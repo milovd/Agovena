@@ -1,0 +1,34 @@
+.ag-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--ag-space-4);
+  margin: 0;
+}
+
+.ag-stats__item {
+  padding: var(--ag-space-4);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface-muted);
+  border: 1px solid var(--ag-color-border);
+}
+
+.ag-stats__label {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ag-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ag-stats__value {
+  margin: var(--ag-space-2) 0 0;
+  font-size: 1.5rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.ag-stats__hint {
+  margin: var(--ag-space-1) 0 0;
+  color: var(--ag-color-text-muted);
+  font-size: 0.875rem;
+}

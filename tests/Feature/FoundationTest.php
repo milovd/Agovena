@@ -29,5 +29,16 @@ test('authenticated owner sees admin dashboard', function () {
     $this->actingAs($staff, 'staff')
         ->get('/admin')
         ->assertOk()
-        ->assertSee('Welcome to Agovena Admin', false);
+        ->assertSee('Commerce overview', false)
+        ->assertSee('Products', false)
+        ->assertSee('System', false);
+});
+
+test('admin registrar exposes settings and widgets', function () {
+    /** @var InMemoryAdminRegistrar $admin */
+    $admin = app(AdminRegistrar::class);
+
+    expect($admin->settingsGroups())->not->toBeEmpty()
+        ->and($admin->widgets())->not->toBeEmpty()
+        ->and($admin->permissions())->toHaveKey('settings.update');
 });

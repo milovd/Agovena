@@ -31,8 +31,15 @@
   color: var(--ag-color-text);
 }
 
-.ag-dropdown__item:hover,
-.ag-dropdown__item:focus-visible {
-  background: var(--ag-color-surface-muted);
-  outline: none;
+.ag-dropdown__meta {
+  margin: 0;
+  padding: var(--ag-space-2) var(--ag-space-3);
+  font-size: 0.8125rem;
+  color: var(--ag-color-text-muted);
+  border-bottom: 1px solid var(--ag-color-border);
 }
+
+[x-cloak] {
+  display: none !important;
+}
+

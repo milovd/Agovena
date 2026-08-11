@@ -3,14 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Shop' }} — {{ config('app.name', 'Agovena') }}</title>
+    <title>{{ $title ?? 'Shop' }} — {{ $siteName ?? config('app.name', 'Agovena') }}</title>
     @vite(['themes/default/resources/css/theme.css'])
     @livewireStyles
 </head>
 <body class="store">
     <a class="store-skip" href="#main">Skip to content</a>
     <header class="store-header">
-        <a class="store-brand" href="{{ route('storefront.home') }}">{{ config('app.name', 'Shop') }}</a>
+        <a class="store-brand" href="{{ route('storefront.home') }}">{{ $siteName ?? config('app.name', 'Shop') }}</a>
         <nav class="store-nav" aria-label="Store">
             <a class="store-nav__link" href="{{ route('storefront.home') }}">Catalog</a>
             <a class="store-nav__link" href="{{ route('storefront.cart') }}">Cart</a>

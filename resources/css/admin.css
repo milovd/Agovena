@@ -10,4 +10,5 @@
 @import './admin/components/_dropdown.css';
 @import './admin/components/_table.css';
 @import './admin/components/_admin-shell.css';
+@import './admin/components/_stats.css';
 @import './admin/utilities/_a11y.css';

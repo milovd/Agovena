@@ -1,3 +1,3 @@
-<button type="button" class="ag-btn ag-btn--ghost" wire:click="logout">
+<button type="button" class="ag-dropdown__item" role="menuitem" wire:click="logout">
     Sign out
 </button>

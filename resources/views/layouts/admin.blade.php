@@ -3,21 +3,28 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Agovena Admin' }} — {{ config('app.name', 'Agovena') }}</title>
+    <title>{{ $title ?? 'Agovena Admin' }} — {{ $siteName ?? config('app.name', 'Agovena') }}</title>
     @vite(['resources/css/admin.css', 'resources/js/admin.js'])
     @livewireStyles
 </head>
-<body class="admin-app">
+<body class="admin-app" x-data="{ navOpen: false }" @keydown.escape.window="navOpen = false">
     <a class="admin-skip-link" href="#main">Skip to content</a>
 
-    <div class="admin-shell">
-        <aside class="admin-sidebar" aria-label="Primary">
+    <div class="admin-shell" :class="{ 'admin-shell--nav-open': navOpen }">
+        <div class="admin-shell__backdrop" x-show="navOpen" x-cloak @click="navOpen = false"></div>
+
+        <aside class="admin-sidebar" id="admin-sidebar" aria-label="Primary">
             <div class="admin-sidebar__brand">
-                <span class="admin-sidebar__logo" aria-hidden="true"></span>
-                <span class="admin-sidebar__title">{{ config('app.name', 'Agovena') }}</span>
+                @if (! empty($brandingLogoPath))
+                    <img class="admin-sidebar__logo-img" src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brandingLogoPath) }}" alt="">
+                @else
+                    <span class="admin-sidebar__logo" aria-hidden="true"></span>
+                @endif
+                <span class="admin-sidebar__title">{{ $siteName ?? config('app.name', 'Agovena') }}</span>
             </div>
-            <nav class="admin-nav">
+            <nav class="admin-nav" aria-label="Admin">
                 @php
+                    use App\Agovena\Admin\AdminNavigation;
                     $staff = auth('staff')->user();
                     $nav = collect($navigation ?? [])->filter(function ($item) use ($staff) {
                         return $item->permission === null
@@ -26,29 +33,72 @@
                     $groups = $nav->groupBy(fn ($item) => $item->group);
                 @endphp
                 @foreach ($groups as $group => $items)
-                    <p class="admin-nav__group">{{ $group }}</p>
-                    @foreach ($items as $item)
-                        <a
-                            class="admin-nav__link @if(request()->is(ltrim($item->href ?? '', '/'))) admin-nav__link--active @endif"
-                            href="{{ $item->href ?? '#' }}"
-                            @if(request()->is(ltrim($item->href ?? '', '/'))) aria-current="page" @endif
-                        >
-                            {{ $item->label }}
-                        </a>
-                    @endforeach
+                    <div class="admin-nav__section">
+                        <p class="admin-nav__group" id="nav-group-{{ \Illuminate\Support\Str::slug($group) }}">{{ $group }}</p>
+                        <ul class="admin-nav__list" role="list" aria-labelledby="nav-group-{{ \Illuminate\Support\Str::slug($group) }}">
+                            @foreach ($items as $item)
+                                @php $active = AdminNavigation::isActive($item->href); @endphp
+                                <li>
+                                    <a
+                                        class="admin-nav__link @if($active) admin-nav__link--active @endif"
+                                        href="{{ $item->href ?? '#' }}"
+                                        @if($active) aria-current="page" @endif
+                                    >
+                                        {{ $item->label }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                 @endforeach
             </nav>
         </aside>
 
         <div class="admin-main">
             <header class="admin-topbar">
-                <h1 class="admin-topbar__title">{{ $title ?? 'Admin' }}</h1>
+                <div class="admin-topbar__start">
+                    <button
+                        type="button"
+                        class="admin-topbar__menu ag-btn ag-btn--ghost"
+                        @click="navOpen = !navOpen"
+                        :aria-expanded="navOpen.toString()"
+                        aria-controls="admin-sidebar"
+                    >
+                        Menu
+                    </button>
+                    <h1 class="admin-topbar__title">{{ $title ?? 'Admin' }}</h1>
+                </div>
                 <div class="admin-topbar__actions">
-                    <livewire:admin.auth.logout />
+                    <div
+                        class="ag-dropdown"
+                        x-data="{ open: false }"
+                        @keydown.escape.window="open = false"
+                        @click.outside="open = false"
+                    >
+                        <button
+                            type="button"
+                            class="ag-btn ag-btn--ghost ag-dropdown__trigger"
+                            @click="open = !open"
+                            :aria-expanded="open.toString()"
+                            aria-haspopup="menu"
+                        >
+                            {{ auth('staff')->user()?->name ?? 'Account' }}
+                        </button>
+                        <div
+                            class="ag-dropdown__menu"
+                            x-show="open"
+                            x-cloak
+                            role="menu"
+                            @keydown.escape.stop="open = false"
+                        >
+                            <p class="ag-dropdown__meta">{{ auth('staff')->user()?->email }}</p>
+                            <livewire:admin.auth.logout />
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <main id="main" class="admin-content">
+            <main id="main" class="admin-content" tabindex="-1">
                 @if (session('status'))
                     <div class="ag-alert ag-alert--success" role="status">{{ session('status') }}</div>
                 @endif
