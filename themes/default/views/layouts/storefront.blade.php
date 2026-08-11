@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Shop' }} — {{ $siteName ?? config('app.name', 'Agovena') }}</title>
+    @if (! empty($brandingFaviconPath))
+        <link rel="icon" href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brandingFaviconPath) }}">
+    @endif
     @vite(['themes/default/resources/css/theme.css'])
     @livewireStyles
 </head>

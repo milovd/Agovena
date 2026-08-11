@@ -12,6 +12,7 @@ use App\Agovena\Admin\SettingsField;
 use App\Agovena\Admin\SettingsGroup;
 use App\Agovena\Cart\CartRepository;
 use App\Agovena\Cart\SessionCartRepository;
+use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
 use Illuminate\Support\Facades\View;
@@ -24,6 +25,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(AdminRegistrar::class, InMemoryAdminRegistrar::class);
         $this->app->singleton(ThemeManager::class);
         $this->app->singleton(SettingsRepository::class);
+        $this->app->singleton(CurrencyCatalog::class);
         $this->app->bind(CartRepository::class, SessionCartRepository::class);
 
         $this->mergeConfigFrom(__DIR__.'/../../config/agovena.php', 'agovena');
@@ -47,8 +49,14 @@ class AgovenaServiceProvider extends ServiceProvider
             $settings = $this->app->make(SettingsRepository::class);
             $siteName = (string) $settings->get('general', 'site_name', config('app.name', 'Agovena'));
             $logoPath = $settings->get('branding', 'logo_path');
+            $faviconPath = $settings->get('branding', 'favicon_path');
             $view->with('siteName', $siteName);
             $view->with('brandingLogoPath', is_string($logoPath) && $logoPath !== '' ? $logoPath : null);
+            $favicon = is_string($faviconPath) && $faviconPath !== '' ? $faviconPath : null;
+            if ($favicon === null && is_string($logoPath) && $logoPath !== '') {
+                $favicon = $logoPath;
+            }
+            $view->with('brandingFaviconPath', $favicon);
         });
 
         View::composer('layouts.admin', function ($view): void {
@@ -126,6 +134,15 @@ class AgovenaServiceProvider extends ServiceProvider
             sort: 120,
             permission: 'settings.view',
         ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'currencies',
+            label: 'Currencies',
+            group: 'System',
+            href: '/admin/currencies',
+            sort: 130,
+            permission: 'currencies.view',
+        ));
     }
 
     private function registerPermissions(AdminRegistrar $admin): void
@@ -141,6 +158,9 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->permission('payments.record', 'Record payments');
         $admin->permission('settings.view', 'View settings');
         $admin->permission('settings.update', 'Update settings');
+        $admin->permission('currencies.view', 'View currencies');
+        $admin->permission('currencies.create', 'Create currencies');
+        $admin->permission('currencies.update', 'Update currencies');
     }
 
     private function registerSettings(AdminRegistrar $admin): void
@@ -198,7 +218,7 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'Base currency',
             type: 'currency',
             default: 'EUR',
-            help: 'ISO 4217 currency code used for new catalog prices.',
+            help: 'Default catalog currency. Create currencies with prefix/suffix under System → Currencies.',
             sort: 40,
         ));
 
@@ -208,7 +228,7 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'Logo',
             type: 'image',
             default: null,
-            help: 'PNG, JPG, WebP or SVG. Max 2 MB.',
+            help: 'PNG, JPG, WebP or SVG. Max 2 MB. You can also use it as the favicon.',
             sort: 10,
         ));
         $admin->settingsField(new SettingsField(
@@ -217,7 +237,7 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'Favicon',
             type: 'image',
             default: null,
-            help: 'Optional favicon image.',
+            help: 'Optional. Leave empty and enable “use logo as favicon”, or upload a separate icon.',
             sort: 20,
         ));
 

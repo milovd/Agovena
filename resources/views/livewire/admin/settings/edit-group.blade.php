@@ -37,9 +37,37 @@
                             <option value="{{ $option }}">{{ ucfirst($option) }}</option>
                         @endforeach
                     </select>
+                @elseif ($field->type === 'currency')
+                    <select
+                        id="setting-{{ $field->key }}"
+                        class="ag-input"
+                        wire:model="values.{{ $field->key }}"
+                        @disabled(! $canUpdate)
+                    >
+                        @forelse ($currencyOptions as $currency)
+                            <option value="{{ $currency->code }}">
+                                {{ $currency->code }} — {{ $currency->name }} ({{ $currency->previewSample() }})
+                            </option>
+                        @empty
+                            <option value="">No active currencies — add one under Currencies</option>
+                        @endforelse
+                    </select>
+                    <p class="ag-field__help">
+                        Manage codes, prefixes and suffixes under
+                        <a href="{{ route('admin.currencies.index') }}">Currencies</a>.
+                    </p>
                 @elseif ($field->type === 'image')
                     @if (! empty($values[$field->key]))
-                        <p class="ag-field__help">Current file: <code>{{ $values[$field->key] }}</code></p>
+                        <div class="ag-field__preview">
+                            <img
+                                src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($values[$field->key]) }}"
+                                alt=""
+                                width="64"
+                                height="64"
+                                style="object-fit: contain; border: 1px solid var(--ag-color-border); border-radius: var(--ag-radius-sm); background: #fff;"
+                            >
+                            <p class="ag-field__help">Current file: <code>{{ $values[$field->key] }}</code></p>
+                        </div>
                     @endif
                     <input
                         id="setting-{{ $field->key }}"
@@ -50,6 +78,18 @@
                         @disabled(! $canUpdate)
                     >
                     @error('uploads.'.$field->key) <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+
+                    @if ($group === 'branding' && $field->key === 'logo_path' && $canUpdate)
+                        <label class="ag-check">
+                            <input type="checkbox" wire:model="useLogoAsFavicon">
+                            <span>Also use this logo as the favicon</span>
+                        </label>
+                        @if (! empty($values['logo_path']))
+                            <button type="button" class="ag-btn ag-btn--ghost" wire:click="useCurrentLogoAsFavicon">
+                                Use current logo as favicon
+                            </button>
+                        @endif
+                    @endif
                 @else
                     <input
                         id="setting-{{ $field->key }}"

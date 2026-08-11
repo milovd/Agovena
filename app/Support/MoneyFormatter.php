@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Support;
 
+use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Money\Money;
-use NumberFormatter;
 
 final class MoneyFormatter
 {
@@ -18,10 +18,9 @@ final class MoneyFormatter
 
         $currency ??= 'EUR';
 
-        if (class_exists(NumberFormatter::class)) {
-            $formatter = new NumberFormatter(app()->getLocale(), NumberFormatter::CURRENCY);
-
-            return $formatter->formatCurrency($amount / 100, $currency) ?: self::fallback($amount, $currency);
+        $defined = app(CurrencyCatalog::class)->find($currency);
+        if ($defined !== null) {
+            return $defined->formatMinorUnits($amount);
         }
 
         return self::fallback($amount, $currency);
@@ -29,6 +28,6 @@ final class MoneyFormatter
 
     private static function fallback(int $amount, string $currency): string
     {
-        return sprintf('%s %.2f', $currency, $amount / 100);
+        return sprintf('%s %s', $currency, number_format($amount / 100, 2, '.', ','));
     }
 }

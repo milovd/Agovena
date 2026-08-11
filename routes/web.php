@@ -2,6 +2,7 @@
 
 use App\Livewire\Admin\Auth\Login;
 use App\Livewire\Admin\Categories\Index as CategoriesIndex;
+use App\Livewire\Admin\Currencies\Index as CurrenciesIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\Orders\Show as OrdersShow;
@@ -34,6 +35,7 @@ Route::middleware('auth:staff')->prefix('admin')->name('admin.')->group(function
     Route::get('/products/create', ProductsCreate::class)->name('products.create');
     Route::get('/products/{product}/edit', ProductsEdit::class)->name('products.edit');
     Route::get('/categories', CategoriesIndex::class)->name('categories.index');
+    Route::get('/currencies', CurrenciesIndex::class)->name('currencies.index');
     Route::get('/orders', OrdersIndex::class)->name('orders.index');
     Route::get('/orders/{order}', OrdersShow::class)->name('orders.show');
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');
