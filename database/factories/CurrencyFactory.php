@@ -21,6 +21,7 @@ class CurrencyFactory extends Factory
             'name' => fake()->currencyCode().' currency',
             'prefix' => '',
             'suffix' => '',
+            'precision' => 2,
             'is_active' => true,
         ];
     }

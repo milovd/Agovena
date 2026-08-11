@@ -15,7 +15,7 @@ final class CurrencyCatalog
     {
         $code = strtoupper($code);
 
-        /** @var array{code: string, name: string, prefix: string, suffix: string, is_active: bool}|null|false $data */
+        /** @var array{code: string, name: string, prefix: string, suffix: string, precision: int, is_active: bool}|null $data */
         $data = Cache::remember(self::CACHE_PREFIX.$code, 3600, function () use ($code): ?array {
             $currency = Currency::query()->where('code', $code)->first();
             if ($currency === null) {
@@ -27,6 +27,7 @@ final class CurrencyCatalog
                 'name' => $currency->name,
                 'prefix' => $currency->prefix,
                 'suffix' => $currency->suffix,
+                'precision' => $currency->normalizedPrecision(),
                 'is_active' => $currency->is_active,
             ];
         });
@@ -35,6 +36,7 @@ final class CurrencyCatalog
             return null;
         }
 
+        // Rebuild from scalar cache payload — never cache Eloquent instances.
         $currency = new Currency;
         $currency->forceFill($data);
         $currency->syncOriginal();

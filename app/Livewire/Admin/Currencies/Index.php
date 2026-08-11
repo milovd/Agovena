@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Currencies;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Money\CurrencyCatalog;
+use App\Agovena\Settings\SettingsRepository;
 use App\Models\Currency;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -28,6 +29,8 @@ final class Index extends Component
     public string $prefix = '';
 
     public string $suffix = '';
+
+    public int $precision = 2;
 
     public bool $is_active = true;
 
@@ -52,6 +55,7 @@ final class Index extends Component
         $this->name = $currency->name;
         $this->prefix = $currency->prefix;
         $this->suffix = $currency->suffix;
+        $this->precision = $currency->normalizedPrecision();
         $this->is_active = $currency->is_active;
         $this->showForm = true;
     }
@@ -77,6 +81,7 @@ final class Index extends Component
             'name' => ['required', 'string', 'max:255'],
             'prefix' => ['nullable', 'string', 'max:16'],
             'suffix' => ['nullable', 'string', 'max:16'],
+            'precision' => ['required', 'integer', 'min:0', 'max:6'],
             'is_active' => ['boolean'],
         ]);
 
@@ -85,6 +90,7 @@ final class Index extends Component
 
         if ($this->editingId === null) {
             Currency::query()->create($data);
+            $catalog->forget($data['code']);
             session()->flash('status', 'Currency created.');
         } else {
             $currency = Currency::query()->findOrFail($this->editingId);
@@ -99,15 +105,26 @@ final class Index extends Component
         $this->resetPage();
     }
 
+    public function setAsBase(int $currencyId, SettingsRepository $settings): void
+    {
+        $this->authorize('settings.update');
+
+        $currency = Currency::query()->whereKey($currencyId)->where('is_active', true)->firstOrFail();
+        $settings->set('general', 'base_currency', $currency->code);
+        session()->flash('status', $currency->code.' is now the base currency.');
+    }
+
     public function cancel(): void
     {
         $this->resetForm();
     }
 
-    public function render(AdminRegistrar $admin)
+    public function render(AdminRegistrar $admin, SettingsRepository $settings)
     {
         return view('livewire.admin.currencies.index', [
             'currencies' => Currency::query()->orderBy('code')->paginate(20),
+            'baseCurrency' => (string) $settings->get('general', 'base_currency', 'EUR'),
+            'canSetBase' => auth('staff')->user()?->can('settings.update') ?? false,
         ])->layout('layouts.admin', [
             'title' => 'Currencies',
             'navigation' => $admin->navigationItems(),
@@ -122,6 +139,7 @@ final class Index extends Component
         $this->name = '';
         $this->prefix = '';
         $this->suffix = '';
+        $this->precision = 2;
         $this->is_active = true;
         $this->resetValidation();
     }

@@ -6,6 +6,7 @@ namespace App\Support;
 
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Money\Money;
+use App\Models\Currency;
 
 final class MoneyFormatter
 {
@@ -28,6 +29,15 @@ final class MoneyFormatter
 
     private static function fallback(int $amount, string $currency): string
     {
-        return sprintf('%s %s', $currency, number_format($amount / 100, 2, '.', ','));
+        $fallback = new Currency([
+            'code' => $currency,
+            'name' => $currency,
+            'prefix' => $currency.' ',
+            'suffix' => '',
+            'precision' => 2,
+            'is_active' => true,
+        ]);
+
+        return $fallback->formatMinorUnits($amount);
     }
 }

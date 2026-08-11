@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('prefix')->default('');
             $table->string('suffix')->default('');
+            $table->unsignedTinyInteger('precision')->default(2);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
@@ -28,6 +29,7 @@ return new class extends Migration
                 'name' => 'Euro',
                 'prefix' => '€',
                 'suffix' => '',
+                'precision' => 2,
                 'is_active' => true,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -37,6 +39,7 @@ return new class extends Migration
                 'name' => 'US Dollar',
                 'prefix' => '$',
                 'suffix' => '',
+                'precision' => 2,
                 'is_active' => true,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -46,6 +49,17 @@ return new class extends Migration
                 'name' => 'Pound Sterling',
                 'prefix' => '£',
                 'suffix' => '',
+                'precision' => 2,
+                'is_active' => true,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'code' => 'JPY',
+                'name' => 'Japanese Yen',
+                'prefix' => '¥',
+                'suffix' => '',
+                'precision' => 0,
                 'is_active' => true,
                 'created_at' => $now,
                 'updated_at' => $now,
