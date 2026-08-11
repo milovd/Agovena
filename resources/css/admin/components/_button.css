@@ -1,13 +1,14 @@
 .ag-btn {
   appearance: none;
   border: 1px solid transparent;
-  border-radius: var(--ag-radius-sm);
-  padding: var(--ag-space-2) var(--ag-space-4);
+  border-radius: var(--ag-radius-md);
+  padding: 0.55rem 1rem;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
   background: var(--ag-color-surface-muted);
   color: var(--ag-color-text);
+  transition: background var(--ag-transition), border-color var(--ag-transition);
 }
 
 .ag-btn:focus-visible {

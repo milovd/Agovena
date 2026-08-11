@@ -35,9 +35,9 @@
 .ag-select {
   width: 100%;
   max-width: 28rem;
-  padding: var(--ag-space-2) var(--ag-space-3);
+  padding: 0.55rem 0.75rem;
   border: 1px solid var(--ag-color-border);
-  border-radius: var(--ag-radius-sm);
+  border-radius: var(--ag-radius-md);
   font: inherit;
   background: var(--ag-color-surface);
   color: var(--ag-color-text);
