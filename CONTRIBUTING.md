@@ -4,13 +4,11 @@ Thanks for taking an interest in Agovena.
 
 ## Current stage
 
-The project is early. There is no installable app yet. Useful help right now:
+The project is early but has a runnable Laravel foundation, Admin product management, and a default Theme storefront checkout slice. Useful help right now:
 
-- Docs and architecture clarity
 - Issues that point out gaps or confusing bits
-- Discussion around module / extension boundaries
-
-Code contributions for the core will open up once the skeleton exists.
+- Discussion around module / extension / theme boundaries
+- Focused code improvements with tests
 
 ## Ground rules
 
@@ -20,12 +18,23 @@ Code contributions for the core will open up once the skeleton exists.
 - No secrets in the repo
 - Don’t describe unfinished work as shipped
 
+## Commits
+
+Prefer [Conventional Commits](https://www.conventionalcommits.org/) that describe the **actual product change**:
+
+- `feat: add admin settings`
+- `fix: prevent duplicate payment recording`
+- `refactor: extract admin navigation registry`
+- `test: add checkout authorization coverage`
+- `chore: update dependencies`
+
+Group related work into meaningful commits. Avoid noise commits for tiny edits; also avoid squashing unrelated work into one mega-commit.
+
 ## Pull requests
 
 - Keep PRs focused
 - Explain why the change is needed
-- Use the PR template
-- Update `docs/PROJECT_MEMORY.md` when a decision should stick around
+- Use the PR template when present
 
 ## Security
 
