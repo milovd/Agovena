@@ -63,13 +63,11 @@ class Currency extends Model
 
     public function normalizedPrecision(): int
     {
-        $precision = $this->attributes['precision'] ?? $this->precision;
-
-        if ($precision === null || $precision === '') {
+        if (! array_key_exists('precision', $this->attributes) || $this->attributes['precision'] === null || $this->attributes['precision'] === '') {
             return 2;
         }
 
-        $precision = (int) $precision;
+        $precision = (int) $this->attributes['precision'];
 
         if ($precision < 0 || $precision > 6) {
             return 2;
