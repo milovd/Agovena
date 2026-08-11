@@ -1,0 +1,39 @@
+.ag-btn {
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: var(--ag-radius-sm);
+  padding: var(--ag-space-2) var(--ag-space-4);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--ag-color-surface-muted);
+  color: var(--ag-color-text);
+}
+
+.ag-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ag-btn--primary {
+  background: var(--ag-color-primary);
+  color: #fff;
+}
+
+.ag-btn--primary:hover:not(:disabled) {
+  background: var(--ag-color-primary-hover);
+}
+
+.ag-btn--ghost {
+  background: transparent;
+}
+
+.ag-btn--danger {
+  background: var(--ag-color-danger);
+  color: #fff;
+}

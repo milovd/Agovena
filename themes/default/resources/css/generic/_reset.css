@@ -1,0 +1,20 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--theme-font-sans);
+  color: var(--theme-color-text);
+  background:
+    radial-gradient(circle at top left, rgb(15 118 110 / 0.08), transparent 40%),
+    linear-gradient(180deg, var(--theme-color-bg), #efeae3);
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  font-family: var(--theme-font-display);
+  font-weight: 600;
+}

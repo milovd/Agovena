@@ -1,0 +1,97 @@
+# Dependencies & tooling
+/vendor/
+/node_modules/
+/bower_components/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+!.env.*.example
+auth.json
+*.pem
+*.key
+!*.public.key
+
+# Build / cache / generated
+/build/
+/dist/
+/public/build/
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail/
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*
+/storage/logs/*
+!/storage/framework/cache/.gitkeep
+!/storage/framework/sessions/.gitkeep
+!/storage/framework/testing/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/logs/.gitkeep
+/bootstrap/cache/*.php
+.phpunit.result.cache
+.phpunit.cache/
+/coverage/
+/.php-cs-fixer.cache
+/.phpstan.cache/
+/.psalm/
+/Homestead.json
+/Homestead.yaml
+
+# Frontend tooling
+/npm-debug.log*
+/yarn-error.log*
+/pnpm-debug.log*
+/.vite/
+/.turbo/
+/.next/
+/out/
+
+# Local databases & dumps
+*.sqlite
+*.sqlite3
+*.db
+*.sql.gz
+/database/*.sqlite
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json.example
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Cursor / local AI tooling (not part of the public project)
+.cursor/
+.cursorrules
+.cursorignore
+*.canvas.tsx
+AGENTS.md
+CLAUDE.md
+.claude/
+.codex/
+.agent/
+.agents/
+
+# Entire docs tree is local-only for now (private development workflow)
+/docs/
+
+# Local runtime spike apps
+/spikes/
+
+# Accidental local binaries / CLI builds at repo root
+/agovena
+/agovena.exe
+
+# Test / temp
+/tmp/
+/temp/
+*.log

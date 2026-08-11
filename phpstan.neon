@@ -1,0 +1,9 @@
+includes:
+    - phar://phpstan.phar/conf/bleedingEdge.neon
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+    level: 5
+    tmpDir: .phpstan.cache

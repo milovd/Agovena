@@ -1,0 +1,32 @@
+.ag-modal {
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  padding: 0;
+  max-width: 28rem;
+  width: calc(100% - 2rem);
+  box-shadow: var(--ag-shadow-sm);
+}
+
+.ag-modal::backdrop {
+  background: rgb(15 23 42 / 0.45);
+}
+
+.ag-modal__body {
+  padding: var(--ag-space-6);
+}
+
+.ag-modal__title {
+  margin: 0 0 var(--ag-space-2);
+  font-size: 1.125rem;
+}
+
+.ag-modal__text {
+  margin: 0 0 var(--ag-space-6);
+  color: var(--ag-color-text-muted);
+}
+
+.ag-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ag-space-2);
+}

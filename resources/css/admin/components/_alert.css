@@ -1,0 +1,21 @@
+.ag-alert {
+  padding: var(--ag-space-3) var(--ag-space-4);
+  border-radius: var(--ag-radius-md);
+  border: 1px solid var(--ag-color-border);
+  background: var(--ag-color-surface);
+}
+
+.ag-alert--success {
+  border-color: rgb(5 150 105 / 0.35);
+  background: rgb(5 150 105 / 0.08);
+}
+
+.ag-alert__title {
+  margin: 0 0 var(--ag-space-1);
+  font-weight: 650;
+}
+
+.ag-alert__text {
+  margin: 0;
+  color: var(--ag-color-text-muted);
+}

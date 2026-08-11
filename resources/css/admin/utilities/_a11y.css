@@ -1,0 +1,26 @@
+.visually-hidden,
+.ag-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.admin-skip-link {
+  position: absolute;
+  left: -9999px;
+}
+
+.admin-skip-link:focus {
+  left: var(--ag-space-4);
+  top: var(--ag-space-4);
+  z-index: 100;
+  background: var(--ag-color-surface);
+  padding: var(--ag-space-2) var(--ag-space-3);
+  box-shadow: var(--ag-focus-ring);
+}

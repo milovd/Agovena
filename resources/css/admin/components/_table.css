@@ -1,0 +1,26 @@
+.admin-table-wrap {
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: var(--ag-space-3) var(--ag-space-2);
+  border-bottom: 1px solid var(--ag-color-border);
+}
+
+.admin-table__head th {
+  color: var(--ag-color-text-muted);
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.admin-table__row:hover {
+  background: var(--ag-color-surface-muted);
+}

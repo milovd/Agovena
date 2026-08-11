@@ -1,0 +1,20 @@
+:root {
+  --theme-color-bg: #f7f5f1;
+  --theme-color-surface: #ffffff;
+  --theme-color-text: #1c1917;
+  --theme-color-text-muted: #57534e;
+  --theme-color-border: #d6d3d1;
+  --theme-color-accent: #0f766e;
+  --theme-color-accent-hover: #0d9488;
+  --theme-color-danger: #b91c1c;
+  --theme-font-sans: "Segoe UI", "Candara", "Trebuchet MS", sans-serif;
+  --theme-font-display: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", serif;
+  --theme-space-2: 0.5rem;
+  --theme-space-3: 0.75rem;
+  --theme-space-4: 1rem;
+  --theme-space-6: 1.5rem;
+  --theme-space-8: 2rem;
+  --theme-radius: 0.25rem;
+  --theme-focus: 0 0 0 3px rgb(15 118 110 / 0.35);
+  --theme-max: 48rem;
+}
