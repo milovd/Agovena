@@ -143,6 +143,15 @@ class AgovenaServiceProvider extends ServiceProvider
             sort: 130,
             permission: 'currencies.view',
         ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'staff',
+            label: 'Staff',
+            group: 'Administration',
+            href: '/admin/staff',
+            sort: 200,
+            permission: 'staff.view',
+        ));
     }
 
     private function registerPermissions(AdminRegistrar $admin): void
@@ -161,6 +170,8 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->permission('currencies.view', 'View currencies');
         $admin->permission('currencies.create', 'Create currencies');
         $admin->permission('currencies.update', 'Update currencies');
+        $admin->permission('staff.view', 'View staff');
+        $admin->permission('staff.create', 'Create staff');
     }
 
     private function registerSettings(AdminRegistrar $admin): void
