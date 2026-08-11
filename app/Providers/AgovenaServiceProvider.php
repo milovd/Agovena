@@ -13,6 +13,7 @@ use App\Agovena\Admin\SettingsGroup;
 use App\Agovena\Cart\CartRepository;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\SessionCartRepository;
+use App\Agovena\Content\MenuResolver;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
@@ -69,18 +70,28 @@ class AgovenaServiceProvider extends ServiceProvider
             }
 
             $view->with('cartCount', $cartCount);
-            // Theme-local menu placeholders until Content → Navigation ships.
-            $view->with('themeMainNav', [
+
+            /** @var MenuResolver $menus */
+            $menus = $this->app->make(MenuResolver::class);
+            $main = $menus->handle('header');
+            $footer = $menus->handle('footer');
+            $legal = $menus->handle('footer_legal');
+
+            $view->with('themeMainNav', $main !== [] ? $this->flattenMenuLinks($main) : [
                 ['label' => 'Shop', 'url' => route('storefront.home')],
             ]);
-            $view->with('themeFooterNav', [
+            $view->with('themeFooterNav', $footer !== [] ? $this->flattenMenuLinks($footer) : [
                 ['label' => 'Shop', 'url' => route('storefront.home')],
                 ['label' => 'Cart', 'url' => route('storefront.cart')],
             ]);
-            $view->with('themeLegalNav', [
+            $view->with('themeLegalNav', $legal !== [] ? $this->flattenMenuLinks($legal) : [
                 ['label' => 'Terms', 'url' => null],
                 ['label' => 'Privacy', 'url' => null],
             ]);
+
+            if (! array_key_exists('themeConfig', $view->getData())) {
+                $view->with('themeConfig', $this->app->make(ThemeManager::class)->config());
+            }
         });
 
         View::composer('layouts.admin', function ($view): void {
@@ -165,6 +176,60 @@ class AgovenaServiceProvider extends ServiceProvider
             sort: 200,
             permission: 'staff.view',
         ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'themes',
+            label: 'Themes',
+            group: 'Appearance',
+            href: '/admin/appearance/themes',
+            icon: 'layout-template',
+            sort: 300,
+            permission: 'theme.view',
+        ));
+        $admin->navigation(new NavigationItem(
+            id: 'theme-customize',
+            label: 'Customize',
+            group: 'Appearance',
+            href: '/admin/appearance/customize',
+            icon: 'palette',
+            sort: 310,
+            permission: 'theme.view',
+        ));
+        $admin->navigation(new NavigationItem(
+            id: 'navigation',
+            label: 'Navigation',
+            group: 'Appearance',
+            href: '/admin/appearance/navigation',
+            icon: 'menu',
+            sort: 320,
+            permission: 'navigation.view',
+        ));
+        $admin->navigation(new NavigationItem(
+            id: 'pages',
+            label: 'Pages',
+            group: 'Appearance',
+            href: '/admin/appearance/pages',
+            icon: 'file-text',
+            sort: 330,
+            permission: 'pages.view',
+        ));
+    }
+
+    /**
+     * @param  list<array{label: string, url: string|null, children?: list<array{label: string, url: string|null}>}>  $items
+     * @return list<array{label: string, url: string|null}>
+     */
+    private function flattenMenuLinks(array $items): array
+    {
+        $out = [];
+        foreach ($items as $item) {
+            $out[] = ['label' => $item['label'], 'url' => $item['url']];
+            foreach ($item['children'] ?? [] as $child) {
+                $out[] = ['label' => $child['label'], 'url' => $child['url']];
+            }
+        }
+
+        return $out;
     }
 
     private function registerPermissions(AdminRegistrar $admin): void
@@ -185,6 +250,12 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->permission('currencies.update', 'Update currencies');
         $admin->permission('staff.view', 'View staff');
         $admin->permission('staff.create', 'Create staff');
+        $admin->permission('theme.view', 'View themes');
+        $admin->permission('theme.manage', 'Manage themes');
+        $admin->permission('pages.view', 'View pages');
+        $admin->permission('pages.manage', 'Manage pages');
+        $admin->permission('navigation.view', 'View navigation');
+        $admin->permission('navigation.manage', 'Manage navigation');
     }
 
     private function registerSettings(AdminRegistrar $admin): void
