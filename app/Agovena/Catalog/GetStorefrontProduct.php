@@ -14,7 +14,7 @@ final class GetStorefrontProduct
         $product = Product::query()
             ->active()
             ->where('slug', $slug)
-            ->with('category')
+            ->with(['category', 'images'])
             ->first();
 
         if ($product === null) {

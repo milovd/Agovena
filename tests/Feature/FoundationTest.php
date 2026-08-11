@@ -7,7 +7,7 @@ use Tests\Support\CreatesStaff;
 uses(CreatesStaff::class);
 
 test('storefront home renders catalog theme', function () {
-    $this->get('/')->assertOk()->assertSee('Catalog', false);
+    $this->get('/')->assertOk()->assertSee('Featured products', false);
 });
 
 test('installer welcome renders', function () {

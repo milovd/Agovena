@@ -1,4 +1,25 @@
-<header class="store-header" data-sticky>
+@php
+    $cfg = $themeConfig ?? app(\App\Agovena\Theme\ThemeManager::class)->config();
+    $announcementOn = $cfg->bool('header.announcement_enabled', true);
+    $announcementText = $cfg->string('header.announcement_text');
+    $announcementLink = $cfg->string('header.announcement_link');
+    $searchOn = $cfg->bool('header.search_enabled', true);
+    $showAccount = $cfg->bool('header.show_account', true);
+@endphp
+
+@if ($announcementOn && $announcementText !== '')
+    <div class="store-announce" role="region" aria-label="Announcement">
+        <div class="store-announce__inner">
+            @if ($announcementLink !== '')
+                <a class="store-announce__link" href="{{ $announcementLink }}">{{ $announcementText }}</a>
+            @else
+                <p class="store-announce__text">{{ $announcementText }}</p>
+            @endif
+        </div>
+    </div>
+@endif
+
+<header class="store-header">
     <div class="store-header__inner">
         <button
             type="button"
@@ -29,52 +50,42 @@
             @endforeach
         </nav>
 
+        @if ($searchOn)
+            <form class="store-header__search" action="{{ route('storefront.home') }}" method="get" role="search">
+                <label class="visually-hidden" for="store-header-search">Search products</label>
+                <input
+                    id="store-header-search"
+                    class="store-header__search-input"
+                    type="search"
+                    name="q"
+                    value="{{ request('q') }}"
+                    placeholder="Search products"
+                    autocomplete="off"
+                >
+                <button type="submit" class="store-header__search-btn">
+                    <span class="visually-hidden">Search</span>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+                </button>
+            </form>
+        @endif
+
         <div class="store-header__actions">
-            <button
-                type="button"
-                class="store-header__action"
-                @click="searchOpen = !searchOpen"
-                :aria-expanded="searchOpen.toString()"
-                aria-controls="store-search"
-            >
-                Search
-            </button>
-            <span
-                class="store-header__action store-header__action--muted"
-                title="Customer accounts will be available when the customer portal ships"
-            >
-                Account
-            </span>
+            @if ($showAccount)
+                <span
+                    class="store-header__action store-header__action--muted"
+                    title="Customer accounts will be available when the customer portal ships"
+                >
+                    Account
+                </span>
+            @endif
             <a class="store-header__cart" href="{{ route('storefront.cart') }}">
-                Cart
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+                <span>Cart</span>
                 @if (($cartCount ?? 0) > 0)
                     <span class="store-header__cart-count" aria-label="{{ $cartCount }} items in cart">{{ $cartCount }}</span>
                 @endif
             </a>
         </div>
-    </div>
-
-    <div
-        id="store-search"
-        class="store-search"
-        x-show="searchOpen"
-        x-cloak
-        x-transition
-        @click.outside="searchOpen = false"
-    >
-        <form class="store-search__form" action="{{ route('storefront.home') }}" method="get" role="search">
-            <label class="visually-hidden" for="store-search-input">Search products</label>
-            <input
-                id="store-search-input"
-                class="store-search__input"
-                type="search"
-                name="q"
-                value="{{ request('q') }}"
-                placeholder="Search products"
-                autocomplete="off"
-            >
-            <button type="submit" class="store-btn store-btn--primary">Search</button>
-        </form>
     </div>
 
     <div
