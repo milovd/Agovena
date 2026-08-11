@@ -12,6 +12,7 @@ use App\Models\Page;
 use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -42,27 +43,27 @@ final class AgovenaSeedDemoCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->writePromoAssets();
+        $this->info('Downloading demo product photos (Unsplash, local cache)…');
 
         $phones = Category::query()->create([
             'name' => 'Phones',
             'slug' => 'phones',
             'description' => 'Smartphones for everyday use.',
-            'image_path' => $this->writeDeviceImage('category-phones', 'Phones', '#155EEF'),
+            'image_path' => $this->storePhoto('category-phones', 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=900&h=700&q=80'),
             'is_active' => true,
         ]);
         $audio = Category::query()->create([
             'name' => 'Audio',
             'slug' => 'audio',
             'description' => 'Headphones and earbuds.',
-            'image_path' => $this->writeDeviceImage('category-audio', 'Audio', '#0F766E', 'earbuds'),
+            'image_path' => $this->storePhoto('category-audio', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=900&h=700&q=80'),
             'is_active' => true,
         ]);
         $accessories = Category::query()->create([
             'name' => 'Accessories',
             'slug' => 'accessories',
             'description' => 'Cases, chargers, and everyday extras.',
-            'image_path' => $this->writeDeviceImage('category-accessories', 'Accessories', '#0369A1', 'case'),
+            'image_path' => $this->storePhoto('category-accessories', 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=900&h=700&q=80'),
             'is_active' => true,
         ]);
 
@@ -71,7 +72,7 @@ final class AgovenaSeedDemoCommand extends Command
             'name' => 'Android',
             'slug' => 'android',
             'description' => 'Android smartphones.',
-            'image_path' => $this->writeDeviceImage('category-android', 'Android', '#1249C7'),
+            'image_path' => $this->storePhoto('category-android', 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=900&h=700&q=80'),
             'is_active' => true,
         ]);
         $iphone = Category::query()->create([
@@ -79,28 +80,31 @@ final class AgovenaSeedDemoCommand extends Command
             'name' => 'iPhone',
             'slug' => 'iphone',
             'description' => 'iPhone models.',
-            'image_path' => $this->writeDeviceImage('category-iphone', 'iPhone', '#0B1220'),
+            'image_path' => $this->storePhoto('category-iphone', 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=900&h=700&q=80'),
             'is_active' => true,
         ]);
 
+        $this->storePhoto('hero-promo', 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=1200&h=900&q=80');
+        $this->storePhoto('promo-split', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&h=900&q=80');
+
         $products = [
-            ['name' => 'Nova Phone 14', 'category' => $android, 'price' => 69900, 'desc' => '6.1" OLED display, dual camera, all-day battery.', 'color' => '#155EEF', 'shape' => 'phone'],
-            ['name' => 'Nova Phone 14 Pro', 'category' => $android, 'price' => 89900, 'desc' => 'Pro camera system with bright AMOLED panel.', 'color' => '#0F172A', 'shape' => 'phone'],
-            ['name' => 'Pulse X', 'category' => $android, 'price' => 54900, 'desc' => 'Compact Android phone with fast charging.', 'color' => '#1D4ED8', 'shape' => 'phone'],
-            ['name' => 'iPhone 15', 'category' => $iphone, 'price' => 92900, 'desc' => 'A16 performance in a slim aluminum design.', 'color' => '#334155', 'shape' => 'phone'],
-            ['name' => 'iPhone 15 Pro', 'category' => $iphone, 'price' => 119900, 'desc' => 'Titanium frame and advanced camera controls.', 'color' => '#0B1220', 'shape' => 'phone'],
-            ['name' => 'Air Soft Buds', 'category' => $audio, 'price' => 12900, 'desc' => 'Lightweight earbuds with clear everyday sound.', 'color' => '#0F766E', 'shape' => 'earbuds'],
-            ['name' => 'Studio Max Headphones', 'category' => $audio, 'price' => 34900, 'desc' => 'Over-ear headphones with balanced sound.', 'color' => '#134E4A', 'shape' => 'headphones'],
-            ['name' => 'Clip Buds Mini', 'category' => $audio, 'price' => 7900, 'desc' => 'Compact buds for calls and commuting.', 'color' => '#115E59', 'shape' => 'earbuds'],
-            ['name' => 'Clear Case MagSafe', 'category' => $accessories, 'price' => 2900, 'desc' => 'Protective clear case with MagSafe ring.', 'color' => '#0369A1', 'shape' => 'case'],
-            ['name' => '40W GaN Charger', 'category' => $accessories, 'price' => 3900, 'desc' => 'Compact dual-port USB-C charger.', 'color' => '#0C4A6E', 'shape' => 'charger'],
-            ['name' => 'Braided USB-C Cable', 'category' => $accessories, 'price' => 1900, 'desc' => '2m braided cable for phones and earbuds.', 'color' => '#075985', 'shape' => 'cable'],
-            ['name' => 'Desk Stand Aluminum', 'category' => $accessories, 'price' => 4500, 'desc' => 'Angled aluminum stand for phones.', 'color' => '#64748B', 'shape' => 'stand'],
+            ['name' => 'Nova Phone 14', 'category' => $android, 'price' => 69900, 'desc' => '6.1" OLED display, dual camera, all-day battery.', 'photo' => 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&h=800&q=80'],
+            ['name' => 'Nova Phone 14 Pro', 'category' => $android, 'price' => 89900, 'desc' => 'Pro camera system with bright AMOLED panel.', 'photo' => 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&h=800&q=80'],
+            ['name' => 'Pulse X', 'category' => $android, 'price' => 54900, 'desc' => 'Compact Android phone with fast charging.', 'photo' => 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
+            ['name' => 'iPhone 15', 'category' => $iphone, 'price' => 92900, 'desc' => 'A16 performance in a slim aluminum design.', 'photo' => 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&h=800&q=80'],
+            ['name' => 'iPhone 15 Pro', 'category' => $iphone, 'price' => 119900, 'desc' => 'Titanium frame and advanced camera controls.', 'photo' => 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&h=800&q=80'],
+            ['name' => 'Air Soft Buds', 'category' => $audio, 'price' => 12900, 'desc' => 'Lightweight earbuds with clear everyday sound.', 'photo' => 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
+            ['name' => 'Studio Max Headphones', 'category' => $audio, 'price' => 34900, 'desc' => 'Over-ear headphones with balanced sound.', 'photo' => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=800&h=800&q=80'],
+            ['name' => 'Clip Buds Mini', 'category' => $audio, 'price' => 7900, 'desc' => 'Compact buds for calls and commuting.', 'photo' => 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
+            ['name' => 'Clear Case MagSafe', 'category' => $accessories, 'price' => 2900, 'desc' => 'Protective clear case with MagSafe ring.', 'photo' => 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
+            ['name' => '40W GaN Charger', 'category' => $accessories, 'price' => 3900, 'desc' => 'Compact dual-port USB-C charger.', 'photo' => 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
+            ['name' => 'Braided USB-C Cable', 'category' => $accessories, 'price' => 1900, 'desc' => '2m braided cable for phones and earbuds.', 'photo' => 'https://images.unsplash.com/photo-1625948515291-69613efd103f?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
+            ['name' => 'Desk Stand Aluminum', 'category' => $accessories, 'price' => 4500, 'desc' => 'Angled aluminum stand for phones.', 'photo' => 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
         ];
 
-        foreach ($products as $i => $row) {
+        foreach ($products as $row) {
             $slug = Str::slug($row['name']);
-            $path = $this->writeDeviceImage($slug, $row['name'], $row['color'], $row['shape']);
+            $path = $this->storePhoto($slug, $row['photo']);
 
             $product = Product::query()->create([
                 'name' => $row['name'],
@@ -119,8 +123,8 @@ final class AgovenaSeedDemoCommand extends Command
                 'sort' => 0,
             ]);
 
-            if ($i < 5) {
-                $alt = $this->writeDeviceImage($slug.'-alt', $row['name'].' detail', '#1249C7', $row['shape']);
+            if (! empty($row['alt'])) {
+                $alt = $this->storePhoto($slug.'-alt', $row['alt']);
                 ProductImage::query()->create([
                     'product_id' => $product->id,
                     'path' => $alt,
@@ -154,107 +158,47 @@ final class AgovenaSeedDemoCommand extends Command
 
         MenuItem::query()->whereIn('menu_id', [$header->id, $footer->id, $legal->id])->delete();
 
-        MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'Shop', 'type' => 'url', 'url' => '/', 'sort' => 0]);
-        MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'Deals', 'type' => 'url', 'url' => '/#catalog', 'sort' => 1]);
-        MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'About', 'type' => 'page', 'page_id' => $about->id, 'sort' => 2]);
-        MenuItem::query()->create(['menu_id' => $footer->id, 'label' => 'Shop', 'type' => 'url', 'url' => '/', 'sort' => 0]);
-        MenuItem::query()->create(['menu_id' => $footer->id, 'label' => 'Cart', 'type' => 'url', 'url' => '/cart', 'sort' => 1]);
+        MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'Deals', 'type' => 'url', 'url' => '/#catalog', 'sort' => 0]);
+        MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'About', 'type' => 'page', 'page_id' => $about->id, 'sort' => 1]);
+        MenuItem::query()->create(['menu_id' => $footer->id, 'label' => 'Cart', 'type' => 'url', 'url' => '/cart', 'sort' => 0]);
         MenuItem::query()->create(['menu_id' => $legal->id, 'label' => 'Terms', 'type' => 'page', 'page_id' => $terms->id, 'sort' => 0]);
         MenuItem::query()->create(['menu_id' => $legal->id, 'label' => 'Privacy', 'type' => 'page', 'page_id' => $privacy->id, 'sort' => 1]);
 
-        $this->info('Demo catalog seeded: phones-focused categories, products, pages, and menus.');
+        $this->info('Demo catalog seeded with photo assets, categories, products, pages, and menus.');
 
         return self::SUCCESS;
     }
 
-    private function writePromoAssets(): void
+    private function storePhoto(string $slug, string $url): string
     {
-        $this->writeDeviceImage('hero-promo', 'New phones', '#155EEF', 'phone', '1200', '900');
-        $this->writeDeviceImage('promo-split', 'Every kind of shop', '#0B1220', 'headphones', '1200', '900');
-    }
+        $relative = 'demo/'.$slug.'.jpg';
 
-    private function writeDeviceImage(
-        string $slug,
-        string $label,
-        string $hex,
-        string $shape = 'phone',
-        string $width = '800',
-        string $height = '800',
-    ): string {
-        $relative = 'demo/'.$slug.'.svg';
-        $safe = htmlspecialchars($label, ENT_QUOTES | ENT_XML1);
-        $w = (int) $width;
-        $h = (int) $height;
-        $device = $this->deviceMarkup($shape, $w, $h);
-        $svg = <<<SVG
-<svg xmlns="http://www.w3.org/2000/svg" width="{$w}" height="{$h}" viewBox="0 0 {$w} {$h}" role="img">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="{$hex}"/>
-      <stop offset="100%" stop-color="#0B1220"/>
-    </linearGradient>
-  </defs>
-  <rect width="{$w}" height="{$h}" rx="28" fill="url(#bg)"/>
-  {$device}
-  <text x="50%" y="88%" text-anchor="middle" fill="#ffffff" font-family="DM Sans, Segoe UI, sans-serif" font-size="28" font-weight="700">{$safe}</text>
-</svg>
-SVG;
-        Storage::disk('public')->put($relative, $svg);
+        try {
+            $response = Http::timeout(25)
+                ->withoutVerifying()
+                ->withHeaders([
+                    'Accept' => 'image/*',
+                    'User-Agent' => 'AgovenaLocalDemoSeeder/1.0',
+                ])
+                ->get($url);
+
+            if ($response->successful() && strlen($response->body()) > 1000) {
+                Storage::disk('public')->put($relative, $response->body());
+
+                return $relative;
+            }
+        } catch (\Throwable) {
+            // Fall through to a minimal local JPEG so seeding still works offline.
+        }
+
+        Storage::disk('public')->put($relative, $this->fallbackJpeg());
 
         return $relative;
     }
 
-    private function deviceMarkup(string $shape, int $w, int $h): string
+    private function fallbackJpeg(): string
     {
-        $cx = (int) ($w / 2);
-        $cy = (int) ($h * 0.42);
-        $left = $cx - 70;
-        $top = $cy - 130;
-        $earLeft = $cx - 90;
-        $earRight = $cx + 90;
-        $canLeft = $cx - 110;
-        $canRight = $cx + 70;
-        $archY = $cy;
-        $budY = $cy + 20;
-        $stemY = $cy + 48;
-
-        return match ($shape) {
-            'earbuds' => <<<SVG
-  <g fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="10" stroke-linecap="round">
-    <circle cx="{$cx}" cy="{$cy}" r="48" fill="rgba(255,255,255,0.12)"/>
-    <path d="M{$cx} {$stemY} v70"/>
-    <circle cx="{$earLeft}" cy="{$budY}" r="34" fill="rgba(255,255,255,0.12)"/>
-    <circle cx="{$earRight}" cy="{$budY}" r="34" fill="rgba(255,255,255,0.12)"/>
-  </g>
-SVG,
-            'headphones' => <<<SVG
-  <g fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="12" stroke-linecap="round">
-    <path d="M{$earLeft} {$archY} a90 70 0 0 1 180 0"/>
-    <rect x="{$canLeft}" y="{$archY}" width="40" height="70" rx="14" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.92)"/>
-    <rect x="{$canRight}" y="{$archY}" width="40" height="70" rx="14" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.92)"/>
-  </g>
-SVG,
-            'case' => <<<SVG
-  <rect x="{$left}" y="{$top}" width="140" height="240" rx="28" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.9)" stroke-width="8"/>
-  <rect x="{$cx}" y="{$cy}" width="96" height="170" rx="16" fill="rgba(15,23,42,0.35)" transform="translate(-48 -88)"/>
-SVG,
-            'charger' => <<<SVG
-  <rect x="{$cx}" y="{$cy}" width="110" height="110" rx="22" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.9)" stroke-width="8" transform="translate(-55 -55)"/>
-  <circle cx="{$cx}" cy="{$cy}" r="18" fill="rgba(255,255,255,0.85)"/>
-SVG,
-            'cable' => <<<SVG
-  <path d="M{$earLeft} {$cy} C{$cx} {$top}, {$cx} {$stemY}, {$earRight} {$cy}" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="14" stroke-linecap="round"/>
-  <rect x="{$earLeft}" y="{$cy}" width="36" height="36" rx="8" fill="rgba(255,255,255,0.85)" transform="translate(-25 -18)"/>
-  <rect x="{$earRight}" y="{$cy}" width="36" height="36" rx="8" fill="rgba(255,255,255,0.85)" transform="translate(-11 -18)"/>
-SVG,
-            'stand' => <<<SVG
-  <path d="M{$earLeft} {$stemY} L{$cx} {$top} L{$earRight} {$stemY} Z" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.9)" stroke-width="8" stroke-linejoin="round"/>
-SVG,
-            default => <<<SVG
-  <rect x="{$left}" y="{$top}" width="140" height="260" rx="28" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.92)" stroke-width="8"/>
-  <rect x="{$cx}" y="{$cy}" width="104" height="200" rx="12" fill="rgba(15,23,42,0.35)" transform="translate(-52 -108)"/>
-  <rect x="{$cx}" y="{$top}" width="36" height="8" rx="4" fill="rgba(255,255,255,0.55)" transform="translate(-18 12)"/>
-SVG,
-        };
+        // 1x1 JPEG so the storefront still has a file path when downloads fail.
+        return base64_decode('/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAALCAABAAEBAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGcP//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8Bf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8Bf//Z');
     }
 }

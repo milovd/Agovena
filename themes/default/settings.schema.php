@@ -151,7 +151,7 @@ return new ThemeSettingsSchema([
                 'lede' => 'Browse smartphones, headphones, and accessories from one storefront.',
                 'cta_label' => 'Shop featured',
                 'cta_href' => '#catalog',
-                'image' => 'demo/hero-promo.svg',
+                'image' => 'demo/hero-promo.jpg',
             ],
             [
                 'type' => 'featured_categories',
@@ -170,7 +170,7 @@ return new ThemeSettingsSchema([
                 'body' => 'Physical goods, digital downloads, and services — presented with the same clear commerce experience.',
                 'cta_label' => 'Browse catalog',
                 'cta_href' => '#catalog',
-                'image' => 'demo/promo-split.svg',
+                'image' => 'demo/promo-split.jpg',
             ],
             [
                 'type' => 'trust_strip',

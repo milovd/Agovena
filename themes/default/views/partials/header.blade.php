@@ -93,12 +93,11 @@
 
             <nav class="store-nav" aria-label="Primary">
                 @if ($categoriesOn && $discoveryCategories->isNotEmpty())
-                    <div class="store-cats" @mouseleave="catsOpen = false; activeCat = null">
+                    <div class="store-cats" @click.outside="catsOpen = false; activeCat = null">
                         <button
                             type="button"
                             class="store-nav__link store-nav__link--btn"
                             @click="catsOpen = !catsOpen"
-                            @mouseenter="catsOpen = true"
                             :aria-expanded="catsOpen.toString()"
                             aria-controls="store-cats-panel"
                         >
@@ -110,10 +109,11 @@
                             class="store-cats__panel"
                             x-show="catsOpen"
                             x-cloak
-                            @click.outside="catsOpen = false"
+                            x-transition.opacity.duration.120ms
                             role="region"
                             aria-label="Categories"
                         >
+                            <div class="store-cats__panel-inner">
                             <ul class="store-cats__roots" role="list">
                                 @foreach ($discoveryCategories as $category)
                                     <li
@@ -157,12 +157,13 @@
                                     </div>
                                 @endforeach
                             </div>
+                            </div>
                         </div>
                     </div>
                 @endif
 
                 @foreach ($themeMainNav ?? [] as $item)
-                    @if (! empty($item['url']))
+                    @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
                         <a class="store-nav__link" href="{{ $item['url'] }}">{{ $item['label'] }}</a>
                     @endif
                 @endforeach
@@ -171,8 +172,7 @@
             @if ($searchOn)
                 <div class="store-header__search-wrap" @click.outside="closeSuggest()">
                     <form class="store-header__search" action="{{ route('storefront.home') }}" method="get" role="search">
-                        <label class="visually-hidden" for="store-header-search">Search products</label>
-                        <svg class="store-header__search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+                        <label class="visually-hidden" for="store-header-search">Search product</label>
                         <input
                             id="store-header-search"
                             class="store-header__search-input"
@@ -181,17 +181,21 @@
                             x-model="suggestQuery"
                             @input="onSuggestInput()"
                             @focus="onSuggestInput()"
-                            placeholder="Search products"
+                            placeholder="Search product"
                             autocomplete="off"
                             aria-autocomplete="list"
                             aria-controls="store-search-suggest"
                         >
+                        <button type="submit" class="store-header__search-icon-btn" aria-label="Search">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+                        </button>
                     </form>
                     <div
                         id="store-search-suggest"
                         class="store-suggest"
                         x-show="suggestOpen"
                         x-cloak
+                        @mousedown.prevent
                         role="listbox"
                         aria-label="Search suggestions"
                     >
@@ -254,10 +258,12 @@
                         x-model="suggestQuery"
                         @input="onSuggestInput()"
                         @focus="onSuggestInput()"
-                        placeholder="Search products"
+                        placeholder="Search product"
                         autocomplete="off"
                     >
-                    <button type="submit" class="store-btn store-btn--primary">Search</button>
+                    <button type="submit" class="store-header__search-icon-btn" aria-label="Search">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+                    </button>
                 </form>
             </div>
         @endif
@@ -277,7 +283,7 @@
             <p class="store-drawer__title">Menu</p>
             <nav class="store-drawer__nav" aria-label="Mobile">
                 @foreach ($themeMainNav ?? [] as $item)
-                    @if (! empty($item['url']))
+                    @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
                         <a class="store-drawer__link" href="{{ $item['url'] }}" @click="navOpen = false">{{ $item['label'] }}</a>
                     @endif
                 @endforeach

@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Collection;
 final class SuggestStorefrontProducts
 {
     /** @return Collection<int, Product> */
-    public function handle(string $query, int $limit = 8): Collection
+    public function handle(string $query, int $limit = 3): Collection
     {
         $term = trim($query);
 
@@ -18,7 +18,7 @@ final class SuggestStorefrontProducts
             return new Collection;
         }
 
-        $limit = max(1, min($limit, 12));
+        $limit = max(1, min($limit, 8));
 
         return Product::query()
             ->active()

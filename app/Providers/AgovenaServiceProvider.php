@@ -79,10 +79,10 @@ class AgovenaServiceProvider extends ServiceProvider
             $legal = $menus->handle('footer_legal');
 
             $view->with('themeMainNav', $main !== [] ? $this->flattenMenuLinks($main) : [
-                ['label' => 'Shop', 'url' => route('storefront.home')],
+                ['label' => 'Deals', 'url' => route('storefront.home').'#catalog'],
+                ['label' => 'About', 'url' => url('/about')],
             ]);
             $view->with('themeFooterNav', $footer !== [] ? $this->flattenMenuLinks($footer) : [
-                ['label' => 'Shop', 'url' => route('storefront.home')],
                 ['label' => 'Cart', 'url' => route('storefront.cart')],
             ]);
             $view->with('themeLegalNav', $legal !== [] ? $this->flattenMenuLinks($legal) : [

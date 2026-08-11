@@ -198,22 +198,43 @@
   gap: 0;
   min-width: 0;
   width: 100%;
-  background: var(--theme-color-bg);
-  border: 1px solid var(--theme-color-border);
+  min-height: 2.85rem;
+  background: #eef2f7;
+  border: 1px solid transparent;
   border-radius: 999px;
   overflow: hidden;
-  transition: border-color var(--theme-ease), box-shadow var(--theme-ease);
+  padding: 0 0.35rem 0 1.1rem;
+  transition: border-color var(--theme-ease), box-shadow var(--theme-ease), background var(--theme-ease);
 }
 
 .store-header__search:focus-within {
+  background: var(--theme-color-surface);
   border-color: var(--theme-color-accent);
   box-shadow: var(--theme-focus);
 }
 
 .store-header__search-icon {
+  display: none;
+}
+
+.store-header__search-icon-btn {
+  appearance: none;
   flex: 0 0 auto;
-  margin-left: var(--theme-space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
   color: var(--theme-color-text-muted);
+  cursor: pointer;
+}
+
+.store-header__search-icon-btn:hover {
+  color: var(--theme-color-accent);
 }
 
 .store-header__search-input {
@@ -221,9 +242,21 @@
   min-width: 0;
   border: 0;
   background: transparent;
-  padding: var(--theme-space-2) var(--theme-space-3);
+  padding: 0.7rem 0.5rem 0.7rem 0;
   font: inherit;
+  font-size: 0.975rem;
   color: var(--theme-color-text);
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.store-header__search-input::-webkit-search-decoration,
+.store-header__search-input::-webkit-search-cancel-button,
+.store-header__search-input::-webkit-search-results-button,
+.store-header__search-input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
 }
 
 .store-header__search-input::placeholder {
@@ -232,15 +265,12 @@
 
 .store-header__search-input:focus {
   outline: none;
+  box-shadow: none;
+  border: 0;
 }
 
 .store-header__search-submit {
-  flex: 0 0 auto;
-  border-radius: 0;
-  border: 0;
-  border-left: 1px solid transparent;
-  min-height: 100%;
-  padding: var(--theme-space-2) var(--theme-space-4);
+  display: none;
 }
 
 .store-header__search--mobile {
@@ -249,27 +279,42 @@
   padding: 0 var(--theme-space-6) var(--theme-space-3);
   background: var(--theme-color-surface);
   border: 0;
-  border-radius: 0;
-  gap: var(--theme-space-2);
-  overflow: visible;
+  border-radius: 999px;
+  gap: 0;
+  overflow: hidden;
+  min-height: 2.85rem;
+  align-items: center;
+  padding-left: 1.1rem;
+  padding-right: 0.35rem;
+  background: #eef2f7;
+  margin-left: var(--theme-space-6);
+  margin-right: var(--theme-space-6);
+  margin-bottom: var(--theme-space-3);
+  width: auto;
 }
 
 .store-header__search--mobile .store-header__search-input {
   flex: 1 1 auto;
-  border: 1px solid var(--theme-color-border);
-  border-radius: var(--theme-radius);
-  background: var(--theme-color-bg);
-  padding: var(--theme-space-2) var(--theme-space-3);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.75rem 0.5rem 0.75rem 0;
+  box-shadow: none;
 }
 
 .store-header__search--mobile .store-header__search-input:focus {
   outline: none;
-  border-color: var(--theme-color-accent);
-  box-shadow: var(--theme-focus);
+  background: transparent;
+  border: 0;
+  box-shadow: none;
 }
 
 .store-header__search--mobile .store-btn {
-  flex: 0 0 auto;
+  display: none;
+}
+
+.store-header__search-wrap--mobile {
+  background: var(--theme-color-surface);
 }
 
 .store-header__actions {
@@ -367,12 +412,19 @@ a.store-header__utility:hover {
 
 .store-cats__panel {
   position: absolute;
-  top: calc(100% + 0.5rem);
+  top: 100%;
   left: 0;
   z-index: 40;
+  padding-top: 0.55rem;
+  min-width: 28rem;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.store-cats__panel-inner {
   display: grid;
   grid-template-columns: minmax(14rem, 17rem) minmax(12rem, 16rem);
-  min-width: 28rem;
   background: var(--theme-color-surface);
   border: 1px solid var(--theme-color-border);
   border-radius: var(--theme-radius-lg);
@@ -472,7 +524,7 @@ a.store-header__utility:hover {
 
 .store-suggest {
   position: absolute;
-  top: calc(100% + 0.4rem);
+  top: calc(100% + 0.35rem);
   left: 0;
   right: 0;
   z-index: 45;
@@ -481,6 +533,7 @@ a.store-header__utility:hover {
   border-radius: var(--theme-radius-lg);
   box-shadow: var(--theme-shadow-md);
   overflow: hidden;
+  padding-top: 0.15rem;
 }
 
 .store-suggest__status {
