@@ -24,6 +24,21 @@
             @error('customer_email') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
         </div>
 
+        <fieldset class="store-field">
+            <legend class="store-field__label">Payment</legend>
+            <label class="store-check">
+                <input type="radio" wire:model="payment_method" value="manual">
+                <span>Manual payment (pay offline)</span>
+            </label>
+            @if ($developmentPayEnabled)
+                <label class="store-check">
+                    <input type="radio" wire:model="payment_method" value="development">
+                    <span>Development (instant — local only)</span>
+                </label>
+            @endif
+            @error('payment_method') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+        </fieldset>
+
         @error('cart') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
 
         <button type="submit" class="store-btn store-btn--primary" wire:loading.attr="disabled">Place order</button>

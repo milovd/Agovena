@@ -7,4 +7,5 @@ namespace App\Enums;
 enum PaymentMethod: string
 {
     case Manual = 'manual';
+    case Development = 'development';
 }

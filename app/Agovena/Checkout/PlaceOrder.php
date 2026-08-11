@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Agovena\Checkout;
 
 use App\Agovena\Cart\CartService;
+use App\Agovena\Payments\CompleteDevelopmentPayment;
+use App\Agovena\Settings\SettingsRepository;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -18,10 +20,14 @@ use Illuminate\Validation\ValidationException;
 
 final class PlaceOrder
 {
-    public function __construct(private readonly CartService $cart) {}
+    public function __construct(
+        private readonly CartService $cart,
+        private readonly SettingsRepository $settings,
+        private readonly CompleteDevelopmentPayment $developmentPayment,
+    ) {}
 
     /**
-     * @param  array{customer_name: string, customer_email: string, idempotency_key?: string|null}  $guest
+     * @param  array{customer_name: string, customer_email: string, idempotency_key?: string|null, payment_method?: string|null}  $guest
      */
     public function handle(array $guest): Order
     {
@@ -49,7 +55,9 @@ final class PlaceOrder
             ]);
         }
 
-        $order = DB::transaction(function () use ($guest, $lines, $subtotal, $idempotencyKey): Order {
+        $method = $this->resolvePaymentMethod($guest['payment_method'] ?? PaymentMethod::Manual->value);
+
+        $order = DB::transaction(function () use ($guest, $lines, $subtotal, $idempotencyKey, $method): Order {
             $order = Order::query()->create([
                 'number' => $this->generateNumber(),
                 'status' => OrderStatus::Pending,
@@ -78,7 +86,7 @@ final class PlaceOrder
                 'order_id' => $order->id,
                 'amount' => $subtotal->amount,
                 'currency' => $subtotal->currency,
-                'method' => PaymentMethod::Manual,
+                'method' => $method,
                 'status' => PaymentStatus::Pending,
                 'paid_at' => null,
                 'reference' => null,
@@ -91,13 +99,38 @@ final class PlaceOrder
 
         event(new OrderCreated($order));
 
+        if ($method === PaymentMethod::Development) {
+            $this->developmentPayment->handle($order);
+
+            return $order->fresh(['items', 'payment']) ?? $order;
+        }
+
         return $order;
+    }
+
+    private function resolvePaymentMethod(string $value): PaymentMethod
+    {
+        $method = PaymentMethod::tryFrom($value) ?? PaymentMethod::Manual;
+
+        if ($method === PaymentMethod::Development) {
+            $allowed = (bool) config('agovena.payments.allow_development_instant_pay');
+            if (! $allowed || app()->environment('production')) {
+                throw ValidationException::withMessages([
+                    'payment_method' => 'Development payment is not available.',
+                ]);
+            }
+        }
+
+        return $method;
     }
 
     private function generateNumber(): string
     {
+        $prefix = (string) $this->settings->get('store', 'order_number_prefix', 'AGO');
+        $prefix = strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $prefix) ?: 'AGO');
+
         do {
-            $number = 'AGO-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
+            $number = $prefix.'-'.now()->format('Ymd').'-'.Str::upper(Str::random(6));
         } while (Order::query()->where('number', $number)->exists());
 
         return $number;
