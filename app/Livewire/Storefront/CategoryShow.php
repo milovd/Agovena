@@ -31,9 +31,15 @@ final class CategoryShow extends Component
         $category = Category::query()
             ->where('slug', $this->slug)
             ->where('is_active', true)
+            ->with(['children' => fn ($q) => $q->where('is_active', true)->orderBy('name')])
             ->firstOrFail();
 
-        $products = $list->handle($category->id);
+        $categoryIds = collect([$category->id])
+            ->merge($category->children->pluck('id'))
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        $products = $list->handle(categoryIds: $categoryIds);
 
         $query = trim($this->search);
         if ($query !== '') {

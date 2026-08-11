@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Storefront\SearchSuggestController;
 use App\Livewire\Admin\Appearance\Customize as AppearanceCustomize;
 use App\Livewire\Admin\Appearance\ThemesIndex as AppearanceThemes;
 use App\Livewire\Admin\Auth\Login;
@@ -28,6 +29,8 @@ use Illuminate\Support\Facades\Route;
 Route::view('/install', 'installer.welcome')->name('install.welcome');
 
 Route::get('/', CatalogIndex::class)->name('storefront.home');
+Route::get('/search/suggest', SearchSuggestController::class)
+    ->name('storefront.search.suggest');
 Route::get('/products/{slug}', ProductShow::class)->name('storefront.product');
 Route::get('/categories/{slug}', CategoryShow::class)->name('storefront.category');
 Route::get('/cart', CartPage::class)->name('storefront.cart');

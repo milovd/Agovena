@@ -24,11 +24,18 @@ test('theme manager discovers default theme and config defaults', function () {
 });
 
 test('homepage renders announcement hero and featured sections', function () {
+    Category::query()->create([
+        'name' => 'Phones',
+        'slug' => 'phones-home',
+        'is_active' => true,
+    ]);
+
     $this->get('/')
         ->assertOk()
         ->assertSee('store-announce', false)
         ->assertSee('store-hero', false)
-        ->assertSee('store-discover', false)
+        ->assertSee('Categories', false)
+        ->assertSee('store-cats', false)
         ->assertSee('Search products', false)
         ->assertSee('DM+Sans', false);
 });
@@ -37,12 +44,23 @@ test('demo seeder populates catalog and refuses production', function () {
     Artisan::call('agovena:seed-demo', ['--force' => true]);
 
     expect(Product::query()->count())->toBeGreaterThan(5)
-        ->and(Category::query()->count())->toBe(4)
+        ->and(Category::query()->whereNull('parent_id')->count())->toBe(3)
+        ->and(Category::query()->whereNotNull('parent_id')->count())->toBe(2)
         ->and(Page::query()->published()->count())->toBeGreaterThan(0);
 
-    $this->get('/')->assertOk()->assertSee('Linen Overshirt', false);
-    $this->get('/categories/apparel')->assertOk();
+    $this->get('/')->assertOk()->assertSee('Nova Phone 14', false);
+    $this->get('/categories/phones')->assertOk();
+    $this->get('/categories/android')->assertOk();
     $this->get('/about')->assertOk()->assertSee('About', false);
+});
+
+test('search suggest returns product thumbnails', function () {
+    Artisan::call('agovena:seed-demo', ['--force' => true]);
+
+    $this->getJson(route('storefront.search.suggest', ['q' => 'Nova']))
+        ->assertOk()
+        ->assertJsonPath('items.0.name', 'Nova Phone 14')
+        ->assertJsonStructure(['query', 'items' => [['name', 'slug', 'url', 'price', 'image']], 'results_url']);
 });
 
 test('theme customize saves accent and hero title', function () {

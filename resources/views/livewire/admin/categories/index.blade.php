@@ -24,6 +24,17 @@
                 <textarea id="category-description" class="ag-input" rows="3" wire:model="description"></textarea>
                 @error('description') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
             </div>
+            <div class="ag-field">
+                <label class="ag-field__label" for="category-parent">Parent category</label>
+                <select id="category-parent" class="ag-select" wire:model="parent_id">
+                    <option value="">None (top-level)</option>
+                    @foreach ($parentOptions as $parent)
+                        <option value="{{ $parent->id }}">{{ $parent->name }}</option>
+                    @endforeach
+                </select>
+                <p class="ag-field__hint">Optional. One subcategory level only.</p>
+                @error('parent_id') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+            </div>
             <label class="ag-check">
                 <input type="checkbox" wire:model="is_active">
                 <span>Active</span>
@@ -46,6 +57,7 @@
                 <thead>
                     <tr>
                         <th scope="col">Name</th>
+                        <th scope="col">Parent</th>
                         <th scope="col">Slug</th>
                         <th scope="col">Status</th>
                         <th scope="col"><span class="visually-hidden">Actions</span></th>
@@ -55,6 +67,7 @@
                     @foreach ($categories as $category)
                         <tr wire:key="category-{{ $category->id }}">
                             <td>{{ $category->name }}</td>
+                            <td>{{ $category->parent?->name ?? '—' }}</td>
                             <td>{{ $category->slug }}</td>
                             <td><span class="ag-badge">{{ $category->is_active ? 'active' : 'inactive' }}</span></td>
                             <td>
