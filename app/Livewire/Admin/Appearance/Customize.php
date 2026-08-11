@@ -90,6 +90,14 @@ final class Customize extends Component
                     ['title' => 'Benefit', 'text' => 'Describe a trust signal.'],
                 ],
             ],
+            'promo_split' => [
+                'type' => 'promo_split',
+                'title' => 'Promo title',
+                'body' => '',
+                'cta_label' => 'Learn more',
+                'cta_href' => '#catalog',
+                'image' => '',
+            ],
             default => [
                 'type' => 'rich_text',
                 'title' => 'Section title',

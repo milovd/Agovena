@@ -13,6 +13,7 @@ use App\Agovena\Admin\SettingsGroup;
 use App\Agovena\Cart\CartRepository;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\SessionCartRepository;
+use App\Agovena\Catalog\ListStorefrontCategories;
 use App\Agovena\Content\MenuResolver;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
@@ -92,6 +93,14 @@ class AgovenaServiceProvider extends ServiceProvider
             if (! array_key_exists('themeConfig', $view->getData())) {
                 $view->with('themeConfig', $this->app->make(ThemeManager::class)->config());
             }
+
+            $discoveryCategories = collect();
+            try {
+                $discoveryCategories = $this->app->make(ListStorefrontCategories::class)->handle();
+            } catch (\Throwable) {
+                $discoveryCategories = collect();
+            }
+            $view->with('discoveryCategories', $discoveryCategories);
         });
 
         View::composer('layouts.admin', function ($view): void {

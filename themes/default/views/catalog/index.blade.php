@@ -1,5 +1,5 @@
 @php
-    $showExcerpt = ($themeConfig?->bool('catalog.show_excerpt', true) ?? true);
+    $showExcerpt = ($themeConfig?->bool('catalog.show_excerpt', false) ?? false);
 @endphp
 
 <div class="store-home">
@@ -36,6 +36,8 @@
                     'products' => $featured,
                     'showExcerpt' => $showExcerpt,
                 ])
+            @elseif ($type === 'promo_split')
+                @include('theme::sections.promo-split', ['section' => $section])
             @elseif ($type === 'trust_strip')
                 @include('theme::sections.trust-strip', ['section' => $section])
             @elseif ($type === 'rich_text')

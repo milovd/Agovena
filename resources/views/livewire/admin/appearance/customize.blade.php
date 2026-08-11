@@ -72,6 +72,10 @@
                                 <label class="ag-field__label">CTA label</label>
                                 <input class="ag-input" type="text" wire:model="sections.{{ $index }}.cta_label">
                             </div>
+                            <div class="ag-field">
+                                <label class="ag-field__label">Image path</label>
+                                <input class="ag-input" type="text" wire:model="sections.{{ $index }}.image" placeholder="demo/hero-promo.svg">
+                            </div>
                         @elseif (($section['type'] ?? '') === 'featured_products')
                             <div class="ag-field">
                                 <label class="ag-field__label">Title</label>
@@ -80,6 +84,23 @@
                             <div class="ag-field">
                                 <label class="ag-field__label">Limit</label>
                                 <input class="ag-input" type="number" min="1" max="24" wire:model="sections.{{ $index }}.limit">
+                            </div>
+                        @elseif (($section['type'] ?? '') === 'promo_split')
+                            <div class="ag-field">
+                                <label class="ag-field__label">Title</label>
+                                <input class="ag-input" type="text" wire:model="sections.{{ $index }}.title">
+                            </div>
+                            <div class="ag-field">
+                                <label class="ag-field__label">Body</label>
+                                <textarea class="ag-input" rows="3" wire:model="sections.{{ $index }}.body"></textarea>
+                            </div>
+                            <div class="ag-field">
+                                <label class="ag-field__label">CTA label</label>
+                                <input class="ag-input" type="text" wire:model="sections.{{ $index }}.cta_label">
+                            </div>
+                            <div class="ag-field">
+                                <label class="ag-field__label">Image path</label>
+                                <input class="ag-input" type="text" wire:model="sections.{{ $index }}.image">
                             </div>
                         @elseif (($section['type'] ?? '') === 'rich_text')
                             <div class="ag-field">
@@ -104,6 +125,7 @@
                 <button type="button" class="ag-btn" wire:click="addSection('hero')">Add hero</button>
                 <button type="button" class="ag-btn" wire:click="addSection('featured_products')">Add products</button>
                 <button type="button" class="ag-btn" wire:click="addSection('featured_categories')">Add categories</button>
+                <button type="button" class="ag-btn" wire:click="addSection('promo_split')">Add promo</button>
                 <button type="button" class="ag-btn" wire:click="addSection('rich_text')">Add rich text</button>
                 <button type="button" class="ag-btn" wire:click="addSection('trust_strip')">Add trust strip</button>
             </div>
