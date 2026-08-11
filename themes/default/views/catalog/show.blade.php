@@ -3,6 +3,10 @@
         <a href="{{ route('storefront.home') }}">Home</a>
         <span aria-hidden="true">/</span>
         @if ($product->category)
+            @if ($product->category->parent)
+                <a href="{{ route('storefront.category', $product->category->parent->slug) }}">{{ $product->category->parent->name }}</a>
+                <span aria-hidden="true">/</span>
+            @endif
             <a href="{{ route('storefront.category', $product->category->slug) }}">{{ $product->category->name }}</a>
             <span aria-hidden="true">/</span>
         @endif
@@ -38,35 +42,57 @@
                     @endforeach
                 </ul>
             @endif
+            {{-- Slot: variants / color swatches (future capability) --}}
         </div>
+
         <div class="store-product__info">
             @if ($product->category)
                 <p class="store-product__eyebrow">
                     <a href="{{ route('storefront.category', $product->category->slug) }}">{{ $product->category->name }}</a>
                 </p>
             @endif
-            <h1 class="store-title">{{ $product->name }}</h1>
+            <h1 class="store-product__title">{{ $product->name }}</h1>
+            {{-- Slot: ratings / reviews (future capability) --}}
             <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</p>
             @if ($product->description)
                 <div class="store-product__description">{!! nl2br(e($product->description)) !!}</div>
             @endif
 
             <form wire:submit="addToCart" class="store-product__form">
-                <div class="store-field store-field--inline">
-                    <label class="store-field__label" for="quantity">Quantity</label>
-                    <input id="quantity" class="store-input store-input--narrow" type="number" min="1" max="99" wire:model="quantity">
-                    @error('quantity') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                <div class="store-product__buy">
+                    <div class="store-qty" role="group" aria-label="Quantity">
+                        <label class="visually-hidden" for="quantity">Quantity</label>
+                        <button type="button" class="store-qty__btn" wire:click="decrementQuantity" aria-label="Decrease quantity">−</button>
+                        <input id="quantity" class="store-qty__input" type="number" min="1" max="99" wire:model="quantity">
+                        <button type="button" class="store-qty__btn" wire:click="incrementQuantity" aria-label="Increase quantity">+</button>
+                    </div>
+                    <button type="submit" class="store-btn store-btn--primary store-btn--lg" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="addToCart">Add to cart</span>
+                        <span wire:loading wire:target="addToCart">Adding…</span>
+                    </button>
                 </div>
-                <button type="submit" class="store-btn store-btn--primary store-btn--block" wire:loading.attr="disabled">
-                    <span wire:loading.remove wire:target="addToCart">Add to cart</span>
-                    <span wire:loading wire:target="addToCart">Adding…</span>
-                </button>
+                @error('quantity') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
             </form>
 
             <ul class="store-product__trust" role="list">
-                <li>Secure checkout</li>
-                <li>Clear pricing</li>
-                <li>Order confirmation by email</li>
+                <li>
+                    <span class="store-product__trust-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13l2 7H6"/><circle cx="9" cy="19" r="1"/><circle cx="17" cy="19" r="1"/></svg>
+                    </span>
+                    <span>
+                        <strong>Clear delivery</strong>
+                        <span class="store-product__trust-text">Shipping options at checkout.</span>
+                    </span>
+                </li>
+                <li>
+                    <span class="store-product__trust-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16v12H4z"/><path d="M8 7V5h8v2"/></svg>
+                    </span>
+                    <span>
+                        <strong>Straightforward returns</strong>
+                        <span class="store-product__trust-text">Policy details from the merchant.</span>
+                    </span>
+                </li>
             </ul>
         </div>
     </div>

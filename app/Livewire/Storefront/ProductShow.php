@@ -21,6 +21,16 @@ final class ProductShow extends Component
         $this->slug = $slug;
     }
 
+    public function incrementQuantity(): void
+    {
+        $this->quantity = min(99, $this->quantity + 1);
+    }
+
+    public function decrementQuantity(): void
+    {
+        $this->quantity = max(1, $this->quantity - 1);
+    }
+
     public function addToCart(CartService $cart, GetStorefrontProduct $get): void
     {
         $product = $get->handle($this->slug);

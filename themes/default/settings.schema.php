@@ -146,9 +146,9 @@ return new ThemeSettingsSchema([
         default: [
             [
                 'type' => 'hero',
-                'eyebrow' => 'New season',
-                'title' => 'Everything you need, clearly priced',
-                'lede' => 'Shop apparel, home, digital goods, and services from one storefront.',
+                'eyebrow' => 'New arrivals',
+                'title' => 'Phones and audio, clearly priced',
+                'lede' => 'Browse smartphones, headphones, and accessories from one storefront.',
                 'cta_label' => 'Shop featured',
                 'cta_href' => '#catalog',
                 'image' => 'demo/hero-promo.svg',

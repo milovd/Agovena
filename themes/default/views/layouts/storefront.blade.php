@@ -42,8 +42,6 @@
 </head>
 <body
     class="store {{ ($config?->bool('header.sticky', true) ?? true) ? 'store--sticky-header' : '' }}"
-    x-data="{ navOpen: false }"
-    @keydown.escape.window="navOpen = false"
 >
     <a class="store-skip" href="#main">Skip to content</a>
 
