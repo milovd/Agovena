@@ -90,6 +90,17 @@ final class CartService
         return $this->cart->lines() === [];
     }
 
+    public function itemCount(): int
+    {
+        $count = 0;
+
+        foreach ($this->cart->lines() as $line) {
+            $count += $line->quantity;
+        }
+
+        return $count;
+    }
+
     private function requirePurchasable(int $productId): Product
     {
         $product = Product::query()->find($productId);

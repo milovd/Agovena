@@ -3,23 +3,26 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Shop' }} — {{ $siteName ?? config('app.name', 'Agovena') }}</title>
+    <title>{{ $title ?? 'Shop' }} — {{ $siteName ?? 'Shop' }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
     @if (! empty($brandingFaviconPath))
         <link rel="icon" href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brandingFaviconPath) }}">
     @endif
     @vite(['themes/default/resources/css/theme.css'])
     @livewireStyles
 </head>
-<body class="store">
+<body
+    class="store"
+    x-data="{ navOpen: false, searchOpen: false }"
+    @keydown.escape.window="navOpen = false; searchOpen = false"
+>
     <a class="store-skip" href="#main">Skip to content</a>
-    <header class="store-header">
-        <a class="store-brand" href="{{ route('storefront.home') }}">{{ $siteName ?? config('app.name', 'Shop') }}</a>
-        <nav class="store-nav" aria-label="Store">
-            <a class="store-nav__link" href="{{ route('storefront.home') }}">Catalog</a>
-            <a class="store-nav__link" href="{{ route('storefront.cart') }}">Cart</a>
-        </nav>
-    </header>
-    <main id="main" class="store-main">
+
+    @include('theme::partials.header')
+
+    <main id="main" class="store-main" tabindex="-1">
         @if (session('status'))
             <p class="store-flash" role="status">{{ session('status') }}</p>
         @endif
@@ -28,9 +31,9 @@
         @endif
         {{ $slot }}
     </main>
-    <footer class="store-footer">
-        <p>Powered by a default Theme. Customer order history comes in a later Core step.</p>
-    </footer>
+
+    @include('theme::partials.footer')
+
     @livewireScripts
 </body>
 </html>

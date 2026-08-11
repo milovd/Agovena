@@ -11,6 +11,7 @@ use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Admin\SettingsField;
 use App\Agovena\Admin\SettingsGroup;
 use App\Agovena\Cart\CartRepository;
+use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\SessionCartRepository;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
@@ -57,6 +58,29 @@ class AgovenaServiceProvider extends ServiceProvider
                 $favicon = $logoPath;
             }
             $view->with('brandingFaviconPath', $favicon);
+        });
+
+        View::composer('theme::layouts.storefront', function ($view): void {
+            $cartCount = 0;
+            try {
+                $cartCount = $this->app->make(CartService::class)->itemCount();
+            } catch (\Throwable) {
+                $cartCount = 0;
+            }
+
+            $view->with('cartCount', $cartCount);
+            // Theme-local menu placeholders until Content → Navigation ships.
+            $view->with('themeMainNav', [
+                ['label' => 'Shop', 'url' => route('storefront.home')],
+            ]);
+            $view->with('themeFooterNav', [
+                ['label' => 'Shop', 'url' => route('storefront.home')],
+                ['label' => 'Cart', 'url' => route('storefront.cart')],
+            ]);
+            $view->with('themeLegalNav', [
+                ['label' => 'Terms', 'url' => null],
+                ['label' => 'Privacy', 'url' => null],
+            ]);
         });
 
         View::composer('layouts.admin', function ($view): void {
