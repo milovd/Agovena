@@ -77,6 +77,7 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'Dashboard',
             group: 'Overview',
             href: '/admin',
+            icon: 'layout-dashboard',
             sort: 0,
             permission: 'dashboard.view',
         ));
@@ -86,6 +87,7 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'Products',
             group: 'Commerce',
             href: '/admin/products',
+            icon: 'package',
             sort: 10,
             permission: 'products.view',
         ));
@@ -95,6 +97,7 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'Categories',
             group: 'Commerce',
             href: '/admin/categories',
+            icon: 'folders',
             sort: 15,
             permission: 'categories.view',
         ));
@@ -104,43 +107,28 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'Orders',
             group: 'Commerce',
             href: '/admin/orders',
+            icon: 'shopping-bag',
             sort: 20,
             permission: 'orders.view',
         ));
 
         $admin->navigation(new NavigationItem(
-            id: 'settings-general',
-            label: 'General',
-            group: 'System',
-            href: '/admin/settings/general',
+            id: 'settings',
+            label: 'Settings',
+            group: 'Configuration',
+            href: '/admin/settings',
+            icon: 'settings',
             sort: 100,
-            permission: 'settings.view',
-        ));
-
-        $admin->navigation(new NavigationItem(
-            id: 'settings-branding',
-            label: 'Branding',
-            group: 'System',
-            href: '/admin/settings/branding',
-            sort: 110,
-            permission: 'settings.view',
-        ));
-
-        $admin->navigation(new NavigationItem(
-            id: 'settings-store',
-            label: 'Store',
-            group: 'System',
-            href: '/admin/settings/store',
-            sort: 120,
             permission: 'settings.view',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'currencies',
             label: 'Currencies',
-            group: 'System',
+            group: 'Configuration',
             href: '/admin/currencies',
-            sort: 130,
+            icon: 'coins',
+            sort: 110,
             permission: 'currencies.view',
         ));
 
@@ -149,6 +137,7 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'Staff',
             group: 'Administration',
             href: '/admin/staff',
+            icon: 'users',
             sort: 200,
             permission: 'staff.view',
         ));
@@ -182,6 +171,7 @@ class AgovenaServiceProvider extends ServiceProvider
             permission: 'settings.view',
             sort: 10,
             description: 'Site identity and regional defaults.',
+            icon: 'settings',
         ));
         $admin->settingsGroup(new SettingsGroup(
             id: 'branding',
@@ -189,6 +179,7 @@ class AgovenaServiceProvider extends ServiceProvider
             permission: 'settings.view',
             sort: 20,
             description: 'Logo and favicon used across Admin and storefront.',
+            icon: 'palette',
         ));
         $admin->settingsGroup(new SettingsGroup(
             id: 'store',
@@ -196,6 +187,7 @@ class AgovenaServiceProvider extends ServiceProvider
             permission: 'settings.view',
             sort: 30,
             description: 'Commerce defaults that do not belong in environment secrets.',
+            icon: 'store',
         ));
 
         $admin->settingsField(new SettingsField(

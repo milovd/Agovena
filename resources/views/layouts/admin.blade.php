@@ -4,6 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? 'Agovena Admin' }} — {{ $siteName ?? config('app.name', 'Agovena') }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     @if (! empty($brandingFaviconPath))
         <link rel="icon" href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brandingFaviconPath) }}">
     @endif
@@ -13,7 +16,11 @@
 <body class="admin-app" x-data="{ navOpen: false }" @keydown.escape.window="navOpen = false">
     <a class="admin-skip-link" href="#main">Skip to content</a>
 
-    <div class="admin-shell" :class="{ 'admin-shell--nav-open': navOpen }">
+    <div
+        class="admin-shell"
+        :class="{ 'admin-shell--nav-open': navOpen }"
+        wire:loading.class="admin-shell--loading"
+    >
         <div class="admin-shell__backdrop" x-show="navOpen" x-cloak @click="navOpen = false"></div>
 
         <aside class="admin-sidebar" id="admin-sidebar" aria-label="Primary">
@@ -47,7 +54,10 @@
                                         href="{{ $item->href ?? '#' }}"
                                         @if($active) aria-current="page" @endif
                                     >
-                                        {{ $item->label }}
+                                        @if ($item->icon)
+                                            <x-ag.icon :name="$item->icon" class="admin-nav__icon" :size="18" />
+                                        @endif
+                                        <span class="admin-nav__label">{{ $item->label }}</span>
                                     </a>
                                 </li>
                             @endforeach
@@ -67,11 +77,21 @@
                         :aria-expanded="navOpen.toString()"
                         aria-controls="admin-sidebar"
                     >
-                        Menu
+                        <x-ag.icon name="menu" :size="18" />
+                        <span class="visually-hidden">Menu</span>
                     </button>
                     <h1 class="admin-topbar__title">{{ $title ?? 'Admin' }}</h1>
                 </div>
                 <div class="admin-topbar__actions">
+                    <div
+                        class="admin-topbar__loading"
+                        wire:loading
+                        wire:target="save,create,edit,setAsBase,useCurrentLogoAsFavicon,placeOrder,logout"
+                        aria-live="polite"
+                    >
+                        <x-ag.icon name="loader" class="ag-icon--spin" :size="18" />
+                        <span class="visually-hidden">Loading</span>
+                    </div>
                     <div
                         class="ag-dropdown"
                         x-data="{ open: false }"

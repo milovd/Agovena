@@ -31,7 +31,7 @@ test('authenticated owner sees admin dashboard', function () {
         ->assertOk()
         ->assertSee('Commerce overview', false)
         ->assertSee('Products', false)
-        ->assertSee('System', false);
+        ->assertSee('Configuration', false);
 });
 
 test('admin registrar exposes settings and widgets', function () {
