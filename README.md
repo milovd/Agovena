@@ -14,7 +14,7 @@
 
 ## Getting started
 
-Agovena is in early development (Phase 1–2 complete).
+Agovena is in early development.
 
 **Requirements**
 
@@ -32,12 +32,16 @@ php artisan migrate
 npm install
 npm run build
 php artisan agovena:create-owner
+php artisan agovena:seed-demo
 php artisan agovena:doctor
 php artisan serve
 ```
 
+`agovena:seed-demo` loads local-only sample products, categories, pages, and menus (refuses in production). Use `--force` to replace existing catalog demo data.
+
 - Storefront (default Theme): `/`
 - Admin: `/admin` (sign in at `/admin/login`)
+- Appearance: Themes, Customize, Navigation, Pages under `/admin/appearance/*`
 - Installer placeholder: `/install`
 
 ## Stack
