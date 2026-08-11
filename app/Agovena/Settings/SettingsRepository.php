@@ -13,13 +13,13 @@ final class SettingsRepository
 
     public function get(string $group, string $key, mixed $default = null): mixed
     {
-        $row = $this->remember($group, $key);
+        $encoded = $this->rememberEncoded($group, $key);
 
-        if ($row === null) {
+        if ($encoded === null && ! $this->exists($group, $key)) {
             return $default;
         }
 
-        return $this->decode($row->value);
+        return $this->decode($encoded);
     }
 
     public function set(string $group, string $key, mixed $value): void
@@ -31,7 +31,7 @@ final class SettingsRepository
             ['value' => $encoded],
         );
 
-        Cache::forget($this->cacheKey($group, $key));
+        Cache::forever($this->cacheKey($group, $key), $encoded);
     }
 
     /**
@@ -58,11 +58,39 @@ final class SettingsRepository
         return $out;
     }
 
-    private function remember(string $group, string $key): ?Setting
+    public function forget(string $group, string $key): void
     {
-        return Cache::remember($this->cacheKey($group, $key), 3600, function () use ($group, $key): ?Setting {
-            return Setting::query()->where('group', $group)->where('key', $key)->first();
-        });
+        Cache::forget($this->cacheKey($group, $key));
+    }
+
+    private function exists(string $group, string $key): bool
+    {
+        return Setting::query()->where('group', $group)->where('key', $key)->exists();
+    }
+
+    /**
+     * Cache only scalar encoded values — never Eloquent models (DB cache unserialize breaks them).
+     */
+    private function rememberEncoded(string $group, string $key): ?string
+    {
+        $cached = Cache::get($this->cacheKey($group, $key), new \stdClass);
+
+        if (! $cached instanceof \stdClass) {
+            if (is_object($cached)) {
+                // Stale Eloquent/incomplete class entries from the previous cache strategy.
+                Cache::forget($this->cacheKey($group, $key));
+            } elseif (is_string($cached) || $cached === null) {
+                return $cached;
+            } else {
+                Cache::forget($this->cacheKey($group, $key));
+            }
+        }
+
+        $row = Setting::query()->where('group', $group)->where('key', $key)->first();
+        $encoded = $row?->value;
+        Cache::forever($this->cacheKey($group, $key), $encoded);
+
+        return $encoded;
     }
 
     private function cacheKey(string $group, string $key): string
@@ -94,7 +122,6 @@ final class SettingsRepository
         }
 
         if ($value === '1' || $value === '0') {
-            // Keep as string unless field cast knows boolean — callers use field type.
             return $value;
         }
 
