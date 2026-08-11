@@ -18,9 +18,9 @@
 
 .admin-sidebar {
   background: var(--ag-color-sidebar);
-  color: #e2e8f0;
+  color: var(--ag-color-text);
   padding: var(--ag-space-6) var(--ag-space-4);
-  border-right: 1px solid rgb(255 255 255 / 0.06);
+  border-right: 1px solid var(--ag-color-border);
   display: flex;
   flex-direction: column;
   gap: var(--ag-space-2);
@@ -103,13 +103,13 @@
 
 .admin-nav__link--active {
   background: var(--ag-color-sidebar-active);
-  color: #fff;
+  color: var(--ag-color-primary);
   font-weight: 600;
 }
 
 .admin-nav__link--active .admin-nav__icon {
   opacity: 1;
-  color: #93c5fd;
+  color: var(--ag-color-primary);
 }
 
 .admin-nav__group {
