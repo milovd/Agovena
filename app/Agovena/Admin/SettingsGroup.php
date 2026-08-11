@@ -12,5 +12,16 @@ final readonly class SettingsGroup
         public ?string $permission = null,
         public int $sort = 0,
         public ?string $description = null,
+        public ?string $icon = null,
+        /**
+         * Optional custom Admin href for the hub card.
+         * Defaults to /admin/settings/{id} when null.
+         */
+        public ?string $href = null,
     ) {}
+
+    public function resolveHref(): string
+    {
+        return $this->href ?? '/admin/settings/'.$this->id;
+    }
 }

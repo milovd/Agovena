@@ -10,6 +10,7 @@ use App\Livewire\Admin\Products\Create as ProductsCreate;
 use App\Livewire\Admin\Products\Edit as ProductsEdit;
 use App\Livewire\Admin\Products\Index as ProductsIndex;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
+use App\Livewire\Admin\Settings\Hub as SettingsHub;
 use App\Livewire\Admin\Staff\Index as StaffIndex;
 use App\Livewire\Storefront\CartPage;
 use App\Livewire\Storefront\CatalogIndex;
@@ -40,5 +41,6 @@ Route::middleware('auth:staff')->prefix('admin')->name('admin.')->group(function
     Route::get('/staff', StaffIndex::class)->name('staff.index');
     Route::get('/orders', OrdersIndex::class)->name('orders.index');
     Route::get('/orders/{order}', OrdersShow::class)->name('orders.show');
+    Route::get('/settings', SettingsHub::class)->name('settings.index');
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');
 });

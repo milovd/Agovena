@@ -1,12 +1,11 @@
 <div class="admin-page">
-    <div class="admin-page__header">
-        <div>
-            <h2 class="admin-page__heading">{{ $groupDefinition->label }}</h2>
-            @if ($groupDefinition->description)
-                <p class="admin-page__lede">{{ $groupDefinition->description }}</p>
-            @endif
-        </div>
-    </div>
+    <nav class="admin-page__crumb" aria-label="Breadcrumb">
+        <a href="{{ route('admin.settings.index') }}">Settings</a>
+        <span aria-hidden="true"> / </span>
+        <span>{{ $groupDefinition->label }}</span>
+    </nav>
+
+    <x-ag.page-header :heading="$groupDefinition->label" :lede="$groupDefinition->description" />
 
     <form wire:submit="save" class="admin-panel ag-form" novalidate>
         @foreach ($fields as $field)
