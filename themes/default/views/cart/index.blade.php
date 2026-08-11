@@ -2,8 +2,13 @@
     <h1 class="store-title">Cart</h1>
 
     @if (empty($lines))
-        <p class="store-empty" role="status">Your cart is empty.</p>
-        <a class="store-btn" href="{{ route('storefront.home') }}">Continue shopping</a>
+        <div class="store-empty" role="status">
+            <p class="store-empty__title">Your cart is empty</p>
+            <p class="store-empty__text">Browse the catalog and add items when you are ready.</p>
+            <p class="store-empty__actions">
+                <a class="store-btn store-btn--primary" href="{{ route('storefront.home') }}">Continue shopping</a>
+            </p>
+        </div>
     @else
         <ul class="store-cart-list">
             @foreach ($lines as $line)
