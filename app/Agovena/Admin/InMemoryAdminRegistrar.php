@@ -15,6 +15,15 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
     /** @var array<string, string> */
     private array $permissions = [];
 
+    /** @var list<DashboardWidget> */
+    private array $widgets = [];
+
+    /** @var array<string, SettingsGroup> */
+    private array $settingsGroups = [];
+
+    /** @var list<SettingsField> */
+    private array $settingsFields = [];
+
     public function navigation(NavigationItem $item): void
     {
         $this->navigation[] = $item;
@@ -28,6 +37,21 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
     public function permission(string $ability, string $label): void
     {
         $this->permissions[$ability] = $label;
+    }
+
+    public function widget(DashboardWidget $widget): void
+    {
+        $this->widgets[] = $widget;
+    }
+
+    public function settingsGroup(SettingsGroup $group): void
+    {
+        $this->settingsGroups[$group->id] = $group;
+    }
+
+    public function settingsField(SettingsField $field): void
+    {
+        $this->settingsFields[] = $field;
     }
 
     /** @return list<NavigationItem> */
@@ -49,5 +73,40 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
     public function permissions(): array
     {
         return $this->permissions;
+    }
+
+    /** @return list<DashboardWidget> */
+    public function widgets(): array
+    {
+        $widgets = $this->widgets;
+        usort($widgets, static fn (DashboardWidget $a, DashboardWidget $b): int => $a->sort <=> $b->sort);
+
+        return $widgets;
+    }
+
+    /** @return list<SettingsGroup> */
+    public function settingsGroups(): array
+    {
+        $groups = array_values($this->settingsGroups);
+        usort($groups, static fn (SettingsGroup $a, SettingsGroup $b): int => $a->sort <=> $b->sort);
+
+        return $groups;
+    }
+
+    public function settingsGroupById(string $id): ?SettingsGroup
+    {
+        return $this->settingsGroups[$id] ?? null;
+    }
+
+    /** @return list<SettingsField> */
+    public function settingsFieldsFor(string $group): array
+    {
+        $fields = array_values(array_filter(
+            $this->settingsFields,
+            static fn (SettingsField $field): bool => $field->group === $group,
+        ));
+        usort($fields, static fn (SettingsField $a, SettingsField $b): int => $a->sort <=> $b->sort);
+
+        return $fields;
     }
 }
