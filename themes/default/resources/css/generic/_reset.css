@@ -11,21 +11,22 @@ html {
 body {
   margin: 0;
   font-family: var(--theme-font-sans);
-  font-size: 1.0625rem;
-  line-height: 1.55;
+  font-size: 1rem;
+  line-height: 1.5;
   color: var(--theme-color-text);
-  background:
-    linear-gradient(180deg, var(--theme-color-bg) 0%, var(--theme-color-bg-accent) 48%, var(--theme-color-bg) 100%);
+  background: var(--theme-color-bg);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 h1,
 h2,
 h3 {
   font-family: var(--theme-font-display);
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.02em;
+  color: var(--theme-color-ink);
 }
 
 img {
@@ -41,6 +42,7 @@ a {
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
+select:focus-visible,
 [tabindex]:focus-visible {
   outline: none;
   box-shadow: var(--theme-focus);
@@ -48,4 +50,17 @@ input:focus-visible,
 
 [x-cloak] {
   display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
 }

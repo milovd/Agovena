@@ -19,6 +19,7 @@ test('theme manager discovers default theme and config defaults', function () {
 
     $config = $themes->config();
     expect($config->bool('header.announcement_enabled'))->toBeTrue()
+        ->and($config->string('colors.accent'))->toBe('#155EEF')
         ->and($config->sections())->not->toBeEmpty();
 });
 
@@ -27,7 +28,9 @@ test('homepage renders announcement hero and featured sections', function () {
         ->assertOk()
         ->assertSee('store-announce', false)
         ->assertSee('store-hero', false)
-        ->assertSee('Search products', false);
+        ->assertSee('store-discover', false)
+        ->assertSee('Search products', false)
+        ->assertSee('DM+Sans', false);
 });
 
 test('demo seeder populates catalog and refuses production', function () {

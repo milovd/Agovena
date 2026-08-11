@@ -6,7 +6,7 @@
     <title>{{ $title ?? 'Shop' }} — {{ $siteName ?? 'Shop' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,650&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     @if (! empty($brandingFaviconPath))
         <link rel="icon" href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brandingFaviconPath) }}">
     @endif
@@ -16,23 +16,25 @@
             $config = app(\App\Agovena\Theme\ThemeManager::class)->config($theme);
         }
         $cssEntry = isset($theme) ? $theme->cssEntry : 'themes/default/resources/css/theme.css';
-        $accent = $config?->string('colors.accent', '#1f4e46') ?? '#1f4e46';
-        $accentHover = $config?->string('colors.accent_hover', '#2a6b60') ?? '#2a6b60';
+        $accent = $config?->string('colors.accent', '#155EEF') ?? '#155EEF';
+        $accentHover = $config?->string('colors.accent_hover', '#1249C7') ?? '#1249C7';
         $surface = $config?->string('colors.surface', '#ffffff') ?? '#ffffff';
-        $bg = $config?->string('colors.background', '#f4f1ec') ?? '#f4f1ec';
-        $text = $config?->string('colors.text', '#1a1814') ?? '#1a1814';
-        $perRow = $config?->string('catalog.products_per_row', '3') ?? '3';
-        $ratio = $config?->string('catalog.image_ratio', '4/3') ?? '4/3';
+        $bg = $config?->string('colors.background', '#f4f6fa') ?? '#f4f6fa';
+        $text = $config?->string('colors.text', '#0f172a') ?? '#0f172a';
+        $perRow = $config?->string('catalog.products_per_row', '4') ?? '4';
+        $ratio = $config?->string('catalog.image_ratio', '1/1') ?? '1/1';
     @endphp
     <style>
         :root {
             --theme-color-accent: {{ $accent }};
             --theme-color-accent-hover: {{ $accentHover }};
+            --theme-color-accent-soft: color-mix(in srgb, {{ $accent }} 12%, transparent);
             --theme-color-surface: {{ $surface }};
             --theme-color-bg: {{ $bg }};
             --theme-color-text: {{ $text }};
             --theme-products-per-row: {{ $perRow }};
             --theme-card-ratio: {{ $ratio }};
+            --theme-focus: 0 0 0 3px color-mix(in srgb, {{ $accent }} 35%, transparent);
         }
     </style>
     @vite([$cssEntry])
