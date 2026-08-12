@@ -15,7 +15,7 @@ use Illuminate\Support\Carbon;
 
 /**
  * Payment is separate from Order lifecycle.
- * PaymentAttempt (gateway attempts) is deferred to Phase 3.
+ * Order ≠ Payment ≠ PaymentAttempt. Provider attempts live on PaymentAttempt.
  *
  * @property int $id
  * @property int $order_id
