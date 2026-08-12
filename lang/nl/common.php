@@ -36,6 +36,8 @@ return [
     'total' => 'Totaal',
     'subtotal' => 'Subtotaal',
     'shipping' => 'Verzending',
+    'discount' => 'Korting',
+    'tax' => 'Btw',
     'customer' => 'Klant',
     'method' => 'Methode',
     'reference' => 'Referentie',

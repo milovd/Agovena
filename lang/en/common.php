@@ -36,6 +36,8 @@ return [
     'total' => 'Total',
     'subtotal' => 'Subtotal',
     'shipping' => 'Shipping',
+    'discount' => 'Discount',
+    'tax' => 'Tax',
     'customer' => 'Customer',
     'method' => 'Method',
     'reference' => 'Reference',

@@ -19,7 +19,9 @@ use App\Agovena\Catalog\ListStorefrontCategories;
 use App\Agovena\Checkout\NullShippingQuoteResolver;
 use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Content\MenuResolver;
+use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Customer\CustomerAccountNav;
+use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Fulfillment\NullOrderFulfillmentPresenter;
@@ -35,9 +37,11 @@ use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Agovena\Theme\ThemeManager;
+use App\Enums\TicketStatus;
 use App\Events\OrderPaid;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
 use App\Listeners\IssueInvoiceWhenOrderPaid;
+use App\Models\Customer;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -51,6 +55,7 @@ class AgovenaServiceProvider extends ServiceProvider
     {
         $this->app->singleton(AdminRegistrar::class, InMemoryAdminRegistrar::class);
         $this->app->singleton(CustomerAccountNav::class);
+        $this->app->singleton(CustomerAccountOverview::class);
         $this->app->singleton(ProductCapabilityRegistry::class);
         $this->app->singleton(ProductCapabilityManager::class);
         $this->app->singleton(ModuleManager::class);
@@ -86,6 +91,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->registerPermissions($admin);
         $this->registerSettings($admin);
         $this->registerWidgets($admin);
+        $this->registerCustomerAccountCards();
 
         $this->app->make(ModuleManager::class)->bootEnabled();
         $this->app->make(ExtensionManager::class)->bootEnabled();
@@ -170,6 +176,26 @@ class AgovenaServiceProvider extends ServiceProvider
     private function registerNavigation(AdminRegistrar $admin): void
     {
         $admin->navigation(new NavigationItem(
+            id: 'customers',
+            label: 'admin.nav.customers',
+            group: 'admin.nav_groups.commerce',
+            href: '/admin/customers',
+            icon: 'users',
+            sort: 30,
+            permission: 'customers.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'tickets',
+            label: 'admin.nav.tickets',
+            group: 'admin.nav_groups.support',
+            href: '/admin/tickets',
+            icon: 'file-text',
+            sort: 50,
+            permission: 'tickets.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'dashboard',
             label: 'admin.nav.dashboard',
             group: 'admin.nav_groups.overview',
@@ -217,6 +243,26 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'file-text',
             sort: 25,
             permission: 'invoices.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'discounts',
+            label: 'admin.nav.discounts',
+            group: 'admin.nav_groups.commerce',
+            href: '/admin/discounts',
+            icon: 'file-text',
+            sort: 27,
+            permission: 'discounts.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'taxes',
+            label: 'admin.nav.taxes',
+            group: 'admin.nav_groups.commerce',
+            href: '/admin/taxes',
+            icon: 'coins',
+            sort: 28,
+            permission: 'taxes.view',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -277,6 +323,16 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'shield',
             sort: 210,
             permission: 'roles.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'audit',
+            label: 'admin.nav.audit',
+            group: 'admin.nav_groups.administration',
+            href: '/admin/audit',
+            icon: 'file-text',
+            sort: 220,
+            permission: 'audit.view',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -349,6 +405,15 @@ class AgovenaServiceProvider extends ServiceProvider
             'orders.view',
             'payments.record',
             'invoices.view',
+            'discounts.view',
+            'discounts.manage',
+            'taxes.view',
+            'taxes.manage',
+            'customers.view',
+            'customers.manage',
+            'tickets.view',
+            'tickets.manage',
+            'audit.view',
             'settings.view',
             'settings.update',
             'currencies.view',
@@ -494,6 +559,15 @@ class AgovenaServiceProvider extends ServiceProvider
             help: 'admin.settings.field_help.enable_reviews',
             sort: 30,
         ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'prices_include_tax',
+            label: 'admin.settings.fields.prices_include_tax',
+            type: 'boolean',
+            default: false,
+            help: 'admin.settings.field_help.prices_include_tax',
+            sort: 40,
+        ));
     }
 
     private function registerWidgets(AdminRegistrar $admin): void
@@ -519,5 +593,26 @@ class AgovenaServiceProvider extends ServiceProvider
             permission: 'dashboard.view',
             sort: 30,
         ));
+    }
+
+    private function registerCustomerAccountCards(): void
+    {
+        $this->app->make(CustomerAccountOverview::class)->register(
+            'support-tickets',
+            static fn (Customer $customer): AccountOverviewCard => new AccountOverviewCard(
+                id: 'support-tickets',
+                label: 'customer.account.cards.open_tickets',
+                countOrValue: (string) $customer->tickets()
+                    ->whereIn('status', [
+                        TicketStatus::Open->value,
+                        TicketStatus::Pending->value,
+                        TicketStatus::Answered->value,
+                    ])
+                    ->count(),
+                routeName: 'customer.tickets.index',
+                sort: 50,
+            ),
+            50,
+        );
     }
 }
