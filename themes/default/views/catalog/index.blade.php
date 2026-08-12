@@ -23,7 +23,11 @@
         @foreach ($sections as $section)
             @php $type = $section['type'] ?? ''; @endphp
             @if ($type === 'hero')
-                @include('theme::sections.hero', ['section' => $section, 'siteName' => $siteName])
+                @include('theme::sections.hero', [
+                    'section' => $section,
+                    'siteName' => $siteName,
+                    'spotlightProducts' => $products,
+                ])
             @elseif ($type === 'featured_categories')
                 @include('theme::sections.featured-categories', ['section' => $section, 'categories' => $categories])
             @elseif ($type === 'featured_products')

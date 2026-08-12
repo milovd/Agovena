@@ -19,6 +19,7 @@ use App\Livewire\Admin\Settings\Hub as SettingsHub;
 use App\Livewire\Admin\Staff\Index as StaffIndex;
 use App\Livewire\Storefront\CartPage;
 use App\Livewire\Storefront\CatalogIndex;
+use App\Livewire\Storefront\CategoriesIndex as StorefrontCategoriesIndex;
 use App\Livewire\Storefront\CategoryShow;
 use App\Livewire\Storefront\CheckoutPage;
 use App\Livewire\Storefront\ContentPage;
@@ -32,6 +33,7 @@ Route::get('/', CatalogIndex::class)->name('storefront.home');
 Route::get('/search/suggest', SearchSuggestController::class)
     ->name('storefront.search.suggest');
 Route::get('/products/{slug}', ProductShow::class)->name('storefront.product');
+Route::get('/categories', StorefrontCategoriesIndex::class)->name('storefront.categories');
 Route::get('/categories/{slug}', CategoryShow::class)->name('storefront.category');
 Route::get('/cart', CartPage::class)->name('storefront.cart');
 Route::get('/checkout', CheckoutPage::class)->name('storefront.checkout');
