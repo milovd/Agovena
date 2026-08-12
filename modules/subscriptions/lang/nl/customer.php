@@ -7,6 +7,8 @@ return [
     'lede' => 'Je terugkerende plannen bij deze winkel.',
     'empty' => 'Je hebt nog geen abonnementen.',
     'nav' => 'Abonnementen',
+    'overview_label' => 'Abonnementen',
+    'overview_hint' => 'Actieve terugkerende plannen',
     'status' => 'Status',
     'period' => 'Huidige periode',
     'cancel' => 'Opzeggen aan einde periode',

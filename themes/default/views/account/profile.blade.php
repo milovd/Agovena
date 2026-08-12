@@ -17,6 +17,10 @@
             <div class="store-field">
                 <label class="store-label" for="profile-email">{{ __('customer.auth.email') }}</label>
                 <input id="profile-email" class="store-input" type="email" wire:model="email" autocomplete="username" required>
+                <p class="store-field__hint">
+                    <strong>{{ $emailVerified ? __('customer.profile.email_verified') : __('customer.profile.email_needs_verification') }}</strong>
+                    {{ $emailVerified ? __('customer.profile.email_verified_hint') : __('customer.profile.email_needs_verification_hint') }}
+                </p>
                 @error('email') <p class="store-field__error">{{ $message }}</p> @enderror
             </div>
 
@@ -46,5 +50,25 @@
 
             <button class="store-btn store-btn--outline" type="submit">{{ __('customer.profile.change_password') }}</button>
         </form>
+
+        <hr class="store-account-panel__divider">
+
+        <h2>{{ __('customer.privacy.heading') }}</h2>
+        <p>{{ __('customer.privacy.lede') }}</p>
+        <div class="store-auth__actions">
+            <button class="store-btn store-btn--outline" type="button" wire:click="exportData">
+                {{ __('customer.privacy.export') }}
+            </button>
+            @if ($deletionRequested)
+                <p class="store-note">{{ __('customer.privacy.request_pending') }}</p>
+            @else
+                <button
+                    class="store-btn store-btn--outline"
+                    type="button"
+                    wire:click="requestDeletion"
+                    wire:confirm="{{ __('customer.privacy.delete_confirm') }}"
+                >{{ __('customer.privacy.request_deletion') }}</button>
+            @endif
+        </div>
     </section>
 </div>

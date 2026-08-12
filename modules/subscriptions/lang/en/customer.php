@@ -7,6 +7,8 @@ return [
     'lede' => 'Your recurring plans with this store.',
     'empty' => 'You have no subscriptions yet.',
     'nav' => 'Subscriptions',
+    'overview_label' => 'Subscriptions',
+    'overview_hint' => 'Active recurring plans',
     'status' => 'Status',
     'period' => 'Current period',
     'cancel' => 'Cancel at period end',

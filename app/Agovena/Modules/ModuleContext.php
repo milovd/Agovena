@@ -7,8 +7,11 @@ namespace App\Agovena\Modules;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Customer\AccountNavItem;
+use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Customer\CustomerAccountNav;
+use App\Agovena\Customer\CustomerAccountOverview;
 use App\Http\Middleware\SyncStaffPermissions;
+use App\Models\Customer;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +25,7 @@ final class ModuleContext
         private readonly AdminRegistrar $admin,
         private readonly ProductCapabilityRegistry $capabilities,
         private readonly CustomerAccountNav $customerAccountNav,
+        private readonly CustomerAccountOverview $customerAccountOverview,
         private readonly Dispatcher $events,
         private readonly string $moduleId,
     ) {}
@@ -44,6 +48,14 @@ final class ModuleContext
     public function customerAccountNav(AccountNavItem $item): void
     {
         $this->customerAccountNav->register($item);
+    }
+
+    /**
+     * @param  callable(Customer): (AccountOverviewCard|null)  $factory
+     */
+    public function customerAccountOverview(string $id, callable $factory, int $sort = 0): void
+    {
+        $this->customerAccountOverview->register($id, $factory, $sort);
     }
 
     /**

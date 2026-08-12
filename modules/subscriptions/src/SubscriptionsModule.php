@@ -8,12 +8,15 @@ use Agovena\Modules\Subscriptions\Http\Livewire\Admin\SubscriptionShow;
 use Agovena\Modules\Subscriptions\Http\Livewire\Admin\SubscriptionsIndex;
 use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionsIndex as CustomerSubscriptionsIndex;
 use Agovena\Modules\Subscriptions\Listeners\CreateSubscriptionsWhenOrderPaid;
+use Agovena\Modules\Subscriptions\Models\Subscription;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Customer\AccountNavItem;
+use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Modules\ModuleContext;
 use App\Events\OrderPaid;
+use App\Models\Customer;
 use Illuminate\Support\Facades\Route;
 
 final class SubscriptionsModule implements Module
@@ -52,6 +55,26 @@ final class SubscriptionsModule implements Module
             section: 'subscriptions',
             sort: 30,
         ));
+
+        $context->customerAccountOverview(
+            'subscriptions',
+            static function (Customer $customer): AccountOverviewCard {
+                $count = Subscription::query()
+                    ->where('customer_id', $customer->id)
+                    ->where('status', 'active')
+                    ->count();
+
+                return new AccountOverviewCard(
+                    id: 'subscriptions',
+                    label: 'subscriptions::customer.overview_label',
+                    countOrValue: (string) $count,
+                    routeName: 'customer.subscriptions',
+                    sort: 20,
+                    hint: 'subscriptions::customer.overview_hint',
+                );
+            },
+            20,
+        );
 
         $context->listen(OrderPaid::class, CreateSubscriptionsWhenOrderPaid::class);
 

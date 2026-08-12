@@ -118,7 +118,7 @@ final class Create extends Component
             'category_id' => $data['category_id'],
         ]);
 
-        session()->flash('status', __('admin.products.flash.created'));
+        session()->flash('status', __('admin.products.flash.created_configure'));
 
         $this->redirect(route('admin.products.edit', $product), navigate: true);
     }

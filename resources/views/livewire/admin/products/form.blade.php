@@ -251,80 +251,121 @@
 
         <section class="ag-section" aria-labelledby="section-capabilities">
             <header class="ag-section__header">
-                <h3 id="section-capabilities" class="ag-section__title">{{ __('admin.products.capabilities.title') }}</h3>
-                <p class="ag-section__lede">{{ __('admin.products.capabilities.lede') }}</p>
+                <h3 id="section-capabilities" class="ag-section__title">{{ __('admin.products.presets.title') }}</h3>
+                <p class="ag-section__lede">{{ __('admin.products.presets.lede') }}</p>
             </header>
             <div class="ag-section__body">
+                @php
+                    $availableCapabilityKeys = collect($availableCapabilities ?? [])->pluck('key')->all();
+                @endphp
+
+                <div class="ag-preset-grid" role="group" aria-label="{{ __('admin.products.presets.aria') }}">
+                    @foreach (['simple', 'physical', 'digital', 'subscription', 'hosted_service'] as $preset)
+                        @php
+                            $requiredCapability = match ($preset) {
+                                'physical' => 'physical',
+                                'digital' => 'digital',
+                                'subscription' => 'subscribable',
+                                'hosted_service' => 'provisionable',
+                                default => null,
+                            };
+                            $isAvailable = $requiredCapability === null || in_array($requiredCapability, $availableCapabilityKeys, true);
+                        @endphp
+                        <button
+                            type="button"
+                            class="ag-preset {{ $sellingPreset === $preset ? 'is-active' : '' }}"
+                            wire:click="applyPreset('{{ $preset }}')"
+                            @disabled(! $isAvailable)
+                        >
+                            <strong>{{ __('admin.products.presets.'.$preset.'.label') }}</strong>
+                            <span>{{ __('admin.products.presets.'.$preset.'.help') }}</span>
+                        </button>
+                    @endforeach
+                </div>
+
+                @if (in_array('provisionable', $availableCapabilityKeys, true))
+                    <div class="ag-preset-option">
+                        <x-ag.checkbox
+                            id="hosted-service-subscription"
+                            wire:model.live="hostedServiceSubscription"
+                            :label="__('admin.products.presets.hosted_service.also_subscription')"
+                        />
+                    </div>
+                @endif
+
                 @if (($availableCapabilities ?? []) === [])
                     <p class="ag-muted">{{ __('admin.products.capabilities.none') }}</p>
                 @else
-                    <div class="ag-stack">
-                        @foreach ($availableCapabilities as $definition)
-                            <div class="ag-field">
-                                <x-ag.checkbox
-                                    :id="'capability-'.$definition->key"
-                                    wire:model="capabilityEnabled.{{ $definition->key }}"
-                                    :label="__($definition->label)"
-                                />
-                                @if ($definition->description !== '')
-                                    <p class="ag-field__hint">{{ __($definition->description) }}</p>
-                                @endif
-                            </div>
-                        @endforeach
-
-                        @if (! empty($capabilityEnabled['inventory']))
-                            <div class="ag-field">
-                                <label class="ag-field__label" for="stockQuantity">{{ __('admin.products.capabilities.stock_quantity') }}</label>
-                                <input id="stockQuantity" class="ag-input" type="number" min="0" wire:model="stockQuantity">
-                                <p class="ag-field__hint">{{ __('admin.products.capabilities.stock_hint') }}</p>
-                            </div>
-                        @endif
-
-                        @if (! empty($capabilityEnabled['shippable']))
-                            <div class="ag-field">
-                                <label class="ag-field__label" for="weightGrams">{{ __('admin.products.capabilities.weight_grams') }}</label>
-                                <input id="weightGrams" class="ag-input" type="number" min="0" wire:model="weightGrams">
-                                <p class="ag-field__hint">{{ __('admin.products.capabilities.weight_hint') }}</p>
-                            </div>
-                        @endif
-
-                        @if (! empty($capabilityEnabled['subscribable']))
-                            <div class="ag-grid ag-grid--2">
+                    <details class="ag-advanced">
+                        <summary class="ag-advanced__summary">{{ __('admin.products.presets.advanced') }}</summary>
+                        <p class="ag-field__hint">{{ __('admin.products.presets.advanced_help') }}</p>
+                        <div class="ag-stack ag-advanced__body">
+                            @foreach ($availableCapabilities as $definition)
                                 <div class="ag-field">
-                                    <label class="ag-field__label" for="subscriptionInterval">{{ __('admin.products.capabilities.subscription_interval') }}</label>
-                                    <select id="subscriptionInterval" class="ag-select" wire:model="subscriptionInterval">
-                                        <option value="day">{{ __('admin.products.capabilities.interval_day') }}</option>
-                                        <option value="week">{{ __('admin.products.capabilities.interval_week') }}</option>
-                                        <option value="month">{{ __('admin.products.capabilities.interval_month') }}</option>
-                                        <option value="year">{{ __('admin.products.capabilities.interval_year') }}</option>
-                                    </select>
+                                    <x-ag.checkbox
+                                        :id="'capability-'.$definition->key"
+                                        wire:model="capabilityEnabled.{{ $definition->key }}"
+                                        :label="__($definition->label)"
+                                    />
+                                    @if ($definition->description !== '')
+                                        <p class="ag-field__hint">{{ __($definition->description) }}</p>
+                                    @endif
                                 </div>
-                                <div class="ag-field">
-                                    <label class="ag-field__label" for="subscriptionIntervalCount">{{ __('admin.products.capabilities.subscription_interval_count') }}</label>
-                                    <input id="subscriptionIntervalCount" class="ag-input" type="number" min="1" wire:model="subscriptionIntervalCount">
-                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.subscription_interval_hint') }}</p>
-                                </div>
-                                <div class="ag-field">
-                                    <label class="ag-field__label" for="subscriptionTrialDays">{{ __('admin.products.capabilities.subscription_trial_days') }}</label>
-                                    <input id="subscriptionTrialDays" class="ag-input" type="number" min="0" wire:model="subscriptionTrialDays">
-                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.subscription_trial_hint') }}</p>
-                                </div>
-                            </div>
-                        @endif
+                            @endforeach
 
-                        @if (! empty($capabilityEnabled['provisionable']))
-                            <div class="ag-field">
-                                <label class="ag-field__label" for="providerKey">{{ __('admin.products.capabilities.provider_key') }}</label>
-                                <input id="providerKey" class="ag-input" type="text" wire:model="providerKey">
-                                <p class="ag-field__hint">{{ __('admin.products.capabilities.provider_key_hint') }}</p>
-                            </div>
-                        @endif
+                            @if (! empty($capabilityEnabled['inventory']))
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="stockQuantity">{{ __('admin.products.capabilities.stock_quantity') }}</label>
+                                    <input id="stockQuantity" class="ag-input" type="number" min="0" wire:model="stockQuantity">
+                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.stock_hint') }}</p>
+                                </div>
+                            @endif
 
-                        <div>
-                            <button type="button" class="ag-btn ag-btn--secondary" wire:click="saveCapabilities">
-                                {{ __('admin.products.capabilities.save') }}
-                            </button>
+                            @if (! empty($capabilityEnabled['shippable']))
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="weightGrams">{{ __('admin.products.capabilities.weight_grams') }}</label>
+                                    <input id="weightGrams" class="ag-input" type="number" min="0" wire:model="weightGrams">
+                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.weight_hint') }}</p>
+                                </div>
+                            @endif
+
+                            @if (! empty($capabilityEnabled['subscribable']))
+                                <div class="ag-grid ag-grid--2">
+                                    <div class="ag-field">
+                                        <label class="ag-field__label" for="subscriptionInterval">{{ __('admin.products.capabilities.subscription_interval') }}</label>
+                                        <select id="subscriptionInterval" class="ag-select" wire:model="subscriptionInterval">
+                                            <option value="day">{{ __('admin.products.capabilities.interval_day') }}</option>
+                                            <option value="week">{{ __('admin.products.capabilities.interval_week') }}</option>
+                                            <option value="month">{{ __('admin.products.capabilities.interval_month') }}</option>
+                                            <option value="year">{{ __('admin.products.capabilities.interval_year') }}</option>
+                                        </select>
+                                    </div>
+                                    <div class="ag-field">
+                                        <label class="ag-field__label" for="subscriptionIntervalCount">{{ __('admin.products.capabilities.subscription_interval_count') }}</label>
+                                        <input id="subscriptionIntervalCount" class="ag-input" type="number" min="1" wire:model="subscriptionIntervalCount">
+                                        <p class="ag-field__hint">{{ __('admin.products.capabilities.subscription_interval_hint') }}</p>
+                                    </div>
+                                    <div class="ag-field">
+                                        <label class="ag-field__label" for="subscriptionTrialDays">{{ __('admin.products.capabilities.subscription_trial_days') }}</label>
+                                        <input id="subscriptionTrialDays" class="ag-input" type="number" min="0" wire:model="subscriptionTrialDays">
+                                        <p class="ag-field__hint">{{ __('admin.products.capabilities.subscription_trial_hint') }}</p>
+                                    </div>
+                                </div>
+                            @endif
+
+                            @if (! empty($capabilityEnabled['provisionable']))
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="providerKey">{{ __('admin.products.capabilities.provider_key') }}</label>
+                                    <input id="providerKey" class="ag-input" type="text" wire:model="providerKey">
+                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.provider_key_hint') }}</p>
+                                </div>
+                            @endif
                         </div>
+                    </details>
+                    <div class="ag-preset-save">
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="saveCapabilities">
+                            {{ __('admin.products.capabilities.save') }}
+                        </button>
                     </div>
                 @endif
                 @error('capability') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror

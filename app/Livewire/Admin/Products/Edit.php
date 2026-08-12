@@ -68,6 +68,10 @@ final class Edit extends Component
     /** @var array<string, bool> */
     public array $capabilityEnabled = [];
 
+    public string $sellingPreset = '';
+
+    public bool $hostedServiceSubscription = false;
+
     public int $stockQuantity = 0;
 
     public int $weightGrams = 0;
@@ -138,6 +142,51 @@ final class Edit extends Component
         $this->specRows = array_values($this->specRows);
         if ($this->specRows === []) {
             $this->specRows = [['label' => '', 'value' => '']];
+        }
+    }
+
+    public function applyPreset(string $preset): void
+    {
+        $available = collect(app(ProductCapabilityRegistry::class)->available())
+            ->pluck('key')
+            ->all();
+
+        foreach (array_keys($this->capabilityEnabled) as $key) {
+            $this->capabilityEnabled[$key] = false;
+        }
+        foreach ($available as $key) {
+            $this->capabilityEnabled[$key] = false;
+        }
+
+        $requested = match ($preset) {
+            'physical' => ['physical', 'inventory', 'shippable'],
+            'digital' => ['digital'],
+            'subscription' => ['subscribable'],
+            'hosted_service' => $this->hostedServiceSubscription
+                ? ['provisionable', 'subscribable']
+                : ['provisionable'],
+            default => [],
+        };
+
+        foreach ($requested as $key) {
+            if (in_array($key, $available, true)) {
+                $this->capabilityEnabled[$key] = true;
+            }
+        }
+
+        $this->sellingPreset = in_array($preset, [
+            'simple',
+            'physical',
+            'digital',
+            'subscription',
+            'hosted_service',
+        ], true) ? $preset : 'simple';
+    }
+
+    public function updatedHostedServiceSubscription(): void
+    {
+        if ($this->sellingPreset === 'hosted_service') {
+            $this->applyPreset('hosted_service');
         }
     }
 

@@ -12,4 +12,6 @@ return [
     'exhausted' => 'Limit reached',
     'remaining' => ':count remaining',
     'nav' => 'Downloads',
+    'overview_label' => 'Downloads',
+    'overview_hint' => 'Active file entitlements',
 ];

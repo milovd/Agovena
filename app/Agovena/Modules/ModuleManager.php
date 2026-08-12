@@ -7,6 +7,7 @@ namespace App\Agovena\Modules;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Customer\CustomerAccountNav;
+use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Modules\Contracts\Module;
 use App\Models\AgovenaModule;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -30,6 +31,7 @@ final class ModuleManager
         private readonly AdminRegistrar $admin,
         private readonly ProductCapabilityRegistry $capabilities,
         private readonly CustomerAccountNav $customerAccountNav,
+        private readonly CustomerAccountOverview $customerAccountOverview,
         private readonly Dispatcher $events,
     ) {}
 
@@ -197,6 +199,7 @@ final class ModuleManager
             $this->admin,
             $this->capabilities,
             $this->customerAccountNav,
+            $this->customerAccountOverview,
             $this->events,
             $manifest->id,
         );

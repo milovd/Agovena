@@ -8,12 +8,15 @@ use Agovena\Modules\Digital\Http\Controllers\DownloadController;
 use Agovena\Modules\Digital\Http\Livewire\Admin\AssetsIndex;
 use Agovena\Modules\Digital\Http\Livewire\Customer\DownloadsIndex;
 use Agovena\Modules\Digital\Listeners\GrantDigitalEntitlementsWhenOrderPaid;
+use Agovena\Modules\Digital\Models\DigitalEntitlement;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Customer\AccountNavItem;
+use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Modules\ModuleContext;
 use App\Events\OrderPaid;
+use App\Models\Customer;
 use Illuminate\Support\Facades\Route;
 
 final class DigitalModule implements Module
@@ -52,6 +55,26 @@ final class DigitalModule implements Module
             section: 'downloads',
             sort: 35,
         ));
+
+        $context->customerAccountOverview(
+            'digital-downloads',
+            static function (Customer $customer): AccountOverviewCard {
+                $count = DigitalEntitlement::query()
+                    ->where('customer_id', $customer->id)
+                    ->whereNull('revoked_at')
+                    ->count();
+
+                return new AccountOverviewCard(
+                    id: 'digital-downloads',
+                    label: 'digital::customer.overview_label',
+                    countOrValue: (string) $count,
+                    routeName: 'customer.downloads',
+                    sort: 30,
+                    hint: 'digital::customer.overview_hint',
+                );
+            },
+            30,
+        );
 
         $context->listen(OrderPaid::class, GrantDigitalEntitlementsWhenOrderPaid::class);
 

@@ -1,6 +1,7 @@
 <?php
 
 use App\Agovena\Catalog\DeleteProduct;
+use App\Agovena\Modules\ModuleManager;
 use App\Enums\ProductStatus;
 use App\Livewire\Admin\Products\Create;
 use App\Livewire\Admin\Products\Edit;
@@ -83,6 +84,22 @@ test('staff can update product presentation and specifications', function () {
         ->and($product->specifications)->toBe([
             ['label' => 'Material', 'value' => 'Polycarbonate'],
         ]);
+});
+
+test('physical selling preset enables available fulfillment capabilities', function () {
+    $staff = $this->createStaff();
+    $product = Product::factory()->create();
+    $modules = app(ModuleManager::class);
+    $modules->enable('inventory');
+    $modules->enable('shipping');
+
+    $this->actingAs($staff, 'staff');
+
+    Livewire::test(Edit::class, ['product' => $product])
+        ->call('applyPreset', 'physical')
+        ->assertSet('capabilityEnabled.physical', true)
+        ->assertSet('capabilityEnabled.inventory', true)
+        ->assertSet('capabilityEnabled.shippable', true);
 });
 
 test('product list supports search and status filter', function () {

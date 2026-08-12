@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Customer\AttachGuestOrdersToCustomer;
+use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Settings\SettingsRepository;
 use App\Livewire\Customer\Account\Dashboard;
 use App\Livewire\Customer\Account\OrderShow;
@@ -41,6 +43,34 @@ test('customer can register login and open account dashboard', function () {
         ->test(Dashboard::class)
         ->assertOk()
         ->assertSee(__('customer.account.welcome', ['name' => 'Ada Customer']), false);
+});
+
+test('customer account dashboard receives registered overview cards', function () {
+    $customer = Customer::factory()->create();
+
+    app(CustomerAccountOverview::class)->register(
+        'downloads',
+        static fn (Customer $cardCustomer): AccountOverviewCard => new AccountOverviewCard(
+            id: 'downloads',
+            label: 'customer.account.cards.downloads',
+            countOrValue: $cardCustomer->is($customer) ? '3' : '0',
+            routeName: 'customer.orders.index',
+            sort: 20,
+        ),
+        20,
+    );
+
+    Livewire::actingAs($customer, 'customer')
+        ->test(Dashboard::class)
+        ->assertViewHas('overviewCards', static function (array $cards): bool {
+            foreach ($cards as $card) {
+                if ($card->id === 'downloads' && $card->countOrValue === '3') {
+                    return true;
+                }
+            }
+
+            return false;
+        });
 });
 
 test('logged in customer checkout attaches customer id to order', function () {

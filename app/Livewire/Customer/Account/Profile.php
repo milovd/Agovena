@@ -6,11 +6,14 @@ namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Customer\ChangeCustomerPassword;
 use App\Agovena\Customer\UpdateCustomerProfile;
+use App\Agovena\Privacy\ExportCustomerData;
+use App\Agovena\Privacy\RequestAccountDeletion;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class Profile extends Component
 {
@@ -66,12 +69,38 @@ final class Profile extends Component
         session()->flash('status', __('customer.profile.password_changed'));
     }
 
+    public function exportData(ExportCustomerData $export): StreamedResponse
+    {
+        /** @var Customer $customer */
+        $customer = Auth::guard('customer')->user();
+        $json = json_encode($export->handle($customer), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+
+        return response()->streamDownload(
+            static function () use ($json): void {
+                echo $json;
+            },
+            'agovena-customer-data.json',
+            ['Content-Type' => 'application/json'],
+        );
+    }
+
+    public function requestDeletion(RequestAccountDeletion $requestDeletion): void
+    {
+        /** @var Customer $customer */
+        $customer = Auth::guard('customer')->user();
+        $requestDeletion->handle($customer);
+        session()->flash('status', __('customer.privacy.deletion_requested'));
+    }
+
     public function render(ThemeManager $themes)
     {
         $theme = $themes->active();
+        $customer = Auth::guard('customer')->user();
 
         return view($theme->view('account.profile'), [
             'theme' => $theme,
+            'emailVerified' => $customer instanceof Customer && $customer->hasVerifiedEmail(),
+            'deletionRequested' => $customer instanceof Customer && $customer->deletion_requested_at !== null,
             'accountSection' => 'profile',
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.account.profile_title'),

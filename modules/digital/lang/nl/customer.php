@@ -12,4 +12,6 @@ return [
     'exhausted' => 'Limiet bereikt',
     'remaining' => ':count resterend',
     'nav' => 'Downloads',
+    'overview_label' => 'Downloads',
+    'overview_hint' => 'Actieve bestandsrechten',
 ];
