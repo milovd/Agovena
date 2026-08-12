@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $name
  * @property string|null $subtitle
  * @property string $slug
+ * @property string|null $sku
  * @property string|null $description
  * @property array<int, array{label: string, value: string}>|null $specifications
  * @property bool $show_details
@@ -35,6 +36,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'name',
     'subtitle',
     'slug',
+    'sku',
     'description',
     'specifications',
     'show_details',
@@ -71,6 +73,11 @@ class Product extends Model
         return $this->status->isPurchasable();
     }
 
+    public function isReferencedByOrders(): bool
+    {
+        return $this->orderItems()->exists();
+    }
+
     /** @param Builder<Product> $query */
     public function scopeActive(Builder $query): void
     {
@@ -89,6 +96,12 @@ class Product extends Model
         return $this->hasMany(ProductImage::class)->orderBy('sort');
     }
 
+    /** @return HasMany<OrderItem, $this> */
+    public function orderItems(): HasMany
+    {
+        return $this->hasMany(OrderItem::class);
+    }
+
     /**
      * Spec groups for storefront Details tab (overview + merchant specifications).
      *
@@ -96,9 +109,13 @@ class Product extends Model
      */
     public function specificationGroups(): array
     {
+        $sku = filled($this->sku)
+            ? (string) $this->sku
+            : strtoupper(str_replace('-', ' ', $this->slug));
+
         $overview = array_values(array_filter([
             $this->category ? ['label' => 'Category', 'value' => $this->category->name] : null,
-            ['label' => 'SKU', 'value' => strtoupper(str_replace('-', ' ', $this->slug))],
+            ['label' => 'SKU', 'value' => $sku],
             ['label' => 'Currency', 'value' => strtoupper($this->currency)],
             ['label' => 'Availability', 'value' => $this->status->value === 'active' ? 'Available' : ucfirst($this->status->value)],
         ]));

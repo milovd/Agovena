@@ -23,6 +23,7 @@ class ProductFactory extends Factory
         return [
             'name' => ucfirst($name),
             'slug' => Str::slug($name),
+            'sku' => null,
             'description' => fake()->paragraph(),
             'status' => ProductStatus::Draft,
             'price_amount' => fake()->numberBetween(500, 25000),

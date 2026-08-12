@@ -247,9 +247,11 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->permission('products.view', 'View products');
         $admin->permission('products.create', 'Create products');
         $admin->permission('products.update', 'Update products');
+        $admin->permission('products.delete', 'Delete products');
         $admin->permission('categories.view', 'View categories');
         $admin->permission('categories.create', 'Create categories');
         $admin->permission('categories.update', 'Update categories');
+        $admin->permission('categories.delete', 'Delete categories');
         $admin->permission('orders.view', 'View orders');
         $admin->permission('payments.record', 'Record payments');
         $admin->permission('settings.view', 'View settings');

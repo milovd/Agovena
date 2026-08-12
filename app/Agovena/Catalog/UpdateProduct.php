@@ -16,6 +16,7 @@ final class UpdateProduct
      *     name: string,
      *     subtitle?: string|null,
      *     slug?: string|null,
+     *     sku?: string|null,
      *     description?: string|null,
      *     specifications?: list<array{label: string, value: string}>|null,
      *     show_details?: bool,
@@ -43,10 +44,15 @@ final class UpdateProduct
             ? Str::slug((string) $data['slug'])
             : Str::slug($data['name']);
 
+        $sku = array_key_exists('sku', $data)
+            ? (trim((string) ($data['sku'] ?? '')) ?: null)
+            : $product->sku;
+
         $product->fill([
             'name' => $data['name'],
             'subtitle' => $data['subtitle'] ?? null,
             'slug' => $slug,
+            'sku' => $sku,
             'description' => $data['description'] ?? null,
             'specifications' => $this->normalizeSpecifications($data['specifications'] ?? null),
             'show_details' => $data['show_details'] ?? true,
