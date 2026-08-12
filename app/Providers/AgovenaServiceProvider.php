@@ -366,6 +366,15 @@ class AgovenaServiceProvider extends ServiceProvider
             default: 'AGO',
             sort: 20,
         ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'enable_reviews',
+            label: 'Enable product reviews',
+            type: 'boolean',
+            default: true,
+            help: 'When off, review UI is hidden on all product pages. Per-product review content still deferred.',
+            sort: 30,
+        ));
     }
 
     private function registerWidgets(AdminRegistrar $admin): void

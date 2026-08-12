@@ -40,6 +40,11 @@ test('phase 2 vertical slice end to end with persisted data', function () {
         ->call('addToCart')
         ->assertRedirect(route('storefront.cart'));
 
+    Livewire::test(ProductShow::class, ['slug' => $product->slug])
+        ->set('quantity', 1)
+        ->call('buyNow')
+        ->assertRedirect(route('storefront.checkout'));
+
     Livewire::test(CheckoutPage::class)
         ->set('customer_name', 'Guest Buyer')
         ->set('customer_email', 'guest@example.com')

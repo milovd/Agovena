@@ -94,6 +94,59 @@
   font-size: 0.875rem;
 }
 
+.ag-field__label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-3);
+  margin-bottom: var(--ag-space-2);
+}
+
+.ag-field__label-row .ag-field__label {
+  margin-bottom: 0;
+}
+
+.ag-spec-rows {
+  display: grid;
+  gap: var(--ag-space-2);
+}
+
+.ag-spec-rows__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) auto;
+  gap: var(--ag-space-2);
+  align-items: center;
+}
+
+.ag-gallery-admin {
+  list-style: none;
+  margin: var(--ag-space-4) 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: var(--ag-space-3);
+}
+
+.ag-gallery-admin__item {
+  display: grid;
+  gap: var(--ag-space-2);
+  justify-items: start;
+}
+
+.ag-gallery-admin__item img {
+  width: 6rem;
+  height: 6rem;
+  object-fit: cover;
+  border-radius: var(--ag-radius-sm);
+  border: 1px solid var(--ag-color-border);
+  background: #fff;
+}
+
+.ag-btn--sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+}
+
 .admin-panel__title {
   margin: 0 0 var(--ag-space-4);
   font-size: 1.05rem;

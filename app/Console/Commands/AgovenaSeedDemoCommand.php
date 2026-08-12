@@ -88,47 +88,144 @@ final class AgovenaSeedDemoCommand extends Command
         $this->storePhoto('promo-split', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=1200&h=900&q=80');
 
         $products = [
-            ['name' => 'Nova Phone 14', 'category' => $android, 'price' => 69900, 'desc' => '6.1" OLED display, dual camera, all-day battery.', 'photo' => 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&h=800&q=80'],
-            ['name' => 'Nova Phone 14 Pro', 'category' => $android, 'price' => 89900, 'desc' => 'Pro camera system with bright AMOLED panel.', 'photo' => 'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&h=800&q=80'],
-            ['name' => 'Pulse X', 'category' => $android, 'price' => 54900, 'desc' => 'Compact Android phone with fast charging.', 'photo' => 'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
-            ['name' => 'iPhone 15', 'category' => $iphone, 'price' => 92900, 'desc' => 'A16 performance in a slim aluminum design.', 'photo' => 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&h=800&q=80'],
-            ['name' => 'iPhone 15 Pro', 'category' => $iphone, 'price' => 119900, 'desc' => 'Titanium frame and advanced camera controls.', 'photo' => 'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&h=800&q=80'],
-            ['name' => 'Air Soft Buds', 'category' => $audio, 'price' => 12900, 'desc' => 'Lightweight earbuds with clear everyday sound.', 'photo' => 'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
-            ['name' => 'Studio Max Headphones', 'category' => $audio, 'price' => 34900, 'desc' => 'Over-ear headphones with balanced sound.', 'photo' => 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => 'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=800&h=800&q=80'],
-            ['name' => 'Clip Buds Mini', 'category' => $audio, 'price' => 7900, 'desc' => 'Compact buds for calls and commuting.', 'photo' => 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
-            ['name' => 'Clear Case MagSafe', 'category' => $accessories, 'price' => 2900, 'desc' => 'Protective clear case with MagSafe ring.', 'photo' => 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
-            ['name' => '40W GaN Charger', 'category' => $accessories, 'price' => 3900, 'desc' => 'Compact dual-port USB-C charger.', 'photo' => 'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
-            ['name' => 'Braided USB-C Cable', 'category' => $accessories, 'price' => 1900, 'desc' => '2m braided cable for phones and earbuds.', 'photo' => 'https://images.unsplash.com/photo-1625948515291-69613efd103f?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
-            ['name' => 'Desk Stand Aluminum', 'category' => $accessories, 'price' => 4500, 'desc' => 'Angled aluminum stand for phones.', 'photo' => 'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&h=800&q=80', 'alt' => null],
+            ['name' => 'Nova Phone 14', 'subtitle' => '6.1 inch OLED, dual camera, all-day battery.', 'category' => $android, 'price' => 69900, 'desc' => "6.1\" OLED display, dual camera, and all-day battery.\n\nNova Phone 14 is built for everyday clarity: bright screen, fast charging, and a clean software experience without the noise.", 'photos' => [
+                'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Smartphone'],
+                ['label' => 'Display', 'value' => '6.1 inch OLED'],
+                ['label' => 'Storage', 'value' => '128 GB'],
+                ['label' => 'Battery', 'value' => 'All-day'],
+                ['label' => 'Connectivity', 'value' => '5G, Wi‑Fi 6, Bluetooth 5.3'],
+            ]],
+            ['name' => 'Nova Phone 14 Pro', 'category' => $android, 'price' => 89900, 'desc' => 'Pro camera system with bright AMOLED panel.', 'photos' => [
+                'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Smartphone'],
+                ['label' => 'Display', 'value' => '6.5" AMOLED'],
+                ['label' => 'Camera', 'value' => 'Pro triple system'],
+                ['label' => 'Storage', 'value' => '256 GB'],
+            ]],
+            ['name' => 'Pulse X', 'category' => $android, 'price' => 54900, 'desc' => 'Compact Android phone with fast charging.', 'photos' => [
+                'https://images.unsplash.com/photo-1580910051074-3eb694886505?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Smartphone'],
+                ['label' => 'Charging', 'value' => 'Fast charge'],
+                ['label' => 'Form factor', 'value' => 'Compact'],
+            ]],
+            ['name' => 'iPhone 15', 'category' => $iphone, 'price' => 92900, 'desc' => 'A16 performance in a slim aluminum design.', 'photos' => [
+                'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Smartphone'],
+                ['label' => 'Chip', 'value' => 'A16'],
+                ['label' => 'Material', 'value' => 'Aluminum'],
+            ]],
+            ['name' => 'iPhone 15 Pro', 'category' => $iphone, 'price' => 119900, 'desc' => 'Titanium frame and advanced camera controls.', 'photos' => [
+                'https://images.unsplash.com/photo-1695048133142-1a20484d2569?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1510557880182-3d4d3cba35a5?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Smartphone'],
+                ['label' => 'Frame', 'value' => 'Titanium'],
+                ['label' => 'Camera', 'value' => 'Pro controls'],
+            ]],
+            ['name' => 'Air Soft Buds', 'category' => $audio, 'price' => 12900, 'desc' => 'Lightweight earbuds with clear everyday sound.', 'photos' => [
+                'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Earbuds'],
+                ['label' => 'Fit', 'value' => 'In-ear'],
+                ['label' => 'Use case', 'value' => 'Everyday / calls'],
+            ]],
+            ['name' => 'Studio Max Headphones', 'category' => $audio, 'price' => 34900, 'desc' => 'Over-ear headphones with balanced sound.', 'photos' => [
+                'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=800&h=800&q=80',
+                'https://images.unsplash.com/photo-1590658268037-6bf12165a8df?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Over-ear headphones'],
+                ['label' => 'Sound', 'value' => 'Balanced'],
+                ['label' => 'Use case', 'value' => 'Studio / commuting'],
+            ]],
+            ['name' => 'Clip Buds Mini', 'category' => $audio, 'price' => 7900, 'desc' => 'Compact buds for calls and commuting.', 'photos' => [
+                'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Earbuds'],
+                ['label' => 'Form factor', 'value' => 'Compact'],
+            ]],
+            ['name' => 'Clear Case MagSafe', 'category' => $accessories, 'price' => 2900, 'desc' => 'Protective clear case with MagSafe ring.', 'photos' => [
+                'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Phone case'],
+                ['label' => 'Material', 'value' => 'Clear polycarbonate'],
+                ['label' => 'Compatibility', 'value' => 'MagSafe'],
+            ]],
+            ['name' => '40W GaN Charger', 'category' => $accessories, 'price' => 3900, 'desc' => 'Compact dual-port USB-C charger.', 'photos' => [
+                'https://images.unsplash.com/photo-1583863788434-e58a36330cf0?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Charger'],
+                ['label' => 'Power', 'value' => '40W GaN'],
+                ['label' => 'Ports', 'value' => 'Dual USB-C'],
+            ]],
+            ['name' => 'Braided USB-C Cable', 'category' => $accessories, 'price' => 1900, 'desc' => '2m braided cable for phones and earbuds.', 'photos' => [
+                'https://images.unsplash.com/photo-1625948515291-69613efd103f?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Cable'],
+                ['label' => 'Length', 'value' => '2 m'],
+                ['label' => 'Connector', 'value' => 'USB-C'],
+            ]],
+            ['name' => 'Desk Stand Aluminum', 'category' => $accessories, 'price' => 4500, 'desc' => 'Angled aluminum stand for phones.', 'photos' => [
+                'https://images.unsplash.com/photo-1601784551446-20c9e07cdbdb?auto=format&fit=crop&w=800&h=800&q=80',
+            ], 'specs' => [
+                ['label' => 'Type', 'value' => 'Stand'],
+                ['label' => 'Material', 'value' => 'Aluminum'],
+                ['label' => 'Angle', 'value' => 'Desk viewing'],
+            ]],
         ];
 
         foreach ($products as $row) {
             $slug = Str::slug($row['name']);
-            $path = $this->storePhoto($slug, $row['photo']);
+            $photos = $row['photos'];
+            $primaryPath = $this->storePhoto($slug, $photos[0]);
 
             $product = Product::query()->create([
                 'name' => $row['name'],
+                'subtitle' => array_key_exists('subtitle', $row) ? $row['subtitle'] : null,
                 'slug' => $slug,
                 'description' => $row['desc'],
+                'specifications' => $row['specs'],
+                'show_details' => true,
+                'show_specifications' => true,
                 'status' => ProductStatus::Active,
                 'price_amount' => $row['price'],
                 'currency' => 'EUR',
-                'image_path' => $path,
+                'image_path' => $primaryPath,
                 'category_id' => $row['category']->id,
             ]);
 
             ProductImage::query()->create([
                 'product_id' => $product->id,
-                'path' => $path,
+                'path' => $primaryPath,
                 'sort' => 0,
             ]);
 
-            if (! empty($row['alt'])) {
-                $alt = $this->storePhoto($slug.'-alt', $row['alt']);
+            foreach (array_slice($photos, 1) as $sort => $photoUrl) {
                 ProductImage::query()->create([
                     'product_id' => $product->id,
-                    'path' => $alt,
-                    'sort' => 1,
+                    'path' => $this->storePhoto($slug.'-'.($sort + 2), $photoUrl),
+                    'sort' => $sort + 1,
                 ]);
             }
         }
