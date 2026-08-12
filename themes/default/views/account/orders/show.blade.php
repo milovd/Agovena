@@ -36,7 +36,14 @@
 
             <div>
                 <h2>{{ __('customer.account.billing') }}</h2>
-                <p>{{ $order->customer_name }}</p>
+                <p>{{ $order->billing_name ?: $order->customer_name }}</p>
+                @if ($order->billing_company)<p>{{ $order->billing_company }}</p>@endif
+                @if ($order->billing_line1)
+                    <p>{{ $order->billing_line1 }}</p>
+                    @if ($order->billing_line2)<p>{{ $order->billing_line2 }}</p>@endif
+                    <p>{{ $order->billing_postal_code }} {{ $order->billing_city }}</p>
+                    <p>{{ $order->billing_country }}</p>
+                @endif
                 <p>{{ $order->customer_email }}</p>
                 <p>{{ $order->created_at?->timezone(config('app.timezone'))->format('Y-m-d H:i') }}</p>
             </div>

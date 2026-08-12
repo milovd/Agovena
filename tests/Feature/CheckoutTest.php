@@ -26,6 +26,11 @@ test('guest can add product to cart and checkout', function () {
     Livewire::test(CheckoutPage::class)
         ->set('customer_name', 'Ada Guest')
         ->set('customer_email', 'ada@example.com')
+        ->set('billing_name', 'Ada Guest')
+        ->set('billing_line1', 'Keizersgracht 1')
+        ->set('billing_city', 'Amsterdam')
+        ->set('billing_postal_code', '1015 CJ')
+        ->set('billing_country', 'NL')
         ->call('placeOrder')
         ->assertRedirect();
 
@@ -34,6 +39,9 @@ test('guest can add product to cart and checkout', function () {
     expect($order)->not->toBeNull()
         ->and($order->customer_name)->toBe('Ada Guest')
         ->and($order->customer_id)->toBeNull()
+        ->and($order->billing_line1)->toBe('Keizersgracht 1')
+        ->and($order->billing_city)->toBe('Amsterdam')
+        ->and($order->billing_country)->toBe('NL')
         ->and($order->status)->toBe(OrderStatus::Pending)
         ->and($order->total_amount)->toBe(3000)
         ->and($order->items)->toHaveCount(1)

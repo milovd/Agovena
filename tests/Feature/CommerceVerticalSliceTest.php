@@ -48,6 +48,11 @@ test('phase 2 vertical slice end to end with persisted data', function () {
     Livewire::test(CheckoutPage::class)
         ->set('customer_name', 'Guest Buyer')
         ->set('customer_email', 'guest@example.com')
+        ->set('billing_name', 'Guest Buyer')
+        ->set('billing_line1', 'Main Street 1')
+        ->set('billing_city', 'Amsterdam')
+        ->set('billing_postal_code', '1011 AB')
+        ->set('billing_country', 'NL')
         ->call('placeOrder')
         ->assertRedirect();
 

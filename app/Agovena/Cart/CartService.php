@@ -126,6 +126,15 @@ final class CartService
         return $count;
     }
 
+    /**
+     * True when the cart contains shippable items.
+     * Remains false until product shipping capabilities / Shipping module mark items as shippable.
+     */
+    public function requiresShipping(): bool
+    {
+        return false;
+    }
+
     private function requirePurchasable(int $productId): Product
     {
         $product = Product::query()->find($productId);

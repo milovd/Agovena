@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Checkout;
 
 use App\Agovena\Cart\CartService;
+use App\Agovena\Customer\AddressData;
 use App\Agovena\Payments\CompleteDevelopmentPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\OrderStatus;
@@ -27,7 +28,16 @@ final class PlaceOrder
     ) {}
 
     /**
-     * @param  array{customer_name: string, customer_email: string, idempotency_key?: string|null, payment_method?: string|null, customer_id?: int|null}  $guest
+     * @param  array{
+     *     customer_name: string,
+     *     customer_email: string,
+     *     idempotency_key?: string|null,
+     *     payment_method?: string|null,
+     *     customer_id?: int|null,
+     *     billing?: AddressData|null,
+     *     shipping?: AddressData|null,
+     *     shipping_same_as_billing?: bool
+     * }  $guest
      */
     public function handle(array $guest): Order
     {
@@ -61,8 +71,14 @@ final class PlaceOrder
             $customerId = null;
         }
 
-        $order = DB::transaction(function () use ($guest, $lines, $subtotal, $idempotencyKey, $method, $customerId): Order {
-            $order = Order::query()->create([
+        /** @var AddressData|null $billing */
+        $billing = $guest['billing'] ?? null;
+        $shippingSame = (bool) ($guest['shipping_same_as_billing'] ?? true);
+        /** @var AddressData|null $shipping */
+        $shipping = $shippingSame ? $billing : ($guest['shipping'] ?? null);
+
+        $order = DB::transaction(function () use ($guest, $lines, $subtotal, $idempotencyKey, $method, $customerId, $billing, $shipping, $shippingSame): Order {
+            $payload = [
                 'number' => $this->generateNumber(),
                 'status' => OrderStatus::Pending,
                 'customer_name' => $guest['customer_name'],
@@ -72,7 +88,18 @@ final class PlaceOrder
                 'total_amount' => $subtotal->amount,
                 'currency' => $subtotal->currency,
                 'idempotency_key' => $idempotencyKey,
-            ]);
+                'shipping_same_as_billing' => $shippingSame,
+            ];
+
+            if ($billing instanceof AddressData) {
+                $payload = [...$payload, ...$billing->toOrderBillingColumns()];
+            }
+
+            if ($shipping instanceof AddressData) {
+                $payload = [...$payload, ...$shipping->toOrderShippingColumns()];
+            }
+
+            $order = Order::query()->create($payload);
 
             foreach ($lines as $line) {
                 OrderItem::query()->create([

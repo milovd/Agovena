@@ -21,6 +21,7 @@ use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
 use App\Livewire\Admin\Users\Index as UsersIndex;
+use App\Livewire\Customer\Account\Addresses as CustomerAddresses;
 use App\Livewire\Customer\Account\Dashboard as CustomerDashboard;
 use App\Livewire\Customer\Account\OrderShow as CustomerOrderShow;
 use App\Livewire\Customer\Account\OrdersIndex as CustomerOrdersIndex;
@@ -74,6 +75,7 @@ Route::middleware('auth:customer')->prefix('account')->name('customer.')->group(
         Route::get('/', CustomerDashboard::class)->name('account');
         Route::get('/orders', CustomerOrdersIndex::class)->name('orders.index');
         Route::get('/orders/{order}', CustomerOrderShow::class)->name('orders.show');
+        Route::get('/addresses', CustomerAddresses::class)->name('addresses');
         Route::get('/profile', CustomerProfile::class)->name('profile');
     });
 });

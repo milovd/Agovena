@@ -15,6 +15,11 @@
             @if ($section === 'orders') aria-current="page" @endif
         >{{ __('customer.account.nav_orders') }}</a>
         <a
+            class="store-account__link {{ $section === 'addresses' ? 'is-active' : '' }}"
+            href="{{ route('customer.addresses') }}"
+            @if ($section === 'addresses') aria-current="page" @endif
+        >{{ __('customer.account.nav_addresses') }}</a>
+        <a
             class="store-account__link {{ $section === 'profile' ? 'is-active' : '' }}"
             href="{{ route('customer.profile') }}"
             @if ($section === 'profile') aria-current="page" @endif

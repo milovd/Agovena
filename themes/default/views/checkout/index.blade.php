@@ -35,6 +35,108 @@
             </fieldset>
 
             <fieldset class="store-panel">
+                <legend class="store-panel__title">{{ __('storefront.checkout.billing') }}</legend>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_name">{{ __('storefront.checkout.address_name') }}</label>
+                    <input id="billing_name" class="store-input" type="text" wire:model="billing_name" required autocomplete="billing name">
+                    @error('billing_name') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                </div>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_company">{{ __('storefront.checkout.company') }}</label>
+                    <input id="billing_company" class="store-input" type="text" wire:model="billing_company" autocomplete="billing organization">
+                </div>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_line1">{{ __('storefront.checkout.line1') }}</label>
+                    <input id="billing_line1" class="store-input" type="text" wire:model="billing_line1" required autocomplete="billing address-line1">
+                    @error('billing_line1') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                </div>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_line2">{{ __('storefront.checkout.line2') }}</label>
+                    <input id="billing_line2" class="store-input" type="text" wire:model="billing_line2" autocomplete="billing address-line2">
+                </div>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_city">{{ __('storefront.checkout.city') }}</label>
+                    <input id="billing_city" class="store-input" type="text" wire:model="billing_city" required autocomplete="billing address-level2">
+                    @error('billing_city') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                </div>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_region">{{ __('storefront.checkout.region') }}</label>
+                    <input id="billing_region" class="store-input" type="text" wire:model="billing_region" autocomplete="billing address-level1">
+                </div>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_postal_code">{{ __('storefront.checkout.postal_code') }}</label>
+                    <input id="billing_postal_code" class="store-input" type="text" wire:model="billing_postal_code" required autocomplete="billing postal-code">
+                    @error('billing_postal_code') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                </div>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_country">{{ __('storefront.checkout.country') }}</label>
+                    <select id="billing_country" class="store-input" wire:model="billing_country" required autocomplete="billing country">
+                        <option value="NL">Netherlands</option>
+                        <option value="BE">Belgium</option>
+                        <option value="DE">Germany</option>
+                        <option value="FR">France</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="US">United States</option>
+                    </select>
+                    @error('billing_country') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                </div>
+                <div class="store-field">
+                    <label class="store-field__label" for="billing_phone">{{ __('storefront.checkout.phone') }}</label>
+                    <input id="billing_phone" class="store-input" type="text" wire:model="billing_phone" autocomplete="billing tel">
+                </div>
+                @if ($customerLoggedIn)
+                    <label class="store-check">
+                        <input type="checkbox" wire:model="save_billing_address">
+                        <span>{{ __('storefront.checkout.save_address') }}</span>
+                    </label>
+                @endif
+            </fieldset>
+
+            @if ($requiresShipping)
+                <fieldset class="store-panel">
+                    <legend class="store-panel__title">{{ __('storefront.checkout.shipping') }}</legend>
+                    <label class="store-check">
+                        <input type="checkbox" wire:model.live="shipping_same_as_billing">
+                        <span>{{ __('storefront.checkout.same_as_billing') }}</span>
+                    </label>
+
+                    @if (! $shipping_same_as_billing)
+                        <div class="store-field">
+                            <label class="store-field__label" for="shipping_name">{{ __('storefront.checkout.address_name') }}</label>
+                            <input id="shipping_name" class="store-input" type="text" wire:model="shipping_name" required autocomplete="shipping name">
+                            @error('shipping_name') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="store-field">
+                            <label class="store-field__label" for="shipping_line1">{{ __('storefront.checkout.line1') }}</label>
+                            <input id="shipping_line1" class="store-input" type="text" wire:model="shipping_line1" required autocomplete="shipping address-line1">
+                            @error('shipping_line1') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="store-field">
+                            <label class="store-field__label" for="shipping_city">{{ __('storefront.checkout.city') }}</label>
+                            <input id="shipping_city" class="store-input" type="text" wire:model="shipping_city" required autocomplete="shipping address-level2">
+                            @error('shipping_city') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="store-field">
+                            <label class="store-field__label" for="shipping_postal_code">{{ __('storefront.checkout.postal_code') }}</label>
+                            <input id="shipping_postal_code" class="store-input" type="text" wire:model="shipping_postal_code" required autocomplete="shipping postal-code">
+                            @error('shipping_postal_code') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="store-field">
+                            <label class="store-field__label" for="shipping_country">{{ __('storefront.checkout.country') }}</label>
+                            <select id="shipping_country" class="store-input" wire:model="shipping_country" required autocomplete="shipping country">
+                                <option value="NL">Netherlands</option>
+                                <option value="BE">Belgium</option>
+                                <option value="DE">Germany</option>
+                                <option value="FR">France</option>
+                                <option value="GB">United Kingdom</option>
+                                <option value="US">United States</option>
+                            </select>
+                        </div>
+                    @endif
+                </fieldset>
+            @endif
+
+            <fieldset class="store-panel">
                 <legend class="store-panel__title">{{ __('storefront.checkout.payment') }}</legend>
                 <label class="store-check">
                     <input type="radio" wire:model="payment_method" value="manual">

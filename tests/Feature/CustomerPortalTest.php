@@ -58,6 +58,11 @@ test('logged in customer checkout attaches customer id to order', function () {
         ->test(CheckoutPage::class)
         ->assertSet('customer_name', 'Linked Buyer')
         ->assertSet('customer_email', 'linked@example.com')
+        ->set('billing_name', 'Linked Buyer')
+        ->set('billing_line1', 'Damrak 10')
+        ->set('billing_city', 'Amsterdam')
+        ->set('billing_postal_code', '1012 LG')
+        ->set('billing_country', 'NL')
         ->call('placeOrder')
         ->assertRedirect();
 

@@ -38,6 +38,12 @@ class Customer extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(Order::class);
     }
 
+    /** @return HasMany<CustomerAddress, $this> */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(CustomerAddress::class);
+    }
+
     public function sendEmailVerificationNotification(): void
     {
         $this->notify(new VerifyCustomerEmail);
