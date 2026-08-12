@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Subscriptions',
+    'lede' => 'Manage recurring subscriptions created from paid orders.',
+    'empty' => 'No subscriptions yet.',
+    'number' => 'Number',
+    'customer' => 'Customer',
+    'status' => 'Status',
+    'next_billing' => 'Next billing',
+    'filter_status' => 'Filter by status',
+    'all_statuses' => 'All statuses',
+    'show_title' => 'Subscription :number',
+    'details' => 'Details',
+    'interval' => 'Interval',
+    'period' => 'Period',
+    'cancel_at_period_end' => 'Cancel at period end',
+    'origin_order' => 'Origin order',
+    'actions' => 'Actions',
+    'cancel_period_end' => 'Cancel at period end',
+    'cancel_now' => 'Cancel immediately',
+    'mark_past_due' => 'Mark past due',
+    'create_renewal' => 'Create renewal order',
+    'renewals' => 'Renewals',
+    'renewals_empty' => 'No renewal orders yet.',
+    'renewal_order' => 'Order',
+    'renewal_item' => 'Subscription renewal',
+    'renewal_created' => 'Renewal order :number created.',
+    'cancelled_period_end' => 'Subscription will end after the current period.',
+    'cancelled_now' => 'Subscription cancelled.',
+    'marked_past_due' => 'Subscription marked past due.',
+    'back' => 'Back to subscriptions',
+];

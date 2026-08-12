@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    'title' => 'Abonnementen',
+    'lede' => 'Beheer terugkerende abonnementen uit betaalde bestellingen.',
+    'empty' => 'Nog geen abonnementen.',
+    'number' => 'Nummer',
+    'customer' => 'Klant',
+    'status' => 'Status',
+    'next_billing' => 'Volgende facturatie',
+    'filter_status' => 'Filter op status',
+    'all_statuses' => 'Alle statussen',
+    'show_title' => 'Abonnement :number',
+    'details' => 'Details',
+    'interval' => 'Interval',
+    'period' => 'Periode',
+    'cancel_at_period_end' => 'Opzeggen aan einde periode',
+    'origin_order' => 'Oorspronkelijke bestelling',
+    'actions' => 'Acties',
+    'cancel_period_end' => 'Opzeggen aan einde periode',
+    'cancel_now' => 'Direct opzeggen',
+    'mark_past_due' => 'Markeer als achterstallig',
+    'create_renewal' => 'Verlengingsbestelling maken',
+    'renewals' => 'Verlengingen',
+    'renewals_empty' => 'Nog geen verlengingsbestellingen.',
+    'renewal_order' => 'Bestelling',
+    'renewal_item' => 'Abonnementsverlenging',
+    'renewal_created' => 'Verlengingsbestelling :number aangemaakt.',
+    'cancelled_period_end' => 'Abonnement eindigt na de huidige periode.',
+    'cancelled_now' => 'Abonnement opgezegd.',
+    'marked_past_due' => 'Abonnement gemarkeerd als achterstallig.',
+    'back' => 'Terug naar abonnementen',
+];

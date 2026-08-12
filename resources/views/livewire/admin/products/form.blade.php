@@ -288,6 +288,30 @@
                             </div>
                         @endif
 
+                        @if (! empty($capabilityEnabled['subscribable']))
+                            <div class="ag-grid ag-grid--2">
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="subscriptionInterval">{{ __('admin.products.capabilities.subscription_interval') }}</label>
+                                    <select id="subscriptionInterval" class="ag-select" wire:model="subscriptionInterval">
+                                        <option value="day">{{ __('admin.products.capabilities.interval_day') }}</option>
+                                        <option value="week">{{ __('admin.products.capabilities.interval_week') }}</option>
+                                        <option value="month">{{ __('admin.products.capabilities.interval_month') }}</option>
+                                        <option value="year">{{ __('admin.products.capabilities.interval_year') }}</option>
+                                    </select>
+                                </div>
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="subscriptionIntervalCount">{{ __('admin.products.capabilities.subscription_interval_count') }}</label>
+                                    <input id="subscriptionIntervalCount" class="ag-input" type="number" min="1" wire:model="subscriptionIntervalCount">
+                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.subscription_interval_hint') }}</p>
+                                </div>
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="subscriptionTrialDays">{{ __('admin.products.capabilities.subscription_trial_days') }}</label>
+                                    <input id="subscriptionTrialDays" class="ag-input" type="number" min="0" wire:model="subscriptionTrialDays">
+                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.subscription_trial_hint') }}</p>
+                                </div>
+                            </div>
+                        @endif
+
                         <div>
                             <button type="button" class="ag-btn ag-btn--secondary" wire:click="saveCapabilities">
                                 {{ __('admin.products.capabilities.save') }}

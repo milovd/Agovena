@@ -72,6 +72,12 @@ final class Edit extends Component
 
     public int $weightGrams = 0;
 
+    public string $subscriptionInterval = 'month';
+
+    public int $subscriptionIntervalCount = 1;
+
+    public int $subscriptionTrialDays = 0;
+
     public function mount(Product $product): void
     {
         $this->authorize('products.update');
@@ -102,6 +108,11 @@ final class Edit extends Component
             $this->capabilityEnabled[$row->capability] = true;
             if ($row->capability === 'shippable') {
                 $this->weightGrams = (int) (($row->config['weight_grams'] ?? 0));
+            }
+            if ($row->capability === 'subscribable') {
+                $this->subscriptionInterval = (string) ($row->config['interval'] ?? 'month');
+                $this->subscriptionIntervalCount = max(1, (int) ($row->config['interval_count'] ?? 1));
+                $this->subscriptionTrialDays = max(0, (int) ($row->config['trial_days'] ?? 0));
             }
         }
 
@@ -327,11 +338,20 @@ final class Edit extends Component
             if ($key === 'shippable') {
                 $config['weight_grams'] = max(0, $this->weightGrams);
             }
+            if ($key === 'subscribable') {
+                $config = [
+                    'interval' => in_array($this->subscriptionInterval, ['day', 'week', 'month', 'year'], true)
+                        ? $this->subscriptionInterval
+                        : 'month',
+                    'interval_count' => max(1, $this->subscriptionIntervalCount),
+                    'trial_days' => max(0, $this->subscriptionTrialDays),
+                ];
+            }
             if (! $this->product->hasCapability($key)) {
                 $capabilities->enable($this->product, $key, $config);
                 $this->product->unsetRelation('capabilities');
                 $this->product->load('capabilities');
-            } elseif ($key === 'shippable') {
+            } elseif (in_array($key, ['shippable', 'subscribable'], true)) {
                 $capabilities->syncConfig($this->product, $key, $config);
             }
         }
