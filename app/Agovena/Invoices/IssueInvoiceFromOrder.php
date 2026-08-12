@@ -61,7 +61,8 @@ final class IssueInvoiceFromOrder
                 'issued_at' => now()->toDateString(),
                 'due_at' => null,
                 'subtotal_amount' => $locked->subtotal_amount,
-                'tax_amount' => 0,
+                'discount_amount' => $locked->discount_amount,
+                'tax_amount' => $locked->tax_amount,
                 'total_amount' => $locked->total_amount,
                 'currency' => $locked->currency,
             ]);
@@ -84,6 +85,30 @@ final class IssueInvoiceFromOrder
                     'quantity' => 1,
                     'unit_amount' => (int) $locked->shipping_amount,
                     'line_total_amount' => (int) $locked->shipping_amount,
+                    'currency' => $locked->currency,
+                ]);
+            }
+
+            if ((int) $locked->discount_amount > 0) {
+                InvoiceItem::query()->create([
+                    'invoice_id' => $invoice->id,
+                    'label' => __('common.discount').' '.($locked->discount_code ?: ''),
+                    'quantity' => 1,
+                    'unit_amount' => (int) $locked->discount_amount,
+                    'line_total_amount' => (int) $locked->discount_amount,
+                    'currency' => $locked->currency,
+                ]);
+            }
+
+            $exclusiveTax = (int) $locked->total_amount
+                > ((int) $locked->subtotal_amount - (int) $locked->discount_amount + (int) $locked->shipping_amount);
+            if ($exclusiveTax && (int) $locked->tax_amount > 0) {
+                InvoiceItem::query()->create([
+                    'invoice_id' => $invoice->id,
+                    'label' => $locked->tax_rate_name ?: __('common.tax'),
+                    'quantity' => 1,
+                    'unit_amount' => (int) $locked->tax_amount,
+                    'line_total_amount' => (int) $locked->tax_amount,
                     'currency' => $locked->currency,
                 ]);
             }

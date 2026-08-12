@@ -77,6 +77,61 @@
   margin-bottom: var(--ag-space-4);
 }
 
+.ag-preset-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: var(--ag-space-3);
+}
+
+.ag-preset {
+  display: grid;
+  gap: var(--ag-space-1);
+  min-height: 5.5rem;
+  padding: var(--ag-space-3);
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+  color: var(--ag-color-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.ag-preset span {
+  color: var(--ag-color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.ag-preset:hover:not(:disabled),
+.ag-preset.is-active {
+  border-color: var(--ag-color-primary);
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-preset:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ag-preset-option,
+.ag-preset-save {
+  margin-top: var(--ag-space-4);
+}
+
+.ag-advanced {
+  margin-top: var(--ag-space-5);
+  border-top: 1px solid var(--ag-color-border);
+  padding-top: var(--ag-space-4);
+}
+
+.ag-advanced__summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ag-advanced__body {
+  margin-top: var(--ag-space-4);
+}
+
 /* Checkbox — selection within a form/set */
 .ag-checkbox {
   display: inline-flex;

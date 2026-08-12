@@ -41,6 +41,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'issued_at',
     'due_at',
     'subtotal_amount',
+    'discount_amount',
     'tax_amount',
     'total_amount',
     'currency',
@@ -54,6 +55,7 @@ class Invoice extends Model
             'issued_at' => 'date',
             'due_at' => 'date',
             'subtotal_amount' => 'integer',
+            'discount_amount' => 'integer',
             'tax_amount' => 'integer',
             'total_amount' => 'integer',
         ];

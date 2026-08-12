@@ -56,6 +56,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'subtotal_amount',
     'shipping_amount',
     'shipping_method_label',
+    'discount_amount',
+    'tax_amount',
+    'credit_amount',
+    'discount_code',
+    'tax_rate_name',
+    'tax_rate_bps',
     'total_amount',
     'currency',
     'idempotency_key',
@@ -71,6 +77,10 @@ class Order extends Model
             'status' => OrderStatus::class,
             'subtotal_amount' => 'integer',
             'shipping_amount' => 'integer',
+            'discount_amount' => 'integer',
+            'tax_amount' => 'integer',
+            'credit_amount' => 'integer',
+            'tax_rate_bps' => 'integer',
             'total_amount' => 'integer',
             'shipping_same_as_billing' => 'boolean',
         ];
@@ -92,5 +102,11 @@ class Order extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** @return HasOne<DiscountRedemption, $this> */
+    public function discountRedemption(): HasOne
+    {
+        return $this->hasOne(DiscountRedemption::class);
     }
 }

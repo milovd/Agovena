@@ -29,6 +29,10 @@
                     @endforeach
                 </ul>
                 <p class="store-order-items__total">
+                    <span>{{ __('common.tax') }}</span>
+                    <strong>{{ \App\Support\MoneyFormatter::format($invoice->tax_amount, $invoice->currency) }}</strong>
+                </p>
+                <p class="store-order-items__total">
                     <span>{{ __('customer.account.total') }}</span>
                     <strong>{{ \App\Support\MoneyFormatter::format($invoice->total_amount, $invoice->currency) }}</strong>
                 </p>

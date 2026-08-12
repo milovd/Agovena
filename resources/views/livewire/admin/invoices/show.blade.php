@@ -22,6 +22,13 @@
                     </li>
                 @endforeach
             </ul>
+            <dl class="ag-dl">
+                <div><dt>{{ __('common.subtotal') }}</dt><dd>{{ \App\Support\MoneyFormatter::format($invoice->subtotal_amount, $invoice->currency) }}</dd></div>
+                @if ($invoice->discount_amount > 0)
+                    <div><dt>{{ __('common.discount') }}</dt><dd>−{{ \App\Support\MoneyFormatter::format($invoice->discount_amount, $invoice->currency) }}</dd></div>
+                @endif
+                <div><dt>{{ __('common.tax') }}</dt><dd>{{ \App\Support\MoneyFormatter::format($invoice->tax_amount, $invoice->currency) }}</dd></div>
+            </dl>
             <p class="ag-total">
                 <span>{{ __('common.total') }}</span>
                 <strong>{{ \App\Support\MoneyFormatter::format($invoice->total_amount, $invoice->currency) }}</strong>

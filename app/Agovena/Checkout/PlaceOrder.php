@@ -5,18 +5,24 @@ declare(strict_types=1);
 namespace App\Agovena\Checkout;
 
 use App\Agovena\Cart\CartService;
+use App\Agovena\Credits\ApplyCreditToOrder;
 use App\Agovena\Customer\AddressData;
+use App\Agovena\Discounts\DiscountApplicator;
 use App\Agovena\Money\Money;
 use App\Agovena\Payments\CompleteDevelopmentPayment;
 use App\Agovena\Settings\SettingsRepository;
+use App\Agovena\Tax\TaxCalculator;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Events\OrderCreated;
 use App\Events\OrderPlacing;
+use App\Models\Customer;
+use App\Models\DiscountRedemption;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\TaxRate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -28,6 +34,9 @@ final class PlaceOrder
         private readonly SettingsRepository $settings,
         private readonly CompleteDevelopmentPayment $developmentPayment,
         private readonly ShippingQuoteResolver $shippingQuotes,
+        private readonly DiscountApplicator $discounts,
+        private readonly TaxCalculator $taxes,
+        private readonly ApplyCreditToOrder $applyCredit,
     ) {}
 
     /**
@@ -40,7 +49,10 @@ final class PlaceOrder
      *     billing?: AddressData|null,
      *     shipping?: AddressData|null,
      *     shipping_same_as_billing?: bool,
-     *     shipping_method_id?: int|null
+     *     shipping_method_id?: int|null,
+     *     discount_code?: string|null,
+     *     apply_credit?: bool,
+     *     credit_amount?: int|null
      * }  $guest
      */
     public function handle(array $guest): Order
@@ -118,7 +130,24 @@ final class PlaceOrder
             $shippingLabel = $quote->label;
         }
 
-        $total = $subtotal->add($shippingAmount);
+        $discount = $this->discounts->apply($guest['discount_code'] ?? null, $subtotal, $customerId);
+        $subtotalAfterDiscount = $subtotal->subtract(
+            $discount === null ? Money::of(0, $subtotal->currency) : $discount->amount,
+        );
+        $taxCountry = $shipping?->country ?: ($billing?->country ?: 'NL');
+        $taxRate = $this->activeTaxRate($taxCountry);
+        $pricesIncludeTax = (bool) $this->settings->get('store', 'prices_include_tax', false);
+        $tax = $this->taxes->calculate(
+            $subtotalAfterDiscount,
+            $shippingAmount,
+            $taxCountry,
+            $pricesIncludeTax,
+            $taxRate,
+        );
+        $total = $subtotalAfterDiscount->add($shippingAmount);
+        if (! $pricesIncludeTax) {
+            $total = $total->add($tax->tax);
+        }
 
         $order = DB::transaction(function () use (
             $guest,
@@ -128,6 +157,8 @@ final class PlaceOrder
             $shippingAmount,
             $shippingLabel,
             $shippingMethodId,
+            $discount,
+            $tax,
             $idempotencyKey,
             $method,
             $customerId,
@@ -144,6 +175,12 @@ final class PlaceOrder
                 'subtotal_amount' => $subtotal->amount,
                 'shipping_amount' => $shippingAmount->amount,
                 'shipping_method_label' => $shippingLabel,
+                'discount_amount' => $discount?->amount->amount ?? 0,
+                'tax_amount' => $tax->tax->amount,
+                'credit_amount' => 0,
+                'discount_code' => $discount?->code->code,
+                'tax_rate_name' => $tax->rateName,
+                'tax_rate_bps' => $tax->rateBps,
                 'total_amount' => $total->amount,
                 'currency' => $subtotal->currency,
                 'idempotency_key' => $idempotencyKey,
@@ -160,6 +197,19 @@ final class PlaceOrder
 
             $order = Order::query()->create($payload);
 
+            $creditAmount = 0;
+            if (($guest['apply_credit'] ?? false) && $customerId !== null) {
+                $customer = Customer::query()->findOrFail($customerId);
+                $creditAmount = $this->applyCredit->handle(
+                    $order,
+                    $customer,
+                    isset($guest['credit_amount']) ? (int) $guest['credit_amount'] : $total->amount,
+                );
+                if ($creditAmount > 0) {
+                    $order->update(['credit_amount' => $creditAmount]);
+                }
+            }
+
             foreach ($lines as $line) {
                 OrderItem::query()->create([
                     'order_id' => $order->id,
@@ -174,13 +224,23 @@ final class PlaceOrder
 
             Payment::query()->create([
                 'order_id' => $order->id,
-                'amount' => $total->amount,
+                'amount' => $total->amount - $creditAmount,
                 'currency' => $subtotal->currency,
                 'method' => $method,
                 'status' => PaymentStatus::Pending,
                 'paid_at' => null,
                 'reference' => null,
             ]);
+
+            if ($discount !== null) {
+                DiscountRedemption::query()->create([
+                    'discount_code_id' => $discount->code->id,
+                    'order_id' => $order->id,
+                    'customer_id' => $customerId,
+                    'code' => $discount->code->code,
+                    'amount' => $discount->amount->amount,
+                ]);
+            }
 
             $order = $order->load(['items', 'payment']);
 
@@ -227,5 +287,18 @@ final class PlaceOrder
         } while (Order::query()->where('number', $number)->exists());
 
         return $number;
+    }
+
+    private function activeTaxRate(string $country): ?TaxRate
+    {
+        return TaxRate::query()
+            ->where('is_active', true)
+            ->where(function ($query) use ($country): void {
+                $query->where('country', strtoupper($country))
+                    ->orWhereNull('country');
+            })
+            ->orderByRaw('CASE WHEN country IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('id')
+            ->first();
     }
 }

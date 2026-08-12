@@ -43,6 +43,13 @@ final readonly class Money
         return new self($this->amount + $other->amount, $this->currency);
     }
 
+    public function subtract(self $other): self
+    {
+        $this->assertSameCurrency($other);
+
+        return new self(max(0, $this->amount - $other->amount), $this->currency);
+    }
+
     public function multiply(int $quantity): self
     {
         if ($quantity < 0) {

@@ -8,14 +8,20 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\AddressValidation;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Checkout\ShippingQuoteResolver;
+use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\CustomerRegistration;
 use App\Agovena\Customer\SaveCustomerAddress;
+use App\Agovena\Discounts\DiscountApplicator;
+use App\Agovena\Money\Money;
 use App\Agovena\Payments\AvailablePaymentMethods;
+use App\Agovena\Settings\SettingsRepository;
+use App\Agovena\Tax\TaxCalculator;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\PaymentMethod;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
+use App\Models\TaxRate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -73,6 +79,12 @@ final class CheckoutPage extends Component
 
     public bool $save_billing_address = false;
 
+    public string $coupon_code = '';
+
+    public string $applied_coupon_code = '';
+
+    public bool $apply_credit = false;
+
     public function mount(CartService $cart, CustomerRegistration $registration): void
     {
         if ($cart->isEmpty()) {
@@ -129,6 +141,7 @@ final class CheckoutPage extends Component
             'payment_method' => ['required', 'string', Rule::in($allowed)],
             ...AddressValidation::rules('billing'),
             'save_billing_address' => ['boolean'],
+            'apply_credit' => ['boolean'],
         ];
 
         $requiresShipping = $cart->requiresShipping();
@@ -192,17 +205,52 @@ final class CheckoutPage extends Component
             'shipping' => $shipping,
             'shipping_same_as_billing' => $shippingSame,
             'shipping_method_id' => $requiresShipping ? (int) ($data['shipping_method_id'] ?? 0) : null,
+            'discount_code' => $this->applied_coupon_code !== '' ? $this->applied_coupon_code : null,
+            'apply_credit' => (bool) ($data['apply_credit'] ?? false),
         ]);
 
         $this->redirect(route('storefront.order.confirmation', $order), navigate: true);
     }
 
-    public function render(CartService $cart, ThemeManager $themes, CustomerRegistration $registration, ShippingQuoteResolver $shippingQuotes)
+    public function applyCoupon(CartService $cart, DiscountApplicator $discounts): void
     {
+        $subtotal = $cart->subtotal();
+        if ($subtotal === null) {
+            return;
+        }
+
+        $applied = $discounts->apply($this->coupon_code, $subtotal, Auth::guard('customer')->id());
+        $this->applied_coupon_code = $applied?->code->code ?? '';
+        $this->coupon_code = $this->applied_coupon_code;
+        $this->resetErrorBag('discount_code');
+    }
+
+    public function removeCoupon(): void
+    {
+        $this->coupon_code = '';
+        $this->applied_coupon_code = '';
+        $this->resetErrorBag('discount_code');
+    }
+
+    public function render(
+        CartService $cart,
+        ThemeManager $themes,
+        CustomerRegistration $registration,
+        ShippingQuoteResolver $shippingQuotes,
+        DiscountApplicator $discounts,
+        TaxCalculator $taxes,
+        SettingsRepository $settings,
+        CustomerCreditLedger $creditLedger,
+    ) {
         $theme = $themes->active();
         $lines = $cart->pricedLines();
         $subtotal = $cart->subtotal();
         $requiresShipping = $cart->requiresShipping();
+        /** @var Customer|null $customer */
+        $customer = Auth::guard('customer')->user();
+        $creditBalance = $customer === null || $subtotal === null
+            ? 0
+            : $creditLedger->balance($customer, $subtotal->currency);
 
         $quotes = [];
         $shippingTotal = null;
@@ -226,9 +274,38 @@ final class CheckoutPage extends Component
             }
         }
 
+        $discountTotal = null;
+        $taxTotal = null;
+        $creditTotal = null;
         $orderTotal = $subtotal;
-        if ($subtotal !== null && $shippingTotal !== null) {
-            $orderTotal = $subtotal->add($shippingTotal);
+        $pricesIncludeTax = (bool) $settings->get('store', 'prices_include_tax', false);
+        if ($subtotal !== null) {
+            $applied = $discounts->apply(
+                $this->applied_coupon_code !== '' ? $this->applied_coupon_code : null,
+                $subtotal,
+                Auth::guard('customer')->id(),
+            );
+            $discountTotal = $applied === null ? Money::of(0, $subtotal->currency) : $applied->amount;
+            $subtotalAfterDiscount = $subtotal->subtract($discountTotal);
+            $shipping = $shippingTotal ?? Money::of(0, $subtotal->currency);
+            $country = $requiresShipping && ! $this->shipping_same_as_billing
+                ? $this->shipping_country
+                : $this->billing_country;
+            $tax = $taxes->calculate(
+                $subtotalAfterDiscount,
+                $shipping,
+                $country !== '' ? $country : 'NL',
+                $pricesIncludeTax,
+                $this->activeTaxRate($country !== '' ? $country : 'NL'),
+            );
+            $taxTotal = $tax->tax;
+            $orderTotal = $subtotalAfterDiscount->add($shipping);
+            if (! $pricesIncludeTax) {
+                $orderTotal = $orderTotal->add($taxTotal);
+            }
+            if ($this->apply_credit && $creditBalance > 0) {
+                $creditTotal = Money::of(min($creditBalance, $orderTotal->amount), $orderTotal->currency);
+            }
         }
 
         return view($theme->view('checkout.index'), [
@@ -236,13 +313,18 @@ final class CheckoutPage extends Component
             'subtotal' => $subtotal,
             'shippingQuotes' => $quotes,
             'shippingTotal' => $shippingTotal,
+            'discountTotal' => $discountTotal,
+            'taxTotal' => $taxTotal,
             'orderTotal' => $orderTotal,
+            'creditTotal' => $creditTotal,
             'theme' => $theme,
             'paymentOptions' => app(AvailablePaymentMethods::class)->options(),
             'developmentPayEnabled' => $this->developmentPayEnabled(),
             'customerLoggedIn' => Auth::guard('customer')->check(),
             'registrationEnabled' => $registration->allowsRegistration(),
             'requiresShipping' => $requiresShipping,
+            'pricesIncludeTax' => $pricesIncludeTax,
+            'creditBalance' => $creditBalance,
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('storefront.checkout.title'),
             'theme' => $theme,
@@ -266,5 +348,18 @@ final class CheckoutPage extends Component
     {
         return (bool) config('agovena.payments.allow_development_instant_pay')
             && ! app()->environment('production');
+    }
+
+    private function activeTaxRate(string $country): ?TaxRate
+    {
+        return TaxRate::query()
+            ->where('is_active', true)
+            ->where(function ($query) use ($country): void {
+                $query->where('country', strtoupper($country))
+                    ->orWhereNull('country');
+            })
+            ->orderByRaw('CASE WHEN country IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('id')
+            ->first();
     }
 }

@@ -165,6 +165,16 @@
                 @error('payment_method') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
             </fieldset>
 
+            @if (($creditBalance ?? 0) > 0)
+                <fieldset class="store-panel">
+                    <legend class="store-panel__title">{{ __('storefront.checkout.store_credit') }}</legend>
+                    <label class="store-check">
+                        <input type="checkbox" wire:model.live="apply_credit">
+                        <span>{{ __('storefront.checkout.apply_store_credit', ['amount' => \App\Support\MoneyFormatter::format(\App\Agovena\Money\Money::of($creditBalance, $subtotal->currency))]) }}</span>
+                    </label>
+                </fieldset>
+            @endif
+
             @error('cart') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
 
             <button type="submit" class="store-btn store-btn--primary store-btn--block" wire:loading.attr="disabled">{{ __('storefront.checkout.place_order') }}</button>
@@ -180,6 +190,21 @@
                     </li>
                 @endforeach
             </ul>
+            <form wire:submit="applyCoupon" class="store-field">
+                <label class="store-field__label" for="coupon-code">{{ __('storefront.checkout.coupon_code') }}</label>
+                <div class="store-checkout__coupon">
+                    <input id="coupon-code" class="store-input" type="text" wire:model="coupon_code" @disabled($applied_coupon_code !== '')>
+                    @if ($applied_coupon_code !== '')
+                        <button type="button" class="store-btn store-btn--secondary" wire:click="removeCoupon">{{ __('common.remove') }}</button>
+                    @else
+                        <button type="submit" class="store-btn store-btn--secondary">{{ __('storefront.checkout.apply_coupon') }}</button>
+                    @endif
+                </div>
+                @error('discount_code') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                @if ($applied_coupon_code !== '')
+                    <p class="store-note">{{ __('storefront.checkout.coupon_applied', ['code' => $applied_coupon_code]) }}</p>
+                @endif
+            </form>
             <p class="store-cart__subtotal">
                 {{ __('storefront.checkout.subtotal') }}
                 <strong>{{ \App\Support\MoneyFormatter::format($subtotal) }}</strong>
@@ -196,10 +221,32 @@
                     </strong>
                 </p>
             @endif
+            @if ($discountTotal?->amount > 0)
+                <p class="store-cart__subtotal">
+                    {{ __('storefront.checkout.discount') }}
+                    <strong>−{{ \App\Support\MoneyFormatter::format($discountTotal) }}</strong>
+                </p>
+            @endif
+            @if ($taxTotal?->amount > 0)
+                <p class="store-cart__subtotal">
+                    {{ $pricesIncludeTax ? __('storefront.checkout.tax_included') : __('storefront.checkout.tax') }}
+                    <strong>{{ \App\Support\MoneyFormatter::format($taxTotal) }}</strong>
+                </p>
+            @endif
             <p class="store-cart__subtotal">
                 {{ __('storefront.checkout.total') }}
                 <strong>{{ \App\Support\MoneyFormatter::format($orderTotal ?? $subtotal) }}</strong>
             </p>
+            @if ($creditTotal?->amount > 0)
+                <p class="store-cart__subtotal">
+                    {{ __('storefront.checkout.credit_applied') }}
+                    <strong>−{{ \App\Support\MoneyFormatter::format($creditTotal) }}</strong>
+                </p>
+                <p class="store-cart__subtotal">
+                    {{ __('storefront.checkout.amount_due') }}
+                    <strong>{{ \App\Support\MoneyFormatter::format($orderTotal->subtract($creditTotal)) }}</strong>
+                </p>
+            @endif
         </aside>
     </div>
 </div>
