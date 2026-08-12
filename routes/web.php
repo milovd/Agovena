@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Storefront\SearchSuggestController;
+use App\Http\Middleware\SyncStaffPermissions;
 use App\Livewire\Admin\Appearance\Customize as AppearanceCustomize;
 use App\Livewire\Admin\Appearance\ThemesIndex as AppearanceThemes;
 use App\Livewire\Admin\Auth\Login;
@@ -44,7 +45,7 @@ Route::middleware('guest:staff')->group(function (): void {
     Route::get('/admin/login', Login::class)->name('admin.login');
 });
 
-Route::middleware('auth:staff')->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/products', ProductsIndex::class)->name('products.index');
     Route::get('/products/create', ProductsCreate::class)->name('products.create');

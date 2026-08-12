@@ -37,7 +37,7 @@
                         @foreach ($allPermissions as $ability => $label)
                             <label class="ag-check" wire:key="perm-{{ $ability }}">
                                 <input type="checkbox" value="{{ $ability }}" wire:model="selectedPermissions">
-                                <span>{{ __('admin.permissions.'.$ability) }}</span>
+                                <span>{{ __($label) }}</span>
                             </label>
                         @endforeach
                     </div>

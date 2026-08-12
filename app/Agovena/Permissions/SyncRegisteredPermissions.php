@@ -6,28 +6,39 @@ namespace App\Agovena\Permissions;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\InMemoryAdminRegistrar;
+use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
 final class SyncRegisteredPermissions
 {
+    private const FINGERPRINT_CACHE_KEY = 'agovena.registered_permissions.fingerprint';
+
     public function __construct(private readonly AdminRegistrar $admin) {}
 
-    public function __invoke(): void
+    public function __invoke(bool $force = false): void
     {
         /** @var InMemoryAdminRegistrar $admin */
         $admin = $this->admin;
-        $names = [];
-
-        foreach ($admin->permissions() as $name => $label) {
-            Permission::findOrCreate($name, 'staff');
-            $names[] = $name;
-        }
+        $names = array_keys($admin->permissions());
+        sort($names);
+        $fingerprint = hash('sha256', implode("\0", $names));
 
         $owner = Role::findOrCreate('owner', 'staff');
+        $ownerOutOfDate = $owner->permissions()->count() !== count($names);
+
+        if (! $force && ! $ownerOutOfDate && Cache::get(self::FINGERPRINT_CACHE_KEY) === $fingerprint) {
+            return;
+        }
+
+        foreach ($names as $name) {
+            Permission::findOrCreate($name, 'staff');
+        }
+
         $owner->syncPermissions($names);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+        Cache::forever(self::FINGERPRINT_CACHE_KEY, $fingerprint);
     }
 }

@@ -253,35 +253,39 @@ class AgovenaServiceProvider extends ServiceProvider
 
     private function registerPermissions(AdminRegistrar $admin): void
     {
-        $admin->permission('dashboard.view', 'View dashboard');
-        $admin->permission('products.view', 'View products');
-        $admin->permission('products.create', 'Create products');
-        $admin->permission('products.update', 'Update products');
-        $admin->permission('products.delete', 'Delete products');
-        $admin->permission('categories.view', 'View categories');
-        $admin->permission('categories.create', 'Create categories');
-        $admin->permission('categories.update', 'Update categories');
-        $admin->permission('categories.delete', 'Delete categories');
-        $admin->permission('orders.view', 'View orders');
-        $admin->permission('payments.record', 'Record payments');
-        $admin->permission('settings.view', 'View settings');
-        $admin->permission('settings.update', 'Update settings');
-        $admin->permission('currencies.view', 'View currencies');
-        $admin->permission('currencies.create', 'Create currencies');
-        $admin->permission('currencies.update', 'Update currencies');
-        $admin->permission('users.view', 'View users');
-        $admin->permission('users.create', 'Create users');
-        $admin->permission('users.update', 'Update users');
-        $admin->permission('roles.view', 'View roles');
-        $admin->permission('roles.create', 'Create roles');
-        $admin->permission('roles.update', 'Update roles');
-        $admin->permission('roles.delete', 'Delete roles');
-        $admin->permission('theme.view', 'View themes');
-        $admin->permission('theme.manage', 'Manage themes');
-        $admin->permission('pages.view', 'View pages');
-        $admin->permission('pages.manage', 'Manage pages');
-        $admin->permission('navigation.view', 'View navigation');
-        $admin->permission('navigation.manage', 'Manage navigation');
+        foreach ([
+            'dashboard.view',
+            'products.view',
+            'products.create',
+            'products.update',
+            'products.delete',
+            'categories.view',
+            'categories.create',
+            'categories.update',
+            'categories.delete',
+            'orders.view',
+            'payments.record',
+            'settings.view',
+            'settings.update',
+            'currencies.view',
+            'currencies.create',
+            'currencies.update',
+            'users.view',
+            'users.create',
+            'users.update',
+            'roles.view',
+            'roles.create',
+            'roles.update',
+            'roles.delete',
+            'theme.view',
+            'theme.manage',
+            'pages.view',
+            'pages.manage',
+            'navigation.view',
+            'navigation.manage',
+        ] as $ability) {
+            $admin->permission($ability, 'admin.permissions.'.$ability);
+        }
     }
 
     private function registerSettings(AdminRegistrar $admin): void

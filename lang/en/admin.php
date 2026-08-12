@@ -96,6 +96,8 @@ return [
         'navigation.manage' => 'Manage navigation',
     ],
 
+    'permissions_synced' => 'Registered permissions synced to the owner role.',
+
     'settings' => [
         'locale_help' => 'Applies to Admin and the storefront. Add more languages under lang/{code}/ and list them in config/agovena.php.',
         'title' => 'Settings',

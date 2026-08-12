@@ -96,6 +96,8 @@ return [
         'navigation.manage' => 'Navigatie beheren',
     ],
 
+    'permissions_synced' => 'Geregistreerde rechten gesynchroniseerd naar de owner-rol.',
+
     'settings' => [
         'locale_help' => 'Geldt voor Admin en de webshop. Voeg talen toe onder lang/{code}/ en vermeld ze in config/agovena.php.',
         'title' => 'Instellingen',
