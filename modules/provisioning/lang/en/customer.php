@@ -11,4 +11,5 @@ return [
     'overview_hint' => 'Active hosted services',
     'status' => 'Status',
     'reference' => 'Reference',
+    'action_completed' => 'Service action completed.',
 ];

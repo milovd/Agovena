@@ -15,6 +15,7 @@ use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Provisioning\RunProvisionerAction;
 use App\Models\Customer;
 use App\Models\Product;
 use Livewire\Livewire;
@@ -134,6 +135,28 @@ test('customer portal lists service instances', function () {
         ->assertSee($product->name)
         ->assertSee('portal-ref')
         ->assertSee(__('provisioning::status.active'));
+});
+
+test('manual provisioner exposes and safely runs its proof action', function () {
+    enableProvisioningModule();
+    $customer = Customer::factory()->create();
+    $product = makeProvisionableProduct(['provider_key' => 'manual']);
+
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+        'customer_id' => $customer->id,
+        'billing' => billingForProvisioning(),
+    ]);
+    app(RecordManualPayment::class)->handle($order, $this->createStaff());
+    $instance = ServiceInstance::query()->firstOrFail();
+
+    app(RunProvisionerAction::class)->handle($customer, $instance->id, 'refresh_status');
+
+    Livewire::actingAs($customer, 'customer')
+        ->test(ServicesIndex::class)
+        ->assertSee(__('notifications.provisioning.refresh_status'));
 });
 
 test('provisioning module disable preserves service instances', function () {

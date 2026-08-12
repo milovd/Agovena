@@ -11,6 +11,11 @@ final class ProvisionerRegistry
     /** @var array<string, Provisioner> */
     private array $items = [];
 
+    public function __construct()
+    {
+        $this->register(new ManualProvisioner);
+    }
+
     public function register(Provisioner $provisioner): void
     {
         $this->items[$provisioner->id()] = $provisioner;
@@ -30,5 +35,6 @@ final class ProvisionerRegistry
     public function clear(): void
     {
         $this->items = [];
+        $this->register(new ManualProvisioner);
     }
 }

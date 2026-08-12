@@ -11,4 +11,5 @@ return [
     'overview_hint' => 'Actieve gehoste services',
     'status' => 'Status',
     'reference' => 'Referentie',
+    'action_completed' => 'Serviceactie voltooid.',
 ];
