@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
@@ -23,9 +24,9 @@ use Spatie\Permission\Traits\HasRoles;
  * @property int $id
  * @property string $name
  * @property string $email
- * @property \Illuminate\Support\Carbon|null $email_verified_at
- * @property \Illuminate\Support\Carbon|null $anonymized_at
- * @property \Illuminate\Support\Carbon|null $deletion_requested_at
+ * @property Carbon|null $email_verified_at
+ * @property Carbon|null $anonymized_at
+ * @property Carbon|null $deletion_requested_at
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
@@ -83,18 +84,27 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function ensureCustomer(): Customer
     {
-        $existing = $this->customer;
+        if ($this->relationLoaded('customer')) {
+            $loaded = $this->getRelation('customer');
+            if ($loaded instanceof Customer) {
+                return $loaded;
+            }
+        }
+
+        $existing = $this->customer()->first();
         if ($existing !== null) {
+            $this->setRelation('customer', $existing);
+
             return $existing;
         }
 
-        return $this->customer()->firstOrCreate(
-            ['user_id' => $this->id],
-            [
-                'name' => $this->name,
-                'email' => $this->email,
-            ],
-        );
+        $created = $this->customer()->create([
+            'name' => $this->name,
+            'email' => $this->email,
+        ]);
+        $this->setRelation('customer', $created);
+
+        return $created;
     }
 
     public function canAccessAdmin(): bool

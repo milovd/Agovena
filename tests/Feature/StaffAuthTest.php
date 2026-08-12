@@ -51,3 +51,36 @@ test('authenticated customer without admin permission is forbidden from admin', 
         ->get('/admin')
         ->assertForbidden();
 });
+
+test('remember me on the unified guard still authenticates after login', function () {
+    $user = User::factory()->create([
+        'email' => 'remember@example.com',
+        'password' => 'password',
+    ]);
+
+    Livewire::test(Login::class)
+        ->set('email', 'remember@example.com')
+        ->set('password', 'password')
+        ->set('remember', true)
+        ->call('login');
+
+    $this->assertAuthenticatedAs($user);
+    expect($user->fresh()?->remember_token)->not->toBeNull();
+});
+
+test('auth pages use the storefront form design system', function () {
+    $this->get('/login')
+        ->assertOk()
+        ->assertSee('store-auth', false)
+        ->assertSee('store-btn--primary', false);
+
+    $this->get('/register')
+        ->assertOk()
+        ->assertSee('store-auth', false)
+        ->assertSee('store-btn--primary', false);
+
+    $this->get('/forgot-password')
+        ->assertOk()
+        ->assertSee('store-auth', false)
+        ->assertSee('store-btn--primary', false);
+});

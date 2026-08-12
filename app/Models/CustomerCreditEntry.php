@@ -44,7 +44,7 @@ class CustomerCreditEntry extends Model
 
     public function staffUser(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'staff_user_id');
     }
 
     public function reference(): MorphTo

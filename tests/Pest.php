@@ -2,8 +2,10 @@
 
 use App\Agovena\Installation\InstallationState;
 use Tests\TestCase;
+use Tests\UpgradeTestCase;
 
 pest()->extend(TestCase::class)->in('Feature', 'Unit');
+pest()->extend(UpgradeTestCase::class)->in('Upgrade');
 
 pest()->beforeEach(function (): void {
     if (! $this->app->runningUnitTests()) {
