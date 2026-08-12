@@ -12,5 +12,6 @@ final readonly class RequirementCheck
         public bool $passed,
         public bool $required = true,
         public ?string $detail = null,
+        public ?string $technicalDetail = null,
     ) {}
 }

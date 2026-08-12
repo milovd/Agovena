@@ -36,7 +36,8 @@ test('installer welcome is available when not installed', function () {
         ->assertSee(__('installer.welcome.heading'), false)
         ->assertSee(__('installer.welcome.ready_title'), false)
         ->assertDontSee(__('installer.checks.ext_openssl'), false)
-        ->assertSee(asset('vendor/agovena/logo.png'), false);
+        ->assertSee(asset('vendor/agovena/logo.png'), false)
+        ->assertDontSee('install-welcome__logo', false);
 });
 
 test('application routes redirect to installer before installation', function () {

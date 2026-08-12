@@ -54,6 +54,7 @@ return [
         'blocked_title' => 'Je server heeft aandacht nodig',
         'blocked_text' => 'Los de onderstaande problemen op en vernieuw daarna deze pagina.',
         'warnings_summary' => ':count optionele waarschuwing(en)',
+        'technical_details' => 'Technische details',
         'doctor_hint' => 'Voor de volledige technische checklist: php artisan agovena:doctor.',
     ],
 
@@ -119,7 +120,9 @@ return [
         'bootstrap_cache_writable' => 'Bootstrap-cache schrijfbaar',
         'database' => 'Databaseverbinding',
         'migrations' => 'Vereiste migraties toegepast',
-        'storage_link' => 'Publieke storage-link',
+        'storage_link' => 'Geüploade afbeeldingen worden mogelijk niet getoond',
+        'storage_link_message' => 'Winkellogo’s en andere openbare afbeeldingen verschijnen mogelijk niet totdat openbare bestanden op deze server beschikbaar zijn.',
+        'storage_link_technical' => 'Kon de public/storage-koppeling naar storage/app/public niet maken. Voer op de server uit: php artisan storage:link',
         'themes' => 'Thema-beschikbaarheid',
     ],
 ];

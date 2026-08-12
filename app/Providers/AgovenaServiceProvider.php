@@ -15,6 +15,7 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\SessionCartRepository;
 use App\Agovena\Catalog\ListStorefrontCategories;
 use App\Agovena\Content\MenuResolver;
+use App\Agovena\Installation\EnsurePublicStorageLink;
 use App\Agovena\Installation\InstallAgovena;
 use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
@@ -34,6 +35,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(CurrencyCatalog::class);
         $this->app->singleton(InstallationState::class);
         $this->app->singleton(InstallationRequirements::class);
+        $this->app->singleton(EnsurePublicStorageLink::class);
         $this->app->singleton(InstallAgovena::class);
         $this->app->bind(CartRepository::class, SessionCartRepository::class);
 

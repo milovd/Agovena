@@ -163,8 +163,9 @@ final class InstallCommand extends Command
     private function formatCheck(RequirementCheck $check): string
     {
         $status = $check->passed ? '<info>PASS</info>' : ($check->required ? '<error>FAIL</error>' : '<comment>WARN</comment>');
-        $detail = $check->detail !== null ? " — {$check->detail}" : '';
+        $detail = $check->technicalDetail ?? $check->detail;
+        $suffix = $detail !== null ? " — {$detail}" : '';
 
-        return "{$status}  {$check->id}{$detail}";
+        return "{$status}  {$check->id}{$suffix}";
     }
 }

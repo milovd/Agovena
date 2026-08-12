@@ -192,10 +192,6 @@
   margin-bottom: var(--ag-space-5);
 }
 
-.install-welcome__logo {
-  margin: 0 auto var(--ag-space-4);
-}
-
 .install-welcome__doctor {
   margin: var(--ag-space-4) 0 0;
   color: var(--ag-color-text-muted);
@@ -262,15 +258,71 @@
   padding: var(--ag-space-3) var(--ag-space-4);
 }
 
-.install-warnings summary {
+.install-warnings > summary {
   cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
   font-weight: 600;
   font-size: 0.875rem;
   color: #b45309;
 }
 
-.install-warnings[open] summary {
+.install-warnings > summary::-webkit-details-marker {
+  display: none;
+}
+
+.install-warnings__label {
+  flex: 1;
+}
+
+.install-warnings__chevron {
+  display: inline-flex;
+  color: currentColor;
+  transition: transform var(--ag-transition);
+}
+
+.install-warnings[open] > summary .install-warnings__chevron {
+  transform: rotate(180deg);
+}
+
+.install-warnings[open] > summary {
   margin-bottom: var(--ag-space-3);
+}
+
+.install-warnings__technical {
+  margin-top: var(--ag-space-2);
+}
+
+.install-warnings__technical > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ag-color-text-muted);
+}
+
+.install-warnings__technical > summary::-webkit-details-marker {
+  display: none;
+}
+
+.install-warnings__technical > summary::after {
+  content: "";
+  display: inline-block;
+  width: 0.4rem;
+  height: 0.4rem;
+  margin-left: 0.4rem;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  vertical-align: 0.15rem;
+  transition: transform var(--ag-transition);
+}
+
+.install-warnings__technical[open] > summary::after {
+  transform: rotate(225deg);
+  vertical-align: -0.05rem;
 }
 
 .install-checks {

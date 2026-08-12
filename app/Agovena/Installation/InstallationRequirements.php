@@ -11,14 +11,17 @@ use Throwable;
 
 class InstallationRequirements
 {
-    public function __construct(private readonly ThemeManager $themes) {}
+    public function __construct(
+        private readonly ThemeManager $themes,
+        private readonly EnsurePublicStorageLink $storageLink,
+    ) {}
 
     /**
      * @return list<RequirementCheck>
      */
     public function checks(): array
     {
-        $checks = [
+        return [
             $this->check('php_version', 'installer.checks.php_version', version_compare(PHP_VERSION, '8.3.0', '>='), true, 'PHP '.PHP_VERSION),
             $this->check('ext_openssl', 'installer.checks.ext_openssl', extension_loaded('openssl')),
             $this->check('ext_pdo', 'installer.checks.ext_pdo', extension_loaded('pdo')),
@@ -36,8 +39,6 @@ class InstallationRequirements
             $this->storageLinkCheck(),
             $this->themesCheck(),
         ];
-
-        return $checks;
     }
 
     public function ready(): bool
@@ -100,14 +101,26 @@ class InstallationRequirements
 
     private function storageLinkCheck(): RequirementCheck
     {
-        $linked = is_link(public_path('storage')) || is_dir(public_path('storage'));
+        $ok = $this->storageLink->ensure();
+
+        if ($ok) {
+            return $this->check(
+                'storage_link',
+                'installer.checks.storage_link',
+                true,
+                false,
+                null,
+                'public/storage → storage/app/public',
+            );
+        }
 
         return $this->check(
             'storage_link',
             'installer.checks.storage_link',
-            $linked,
             false,
-            $linked ? null : 'Optional: php artisan storage:link for public branding uploads',
+            false,
+            (string) __('installer.checks.storage_link_message'),
+            (string) __('installer.checks.storage_link_technical'),
         );
     }
 
@@ -129,8 +142,14 @@ class InstallationRequirements
         }
     }
 
-    private function check(string $id, string $label, bool $passed, bool $required = true, ?string $detail = null): RequirementCheck
-    {
-        return new RequirementCheck($id, $label, $passed, $required, $detail);
+    private function check(
+        string $id,
+        string $label,
+        bool $passed,
+        bool $required = true,
+        ?string $detail = null,
+        ?string $technicalDetail = null,
+    ): RequirementCheck {
+        return new RequirementCheck($id, $label, $passed, $required, $detail, $technicalDetail);
     }
 }

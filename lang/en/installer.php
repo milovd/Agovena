@@ -54,6 +54,7 @@ return [
         'blocked_title' => 'Your server needs attention',
         'blocked_text' => 'Fix the issues below, then refresh this page to continue.',
         'warnings_summary' => ':count optional warning(s)',
+        'technical_details' => 'Technical details',
         'doctor_hint' => 'For a full technical checklist, run php artisan agovena:doctor.',
     ],
 
@@ -119,7 +120,9 @@ return [
         'bootstrap_cache_writable' => 'Bootstrap cache writable',
         'database' => 'Database connection',
         'migrations' => 'Required migrations applied',
-        'storage_link' => 'Public storage link',
+        'storage_link' => 'Uploaded images may not display',
+        'storage_link_message' => 'Store logos and other public images may not appear until public file access is available on this server.',
+        'storage_link_technical' => 'Could not create the public/storage link to storage/app/public. On the server, run: php artisan storage:link',
         'themes' => 'Theme availability',
     ],
 ];

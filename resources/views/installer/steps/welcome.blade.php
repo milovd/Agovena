@@ -6,7 +6,6 @@
 
 <div class="install-welcome">
     <div class="install-welcome__hero">
-        <x-ag.logo variant="hero" class="install-welcome__logo" :alt="__('installer.brand_alt')" />
         <h1 id="install-step-heading" class="install-panel__title">{{ __('installer.welcome.heading') }}</h1>
         <p class="install-panel__lede">{{ __('installer.welcome.lede') }}</p>
     </div>
@@ -45,7 +44,12 @@
 
     @if ($warnings !== [])
         <details class="install-warnings">
-            <summary>{{ __('installer.welcome.warnings_summary', ['count' => count($warnings)]) }}</summary>
+            <summary>
+                <span class="install-warnings__label">{{ __('installer.welcome.warnings_summary', ['count' => count($warnings)]) }}</span>
+                <span class="install-warnings__chevron" aria-hidden="true">
+                    <x-ag.icon name="chevron-down" :size="16" />
+                </span>
+            </summary>
             <ul class="install-checks install-checks--compact" role="list">
                 @foreach ($warnings as $check)
                     <li class="install-checks__item is-warn">
@@ -54,6 +58,12 @@
                             <p class="install-checks__label">{{ __($check->label) }}</p>
                             @if ($check->detail)
                                 <p class="install-checks__detail">{{ $check->detail }}</p>
+                            @endif
+                            @if ($check->technicalDetail)
+                                <details class="install-warnings__technical">
+                                    <summary>{{ __('installer.welcome.technical_details') }}</summary>
+                                    <p class="install-checks__detail">{{ $check->technicalDetail }}</p>
+                                </details>
                             @endif
                         </div>
                     </li>
