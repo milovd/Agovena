@@ -38,3 +38,45 @@
   background: var(--ag-color-danger);
   color: #fff;
 }
+
+.ag-btn--danger:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.ag-btn--sm {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.8125rem;
+}
+
+.ag-icon-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ag-radius-md);
+  background: transparent;
+  color: var(--ag-color-text-muted);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--ag-transition), color var(--ag-transition), border-color var(--ag-transition);
+}
+
+.ag-icon-btn:hover {
+  background: var(--ag-color-surface-muted);
+  color: var(--ag-color-text);
+}
+
+.ag-icon-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-icon-btn--danger:hover {
+  background: rgb(220 38 38 / 0.1);
+  color: var(--ag-color-danger);
+}

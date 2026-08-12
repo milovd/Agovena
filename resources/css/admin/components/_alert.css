@@ -8,6 +8,13 @@
 .ag-alert--success {
   border-color: rgb(5 150 105 / 0.35);
   background: rgb(5 150 105 / 0.08);
+  color: var(--ag-color-success);
+}
+
+.ag-alert--danger {
+  border-color: rgb(220 38 38 / 0.35);
+  background: rgb(220 38 38 / 0.08);
+  color: var(--ag-color-danger);
 }
 
 .ag-alert__title {

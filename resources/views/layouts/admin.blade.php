@@ -125,6 +125,9 @@
                 @if (session('status'))
                     <div class="ag-alert ag-alert--success" role="status">{{ session('status') }}</div>
                 @endif
+                @if (session('error'))
+                    <div class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</div>
+                @endif
                 {{ $slot }}
             </main>
         </div>
