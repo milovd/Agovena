@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 return [
     'title' => 'Agovena installeren',
+    'brand_alt' => 'Agovena',
     'tagline' => 'Self-hosted commerce-installatie',
     'footer' => 'Agovena-installer — configureer je winkel één keer, beheer daarna in Admin.',
     'progress_aria' => 'Installatievoortgang',
@@ -39,15 +40,21 @@ return [
         'locale' => 'Standaardtaal',
         'timezone' => 'Tijdzone',
         'currency' => 'Basisvaluta',
-        'logo' => 'Logo (optioneel)',
+        'logo' => 'Winkellogo (optioneel)',
         'favicon' => 'Favicon (optioneel)',
-        'use_logo_as_favicon' => 'Gebruik logo als favicon',
+        'use_logo_as_favicon' => 'Gebruik winkellogo als favicon',
         'theme' => 'Thema',
     ],
 
     'welcome' => [
         'heading' => 'Welkom bij Agovena',
-        'lede' => 'We maken je eigenaarsaccount en de minimale winkelconfiguratie. Databasegegevens en serverinrichting blijven in je deployment-omgeving.',
+        'lede' => 'Laten we je winkel klaarzetten.',
+        'ready_title' => 'Je server is klaar voor Agovena',
+        'ready_text' => 'De vereiste systeemcontroles zijn geslaagd. Ga verder om je eigenaarsaccount en winkel aan te maken.',
+        'blocked_title' => 'Je server heeft aandacht nodig',
+        'blocked_text' => 'Los de onderstaande problemen op en vernieuw daarna deze pagina.',
+        'warnings_summary' => ':count optionele waarschuwing(en)',
+        'doctor_hint' => 'Voor de volledige technische checklist: php artisan agovena:doctor.',
     ],
 
     'owner' => [
@@ -68,21 +75,29 @@ return [
     ],
 
     'branding' => [
-        'heading' => 'Branding',
-        'lede' => 'Optioneel. Upload nu een logo, of sla over en voeg branding later toe via Admin → Instellingen.',
+        'heading' => 'Winkelbranding',
+        'lede' => 'Optioneel. Voeg nu je winkellogo toe, of sla over en configureer branding later in Admin.',
+        'product_vs_store' => 'Het Agovena-merk hierboven is de productidentiteit. Upload hier het logo van je winkel.',
+        'logo_hint' => 'PNG, JPG, WebP of GIF tot 2 MB.',
+        'favicon_hint' => 'Optioneel apart favicon-bestand.',
         'uploading' => 'Uploaden…',
     ],
 
     'theme' => [
-        'heading' => 'Bevestig thema',
-        'lede' => 'Activeer een thema voor de storefront. Je kunt het na installatie aanpassen.',
-        'customize_later' => 'Uiterlijk, kleuren en homepage-secties kun je na de setup in Admin aanpassen.',
+        'heading' => 'Storefront-thema',
+        'lede' => 'Bevestig het thema voor je storefront. Je kunt het na installatie aanpassen.',
+        'selected' => 'Geselecteerd',
+        'customize_later' => 'Je kunt later thema’s installeren en wisselen. Uiterlijk kun je na de setup in Admin aanpassen.',
     ],
 
     'complete' => [
         'eyebrow' => 'Installatie voltooid',
-        'heading' => 'Je winkel is klaar',
+        'heading' => 'Je Agovena-winkel is klaar',
         'lede' => ':store is geïnstalleerd. Log in op Admin om catalogus, bestellingen en instellingen te beheren.',
+        'summary_store' => 'Winkel',
+        'summary_locale' => 'Taal',
+        'summary_currency' => 'Valuta',
+        'summary_theme' => 'Thema',
     ],
 
     'errors' => [

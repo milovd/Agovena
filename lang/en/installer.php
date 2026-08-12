@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 return [
     'title' => 'Install Agovena',
+    'brand_alt' => 'Agovena',
     'tagline' => 'Self-hosted commerce setup',
     'footer' => 'Agovena installer — configure your store once, then manage it in Admin.',
     'progress_aria' => 'Installation progress',
@@ -39,15 +40,21 @@ return [
         'locale' => 'Default language',
         'timezone' => 'Timezone',
         'currency' => 'Base currency',
-        'logo' => 'Logo (optional)',
+        'logo' => 'Store logo (optional)',
         'favicon' => 'Favicon (optional)',
-        'use_logo_as_favicon' => 'Use logo as favicon',
+        'use_logo_as_favicon' => 'Use store logo as favicon',
         'theme' => 'Theme',
     ],
 
     'welcome' => [
         'heading' => 'Welcome to Agovena',
-        'lede' => 'We will create your owner account and the minimum store configuration. Database credentials and server provisioning stay in your deployment environment.',
+        'lede' => 'Let’s get your store ready.',
+        'ready_title' => 'Your server is ready for Agovena',
+        'ready_text' => 'Required system checks passed. Continue to create your owner account and store.',
+        'blocked_title' => 'Your server needs attention',
+        'blocked_text' => 'Fix the issues below, then refresh this page to continue.',
+        'warnings_summary' => ':count optional warning(s)',
+        'doctor_hint' => 'For a full technical checklist, run php artisan agovena:doctor.',
     ],
 
     'owner' => [
@@ -68,21 +75,29 @@ return [
     ],
 
     'branding' => [
-        'heading' => 'Branding',
-        'lede' => 'Optional. Upload a logo now, or skip and add branding later in Admin → Settings.',
+        'heading' => 'Store branding',
+        'lede' => 'Optional. Add your store logo now, or skip and configure branding later in Admin.',
+        'product_vs_store' => 'The Agovena mark above is the product identity. Upload your merchant store logo here.',
+        'logo_hint' => 'PNG, JPG, WebP or GIF up to 2 MB.',
+        'favicon_hint' => 'Optional separate favicon image.',
         'uploading' => 'Uploading…',
     ],
 
     'theme' => [
-        'heading' => 'Confirm Theme',
-        'lede' => 'Activate a Theme for the storefront. You can customize it after installation.',
-        'customize_later' => 'Appearance, colors, and homepage sections can be customized in Admin after setup.',
+        'heading' => 'Storefront Theme',
+        'lede' => 'Confirm the Theme for your storefront. You can customize it after installation.',
+        'selected' => 'Selected',
+        'customize_later' => 'You can install and change Themes later. Appearance can be customized in Admin after setup.',
     ],
 
     'complete' => [
         'eyebrow' => 'Installation complete',
-        'heading' => 'Your store is ready',
+        'heading' => 'Your Agovena store is ready',
         'lede' => ':store is installed. Sign in to Admin to manage catalog, orders, and settings.',
+        'summary_store' => 'Store',
+        'summary_locale' => 'Language',
+        'summary_currency' => 'Currency',
+        'summary_theme' => 'Theme',
     ],
 
     'errors' => [
