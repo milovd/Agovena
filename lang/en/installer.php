@@ -6,7 +6,7 @@ return [
     'title' => 'Install Agovena',
     'brand_alt' => 'Agovena',
     'tagline' => 'Self-hosted commerce setup',
-    'footer' => 'Agovena installer — configure your store once, then manage it in Admin.',
+    'footer' => 'Agovena installer. Configure your store once, then manage it in Admin.',
     'progress_aria' => 'Installation progress',
     'progress_status' => 'Step :current of :total',
 
