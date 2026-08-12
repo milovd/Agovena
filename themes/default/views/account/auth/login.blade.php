@@ -19,17 +19,17 @@
             <span>{{ __('customer.auth.remember') }}</span>
         </label>
 
-        <button class="store-btn store-btn--primary" type="submit">{{ __('customer.auth.sign_in') }}</button>
+        <button class="store-btn store-btn--primary store-btn--block" type="submit">{{ __('customer.auth.sign_in') }}</button>
     </form>
 
     <p class="store-auth__meta">
-        <a href="{{ route('password.request') }}">{{ __('customer.auth.forgot_link') }}</a>
+        <a class="store-auth__link" href="{{ route('password.request') }}">{{ __('customer.auth.forgot_link') }}</a>
     </p>
 
     @if ($registrationEnabled)
         <p class="store-auth__meta">
             {{ __('customer.auth.no_account') }}
-            <a href="{{ route('register') }}">{{ __('customer.auth.register_link') }}</a>
+            <a class="store-auth__link" href="{{ route('register') }}">{{ __('customer.auth.register_link') }}</a>
         </p>
     @endif
 </section>

@@ -3,10 +3,10 @@
     <p class="store-auth__lede">{{ __('customer.auth.verify_text') }}</p>
 
     <form class="store-auth__form" wire:submit="resend">
-        <button class="store-btn store-btn--primary" type="submit">{{ __('customer.auth.resend_verification') }}</button>
+        <button class="store-btn store-btn--primary store-btn--block" type="submit">{{ __('customer.auth.resend_verification') }}</button>
     </form>
 
     <p class="store-auth__meta">
-        <a href="{{ route('customer.logout') }}">{{ __('customer.auth.logout') }}</a>
+        <a class="store-auth__link" href="{{ route('customer.logout') }}">{{ __('customer.auth.logout') }}</a>
     </p>
 </section>

@@ -12,10 +12,10 @@
             @error('email') <p class="store-field__error">{{ $message }}</p> @enderror
         </div>
 
-        <button class="store-btn store-btn--primary" type="submit">{{ __('customer.auth.send_reset_link') }}</button>
+        <button class="store-btn store-btn--primary store-btn--block" type="submit">{{ __('customer.auth.send_reset_link') }}</button>
     </form>
 
     <p class="store-auth__meta">
-        <a href="{{ route('login') }}">{{ __('customer.auth.login_link') }}</a>
+        <a class="store-auth__link" href="{{ route('login') }}">{{ __('customer.auth.login_link') }}</a>
     </p>
 </section>

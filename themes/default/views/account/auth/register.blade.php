@@ -25,11 +25,11 @@
             <input id="customer-password-confirmation" class="store-input" type="password" wire:model="password_confirmation" autocomplete="new-password" required>
         </div>
 
-        <button class="store-btn store-btn--primary" type="submit">{{ __('customer.auth.create_account') }}</button>
+        <button class="store-btn store-btn--primary store-btn--block" type="submit">{{ __('customer.auth.create_account') }}</button>
     </form>
 
     <p class="store-auth__meta">
         {{ __('customer.auth.have_account') }}
-        <a href="{{ route('login') }}">{{ __('customer.auth.login_link') }}</a>
+        <a class="store-auth__link" href="{{ route('login') }}">{{ __('customer.auth.login_link') }}</a>
     </p>
 </section>

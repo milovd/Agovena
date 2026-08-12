@@ -345,7 +345,7 @@
                     @else
                         <div class="store-header__auth">
                             <a class="store-header__auth-link" href="{{ route('login') }}">{{ __('storefront.nav.login') }}</a>
-                            <a class="store-header__auth-link store-header__auth-link--register" href="{{ route('register') }}">{{ __('storefront.nav.register') }}</a>
+                            <a class="store-header__auth-register" href="{{ route('register') }}">{{ __('storefront.nav.register') }}</a>
                         </div>
                     @endauth
                 @endif
@@ -440,8 +440,10 @@
                         @endif
                         <a class="store-drawer__link store-drawer__link--danger" href="{{ route('customer.logout') }}" @click="navOpen = false">{{ __('storefront.nav.logout') }}</a>
                     @else
-                        <a class="store-drawer__link" href="{{ route('login') }}" @click="navOpen = false">{{ __('storefront.nav.login') }}</a>
-                        <a class="store-drawer__link" href="{{ route('register') }}" @click="navOpen = false">{{ __('storefront.nav.register') }}</a>
+                        <div class="store-drawer__auth">
+                            <a class="store-btn store-btn--ghost store-drawer__auth-login" href="{{ route('login') }}" @click="navOpen = false">{{ __('storefront.nav.login') }}</a>
+                            <a class="store-btn store-btn--primary store-drawer__auth-register" href="{{ route('register') }}" @click="navOpen = false">{{ __('storefront.nav.register') }}</a>
+                        </div>
                     @endauth
                 @endif
             </nav>

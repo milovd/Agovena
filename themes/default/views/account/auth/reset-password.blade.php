@@ -19,6 +19,6 @@
             <input id="customer-password-confirmation" class="store-input" type="password" wire:model="password_confirmation" autocomplete="new-password" required>
         </div>
 
-        <button class="store-btn store-btn--primary" type="submit">{{ __('customer.auth.reset_password') }}</button>
+        <button class="store-btn store-btn--primary store-btn--block" type="submit">{{ __('customer.auth.reset_password') }}</button>
     </form>
 </section>
