@@ -24,7 +24,7 @@ test('staff with permission can create and publish a product', function () {
         ->set('sku', 'SKU-STARTER-1')
         ->set('description', 'A generic product')
         ->set('status', 'active')
-        ->set('price_amount', '2500')
+        ->set('price', '25.00')
         ->set('currency', 'EUR')
         ->call('save')
         ->assertHasNoErrors();
@@ -52,7 +52,7 @@ test('staff can update product price without affecting historical orders later',
     $this->actingAs($staff, 'staff');
 
     Livewire::test(Edit::class, ['product' => $product])
-        ->set('price_amount', '9999')
+        ->set('price', '99,99')
         ->call('save')
         ->assertHasNoErrors();
 

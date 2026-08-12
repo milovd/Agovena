@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Support\MoneyFormatter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -49,7 +50,7 @@ final class Edit extends Component
 
     public string $status = 'draft';
 
-    public string $price_amount = '0';
+    public string $price = '0.00';
 
     public string $currency = 'EUR';
 
@@ -73,7 +74,7 @@ final class Edit extends Component
         $this->show_details = (bool) $product->show_details;
         $this->show_specifications = (bool) $product->show_specifications;
         $this->status = $product->status->value;
-        $this->price_amount = (string) $product->price_amount;
+        $this->price = MoneyFormatter::majorInputFromMinor($product->price_amount, $product->currency);
         $this->currency = $product->currency;
         $this->category_id = $product->category_id;
 
@@ -222,10 +223,18 @@ final class Edit extends Component
             'show_details' => ['boolean'],
             'show_specifications' => ['boolean'],
             'status' => ['required', Rule::enum(ProductStatus::class)],
-            'price_amount' => ['required', 'integer', 'min:0'],
+            'price' => ['required', 'string', 'max:20'],
             'currency' => ['required', $currencyRule],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
         ]);
+
+        try {
+            $priceAmount = MoneyFormatter::minorFromMajorInput($data['price'], $data['currency']);
+        } catch (\InvalidArgumentException $e) {
+            throw ValidationException::withMessages([
+                'price' => $e->getMessage(),
+            ]);
+        }
 
         $update->handle($this->product, [
             'name' => $data['name'],
@@ -237,7 +246,7 @@ final class Edit extends Component
             'show_details' => (bool) $data['show_details'],
             'show_specifications' => (bool) $data['show_specifications'],
             'status' => $data['status'],
-            'price_amount' => (int) $data['price_amount'],
+            'price_amount' => $priceAmount,
             'currency' => $data['currency'],
             'category_id' => $data['category_id'],
         ]);

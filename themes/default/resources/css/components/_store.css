@@ -935,40 +935,19 @@ a.store-header__utility:hover {
   isolation: isolate;
   overflow: hidden;
   margin: 0 0 var(--theme-space-6);
-  padding: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 3vw, 2.5rem) clamp(2rem, 4vw, 3.25rem);
-  border-radius: 1.75rem;
-  color: #fff;
-  background:
-    radial-gradient(120% 90% at 88% 18%, color-mix(in srgb, var(--theme-color-accent) 55%, #08204d) 0%, transparent 55%),
-    radial-gradient(90% 70% at 12% 88%, color-mix(in srgb, var(--theme-color-accent) 28%, transparent) 0%, transparent 50%),
-    linear-gradient(145deg, #071833 0%, #0b2a6b 42%, color-mix(in srgb, var(--theme-color-accent) 75%, #061229) 100%);
+  padding: clamp(1.75rem, 4vw, 3rem) 0 clamp(2rem, 4vw, 3.25rem);
+  border-radius: 0;
+  color: var(--theme-color-text);
+  background: transparent;
   box-shadow: none;
   border: 0;
   display: block;
   min-height: clamp(28rem, 62vh, 36rem);
 }
 
-.store-hero__glow {
-  position: absolute;
-  inset: auto -10% -35% 35%;
-  height: 70%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--theme-color-accent) 45%, transparent), transparent 70%);
-  filter: blur(8px);
-  pointer-events: none;
-  z-index: 0;
-}
-
+.store-hero__glow,
 .store-hero__grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgb(255 255 255 / 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(255 255 255 / 0.045) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(80% 70% at 70% 40%, #000 20%, transparent 75%);
-  opacity: 0.55;
-  pointer-events: none;
-  z-index: 0;
+  display: none;
 }
 
 .store-hero__stage {
@@ -982,17 +961,20 @@ a.store-header__utility:hover {
 
 .store-hero__copy {
   min-width: 0;
-  max-width: 34rem;
+  max-width: 36rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .store-hero__brand {
-  margin: 0 0 var(--theme-space-4);
+  margin: 0;
   font-family: var(--theme-font-display);
-  font-size: clamp(2.6rem, 7vw, 4.6rem);
+  font-size: clamp(3rem, 8vw, 5rem);
   font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 0.95;
-  color: #fff;
+  letter-spacing: -0.045em;
+  line-height: 0.92;
+  color: var(--theme-color-accent);
   opacity: 0;
   transform: translateY(1.1rem);
   transition: opacity 0.55s ease, transform 0.55s ease;
@@ -1004,15 +986,16 @@ a.store-header__utility:hover {
 }
 
 .store-hero__eyebrow {
+  order: -1;
   margin: 0 0 var(--theme-space-3);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
   font-weight: 700;
-  color: rgb(255 255 255 / 0.72);
+  color: var(--theme-color-text-muted);
   opacity: 0;
   transform: translateY(0.75rem);
-  transition: opacity 0.5s ease 0.08s, transform 0.5s ease 0.08s;
+  transition: opacity 0.5s ease 0.05s, transform 0.5s ease 0.05s;
 }
 
 .store-hero.is-ready .store-hero__eyebrow {
@@ -1021,17 +1004,17 @@ a.store-header__utility:hover {
 }
 
 .store-hero__title {
-  margin: 0 0 var(--theme-space-4);
+  margin: var(--theme-space-4) 0 0;
   font-family: var(--theme-font-display);
-  font-size: clamp(1.65rem, 3.4vw, 2.55rem);
+  font-size: clamp(1.5rem, 3vw, 2.15rem);
   font-weight: 700;
-  letter-spacing: -0.035em;
-  color: #fff;
-  line-height: 1.12;
-  max-width: 16ch;
+  letter-spacing: -0.03em;
+  color: var(--theme-color-text);
+  line-height: 1.18;
+  max-width: 18ch;
   opacity: 0;
   transform: translateY(0.85rem);
-  transition: opacity 0.55s ease 0.12s, transform 0.55s ease 0.12s;
+  transition: opacity 0.55s ease 0.1s, transform 0.55s ease 0.1s;
 }
 
 .store-hero.is-ready .store-hero__title {
@@ -1040,14 +1023,14 @@ a.store-header__utility:hover {
 }
 
 .store-hero__lede {
-  margin: 0 0 var(--theme-space-6);
-  max-width: 30rem;
-  color: rgb(255 255 255 / 0.78);
+  margin: var(--theme-space-3) 0 0;
+  max-width: 32rem;
+  color: var(--theme-color-text-muted);
   font-size: 1.0625rem;
   line-height: 1.55;
   opacity: 0;
   transform: translateY(0.75rem);
-  transition: opacity 0.55s ease 0.18s, transform 0.55s ease 0.18s;
+  transition: opacity 0.55s ease 0.16s, transform 0.55s ease 0.16s;
 }
 
 .store-hero.is-ready .store-hero__lede {
@@ -1060,9 +1043,10 @@ a.store-header__utility:hover {
   flex-wrap: wrap;
   align-items: center;
   gap: var(--theme-space-3);
+  margin-top: var(--theme-space-6);
   opacity: 0;
   transform: translateY(0.7rem);
-  transition: opacity 0.55s ease 0.24s, transform 0.55s ease 0.24s;
+  transition: opacity 0.55s ease 0.22s, transform 0.55s ease 0.22s;
 }
 
 .store-hero.is-ready .store-hero__actions {
@@ -1070,35 +1054,17 @@ a.store-header__utility:hover {
   transform: none;
 }
 
-.store-btn--hero {
-  background: #fff;
-  border-color: #fff;
-  color: #0b1f4d;
-  border-radius: 999px;
+.store-btn--hero,
+.store-btn--hero-secondary {
   min-height: 2.85rem;
-  padding-inline: 1.35rem;
+  padding-inline: 1.25rem;
+  border-radius: var(--theme-radius-md);
   font-weight: 700;
+  text-decoration: none;
 }
 
 .store-btn--hero:hover:not(:disabled) {
-  background: #eef3ff;
-  border-color: #eef3ff;
-  color: var(--theme-color-accent-hover);
-}
-
-.store-hero__secondary {
   color: #fff;
-  font-weight: 600;
-  text-decoration: none;
-  font-size: 0.9375rem;
-  border-bottom: 1px solid rgb(255 255 255 / 0.45);
-  padding-bottom: 0.1rem;
-  transition: border-color var(--theme-ease), color var(--theme-ease);
-}
-
-.store-hero__secondary:hover {
-  color: #fff;
-  border-bottom-color: #fff;
 }
 
 .store-hero__orbit {
@@ -1114,11 +1080,9 @@ a.store-header__utility:hover {
   display: block;
   overflow: hidden;
   border-radius: 1.35rem;
-  background: rgb(255 255 255 / 0.08);
-  border: 1px solid rgb(255 255 255 / 0.18);
-  box-shadow:
-    0 24px 50px rgb(2 12 36 / 0.35),
-    inset 0 1px 0 rgb(255 255 255 / 0.18);
+  background: var(--theme-color-surface);
+  border: 1px solid var(--theme-color-border);
+  box-shadow: 0 18px 40px rgb(15 23 42 / 0.12);
   transform-origin: center;
   opacity: 0;
   transition: opacity 0.6s ease, transform 0.6s ease;
@@ -1189,8 +1153,7 @@ a.store-header__utility:hover {
 }
 
 .store-hero__plate--empty {
-  background:
-    linear-gradient(145deg, rgb(255 255 255 / 0.16), rgb(255 255 255 / 0.04));
+  background: var(--theme-color-surface-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {

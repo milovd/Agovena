@@ -22,9 +22,6 @@
     x-init="requestAnimationFrame(() => ready = true)"
     :class="{ 'is-ready': ready }"
 >
-    <div class="store-hero__glow" aria-hidden="true"></div>
-    <div class="store-hero__grid" aria-hidden="true"></div>
-
     <div class="store-hero__stage">
         <div class="store-hero__copy">
             <p class="store-hero__brand">{{ $brand }}</p>
@@ -41,9 +38,13 @@
 
             <div class="store-hero__actions">
                 @if (! empty($section['cta_label']))
-                    <a class="store-btn store-btn--hero" href="{{ $section['cta_href'] ?? '#catalog' }}">{{ $section['cta_label'] }}</a>
+                    <a class="store-btn store-btn--primary store-btn--hero" href="{{ $section['cta_href'] ?? '#catalog' }}">
+                        {{ $section['cta_label'] }}
+                    </a>
                 @endif
-                <a class="store-hero__secondary" href="{{ route('storefront.categories') }}">Browse categories</a>
+                <a class="store-btn store-btn--outline store-btn--hero-secondary" href="{{ route('storefront.categories') }}">
+                    Browse categories
+                </a>
             </div>
         </div>
 

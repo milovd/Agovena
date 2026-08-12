@@ -23,7 +23,7 @@ test('phase 2 vertical slice end to end with persisted data', function () {
     Livewire::test(Create::class)
         ->set('name', 'Slice Product')
         ->set('status', 'active')
-        ->set('price_amount', '1999')
+        ->set('price', '19.99')
         ->set('currency', 'EUR')
         ->call('save')
         ->assertHasNoErrors();

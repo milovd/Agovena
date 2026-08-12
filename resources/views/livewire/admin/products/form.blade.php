@@ -29,11 +29,6 @@
                     </span>
                 @endif
             @endif
-            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.products.index') }}">Cancel</a>
-            <button type="submit" form="product-form" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
-                <span wire:loading.remove wire:target="save">{{ $mode === 'create' ? 'Create product' : 'Save changes' }}</span>
-                <span wire:loading wire:target="save">Saving…</span>
-            </button>
         </x-slot:actions>
     </x-ag.page-header>
 
@@ -137,10 +132,19 @@
             <div class="ag-section__body">
                 <div class="ag-grid ag-grid--2">
                     <div class="ag-field">
-                        <label class="ag-field__label" for="price_amount">Price (minor units)</label>
-                        <input id="price_amount" class="ag-input" type="number" min="0" step="1" wire:model="price_amount" required aria-describedby="price-hint">
-                        <p id="price-hint" class="ag-field__hint">Integer only (e.g. 1999 = 19.99).</p>
-                        @error('price_amount') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        <label class="ag-field__label" for="price">Price</label>
+                        <input
+                            id="price"
+                            class="ag-input"
+                            type="text"
+                            inputmode="decimal"
+                            wire:model="price"
+                            required
+                            aria-describedby="price-hint"
+                            placeholder="45.00"
+                        >
+                        <p id="price-hint" class="ag-field__hint">Enter the amount customers pay, e.g. 45 or 45.00 (comma also works).</p>
+                        @error('price') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="currency">Currency</label>
