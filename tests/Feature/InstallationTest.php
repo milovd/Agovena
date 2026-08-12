@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 use App\Agovena\Installation\InstallAgovena;
 use App\Agovena\Installation\InstallationException;
+use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Installation\InstallRequest;
+use App\Agovena\Installation\RequirementCheck;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
 use App\Livewire\Installer\Wizard;
+use App\Models\Product;
 use App\Models\StaffUser;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
+
+beforeEach(function (): void {
+    app(InstallationState::class)->reset();
+});
 
 test('fresh application is not installed', function () {
     $state = app(InstallationState::class);
@@ -26,7 +33,32 @@ test('fresh application is not installed', function () {
 test('installer welcome is available when not installed', function () {
     $this->get('/install')
         ->assertOk()
-        ->assertSee(__('installer.welcome.heading'), false);
+        ->assertSee(__('installer.welcome.heading'), false)
+        ->assertSee(__('installer.welcome.ready_title'), false)
+        ->assertDontSee(__('installer.checks.ext_openssl'), false)
+        ->assertSee(asset('vendor/agovena/logo.png'), false);
+});
+
+test('application routes redirect to installer before installation', function () {
+    $product = Product::factory()->active()->create(['slug' => 'gated-phone']);
+
+    $this->get('/')->assertRedirect(route('install'));
+    $this->get('/products/'.$product->slug)->assertRedirect(route('install'));
+    $this->get('/categories')->assertRedirect(route('install'));
+    $this->get('/cart')->assertRedirect(route('install'));
+    $this->get('/checkout')->assertRedirect(route('install'));
+    $this->get('/admin/login')->assertRedirect(route('install'));
+    $this->get('/admin')->assertRedirect(route('install'));
+    $this->get('/about')->assertRedirect(route('install'));
+
+    $this->get('/install')->assertOk();
+});
+
+test('installer welcome has no redirect loop', function () {
+    $response = $this->get('/install');
+
+    $response->assertOk();
+    expect($response->headers->get('Location'))->toBeNull();
 });
 
 test('admin redirects to installer when not installed', function () {
@@ -37,6 +69,7 @@ test('admin redirects to installer when not installed', function () {
 test('web installation creates owner settings currency theme and lock', function () {
     Livewire::test(Wizard::class)
         ->assertSet('step', 'welcome')
+        ->assertSee(__('installer.welcome.ready_title'), false)
         ->call('next')
         ->assertSet('step', 'owner')
         ->set('ownerName', 'Store Owner')
@@ -55,10 +88,13 @@ test('web installation creates owner settings currency theme and lock', function
         ->assertSet('step', 'branding')
         ->call('skipBranding')
         ->assertSet('step', 'theme')
+        ->assertSee(__('installer.theme.selected'), false)
         ->set('themeId', 'default')
         ->call('install')
         ->assertSet('step', 'complete')
-        ->assertSet('installError', '');
+        ->assertSet('installError', '')
+        ->assertSee('Demo Shop', false)
+        ->assertSee('EUR', false);
 
     $state = app(InstallationState::class);
     expect($state->installed())->toBeTrue()
@@ -80,6 +116,10 @@ test('web installation creates owner settings currency theme and lock', function
         ->and($settings->get('appearance', 'active_theme'))->toBe('default');
 
     expect(app(ThemeManager::class)->active()->id)->toBe('default');
+
+    $this->get('/')->assertOk();
+    $this->get('/admin/login')->assertOk();
+    $this->get('/install')->assertRedirect(route('admin.login'));
 });
 
 test('installer is inaccessible after installation', function () {
@@ -207,4 +247,54 @@ test('installer refuses creating a second owner email after partial owner exists
 
 test('doctor reports installation readiness', function () {
     $this->artisan('agovena:doctor')->assertSuccessful();
+});
+
+test('healthy requirements stay concise in the installer while warnings do not block continue', function () {
+    $requirements = app(InstallationRequirements::class);
+
+    expect($requirements->ready())->toBeTrue();
+
+    $component = Livewire::test(Wizard::class);
+    $component->assertSee(__('installer.welcome.ready_title'), false)
+        ->assertDontSee(__('installer.checks.ext_mbstring'), false);
+
+    $warnings = array_values(array_filter(
+        $requirements->checks(),
+        static fn (RequirementCheck $check): bool => ! $check->required && ! $check->passed,
+    ));
+
+    if ($warnings !== []) {
+        $component->assertSee(__('installer.welcome.warnings_summary', ['count' => count($warnings)]), false);
+    }
+
+    $component->call('next')->assertSet('step', 'owner');
+});
+
+test('blocking requirement failure is surfaced and blocks continue', function () {
+    $requirements = Mockery::mock(InstallationRequirements::class);
+    $requirements->shouldReceive('checks')->andReturn([
+        new RequirementCheck('database', 'installer.checks.database', false, true, 'connection refused'),
+        new RequirementCheck('storage_link', 'installer.checks.storage_link', false, false, 'optional'),
+    ]);
+    $requirements->shouldReceive('ready')->andReturn(false);
+    $requirements->shouldReceive('failures')->andReturn([
+        new RequirementCheck('database', 'installer.checks.database', false, true, 'connection refused'),
+    ]);
+    app()->instance(InstallationRequirements::class, $requirements);
+
+    Livewire::test(Wizard::class)
+        ->assertSee(__('installer.welcome.blocked_title'), false)
+        ->assertSee(__('installer.checks.database'), false)
+        ->assertSee('connection refused', false)
+        ->assertDontSee(__('installer.welcome.ready_title'), false)
+        ->call('next')
+        ->assertHasErrors('welcome')
+        ->assertSet('step', 'welcome');
+});
+
+test('official Agovena logo is independent from merchant branding', function () {
+    $this->get('/install')
+        ->assertOk()
+        ->assertSee(asset('vendor/agovena/logo.png'), false)
+        ->assertDontSee('storage/branding', false);
 });

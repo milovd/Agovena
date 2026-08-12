@@ -2,28 +2,44 @@
 <p class="install-panel__lede">{{ __('installer.theme.lede') }}</p>
 
 <form wire:submit="install" class="install-form" novalidate>
-    <fieldset class="install-themes">
-        <legend class="visually-hidden">{{ __('installer.fields.theme') }}</legend>
-        @foreach ($themes as $theme)
-            <label class="install-theme @if ($themeId === $theme->id) is-selected @endif">
-                <input
-                    type="radio"
-                    name="themeId"
-                    value="{{ $theme->id }}"
-                    wire:model="themeId"
-                    class="install-theme__input"
-                >
-                <span class="install-theme__body">
-                    <span class="install-theme__name">{{ $theme->name }}</span>
-                    <span class="install-theme__meta">v{{ $theme->version }}</span>
-                    @if ($theme->description !== '')
-                        <span class="install-theme__desc">{{ $theme->description }}</span>
-                    @endif
-                </span>
-            </label>
-        @endforeach
-    </fieldset>
-    <p class="ag-field__help">{{ __('installer.theme.customize_later') }}</p>
+    @if (count($themes) === 1)
+        @php $theme = $themes[0]; @endphp
+        <div class="install-theme is-selected is-confirmed" role="status">
+            <span class="install-theme__body">
+                <span class="install-theme__name">{{ $theme->name }}</span>
+                <span class="install-theme__badge">{{ __('installer.theme.selected') }}</span>
+                <span class="install-theme__meta">v{{ $theme->version }}</span>
+                @if ($theme->description !== '')
+                    <span class="install-theme__desc">{{ $theme->description }}</span>
+                @endif
+            </span>
+        </div>
+        <p class="ag-field__help">{{ __('installer.theme.customize_later') }}</p>
+    @else
+        <fieldset class="install-themes">
+            <legend class="visually-hidden">{{ __('installer.fields.theme') }}</legend>
+            @foreach ($themes as $theme)
+                <label class="install-theme @if ($themeId === $theme->id) is-selected @endif">
+                    <input
+                        type="radio"
+                        name="themeId"
+                        value="{{ $theme->id }}"
+                        wire:model="themeId"
+                        class="install-theme__input"
+                    >
+                    <span class="install-theme__body">
+                        <span class="install-theme__name">{{ $theme->name }}</span>
+                        <span class="install-theme__meta">v{{ $theme->version }}</span>
+                        @if ($theme->description !== '')
+                            <span class="install-theme__desc">{{ $theme->description }}</span>
+                        @endif
+                    </span>
+                </label>
+            @endforeach
+        </fieldset>
+        <p class="ag-field__help">{{ __('installer.theme.customize_later') }}</p>
+    @endif
+
     @error('themeId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
 
     @if ($installError !== '')

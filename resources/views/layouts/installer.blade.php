@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? __('installer.title') }}</title>
+    <link rel="icon" href="{{ asset('vendor/agovena/logo.png') }}" type="image/png">
     @vite(['resources/css/installer.css', 'resources/js/installer.js'])
     @livewireStyles
 </head>
@@ -11,7 +12,7 @@
     <a class="admin-skip-link" href="#main">{{ __('admin.skip_to_content') }}</a>
     <div class="install-shell">
         <header class="install-shell__brand">
-            <span class="install-shell__mark" aria-hidden="true">A</span>
+            <x-ag.logo class="install-shell__logo" :alt="__('installer.brand_alt')" />
             <div>
                 <p class="install-shell__product">Agovena</p>
                 <p class="install-shell__tagline">{{ __('installer.tagline') }}</p>
