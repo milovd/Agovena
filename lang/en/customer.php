@@ -61,6 +61,7 @@ return [
         'no_invoices' => 'You have no invoices yet.',
         'view_invoice' => 'View invoice',
         'back_to_invoices' => 'Back to invoices',
+        'print_invoice' => 'Print invoice',
         'invoice_statuses' => [
             'issued' => 'Issued',
             'paid' => 'Paid',

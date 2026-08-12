@@ -48,6 +48,7 @@ return [
     'draft' => 'Concept',
     'none' => 'Geen',
     'preview' => 'Voorbeeld',
+    'print' => 'Afdrukken',
     'loading' => 'Laden…',
     'saving' => 'Opslaan…',
     'title' => 'Titel',

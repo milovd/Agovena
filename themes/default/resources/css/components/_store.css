@@ -3272,3 +3272,44 @@ select.store-input::-ms-expand {
     grid-template-columns: minmax(0, 1.4fr) minmax(12rem, 0.8fr);
   }
 }
+
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  .store {
+    background: #fff;
+  }
+
+  .store-skip,
+  .store-header,
+  .store-footer,
+  .store-flash,
+  .store-account__nav,
+  .store-invoice__print,
+  .store-invoice .store-account-panel__back {
+    display: none !important;
+  }
+
+  .store-main {
+    max-width: none;
+    padding: 0;
+  }
+
+  .store-invoice {
+    display: block;
+    color: #000;
+  }
+
+  .store-invoice .store-account-panel {
+    padding: 0;
+    border: 0;
+    box-shadow: none;
+    background: #fff;
+  }
+
+  .store-invoice .store-account-panel__grid {
+    grid-template-columns: minmax(0, 1.4fr) minmax(12rem, 0.8fr);
+  }
+}

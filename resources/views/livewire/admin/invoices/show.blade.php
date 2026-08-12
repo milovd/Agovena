@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page admin-invoice">
     <x-ag.page-header
         :heading="$invoice->number"
         :lede="__('admin.invoices.show_lede')"
@@ -6,6 +6,11 @@
         <x-slot:back>
             <x-ag.back :href="route('admin.invoices.index')" :label="__('admin.invoices.title')" />
         </x-slot:back>
+        <x-slot:actions>
+            <button type="button" class="ag-btn ag-btn--secondary admin-invoice__print" onclick="window.print()">
+                {{ __('admin.invoices.print') }}
+            </button>
+        </x-slot:actions>
     </x-ag.page-header>
 
     <div class="ag-grid ag-grid--2">

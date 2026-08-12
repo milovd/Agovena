@@ -1,4 +1,4 @@
-<div class="store-account">
+<div class="store-account store-invoice">
     @include('theme::account.partials.nav', ['accountSection' => $accountSection])
 
     <section class="store-account__main store-account-panel">
@@ -12,6 +12,11 @@
                 ·
                 {{ $invoice->issued_at?->format('Y-m-d') }}
             </p>
+            <div class="store-account-panel__actions store-invoice__print">
+                <button type="button" class="store-btn store-btn--secondary" onclick="window.print()">
+                    {{ __('customer.account.print_invoice') }}
+                </button>
+            </div>
         </header>
 
         <div class="store-account-panel__grid">

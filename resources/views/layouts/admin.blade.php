@@ -37,8 +37,10 @@
                     use App\Agovena\Admin\AdminNavigation;
                     $staff = auth('staff')->user();
                     $nav = collect($navigation ?? [])->filter(function ($item) use ($staff) {
-                        return $item->permission === null
+                        $authorized = $item->permission === null
                             || ($staff !== null && $staff->can($item->permission));
+
+                        return $authorized && is_string($item->href) && $item->href !== '';
                     });
                     $groups = $nav->groupBy(fn ($item) => $item->group);
                 @endphp
@@ -51,7 +53,7 @@
                                 <li>
                                     <a
                                         class="admin-nav__link @if($active) admin-nav__link--active @endif"
-                                        href="{{ $item->href ?? '#' }}"
+                                        href="{{ $item->href }}"
                                         @if($active) aria-current="page" @endif
                                     >
                                         @if ($item->icon)

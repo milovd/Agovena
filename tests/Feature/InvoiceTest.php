@@ -9,6 +9,7 @@ use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Enums\InvoiceStatus;
 use App\Livewire\Admin\Invoices\Index as AdminInvoicesIndex;
+use App\Livewire\Admin\Invoices\Show as AdminInvoiceShow;
 use App\Livewire\Customer\Account\InvoiceShow;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -71,7 +72,9 @@ test('customer can view own invoice but not another customers', function () {
     Livewire::actingAs($owner, 'customer')
         ->test(InvoiceShow::class, ['invoice' => $invoice])
         ->assertOk()
-        ->assertSee('INV-TEST-00001');
+        ->assertSee('INV-TEST-00001')
+        ->assertSee(__('customer.account.print_invoice'))
+        ->assertSee('window.print()', false);
 
     Livewire::actingAs($intruder, 'customer')
         ->test(InvoiceShow::class, ['invoice' => $invoice])
@@ -80,9 +83,26 @@ test('customer can view own invoice but not another customers', function () {
 
 test('owner can open invoices admin', function () {
     $staff = $this->createStaff();
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-TEST-00002',
+        'status' => InvoiceStatus::Paid,
+        'customer_name' => 'Admin Invoice Customer',
+        'customer_email' => 'invoice@example.test',
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
 
     Livewire::actingAs($staff, 'staff')
         ->test(AdminInvoicesIndex::class)
         ->assertOk()
         ->assertSee(__('admin.invoices.title'));
+
+    Livewire::actingAs($staff, 'staff')
+        ->test(AdminInvoiceShow::class, ['invoice' => $invoice])
+        ->assertOk()
+        ->assertSee(__('admin.invoices.print'))
+        ->assertSee('window.print()', false);
 });

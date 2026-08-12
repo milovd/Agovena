@@ -41,7 +41,7 @@ final class SubscriptionsModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'subscriptions',
             label: 'admin.nav.subscriptions',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.services',
             href: '/admin/subscriptions',
             icon: 'package',
             sort: 16,

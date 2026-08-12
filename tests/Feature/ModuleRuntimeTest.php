@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Agovena\Modules\Inventory\InventoryService;
 use Agovena\Modules\Inventory\Models\InventoryStock;
+use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
@@ -42,6 +43,17 @@ test('module manager discovers inventory and enable boots capabilities', functio
         ->and(app(ProductCapabilityRegistry::class)->has('physical'))->toBeTrue()
         ->and(app(ProductCapabilityRegistry::class)->has('inventory'))->toBeTrue()
         ->and(AgovenaModule::query()->where('module_id', 'inventory')->where('enabled', true)->exists())->toBeTrue();
+});
+
+test('enabled inventory navigation is grouped under services', function () {
+    enableInventoryModule();
+
+    $inventory = collect(app(AdminRegistrar::class)->navigationItems())
+        ->firstWhere('id', 'inventory-stocks');
+
+    expect($inventory)->not->toBeNull()
+        ->and($inventory->group)->toBe('admin.nav_groups.services')
+        ->and(__('admin.nav_groups.services'))->toBe('Services');
 });
 
 test('module disable preserves inventory stock rows', function () {

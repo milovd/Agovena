@@ -47,7 +47,7 @@ final class ShippingModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'shipping-methods',
             label: 'admin.nav.shipping',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.services',
             href: '/admin/shipping/methods',
             icon: 'package',
             sort: 19,

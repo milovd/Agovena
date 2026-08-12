@@ -1,0 +1,45 @@
+@media print {
+  @page {
+    margin: 15mm;
+  }
+
+  html,
+  body,
+  .admin-app,
+  .admin-shell,
+  .admin-main {
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    background: #fff;
+  }
+
+  .admin-shell {
+    display: block;
+  }
+
+  .admin-sidebar,
+  .admin-topbar,
+  .admin-shell__backdrop,
+  .admin-invoice__print,
+  .admin-invoice .admin-page__back {
+    display: none !important;
+  }
+
+  .admin-content {
+    max-width: none;
+    padding: 0;
+  }
+
+  .admin-invoice,
+  .admin-invoice .ag-section {
+    color: #000;
+    background: #fff;
+  }
+
+  .admin-invoice .ag-section {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}

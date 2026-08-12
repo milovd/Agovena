@@ -13,6 +13,7 @@ return [
     'nav_groups' => [
         'overview' => 'Overzicht',
         'commerce' => 'Commerce',
+        'services' => 'Diensten',
         'configuration' => 'Configuratie',
         'administration' => 'Beheer',
         'support' => 'Support',
@@ -696,6 +697,7 @@ return [
         'lede' => 'Facturen die ontstaan uit betaalde bestellingen. Nummers zijn opeenvolgend en worden niet hergebruikt.',
         'show_title' => 'Factuur :number',
         'show_lede' => 'Factuursnapshot voor administratie en klantendownload.',
+        'print' => 'Factuur afdrukken',
         'search_label' => 'Facturen zoeken',
         'search_placeholder' => 'Nummer, klant…',
         'status_label' => 'Status',

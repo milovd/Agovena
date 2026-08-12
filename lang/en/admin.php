@@ -13,6 +13,7 @@ return [
     'nav_groups' => [
         'overview' => 'Overview',
         'commerce' => 'Commerce',
+        'services' => 'Services',
         'configuration' => 'Configuration',
         'administration' => 'Administration',
         'support' => 'Support',
@@ -696,6 +697,7 @@ return [
         'lede' => 'Invoices issued from paid orders. Numbers are sequential and never reused.',
         'show_title' => 'Invoice :number',
         'show_lede' => 'Invoice snapshot for accounting and customer download.',
+        'print' => 'Print invoice',
         'search_label' => 'Search invoices',
         'search_placeholder' => 'Number, customer…',
         'status_label' => 'Status',

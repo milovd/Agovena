@@ -61,6 +61,7 @@ return [
         'no_invoices' => 'Je hebt nog geen facturen.',
         'view_invoice' => 'Bekijk factuur',
         'back_to_invoices' => 'Terug naar facturen',
+        'print_invoice' => 'Factuur afdrukken',
         'invoice_statuses' => [
             'issued' => 'Uitgegeven',
             'paid' => 'Betaald',

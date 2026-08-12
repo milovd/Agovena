@@ -264,10 +264,10 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'taxes',
             label: 'admin.nav.taxes',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.configuration',
             href: '/admin/taxes',
             icon: 'coins',
-            sort: 28,
+            sort: 115,
             permission: 'taxes.view',
         ));
         $admin->navigation(new NavigationItem(
