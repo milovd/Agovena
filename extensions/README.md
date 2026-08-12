@@ -1,11 +1,28 @@
 # Extensions
 
-Third-party integrations and optional external connectors.
+Provider integrations that plug into Agovena capabilities. Distinct from Modules.
 
-Examples (planned, not implemented):
+- **Modules** add platform capabilities/domains (inventory, shipping, digital, …).
+- **Extensions** integrate external providers into those capabilities (payment gateways, carriers, provisioners, …).
 
-- Payments: Stripe, Mollie, PayPal
-- Provisioning: Pterodactyl, ISPConfig, Proxmox
-- Shipping: PostNL, DHL
+## Distribution
 
-Extensions must stay loosely coupled to core so external developers can eventually publish their own.
+Composer / GitHub oriented. Do **not** execute arbitrary uploaded PHP ZIPs.
+
+## Layout
+
+```
+extensions/{id}/
+  extension.json
+  src/
+```
+
+Lifecycle: discover → install → enable / disable → uninstall. Disable preserves settings and data.
+
+## Categories
+
+`payment_gateway`, `provisioning`, `shipping`, `authentication`, `storage`, `notifications`, `analytics`, `tax`, `other`
+
+## Reference
+
+`extensions/manual-payment` proves Extension lifecycle and PaymentGateway registration (manual + optional development). Mollie/Stripe are not bundled yet.

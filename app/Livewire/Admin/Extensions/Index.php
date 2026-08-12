@@ -1,0 +1,156 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Livewire\Admin\Extensions;
+
+use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Extensions\ExtensionCategory;
+use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Payments\HealthResult;
+use App\Agovena\Permissions\SyncRegisteredPermissions;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\ValidationException;
+use Livewire\Component;
+
+final class Index extends Component
+{
+    use AuthorizesRequests;
+
+    public string $category = '';
+
+    public ?string $settingsExtensionId = null;
+
+    /** @var array<string, mixed> */
+    public array $settingsForm = [];
+
+    public function mount(): void
+    {
+        $this->authorize('extensions.view');
+    }
+
+    public function enable(string $extensionId, ExtensionManager $extensions, SyncRegisteredPermissions $sync): void
+    {
+        $this->authorize('extensions.manage');
+
+        try {
+            $extensions->enable($extensionId);
+            $sync(force: true);
+            session()->flash('status', __('admin.extensions.flash.enabled', ['extension' => $extensionId]));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->errors()['extension'][0] ?? $e->getMessage());
+        }
+    }
+
+    public function disable(string $extensionId, ExtensionManager $extensions, SyncRegisteredPermissions $sync): void
+    {
+        $this->authorize('extensions.manage');
+
+        try {
+            $extensions->disable($extensionId);
+            $sync(force: true);
+            session()->flash('status', __('admin.extensions.flash.disabled', ['extension' => $extensionId]));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->errors()['extension'][0] ?? $e->getMessage());
+        }
+    }
+
+    public function install(string $extensionId, ExtensionManager $extensions): void
+    {
+        $this->authorize('extensions.manage');
+
+        try {
+            $extensions->install($extensionId);
+            session()->flash('status', __('admin.extensions.flash.installed', ['extension' => $extensionId]));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->errors()['extension'][0] ?? $e->getMessage());
+        }
+    }
+
+    public function openSettings(string $extensionId, ExtensionManager $extensions, ExtensionSettingsRepository $settings): void
+    {
+        $this->authorize('extensions.manage');
+        $status = $extensions->status($extensionId);
+        $this->settingsExtensionId = $extensionId;
+        $this->settingsForm = [];
+        foreach ($status['manifest']->settings as $definition) {
+            $key = $definition['key'];
+            $secret = (bool) ($definition['secret'] ?? false);
+            $current = $settings->get($extensionId, $key, $definition['default'] ?? '');
+            $this->settingsForm[$key] = $secret ? '' : $current;
+        }
+    }
+
+    public function closeSettings(): void
+    {
+        $this->settingsExtensionId = null;
+        $this->settingsForm = [];
+    }
+
+    public function saveSettings(ExtensionManager $extensions, ExtensionSettingsRepository $settings): void
+    {
+        $this->authorize('extensions.manage');
+        if ($this->settingsExtensionId === null) {
+            return;
+        }
+
+        $manifest = $extensions->manifest($this->settingsExtensionId);
+        if ($manifest === null) {
+            return;
+        }
+
+        foreach ($manifest->settings as $definition) {
+            $key = $definition['key'];
+            $secret = (bool) ($definition['secret'] ?? false);
+            $value = $this->settingsForm[$key] ?? null;
+            if ($secret && ($value === null || $value === '')) {
+                continue;
+            }
+            $settings->set($this->settingsExtensionId, $key, $value, $secret);
+        }
+
+        session()->flash('status', __('admin.extensions.flash.settings_saved'));
+        $this->closeSettings();
+    }
+
+    public function runHealth(string $extensionId, ExtensionManager $extensions): void
+    {
+        $this->authorize('extensions.manage');
+        $context = $extensions->context($extensionId);
+        $callback = $context?->healthCallback();
+        if ($callback === null) {
+            session()->flash('error', __('admin.extensions.health.unavailable'));
+
+            return;
+        }
+
+        /** @var HealthResult $result */
+        $result = $callback();
+        if ($result->ok) {
+            session()->flash('status', __('admin.extensions.health.ok', ['message' => $result->message]));
+        } else {
+            session()->flash('error', __('admin.extensions.health.fail', ['message' => $result->message]));
+        }
+    }
+
+    public function render(AdminRegistrar $admin, ExtensionManager $extensions)
+    {
+        $rows = [];
+        foreach ($extensions->discover() as $manifest) {
+            if ($this->category !== '' && $manifest->category->value !== $this->category) {
+                continue;
+            }
+            $rows[] = $extensions->status($manifest->id);
+        }
+
+        return view('livewire.admin.extensions.index', [
+            'extensions' => $rows,
+            'categories' => ExtensionCategory::cases(),
+            'settingsExtensionId' => $this->settingsExtensionId,
+        ])->layout('layouts.admin', [
+            'title' => __('admin.extensions.title'),
+            'navigation' => $admin->navigationItems(),
+        ]);
+    }
+}

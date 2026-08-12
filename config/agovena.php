@@ -4,6 +4,11 @@ declare(strict_types=1);
 
 return [
     /*
+     * Platform version for Extension/Module compatibility constraints.
+     */
+    'version' => '0.1.0',
+
+    /*
      * Available UI locales. Add a matching lang/{code}/ directory, then list
      * the locale here so Settings → General can select it site-wide.
      *

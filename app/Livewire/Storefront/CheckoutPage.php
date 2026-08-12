@@ -11,6 +11,7 @@ use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\CustomerRegistration;
 use App\Agovena\Customer\SaveCustomerAddress;
+use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\PaymentMethod;
 use App\Models\Customer;
@@ -119,10 +120,7 @@ final class CheckoutPage extends Component
             return;
         }
 
-        $allowed = [PaymentMethod::Manual->value];
-        if ($this->developmentPayEnabled()) {
-            $allowed[] = PaymentMethod::Development->value;
-        }
+        $allowed = app(AvailablePaymentMethods::class)->ids();
 
         $rules = [
             'customer_name' => ['required', 'string', 'max:255'],
@@ -240,6 +238,7 @@ final class CheckoutPage extends Component
             'shippingTotal' => $shippingTotal,
             'orderTotal' => $orderTotal,
             'theme' => $theme,
+            'paymentOptions' => app(AvailablePaymentMethods::class)->options(),
             'developmentPayEnabled' => $this->developmentPayEnabled(),
             'customerLoggedIn' => Auth::guard('customer')->check(),
             'registrationEnabled' => $registration->allowsRegistration(),

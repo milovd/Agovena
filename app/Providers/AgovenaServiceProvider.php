@@ -20,6 +20,8 @@ use App\Agovena\Checkout\NullShippingQuoteResolver;
 use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Content\MenuResolver;
 use App\Agovena\Customer\CustomerAccountNav;
+use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Fulfillment\NullOrderFulfillmentPresenter;
 use App\Agovena\Fulfillment\OrderFulfillmentPresenter;
 use App\Agovena\Installation\EnsurePublicStorageLink;
@@ -28,7 +30,10 @@ use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
+use App\Agovena\Payments\PaymentGatewayRegistry;
+use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Settings\SettingsRepository;
+use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Agovena\Theme\ThemeManager;
 use App\Events\OrderPaid;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
@@ -49,6 +54,11 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ProductCapabilityRegistry::class);
         $this->app->singleton(ProductCapabilityManager::class);
         $this->app->singleton(ModuleManager::class);
+        $this->app->singleton(ExtensionSettingsRepository::class);
+        $this->app->singleton(PaymentGatewayRegistry::class);
+        $this->app->singleton(ProvisionerRegistry::class);
+        $this->app->singleton(ShippingCarrierRegistry::class);
+        $this->app->singleton(ExtensionManager::class);
         $this->app->singleton(ShippingQuoteResolver::class, NullShippingQuoteResolver::class);
         $this->app->singleton(OrderFulfillmentPresenter::class, NullOrderFulfillmentPresenter::class);
         $this->app->singleton(ThemeManager::class);
@@ -78,6 +88,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->registerWidgets($admin);
 
         $this->app->make(ModuleManager::class)->bootEnabled();
+        $this->app->make(ExtensionManager::class)->bootEnabled();
 
         $theme = $this->app->make(ThemeManager::class)->active();
         View::addNamespace('theme', $theme->viewsPath);
@@ -239,6 +250,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'extensions',
+            label: 'admin.nav.extensions',
+            group: 'admin.nav_groups.configuration',
+            href: '/admin/extensions',
+            icon: 'package',
+            sort: 121,
+            permission: 'extensions.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'users',
             label: 'admin.nav.users',
             group: 'admin.nav_groups.administration',
@@ -335,6 +356,8 @@ class AgovenaServiceProvider extends ServiceProvider
             'currencies.update',
             'modules.view',
             'modules.manage',
+            'extensions.view',
+            'extensions.manage',
             'users.view',
             'users.create',
             'users.update',

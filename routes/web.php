@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Customer\EmailVerificationController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
+use App\Http\Controllers\Webhooks\PaymentWebhookController;
 use App\Http\Middleware\RedirectIfInstalled;
 use App\Http\Middleware\SyncStaffPermissions;
 use App\Livewire\Admin\Appearance\Customize as AppearanceCustomize;
@@ -12,6 +13,7 @@ use App\Livewire\Admin\Content\NavigationIndex as ContentNavigation;
 use App\Livewire\Admin\Content\PagesIndex as ContentPages;
 use App\Livewire\Admin\Currencies\Index as CurrenciesIndex;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\Extensions\Index as ExtensionsIndex;
 use App\Livewire\Admin\Invoices\Index as InvoicesIndex;
 use App\Livewire\Admin\Invoices\Show as InvoicesShow;
 use App\Livewire\Admin\Modules\Index as ModulesIndex;
@@ -62,6 +64,9 @@ Route::get('/cart', CartPage::class)->name('storefront.cart');
 Route::get('/checkout', CheckoutPage::class)->name('storefront.checkout');
 Route::get('/orders/{order}/confirmation', OrderConfirmation::class)->name('storefront.order.confirmation');
 
+Route::post('/webhooks/payments/{gateway}', PaymentWebhookController::class)
+    ->name('webhooks.payments');
+
 Route::middleware('guest:customer')->prefix('account')->name('customer.')->group(function (): void {
     Route::get('/login', CustomerLogin::class)->name('login');
     Route::get('/register', CustomerRegister::class)->name('register');
@@ -106,6 +111,7 @@ Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')-
     Route::get('/invoices', InvoicesIndex::class)->name('invoices.index');
     Route::get('/invoices/{invoice}', InvoicesShow::class)->name('invoices.show');
     Route::get('/modules', ModulesIndex::class)->name('modules.index');
+    Route::get('/extensions', ExtensionsIndex::class)->name('extensions.index');
     Route::get('/settings', SettingsHub::class)->name('settings.index');
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');
     Route::get('/appearance/themes', AppearanceThemes::class)->name('appearance.themes');

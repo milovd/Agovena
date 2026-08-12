@@ -156,16 +156,12 @@
 
             <fieldset class="store-panel">
                 <legend class="store-panel__title">{{ __('storefront.checkout.payment') }}</legend>
-                <label class="store-check">
-                    <input type="radio" wire:model="payment_method" value="manual">
-                    <span>{{ __('storefront.checkout.manual_payment') }}</span>
-                </label>
-                @if ($developmentPayEnabled)
-                    <label class="store-check">
-                        <input type="radio" wire:model="payment_method" value="development">
-                        <span>{{ __('storefront.checkout.development_payment') }}</span>
+                @foreach ($paymentOptions as $option)
+                    <label class="store-check" wire:key="pay-{{ $option['id'] }}">
+                        <input type="radio" wire:model="payment_method" value="{{ $option['id'] }}">
+                        <span>{{ __($option['label']) }}</span>
                     </label>
-                @endif
+                @endforeach
                 @error('payment_method') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
             </fieldset>
 

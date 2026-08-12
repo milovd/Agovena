@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "composer/semver": "^3.4",
         "laravel/framework": "^13.8",
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.4",
@@ -32,7 +33,8 @@
                 "Agovena\\Modules\\Shipping\\": "modules/shipping/src/",
                 "Agovena\\Modules\\Digital\\": "modules/digital/src/",
                 "Agovena\\Modules\\Subscriptions\\": "modules/subscriptions/src/",
-                "Agovena\\Modules\\Provisioning\\": "modules/provisioning/src/"
+                "Agovena\\Modules\\Provisioning\\": "modules/provisioning/src/",
+                "Agovena\\Extensions\\ManualPayment\\": "extensions/manual-payment/src/"
             }
     },
     "autoload-dev": {
