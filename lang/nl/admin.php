@@ -23,6 +23,7 @@ return [
         'products' => 'Producten',
         'categories' => 'Categorieën',
         'orders' => 'Bestellingen',
+        'invoices' => 'Facturen',
         'settings' => 'Instellingen',
         'currencies' => 'Valuta',
         'users' => 'Gebruikers',
@@ -76,6 +77,7 @@ return [
         'categories.delete' => 'Categorieën verwijderen',
         'orders.view' => 'Bestellingen bekijken',
         'payments.record' => 'Betalingen registreren',
+        'invoices.view' => 'Facturen bekijken',
         'settings.view' => 'Instellingen bekijken',
         'settings.update' => 'Instellingen bijwerken',
         'currencies.view' => 'Valuta bekijken',
@@ -137,6 +139,7 @@ return [
             'favicon_path' => 'Favicon',
             'customer_registration' => 'Klantregistratie',
             'order_number_prefix' => 'Prefix bestelnummer',
+            'invoice_number_prefix' => 'Prefix factuurnummer',
             'enable_reviews' => 'Productbeoordelingen inschakelen',
         ],
 
@@ -581,6 +584,32 @@ return [
         ],
         'flash' => [
             'payment_recorded' => 'Betaling geregistreerd.',
+        ],
+    ],
+
+    'invoices' => [
+        'title' => 'Facturen',
+        'lede' => 'Facturen die ontstaan uit betaalde bestellingen. Nummers zijn opeenvolgend en worden niet hergebruikt.',
+        'show_title' => 'Factuur :number',
+        'show_lede' => 'Factuursnapshot voor administratie en klantendownload.',
+        'search_label' => 'Facturen zoeken',
+        'search_placeholder' => 'Nummer, klant…',
+        'status_label' => 'Status',
+        'status_all' => 'Alle statussen',
+        'number' => 'Factuur',
+        'issued' => 'Uitgegeven',
+        'items' => 'Regels',
+        'details' => 'Details',
+        'order' => 'Bestelling',
+        'billing' => 'Factuuradres',
+        'status' => [
+            'issued' => 'Uitgegeven',
+            'paid' => 'Betaald',
+            'void' => 'Vervallen',
+        ],
+        'empty' => [
+            'title' => 'Nog geen facturen',
+            'text' => 'Facturen worden automatisch aangemaakt wanneer een bestelling als betaald wordt gemarkeerd.',
         ],
     ],
 

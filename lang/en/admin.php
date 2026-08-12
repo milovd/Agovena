@@ -23,6 +23,7 @@ return [
         'products' => 'Products',
         'categories' => 'Categories',
         'orders' => 'Orders',
+        'invoices' => 'Invoices',
         'settings' => 'Settings',
         'currencies' => 'Currencies',
         'users' => 'Users',
@@ -76,6 +77,7 @@ return [
         'categories.delete' => 'Delete categories',
         'orders.view' => 'View orders',
         'payments.record' => 'Record payments',
+        'invoices.view' => 'View invoices',
         'settings.view' => 'View settings',
         'settings.update' => 'Update settings',
         'currencies.view' => 'View currencies',
@@ -137,6 +139,7 @@ return [
             'favicon_path' => 'Favicon',
             'customer_registration' => 'Customer registration',
             'order_number_prefix' => 'Order number prefix',
+            'invoice_number_prefix' => 'Invoice number prefix',
             'enable_reviews' => 'Enable product reviews',
         ],
 
@@ -581,6 +584,32 @@ return [
         ],
         'flash' => [
             'payment_recorded' => 'Payment recorded.',
+        ],
+    ],
+
+    'invoices' => [
+        'title' => 'Invoices',
+        'lede' => 'Invoices issued from paid orders. Numbers are sequential and never reused.',
+        'show_title' => 'Invoice :number',
+        'show_lede' => 'Invoice snapshot for accounting and customer download.',
+        'search_label' => 'Search invoices',
+        'search_placeholder' => 'Number, customer…',
+        'status_label' => 'Status',
+        'status_all' => 'All statuses',
+        'number' => 'Invoice',
+        'issued' => 'Issued',
+        'items' => 'Line items',
+        'details' => 'Details',
+        'order' => 'Order',
+        'billing' => 'Billing',
+        'status' => [
+            'issued' => 'Issued',
+            'paid' => 'Paid',
+            'void' => 'Void',
+        ],
+        'empty' => [
+            'title' => 'No invoices yet',
+            'text' => 'Invoices are created automatically when an order is marked paid.',
         ],
     ],
 

@@ -22,7 +22,9 @@ use App\Agovena\Installation\InstallationState;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
+use App\Events\OrderPaid;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
+use App\Listeners\IssueInvoiceWhenOrderPaid;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -51,6 +53,7 @@ class AgovenaServiceProvider extends ServiceProvider
     {
         Event::listen(Registered::class, SendEmailVerificationNotification::class);
         Event::listen(Verified::class, AttachGuestOrdersWhenCustomerVerified::class);
+        Event::listen(OrderPaid::class, IssueInvoiceWhenOrderPaid::class);
 
         /** @var AdminRegistrar $admin */
         $admin = $this->app->make(AdminRegistrar::class);
@@ -173,6 +176,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'invoices',
+            label: 'admin.nav.invoices',
+            group: 'admin.nav_groups.commerce',
+            href: '/admin/invoices',
+            icon: 'file-text',
+            sort: 25,
+            permission: 'invoices.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'settings',
             label: 'admin.nav.settings',
             group: 'admin.nav_groups.configuration',
@@ -281,6 +294,7 @@ class AgovenaServiceProvider extends ServiceProvider
             'categories.delete',
             'orders.view',
             'payments.record',
+            'invoices.view',
             'settings.view',
             'settings.update',
             'currencies.view',
@@ -404,6 +418,14 @@ class AgovenaServiceProvider extends ServiceProvider
             type: 'string',
             default: 'AGO',
             sort: 20,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'invoice_number_prefix',
+            label: 'admin.settings.fields.invoice_number_prefix',
+            type: 'string',
+            default: 'INV',
+            sort: 25,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
