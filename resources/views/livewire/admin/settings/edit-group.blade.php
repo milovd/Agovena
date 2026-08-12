@@ -5,12 +5,18 @@
         <span>{{ $groupDefinition->label }}</span>
     </nav>
 
-    <x-ag.page-header :heading="$groupDefinition->label" :lede="$groupDefinition->description" />
+    <x-ag.page-header :heading="$groupDefinition->label" :lede="$groupDefinition->description">
+        <x-slot:back>
+            <x-ag.back :href="route('admin.settings.index')" label="Settings" />
+        </x-slot:back>
+    </x-ag.page-header>
 
-    <form wire:submit="save" class="admin-panel ag-form" novalidate>
+    <form wire:submit="save" class="admin-panel ag-form ag-form--constrained" novalidate>
         @foreach ($fields as $field)
             <div class="ag-field" wire:key="field-{{ $field->key }}">
-                <label class="ag-field__label" for="setting-{{ $field->key }}">{{ $field->label }}</label>
+                @if ($field->type !== 'boolean' && $field->type !== 'image')
+                    <label class="ag-field__label" for="setting-{{ $field->key }}">{{ $field->label }}</label>
+                @endif
 
                 @if ($field->type === 'text')
                     <textarea
@@ -21,10 +27,12 @@
                         @disabled(! $canUpdate)
                     ></textarea>
                 @elseif ($field->type === 'boolean')
-                    <label class="ag-check">
-                        <input type="checkbox" wire:model="values.{{ $field->key }}" @disabled(! $canUpdate)>
-                        <span>Enabled</span>
-                    </label>
+                    <x-ag.switch
+                        id="setting-{{ $field->key }}"
+                        wire:model="values.{{ $field->key }}"
+                        :label="$field->label"
+                        :disabled="! $canUpdate"
+                    />
                 @elseif ($field->type === 'select')
                     <select
                         id="setting-{{ $field->key }}"
@@ -56,38 +64,32 @@
                         <a href="{{ route('admin.currencies.index') }}">Currencies</a>.
                     </p>
                 @elseif ($field->type === 'image')
-                    @if (! empty($values[$field->key]))
-                        <div class="ag-field__preview">
-                            <img
-                                src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($values[$field->key]) }}"
-                                alt=""
-                                width="64"
-                                height="64"
-                                style="object-fit: contain; border: 1px solid var(--ag-color-border); border-radius: var(--ag-radius-sm); background: #fff;"
-                            >
-                            <p class="ag-field__help">Current file: <code>{{ $values[$field->key] }}</code></p>
-                        </div>
-                    @endif
-                    <input
+                    <x-ag.file-upload
                         id="setting-{{ $field->key }}"
-                        class="ag-input"
-                        type="file"
+                        :label="$field->label"
+                        hint="PNG, JPG, WebP, or SVG recommended."
                         accept="image/*"
+                        button-label="Upload"
+                        replace-label="Replace"
+                        :preview-url="! empty($values[$field->key]) ? \Illuminate\Support\Facades\Storage::disk('public')->url($values[$field->key]) : null"
+                        loading-target="uploads.{{ $field->key }}"
+                        :disabled="! $canUpdate"
                         wire:model="uploads.{{ $field->key }}"
-                        @disabled(! $canUpdate)
                     >
-                    @error('uploads.'.$field->key) <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        @error('uploads.'.$field->key) <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </x-ag.file-upload>
 
                     @if ($group === 'branding' && $field->key === 'logo_path' && $canUpdate)
-                        <label class="ag-check">
-                            <input type="checkbox" wire:model="useLogoAsFavicon">
-                            <span>Also use this logo as the favicon</span>
-                        </label>
-                        @if (! empty($values['logo_path']))
-                            <button type="button" class="ag-btn ag-btn--ghost" wire:click="useCurrentLogoAsFavicon">
-                                Use current logo as favicon
-                            </button>
-                        @endif
+                        <div style="margin-top: var(--ag-space-3); display: grid; gap: var(--ag-space-3);">
+                            <x-ag.checkbox id="use-logo-as-favicon" wire:model="useLogoAsFavicon" label="Also use this logo as the favicon" />
+                            @if (! empty($values['logo_path']))
+                                <div>
+                                    <button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="useCurrentLogoAsFavicon">
+                                        Use current logo as favicon
+                                    </button>
+                                </div>
+                            @endif
+                        </div>
                     @endif
                 @else
                     <input

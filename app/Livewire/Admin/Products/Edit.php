@@ -246,6 +246,18 @@ final class Edit extends Component
         session()->flash('status', 'Product updated.');
     }
 
+    public function setDraft(): void
+    {
+        $this->authorize('products.update');
+
+        $this->product->forceFill([
+            'status' => ProductStatus::Draft,
+        ])->save();
+
+        $this->status = ProductStatus::Draft->value;
+        session()->flash('status', 'Product set to draft.');
+    }
+
     public function confirmDelete(): void
     {
         $this->authorize('products.delete');

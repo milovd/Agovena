@@ -21,9 +21,24 @@
     </div>
 
     @if ($showForm)
-        <form wire:submit="save" class="ag-section ag-form" novalidate>
-            <header class="ag-section__header">
-                <h3 class="ag-section__title">{{ $editingId ? 'Edit category' : 'New category' }}</h3>
+        <form wire:submit="save" class="ag-section ag-form ag-form--constrained" novalidate>
+            <header class="ag-section__header" style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:flex-start;">
+                <div>
+                    <h3 class="ag-section__title">{{ $editingId ? 'Edit category' : 'New category' }}</h3>
+                </div>
+                @if ($editingId)
+                    @if ($is_active && filled($slug))
+                        <a class="ag-btn ag-btn--secondary ag-btn--sm" href="{{ route('storefront.category', $slug) }}" target="_blank" rel="noopener">
+                            <x-ag.icon name="eye" :size="16" />
+                            Preview category
+                        </a>
+                    @else
+                        <span class="ag-btn ag-btn--secondary ag-btn--sm is-disabled" title="Activate the category to preview on the storefront" aria-disabled="true">
+                            <x-ag.icon name="eye" :size="16" />
+                            Preview category
+                        </span>
+                    @endif
+                @endif
             </header>
             <div class="ag-section__body">
                 <div class="ag-grid ag-grid--2">
@@ -53,28 +68,28 @@
                         <p class="ag-field__hint">Optional. One subcategory level only.</p>
                         @error('parent_id') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
-                    <div class="ag-field">
-                        <label class="ag-check" style="margin-top: 1.75rem;">
-                            <input type="checkbox" wire:model="is_active">
-                            <span>Active</span>
-                        </label>
+                    <div class="ag-field" style="display:flex; align-items:flex-end;">
+                        <x-ag.switch id="category-active" wire:model="is_active" label="Active" />
                     </div>
                     <div class="ag-field ag-grid__span-2">
-                        <label class="ag-field__label" for="category-image">Image</label>
-                        @if ($existingImagePath && ! $removeExistingImage)
-                            <div class="ag-media-preview">
-                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($existingImagePath) }}" alt="" width="96" height="96">
-                                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="clearImage">Remove image</button>
-                            </div>
-                        @endif
-                        <input id="category-image" class="ag-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" wire:model="image">
-                        <div wire:loading wire:target="image" class="ag-loading ag-loading--inline">Uploading…</div>
-                        @error('image') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        <x-ag.file-upload
+                            id="category-image"
+                            label="Image"
+                            hint="JPEG, PNG, WebP, or GIF. Max 4 MB."
+                            button-label="Upload image"
+                            replace-label="Replace"
+                            :preview-url="($existingImagePath && ! $removeExistingImage) ? \Illuminate\Support\Facades\Storage::disk('public')->url($existingImagePath) : null"
+                            remove-wire-click="clearImage"
+                            loading-target="image"
+                            wire:model="image"
+                        >
+                            @error('image') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        </x-ag.file-upload>
                     </div>
                 </div>
                 <div class="ag-form__actions">
                     <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled">Save</button>
-                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancel">Cancel</button>
+                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancel">Cancel</button>
                 </div>
             </div>
         </form>
@@ -148,18 +163,18 @@
                 @if ($confirmingCategory->products_count > 0)
                     <p class="ag-modal__text">This category still has {{ $confirmingCategory->products_count }} product(s). Reassign them or set the category inactive instead.</p>
                     <div class="ag-modal__actions">
-                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelDelete">Close</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">Close</button>
                     </div>
                 @elseif ($confirmingCategory->children_count > 0)
                     <p class="ag-modal__text">This category has {{ $confirmingCategory->children_count }} subcategor{{ $confirmingCategory->children_count === 1 ? 'y' : 'ies' }}. Remove or reassign them first.</p>
                     <div class="ag-modal__actions">
-                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelDelete">Close</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">Close</button>
                     </div>
                 @else
                     <p class="ag-modal__text">This permanently deletes the category. This cannot be undone.</p>
                     <div class="ag-modal__actions">
                         <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteCategory">Delete permanently</button>
-                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelDelete">Cancel</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">Cancel</button>
                     </div>
                 @endif
             </div>

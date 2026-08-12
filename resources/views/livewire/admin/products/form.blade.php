@@ -3,10 +3,31 @@
         :heading="$mode === 'create' ? 'Create product' : 'Edit product'"
         :lede="$mode === 'create' ? 'Add a catalog product. Photos can be uploaded after saving.' : 'Update product details, media, and publishing status.'"
     >
+        <x-slot:back>
+            <x-ag.back :href="route('admin.products.index')" label="Products" />
+        </x-slot:back>
         <x-slot:actions>
-            <a class="ag-btn ag-btn--ghost" href="{{ route('admin.products.index') }}">Back to products</a>
-            @if ($mode === 'edit' && $product->status->value === 'active')
-                <a class="ag-btn ag-btn--ghost" href="{{ route('storefront.product', $product->slug) }}" target="_blank" rel="noopener">View storefront</a>
+            @if ($mode === 'edit')
+                @if ($product->status->value === 'active')
+                    <a
+                        class="ag-btn ag-btn--secondary"
+                        href="{{ route('storefront.product', $product->slug) }}"
+                        target="_blank"
+                        rel="noopener"
+                    >
+                        <x-ag.icon name="eye" :size="16" />
+                        Preview product
+                    </a>
+                @else
+                    <span
+                        class="ag-btn ag-btn--secondary is-disabled"
+                        title="Set status to Active to preview on the storefront"
+                        aria-disabled="true"
+                    >
+                        <x-ag.icon name="eye" :size="16" />
+                        Preview product
+                    </span>
+                @endif
             @endif
         </x-slot:actions>
     </x-ag.page-header>
@@ -80,20 +101,14 @@
                     <textarea id="description" class="ag-input ag-input--area" rows="6" wire:model="description"></textarea>
                     @error('description') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                 </div>
-                <div class="ag-check-row">
-                    <label class="ag-check">
-                        <input type="checkbox" wire:model="show_details">
-                        <span>Show Details tab</span>
-                    </label>
-                    <label class="ag-check">
-                        <input type="checkbox" wire:model="show_specifications">
-                        <span>Show specifications table</span>
-                    </label>
+                <div class="ag-switch-row">
+                    <x-ag.switch id="show_details" wire:model="show_details" label="Show Details tab" />
+                    <x-ag.switch id="show_specifications" wire:model="show_specifications" label="Show specifications table" />
                 </div>
                 <div class="ag-field">
                     <div class="ag-field__label-row">
                         <label class="ag-field__label">Specifications</label>
-                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="addSpecRow">Add row</button>
+                        <button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="addSpecRow">Add row</button>
                     </div>
                     <p class="ag-field__hint">Optional label / value rows. Leave blank to skip.</p>
                     <div class="ag-spec-rows">
@@ -139,51 +154,90 @@
             </div>
         </section>
 
-        <div class="ag-form__sticky">
+        <div class="ag-form__sticky" role="group" aria-label="Form actions">
             <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
                 <span wire:loading.remove wire:target="save">{{ $mode === 'create' ? 'Create product' : 'Save changes' }}</span>
                 <span wire:loading wire:target="save">Saving…</span>
             </button>
-            <a class="ag-btn ag-btn--ghost" href="{{ route('admin.products.index') }}">Cancel</a>
+            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.products.index') }}">Cancel</a>
         </div>
     </form>
 
     @if ($mode === 'edit')
-        <section class="ag-section" aria-labelledby="section-media">
+        <section class="ag-section ag-form--product" aria-labelledby="section-media">
             <header class="ag-section__header">
                 <h3 id="section-media" class="ag-section__title">Media</h3>
                 <p class="ag-section__lede">Primary image and gallery used on the product page.</p>
             </header>
             <div class="ag-section__body">
-                <div class="ag-field">
-                    <label class="ag-field__label" for="product-uploads">Add photos</label>
-                    <input id="product-uploads" class="ag-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple wire:model="uploads">
-                    <p class="ag-field__hint">JPEG, PNG, WebP, or GIF. Max 4 MB per image.</p>
-                    <div wire:loading wire:target="uploads" class="ag-loading ag-loading--inline">Uploading…</div>
+                <x-ag.file-upload
+                    id="product-uploads"
+                    label="Add photos"
+                    hint="JPEG, PNG, WebP, or GIF. Max 4 MB per image."
+                    multiple
+                    button-label="Upload photos"
+                    replace-label="Upload more"
+                    loading-target="uploads"
+                    wire:model="uploads"
+                >
                     @error('uploads') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     @error('uploads.*') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                </div>
+                </x-ag.file-upload>
 
                 @if ($galleryImages->isNotEmpty())
                     <ul class="ag-gallery-admin" role="list">
                         @foreach ($galleryImages as $image)
                             @php $isPrimary = $product->image_path === $image->path; @endphp
-                            <li class="ag-gallery-admin__item {{ $isPrimary ? 'is-primary' : '' }}" wire:key="img-{{ $image->id }}">
-                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($image->path) }}" alt="" width="112" height="112">
-                                @if ($isPrimary)
-                                    <span class="ag-gallery-admin__badge">Primary</span>
-                                @endif
-                                <div class="ag-gallery-admin__actions">
-                                    @unless ($isPrimary)
-                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="setPrimaryImage({{ $image->id }})">Set as primary</button>
-                                    @endunless
-                                    <button type="button" class="ag-icon-btn" wire:click="moveImage({{ $image->id }}, 'up')" title="Move earlier" aria-label="Move photo earlier">
-                                        <x-ag.icon name="chevron-up" :size="16" />
-                                    </button>
-                                    <button type="button" class="ag-icon-btn" wire:click="moveImage({{ $image->id }}, 'down')" title="Move later" aria-label="Move photo later">
-                                        <x-ag.icon name="chevron-down" :size="16" />
-                                    </button>
-                                    <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="removeImage({{ $image->id }})" wire:confirm="Remove this photo?">Remove</button>
+                            <li class="ag-media-tile {{ $isPrimary ? 'is-primary' : '' }}" wire:key="img-{{ $image->id }}">
+                                <div class="ag-media-tile__preview">
+                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($image->path) }}" alt="" width="112" height="112">
+                                    @if ($isPrimary)
+                                        <span class="ag-media-tile__badge">Primary</span>
+                                    @endif
+                                </div>
+                                <div class="ag-media-tile__toolbar">
+                                    <div class="ag-media-tile__tools">
+                                        <button type="button" class="ag-icon-btn" wire:click="moveImage({{ $image->id }}, 'up')" title="Move earlier" aria-label="Move photo earlier">
+                                            <x-ag.icon name="chevron-up" :size="16" />
+                                        </button>
+                                        <button type="button" class="ag-icon-btn" wire:click="moveImage({{ $image->id }}, 'down')" title="Move later" aria-label="Move photo later">
+                                            <x-ag.icon name="chevron-down" :size="16" />
+                                        </button>
+                                    </div>
+                                    <div
+                                        class="ag-menu"
+                                        x-data="{ open: false }"
+                                        @keydown.escape.window="open = false"
+                                        @click.outside="open = false"
+                                    >
+                                        <button
+                                            type="button"
+                                            class="ag-icon-btn"
+                                            @click="open = !open"
+                                            :aria-expanded="open.toString()"
+                                            aria-haspopup="menu"
+                                            title="Photo actions"
+                                            aria-label="Photo actions"
+                                        >
+                                            <x-ag.icon name="more-horizontal" :size="16" />
+                                        </button>
+                                        <div class="ag-menu__panel" x-show="open" x-cloak role="menu">
+                                            @unless ($isPrimary)
+                                                <button type="button" class="ag-menu__item" role="menuitem" wire:click="setPrimaryImage({{ $image->id }})">
+                                                    Set as primary
+                                                </button>
+                                            @endunless
+                                            <button
+                                                type="button"
+                                                class="ag-menu__item ag-menu__item--danger"
+                                                role="menuitem"
+                                                wire:click="removeImage({{ $image->id }})"
+                                                wire:confirm="Remove this photo?"
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </li>
                         @endforeach
@@ -195,22 +249,24 @@
         </section>
 
         @can('products.delete')
-            <section class="ag-section ag-section--danger" aria-labelledby="section-danger">
-                <header class="ag-section__header">
-                    <h3 id="section-danger" class="ag-section__title">Delete product</h3>
-                </header>
-                <div class="ag-section__body">
+            <div class="ag-form--product">
+                <x-ag.danger-zone
+                    title="Delete product"
+                    :description="$isReferenced
+                        ? 'This product appears on historical orders and cannot be permanently deleted. Set status to Draft so it is no longer sold.'
+                        : 'Permanently removes this product and its media. Prefer Draft if you may need it later.'"
+                >
                     @if ($isReferenced)
-                        <p class="ag-field__hint">
-                            This product appears on historical orders and cannot be permanently deleted.
-                            Set status to <strong>Draft</strong> so it is no longer sold.
-                        </p>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="setDraft">
+                            Set as draft
+                        </button>
                     @else
-                        <p class="ag-field__hint">Permanently remove this product and its photos. Prefer Draft if you may need it later.</p>
-                        <button type="button" class="ag-btn ag-btn--danger" wire:click="confirmDelete">Delete permanently…</button>
+                        <button type="button" class="ag-btn ag-btn--danger" wire:click="confirmDelete">
+                            Delete permanently
+                        </button>
                     @endif
-                </div>
-            </section>
+                </x-ag.danger-zone>
+            </div>
         @endcan
 
         @if ($confirmingDelete)
@@ -221,7 +277,7 @@
                     <p class="ag-modal__text">This permanently deletes the product and its photos. This cannot be undone.</p>
                     <div class="ag-modal__actions">
                         <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteProduct">Delete permanently</button>
-                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelDelete">Cancel</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">Cancel</button>
                     </div>
                 </div>
             </div>
