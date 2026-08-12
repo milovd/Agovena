@@ -1,5 +1,6 @@
 <?php
 
+use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
 use App\Livewire\Admin\Appearance\Customize;
 use App\Models\Category;
@@ -20,7 +21,8 @@ test('theme manager discovers default theme and config defaults', function () {
     $config = $themes->config();
     expect($config->bool('header.announcement_enabled'))->toBeTrue()
         ->and($config->string('colors.accent'))->toBe('#155EEF')
-        ->and($config->sections())->not->toBeEmpty();
+        ->and($config->sections())->not->toBeEmpty()
+        ->and($config->uspItems())->toHaveCount(3);
 });
 
 test('homepage renders announcement hero and featured sections', function () {
@@ -32,7 +34,14 @@ test('homepage renders announcement hero and featured sections', function () {
 
     $this->get('/')
         ->assertOk()
-        ->assertSee('store-announce', false)
+        ->assertSee('store-usp', false)
+        ->assertSeeText('Free shipping from €25')
+        ->assertSeeText('Easy returns within 30 days')
+        ->assertSeeText('Shop now')
+        ->assertSee('store-usp__label-short', false)
+        ->assertSeeText('Free shipping')
+        ->assertSeeText('Easy returns')
+        ->assertSee('store-usp__cta', false)
         ->assertSee('store-hero', false)
         ->assertSee('Categories', false)
         ->assertSee('store-cats', false)
@@ -52,6 +61,45 @@ test('demo seeder populates catalog and refuses production', function () {
     $this->get('/categories/phones')->assertOk();
     $this->get('/categories/android')->assertOk();
     $this->get('/about')->assertOk()->assertSee('About', false);
+});
+
+test('categories index page lists root categories', function () {
+    Artisan::call('agovena:seed-demo', ['--force' => true]);
+
+    $this->get('/categories')
+        ->assertOk()
+        ->assertSee('Phones', false)
+        ->assertSee('Audio', false);
+});
+
+test('product detail shows gallery nav and zero reviews', function () {
+    Artisan::call('agovena:seed-demo', ['--force' => true]);
+
+    $this->get('/products/nova-phone-14')
+        ->assertOk()
+        ->assertSee('View 0 reviews', false)
+        ->assertSee('Scroll thumbnails left', false)
+        ->assertSee('Scroll thumbnails right', false)
+        ->assertSee('Show image 1', false)
+        ->assertSee('Show image 8', false)
+        ->assertSee('store-product__thumb is-active', false)
+        ->assertSee('Details', false)
+        ->assertSee('Reviews', false)
+        ->assertSee('Specifications', false)
+        ->assertSee('6.1 inch OLED', false)
+        ->assertSee('No reviews yet', false)
+        ->assertSee('6.1 inch OLED, dual camera, all-day battery.', false);
+});
+
+test('store setting can disable reviews on product pages', function () {
+    Artisan::call('agovena:seed-demo', ['--force' => true]);
+    app(SettingsRepository::class)->set('store', 'enable_reviews', false);
+
+    $this->get('/products/nova-phone-14')
+        ->assertOk()
+        ->assertDontSee('View 0 reviews', false)
+        ->assertDontSee('No reviews yet', false)
+        ->assertSee('Details', false);
 });
 
 test('search suggest returns product thumbnails', function () {

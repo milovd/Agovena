@@ -32,17 +32,61 @@
                         @elseif ($field->type === 'color')
                             <label class="ag-field__label" for="tf-{{ md5($field->key) }}">{{ $field->label }}</label>
                             <input id="tf-{{ md5($field->key) }}" class="ag-input" type="color" wire:model="values.{{ $field->key }}">
-                        @elseif ($field->type !== 'sections')
+                        @elseif (! in_array($field->type, ['sections', 'usp_items'], true))
                             <label class="ag-field__label" for="tf-{{ md5($field->key) }}">{{ $field->label }}</label>
                             <input id="tf-{{ md5($field->key) }}" class="ag-input" type="text" wire:model="values.{{ $field->key }}">
                         @endif
-                        @if ($field->help)
+                        @if ($field->help && ! in_array($field->type, ['sections', 'usp_items'], true))
                             <p class="ag-field__help">{{ $field->help }}</p>
                         @endif
                     </div>
                 @endforeach
             </fieldset>
         @endforeach
+
+        <fieldset class="ag-fieldset">
+            <legend class="ag-fieldset__legend">USP / benefits bar</legend>
+            <p class="ag-field__help">Items across the top of the storefront (shipping, returns, etc.). Use emphasis for a bold lead word; highlight for the special callout.</p>
+
+            <div class="ag-stack">
+                @foreach ($uspItems as $index => $usp)
+                    <div class="admin-panel" wire:key="usp-{{ $index }}">
+                        <div class="ag-toolbar">
+                            <strong>Item {{ $index + 1 }}</strong>
+                            <div class="ag-toolbar__actions">
+                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="moveUspItem({{ $index }}, 'up')">Up</button>
+                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="moveUspItem({{ $index }}, 'down')">Down</button>
+                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="removeUspItem({{ $index }})">Remove</button>
+                            </div>
+                        </div>
+                        <div class="ag-field">
+                            <label class="ag-field__label">Text</label>
+                            <input class="ag-input" type="text" wire:model="uspItems.{{ $index }}.text">
+                        </div>
+                        <div class="ag-field">
+                            <label class="ag-field__label">Short text (narrow screens)</label>
+                            <input class="ag-input" type="text" wire:model="uspItems.{{ $index }}.short" placeholder="Optional — drops words on small screens">
+                        </div>
+                        <div class="ag-field">
+                            <label class="ag-field__label">Emphasis (bold word)</label>
+                            <input class="ag-input" type="text" wire:model="uspItems.{{ $index }}.emphasis" placeholder="e.g. Free">
+                        </div>
+                        <div class="ag-field">
+                            <label class="ag-field__label">Link (optional)</label>
+                            <input class="ag-input" type="text" wire:model="uspItems.{{ $index }}.href" placeholder="/shipping">
+                        </div>
+                        <label class="ag-check">
+                            <input type="checkbox" wire:model="uspItems.{{ $index }}.highlight" value="1">
+                            <span>CTA button (right side)</span>
+                        </label>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="ag-toolbar" style="margin-top: 1rem;">
+                <button type="button" class="ag-btn" wire:click="addUspItem">Add USP item</button>
+            </div>
+        </fieldset>
 
         <fieldset class="ag-fieldset">
             <legend class="ag-fieldset__legend">Homepage sections</legend>

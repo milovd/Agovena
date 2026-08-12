@@ -103,4 +103,46 @@ final class ThemeConfig
 
         return $out;
     }
+
+    /**
+     * @return list<array{text: string, short: string, emphasis: string, href: string, highlight: bool}>
+     */
+    public function uspItems(): array
+    {
+        $items = $this->get('header.usp_items', []);
+        if (! is_array($items) || $items === []) {
+            $legacy = $this->string('header.announcement_text', '');
+            if ($legacy === '') {
+                return [];
+            }
+
+            return [[
+                'text' => $legacy,
+                'short' => '',
+                'emphasis' => '',
+                'href' => $this->string('header.announcement_link', ''),
+                'highlight' => false,
+            ]];
+        }
+
+        $out = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $text = isset($item['text']) ? trim((string) $item['text']) : '';
+            if ($text === '') {
+                continue;
+            }
+            $out[] = [
+                'text' => $text,
+                'short' => isset($item['short']) ? trim((string) $item['short']) : '',
+                'emphasis' => isset($item['emphasis']) ? trim((string) $item['emphasis']) : '',
+                'href' => isset($item['href']) ? trim((string) $item['href']) : '',
+                'highlight' => filter_var($item['highlight'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            ];
+        }
+
+        return $out;
+    }
 }

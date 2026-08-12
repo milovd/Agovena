@@ -38,21 +38,42 @@ final class CartService
     }
 
     /**
+     * Drop lines whose products were deleted or are no longer purchasable.
+     *
+     * @return list<int> Removed product ids
+     */
+    public function removeUnavailable(): array
+    {
+        $removed = [];
+
+        foreach ($this->cart->lines() as $line) {
+            $product = Product::query()->find($line->productId);
+
+            if ($product === null || ! $product->isPurchasable()) {
+                $this->cart->remove($line->productId);
+                $removed[] = $line->productId;
+            }
+        }
+
+        return $removed;
+    }
+
+    /**
      * Server-authoritative pricing. Client-submitted prices are never used.
      *
      * @return list<PricedCartLine>
      */
     public function pricedLines(): array
     {
+        $this->removeUnavailable();
+
         $priced = [];
 
         foreach ($this->cart->lines() as $line) {
             $product = Product::query()->find($line->productId);
 
             if ($product === null || ! $product->isPurchasable()) {
-                throw ValidationException::withMessages([
-                    'cart' => 'Your cart contains an unavailable product. Remove it to continue.',
-                ]);
+                continue;
             }
 
             $unit = $product->money();
@@ -87,11 +108,15 @@ final class CartService
 
     public function isEmpty(): bool
     {
+        $this->removeUnavailable();
+
         return $this->cart->lines() === [];
     }
 
     public function itemCount(): int
     {
+        $this->removeUnavailable();
+
         $count = 0;
 
         foreach ($this->cart->lines() as $line) {

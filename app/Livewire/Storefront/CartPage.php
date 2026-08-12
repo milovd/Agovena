@@ -6,7 +6,6 @@ namespace App\Livewire\Storefront;
 
 use App\Agovena\Cart\CartService;
 use App\Agovena\Theme\ThemeManager;
-use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 final class CartPage extends Component
@@ -16,13 +15,12 @@ final class CartPage extends Component
 
     public function mount(CartService $cart): void
     {
-        try {
-            foreach ($cart->pricedLines() as $line) {
-                $this->quantities[$line->productId] = $line->quantity;
-            }
-        } catch (ValidationException) {
-            $this->quantities = [];
+        $removed = $cart->removeUnavailable();
+        if ($removed !== []) {
+            session()->flash('status', 'Unavailable items were removed from your cart.');
         }
+
+        $this->refreshQuantities($cart);
     }
 
     public function updateLine(int $productId, CartService $cart): void
@@ -41,15 +39,8 @@ final class CartPage extends Component
     public function render(CartService $cart, ThemeManager $themes)
     {
         $theme = $themes->active();
-
-        try {
-            $lines = $cart->pricedLines();
-            $subtotal = $cart->subtotal();
-        } catch (ValidationException $e) {
-            $lines = [];
-            $subtotal = null;
-            session()->flash('error', $e->getMessage());
-        }
+        $lines = $cart->pricedLines();
+        $subtotal = $cart->subtotal();
 
         return view($theme->view('cart.index'), [
             'lines' => $lines,

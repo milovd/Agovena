@@ -1,8 +1,7 @@
 @php
     $cfg = $themeConfig ?? app(\App\Agovena\Theme\ThemeManager::class)->config();
     $announcementOn = $cfg->bool('header.announcement_enabled', true);
-    $announcementText = $cfg->string('header.announcement_text');
-    $announcementLink = $cfg->string('header.announcement_link');
+    $uspItems = $announcementOn ? $cfg->uspItems() : [];
     $searchOn = $cfg->bool('header.search_enabled', true);
     $showAccount = $cfg->bool('header.show_account', true);
     $categoriesOn = $cfg->bool('header.show_discovery_bar', true);
@@ -10,13 +9,52 @@
     $suggestUrl = route('storefront.search.suggest');
 @endphp
 
-@if ($announcementOn && $announcementText !== '')
-    <div class="store-announce" role="region" aria-label="Announcement">
-        <div class="store-announce__inner">
-            @if ($announcementLink !== '')
-                <a class="store-announce__link" href="{{ $announcementLink }}">{{ $announcementText }}</a>
-            @else
-                <p class="store-announce__text">{{ $announcementText }}</p>
+@if ($uspItems !== [])
+    @php
+        $uspBenefits = [];
+        $uspCtas = [];
+        foreach ($uspItems as $usp) {
+            if ($usp['highlight']) {
+                $uspCtas[] = $usp;
+            } else {
+                $uspBenefits[] = $usp;
+            }
+        }
+    @endphp
+    <div class="store-usp" role="region" aria-label="Store benefits">
+        <div class="store-usp__inner">
+            @if ($uspBenefits !== [])
+                <ul class="store-usp__benefits">
+                    @foreach ($uspBenefits as $usp)
+                        <li class="store-usp__item">
+                            @if ($usp['href'] !== '')
+                                <a class="store-usp__link" href="{{ $usp['href'] }}">
+                                    @include('theme::partials.usp-label', ['usp' => $usp])
+                                </a>
+                            @else
+                                <span class="store-usp__text">
+                                    @include('theme::partials.usp-label', ['usp' => $usp])
+                                </span>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+
+            @if ($uspCtas !== [])
+                <ul class="store-usp__actions">
+                    @foreach ($uspCtas as $usp)
+                        @php
+                            $ctaHref = $usp['href'] !== '' ? $usp['href'] : route('storefront.home');
+                        @endphp
+                        <li class="store-usp__item store-usp__item--cta">
+                            <a class="store-usp__cta" href="{{ $ctaHref }}">
+                                @include('theme::partials.usp-label', ['usp' => $usp])
+                                <span class="store-usp__chev" aria-hidden="true">›</span>
+                            </a>
+                        </li>
+                    @endforeach
+                </ul>
             @endif
         </div>
     </div>
@@ -62,6 +100,12 @@
         },
         closeSuggest() {
             this.suggestOpen = false;
+        },
+        clearSuggest() {
+            this.suggestQuery = '';
+            this.suggestItems = [];
+            this.suggestOpen = false;
+            this.suggestLoading = false;
         }
     }"
     @keydown.escape.window="navOpen = false; catsOpen = false; suggestOpen = false"
@@ -100,17 +144,16 @@
                         @focusin="catsOpen = true"
                         @click.outside="catsOpen = false; activeCat = null"
                     >
-                        <button
-                            type="button"
+                        <a
+                            href="{{ route('storefront.categories') }}"
                             class="store-nav__link store-nav__link--btn"
-                            @click="catsOpen = !catsOpen"
                             :aria-expanded="catsOpen.toString()"
                             aria-controls="store-cats-panel"
                             aria-haspopup="true"
                         >
                             Categories
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-                        </button>
+                        </a>
                         <div
                             id="store-cats-panel"
                             class="store-cats__panel"
@@ -193,6 +236,19 @@
                             aria-autocomplete="list"
                             aria-controls="store-search-suggest"
                         >
+                        <button
+                            type="button"
+                            class="store-header__search-clear"
+                            x-show="(suggestQuery || '').length > 0"
+                            x-cloak
+                            @click="clearSuggest()"
+                            aria-label="Clear search"
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                                <path d="M18 6 6 18"/>
+                                <path d="m6 6 12 12"/>
+                            </svg>
+                        </button>
                         <button type="submit" class="store-header__search-icon-btn" aria-label="Search">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
                         </button>
@@ -238,16 +294,17 @@
                     <span
                         class="store-header__utility"
                         title="Customer accounts will be available when the customer portal ships"
+                        aria-label="Account"
                     >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                        <span class="store-header__utility-label">Account</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                        <span class="visually-hidden">Account</span>
                     </span>
                 @endif
-                <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
-                    <span class="store-header__utility-label">Cart</span>
+                <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}" aria-label="Cart{{ ($cartCount ?? 0) > 0 ? ', '.$cartCount.' items' : '' }}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+                    <span class="visually-hidden">Cart</span>
                     @if (($cartCount ?? 0) > 0)
-                        <span class="store-header__cart-count" aria-label="{{ $cartCount }} items in cart">{{ $cartCount }}</span>
+                        <span class="store-header__cart-count" aria-hidden="true">{{ $cartCount }}</span>
                     @endif
                 </a>
             </div>
@@ -268,6 +325,19 @@
                         placeholder="Search product"
                         autocomplete="off"
                     >
+                    <button
+                        type="button"
+                        class="store-header__search-clear"
+                        x-show="(suggestQuery || '').length > 0"
+                        x-cloak
+                        @click="clearSuggest()"
+                        aria-label="Clear search"
+                    >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                            <path d="M18 6 6 18"/>
+                            <path d="m6 6 12 12"/>
+                        </svg>
+                    </button>
                     <button type="submit" class="store-header__search-icon-btn" aria-label="Search">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
                     </button>
@@ -289,13 +359,16 @@
         <div class="store-drawer__panel">
             <p class="store-drawer__title">Menu</p>
             <nav class="store-drawer__nav" aria-label="Mobile">
+                @if ($categoriesOn)
+                    <a class="store-drawer__link" href="{{ route('storefront.categories') }}" @click="navOpen = false">Categories</a>
+                @endif
                 @foreach ($themeMainNav ?? [] as $item)
                     @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
                         <a class="store-drawer__link" href="{{ $item['url'] }}" @click="navOpen = false">{{ $item['label'] }}</a>
                     @endif
                 @endforeach
                 @if ($categoriesOn && $discoveryCategories->isNotEmpty())
-                    <p class="store-drawer__label">Categories</p>
+                    <p class="store-drawer__label">Browse categories</p>
                     @foreach ($discoveryCategories as $category)
                         <a class="store-drawer__link" href="{{ route('storefront.category', $category->slug) }}" @click="navOpen = false">{{ $category->name }}</a>
                         @foreach ($category->children as $child)

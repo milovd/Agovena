@@ -16,6 +16,9 @@ final class Customize extends Component
     /** @var list<array<string, mixed>> */
     public array $sections = [];
 
+    /** @var list<array{text: string, short: string, emphasis: string, href: string, highlight: bool}> */
+    public array $uspItems = [];
+
     public function mount(ThemeManager $themes): void
     {
         $this->authorize('theme.manage');
@@ -23,7 +26,12 @@ final class Customize extends Component
         $flat = $config->all();
         $sections = $flat['homepage.sections'] ?? [];
         unset($flat['homepage.sections']);
+        $usp = $flat['header.usp_items'] ?? null;
+        unset($flat['header.usp_items'], $flat['header.announcement_text'], $flat['header.announcement_link']);
         $this->sections = is_array($sections) ? array_values($sections) : [];
+        $this->uspItems = $this->normalizeUspItems(
+            (is_array($usp) && $usp !== []) ? $usp : $config->uspItems()
+        );
         $this->values = Arr::undot($flat);
     }
 
@@ -34,7 +42,7 @@ final class Customize extends Component
         $flat = Arr::dot($this->values);
 
         foreach ($schema->fields as $field) {
-            if ($field->key === 'homepage.sections') {
+            if (in_array($field->key, ['homepage.sections', 'header.usp_items'], true)) {
                 continue;
             }
             if ($field->type === 'boolean') {
@@ -43,9 +51,35 @@ final class Customize extends Component
         }
 
         $flat['homepage.sections'] = $this->sections;
+        $flat['header.usp_items'] = $this->normalizeUspItems($this->uspItems);
         $themes->config()->setMany($flat);
 
         session()->flash('status', 'Theme settings saved.');
+    }
+
+    public function addUspItem(): void
+    {
+        $this->uspItems[] = [
+            'text' => 'New benefit',
+            'short' => '',
+            'emphasis' => '',
+            'href' => '',
+            'highlight' => false,
+        ];
+    }
+
+    public function removeUspItem(int $index): void
+    {
+        array_splice($this->uspItems, $index, 1);
+    }
+
+    public function moveUspItem(int $index, string $direction): void
+    {
+        $swap = $direction === 'up' ? $index - 1 : $index + 1;
+        if (! isset($this->uspItems[$index], $this->uspItems[$swap])) {
+            return;
+        }
+        [$this->uspItems[$index], $this->uspItems[$swap]] = [$this->uspItems[$swap], $this->uspItems[$index]];
     }
 
     public function moveSection(int $index, string $direction): void
@@ -120,5 +154,32 @@ final class Customize extends Component
         ])->layout('layouts.admin', [
             'title' => 'Customize theme',
         ]);
+    }
+
+    /**
+     * @param  list<mixed>  $items
+     * @return list<array{text: string, short: string, emphasis: string, href: string, highlight: bool}>
+     */
+    private function normalizeUspItems(array $items): array
+    {
+        $out = [];
+        foreach ($items as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $text = isset($item['text']) ? trim((string) $item['text']) : '';
+            if ($text === '') {
+                continue;
+            }
+            $out[] = [
+                'text' => $text,
+                'short' => isset($item['short']) ? trim((string) $item['short']) : '',
+                'emphasis' => isset($item['emphasis']) ? trim((string) $item['emphasis']) : '',
+                'href' => isset($item['href']) ? trim((string) $item['href']) : '',
+                'highlight' => filter_var($item['highlight'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            ];
+        }
+
+        return $out;
     }
 }

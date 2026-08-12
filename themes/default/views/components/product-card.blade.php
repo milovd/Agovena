@@ -16,7 +16,13 @@
         @endif
         <div class="store-product-card__footer">
             <p class="store-product-card__price">{{ \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</p>
-            <span class="store-product-card__cta">View</span>
+            <span class="store-product-card__cta" aria-hidden="true" title="View product">
+                <svg class="store-product-card__cta-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14"/>
+                    <path d="m13 6 6 6-6 6"/>
+                </svg>
+            </span>
+            <span class="visually-hidden">View {{ $product->name }}</span>
         </div>
     </div>
 </a>

@@ -56,5 +56,22 @@ test('cart item count sums quantities', function () {
     $this->withSession(['agovena.cart' => [$product->id => 3]])
         ->get('/')
         ->assertOk()
-        ->assertSee('aria-label="3 items in cart"', false);
+        ->assertSee('aria-label="Cart, 3 items"', false);
+});
+
+test('cart prunes deleted products and clears badge', function () {
+    $product = Product::factory()->active()->create();
+    $goneId = $product->id + 9000;
+
+    $this->withSession(['agovena.cart' => [$goneId => 1]])
+        ->get('/cart')
+        ->assertOk()
+        ->assertSee('Your cart is empty', false)
+        ->assertSee('Unavailable items were removed from your cart.', false);
+
+    expect(session('agovena.cart', []))->toBe([]);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertDontSee('aria-label="Cart, 1 items"', false);
 });
