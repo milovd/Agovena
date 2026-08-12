@@ -1,133 +1,232 @@
-<div class="admin-page">
-    <div class="admin-page__header">
-        <h2 class="admin-page__heading">{{ $mode === 'create' ? 'Create product' : 'Edit product' }}</h2>
-        <a class="ag-btn ag-btn--ghost" href="{{ route('admin.products.index') }}">Back</a>
-    </div>
+<div class="admin-page admin-page--form">
+    <x-ag.page-header
+        :heading="$mode === 'create' ? 'Create product' : 'Edit product'"
+        :lede="$mode === 'create' ? 'Add a catalog product. Photos can be uploaded after saving.' : 'Update product details, media, and publishing status.'"
+    >
+        <x-slot:actions>
+            <a class="ag-btn ag-btn--ghost" href="{{ route('admin.products.index') }}">Back to products</a>
+            @if ($mode === 'edit' && $product->status->value === 'active')
+                <a class="ag-btn ag-btn--ghost" href="{{ route('storefront.product', $product->slug) }}" target="_blank" rel="noopener">View storefront</a>
+            @endif
+        </x-slot:actions>
+    </x-ag.page-header>
 
-    <form wire:submit="save" class="admin-panel" novalidate>
-        <div class="ag-field">
-            <label class="ag-field__label" for="name">Name</label>
-            <input id="name" class="ag-input" type="text" wire:model="name" required>
-            @error('name') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-        </div>
+    @if (session('error'))
+        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
+    @endif
 
-        <div class="ag-field">
-            <label class="ag-field__label" for="subtitle">Subtitle</label>
-            <input id="subtitle" class="ag-input" type="text" wire:model="subtitle" aria-describedby="subtitle-hint">
-            <p id="subtitle-hint" class="ag-field__hint">Short line under the title on the product page. Falls back to a trimmed description when empty.</p>
-            @error('subtitle') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-        </div>
-
-        <div class="ag-field">
-            <label class="ag-field__label" for="slug">Slug</label>
-            <input id="slug" class="ag-input" type="text" wire:model="slug" aria-describedby="slug-hint">
-            <p id="slug-hint" class="ag-field__hint">Leave blank to generate from name.</p>
-            @error('slug') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-        </div>
-
-        <div class="ag-field">
-            <label class="ag-field__label" for="description">Details text</label>
-            <textarea id="description" class="ag-input ag-input--area" rows="5" wire:model="description" aria-describedby="description-hint"></textarea>
-            <p id="description-hint" class="ag-field__hint">Shown in the Details tab when “Show details” is enabled.</p>
-            @error('description') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-        </div>
-
-        <fieldset class="ag-fieldset">
-            <legend class="ag-fieldset__legend">Product page sections</legend>
-            <label class="ag-check">
-                <input type="checkbox" wire:model="show_details">
-                <span>Show Details tab (description text)</span>
-            </label>
-            <label class="ag-check">
-                <input type="checkbox" wire:model="show_specifications">
-                <span>Show specifications table</span>
-            </label>
-        </fieldset>
-
-        <div class="ag-field">
-            <div class="ag-field__label-row">
-                <label class="ag-field__label">Specifications</label>
-                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="addSpecRow">Add row</button>
-            </div>
-            <p class="ag-field__hint">Optional label / value rows for the Details table. Leave blank to skip.</p>
-            <div class="ag-spec-rows">
-                @foreach ($specRows as $index => $row)
-                    <div class="ag-spec-rows__row" wire:key="spec-{{ $index }}">
-                        <input class="ag-input" type="text" placeholder="Label" wire:model="specRows.{{ $index }}.label" aria-label="Spec label {{ $index + 1 }}">
-                        <input class="ag-input" type="text" placeholder="Value" wire:model="specRows.{{ $index }}.value" aria-label="Spec value {{ $index + 1 }}">
-                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="removeSpecRow({{ $index }})" aria-label="Remove row">Remove</button>
+    <form wire:submit="save" class="ag-form ag-form--product" novalidate>
+        <section class="ag-section" aria-labelledby="section-basic">
+            <header class="ag-section__header">
+                <h3 id="section-basic" class="ag-section__title">Basic information</h3>
+                <p class="ag-section__lede">Core identity used across Admin and the storefront.</p>
+            </header>
+            <div class="ag-section__body">
+                <div class="ag-grid ag-grid--2">
+                    <div class="ag-field ag-grid__span-2">
+                        <label class="ag-field__label" for="name">Name</label>
+                        <input id="name" class="ag-input" type="text" wire:model="name" required>
+                        @error('name') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
-                @endforeach
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="slug">Slug</label>
+                        <input id="slug" class="ag-input" type="text" wire:model="slug" aria-describedby="slug-hint">
+                        <p id="slug-hint" class="ag-field__hint">Leave blank to generate from name.</p>
+                        @error('slug') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="sku">SKU</label>
+                        <input id="sku" class="ag-input" type="text" wire:model="sku" aria-describedby="sku-hint">
+                        <p id="sku-hint" class="ag-field__hint">Optional unique stock-keeping code.</p>
+                        @error('sku') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="status">Status</label>
+                        <select id="status" class="ag-select" wire:model="status">
+                            <option value="draft">Draft</option>
+                            <option value="active">Active</option>
+                        </select>
+                        <p class="ag-field__hint">Draft products are not listable or purchasable.</p>
+                        @error('status') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="category_id">Category</label>
+                        <select id="category_id" class="ag-select" wire:model="category_id">
+                            <option value="">None</option>
+                            @foreach ($categories as $category)
+                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('category_id') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                </div>
             </div>
-            @error('specRows') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-        </div>
+        </section>
 
-        <div class="ag-field">
-            <label class="ag-field__label" for="status">Status</label>
-            <select id="status" class="ag-select" wire:model="status">
-                <option value="draft">Draft</option>
-                <option value="active">Active (published)</option>
-            </select>
-            <p class="ag-field__hint">Draft products are not listable or purchasable on the storefront.</p>
-            @error('status') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-        </div>
+        <section class="ag-section" aria-labelledby="section-description">
+            <header class="ag-section__header">
+                <h3 id="section-description" class="ag-section__title">Description</h3>
+                <p class="ag-section__lede">Copy shown on the product page.</p>
+            </header>
+            <div class="ag-section__body">
+                <div class="ag-field">
+                    <label class="ag-field__label" for="subtitle">Short description</label>
+                    <input id="subtitle" class="ag-input" type="text" wire:model="subtitle" aria-describedby="subtitle-hint">
+                    <p id="subtitle-hint" class="ag-field__hint">One-line summary under the title. Falls back to a trimmed details text when empty.</p>
+                    @error('subtitle') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                </div>
+                <div class="ag-field">
+                    <label class="ag-field__label" for="description">Details</label>
+                    <textarea id="description" class="ag-input ag-input--area" rows="6" wire:model="description"></textarea>
+                    @error('description') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                </div>
+                <div class="ag-check-row">
+                    <label class="ag-check">
+                        <input type="checkbox" wire:model="show_details">
+                        <span>Show Details tab</span>
+                    </label>
+                    <label class="ag-check">
+                        <input type="checkbox" wire:model="show_specifications">
+                        <span>Show specifications table</span>
+                    </label>
+                </div>
+                <div class="ag-field">
+                    <div class="ag-field__label-row">
+                        <label class="ag-field__label">Specifications</label>
+                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="addSpecRow">Add row</button>
+                    </div>
+                    <p class="ag-field__hint">Optional label / value rows. Leave blank to skip.</p>
+                    <div class="ag-spec-rows">
+                        @foreach ($specRows as $index => $row)
+                            <div class="ag-spec-rows__row" wire:key="spec-{{ $index }}">
+                                <input class="ag-input" type="text" placeholder="Label" wire:model="specRows.{{ $index }}.label" aria-label="Spec label {{ $index + 1 }}">
+                                <input class="ag-input" type="text" placeholder="Value" wire:model="specRows.{{ $index }}.value" aria-label="Spec value {{ $index + 1 }}">
+                                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="removeSpecRow({{ $index }})" aria-label="Remove row">Remove</button>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <div class="ag-field">
-            <label class="ag-field__label" for="price_amount">Price (minor units)</label>
-            <input id="price_amount" class="ag-input" type="number" min="0" step="1" wire:model="price_amount" required aria-describedby="price-hint">
-            <p id="price-hint" class="ag-field__hint">Integer minor units only (e.g. 1999 = 19.99). No floats.</p>
-            @error('price_amount') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-        </div>
+        <section class="ag-section" aria-labelledby="section-pricing">
+            <header class="ag-section__header">
+                <h3 id="section-pricing" class="ag-section__title">Pricing</h3>
+                <p class="ag-section__lede">Server-authoritative amounts in minor units.</p>
+            </header>
+            <div class="ag-section__body">
+                <div class="ag-grid ag-grid--2">
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="price_amount">Price (minor units)</label>
+                        <input id="price_amount" class="ag-input" type="number" min="0" step="1" wire:model="price_amount" required aria-describedby="price-hint">
+                        <p id="price-hint" class="ag-field__hint">Integer only (e.g. 1999 = 19.99).</p>
+                        @error('price_amount') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="currency">Currency</label>
+                        @if ($currencies->isNotEmpty())
+                            <select id="currency" class="ag-select" wire:model="currency">
+                                @foreach ($currencies as $currencyOption)
+                                    <option value="{{ $currencyOption->code }}">{{ $currencyOption->code }} — {{ $currencyOption->name }}</option>
+                                @endforeach
+                            </select>
+                        @else
+                            <input id="currency" class="ag-input" type="text" maxlength="3" wire:model="currency" required>
+                        @endif
+                        @error('currency') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
+        </section>
 
-        <div class="ag-field">
-            <label class="ag-field__label" for="currency">Currency</label>
-            <input id="currency" class="ag-input" type="text" maxlength="3" wire:model="currency" required>
-            @error('currency') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+        <div class="ag-form__sticky">
+            <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
+                <span wire:loading.remove wire:target="save">{{ $mode === 'create' ? 'Create product' : 'Save changes' }}</span>
+                <span wire:loading wire:target="save">Saving…</span>
+            </button>
+            <a class="ag-btn ag-btn--ghost" href="{{ route('admin.products.index') }}">Cancel</a>
         </div>
-
-        <div class="ag-field">
-            <label class="ag-field__label" for="category_id">Category</label>
-            <select id="category_id" class="ag-select" wire:model="category_id">
-                <option value="">— None —</option>
-                @foreach ($categories as $category)
-                    <option value="{{ $category->id }}">{{ $category->name }}</option>
-                @endforeach
-            </select>
-            @error('category_id') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-        </div>
-
-        <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
-            {{ $mode === 'create' ? 'Create' : 'Save' }}
-        </button>
     </form>
 
     @if ($mode === 'edit')
-        <section class="admin-panel" style="margin-top: 1.25rem;" aria-labelledby="gallery-heading">
-            <h3 id="gallery-heading" class="admin-page__heading" style="font-size: 1.1rem;">Product photos</h3>
-            <p class="ag-field__hint">Upload multiple images for the storefront gallery (arrows appear when there is more than one).</p>
+        <section class="ag-section" aria-labelledby="section-media">
+            <header class="ag-section__header">
+                <h3 id="section-media" class="ag-section__title">Media</h3>
+                <p class="ag-section__lede">Primary image and gallery used on the product page.</p>
+            </header>
+            <div class="ag-section__body">
+                <div class="ag-field">
+                    <label class="ag-field__label" for="product-uploads">Add photos</label>
+                    <input id="product-uploads" class="ag-input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" multiple wire:model="uploads">
+                    <p class="ag-field__hint">JPEG, PNG, WebP, or GIF. Max 4 MB per image.</p>
+                    <div wire:loading wire:target="uploads" class="ag-loading ag-loading--inline">Uploading…</div>
+                    @error('uploads') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    @error('uploads.*') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                </div>
 
-            <div class="ag-field">
-                <label class="ag-field__label" for="product-uploads">Add photos</label>
-                <input id="product-uploads" class="ag-input" type="file" accept="image/*" multiple wire:model="uploads">
-                <div wire:loading wire:target="uploads">Uploading…</div>
-                @error('uploads') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                @error('uploads.*') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                @if ($galleryImages->isNotEmpty())
+                    <ul class="ag-gallery-admin" role="list">
+                        @foreach ($galleryImages as $image)
+                            @php $isPrimary = $product->image_path === $image->path; @endphp
+                            <li class="ag-gallery-admin__item {{ $isPrimary ? 'is-primary' : '' }}" wire:key="img-{{ $image->id }}">
+                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($image->path) }}" alt="" width="112" height="112">
+                                @if ($isPrimary)
+                                    <span class="ag-gallery-admin__badge">Primary</span>
+                                @endif
+                                <div class="ag-gallery-admin__actions">
+                                    @unless ($isPrimary)
+                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="setPrimaryImage({{ $image->id }})">Set as primary</button>
+                                    @endunless
+                                    <button type="button" class="ag-icon-btn" wire:click="moveImage({{ $image->id }}, 'up')" title="Move earlier" aria-label="Move photo earlier">
+                                        <x-ag.icon name="chevron-up" :size="16" />
+                                    </button>
+                                    <button type="button" class="ag-icon-btn" wire:click="moveImage({{ $image->id }}, 'down')" title="Move later" aria-label="Move photo later">
+                                        <x-ag.icon name="chevron-down" :size="16" />
+                                    </button>
+                                    <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="removeImage({{ $image->id }})" wire:confirm="Remove this photo?">Remove</button>
+                                </div>
+                            </li>
+                        @endforeach
+                    </ul>
+                @else
+                    <p class="ag-empty ag-empty--compact" role="status">No photos yet.</p>
+                @endif
             </div>
-
-            @if ($galleryImages->isNotEmpty())
-                <ul class="ag-gallery-admin" role="list">
-                    @foreach ($galleryImages as $image)
-                        <li class="ag-gallery-admin__item">
-                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($image->path) }}" alt="" width="96" height="96">
-                            <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="removeImage({{ $image->id }})" wire:confirm="Remove this photo?">Remove</button>
-                        </li>
-                    @endforeach
-                </ul>
-            @else
-                <p class="ag-field__hint">No photos yet.</p>
-            @endif
         </section>
+
+        @can('products.delete')
+            <section class="ag-section ag-section--danger" aria-labelledby="section-danger">
+                <header class="ag-section__header">
+                    <h3 id="section-danger" class="ag-section__title">Delete product</h3>
+                </header>
+                <div class="ag-section__body">
+                    @if ($isReferenced)
+                        <p class="ag-field__hint">
+                            This product appears on historical orders and cannot be permanently deleted.
+                            Set status to <strong>Draft</strong> so it is no longer sold.
+                        </p>
+                    @else
+                        <p class="ag-field__hint">Permanently remove this product and its photos. Prefer Draft if you may need it later.</p>
+                        <button type="button" class="ag-btn ag-btn--danger" wire:click="confirmDelete">Delete permanently…</button>
+                    @endif
+                </div>
+            </section>
+        @endcan
+
+        @if ($confirmingDelete)
+            <div class="ag-modal" role="dialog" aria-modal="true" aria-labelledby="delete-edit-title">
+                <div class="ag-modal__backdrop" wire:click="cancelDelete"></div>
+                <div class="ag-modal__panel">
+                    <h3 id="delete-edit-title" class="ag-modal__title">Delete {{ $product->name }}?</h3>
+                    <p class="ag-modal__text">This permanently deletes the product and its photos. This cannot be undone.</p>
+                    <div class="ag-modal__actions">
+                        <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteProduct">Delete permanently</button>
+                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelDelete">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        @endif
     @else
-        <p class="ag-field__hint" style="margin-top: 1rem;">Create the product first, then add photos on the edit screen.</p>
+        <p class="ag-field__hint">After creating the product you can upload gallery photos on the edit screen.</p>
     @endif
 </div>

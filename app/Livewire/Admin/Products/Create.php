@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Products;
 
 use App\Agovena\Admin\AdminRegistrar;
-use App\Agovena\Admin\InMemoryAdminRegistrar;
 use App\Agovena\Catalog\CreateProduct;
 use App\Enums\ProductStatus;
 use App\Models\Category;
+use App\Models\Currency;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -22,6 +22,8 @@ final class Create extends Component
     public string $subtitle = '';
 
     public string $slug = '';
+
+    public string $sku = '';
 
     public string $description = '';
 
@@ -45,6 +47,11 @@ final class Create extends Component
     public function mount(): void
     {
         $this->authorize('products.create');
+
+        $defaultCurrency = Currency::query()->where('is_active', true)->orderBy('code')->value('code');
+        if (is_string($defaultCurrency) && $defaultCurrency !== '') {
+            $this->currency = $defaultCurrency;
+        }
     }
 
     public function addSpecRow(): void
@@ -65,10 +72,15 @@ final class Create extends Component
     {
         $this->authorize('products.create');
 
+        $currencyRule = Currency::query()->where('is_active', true)->exists()
+            ? Rule::exists('currencies', 'code')->where('is_active', true)
+            : ['string', 'size:3'];
+
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', 'unique:products,slug'],
+            'sku' => ['nullable', 'string', 'max:64', 'unique:products,sku'],
             'description' => ['nullable', 'string'],
             'specRows' => ['array'],
             'specRows.*.label' => ['nullable', 'string', 'max:120'],
@@ -77,7 +89,7 @@ final class Create extends Component
             'show_specifications' => ['boolean'],
             'status' => ['required', Rule::enum(ProductStatus::class)],
             'price_amount' => ['required', 'integer', 'min:0'],
-            'currency' => ['required', 'string', 'size:3'],
+            'currency' => ['required', $currencyRule],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
         ]);
 
@@ -85,6 +97,7 @@ final class Create extends Component
             'name' => $data['name'],
             'subtitle' => $data['subtitle'] ?: null,
             'slug' => $data['slug'] ?: null,
+            'sku' => $data['sku'] ?: null,
             'description' => $data['description'] ?: null,
             'specifications' => $data['specRows'],
             'show_details' => (bool) $data['show_details'],
@@ -102,12 +115,11 @@ final class Create extends Component
 
     public function render(AdminRegistrar $admin)
     {
-        /** @var InMemoryAdminRegistrar $admin */
         return view('livewire.admin.products.form', [
             'categories' => Category::query()->orderBy('name')->get(),
+            'currencies' => Currency::query()->where('is_active', true)->orderBy('code')->get(['code', 'name']),
             'mode' => 'create',
             'galleryImages' => collect(),
-            'navigation' => $admin->navigationItems(),
         ])->layout('layouts.admin', [
             'title' => 'Create product',
             'navigation' => $admin->navigationItems(),

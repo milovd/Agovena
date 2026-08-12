@@ -5,15 +5,18 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Products;
 
 use App\Agovena\Admin\AdminRegistrar;
-use App\Agovena\Admin\InMemoryAdminRegistrar;
+use App\Agovena\Catalog\DeleteProduct;
 use App\Agovena\Catalog\UpdateProduct;
 use App\Enums\ProductStatus;
 use App\Models\Category;
+use App\Models\Currency;
 use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -30,6 +33,8 @@ final class Edit extends Component
     public string $subtitle = '';
 
     public string $slug = '';
+
+    public string $sku = '';
 
     public string $description = '';
 
@@ -53,6 +58,8 @@ final class Edit extends Component
     /** @var list<TemporaryUploadedFile>|TemporaryUploadedFile|null */
     public $uploads = null;
 
+    public bool $confirmingDelete = false;
+
     public function mount(Product $product): void
     {
         $this->authorize('products.update');
@@ -61,6 +68,7 @@ final class Edit extends Component
         $this->name = $product->name;
         $this->subtitle = (string) $product->subtitle;
         $this->slug = $product->slug;
+        $this->sku = (string) $product->sku;
         $this->description = (string) $product->description;
         $this->show_details = (bool) $product->show_details;
         $this->show_specifications = (bool) $product->show_specifications;
@@ -99,7 +107,7 @@ final class Edit extends Component
 
         $this->validate([
             'uploads' => ['required'],
-            'uploads.*' => ['image', 'max:4096'],
+            'uploads.*' => ['image', 'mimes:jpeg,jpg,png,webp,gif', 'max:4096'],
         ]);
 
         $files = is_array($this->uploads) ? $this->uploads : [$this->uploads];
@@ -125,6 +133,51 @@ final class Edit extends Component
         $this->uploads = null;
         $this->product->refresh()->load('images');
         session()->flash('status', 'Photos uploaded.');
+    }
+
+    public function setPrimaryImage(int $imageId): void
+    {
+        $this->authorize('products.update');
+
+        $image = ProductImage::query()
+            ->where('product_id', $this->product->id)
+            ->whereKey($imageId)
+            ->firstOrFail();
+
+        $this->product->forceFill(['image_path' => $image->path])->save();
+        $this->product->refresh()->load('images');
+        session()->flash('status', 'Primary photo updated.');
+    }
+
+    public function moveImage(int $imageId, string $direction): void
+    {
+        $this->authorize('products.update');
+
+        $image = ProductImage::query()
+            ->where('product_id', $this->product->id)
+            ->whereKey($imageId)
+            ->firstOrFail();
+
+        $swap = ProductImage::query()
+            ->where('product_id', $this->product->id)
+            ->when(
+                $direction === 'up',
+                fn ($q) => $q->where('sort', '<', $image->sort)->orderByDesc('sort'),
+                fn ($q) => $q->where('sort', '>', $image->sort)->orderBy('sort'),
+            )
+            ->first();
+
+        if ($swap === null) {
+            return;
+        }
+
+        DB::transaction(function () use ($image, $swap): void {
+            $current = $image->sort;
+            $image->forceFill(['sort' => $swap->sort])->save();
+            $swap->forceFill(['sort' => $current])->save();
+        });
+
+        $this->product->refresh()->load('images');
     }
 
     public function removeImage(int $imageId): void
@@ -153,10 +206,15 @@ final class Edit extends Component
     {
         $this->authorize('products.update');
 
+        $currencyRule = Currency::query()->where('is_active', true)->exists()
+            ? Rule::exists('currencies', 'code')->where('is_active', true)
+            : ['string', 'size:3'];
+
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'subtitle' => ['nullable', 'string', 'max:255'],
             'slug' => ['nullable', 'string', 'max:255', Rule::unique('products', 'slug')->ignore($this->product->id)],
+            'sku' => ['nullable', 'string', 'max:64', Rule::unique('products', 'sku')->ignore($this->product->id)],
             'description' => ['nullable', 'string'],
             'specRows' => ['array'],
             'specRows.*.label' => ['nullable', 'string', 'max:120'],
@@ -165,7 +223,7 @@ final class Edit extends Component
             'show_specifications' => ['boolean'],
             'status' => ['required', Rule::enum(ProductStatus::class)],
             'price_amount' => ['required', 'integer', 'min:0'],
-            'currency' => ['required', 'string', 'size:3'],
+            'currency' => ['required', $currencyRule],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
         ]);
 
@@ -173,6 +231,7 @@ final class Edit extends Component
             'name' => $data['name'],
             'subtitle' => $data['subtitle'] ?: null,
             'slug' => $data['slug'] ?: null,
+            'sku' => $data['sku'] ?: null,
             'description' => $data['description'] ?: null,
             'specifications' => $data['specRows'],
             'show_details' => (bool) $data['show_details'],
@@ -187,14 +246,39 @@ final class Edit extends Component
         session()->flash('status', 'Product updated.');
     }
 
-    public function render(AdminRegistrar $admin)
+    public function confirmDelete(): void
     {
-        /** @var InMemoryAdminRegistrar $admin */
+        $this->authorize('products.delete');
+        $this->confirmingDelete = true;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->confirmingDelete = false;
+    }
+
+    public function deleteProduct(DeleteProduct $delete): void
+    {
+        $this->authorize('products.delete');
+
+        try {
+            $delete->handle($this->product);
+            session()->flash('status', 'Product deleted.');
+            $this->redirect(route('admin.products.index'), navigate: true);
+        } catch (ValidationException $e) {
+            $this->confirmingDelete = false;
+            session()->flash('error', $e->errors()['product'][0] ?? $e->getMessage());
+        }
+    }
+
+    public function render(AdminRegistrar $admin, DeleteProduct $delete)
+    {
         return view('livewire.admin.products.form', [
             'categories' => Category::query()->orderBy('name')->get(),
+            'currencies' => Currency::query()->where('is_active', true)->orderBy('code')->get(['code', 'name']),
             'mode' => 'edit',
             'galleryImages' => $this->product->images,
-            'navigation' => $admin->navigationItems(),
+            'isReferenced' => $delete->isReferencedByOrders($this->product),
         ])->layout('layouts.admin', [
             'title' => 'Edit product',
             'navigation' => $admin->navigationItems(),
