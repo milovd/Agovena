@@ -11,7 +11,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Validator;
 
 #[Signature('agovena:create-owner {email?} {--name=} {--password=}')]
-#[Description('Create the first staff Owner with all registered permissions')]
+#[Description('Create the first Owner with all registered permissions')]
 final class CreateOwnerCommand extends Command
 {
     public function handle(CreateOwnerStaff $createOwner): int
