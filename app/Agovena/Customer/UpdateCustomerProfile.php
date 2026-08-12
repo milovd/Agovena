@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Customer;
 
 use App\Models\Customer;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -15,12 +16,19 @@ final class UpdateCustomerProfile
      */
     public function handle(Customer $customer, array $data): Customer
     {
-        $emailChanged = mb_strtolower($customer->email) !== mb_strtolower($data['email']);
+        $user = $customer->user;
+        if ($user === null) {
+            throw ValidationException::withMessages([
+                'email' => __('customer.profile.email_taken'),
+            ]);
+        }
+
+        $emailChanged = mb_strtolower($user->email) !== mb_strtolower($data['email']);
 
         if ($emailChanged) {
-            $taken = Customer::query()
+            $taken = User::query()
                 ->where('email', $data['email'])
-                ->whereKeyNot($customer->id)
+                ->whereKeyNot($user->id)
                 ->exists();
 
             if ($taken) {
@@ -30,18 +38,20 @@ final class UpdateCustomerProfile
             }
         }
 
-        return DB::transaction(function () use ($customer, $data, $emailChanged): Customer {
-            $customer->name = $data['name'];
-            $customer->email = $data['email'];
+        return DB::transaction(function () use ($user, $customer, $data, $emailChanged): Customer {
+            $user->fill([
+                'name' => $data['name'],
+                'email' => $data['email'],
+            ]);
 
             if ($emailChanged) {
-                $customer->email_verified_at = null;
+                $user->email_verified_at = null;
             }
 
-            $customer->save();
+            $user->save();
 
             if ($emailChanged) {
-                $customer->sendEmailVerificationNotification();
+                $user->sendEmailVerificationNotification();
             }
 
             return $customer->fresh() ?? $customer;

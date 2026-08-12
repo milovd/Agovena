@@ -74,7 +74,7 @@ final class ModuleContext
      */
     public function adminRoutes(callable $routes): void
     {
-        Route::middleware(['web', 'auth:staff', SyncStaffPermissions::class])
+        Route::middleware(['web', 'auth', SyncStaffPermissions::class, 'admin.access'])
             ->prefix('admin')
             ->name('admin.')
             ->group($routes);
@@ -87,7 +87,7 @@ final class ModuleContext
      */
     public function customerRoutes(callable $routes): void
     {
-        Route::middleware(['web', 'auth:customer', 'customer.verified'])
+        Route::middleware(['web', 'auth', 'customer.verified'])
             ->prefix('account')
             ->name('customer.')
             ->group($routes);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,9 +17,9 @@ final class EnsureCustomerEmailIsVerified
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $customer = Auth::guard('customer')->user();
+        $user = Auth::user();
 
-        if ($customer === null || ! $customer->hasVerifiedEmail()) {
+        if (! $user instanceof User || ! $user->hasVerifiedEmail()) {
             return redirect()->route('customer.verification.notice');
         }
 

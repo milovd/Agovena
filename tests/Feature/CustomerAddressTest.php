@@ -12,7 +12,7 @@ use Livewire\Livewire;
 test('customer can save and delete an address', function () {
     $customer = Customer::factory()->create();
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(Addresses::class)
         ->set('name', 'Ada Lovelace')
         ->set('line1', 'Analytical Engine 1')
@@ -29,7 +29,7 @@ test('customer can save and delete an address', function () {
         ->and($address->line1)->toBe('Analytical Engine 1')
         ->and($address->is_default_billing)->toBeTrue();
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(Addresses::class)
         ->call('delete', $address->id)
         ->assertHasNoErrors();

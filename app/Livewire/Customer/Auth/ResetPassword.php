@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Customer\Auth;
 
 use App\Agovena\Theme\ThemeManager;
+use App\Models\User;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Password;
@@ -25,7 +26,7 @@ final class ResetPassword extends Component
 
     public function mount(string $token): void
     {
-        if (Auth::guard('customer')->check()) {
+        if (Auth::check()) {
             $this->redirect(route('customer.account'), navigate: true);
 
             return;
@@ -43,20 +44,20 @@ final class ResetPassword extends Component
             'password' => ['required', 'string', 'confirmed', PasswordRule::defaults()],
         ]);
 
-        $status = Password::broker('customers')->reset(
+        $status = Password::broker('users')->reset(
             [
                 'email' => $this->email,
                 'password' => $this->password,
                 'password_confirmation' => $this->password_confirmation,
                 'token' => $this->token,
             ],
-            function ($customer, string $password): void {
-                $customer->forceFill([
+            function (User $user, string $password): void {
+                $user->forceFill([
                     'password' => $password,
                     'remember_token' => Str::random(60),
                 ])->save();
 
-                event(new PasswordReset($customer));
+                event(new PasswordReset($user));
             },
         );
 
@@ -68,7 +69,7 @@ final class ResetPassword extends Component
 
         session()->flash('status', __($status));
 
-        $this->redirect(route('customer.login'), navigate: true);
+        $this->redirect(route('login'), navigate: true);
     }
 
     public function render(ThemeManager $themes)

@@ -6,6 +6,7 @@ namespace App\Agovena\Permissions;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\InMemoryAdminRegistrar;
+use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -25,7 +26,7 @@ final class SyncRegisteredPermissions
         sort($names);
         $fingerprint = hash('sha256', implode("\0", $names));
 
-        $owner = Role::findOrCreate('owner', 'staff');
+        $owner = Role::findOrCreate('owner', User::GUARD);
         $ownerOutOfDate = $owner->permissions()->count() !== count($names);
 
         if (! $force && ! $ownerOutOfDate && Cache::get(self::FINGERPRINT_CACHE_KEY) === $fingerprint) {
@@ -33,7 +34,7 @@ final class SyncRegisteredPermissions
         }
 
         foreach ($names as $name) {
-            Permission::findOrCreate($name, 'staff');
+            Permission::findOrCreate($name, User::GUARD);
         }
 
         $owner->syncPermissions($names);

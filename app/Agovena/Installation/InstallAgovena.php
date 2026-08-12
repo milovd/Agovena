@@ -9,7 +9,7 @@ use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Staff\CreateOwnerStaff;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Currency;
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
@@ -26,7 +26,7 @@ final class InstallAgovena
         private readonly CurrencyCatalog $currencies,
     ) {}
 
-    public function __invoke(InstallRequest $request, bool $enforceRequirements = true): StaffUser
+    public function __invoke(InstallRequest $request, bool $enforceRequirements = true): User
     {
         $this->state->assertNotInstalled();
 
@@ -41,7 +41,7 @@ final class InstallAgovena
         $this->validateRequest($request);
 
         try {
-            return DB::transaction(function () use ($request): StaffUser {
+            return DB::transaction(function () use ($request): User {
                 $this->state->assertNotInstalled();
 
                 $owner = ($this->createOwner)(

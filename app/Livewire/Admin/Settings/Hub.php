@@ -20,7 +20,7 @@ final class Hub extends Component
 
     public function render(AdminRegistrar $admin)
     {
-        $staff = auth('staff')->user();
+        $staff = auth()->user();
 
         $groups = collect($admin->settingsGroups())
             ->filter(function (SettingsGroup $group) use ($staff): bool {

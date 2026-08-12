@@ -10,7 +10,6 @@ use App\Agovena\Privacy\ExportCustomerData;
 use App\Agovena\Privacy\RequestAccountDeletion;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -30,7 +29,7 @@ final class Profile extends Component
     public function mount(): void
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $this->name = $customer->name;
         $this->email = $customer->email;
     }
@@ -43,7 +42,7 @@ final class Profile extends Component
         ]);
 
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $update->handle($customer, $data);
 
         session()->flash('status', __('customer.profile.saved'));
@@ -61,7 +60,7 @@ final class Profile extends Component
         ]);
 
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $changePassword->handle($customer, $data['current_password'], $data['password']);
 
         $this->reset(['current_password', 'password', 'password_confirmation']);
@@ -72,7 +71,7 @@ final class Profile extends Component
     public function exportData(ExportCustomerData $export): StreamedResponse
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $json = json_encode($export->handle($customer), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
 
         return response()->streamDownload(
@@ -87,7 +86,7 @@ final class Profile extends Component
     public function requestDeletion(RequestAccountDeletion $requestDeletion): void
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $requestDeletion->handle($customer);
         session()->flash('status', __('customer.privacy.deletion_requested'));
     }
@@ -95,12 +94,12 @@ final class Profile extends Component
     public function render(ThemeManager $themes)
     {
         $theme = $themes->active();
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         return view($theme->view('account.profile'), [
             'theme' => $theme,
-            'emailVerified' => $customer instanceof Customer && $customer->hasVerifiedEmail(),
-            'deletionRequested' => $customer instanceof Customer && $customer->deletion_requested_at !== null,
+            'emailVerified' => $customer->hasVerifiedEmail(),
+            'deletionRequested' => $customer->deletion_requested_at !== null,
             'accountSection' => 'profile',
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.account.profile_title'),

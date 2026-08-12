@@ -31,6 +31,7 @@ final class Index extends Component
     {
         return view('livewire.admin.customers.index', [
             'customers' => Customer::query()
+                ->with('user')
                 ->when($this->search !== '', fn ($query) => $query
                     ->where('name', 'like', '%'.$this->search.'%')
                     ->orWhere('email', 'like', '%'.$this->search.'%'))

@@ -12,7 +12,7 @@ test('storefront home renders catalog theme', function () {
 
 test('installer redirects when already installed', function () {
     $this->get('/install')
-        ->assertRedirect(route('admin.login'));
+        ->assertRedirect(route('admin.dashboard'));
 });
 
 test('admin registrar is bound', function () {
@@ -25,7 +25,7 @@ test('admin registrar is bound', function () {
 test('authenticated owner sees admin dashboard', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
         ->assertSee('Commerce overview', false)

@@ -10,7 +10,7 @@ use App\Events\OrderPaid;
 use App\Events\PaymentRecorded;
 use App\Models\Order;
 use App\Models\Payment;
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -19,7 +19,7 @@ final class RecordManualPayment
     /**
      * Mark a pending manual payment as received. Idempotent: already-paid is a no-op success.
      */
-    public function handle(Order $order, StaffUser $staff, ?string $reference = null): Payment
+    public function handle(Order $order, User $staff, ?string $reference = null): Payment
     {
         if (! $staff->can('payments.record')) {
             abort(403);

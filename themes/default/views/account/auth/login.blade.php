@@ -23,13 +23,13 @@
     </form>
 
     <p class="store-auth__meta">
-        <a href="{{ route('customer.password.request') }}">{{ __('customer.auth.forgot_link') }}</a>
+        <a href="{{ route('password.request') }}">{{ __('customer.auth.forgot_link') }}</a>
     </p>
 
     @if ($registrationEnabled)
         <p class="store-auth__meta">
             {{ __('customer.auth.no_account') }}
-            <a href="{{ route('customer.register') }}">{{ __('customer.auth.register_link') }}</a>
+            <a href="{{ route('register') }}">{{ __('customer.auth.register_link') }}</a>
         </p>
     @endif
 </section>

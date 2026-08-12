@@ -6,9 +6,8 @@ namespace App\Livewire\Admin\Users;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
@@ -48,21 +47,22 @@ final class Index extends Component
         $sync();
 
         $roleNames = Role::query()
-            ->where('guard_name', 'staff')
+            ->where('guard_name', User::GUARD)
             ->pluck('name')
             ->all();
 
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('staff_users', 'email')],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
             'password' => ['required', 'string', Password::defaults()],
             'role' => ['required', 'string', Rule::in($roleNames)],
         ]);
 
-        $user = StaffUser::query()->create([
+        $user = User::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
-            'password' => Hash::make($data['password']),
+            'password' => $data['password'],
+            'email_verified_at' => now(),
         ]);
 
         $user->syncRoles([$data['role']]);
@@ -80,8 +80,8 @@ final class Index extends Component
     public function render(AdminRegistrar $admin)
     {
         return view('livewire.admin.users.index', [
-            'users' => StaffUser::query()->with('roles')->orderBy('name')->paginate(20),
-            'roles' => Role::query()->where('guard_name', 'staff')->orderBy('name')->get(),
+            'users' => User::query()->with('roles')->orderBy('name')->paginate(20),
+            'roles' => Role::query()->where('guard_name', User::GUARD)->orderBy('name')->get(),
         ])->layout('layouts.admin', [
             'title' => __('admin.users.title'),
             'navigation' => $admin->navigationItems(),

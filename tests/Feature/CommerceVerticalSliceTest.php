@@ -18,7 +18,7 @@ uses(CreatesStaff::class);
 test('phase 2 vertical slice end to end with persisted data', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Create::class)
         ->set('name', 'Slice Product')
@@ -31,7 +31,7 @@ test('phase 2 vertical slice end to end with persisted data', function () {
     $product = Product::query()->where('slug', 'slice-product')->firstOrFail();
     expect($product->status)->toBe(ProductStatus::Active);
 
-    auth('staff')->logout();
+    auth()->logout();
 
     $this->get('/')->assertOk()->assertSee('Slice Product', false);
 
@@ -66,7 +66,7 @@ test('phase 2 vertical slice end to end with persisted data', function () {
     $product->update(['price_amount' => 1]);
     expect($order->fresh()->items->first()->unit_amount)->toBe(1999);
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Show::class, ['order' => $order])
         ->call('startRecordPayment')

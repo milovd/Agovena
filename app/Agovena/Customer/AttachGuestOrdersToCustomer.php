@@ -14,7 +14,7 @@ final class AttachGuestOrdersToCustomer
      */
     public function handle(Customer $customer): int
     {
-        if ($customer->email_verified_at === null) {
+        if (! $customer->hasVerifiedEmail()) {
             return 0;
         }
 

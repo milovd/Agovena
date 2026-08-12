@@ -11,7 +11,7 @@ final class ResetCustomerPassword extends ResetPassword
 {
     protected function resetUrl($notifiable): string
     {
-        return url(route('customer.password.reset', [
+        return url(route('password.reset', [
             'token' => $this->token,
             'email' => $notifiable->getEmailForPasswordReset(),
         ], false));

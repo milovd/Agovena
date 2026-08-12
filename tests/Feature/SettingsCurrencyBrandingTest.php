@@ -26,7 +26,7 @@ test('branding logo setting survives cache round-trip as a scalar path', functio
     // Second read must use cache and still return a valid scalar (not Incomplete_Class).
     expect($repo->get('branding', 'logo_path'))->toBe('branding/round-trip.png');
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get(route('admin.settings.edit', ['group' => 'branding']))
         ->assertOk()
         ->assertSee('Branding', false);
@@ -61,7 +61,7 @@ test('money formatter uses currency prefix suffix and precision without floats',
 test('owner can create a currency with prefix suffix and precision', function () {
     $staff = $this->createStaff();
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(Index::class)
         ->call('create')
         ->set('code', 'nok')
@@ -83,7 +83,7 @@ test('owner can set base currency from currencies admin', function () {
     $staff = $this->createStaff();
     $usd = Currency::query()->where('code', 'USD')->firstOrFail();
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(Index::class)
         ->call('setAsBase', $usd->id)
         ->assertHasNoErrors();
@@ -97,7 +97,7 @@ test('branding page can set favicon from logo path without merging settings keys
     $settings->set('branding', 'logo_path', 'branding/logo.png');
     $settings->set('branding', 'favicon_path', 'branding/old-favicon.png');
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(EditGroup::class, ['group' => 'branding'])
         ->call('useCurrentLogoAsFavicon')
         ->assertHasNoErrors();

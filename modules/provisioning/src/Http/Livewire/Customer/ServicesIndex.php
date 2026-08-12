@@ -11,7 +11,6 @@ use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Provisioning\RunProvisionerAction;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 final class ServicesIndex extends Component
@@ -22,7 +21,7 @@ final class ServicesIndex extends Component
         RunProvisionerAction $runner,
     ): void {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         $runner->handle($customer, $instanceId, $actionId);
         session()->flash('status', __('provisioning::customer.action_completed'));
@@ -31,7 +30,7 @@ final class ServicesIndex extends Component
     public function render(ThemeManager $themes)
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         $instances = ServiceInstance::query()
             ->with('product')

@@ -124,7 +124,7 @@ final class Index extends Component
         return view('livewire.admin.currencies.index', [
             'currencies' => Currency::query()->orderBy('code')->paginate(20),
             'baseCurrency' => (string) $settings->get('general', 'base_currency', 'EUR'),
-            'canSetBase' => auth('staff')->user()?->can('settings.update') ?? false,
+            'canSetBase' => auth()->user()?->can('settings.update') ?? false,
         ])->layout('layouts.admin', [
             'title' => __('admin.currencies.title'),
             'navigation' => $admin->navigationItems(),

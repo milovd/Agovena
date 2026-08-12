@@ -131,7 +131,7 @@ final class EditGroup extends Component
         return view('livewire.admin.settings.edit-group', [
             'groupDefinition' => $group,
             'fields' => $admin->settingsFieldsFor($this->group),
-            'canUpdate' => auth('staff')->user()?->can('settings.update') ?? false,
+            'canUpdate' => auth()->user()?->can('settings.update') ?? false,
             'currencyOptions' => $currencyOptions,
         ])->layout('layouts.admin', [
             'title' => __('admin.settings.group_title', ['group' => __($group->label)]),

@@ -8,7 +8,6 @@ use App\Agovena\Support\CreateTicket;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\TicketPriority;
 use App\Models\Customer;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -31,7 +30,7 @@ final class TicketCreate extends Component
             'order_id' => ['nullable', 'integer'],
         ]);
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $ticket = $createTicket->handle(
             $customer,
             $data['subject'],
@@ -48,7 +47,7 @@ final class TicketCreate extends Component
     {
         $theme = $themes->active();
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         return view($theme->view('account.tickets.create'), [
             'orders' => $customer->orders()->latest()->get(['id', 'number']),

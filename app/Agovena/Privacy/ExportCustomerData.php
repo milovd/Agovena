@@ -16,9 +16,9 @@ final class ExportCustomerData
             'profile' => [
                 'name' => $customer->name,
                 'email' => $customer->email,
-                'email_verified_at' => $customer->email_verified_at === null
+                'email_verified_at' => $customer->user?->email_verified_at === null
                     ? null
-                    : (string) $customer->email_verified_at,
+                    : (string) $customer->user->email_verified_at,
                 'created_at' => $customer->created_at?->toIso8601String(),
             ],
             'addresses' => $customer->addresses()->get([

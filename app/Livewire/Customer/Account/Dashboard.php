@@ -6,10 +6,8 @@ namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Theme\ThemeManager;
-use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 final class Dashboard extends Component
@@ -17,8 +15,7 @@ final class Dashboard extends Component
     public function render(ThemeManager $themes, CustomerAccountOverview $overview)
     {
         $theme = $themes->active();
-        $customer = Auth::guard('customer')->user();
-        abort_unless($customer instanceof Customer, 403);
+        $customer = authenticated_customer();
 
         $recentOrders = Order::query()
             ->where('customer_id', $customer->id)

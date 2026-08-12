@@ -7,7 +7,6 @@ namespace App\Livewire\Customer\Account;
 use App\Agovena\Fulfillment\OrderFulfillmentPresenter;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Order;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 final class OrderShow extends Component
@@ -16,10 +15,10 @@ final class OrderShow extends Component
 
     public function mount(Order $order): void
     {
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         abort_unless(
-            $customer !== null && (int) $order->customer_id === (int) $customer->id,
+            (int) $order->customer_id === (int) $customer->id,
             404,
         );
 

@@ -23,14 +23,14 @@ final class Register extends Component
 
     public function mount(CustomerRegistration $registration): void
     {
-        if (Auth::guard('customer')->check()) {
+        if (Auth::check()) {
             $this->redirect(route('customer.account'), navigate: true);
 
             return;
         }
 
         if (! $registration->allowsRegistration()) {
-            $this->redirect(route('customer.login'), navigate: true);
+            $this->redirect(route('login'), navigate: true);
         }
     }
 
@@ -38,17 +38,17 @@ final class Register extends Component
     {
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:customers,email'],
+            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
         ]);
 
-        $customer = $registerCustomer->handle([
+        $user = $registerCustomer->handle([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => $data['password'],
         ]);
 
-        Auth::guard('customer')->login($customer);
+        Auth::login($user);
         session()->regenerate();
 
         $this->redirect(route('customer.verification.notice'), navigate: true);

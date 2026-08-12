@@ -9,7 +9,7 @@ use App\Agovena\Admin\InMemoryAdminRegistrar;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -45,8 +45,8 @@ final class Show extends Component
     {
         $this->authorize('payments.record');
 
-        /** @var StaffUser $staff */
-        $staff = Auth::guard('staff')->user();
+        /** @var User $staff */
+        $staff = Auth::user();
 
         $action->handle(
             $this->order,
@@ -62,7 +62,7 @@ final class Show extends Component
     public function render(AdminRegistrar $admin)
     {
         /** @var InMemoryAdminRegistrar $admin */
-        $canRecord = Auth::guard('staff')->user()?->can('payments.record') === true
+        $canRecord = Auth::user()?->can('payments.record') === true
             && $this->order->payment?->status === PaymentStatus::Pending;
 
         return view('livewire.admin.orders.show', [

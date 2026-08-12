@@ -11,7 +11,6 @@ use App\Agovena\PlanChanges\RequestPlanChange;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
 use App\Models\Product;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 final class SubscriptionsIndex extends Component
@@ -22,7 +21,7 @@ final class SubscriptionsIndex extends Component
         RequestPlanChange $request,
     ): void {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $subscription = Subscription::query()
             ->whereKey($subscriptionId)
             ->where('customer_id', $customer->id)
@@ -42,7 +41,7 @@ final class SubscriptionsIndex extends Component
     public function cancel(int $id, SubscriptionService $subscriptions): void
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         $subscription = Subscription::query()
             ->whereKey($id)
@@ -59,7 +58,7 @@ final class SubscriptionsIndex extends Component
     public function render(ThemeManager $themes)
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         $subscriptions = Subscription::query()
             ->with('product')

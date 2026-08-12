@@ -6,7 +6,7 @@ namespace Tests\Support;
 
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
-use App\Models\StaffUser;
+use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -15,7 +15,7 @@ trait CreatesStaff
     /**
      * @param  list<string>|null  $permissions
      */
-    protected function createStaff(array $attributes = [], ?array $permissions = null): StaffUser
+    protected function createStaff(array $attributes = [], ?array $permissions = null): User
     {
         app(SyncRegisteredPermissions::class)();
 
@@ -23,7 +23,7 @@ trait CreatesStaff
             app(InstallationState::class)->markInstalled();
         }
 
-        $user = StaffUser::factory()->create($attributes);
+        $user = User::factory()->create($attributes);
 
         if ($permissions === null) {
             $user->assignRole('owner');
@@ -31,12 +31,12 @@ trait CreatesStaff
             return $user;
         }
 
-        $role = Role::findOrCreate('staff_limited', 'staff');
+        $role = Role::findOrCreate('staff_limited', User::GUARD);
         foreach ($permissions as $permission) {
-            Permission::findOrCreate($permission, 'staff');
+            Permission::findOrCreate($permission, User::GUARD);
         }
         $role->syncPermissions($permissions);
-        $user->assignRole($role);
+        $user->syncRoles([$role]);
 
         return $user;
     }

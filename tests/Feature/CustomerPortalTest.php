@@ -35,11 +35,11 @@ test('customer can register login and open account dashboard', function () {
 
     $customer = Customer::query()->where('email', 'ada@example.com')->first();
     expect($customer)->not->toBeNull()
-        ->and(Auth::guard('customer')->check())->toBeTrue();
+        ->and(Auth::check())->toBeTrue();
 
-    $customer->forceFill(['email_verified_at' => now()])->save();
+    $customer->user?->forceFill(['email_verified_at' => now()])->save();
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(Dashboard::class)
         ->assertOk()
         ->assertSee(__('customer.account.welcome', ['name' => 'Ada Customer']), false);
@@ -60,7 +60,7 @@ test('customer account dashboard receives registered overview cards', function (
         20,
     );
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(Dashboard::class)
         ->assertViewHas('overviewCards', static function (array $cards): bool {
             foreach ($cards as $card) {
@@ -82,9 +82,9 @@ test('logged in customer checkout attaches customer id to order', function () {
 
     app(CartService::class)->add($product->id, 1);
 
-    $this->actingAs($customer, 'customer');
+    $this->actingAs($customer->user);
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(CheckoutPage::class)
         ->assertSet('customer_name', 'Linked Buyer')
         ->assertSet('customer_email', 'linked@example.com')
@@ -121,7 +121,7 @@ test('guest orders attach after customer email is verified', function () {
 
     expect(app(AttachGuestOrdersToCustomer::class)->handle($customer))->toBe(0);
 
-    $customer->forceFill(['email_verified_at' => now()])->save();
+    $customer->user?->forceFill(['email_verified_at' => now()])->save();
 
     expect(app(AttachGuestOrdersToCustomer::class)->handle($customer->fresh()))->toBe(1)
         ->and($order->fresh()->customer_id)->toBe($customer->id);
@@ -136,7 +136,7 @@ test('customers cannot view another customers order', function () {
         'customer_name' => $owner->name,
     ]);
 
-    Livewire::actingAs($intruder, 'customer')
+    Livewire::actingAs($intruder->user)
         ->test(OrderShow::class, ['order' => $order])
         ->assertNotFound();
 });
@@ -145,7 +145,7 @@ test('registration is blocked when disabled in settings', function () {
     app(SettingsRepository::class)->set('store', 'customer_registration', 'disabled');
 
     Livewire::test(Register::class)
-        ->assertRedirect(route('customer.login'));
+        ->assertRedirect(route('login'));
 });
 
 test('required registration redirects guests from checkout to login', function () {
@@ -155,7 +155,7 @@ test('required registration redirects guests from checkout to login', function (
     app(CartService::class)->add($product->id, 1);
 
     Livewire::test(CheckoutPage::class)
-        ->assertRedirect(route('customer.login'));
+        ->assertRedirect(route('login'));
 });
 
 test('customer login rejects invalid credentials', function () {

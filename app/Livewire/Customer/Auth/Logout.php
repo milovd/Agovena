@@ -11,7 +11,7 @@ final class Logout extends Component
 {
     public function mount(): void
     {
-        Auth::guard('customer')->logout();
+        Auth::logout();
 
         session()->invalidate();
         session()->regenerateToken();

@@ -6,7 +6,6 @@ namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -18,7 +17,7 @@ final class TicketsIndex extends Component
     {
         $theme = $themes->active();
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         return view($theme->view('account.tickets.index'), [
             'tickets' => $customer->tickets()->latest('last_reply_at')->paginate(20),

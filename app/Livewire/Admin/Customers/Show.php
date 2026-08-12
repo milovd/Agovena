@@ -9,7 +9,7 @@ use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Privacy\AnonymizeCustomer;
 use App\Models\Customer;
 use App\Models\CustomerCreditAccount;
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -41,8 +41,8 @@ final class Show extends Component
             'amount' => ['required', 'integer', 'min:1'],
             'reason' => ['required', 'string', 'max:255'],
         ]);
-        /** @var StaffUser $staff */
-        $staff = Auth::guard('staff')->user();
+        /** @var User $staff */
+        $staff = Auth::user();
 
         $ledger->{$data['entry_type']}($this->customer, $data['amount'], $data['reason'], staff: $staff);
         $this->reset(['amount', 'reason']);
@@ -59,6 +59,8 @@ final class Show extends Component
     public function render(AdminRegistrar $admin, CustomerCreditLedger $ledger)
     {
         $account = CustomerCreditAccount::query()->where('customer_id', $this->customer->id)->first();
+
+        $this->customer->loadMissing('user');
 
         return view('livewire.admin.customers.show', [
             'balanceAmount' => $ledger->balance($this->customer, $account?->currency),

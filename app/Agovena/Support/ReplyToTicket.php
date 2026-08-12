@@ -7,9 +7,9 @@ namespace App\Agovena\Support;
 use App\Agovena\Audit\AuditLogger;
 use App\Enums\TicketStatus;
 use App\Models\Customer;
-use App\Models\StaffUser;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
+use App\Models\User;
 use App\Notifications\TicketRepliedNotification;
 use Illuminate\Support\Facades\DB;
 
@@ -24,7 +24,7 @@ final class ReplyToTicket
         return $this->store($ticket, 'customer', $customer->id, $body, false);
     }
 
-    public function byStaff(Ticket $ticket, StaffUser $staff, string $body, bool $isInternal = false): TicketMessage
+    public function byStaff(Ticket $ticket, User $staff, string $body, bool $isInternal = false): TicketMessage
     {
         $message = $this->store($ticket, 'staff', $staff->id, $body, $isInternal);
         $this->audit->log($isInternal ? 'ticket.internal_note_added' : 'ticket.replied', $ticket);

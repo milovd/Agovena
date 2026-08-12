@@ -6,7 +6,6 @@ namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Order;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,10 +16,10 @@ final class OrdersIndex extends Component
     public function render(ThemeManager $themes)
     {
         $theme = $themes->active();
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         $orders = Order::query()
-            ->where('customer_id', $customer?->id)
+            ->where('customer_id', $customer->id)
             ->with('payment')
             ->latest('id')
             ->paginate(10);

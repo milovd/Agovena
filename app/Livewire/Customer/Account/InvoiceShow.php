@@ -6,7 +6,6 @@ namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Invoice;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 final class InvoiceShow extends Component
@@ -15,10 +14,10 @@ final class InvoiceShow extends Component
 
     public function mount(Invoice $invoice): void
     {
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         abort_unless(
-            $customer !== null && (int) $invoice->customer_id === (int) $customer->id,
+            (int) $invoice->customer_id === (int) $customer->id,
             404,
         );
 

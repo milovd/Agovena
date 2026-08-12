@@ -13,30 +13,32 @@ use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\StaffUser;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
+use Tests\Support\CreatesStaff;
+
+uses(CreatesStaff::class);
 
 test('customer creates a ticket and sees a staff reply', function () {
     $customer = Customer::factory()->create();
-    $staff = StaffUser::factory()->create();
+    $staff = $this->createStaff();
     $ticket = app(CreateTicket::class)->handle($customer, 'Need help', 'My order needs attention.');
 
     app(ReplyToTicket::class)->byStaff($ticket, $staff, 'We are checking this for you.');
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(TicketShow::class, ['ticket' => $ticket])
         ->assertSee('We are checking this for you.');
 });
 
 test('customer cannot see internal staff notes', function () {
     $customer = Customer::factory()->create();
-    $staff = StaffUser::factory()->create();
+    $staff = $this->createStaff();
     $ticket = app(CreateTicket::class)->handle($customer, 'Private test', 'Visible customer message.');
 
     app(ReplyToTicket::class)->byStaff($ticket, $staff, 'Internal investigation details.', true);
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(TicketShow::class, ['ticket' => $ticket])
         ->assertSee('Visible customer message.')
         ->assertDontSee('Internal investigation details.');
@@ -70,8 +72,8 @@ test('gdpr anonymization keeps order rows', function () {
 
 test('staff credit adjustment creates an audit entry', function () {
     $customer = Customer::factory()->create();
-    $staff = StaffUser::factory()->create();
-    $this->actingAs($staff, 'staff');
+    $staff = $this->createStaff();
+    $this->actingAs($staff);
 
     app(CustomerCreditLedger::class)->credit($customer, 1000, 'service_recovery', staff: $staff);
 

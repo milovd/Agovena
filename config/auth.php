@@ -1,47 +1,32 @@
 <?php
 
-use App\Models\Customer;
-use App\Models\StaffUser;
+use App\Models\User;
 
 return [
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'staff'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'staff'),
+        'guard' => env('AUTH_GUARD', 'web'),
+        'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
     'guards' => [
-        'staff' => [
+        'web' => [
             'driver' => 'session',
-            'provider' => 'staff_users',
-        ],
-        'customer' => [
-            'driver' => 'session',
-            'provider' => 'customers',
+            'provider' => 'users',
         ],
     ],
 
     'providers' => [
-        'staff_users' => [
+        'users' => [
             'driver' => 'eloquent',
-            'model' => StaffUser::class,
-        ],
-        'customers' => [
-            'driver' => 'eloquent',
-            'model' => Customer::class,
+            'model' => User::class,
         ],
     ],
 
     'passwords' => [
-        'staff' => [
-            'provider' => 'staff_users',
+        'users' => [
+            'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
-            'expire' => 60,
-            'throttle' => 60,
-        ],
-        'customers' => [
-            'provider' => 'customers',
-            'table' => 'customer_password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],

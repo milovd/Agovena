@@ -81,7 +81,8 @@ class InstallationRequirements
                 return $this->check('migrations', 'installer.checks.migrations', false, true, 'migrations table missing');
             }
 
-            $ran = Schema::hasTable('staff_users')
+            $ran = Schema::hasTable('users')
+                && Schema::hasTable('customers')
                 && Schema::hasTable('settings')
                 && Schema::hasTable('currencies')
                 && Schema::hasTable('roles')

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Customer\Auth;
 
 use App\Agovena\Theme\ThemeManager;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -12,30 +13,30 @@ final class VerifyEmail extends Component
 {
     public function mount(): void
     {
-        $customer = Auth::guard('customer')->user();
+        $user = Auth::user();
 
-        if ($customer !== null && $customer->hasVerifiedEmail()) {
+        if ($user instanceof User && $user->hasVerifiedEmail()) {
             $this->redirect(route('customer.account'), navigate: true);
         }
     }
 
     public function resend(): void
     {
-        $customer = Auth::guard('customer')->user();
+        $user = Auth::user();
 
-        if ($customer === null) {
-            $this->redirect(route('customer.login'), navigate: true);
+        if (! $user instanceof User) {
+            $this->redirect(route('login'), navigate: true);
 
             return;
         }
 
-        if ($customer->hasVerifiedEmail()) {
+        if ($user->hasVerifiedEmail()) {
             $this->redirect(route('customer.account'), navigate: true);
 
             return;
         }
 
-        $customer->sendEmailVerificationNotification();
+        $user->sendEmailVerificationNotification();
 
         session()->flash('status', __('customer.auth.verification_sent'));
     }

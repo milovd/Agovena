@@ -35,7 +35,7 @@
             <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
                 @php
                     use App\Agovena\Admin\AdminNavigation;
-                    $staff = auth('staff')->user();
+                    $staff = auth()->user();
                     $nav = collect($navigation ?? [])->filter(function ($item) use ($staff) {
                         $authorized = $item->permission === null
                             || ($staff !== null && $staff->can($item->permission));
@@ -107,7 +107,7 @@
                             :aria-expanded="open.toString()"
                             aria-haspopup="menu"
                         >
-                            {{ auth('staff')->user()?->name ?? __('admin.account') }}
+                            {{ auth()->user()?->name ?? __('admin.account') }}
                         </button>
                         <div
                             class="ag-dropdown__menu"
@@ -116,7 +116,7 @@
                             role="menu"
                             @keydown.escape.stop="open = false"
                         >
-                            <p class="ag-dropdown__meta">{{ auth('staff')->user()?->email }}</p>
+                            <p class="ag-dropdown__meta">{{ auth()->user()?->email }}</p>
                             <livewire:admin.auth.logout />
                         </div>
                     </div>

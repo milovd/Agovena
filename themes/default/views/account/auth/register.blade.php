@@ -30,6 +30,6 @@
 
     <p class="store-auth__meta">
         {{ __('customer.auth.have_account') }}
-        <a href="{{ route('customer.login') }}">{{ __('customer.auth.login_link') }}</a>
+        <a href="{{ route('login') }}">{{ __('customer.auth.login_link') }}</a>
     </p>
 </section>

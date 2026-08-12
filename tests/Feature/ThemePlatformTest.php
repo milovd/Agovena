@@ -114,11 +114,11 @@ test('search suggest returns product thumbnails', function () {
 test('theme customize saves accent and hero title', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/appearance/customize')
         ->assertOk();
 
-    Livewire\Livewire::actingAs($staff, 'staff')
+    Livewire\Livewire::actingAs($staff)
         ->test(Customize::class)
         ->set('values.colors.accent', '#112233')
         ->set('sections.0.title', 'Custom hero title')
@@ -133,7 +133,7 @@ test('theme customize saves accent and hero title', function () {
 test('themes admin can list active theme', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/appearance/themes')
         ->assertOk()
         ->assertSee('Default', false)
@@ -143,11 +143,11 @@ test('themes admin can list active theme', function () {
 test('pages and navigation admin are reachable', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/appearance/pages')
         ->assertOk();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/appearance/navigation')
         ->assertOk()
         ->assertSee('Header', false);

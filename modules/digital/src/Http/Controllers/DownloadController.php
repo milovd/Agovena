@@ -6,17 +6,14 @@ namespace Agovena\Modules\Digital\Http\Controllers;
 
 use Agovena\Modules\Digital\DigitalDeliveryService;
 use Agovena\Modules\Digital\Models\DigitalEntitlement;
-use App\Models\Customer;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class DownloadController
 {
-    public function __invoke(string $token, Request $request, DigitalDeliveryService $digital): StreamedResponse
+    public function __invoke(string $token, DigitalDeliveryService $digital): StreamedResponse
     {
-        /** @var Customer $customer */
-        $customer = $request->user('customer');
+        $customer = authenticated_customer();
 
         $entitlement = DigitalEntitlement::query()
             ->with('asset')

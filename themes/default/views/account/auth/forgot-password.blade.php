@@ -16,6 +16,6 @@
     </form>
 
     <p class="store-auth__meta">
-        <a href="{{ route('customer.login') }}">{{ __('customer.auth.login_link') }}</a>
+        <a href="{{ route('login') }}">{{ __('customer.auth.login_link') }}</a>
     </p>
 </section>

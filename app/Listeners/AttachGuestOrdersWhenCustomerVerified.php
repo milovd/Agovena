@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Listeners;
 
 use App\Agovena\Customer\AttachGuestOrdersToCustomer;
-use App\Models\Customer;
+use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 
 final class AttachGuestOrdersWhenCustomerVerified
@@ -18,10 +18,10 @@ final class AttachGuestOrdersWhenCustomerVerified
     {
         $user = $event->user;
 
-        if (! $user instanceof Customer) {
+        if (! $user instanceof User) {
             return;
         }
 
-        $this->attachGuestOrders->handle($user);
+        $this->attachGuestOrders->handle($user->ensureCustomer());
     }
 }

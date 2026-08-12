@@ -9,7 +9,6 @@ use App\Agovena\Customer\DeleteCustomerAddress;
 use App\Agovena\Customer\SaveCustomerAddress;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 final class Addresses extends Component
@@ -43,7 +42,7 @@ final class Addresses extends Component
     public function edit(int $addressId): void
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $address = $customer->addresses()->whereKey($addressId)->firstOrFail();
 
         $this->editingId = $address->id;
@@ -97,7 +96,7 @@ final class Addresses extends Component
         ]);
 
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $existing = $this->editingId !== null
             ? $customer->addresses()->whereKey($this->editingId)->firstOrFail()
             : null;
@@ -120,7 +119,7 @@ final class Addresses extends Component
     public function delete(int $addressId, DeleteCustomerAddress $delete): void
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $address = $customer->addresses()->whereKey($addressId)->firstOrFail();
         $delete->handle($customer, $address);
 
@@ -135,7 +134,7 @@ final class Addresses extends Component
     {
         $theme = $themes->active();
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         return view($theme->view('account.addresses'), [
             'theme' => $theme,

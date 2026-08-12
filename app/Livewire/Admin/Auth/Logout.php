@@ -11,12 +11,12 @@ final class Logout extends Component
 {
     public function logout(): void
     {
-        Auth::guard('staff')->logout();
+        Auth::logout();
 
         session()->invalidate();
         session()->regenerateToken();
 
-        $this->redirect(route('admin.login'), navigate: false);
+        $this->redirect(route('login'), navigate: false);
     }
 
     public function render()

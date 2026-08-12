@@ -8,6 +8,8 @@ use App\Agovena\Audit\AuditLogger;
 use App\Enums\TicketStatus;
 use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 final class AnonymizeCustomer
 {
@@ -25,14 +27,26 @@ final class AnonymizeCustomer
                 ->where('status', '!=', TicketStatus::Closed->value)
                 ->update(['status' => TicketStatus::Closed->value]);
 
-            $customer->forceFill([
-                'name' => __('customer.privacy.deleted_customer'),
-                'email' => 'deleted+'.$customer->id.'@anonymized.invalid',
-                'password' => null,
-                'remember_token' => null,
-                'email_verified_at' => null,
-                'anonymized_at' => now(),
-            ])->save();
+            $email = 'deleted+'.$customer->id.'@anonymized.invalid';
+            $name = __('customer.privacy.deleted_customer');
+
+            $user = $customer->user;
+            if ($user !== null) {
+                $user->forceFill([
+                    'name' => $name,
+                    'email' => $email,
+                    'password' => Hash::make(Str::password(32)),
+                    'remember_token' => null,
+                    'email_verified_at' => null,
+                    'anonymized_at' => now(),
+                    'deletion_requested_at' => $user->deletion_requested_at ?? now(),
+                ])->save();
+            } else {
+                $customer->forceFill([
+                    'name' => $name,
+                    'email' => $email,
+                ])->save();
+            }
 
             return $customer->fresh() ?? $customer;
         });

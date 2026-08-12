@@ -30,7 +30,7 @@ test('admin screens never render raw translation keys', function () {
     $staff = $this->createStaff();
 
     foreach (adminLocalizedRoutes() as $uri) {
-        $this->actingAs($staff, 'staff')
+        $this->actingAs($staff)
             ->get($uri)
             ->assertOk()
             ->assertDontSeeText('admin.settings.')
@@ -46,21 +46,21 @@ test('admin settings and dashboard follow the site locale', function () {
     app(SettingsRepository::class)->set('general', 'locale', 'nl');
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
         ->assertSee(__('admin.dashboard.widgets.commerce_stats', [], 'nl'), false)
         ->assertSee(__('admin.dashboard.stats.products', [], 'nl'), false)
         ->assertSee(__('auth.sign_out', [], 'nl'), false);
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/settings')
         ->assertOk()
         ->assertSee(__('admin.settings.title', [], 'nl'), false)
         ->assertSee(__('admin.settings.groups.general', [], 'nl'), false)
         ->assertSee(__('admin.settings.group_help.branding', [], 'nl'), false);
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/settings/general')
         ->assertOk()
         ->assertSee(__('admin.settings.fields.site_name', [], 'nl'), false)
@@ -71,7 +71,7 @@ test('theme customize labels come from the theme schema keys', function () {
     app(SettingsRepository::class)->set('general', 'locale', 'nl');
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/appearance/customize')
         ->assertOk()
         ->assertSee(__('admin.appearance.theme_fields.colors.accent', [], 'nl'), false)
@@ -83,13 +83,13 @@ test('content admin follows the site locale', function () {
     app(SettingsRepository::class)->set('general', 'locale', 'nl');
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/appearance/pages')
         ->assertOk()
         ->assertSee(__('admin.content.pages.title', [], 'nl'), false)
         ->assertSee(__('admin.content.pages.new', [], 'nl'), false);
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/appearance/navigation')
         ->assertOk()
         ->assertSee(__('admin.content.navigation.title', [], 'nl'), false)

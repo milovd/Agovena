@@ -128,7 +128,7 @@ test('placing order fails when inventory stock is insufficient', function () {
 test('admin modules page lists inventory', function () {
     $staff = $this->createStaff();
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(ModulesIndex::class)
         ->assertOk()
         ->assertSee('Inventory');

@@ -13,7 +13,7 @@ use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
 use App\Livewire\Installer\Wizard;
 use App\Models\Product;
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -102,7 +102,7 @@ test('web installation creates owner settings currency theme and lock', function
         ->and($state->installId())->not->toBeNull()
         ->and(is_file($state->markerPath()))->toBeTrue();
 
-    $owner = StaffUser::query()->where('email', 'owner@example.com')->first();
+    $owner = User::query()->where('email', 'owner@example.com')->first();
     expect($owner)->not->toBeNull()
         ->and($owner->hasRole('owner'))->toBeTrue()
         ->and($owner->can('users.view'))->toBeTrue()
@@ -119,8 +119,8 @@ test('web installation creates owner settings currency theme and lock', function
     expect(app(ThemeManager::class)->active()->id)->toBe('default');
 
     $this->get('/')->assertOk();
-    $this->get('/admin/login')->assertOk();
-    $this->get('/install')->assertRedirect(route('admin.login'));
+    $this->get('/admin/login')->assertRedirect(route('login'));
+    $this->get('/install')->assertRedirect(route('admin.dashboard'));
 });
 
 test('installer is inaccessible after installation', function () {
@@ -135,7 +135,7 @@ test('installer is inaccessible after installation', function () {
         themeId: 'default',
     ));
 
-    $this->get('/install')->assertRedirect(route('admin.login'));
+    $this->get('/install')->assertRedirect(route('admin.dashboard'));
 
     Livewire::test(Wizard::class)->assertStatus(404);
 });
@@ -154,7 +154,7 @@ test('cli installation succeeds', function () {
     ])->assertSuccessful();
 
     expect(app(InstallationState::class)->installed())->toBeTrue();
-    expect(StaffUser::query()->where('email', 'cli@example.com')->exists())->toBeTrue();
+    expect(User::query()->where('email', 'cli@example.com')->exists())->toBeTrue();
     expect(app(SettingsRepository::class)->get('general', 'base_currency'))->toBe('GBP');
 });
 
@@ -194,14 +194,14 @@ test('repeated installation is refused', function () {
         '--no-interaction' => true,
     ])->assertFailed();
 
-    expect(StaffUser::query()->where('email', 'other@example.com')->exists())->toBeFalse();
+    expect(User::query()->where('email', 'other@example.com')->exists())->toBeFalse();
 });
 
 test('interrupted installation remains recoverable and is not marked installed', function () {
     app(SyncRegisteredPermissions::class)(force: true);
-    Role::findOrCreate('owner', 'staff');
+    Role::findOrCreate('owner', 'web');
 
-    $partial = StaffUser::factory()->create([
+    $partial = User::factory()->create([
         'email' => 'partial@example.com',
         'name' => 'Partial',
     ]);
@@ -222,14 +222,14 @@ test('interrupted installation remains recoverable and is not marked installed',
 
     expect(app(InstallationState::class)->installed())->toBeTrue()
         ->and(app(SettingsRepository::class)->get('general', 'site_name'))->toBe('Recovered Shop')
-        ->and(StaffUser::query()->count())->toBe(1);
+        ->and(User::query()->count())->toBe(1);
 });
 
 test('installer refuses creating a second owner email after partial owner exists', function () {
     app(SyncRegisteredPermissions::class)(force: true);
-    Role::findOrCreate('owner', 'staff');
+    Role::findOrCreate('owner', 'web');
 
-    $partial = StaffUser::factory()->create(['email' => 'first-owner@example.com']);
+    $partial = User::factory()->create(['email' => 'first-owner@example.com']);
     $partial->assignRole('owner');
 
     expect(fn () => app(InstallAgovena::class)(new InstallRequest(

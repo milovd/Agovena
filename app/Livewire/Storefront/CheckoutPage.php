@@ -93,9 +93,9 @@ final class CheckoutPage extends Component
             return;
         }
 
-        if ($registration->requiresAccountForCheckout() && ! Auth::guard('customer')->check()) {
+        if ($registration->requiresAccountForCheckout() && ! Auth::check()) {
             session()->put('url.intended', route('storefront.checkout'));
-            $this->redirect(route('customer.login'), navigate: true);
+            $this->redirect(route('login'), navigate: true);
 
             return;
         }
@@ -104,7 +104,7 @@ final class CheckoutPage extends Component
         $this->payment_method = PaymentMethod::Manual->value;
 
         /** @var Customer|null $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = current_customer();
         if ($customer !== null) {
             $this->customer_name = $customer->name;
             $this->customer_email = $customer->email;
@@ -125,9 +125,9 @@ final class CheckoutPage extends Component
 
     public function placeOrder(PlaceOrder $placeOrder, CustomerRegistration $registration, CartService $cart, SaveCustomerAddress $saveAddress): void
     {
-        if ($registration->requiresAccountForCheckout() && ! Auth::guard('customer')->check()) {
+        if ($registration->requiresAccountForCheckout() && ! Auth::check()) {
             session()->put('url.intended', route('storefront.checkout'));
-            $this->redirect(route('customer.login'), navigate: true);
+            $this->redirect(route('login'), navigate: true);
 
             return;
         }
@@ -187,7 +187,7 @@ final class CheckoutPage extends Component
         }
 
         /** @var Customer|null $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = current_customer();
         if ($customer !== null && ($data['save_billing_address'] ?? false)) {
             $saveAddress->handle($customer, $billing, [
                 'label' => __('customer.addresses.checkout_saved_label'),
@@ -200,7 +200,7 @@ final class CheckoutPage extends Component
             'customer_email' => $data['customer_email'],
             'idempotency_key' => $data['idempotency_key'],
             'payment_method' => $data['payment_method'],
-            'customer_id' => Auth::guard('customer')->id(),
+            'customer_id' => current_customer()?->id,
             'billing' => $billing,
             'shipping' => $shipping,
             'shipping_same_as_billing' => $shippingSame,
@@ -219,7 +219,7 @@ final class CheckoutPage extends Component
             return;
         }
 
-        $applied = $discounts->apply($this->coupon_code, $subtotal, Auth::guard('customer')->id());
+        $applied = $discounts->apply($this->coupon_code, $subtotal, current_customer()?->id);
         $this->applied_coupon_code = $applied?->code->code ?? '';
         $this->coupon_code = $this->applied_coupon_code;
         $this->resetErrorBag('discount_code');
@@ -247,7 +247,7 @@ final class CheckoutPage extends Component
         $subtotal = $cart->subtotal();
         $requiresShipping = $cart->requiresShipping();
         /** @var Customer|null $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = current_customer();
         $creditBalance = $customer === null || $subtotal === null
             ? 0
             : $creditLedger->balance($customer, $subtotal->currency);
@@ -283,7 +283,7 @@ final class CheckoutPage extends Component
             $applied = $discounts->apply(
                 $this->applied_coupon_code !== '' ? $this->applied_coupon_code : null,
                 $subtotal,
-                Auth::guard('customer')->id(),
+                current_customer()?->id,
             );
             $discountTotal = $applied === null ? Money::of(0, $subtotal->currency) : $applied->amount;
             $subtotalAfterDiscount = $subtotal->subtract($discountTotal);
@@ -320,7 +320,7 @@ final class CheckoutPage extends Component
             'theme' => $theme,
             'paymentOptions' => app(AvailablePaymentMethods::class)->options(),
             'developmentPayEnabled' => $this->developmentPayEnabled(),
-            'customerLoggedIn' => Auth::guard('customer')->check(),
+            'customerLoggedIn' => Auth::check(),
             'registrationEnabled' => $registration->allowsRegistration(),
             'requiresShipping' => $requiresShipping,
             'pricesIncludeTax' => $pricesIncludeTax,

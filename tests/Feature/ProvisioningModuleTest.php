@@ -130,7 +130,7 @@ test('customer portal lists service instances', function () {
     app(RecordManualPayment::class)->handle($order, $this->createStaff());
     app(ProvisioningService::class)->activate(ServiceInstance::query()->firstOrFail(), 'portal-ref');
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(ServicesIndex::class)
         ->assertSee($product->name)
         ->assertSee('portal-ref')
@@ -154,7 +154,7 @@ test('manual provisioner exposes and safely runs its proof action', function () 
 
     app(RunProvisionerAction::class)->handle($customer, $instance->id, 'refresh_status');
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(ServicesIndex::class)
         ->assertSee(__('notifications.provisioning.refresh_status'));
 });

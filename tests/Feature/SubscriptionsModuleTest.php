@@ -104,7 +104,7 @@ test('customer portal lists subscriptions and can cancel at period end', functio
 
     $subscription = Subscription::query()->firstOrFail();
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(SubscriptionsIndex::class)
         ->assertSee($product->name)
         ->call('cancel', $subscription->id)

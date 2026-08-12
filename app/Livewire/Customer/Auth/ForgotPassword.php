@@ -18,7 +18,7 @@ final class ForgotPassword extends Component
 
     public function mount(): void
     {
-        if (Auth::guard('customer')->check()) {
+        if (Auth::check()) {
             $this->redirect(route('customer.account'), navigate: true);
         }
     }
@@ -29,7 +29,7 @@ final class ForgotPassword extends Component
             'email' => ['required', 'email'],
         ]);
 
-        $status = Password::broker('customers')->sendResetLink([
+        $status = Password::broker('users')->sendResetLink([
             'email' => $this->email,
         ]);
 

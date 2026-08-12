@@ -8,7 +8,6 @@ use App\Http\Middleware\SyncStaffPermissions;
 use App\Livewire\Admin\Appearance\Customize as AppearanceCustomize;
 use App\Livewire\Admin\Appearance\ThemesIndex as AppearanceThemes;
 use App\Livewire\Admin\Audit\Index as AuditIndex;
-use App\Livewire\Admin\Auth\Login;
 use App\Livewire\Admin\Categories\Index as CategoriesIndex;
 use App\Livewire\Admin\Content\NavigationIndex as ContentNavigation;
 use App\Livewire\Admin\Content\PagesIndex as ContentPages;
@@ -79,14 +78,22 @@ Route::get('/orders/{order}/confirmation', OrderConfirmation::class)->name('stor
 Route::post('/webhooks/payments/{gateway}', PaymentWebhookController::class)
     ->name('webhooks.payments');
 
-Route::middleware('guest:customer')->prefix('account')->name('customer.')->group(function (): void {
+Route::middleware('guest')->group(function (): void {
     Route::get('/login', CustomerLogin::class)->name('login');
     Route::get('/register', CustomerRegister::class)->name('register');
     Route::get('/forgot-password', CustomerForgotPassword::class)->name('password.request');
     Route::get('/reset-password/{token}', CustomerResetPassword::class)->name('password.reset');
+
+    Route::redirect('/account/login', '/login')->name('customer.login');
+    Route::redirect('/account/register', '/register')->name('customer.register');
+    Route::redirect('/account/forgot-password', '/forgot-password')->name('customer.password.request');
+    Route::get('/account/reset-password/{token}', function (string $token) {
+        return redirect()->route('password.reset', ['token' => $token, 'email' => request('email')]);
+    })->name('customer.password.reset');
+    Route::redirect('/admin/login', '/login')->name('admin.login');
 });
 
-Route::middleware('auth:customer')->prefix('account')->name('customer.')->group(function (): void {
+Route::middleware('auth')->prefix('account')->name('customer.')->group(function (): void {
     Route::get('/logout', CustomerLogout::class)->name('logout');
     Route::get('/verify-email', CustomerVerifyEmail::class)->name('verification.notice');
     Route::get('/verify-email/{id}/{hash}', EmailVerificationController::class)
@@ -108,11 +115,7 @@ Route::middleware('auth:customer')->prefix('account')->name('customer.')->group(
     });
 });
 
-Route::middleware('guest:staff')->group(function (): void {
-    Route::get('/admin/login', Login::class)->name('admin.login');
-});
-
-Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/products', ProductsIndex::class)->name('products.index');
     Route::get('/products/create', ProductsCreate::class)->name('products.create');
@@ -145,5 +148,5 @@ Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')-
 });
 
 Route::get('/{slug}', ContentPage::class)
-    ->where('slug', '^(?!admin$|install$|cart$|checkout$|products$|categories$|orders$|account$)[A-Za-z0-9\-]+$')
+    ->where('slug', '^(?!admin$|install$|cart$|checkout$|products$|categories$|orders$|account$|login$|register$)[A-Za-z0-9\-]+$')
     ->name('storefront.page');

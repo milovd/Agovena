@@ -9,7 +9,6 @@ use App\Agovena\Theme\ThemeManager;
 use App\Enums\TicketStatus;
 use App\Models\Customer;
 use App\Models\Ticket;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 final class TicketShow extends Component
@@ -21,7 +20,7 @@ final class TicketShow extends Component
     public function mount(Ticket $ticket): void
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         abort_unless((int) $ticket->customer_id === (int) $customer->id, 404);
         $this->ticket = $ticket;
     }
@@ -31,7 +30,7 @@ final class TicketShow extends Component
         abort_if($this->ticket->status === TicketStatus::Closed, 422);
         $data = $this->validate(['reply' => ['required', 'string', 'max:20000']]);
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $replyToTicket->byCustomer($this->ticket, $customer, $data['reply']);
         $this->reply = '';
         session()->flash('status', __('customer.tickets.reply_sent'));

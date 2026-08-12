@@ -9,7 +9,7 @@ use App\Agovena\Settings\SettingsRepository;
 use App\Models\Customer;
 use App\Models\CustomerCreditAccount;
 use App\Models\CustomerCreditEntry;
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -36,7 +36,7 @@ final class CustomerCreditLedger
         int $amount,
         string $reason,
         ?Model $reference = null,
-        ?StaffUser $staff = null,
+        ?User $staff = null,
         array $meta = [],
     ): CustomerCreditEntry {
         return $this->record($customer, 'credit', $amount, $reason, $reference, $staff, $meta);
@@ -47,7 +47,7 @@ final class CustomerCreditLedger
         int $amount,
         string $reason,
         ?Model $reference = null,
-        ?StaffUser $staff = null,
+        ?User $staff = null,
         array $meta = [],
     ): CustomerCreditEntry {
         return $this->record($customer, 'debit', $amount, $reason, $reference, $staff, $meta);
@@ -59,7 +59,7 @@ final class CustomerCreditLedger
         int $amount,
         string $reason,
         ?Model $reference,
-        ?StaffUser $staff,
+        ?User $staff,
         array $meta,
     ): CustomerCreditEntry {
         if ($amount < 1) {

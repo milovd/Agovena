@@ -28,7 +28,7 @@ final class Dashboard extends Component
     public function render(AdminRegistrar $admin)
     {
         /** @var InMemoryAdminRegistrar $admin */
-        $staff = auth('staff')->user();
+        $staff = auth()->user();
 
         $widgets = collect($admin->widgets())->filter(function (DashboardWidget $widget) use ($staff): bool {
             return $widget->permission === null

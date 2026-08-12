@@ -69,14 +69,14 @@ test('customer can view own invoice but not another customers', function () {
         'currency' => 'EUR',
     ]);
 
-    Livewire::actingAs($owner, 'customer')
+    Livewire::actingAs($owner->user)
         ->test(InvoiceShow::class, ['invoice' => $invoice])
         ->assertOk()
         ->assertSee('INV-TEST-00001')
         ->assertSee(__('customer.account.print_invoice'))
         ->assertSee('window.print()', false);
 
-    Livewire::actingAs($intruder, 'customer')
+    Livewire::actingAs($intruder->user)
         ->test(InvoiceShow::class, ['invoice' => $invoice])
         ->assertNotFound();
 });
@@ -95,12 +95,12 @@ test('owner can open invoices admin', function () {
         'currency' => 'EUR',
     ]);
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(AdminInvoicesIndex::class)
         ->assertOk()
         ->assertSee(__('admin.invoices.title'));
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(AdminInvoiceShow::class, ['invoice' => $invoice])
         ->assertOk()
         ->assertSee(__('admin.invoices.print'))

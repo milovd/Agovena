@@ -9,7 +9,6 @@ use App\Agovena\Money\Money;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
 use App\Models\CustomerCreditAccount;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -21,7 +20,7 @@ final class Credits extends Component
     {
         $theme = $themes->active();
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
         $account = CustomerCreditAccount::query()->where('customer_id', $customer->id)->first();
         $currency = $account->currency ?? 'EUR';
 

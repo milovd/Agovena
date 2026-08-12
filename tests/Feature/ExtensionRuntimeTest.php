@@ -96,7 +96,7 @@ test('checkout discovers enabled extension payment methods', function () {
 test('admin extensions page lists manual payment', function () {
     $staff = $this->createStaff();
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(ExtensionsIndex::class)
         ->assertOk()
         ->assertSee('Manual Payment');

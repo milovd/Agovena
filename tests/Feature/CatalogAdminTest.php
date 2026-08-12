@@ -18,7 +18,7 @@ uses(CreatesStaff::class);
 test('staff with permission can create and publish a product', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Create::class)
         ->set('name', 'Starter Kit')
@@ -41,7 +41,7 @@ test('staff with permission can create and publish a product', function () {
 test('staff without create permission cannot create products', function () {
     $staff = $this->createStaff([], ['products.view', 'dashboard.view']);
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin/products/create')
         ->assertForbidden();
 });
@@ -50,7 +50,7 @@ test('staff can update product price without affecting historical orders later',
     $staff = $this->createStaff();
     $product = Product::factory()->active()->create(['price_amount' => 1000]);
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Edit::class, ['product' => $product])
         ->set('price', '99,99')
@@ -64,7 +64,7 @@ test('staff can update product presentation and specifications', function () {
     $staff = $this->createStaff();
     $product = Product::factory()->active()->create();
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Edit::class, ['product' => $product])
         ->set('subtitle', 'Clear case for MagSafe phones')
@@ -93,7 +93,7 @@ test('physical selling preset enables available fulfillment capabilities', funct
     $modules->enable('inventory');
     $modules->enable('shipping');
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Edit::class, ['product' => $product])
         ->call('applyPreset', 'physical')
@@ -107,7 +107,7 @@ test('product list supports search and status filter', function () {
     Product::factory()->active()->create(['name' => 'Alpha Phone', 'sku' => 'ALP-1']);
     Product::factory()->draft()->create(['name' => 'Beta Case', 'sku' => 'BET-1']);
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Index::class)
         ->set('search', 'Alpha')
@@ -123,7 +123,7 @@ test('unreferenced product can be permanently deleted', function () {
     $staff = $this->createStaff();
     $product = Product::factory()->draft()->create();
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Index::class)
         ->call('confirmDelete', $product->id)

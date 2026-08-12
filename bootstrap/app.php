@@ -1,13 +1,14 @@
 <?php
 
 use App\Http\Middleware\EnsureAgovenaInstalled;
+use App\Http\Middleware\EnsureCanAccessAdmin;
 use App\Http\Middleware\EnsureCustomerEmailIsVerified;
 use App\Http\Middleware\SetLocale;
+use App\Models\User;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,19 +25,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->alias([
             'customer.verified' => EnsureCustomerEmailIsVerified::class,
+            'admin.access' => EnsureCanAccessAdmin::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'webhooks/*',
         ]);
         $middleware->redirectGuestsTo(function (Request $request) {
-            if ($request->is('admin') || $request->is('admin/*')) {
-                return route('admin.login');
-            }
-
-            return route('customer.login');
+            return route('login');
         });
         $middleware->redirectUsersTo(function (Request $request) {
-            if ($request->is('admin') || $request->is('admin/*') || Auth::guard('staff')->check()) {
+            $user = $request->user();
+            if ($user instanceof User && $user->canAccessAdmin() && ($request->is('admin') || $request->is('admin/*'))) {
                 return route('admin.dashboard');
             }
 

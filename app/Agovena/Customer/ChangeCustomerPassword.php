@@ -12,13 +12,14 @@ final class ChangeCustomerPassword
 {
     public function handle(Customer $customer, string $currentPassword, string $newPassword): void
     {
-        if ($customer->password === null || ! Hash::check($currentPassword, $customer->password)) {
+        $user = $customer->user;
+        if ($user === null || ! Hash::check($currentPassword, $user->password)) {
             throw ValidationException::withMessages([
                 'current_password' => __('customer.profile.current_password_invalid'),
             ]);
         }
 
-        $customer->forceFill([
+        $user->forceFill([
             'password' => $newPassword,
         ])->save();
     }

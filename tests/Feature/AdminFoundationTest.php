@@ -17,7 +17,7 @@ uses(CreatesStaff::class);
 test('admin shell shows grouped commerce and configuration navigation', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
         ->assertSee('Overview', false)
@@ -33,7 +33,7 @@ test('admin shell shows grouped commerce and configuration navigation', function
 test('settings hub lists registered groups from the admin registrar', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get(route('admin.settings.index'))
         ->assertOk()
         ->assertSee('General', false)
@@ -43,13 +43,13 @@ test('settings hub lists registered groups from the admin registrar', function (
 });
 
 test('guest is redirected from admin', function () {
-    $this->get('/admin')->assertRedirect('/admin/login');
+    $this->get('/admin')->assertRedirect('/login');
 });
 
 test('navigation hides settings without permission', function () {
     $staff = $this->createStaff([], ['dashboard.view']);
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
         ->assertDontSee('>General</a>', false)
@@ -68,7 +68,7 @@ test('dashboard shows real product and order counts', function () {
         'currency' => 'EUR',
     ]);
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
         ->assertSee('2', false)
@@ -79,7 +79,7 @@ test('dashboard shows real product and order counts', function () {
 test('settings persist via repository and admin screen', function () {
     $staff = $this->createStaff();
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(EditGroup::class, ['group' => 'general'])
         ->set('values.site_name', 'Acme Commerce')
         ->set('values.locale', 'en')
@@ -90,7 +90,7 @@ test('settings persist via repository and admin screen', function () {
 
     expect(app(SettingsRepository::class)->get('general', 'site_name'))->toBe('Acme Commerce');
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get('/')
         ->assertOk()
         ->assertSee('Acme Commerce', false);
@@ -99,7 +99,7 @@ test('settings persist via repository and admin screen', function () {
 test('staff without settings update cannot save', function () {
     $staff = $this->createStaff([], ['settings.view', 'dashboard.view']);
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(EditGroup::class, ['group' => 'general'])
         ->set('values.site_name', 'Nope')
         ->call('save')
@@ -109,7 +109,7 @@ test('staff without settings update cannot save', function () {
 test('owner can create a category', function () {
     $staff = $this->createStaff();
 
-    Livewire::actingAs($staff, 'staff')
+    Livewire::actingAs($staff)
         ->test(Index::class)
         ->call('create')
         ->set('name', 'Hosting')

@@ -4,22 +4,21 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Agovena\Installation\InstallationState;
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-final class RedirectIfInstalled
+final class EnsureCanAccessAdmin
 {
-    public function __construct(private readonly InstallationState $state) {}
-
     /**
      * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($this->state->installed()) {
-            return redirect()->route('admin.dashboard');
+        $user = $request->user();
+        if (! $user instanceof User || ! $user->canAccessAdmin()) {
+            abort(403);
         }
 
         return $next($request);

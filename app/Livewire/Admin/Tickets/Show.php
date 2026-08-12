@@ -7,8 +7,8 @@ namespace App\Livewire\Admin\Tickets;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Support\ReplyToTicket;
 use App\Enums\TicketStatus;
-use App\Models\StaffUser;
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -40,8 +40,8 @@ final class Show extends Component
             'reply' => ['required', 'string', 'max:20000'],
             'is_internal' => ['boolean'],
         ]);
-        /** @var StaffUser $staff */
-        $staff = Auth::guard('staff')->user();
+        /** @var User $staff */
+        $staff = Auth::user();
         $replyToTicket->byStaff($this->ticket, $staff, $data['reply'], $data['is_internal']);
         $this->reset(['reply', 'is_internal']);
         $this->ticket->refresh();
@@ -60,7 +60,7 @@ final class Show extends Component
     public function assignSelf(): void
     {
         $this->authorize('tickets.manage');
-        $this->ticket->update(['staff_user_id' => Auth::guard('staff')->id()]);
+        $this->ticket->update(['staff_user_id' => Auth::id()]);
         session()->flash('status', __('admin.tickets.assigned'));
     }
 

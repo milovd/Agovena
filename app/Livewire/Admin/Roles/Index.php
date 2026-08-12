@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Roles;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -43,7 +44,7 @@ final class Index extends Component
     public function edit(int $roleId): void
     {
         $this->authorize('roles.update');
-        $role = Role::query()->where('guard_name', 'staff')->findOrFail($roleId);
+        $role = Role::query()->where('guard_name', User::GUARD)->findOrFail($roleId);
         $this->editingId = $role->id;
         $this->name = $role->name;
         $this->selectedPermissions = $role->permissions->pluck('name')->values()->all();
@@ -70,7 +71,7 @@ final class Index extends Component
                 'max:64',
                 'regex:/^[a-z0-9_\-]+$/',
                 Rule::unique('roles', 'name')
-                    ->where(fn ($query) => $query->where('guard_name', 'staff'))
+                    ->where(fn ($query) => $query->where('guard_name', User::GUARD))
                     ->ignore($this->editingId),
             ],
             'selectedPermissions' => ['array'],
@@ -80,12 +81,12 @@ final class Index extends Component
         if ($this->editingId === null) {
             $role = Role::query()->create([
                 'name' => $data['name'],
-                'guard_name' => 'staff',
+                'guard_name' => User::GUARD,
             ]);
             $role->syncPermissions($data['selectedPermissions'] ?? []);
             session()->flash('status', __('admin.roles.created'));
         } else {
-            $role = Role::query()->where('guard_name', 'staff')->findOrFail($this->editingId);
+            $role = Role::query()->where('guard_name', User::GUARD)->findOrFail($this->editingId);
 
             if ($role->name === 'owner') {
                 if ($data['name'] !== 'owner') {
@@ -109,7 +110,7 @@ final class Index extends Component
     public function delete(int $roleId): void
     {
         $this->authorize('roles.delete');
-        $role = Role::query()->where('guard_name', 'staff')->findOrFail($roleId);
+        $role = Role::query()->where('guard_name', User::GUARD)->findOrFail($roleId);
 
         if ($role->name === 'owner') {
             session()->flash('error', __('admin.roles.cannot_delete_owner'));
@@ -137,7 +138,7 @@ final class Index extends Component
     {
         return view('livewire.admin.roles.index', [
             'roles' => Role::query()
-                ->where('guard_name', 'staff')
+                ->where('guard_name', User::GUARD)
                 ->withCount('users')
                 ->with('permissions')
                 ->orderByRaw("CASE WHEN name = 'owner' THEN 0 ELSE 1 END")

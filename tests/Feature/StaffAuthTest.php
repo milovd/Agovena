@@ -1,24 +1,31 @@
 <?php
 
-use App\Livewire\Admin\Auth\Login;
+use App\Livewire\Customer\Auth\Login;
+use App\Models\User;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-test('guest is redirected from admin to login', function () {
-    $this->get('/admin')->assertRedirect(route('admin.login'));
+test('guest is redirected from admin to the unified login', function () {
+    $this->get('/admin')->assertRedirect(route('login'));
 });
 
 test('guest cannot access admin products', function () {
-    $this->get('/admin/products')->assertRedirect(route('admin.login'));
+    $this->get('/admin/products')->assertRedirect(route('login'));
 });
 
-test('staff can sign in and reach dashboard', function () {
+test('legacy admin login url redirects to the unified login', function () {
+    $this->get('/admin/login')->assertRedirect(route('login'));
+});
+
+test('user can sign in and reach admin dashboard when authorized', function () {
     $staff = $this->createStaff([
         'email' => 'owner@example.com',
         'password' => 'password',
     ]);
+
+    $this->get('/admin')->assertRedirect(route('login'));
 
     Livewire::test(Login::class)
         ->set('email', 'owner@example.com')
@@ -26,13 +33,21 @@ test('staff can sign in and reach dashboard', function () {
         ->call('login')
         ->assertRedirect(route('admin.dashboard'));
 
-    $this->assertAuthenticatedAs($staff, 'staff');
+    $this->assertAuthenticatedAs($staff);
 });
 
 test('staff without dashboard permission is forbidden', function () {
     $staff = $this->createStaff([], ['products.view']);
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
+        ->get('/admin')
+        ->assertForbidden();
+});
+
+test('authenticated customer without admin permission is forbidden from admin', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
         ->get('/admin')
         ->assertForbidden();
 });

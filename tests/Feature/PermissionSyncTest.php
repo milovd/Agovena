@@ -10,7 +10,7 @@ uses(CreatesStaff::class);
 test('admin visit syncs newly registered permissions onto the owner role', function () {
     $staff = $this->createStaff();
 
-    $owner = Role::findByName('owner', 'staff');
+    $owner = Role::findByName('owner', 'web');
     $owner->revokePermissionTo('users.view');
     $owner->revokePermissionTo('roles.view');
     app()[PermissionRegistrar::class]->forgetCachedPermissions();
@@ -18,7 +18,7 @@ test('admin visit syncs newly registered permissions onto the owner role', funct
 
     expect($staff->fresh()->can('users.view'))->toBeFalse();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get(route('admin.dashboard'))
         ->assertOk()
         ->assertSee(__('admin.nav.users'), false)
@@ -26,5 +26,5 @@ test('admin visit syncs newly registered permissions onto the owner role', funct
 
     expect($staff->fresh()->can('users.view'))->toBeTrue()
         ->and($staff->fresh()->can('roles.view'))->toBeTrue()
-        ->and(Permission::findByName('users.view', 'staff'))->not->toBeNull();
+        ->and(Permission::findByName('users.view', 'web'))->not->toBeNull();
 });

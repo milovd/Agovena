@@ -6,7 +6,7 @@ namespace App\Agovena\Staff;
 
 use App\Agovena\Installation\InstallationException;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
 
@@ -15,7 +15,7 @@ final class CreateOwnerStaff
     public function __construct(private readonly SyncRegisteredPermissions $sync) {}
 
     /**
-     * Create or update the owner staff user and sync the owner role permissions.
+     * Create or update the owner user and sync the owner role permissions.
      *
      * @param  bool  $refuseIfOwnerExists  When true (installer), refuse if another owner email already exists.
      */
@@ -24,14 +24,14 @@ final class CreateOwnerStaff
         string $email,
         string $password,
         bool $refuseIfOwnerExists = false,
-    ): StaffUser {
+    ): User {
         ($this->sync)(force: true);
 
         $email = strtolower(trim($email));
 
         if ($refuseIfOwnerExists) {
-            $existingOwner = StaffUser::query()
-                ->whereHas('roles', static fn ($q) => $q->where('name', 'owner')->where('guard_name', 'staff'))
+            $existingOwner = User::query()
+                ->whereHas('roles', static fn ($q) => $q->where('name', 'owner')->where('guard_name', User::GUARD))
                 ->where('email', '!=', $email)
                 ->exists();
 
@@ -40,15 +40,16 @@ final class CreateOwnerStaff
             }
         }
 
-        $user = StaffUser::query()->updateOrCreate(
+        $user = User::query()->updateOrCreate(
             ['email' => $email],
             [
                 'name' => $name,
                 'password' => Hash::make($password),
+                'email_verified_at' => now(),
             ],
         );
 
-        Role::findOrCreate('owner', 'staff');
+        Role::findOrCreate('owner', User::GUARD);
         $user->syncRoles(['owner']);
 
         return $user;

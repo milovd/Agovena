@@ -6,6 +6,7 @@ namespace App\Livewire\Customer\Auth;
 
 use App\Agovena\Customer\CustomerRegistration;
 use App\Agovena\Theme\ThemeManager;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
@@ -19,10 +20,10 @@ final class Login extends Component
 
     public bool $remember = false;
 
-    public function mount(CustomerRegistration $registration): void
+    public function mount(): void
     {
-        if (Auth::guard('customer')->check()) {
-            $this->redirect(route('customer.account'), navigate: true);
+        if (Auth::check()) {
+            $this->redirect($this->destination(Auth::user()), navigate: true);
         }
     }
 
@@ -34,7 +35,7 @@ final class Login extends Component
             'remember' => ['boolean'],
         ]);
 
-        $key = 'customer-login:'.mb_strtolower($credentials['email']).'|'.request()->ip();
+        $key = 'login:'.mb_strtolower($credentials['email']).'|'.request()->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
@@ -44,7 +45,7 @@ final class Login extends Component
             ]);
         }
 
-        if (! Auth::guard('customer')->attempt(
+        if (! Auth::attempt(
             ['email' => $credentials['email'], 'password' => $credentials['password']],
             $credentials['remember'],
         )) {
@@ -58,7 +59,7 @@ final class Login extends Component
         RateLimiter::clear($key);
         session()->regenerate();
 
-        $this->redirectIntended(route('customer.account'), navigate: true);
+        $this->redirect($this->destination(Auth::user()), navigate: true);
     }
 
     public function render(ThemeManager $themes, CustomerRegistration $registration)
@@ -72,5 +73,28 @@ final class Login extends Component
             'title' => __('customer.auth.login_title'),
             'theme' => $theme,
         ]);
+    }
+
+    private function destination(mixed $user): string
+    {
+        $default = route('customer.account');
+        $intended = (string) (session()->pull('url.intended') ?: $default);
+
+        if (! $user instanceof User) {
+            return $default;
+        }
+
+        if ($this->isAdminUrl($intended)) {
+            return $user->canAccessAdmin() ? $intended : $default;
+        }
+
+        return $intended !== '' ? $intended : $default;
+    }
+
+    private function isAdminUrl(string $url): bool
+    {
+        $path = parse_url($url, PHP_URL_PATH) ?? $url;
+
+        return is_string($path) && (str_starts_with($path, '/admin') || str_contains($path, '/admin/'));
     }
 }

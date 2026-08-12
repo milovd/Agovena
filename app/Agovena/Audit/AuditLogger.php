@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Audit;
 
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 
@@ -13,12 +14,25 @@ final class AuditLogger
     /** @param array<string, mixed> $properties */
     public function log(string $action, ?Model $subject = null, array $properties = []): AuditLog
     {
-        $staff = Auth::guard('staff')->user();
-        $customer = Auth::guard('customer')->user();
+        $user = Auth::user();
+        $isAdminContext = request()->is('admin') || request()->is('admin/*');
+
+        $actorType = 'system';
+        $actorId = null;
+
+        if ($user instanceof User) {
+            if ($isAdminContext || $user->canAccessAdmin()) {
+                $actorType = 'staff';
+                $actorId = $user->getKey();
+            } else {
+                $actorType = 'customer';
+                $actorId = $user->customer?->getKey() ?? $user->getKey();
+            }
+        }
 
         return AuditLog::query()->create([
-            'actor_type' => $staff !== null ? 'staff' : ($customer !== null ? 'customer' : 'system'),
-            'actor_id' => $staff?->getAuthIdentifier() ?? $customer?->getAuthIdentifier(),
+            'actor_type' => $actorType,
+            'actor_id' => $actorId,
             'action' => $action,
             'subject_type' => $subject?->getMorphClass(),
             'subject_id' => $subject?->getKey(),

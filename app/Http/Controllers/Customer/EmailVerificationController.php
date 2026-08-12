@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Customer;
 
 use App\Agovena\Customer\AttachGuestOrdersToCustomer;
-use App\Models\Customer;
+use App\Models\User;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,30 +15,30 @@ final class EmailVerificationController
 {
     public function __invoke(Request $request, AttachGuestOrdersToCustomer $attachGuestOrders): RedirectResponse
     {
-        /** @var Customer|null $customer */
-        $customer = Auth::guard('customer')->user();
+        $user = Auth::user();
 
-        if ($customer === null) {
-            return redirect()->route('customer.login');
+        if (! $user instanceof User) {
+            return redirect()->route('login');
         }
 
-        if (! hash_equals((string) $request->route('id'), (string) $customer->getKey())) {
+        if (! hash_equals((string) $request->route('id'), (string) $user->getKey())) {
             abort(403);
         }
 
-        if (! hash_equals((string) $request->route('hash'), sha1($customer->getEmailForVerification()))) {
+        if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
             abort(403);
         }
 
-        if ($customer->hasVerifiedEmail()) {
+        if ($user->hasVerifiedEmail()) {
             return redirect()->route('customer.account');
         }
 
-        if ($customer->markEmailAsVerified()) {
-            event(new Verified($customer));
+        if ($user->markEmailAsVerified()) {
+            event(new Verified($user));
         }
 
-        $attachGuestOrders->handle($customer->fresh() ?? $customer);
+        $customer = $user->ensureCustomer();
+        $attachGuestOrders->handle($customer);
 
         return redirect()
             ->route('customer.account')

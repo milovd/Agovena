@@ -42,7 +42,7 @@ class Ticket extends Model
 
     public function assignee(): BelongsTo
     {
-        return $this->belongsTo(StaffUser::class, 'staff_user_id');
+        return $this->belongsTo(User::class, 'staff_user_id');
     }
 
     public function order(): BelongsTo

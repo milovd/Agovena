@@ -11,7 +11,7 @@
     @if (! $customerLoggedIn && $registrationEnabled)
         <p class="store-note">
             {{ __('customer.checkout.sign_in_prompt') }}
-            <a href="{{ route('customer.login') }}">{{ __('customer.checkout.sign_in_link') }}</a>
+            <a href="{{ route('login') }}">{{ __('customer.checkout.sign_in_link') }}</a>
         </p>
     @endif
 

@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Database\Factories;
 
-use App\Models\StaffUser;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
 /**
- * @extends Factory<StaffUser>
+ * @extends Factory<User>
  */
-class StaffUserFactory extends Factory
+class UserFactory extends Factory
 {
-    protected $model = StaffUser::class;
+    protected $model = User::class;
 
     protected static ?string $password = null;
 
@@ -27,5 +27,12 @@ class StaffUserFactory extends Factory
             'password' => self::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function unverified(): static
+    {
+        return $this->state(fn (array $attributes): array => [
+            'email_verified_at' => null,
+        ]);
     }
 }

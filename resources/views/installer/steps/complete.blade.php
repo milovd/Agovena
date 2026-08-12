@@ -29,7 +29,7 @@
     </dl>
 
     <div class="install-panel__actions">
-        <a class="ag-btn ag-btn--primary" href="{{ route('admin.login') }}">{{ __('installer.actions.open_admin') }}</a>
+        <a class="ag-btn ag-btn--primary" href="{{ route('admin.dashboard') }}">{{ __('installer.actions.open_admin') }}</a>
         <a class="ag-btn ag-btn--secondary" href="{{ route('storefront.home') }}">{{ __('installer.actions.view_storefront') }}</a>
     </div>
 </div>

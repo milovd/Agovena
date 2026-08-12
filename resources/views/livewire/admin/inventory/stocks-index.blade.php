@@ -49,14 +49,14 @@
                                     type="number"
                                     min="0"
                                     wire:model="quantities.{{ $product->id }}"
-                                    @disabled(! auth('staff')->user()?->can('inventory.manage'))
+                                    @disabled(! auth()->user()?->can('inventory.manage'))
                                 >
                             </td>
                             <td>
-                                <input type="checkbox" wire:model="trackStock.{{ $product->id }}" @disabled(! auth('staff')->user()?->can('inventory.manage'))>
+                                <input type="checkbox" wire:model="trackStock.{{ $product->id }}" @disabled(! auth()->user()?->can('inventory.manage'))>
                             </td>
                             <td>
-                                <input type="checkbox" wire:model="allowOversell.{{ $product->id }}" @disabled(! auth('staff')->user()?->can('inventory.manage'))>
+                                <input type="checkbox" wire:model="allowOversell.{{ $product->id }}" @disabled(! auth()->user()?->can('inventory.manage'))>
                             </td>
                             <td>
                                 @can('inventory.manage')

@@ -117,12 +117,12 @@ test('paid digital order grants entitlements and download limit is enforced', fu
         ->and($entitlement->digital_asset_id)->toBe($asset->id)
         ->and($entitlement->canDownload())->toBeTrue();
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(DownloadsIndex::class)
         ->assertSee('Sample PDF')
         ->assertSee(__('digital::customer.download'));
 
-    $response = $this->actingAs($customer, 'customer')
+    $response = $this->actingAs($customer->user)
         ->get(route('customer.downloads.file', $entitlement->token));
     $response->assertOk();
 
@@ -130,7 +130,7 @@ test('paid digital order grants entitlements and download limit is enforced', fu
     expect($entitlement->download_count)->toBe(1)
         ->and($entitlement->canDownload())->toBeFalse();
 
-    $this->actingAs($customer, 'customer')
+    $this->actingAs($customer->user)
         ->get(route('customer.downloads.file', $entitlement->token))
         ->assertForbidden();
 });

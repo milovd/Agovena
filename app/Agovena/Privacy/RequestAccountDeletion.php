@@ -10,8 +10,9 @@ final class RequestAccountDeletion
 {
     public function handle(Customer $customer): void
     {
-        if ($customer->deletion_requested_at === null) {
-            $customer->forceFill(['deletion_requested_at' => now()])->save();
+        $user = $customer->user;
+        if ($user !== null && $user->deletion_requested_at === null) {
+            $user->forceFill(['deletion_requested_at' => now()])->save();
         }
     }
 }

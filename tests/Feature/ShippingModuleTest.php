@@ -239,7 +239,7 @@ test('mark shipped and tracking visible in customer portal', function () {
         ->and($views[0]->trackingNumber)->toBe('TRACK-123')
         ->and($views[0]->carrierName)->toBe('Generic Carrier');
 
-    Livewire::actingAs($customer, 'customer')
+    Livewire::actingAs($customer->user)
         ->test(OrderShow::class, ['order' => $order])
         ->assertOk()
         ->assertSee('TRACK-123')

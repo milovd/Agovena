@@ -7,7 +7,6 @@ namespace Agovena\Modules\Digital\Http\Livewire\Customer;
 use Agovena\Modules\Digital\Models\DigitalEntitlement;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
-use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
 final class DownloadsIndex extends Component
@@ -15,7 +14,7 @@ final class DownloadsIndex extends Component
     public function render(ThemeManager $themes)
     {
         /** @var Customer $customer */
-        $customer = Auth::guard('customer')->user();
+        $customer = authenticated_customer();
 
         $entitlements = DigitalEntitlement::query()
             ->with(['asset', 'order'])

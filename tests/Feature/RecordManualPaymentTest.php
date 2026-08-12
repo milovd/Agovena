@@ -46,7 +46,7 @@ test('staff without payments.record cannot record payment', function () {
     $staff = $this->createStaff([], ['orders.view', 'dashboard.view', 'products.view']);
     $order = createPendingOrder();
 
-    $this->actingAs($staff, 'staff');
+    $this->actingAs($staff);
 
     Livewire::test(Show::class, ['order' => $order])
         ->call('startRecordPayment')
@@ -57,7 +57,7 @@ test('admin order detail shows record payment action for pending payments', func
     $staff = $this->createStaff();
     $order = createPendingOrder();
 
-    $this->actingAs($staff, 'staff')
+    $this->actingAs($staff)
         ->get(route('admin.orders.show', $order))
         ->assertOk()
         ->assertSee('Record payment', false);
