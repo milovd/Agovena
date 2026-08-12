@@ -16,8 +16,10 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Notifications\SubscriptionCancelledNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -91,6 +93,7 @@ final class SubscriptionService
             $subscription->cancel_at_period_end = true;
             $subscription->cancelled_at = now();
             $subscription->save();
+            $this->notifyCancellation($subscription, true);
 
             return $subscription->fresh() ?? $subscription;
         }
@@ -101,6 +104,7 @@ final class SubscriptionService
         $subscription->ended_at = now();
         $subscription->next_billing_at = null;
         $subscription->save();
+        $this->notifyCancellation($subscription, false);
 
         return $subscription->fresh() ?? $subscription;
     }
@@ -262,5 +266,19 @@ final class SubscriptionService
         } while (Order::query()->where('number', $number)->exists());
 
         return $number;
+    }
+
+    private function notifyCancellation(Subscription $subscription, bool $atPeriodEnd): void
+    {
+        $notification = new SubscriptionCancelledNotification($subscription->number, $atPeriodEnd);
+        $customer = $subscription->customer()->first();
+
+        if ($customer !== null) {
+            $customer->notify($notification);
+
+            return;
+        }
+
+        Notification::route('mail', $subscription->customer_email)->notify($notification);
     }
 }

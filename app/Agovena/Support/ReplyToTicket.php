@@ -10,6 +10,7 @@ use App\Models\Customer;
 use App\Models\StaffUser;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
+use App\Notifications\TicketRepliedNotification;
 use Illuminate\Support\Facades\DB;
 
 final class ReplyToTicket
@@ -27,6 +28,10 @@ final class ReplyToTicket
     {
         $message = $this->store($ticket, 'staff', $staff->id, $body, $isInternal);
         $this->audit->log($isInternal ? 'ticket.internal_note_added' : 'ticket.replied', $ticket);
+
+        if (! $isInternal) {
+            $ticket->customer()->firstOrFail()->notify(new TicketRepliedNotification($ticket));
+        }
 
         return $message;
     }

@@ -6,6 +6,8 @@ namespace App\Listeners;
 
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Events\OrderPaid;
+use App\Notifications\InvoiceIssuedNotification;
+use Illuminate\Support\Facades\Notification;
 
 final class IssueInvoiceWhenOrderPaid
 {
@@ -15,6 +17,9 @@ final class IssueInvoiceWhenOrderPaid
 
     public function handle(OrderPaid $event): void
     {
-        $this->issueInvoice->handle($event->order);
+        $invoice = $this->issueInvoice->handle($event->order);
+
+        Notification::route('mail', $invoice->customer_email)
+            ->notify(new InvoiceIssuedNotification($invoice));
     }
 }
