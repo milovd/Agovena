@@ -22,6 +22,11 @@ use App\Agovena\Installation\InstallationState;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
+use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Auth\Events\Verified;
+use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -44,6 +49,9 @@ class AgovenaServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Event::listen(Registered::class, SendEmailVerificationNotification::class);
+        Event::listen(Verified::class, AttachGuestOrdersWhenCustomerVerified::class);
+
         /** @var AdminRegistrar $admin */
         $admin = $this->app->make(AdminRegistrar::class);
 
@@ -384,7 +392,7 @@ class AgovenaServiceProvider extends ServiceProvider
             key: 'customer_registration',
             label: 'admin.settings.fields.customer_registration',
             type: 'select',
-            default: 'disabled',
+            default: 'optional',
             options: ['disabled', 'optional', 'required'],
             help: 'admin.settings.field_help.customer_registration',
             sort: 10,

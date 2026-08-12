@@ -58,6 +58,7 @@ return [
     'checkout' => [
         'title' => 'Afrekenen',
         'lede' => 'Gastafrekening — geen klantaccount nodig.',
+        'lede_account' => 'Je bent ingelogd. Deze bestelling verschijnt in je account.',
         'contact' => 'Contact',
         'name' => 'Naam',
         'email' => 'E-mail',
@@ -75,7 +76,7 @@ return [
         'lede' => 'Bestelling <strong>:number</strong> is bevestigd. Betaling staat in afwachting tot een medewerker deze registreert.',
         'items' => 'Artikelen',
         'total' => 'Totaal: :amount',
-        'note' => 'Klantaccounts en ordergeschiedenis komen later. Bewaar je bestelnummer ter referentie.',
+        'note' => 'Bewaar je bestelnummer ter referentie. Ingelogde klanten vinden bestellingen ook onder Mijn account.',
         'back' => 'Terug naar catalogus',
     ],
 

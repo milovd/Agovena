@@ -6,8 +6,11 @@ namespace App\Livewire\Storefront;
 
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Customer\CustomerRegistration;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\PaymentMethod;
+use App\Models\Customer;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
@@ -22,18 +25,41 @@ final class CheckoutPage extends Component
 
     public string $payment_method = 'manual';
 
-    public function mount(CartService $cart): void
+    public function mount(CartService $cart, CustomerRegistration $registration): void
     {
         if ($cart->isEmpty()) {
             $this->redirect(route('storefront.cart'), navigate: true);
+
+            return;
+        }
+
+        if ($registration->requiresAccountForCheckout() && ! Auth::guard('customer')->check()) {
+            session()->put('url.intended', route('storefront.checkout'));
+            $this->redirect(route('customer.login'), navigate: true);
+
+            return;
         }
 
         $this->idempotency_key = (string) Str::uuid();
         $this->payment_method = PaymentMethod::Manual->value;
+
+        /** @var Customer|null $customer */
+        $customer = Auth::guard('customer')->user();
+        if ($customer !== null) {
+            $this->customer_name = $customer->name;
+            $this->customer_email = $customer->email;
+        }
     }
 
-    public function placeOrder(PlaceOrder $placeOrder): void
+    public function placeOrder(PlaceOrder $placeOrder, CustomerRegistration $registration): void
     {
+        if ($registration->requiresAccountForCheckout() && ! Auth::guard('customer')->check()) {
+            session()->put('url.intended', route('storefront.checkout'));
+            $this->redirect(route('customer.login'), navigate: true);
+
+            return;
+        }
+
         $allowed = [PaymentMethod::Manual->value];
         if ($this->developmentPayEnabled()) {
             $allowed[] = PaymentMethod::Development->value;
@@ -51,12 +77,13 @@ final class CheckoutPage extends Component
             'customer_email' => $data['customer_email'],
             'idempotency_key' => $data['idempotency_key'],
             'payment_method' => $data['payment_method'],
+            'customer_id' => Auth::guard('customer')->id(),
         ]);
 
         $this->redirect(route('storefront.order.confirmation', $order), navigate: true);
     }
 
-    public function render(CartService $cart, ThemeManager $themes)
+    public function render(CartService $cart, ThemeManager $themes, CustomerRegistration $registration)
     {
         $theme = $themes->active();
         $lines = $cart->pricedLines();
@@ -67,6 +94,8 @@ final class CheckoutPage extends Component
             'subtotal' => $subtotal,
             'theme' => $theme,
             'developmentPayEnabled' => $this->developmentPayEnabled(),
+            'customerLoggedIn' => Auth::guard('customer')->check(),
+            'registrationEnabled' => $registration->allowsRegistration(),
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('storefront.checkout.title'),
             'theme' => $theme,

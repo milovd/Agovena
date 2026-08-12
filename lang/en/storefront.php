@@ -58,6 +58,7 @@ return [
     'checkout' => [
         'title' => 'Checkout',
         'lede' => 'Guest checkout — no customer account required.',
+        'lede_account' => 'You are signed in. This order will appear in your account.',
         'contact' => 'Contact',
         'name' => 'Name',
         'email' => 'Email',
@@ -75,7 +76,7 @@ return [
         'lede' => 'Order <strong>:number</strong> is confirmed. Payment is pending until recorded by staff.',
         'items' => 'Items',
         'total' => 'Total: :amount',
-        'note' => 'Customer accounts and order history are a later Core step. Keep your order number for reference.',
+        'note' => 'Keep your order number for reference. Signed-in customers can also find orders under My account.',
         'back' => 'Back to catalog',
     ],
 

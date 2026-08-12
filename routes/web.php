@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Customer\EmailVerificationController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
 use App\Http\Middleware\RedirectIfInstalled;
 use App\Http\Middleware\SyncStaffPermissions;
@@ -20,6 +21,16 @@ use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
 use App\Livewire\Admin\Users\Index as UsersIndex;
+use App\Livewire\Customer\Account\Dashboard as CustomerDashboard;
+use App\Livewire\Customer\Account\OrderShow as CustomerOrderShow;
+use App\Livewire\Customer\Account\OrdersIndex as CustomerOrdersIndex;
+use App\Livewire\Customer\Account\Profile as CustomerProfile;
+use App\Livewire\Customer\Auth\ForgotPassword as CustomerForgotPassword;
+use App\Livewire\Customer\Auth\Login as CustomerLogin;
+use App\Livewire\Customer\Auth\Logout as CustomerLogout;
+use App\Livewire\Customer\Auth\Register as CustomerRegister;
+use App\Livewire\Customer\Auth\ResetPassword as CustomerResetPassword;
+use App\Livewire\Customer\Auth\VerifyEmail as CustomerVerifyEmail;
 use App\Livewire\Installer\Wizard as InstallerWizard;
 use App\Livewire\Storefront\CartPage;
 use App\Livewire\Storefront\CatalogIndex;
@@ -44,6 +55,28 @@ Route::get('/categories/{slug}', CategoryShow::class)->name('storefront.category
 Route::get('/cart', CartPage::class)->name('storefront.cart');
 Route::get('/checkout', CheckoutPage::class)->name('storefront.checkout');
 Route::get('/orders/{order}/confirmation', OrderConfirmation::class)->name('storefront.order.confirmation');
+
+Route::middleware('guest:customer')->prefix('account')->name('customer.')->group(function (): void {
+    Route::get('/login', CustomerLogin::class)->name('login');
+    Route::get('/register', CustomerRegister::class)->name('register');
+    Route::get('/forgot-password', CustomerForgotPassword::class)->name('password.request');
+    Route::get('/reset-password/{token}', CustomerResetPassword::class)->name('password.reset');
+});
+
+Route::middleware('auth:customer')->prefix('account')->name('customer.')->group(function (): void {
+    Route::get('/logout', CustomerLogout::class)->name('logout');
+    Route::get('/verify-email', CustomerVerifyEmail::class)->name('verification.notice');
+    Route::get('/verify-email/{id}/{hash}', EmailVerificationController::class)
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+
+    Route::middleware('customer.verified')->group(function (): void {
+        Route::get('/', CustomerDashboard::class)->name('account');
+        Route::get('/orders', CustomerOrdersIndex::class)->name('orders.index');
+        Route::get('/orders/{order}', CustomerOrderShow::class)->name('orders.show');
+        Route::get('/profile', CustomerProfile::class)->name('profile');
+    });
+});
 
 Route::middleware('guest:staff')->group(function (): void {
     Route::get('/admin/login', Login::class)->name('admin.login');
@@ -70,5 +103,5 @@ Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')-
 });
 
 Route::get('/{slug}', ContentPage::class)
-    ->where('slug', '^(?!admin$|install$|cart$|checkout$|products$|categories$|orders$)[A-Za-z0-9\-]+$')
+    ->where('slug', '^(?!admin$|install$|cart$|checkout$|products$|categories$|orders$|account$)[A-Za-z0-9\-]+$')
     ->name('storefront.page');

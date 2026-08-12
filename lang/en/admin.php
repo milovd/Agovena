@@ -145,7 +145,7 @@ return [
             'base_currency' => 'Default catalog currency. Create currencies with prefix/suffix under Configuration → Currencies.',
             'logo_path' => 'PNG, JPG, WebP or SVG. Max 2 MB. You can also use it as the favicon.',
             'favicon_path' => 'Optional. Leave empty and enable “use logo as favicon”, or upload a separate icon.',
-            'customer_registration' => 'Customer accounts are not required for guest checkout yet.',
+            'customer_registration' => 'Allow customers to create accounts. Guest checkout stays available unless registration is required.',
             'enable_reviews' => 'When off, review UI is hidden on all product pages. Per-product review content still deferred.',
         ],
 

@@ -1,6 +1,19 @@
 <div class="store-checkout">
     <h1 class="store-title">{{ __('storefront.checkout.title') }}</h1>
-    <p class="store-lede">{{ __('storefront.checkout.lede') }}</p>
+    <p class="store-lede">
+        @if ($customerLoggedIn)
+            {{ __('storefront.checkout.lede_account') }}
+        @else
+            {{ __('storefront.checkout.lede') }}
+        @endif
+    </p>
+
+    @if (! $customerLoggedIn && $registrationEnabled)
+        <p class="store-note">
+            {{ __('customer.checkout.sign_in_prompt') }}
+            <a href="{{ route('customer.login') }}">{{ __('customer.checkout.sign_in_link') }}</a>
+        </p>
+    @endif
 
     <div class="store-checkout__layout">
         <form wire:submit="placeOrder" class="store-checkout__form" novalidate>

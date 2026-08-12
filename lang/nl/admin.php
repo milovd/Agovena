@@ -145,7 +145,7 @@ return [
             'base_currency' => 'Standaardvaluta van de catalogus. Valuta met prefix/suffix maak je aan onder Configuratie → Valuta.',
             'logo_path' => 'PNG, JPG, WebP of SVG. Max. 2 MB. Je kunt het ook als favicon gebruiken.',
             'favicon_path' => 'Optioneel. Laat leeg en zet “logo als favicon gebruiken” aan, of upload een apart icoon.',
-            'customer_registration' => 'Klantaccounts zijn nog niet nodig om als gast af te rekenen.',
+            'customer_registration' => 'Sta klanten toe accounts te maken. Gastafrekenen blijft mogelijk tenzij registratie verplicht is.',
             'enable_reviews' => 'Wanneer uit, is de beoordelings-UI verborgen op alle productpagina’s. Beoordelingen per product volgen later.',
         ],
 

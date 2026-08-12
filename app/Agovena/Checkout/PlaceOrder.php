@@ -27,7 +27,7 @@ final class PlaceOrder
     ) {}
 
     /**
-     * @param  array{customer_name: string, customer_email: string, idempotency_key?: string|null, payment_method?: string|null}  $guest
+     * @param  array{customer_name: string, customer_email: string, idempotency_key?: string|null, payment_method?: string|null, customer_id?: int|null}  $guest
      */
     public function handle(array $guest): Order
     {
@@ -56,14 +56,18 @@ final class PlaceOrder
         }
 
         $method = $this->resolvePaymentMethod($guest['payment_method'] ?? PaymentMethod::Manual->value);
+        $customerId = isset($guest['customer_id']) ? (int) $guest['customer_id'] : null;
+        if ($customerId !== null && $customerId < 1) {
+            $customerId = null;
+        }
 
-        $order = DB::transaction(function () use ($guest, $lines, $subtotal, $idempotencyKey, $method): Order {
+        $order = DB::transaction(function () use ($guest, $lines, $subtotal, $idempotencyKey, $method, $customerId): Order {
             $order = Order::query()->create([
                 'number' => $this->generateNumber(),
                 'status' => OrderStatus::Pending,
                 'customer_name' => $guest['customer_name'],
                 'customer_email' => $guest['customer_email'],
-                'customer_id' => null,
+                'customer_id' => $customerId,
                 'subtotal_amount' => $subtotal->amount,
                 'total_amount' => $subtotal->amount,
                 'currency' => $subtotal->currency,

@@ -297,14 +297,17 @@
 
             <div class="store-header__actions">
                 @if ($showAccount)
-                    <span
-                        class="store-header__utility"
-                        title="{{ __('storefront.account_coming_soon') }}"
-                        aria-label="{{ __('storefront.nav.account') }}"
-                    >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                        <span class="visually-hidden">{{ __('storefront.nav.account') }}</span>
-                    </span>
+                    @auth('customer')
+                        <a class="store-header__utility" href="{{ route('customer.account') }}" aria-label="{{ __('storefront.nav.account') }}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                            <span class="visually-hidden">{{ __('storefront.nav.account') }}</span>
+                        </a>
+                    @else
+                        <a class="store-header__utility" href="{{ route('customer.login') }}" aria-label="{{ __('storefront.nav.account') }}">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                            <span class="visually-hidden">{{ __('storefront.nav.account') }}</span>
+                        </a>
+                    @endauth
                 @endif
                 <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}" aria-label="{{ __('storefront.nav.cart') }}{{ ($cartCount ?? 0) > 0 ? ', '.trans_choice('storefront.cart.items', $cartCount, ['count' => $cartCount]) : '' }}">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
