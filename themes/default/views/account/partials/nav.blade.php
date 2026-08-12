@@ -20,6 +20,16 @@
             href="{{ route('customer.invoices.index') }}"
             @if ($section === 'invoices') aria-current="page" @endif
         >{{ __('customer.account.nav_invoices') }}</a>
+        <a
+            class="store-account__link {{ $section === 'tickets' ? 'is-active' : '' }}"
+            href="{{ route('customer.tickets.index') }}"
+            @if ($section === 'tickets') aria-current="page" @endif
+        >{{ __('customer.account.nav_tickets') }}</a>
+        <a
+            class="store-account__link {{ $section === 'credits' ? 'is-active' : '' }}"
+            href="{{ route('customer.credits') }}"
+            @if ($section === 'credits') aria-current="page" @endif
+        >{{ __('customer.account.nav_credits') }}</a>
         @foreach ($extraNav as $navItem)
             <a
                 class="store-account__link {{ $section === $navItem->section ? 'is-active' : '' }}"

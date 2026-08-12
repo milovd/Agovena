@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -28,6 +29,8 @@ class Customer extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'anonymized_at' => 'datetime',
+            'deletion_requested_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -42,6 +45,26 @@ class Customer extends Authenticatable implements MustVerifyEmail
     public function addresses(): HasMany
     {
         return $this->hasMany(CustomerAddress::class);
+    }
+
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class);
+    }
+
+    public function creditEntries(): HasMany
+    {
+        return $this->hasMany(CustomerCreditEntry::class);
+    }
+
+    public function creditAccount(): HasOne
+    {
+        return $this->hasOne(CustomerCreditAccount::class);
     }
 
     public function sendEmailVerificationNotification(): void

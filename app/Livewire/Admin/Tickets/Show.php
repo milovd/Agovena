@@ -1,0 +1,78 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Livewire\Admin\Tickets;
+
+use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Support\ReplyToTicket;
+use App\Enums\TicketStatus;
+use App\Models\StaffUser;
+use App\Models\Ticket;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+use Livewire\Component;
+
+final class Show extends Component
+{
+    use AuthorizesRequests;
+
+    public Ticket $ticket;
+
+    public string $reply = '';
+
+    public bool $is_internal = false;
+
+    public string $status = '';
+
+    public function mount(Ticket $ticket): void
+    {
+        $this->authorize('tickets.view');
+        $this->ticket = $ticket;
+        $this->status = $ticket->status->value;
+    }
+
+    public function sendReply(ReplyToTicket $replyToTicket): void
+    {
+        $this->authorize('tickets.manage');
+        $data = $this->validate([
+            'reply' => ['required', 'string', 'max:20000'],
+            'is_internal' => ['boolean'],
+        ]);
+        /** @var StaffUser $staff */
+        $staff = Auth::guard('staff')->user();
+        $replyToTicket->byStaff($this->ticket, $staff, $data['reply'], $data['is_internal']);
+        $this->reset(['reply', 'is_internal']);
+        $this->ticket->refresh();
+        $this->status = $this->ticket->status->value;
+        session()->flash('status', __('admin.tickets.reply_sent'));
+    }
+
+    public function updateStatus(): void
+    {
+        $this->authorize('tickets.manage');
+        $data = $this->validate(['status' => ['required', Rule::enum(TicketStatus::class)]]);
+        $this->ticket->update(['status' => $data['status']]);
+        session()->flash('status', __('admin.tickets.status_updated'));
+    }
+
+    public function assignSelf(): void
+    {
+        $this->authorize('tickets.manage');
+        $this->ticket->update(['staff_user_id' => Auth::guard('staff')->id()]);
+        session()->flash('status', __('admin.tickets.assigned'));
+    }
+
+    public function render(AdminRegistrar $admin)
+    {
+        $this->ticket->load(['customer', 'assignee', 'messages']);
+
+        return view('livewire.admin.tickets.show', [
+            'ticket' => $this->ticket,
+        ])->layout('layouts.admin', [
+            'title' => __('admin.tickets.ticket_title', ['number' => $this->ticket->number]),
+            'navigation' => $admin->navigationItems(),
+        ]);
+    }
+}
