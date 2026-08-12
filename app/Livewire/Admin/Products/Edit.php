@@ -78,6 +78,8 @@ final class Edit extends Component
 
     public int $subscriptionTrialDays = 0;
 
+    public string $providerKey = '';
+
     public function mount(Product $product): void
     {
         $this->authorize('products.update');
@@ -113,6 +115,9 @@ final class Edit extends Component
                 $this->subscriptionInterval = (string) ($row->config['interval'] ?? 'month');
                 $this->subscriptionIntervalCount = max(1, (int) ($row->config['interval_count'] ?? 1));
                 $this->subscriptionTrialDays = max(0, (int) ($row->config['trial_days'] ?? 0));
+            }
+            if ($row->capability === 'provisionable') {
+                $this->providerKey = (string) ($row->config['provider_key'] ?? '');
             }
         }
 
@@ -347,11 +352,16 @@ final class Edit extends Component
                     'trial_days' => max(0, $this->subscriptionTrialDays),
                 ];
             }
+            if ($key === 'provisionable') {
+                $config = [
+                    'provider_key' => trim($this->providerKey) !== '' ? trim($this->providerKey) : null,
+                ];
+            }
             if (! $this->product->hasCapability($key)) {
                 $capabilities->enable($this->product, $key, $config);
                 $this->product->unsetRelation('capabilities');
                 $this->product->load('capabilities');
-            } elseif (in_array($key, ['shippable', 'subscribable'], true)) {
+            } elseif (in_array($key, ['shippable', 'subscribable', 'provisionable'], true)) {
                 $capabilities->syncConfig($this->product, $key, $config);
             }
         }

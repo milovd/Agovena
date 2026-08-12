@@ -312,6 +312,14 @@
                             </div>
                         @endif
 
+                        @if (! empty($capabilityEnabled['provisionable']))
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="providerKey">{{ __('admin.products.capabilities.provider_key') }}</label>
+                                <input id="providerKey" class="ag-input" type="text" wire:model="providerKey">
+                                <p class="ag-field__hint">{{ __('admin.products.capabilities.provider_key_hint') }}</p>
+                            </div>
+                        @endif
+
                         <div>
                             <button type="button" class="ag-btn ag-btn--secondary" wire:click="saveCapabilities">
                                 {{ __('admin.products.capabilities.save') }}

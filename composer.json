@@ -31,7 +31,8 @@
                 "Agovena\\Modules\\Inventory\\": "modules/inventory/src/",
                 "Agovena\\Modules\\Shipping\\": "modules/shipping/src/",
                 "Agovena\\Modules\\Digital\\": "modules/digital/src/",
-                "Agovena\\Modules\\Subscriptions\\": "modules/subscriptions/src/"
+                "Agovena\\Modules\\Subscriptions\\": "modules/subscriptions/src/",
+                "Agovena\\Modules\\Provisioning\\": "modules/provisioning/src/"
             }
     },
     "autoload-dev": {
