@@ -249,6 +249,48 @@
             </div>
         </section>
 
+        <section class="ag-section" aria-labelledby="section-capabilities">
+            <header class="ag-section__header">
+                <h3 id="section-capabilities" class="ag-section__title">{{ __('admin.products.capabilities.title') }}</h3>
+                <p class="ag-section__lede">{{ __('admin.products.capabilities.lede') }}</p>
+            </header>
+            <div class="ag-section__body">
+                @if (($availableCapabilities ?? []) === [])
+                    <p class="ag-muted">{{ __('admin.products.capabilities.none') }}</p>
+                @else
+                    <div class="ag-stack">
+                        @foreach ($availableCapabilities as $definition)
+                            <div class="ag-field">
+                                <x-ag.checkbox
+                                    :id="'capability-'.$definition->key"
+                                    wire:model="capabilityEnabled.{{ $definition->key }}"
+                                    :label="__($definition->label)"
+                                />
+                                @if ($definition->description !== '')
+                                    <p class="ag-field__hint">{{ __($definition->description) }}</p>
+                                @endif
+                            </div>
+                        @endforeach
+
+                        @if (! empty($capabilityEnabled['inventory']))
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="stockQuantity">{{ __('admin.products.capabilities.stock_quantity') }}</label>
+                                <input id="stockQuantity" class="ag-input" type="number" min="0" wire:model="stockQuantity">
+                                <p class="ag-field__hint">{{ __('admin.products.capabilities.stock_hint') }}</p>
+                            </div>
+                        @endif
+
+                        <div>
+                            <button type="button" class="ag-btn ag-btn--secondary" wire:click="saveCapabilities">
+                                {{ __('admin.products.capabilities.save') }}
+                            </button>
+                        </div>
+                    </div>
+                @endif
+                @error('capability') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+            </div>
+        </section>
+
         @can('products.delete')
             <div class="ag-form--product">
                 <x-ag.danger-zone

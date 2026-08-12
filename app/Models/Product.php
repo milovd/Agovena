@@ -13,9 +13,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 
 /**
- * Generic sellable product. Variants deferred to a later catalog iteration.
+ * Generic sellable product. Capabilities are attached via product_capabilities (composable).
+ * Variants/SKUs and configurable purchase options remain separate future concepts.
  *
  * @property int $id
  * @property string $name
@@ -31,6 +33,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $currency
  * @property string|null $image_path
  * @property int|null $category_id
+ * @property-read Collection<int, ProductCapability> $capabilities
  */
 #[Fillable([
     'name',
@@ -100,6 +103,34 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /** @return HasMany<ProductCapability, $this> */
+    public function capabilities(): HasMany
+    {
+        return $this->hasMany(ProductCapability::class);
+    }
+
+    public function hasCapability(string $capability): bool
+    {
+        if ($this->relationLoaded('capabilities')) {
+            return $this->capabilities->contains(
+                static fn (ProductCapability $row): bool => $row->capability === $capability,
+            );
+        }
+
+        return $this->capabilities()->where('capability', $capability)->exists();
+    }
+
+    public function capability(string $capability): ?ProductCapability
+    {
+        if ($this->relationLoaded('capabilities')) {
+            return $this->capabilities->first(
+                static fn (ProductCapability $row): bool => $row->capability === $capability,
+            );
+        }
+
+        return $this->capabilities()->where('capability', $capability)->first();
     }
 
     /**

@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Products;
 
+use Agovena\Modules\Inventory\InventoryService;
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\DeleteProduct;
 use App\Agovena\Catalog\UpdateProduct;
 use App\Enums\ProductStatus;
@@ -61,11 +65,16 @@ final class Edit extends Component
 
     public bool $confirmingDelete = false;
 
+    /** @var array<string, bool> */
+    public array $capabilityEnabled = [];
+
+    public int $stockQuantity = 0;
+
     public function mount(Product $product): void
     {
         $this->authorize('products.update');
 
-        $this->product = $product->load('images');
+        $this->product = $product->load(['images', 'capabilities']);
         $this->name = $product->name;
         $this->subtitle = (string) $product->subtitle;
         $this->slug = $product->slug;
@@ -86,6 +95,15 @@ final class Edit extends Component
                 'label' => $row['label'],
                 'value' => $row['value'],
             ], $specs);
+
+        foreach ($product->capabilities as $row) {
+            $this->capabilityEnabled[$row->capability] = true;
+        }
+
+        if (app()->bound(InventoryService::class)) {
+            $this->stockQuantity = app(InventoryService::class)
+                ->quantityFor($product);
+        }
     }
 
     public function addSpecRow(): void
@@ -255,6 +273,81 @@ final class Edit extends Component
         session()->flash('status', __('admin.products.flash.updated'));
     }
 
+    public function saveCapabilities(ProductCapabilityManager $capabilities, ProductCapabilityRegistry $registry): void
+    {
+        $this->authorize('products.update');
+
+        $this->product->load('capabilities');
+
+        $desired = array_keys(array_filter($this->capabilityEnabled));
+        $available = collect($registry->available())->keyBy(static fn ($d) => $d->key);
+
+        $desired = array_values(array_filter(
+            $desired,
+            static function (string $key) use ($desired, $available): bool {
+                $definition = $available->get($key);
+                if ($definition === null) {
+                    return false;
+                }
+                foreach ($definition->requires as $required) {
+                    if (! in_array($required, $desired, true)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            },
+        ));
+
+        // Enable required dependencies first (stable order by requirement depth).
+        $ordered = $desired;
+        usort($ordered, static function (string $a, string $b) use ($available): int {
+            $defA = $available->get($a);
+            $defB = $available->get($b);
+            $ra = $defA instanceof ProductCapabilityDefinition
+                ? count($defA->requires)
+                : 0;
+            $rb = $defB instanceof ProductCapabilityDefinition
+                ? count($defB->requires)
+                : 0;
+
+            return $ra <=> $rb;
+        });
+
+        foreach ($ordered as $key) {
+            if (! $available->has($key)) {
+                continue;
+            }
+            if (! $this->product->hasCapability($key)) {
+                $capabilities->enable($this->product, $key);
+                $this->product->unsetRelation('capabilities');
+                $this->product->load('capabilities');
+            }
+        }
+
+        foreach ($this->product->capabilities as $row) {
+            if (! in_array($row->capability, $desired, true)) {
+                $capabilities->disable($this->product, $row->capability);
+            }
+        }
+
+        $this->product->refresh()->load('capabilities');
+
+        if (
+            $this->product->hasCapability('inventory')
+            && app()->bound(InventoryService::class)
+        ) {
+            app(InventoryService::class)
+                ->setQuantity($this->product, max(0, $this->stockQuantity));
+        }
+
+        foreach ($this->product->capabilities as $row) {
+            $this->capabilityEnabled[$row->capability] = true;
+        }
+
+        session()->flash('status', __('admin.products.flash.capabilities_updated'));
+    }
+
     public function setDraft(): void
     {
         $this->authorize('products.update');
@@ -292,7 +385,7 @@ final class Edit extends Component
         }
     }
 
-    public function render(AdminRegistrar $admin, DeleteProduct $delete)
+    public function render(AdminRegistrar $admin, DeleteProduct $delete, ProductCapabilityRegistry $capabilities)
     {
         return view('livewire.admin.products.form', [
             'categories' => Category::query()->orderBy('name')->get(),
@@ -300,6 +393,7 @@ final class Edit extends Component
             'mode' => 'edit',
             'galleryImages' => $this->product->images,
             'isReferenced' => $delete->isReferencedByOrders($this->product),
+            'availableCapabilities' => $capabilities->available(),
         ])->layout('layouts.admin', [
             'title' => __('admin.products.form.edit_title'),
             'navigation' => $admin->navigationItems(),

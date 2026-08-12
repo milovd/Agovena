@@ -13,12 +13,15 @@ use App\Agovena\Admin\SettingsGroup;
 use App\Agovena\Cart\CartRepository;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\SessionCartRepository;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\ListStorefrontCategories;
 use App\Agovena\Content\MenuResolver;
 use App\Agovena\Installation\EnsurePublicStorageLink;
 use App\Agovena\Installation\InstallAgovena;
 use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
+use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
@@ -37,6 +40,9 @@ class AgovenaServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AdminRegistrar::class, InMemoryAdminRegistrar::class);
+        $this->app->singleton(ProductCapabilityRegistry::class);
+        $this->app->singleton(ProductCapabilityManager::class);
+        $this->app->singleton(ModuleManager::class);
         $this->app->singleton(ThemeManager::class);
         $this->app->singleton(SettingsRepository::class);
         $this->app->singleton(CurrencyCatalog::class);
@@ -62,6 +68,8 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->registerPermissions($admin);
         $this->registerSettings($admin);
         $this->registerWidgets($admin);
+
+        $this->app->make(ModuleManager::class)->bootEnabled();
 
         $theme = $this->app->make(ThemeManager::class)->active();
         View::addNamespace('theme', $theme->viewsPath);
@@ -206,6 +214,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'modules',
+            label: 'admin.nav.modules',
+            group: 'admin.nav_groups.configuration',
+            href: '/admin/modules',
+            icon: 'package',
+            sort: 120,
+            permission: 'modules.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'users',
             label: 'admin.nav.users',
             group: 'admin.nav_groups.administration',
@@ -300,6 +318,8 @@ class AgovenaServiceProvider extends ServiceProvider
             'currencies.view',
             'currencies.create',
             'currencies.update',
+            'modules.view',
+            'modules.manage',
             'users.view',
             'users.create',
             'users.update',

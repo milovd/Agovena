@@ -14,6 +14,7 @@ use App\Livewire\Admin\Currencies\Index as CurrenciesIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Invoices\Index as InvoicesIndex;
 use App\Livewire\Admin\Invoices\Show as InvoicesShow;
+use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\Orders\Show as OrdersShow;
 use App\Livewire\Admin\Products\Create as ProductsCreate;
@@ -104,6 +105,7 @@ Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')-
     Route::get('/orders/{order}', OrdersShow::class)->name('orders.show');
     Route::get('/invoices', InvoicesIndex::class)->name('invoices.index');
     Route::get('/invoices/{invoice}', InvoicesShow::class)->name('invoices.show');
+    Route::get('/modules', ModulesIndex::class)->name('modules.index');
     Route::get('/settings', SettingsHub::class)->name('settings.index');
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');
     Route::get('/appearance/themes', AppearanceThemes::class)->name('appearance.themes');

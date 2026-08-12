@@ -130,6 +130,7 @@ final class Create extends Component
             'currencies' => Currency::query()->where('is_active', true)->orderBy('code')->get(['code', 'name']),
             'mode' => 'create',
             'galleryImages' => collect(),
+            'availableCapabilities' => [],
         ])->layout('layouts.admin', [
             'title' => __('admin.products.form.create_title'),
             'navigation' => $admin->navigationItems(),

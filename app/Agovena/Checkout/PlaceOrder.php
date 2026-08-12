@@ -12,6 +12,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Events\OrderCreated;
+use App\Events\OrderPlacing;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
@@ -71,6 +72,8 @@ final class PlaceOrder
             $customerId = null;
         }
 
+        event(new OrderPlacing($lines));
+
         /** @var AddressData|null $billing */
         $billing = $guest['billing'] ?? null;
         $shippingSame = (bool) ($guest['shipping_same_as_billing'] ?? true);
@@ -123,12 +126,15 @@ final class PlaceOrder
                 'reference' => null,
             ]);
 
-            return $order->load(['items', 'payment']);
+            $order = $order->load(['items', 'payment']);
+
+            // Inside the transaction so Module listeners (e.g. inventory) can roll back on failure.
+            event(new OrderCreated($order));
+
+            return $order;
         });
 
         $this->cart->clear();
-
-        event(new OrderCreated($order));
 
         if ($method === PaymentMethod::Development) {
             $this->developmentPayment->handle($order);
