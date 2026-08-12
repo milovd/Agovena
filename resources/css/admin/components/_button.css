@@ -159,8 +159,9 @@ a.ag-icon-btn {
   align-items: center;
   gap: var(--ag-space-2);
   margin: 0 0 var(--ag-space-3);
-  padding: 0.15rem 0;
+  padding: 0.25rem 0.4rem 0.25rem 0.15rem;
   border: 0;
+  border-radius: var(--ag-radius-sm);
   background: transparent;
   color: var(--ag-color-text-muted);
   font: inherit;

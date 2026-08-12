@@ -167,7 +167,7 @@
                                                 <a class="ag-menu__item" role="menuitem" href="{{ route('admin.products.edit', $product) }}">Edit</a>
                                                 @if ($product->status->value === 'active')
                                                     <button type="button" class="ag-menu__item" role="menuitem" wire:click="setStatus({{ $product->id }}, 'draft')">Set as draft</button>
-                                                    <a class="ag-menu__item" role="menuitem" href="{{ route('storefront.product', $product->slug) }}" target="_blank" rel="noopener">View on storefront</a>
+                                                    <a class="ag-menu__item" role="menuitem" href="{{ route('storefront.product', $product->slug) }}" target="_blank" rel="noopener">Preview product</a>
                                                 @else
                                                     <button type="button" class="ag-menu__item" role="menuitem" wire:click="setStatus({{ $product->id }}, 'active')">Set as active</button>
                                                 @endif

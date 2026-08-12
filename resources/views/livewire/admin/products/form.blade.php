@@ -29,6 +29,11 @@
                     </span>
                 @endif
             @endif
+            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.products.index') }}">Cancel</a>
+            <button type="submit" form="product-form" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
+                <span wire:loading.remove wire:target="save">{{ $mode === 'create' ? 'Create product' : 'Save changes' }}</span>
+                <span wire:loading wire:target="save">Saving…</span>
+            </button>
         </x-slot:actions>
     </x-ag.page-header>
 
@@ -36,7 +41,7 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
-    <form wire:submit="save" class="ag-form ag-form--product" novalidate>
+    <form id="product-form" wire:submit="save" class="ag-form ag-form--product" novalidate>
         <section class="ag-section" aria-labelledby="section-basic">
             <header class="ag-section__header">
                 <h3 id="section-basic" class="ag-section__title">Basic information</h3>
@@ -153,14 +158,6 @@
                 </div>
             </div>
         </section>
-
-        <div class="ag-form__sticky" role="group" aria-label="Form actions">
-            <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
-                <span wire:loading.remove wire:target="save">{{ $mode === 'create' ? 'Create product' : 'Save changes' }}</span>
-                <span wire:loading wire:target="save">Saving…</span>
-            </button>
-            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.products.index') }}">Cancel</a>
-        </div>
     </form>
 
     @if ($mode === 'edit')
@@ -285,4 +282,12 @@
     @else
         <p class="ag-field__hint">After creating the product you can upload gallery photos on the edit screen.</p>
     @endif
+
+    <div class="ag-form__sticky ag-form__sticky--page" role="group" aria-label="Form actions">
+        <a class="ag-btn ag-btn--secondary" href="{{ route('admin.products.index') }}">Cancel</a>
+        <button type="submit" form="product-form" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
+            <span wire:loading.remove wire:target="save">{{ $mode === 'create' ? 'Create product' : 'Save changes' }}</span>
+            <span wire:loading wire:target="save">Saving…</span>
+        </button>
+    </div>
 </div>

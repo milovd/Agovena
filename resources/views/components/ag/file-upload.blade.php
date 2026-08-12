@@ -56,10 +56,11 @@
             <input
                 type="file"
                 id="{{ $id }}"
+                class="ag-file-upload__input"
                 accept="{{ $accept }}"
                 @if ($multiple) multiple @endif
                 @disabled($disabled)
-                {{ $attributes->class(['ag-file-upload__input'])->except(['id', 'class'])->merge(['accept' => $accept]) }}
+                {{ $attributes->except(['id', 'class', 'accept'])->merge(['accept' => $accept]) }}
             >
             <label for="{{ $id }}" class="ag-btn ag-btn--secondary ag-btn--sm ag-file-upload__trigger">
                 <x-ag.icon name="upload" :size="16" />

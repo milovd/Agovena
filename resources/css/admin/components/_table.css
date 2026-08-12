@@ -400,14 +400,19 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--ag-space-2);
   padding: var(--ag-space-3) var(--ag-space-4);
   margin-top: var(--ag-space-4);
   border: 1px solid var(--ag-color-border);
   border-radius: var(--ag-radius-md);
-  background: rgb(255 255 255 / 0.92);
+  background: rgb(255 255 255 / 0.94);
   backdrop-filter: blur(8px);
   box-shadow: var(--ag-shadow-sm);
+}
+
+.ag-form__sticky--page {
+  max-width: 52rem;
 }
 
 .ag-form__actions {
