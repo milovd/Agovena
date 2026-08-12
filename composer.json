@@ -28,7 +28,8 @@
                 "App\\": "app/",
                 "Database\\Factories\\": "database/factories/",
                 "Database\\Seeders\\": "database/seeders/",
-                "Agovena\\Modules\\Inventory\\": "modules/inventory/src/"
+                "Agovena\\Modules\\Inventory\\": "modules/inventory/src/",
+            "Agovena\\Modules\\Shipping\\": "modules/shipping/src/"
             }
     },
     "autoload-dev": {

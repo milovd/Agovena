@@ -77,6 +77,9 @@ return [
         'back_to_orders' => 'Terug naar bestellingen',
         'items' => 'Artikelen',
         'billing' => 'Factuurgegevens',
+        'shipments' => 'Zendingen',
+        'tracking' => 'Tracking',
+        'shipped_at' => 'Verzonden',
         'quantity' => 'Aantal :count',
         'order_statuses' => [
             'pending' => 'In behandeling',

@@ -77,6 +77,17 @@ final class IssueInvoiceFromOrder
                 ]);
             }
 
+            if ((int) $locked->shipping_amount > 0) {
+                InvoiceItem::query()->create([
+                    'invoice_id' => $invoice->id,
+                    'label' => $locked->shipping_method_label ?: __('common.shipping'),
+                    'quantity' => 1,
+                    'unit_amount' => (int) $locked->shipping_amount,
+                    'line_total_amount' => (int) $locked->shipping_amount,
+                    'currency' => $locked->currency,
+                ]);
+            }
+
             return $invoice->load('items');
         });
     }

@@ -18,6 +18,8 @@ interface AdminRegistrar
 
     public function settingsField(SettingsField $field): void;
 
+    public function orderDetailSection(OrderDetailSection $section): void;
+
     /** @return list<NavigationItem> */
     public function navigationItems(): array;
 
@@ -37,4 +39,7 @@ interface AdminRegistrar
 
     /** @return list<SettingsField> */
     public function settingsFieldsFor(string $group): array;
+
+    /** @return list<OrderDetailSection> */
+    public function orderDetailSections(): array;
 }

@@ -70,6 +70,8 @@ final class Edit extends Component
 
     public int $stockQuantity = 0;
 
+    public int $weightGrams = 0;
+
     public function mount(Product $product): void
     {
         $this->authorize('products.update');
@@ -98,6 +100,9 @@ final class Edit extends Component
 
         foreach ($product->capabilities as $row) {
             $this->capabilityEnabled[$row->capability] = true;
+            if ($row->capability === 'shippable') {
+                $this->weightGrams = (int) (($row->config['weight_grams'] ?? 0));
+            }
         }
 
         if (app()->bound(InventoryService::class)) {
@@ -318,10 +323,16 @@ final class Edit extends Component
             if (! $available->has($key)) {
                 continue;
             }
+            $config = [];
+            if ($key === 'shippable') {
+                $config['weight_grams'] = max(0, $this->weightGrams);
+            }
             if (! $this->product->hasCapability($key)) {
-                $capabilities->enable($this->product, $key);
+                $capabilities->enable($this->product, $key, $config);
                 $this->product->unsetRelation('capabilities');
                 $this->product->load('capabilities');
+            } elseif ($key === 'shippable') {
+                $capabilities->syncConfig($this->product, $key, $config);
             }
         }
 

@@ -133,6 +133,24 @@
                             </select>
                         </div>
                     @endif
+
+                    <div class="store-field" style="margin-top: 1rem;">
+                        <fieldset>
+                            <legend class="store-field__label">{{ __('storefront.checkout.shipping_method') }}</legend>
+                            @forelse ($shippingQuotes as $quote)
+                                <label class="store-check">
+                                    <input type="radio" wire:model.live="shipping_method_id" value="{{ $quote->methodId }}">
+                                    <span>
+                                        {{ $quote->label }}
+                                        — {{ \App\Support\MoneyFormatter::format($quote->amount) }}
+                                    </span>
+                                </label>
+                            @empty
+                                <p class="store-field__error" role="alert">{{ __('storefront.checkout.no_shipping_methods') }}</p>
+                            @endforelse
+                            @error('shipping_method_id') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                        </fieldset>
+                    </div>
                 </fieldset>
             @endif
 
@@ -167,7 +185,24 @@
                 @endforeach
             </ul>
             <p class="store-cart__subtotal">
-                {{ __('storefront.checkout.total') }} <strong>{{ \App\Support\MoneyFormatter::format($subtotal) }}</strong>
+                {{ __('storefront.checkout.subtotal') }}
+                <strong>{{ \App\Support\MoneyFormatter::format($subtotal) }}</strong>
+            </p>
+            @if ($requiresShipping)
+                <p class="store-cart__subtotal">
+                    {{ __('storefront.checkout.shipping_cost') }}
+                    <strong>
+                        @if ($shippingTotal)
+                            {{ \App\Support\MoneyFormatter::format($shippingTotal) }}
+                        @else
+                            —
+                        @endif
+                    </strong>
+                </p>
+            @endif
+            <p class="store-cart__subtotal">
+                {{ __('storefront.checkout.total') }}
+                <strong>{{ \App\Support\MoneyFormatter::format($orderTotal ?? $subtotal) }}</strong>
             </p>
         </aside>
     </div>

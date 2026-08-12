@@ -35,6 +35,7 @@ return [
     'amount' => 'Amount',
     'total' => 'Total',
     'subtotal' => 'Subtotal',
+    'shipping' => 'Shipping',
     'customer' => 'Customer',
     'method' => 'Method',
     'reference' => 'Reference',

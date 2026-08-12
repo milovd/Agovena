@@ -54,6 +54,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'shipping_phone',
     'shipping_same_as_billing',
     'subtotal_amount',
+    'shipping_amount',
+    'shipping_method_label',
     'total_amount',
     'currency',
     'idempotency_key',
@@ -68,6 +70,7 @@ class Order extends Model
         return [
             'status' => OrderStatus::class,
             'subtotal_amount' => 'integer',
+            'shipping_amount' => 'integer',
             'total_amount' => 'integer',
             'shipping_same_as_billing' => 'boolean',
         ];

@@ -77,6 +77,9 @@ return [
         'back_to_orders' => 'Back to orders',
         'items' => 'Items',
         'billing' => 'Billing',
+        'shipments' => 'Shipments',
+        'tracking' => 'Tracking',
+        'shipped_at' => 'Shipped',
         'quantity' => 'Qty :count',
         'order_statuses' => [
             'pending' => 'Pending',

@@ -24,6 +24,9 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
     /** @var list<SettingsField> */
     private array $settingsFields = [];
 
+    /** @var list<OrderDetailSection> */
+    private array $orderDetailSections = [];
+
     public function navigation(NavigationItem $item): void
     {
         $this->navigation[] = $item;
@@ -52,6 +55,11 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
     public function settingsField(SettingsField $field): void
     {
         $this->settingsFields[] = $field;
+    }
+
+    public function orderDetailSection(OrderDetailSection $section): void
+    {
+        $this->orderDetailSections[] = $section;
     }
 
     /** @return list<NavigationItem> */
@@ -108,5 +116,14 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
         usort($fields, static fn (SettingsField $a, SettingsField $b): int => $a->sort <=> $b->sort);
 
         return $fields;
+    }
+
+    /** @return list<OrderDetailSection> */
+    public function orderDetailSections(): array
+    {
+        $sections = $this->orderDetailSections;
+        usort($sections, static fn (OrderDetailSection $a, OrderDetailSection $b): int => $a->sort <=> $b->sort);
+
+        return $sections;
     }
 }

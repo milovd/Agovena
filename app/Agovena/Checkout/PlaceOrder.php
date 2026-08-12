@@ -6,6 +6,7 @@ namespace App\Agovena\Checkout;
 
 use App\Agovena\Cart\CartService;
 use App\Agovena\Customer\AddressData;
+use App\Agovena\Money\Money;
 use App\Agovena\Payments\CompleteDevelopmentPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\OrderStatus;
@@ -26,6 +27,7 @@ final class PlaceOrder
         private readonly CartService $cart,
         private readonly SettingsRepository $settings,
         private readonly CompleteDevelopmentPayment $developmentPayment,
+        private readonly ShippingQuoteResolver $shippingQuotes,
     ) {}
 
     /**
@@ -37,7 +39,8 @@ final class PlaceOrder
      *     customer_id?: int|null,
      *     billing?: AddressData|null,
      *     shipping?: AddressData|null,
-     *     shipping_same_as_billing?: bool
+     *     shipping_same_as_billing?: bool,
+     *     shipping_method_id?: int|null
      * }  $guest
      */
     public function handle(array $guest): Order
@@ -80,7 +83,58 @@ final class PlaceOrder
         /** @var AddressData|null $shipping */
         $shipping = $shippingSame ? $billing : ($guest['shipping'] ?? null);
 
-        $order = DB::transaction(function () use ($guest, $lines, $subtotal, $idempotencyKey, $method, $customerId, $billing, $shipping, $shippingSame): Order {
+        $shippingAmount = Money::of(0, $subtotal->currency);
+        $shippingLabel = null;
+        $shippingMethodId = isset($guest['shipping_method_id']) ? (int) $guest['shipping_method_id'] : null;
+
+        if ($this->cart->requiresShipping()) {
+            if ($shipping === null) {
+                throw ValidationException::withMessages([
+                    'shipping' => __('storefront.errors.shipping_address_required'),
+                ]);
+            }
+
+            $country = strtoupper($shipping->country);
+            if ($shippingMethodId === null || $shippingMethodId < 1) {
+                throw ValidationException::withMessages([
+                    'shipping_method_id' => __('storefront.errors.shipping_method_required'),
+                ]);
+            }
+
+            $quote = $this->shippingQuotes->quote(
+                $this->cart->shippableLines(),
+                $country,
+                $subtotal->currency,
+                $shippingMethodId,
+            );
+
+            if ($quote === null) {
+                throw ValidationException::withMessages([
+                    'shipping_method_id' => __('storefront.errors.shipping_method_unavailable'),
+                ]);
+            }
+
+            $shippingAmount = $quote->amount;
+            $shippingLabel = $quote->label;
+        }
+
+        $total = $subtotal->add($shippingAmount);
+
+        $order = DB::transaction(function () use (
+            $guest,
+            $lines,
+            $subtotal,
+            $total,
+            $shippingAmount,
+            $shippingLabel,
+            $shippingMethodId,
+            $idempotencyKey,
+            $method,
+            $customerId,
+            $billing,
+            $shipping,
+            $shippingSame,
+        ): Order {
             $payload = [
                 'number' => $this->generateNumber(),
                 'status' => OrderStatus::Pending,
@@ -88,7 +142,9 @@ final class PlaceOrder
                 'customer_email' => $guest['customer_email'],
                 'customer_id' => $customerId,
                 'subtotal_amount' => $subtotal->amount,
-                'total_amount' => $subtotal->amount,
+                'shipping_amount' => $shippingAmount->amount,
+                'shipping_method_label' => $shippingLabel,
+                'total_amount' => $total->amount,
                 'currency' => $subtotal->currency,
                 'idempotency_key' => $idempotencyKey,
                 'shipping_same_as_billing' => $shippingSame,
@@ -118,7 +174,7 @@ final class PlaceOrder
 
             Payment::query()->create([
                 'order_id' => $order->id,
-                'amount' => $subtotal->amount,
+                'amount' => $total->amount,
                 'currency' => $subtotal->currency,
                 'method' => $method,
                 'status' => PaymentStatus::Pending,
@@ -128,8 +184,8 @@ final class PlaceOrder
 
             $order = $order->load(['items', 'payment']);
 
-            // Inside the transaction so Module listeners (e.g. inventory) can roll back on failure.
-            event(new OrderCreated($order));
+            // Inside the transaction so Module listeners (e.g. inventory/shipping) can roll back on failure.
+            event(new OrderCreated($order, $shippingMethodId));
 
             return $order;
         });

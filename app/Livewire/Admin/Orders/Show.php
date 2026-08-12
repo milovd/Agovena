@@ -67,6 +67,7 @@ final class Show extends Component
 
         return view('livewire.admin.orders.show', [
             'canRecord' => $canRecord,
+            'orderDetailSections' => $admin->orderDetailSections(),
             'navigation' => $admin->navigationItems(),
         ])->layout('layouts.admin', [
             'title' => __('admin.orders.show.title', ['number' => $this->order->number]),

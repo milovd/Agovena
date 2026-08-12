@@ -35,6 +35,7 @@ return [
     'amount' => 'Bedrag',
     'total' => 'Totaal',
     'subtotal' => 'Subtotaal',
+    'shipping' => 'Verzending',
     'customer' => 'Klant',
     'method' => 'Methode',
     'reference' => 'Referentie',

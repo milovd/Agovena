@@ -4,13 +4,17 @@ declare(strict_types=1);
 
 namespace App\Agovena\Cart;
 
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Money\Money;
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
 
 final class CartService
 {
-    public function __construct(private readonly CartRepository $cart) {}
+    public function __construct(
+        private readonly CartRepository $cart,
+        private readonly ProductCapabilityRegistry $capabilities,
+    ) {}
 
     public function add(int $productId, int $quantity = 1): void
     {
@@ -127,12 +131,47 @@ final class CartService
     }
 
     /**
-     * True when the cart contains shippable items.
-     * Remains false until product shipping capabilities / Shipping module mark items as shippable.
+     * True when a shippable capability is registered and present on any cart line.
+     * Digital/service-only carts stay false so checkout does not collect a shipping address.
      */
     public function requiresShipping(): bool
     {
+        if (! $this->capabilities->has('shippable')) {
+            return false;
+        }
+
+        $this->removeUnavailable();
+
+        foreach ($this->cart->lines() as $line) {
+            $product = Product::query()->with('capabilities')->find($line->productId);
+            if ($product !== null && $product->hasCapability('shippable')) {
+                return true;
+            }
+        }
+
         return false;
+    }
+
+    /**
+     * Cart lines whose products carry the shippable capability (mixed carts supported).
+     *
+     * @return list<PricedCartLine>
+     */
+    public function shippableLines(): array
+    {
+        if (! $this->capabilities->has('shippable')) {
+            return [];
+        }
+
+        $shippable = [];
+        foreach ($this->pricedLines() as $line) {
+            $product = Product::query()->with('capabilities')->find($line->productId);
+            if ($product !== null && $product->hasCapability('shippable')) {
+                $shippable[] = $line;
+            }
+        }
+
+        return $shippable;
     }
 
     private function requirePurchasable(int $productId): Product

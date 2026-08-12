@@ -47,6 +47,40 @@
                 <p>{{ $order->customer_email }}</p>
                 <p>{{ $order->created_at?->timezone(config('app.timezone'))->format('Y-m-d H:i') }}</p>
             </div>
+
+            @if (($shipments ?? []) !== [])
+                <div class="store-account-panel__span">
+                    <h2>{{ __('customer.account.shipments') }}</h2>
+                    @foreach ($shipments as $shipment)
+                        <article class="store-shipment" wire:key="shipment-{{ $loop->index }}">
+                            <p>
+                                <strong>{{ $shipment->statusLabel }}</strong>
+                                @if ($shipment->carrierName)
+                                    · {{ $shipment->carrierName }}
+                                @endif
+                            </p>
+                            @if ($shipment->trackingNumber)
+                                <p>
+                                    {{ __('customer.account.tracking') }}:
+                                    @if ($shipment->trackingUrl)
+                                        <a href="{{ $shipment->trackingUrl }}" target="_blank" rel="noopener">{{ $shipment->trackingNumber }}</a>
+                                    @else
+                                        {{ $shipment->trackingNumber }}
+                                    @endif
+                                </p>
+                            @endif
+                            @if ($shipment->shippedAt)
+                                <p>{{ __('customer.account.shipped_at') }}: {{ $shipment->shippedAt }}</p>
+                            @endif
+                            <ul>
+                                @foreach ($shipment->items as $item)
+                                    <li>{{ $item['quantity'] }} × {{ $item['label'] }}</li>
+                                @endforeach
+                            </ul>
+                        </article>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </section>
 </div>

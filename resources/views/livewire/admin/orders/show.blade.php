@@ -37,6 +37,10 @@
                     </div>
                 </div>
             </section>
+
+            @foreach ($orderDetailSections ?? [] as $section)
+                @livewire($section->component, ['order' => $order], key($section->id.'-'.$order->id))
+            @endforeach
         </div>
 
         <aside class="ag-order-layout__side">
@@ -65,6 +69,17 @@
                             <dt>{{ __('common.subtotal') }}</dt>
                             <dd>{{ \App\Support\MoneyFormatter::format($order->subtotal_amount, $order->currency) }}</dd>
                         </div>
+                        @if (($order->shipping_amount ?? 0) > 0 || filled($order->shipping_method_label))
+                            <div>
+                                <dt>{{ __('common.shipping') }}</dt>
+                                <dd>
+                                    {{ \App\Support\MoneyFormatter::format((int) $order->shipping_amount, $order->currency) }}
+                                    @if ($order->shipping_method_label)
+                                        <span class="ag-muted">({{ $order->shipping_method_label }})</span>
+                                    @endif
+                                </dd>
+                            </div>
+                        @endif
                         <div>
                             <dt>{{ __('common.total') }}</dt>
                             <dd><strong>{{ \App\Support\MoneyFormatter::format($order->total_amount, $order->currency) }}</strong></dd>

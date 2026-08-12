@@ -7,6 +7,7 @@ namespace App\Livewire\Storefront;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\AddressValidation;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\CustomerRegistration;
 use App\Agovena\Customer\SaveCustomerAddress;
@@ -28,6 +29,8 @@ final class CheckoutPage extends Component
     public string $idempotency_key = '';
 
     public string $payment_method = 'manual';
+
+    public ?int $shipping_method_id = null;
 
     public string $billing_name = '';
 
@@ -133,6 +136,7 @@ final class CheckoutPage extends Component
         $requiresShipping = $cart->requiresShipping();
         if ($requiresShipping) {
             $rules['shipping_same_as_billing'] = ['boolean'];
+            $rules['shipping_method_id'] = ['required', 'integer'];
             if (! $this->shipping_same_as_billing) {
                 $rules = [...$rules, ...AddressValidation::rules('shipping')];
             }
@@ -189,25 +193,57 @@ final class CheckoutPage extends Component
             'billing' => $billing,
             'shipping' => $shipping,
             'shipping_same_as_billing' => $shippingSame,
+            'shipping_method_id' => $requiresShipping ? (int) ($data['shipping_method_id'] ?? 0) : null,
         ]);
 
         $this->redirect(route('storefront.order.confirmation', $order), navigate: true);
     }
 
-    public function render(CartService $cart, ThemeManager $themes, CustomerRegistration $registration)
+    public function render(CartService $cart, ThemeManager $themes, CustomerRegistration $registration, ShippingQuoteResolver $shippingQuotes)
     {
         $theme = $themes->active();
         $lines = $cart->pricedLines();
         $subtotal = $cart->subtotal();
+        $requiresShipping = $cart->requiresShipping();
+
+        $quotes = [];
+        $shippingTotal = null;
+        if ($requiresShipping && $subtotal !== null) {
+            $country = $this->shipping_same_as_billing
+                ? $this->billing_country
+                : $this->shipping_country;
+            $quotes = $shippingQuotes->quotes(
+                $cart->shippableLines(),
+                strtoupper($country !== '' ? $country : 'NL'),
+                $subtotal->currency,
+            );
+            if ($this->shipping_method_id === null && $quotes !== []) {
+                $this->shipping_method_id = $quotes[0]->methodId;
+            }
+            foreach ($quotes as $quote) {
+                if ($quote->methodId === $this->shipping_method_id) {
+                    $shippingTotal = $quote->amount;
+                    break;
+                }
+            }
+        }
+
+        $orderTotal = $subtotal;
+        if ($subtotal !== null && $shippingTotal !== null) {
+            $orderTotal = $subtotal->add($shippingTotal);
+        }
 
         return view($theme->view('checkout.index'), [
             'lines' => $lines,
             'subtotal' => $subtotal,
+            'shippingQuotes' => $quotes,
+            'shippingTotal' => $shippingTotal,
+            'orderTotal' => $orderTotal,
             'theme' => $theme,
             'developmentPayEnabled' => $this->developmentPayEnabled(),
             'customerLoggedIn' => Auth::guard('customer')->check(),
             'registrationEnabled' => $registration->allowsRegistration(),
-            'requiresShipping' => $cart->requiresShipping(),
+            'requiresShipping' => $requiresShipping,
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('storefront.checkout.title'),
             'theme' => $theme,

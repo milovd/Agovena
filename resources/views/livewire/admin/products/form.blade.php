@@ -280,6 +280,14 @@
                             </div>
                         @endif
 
+                        @if (! empty($capabilityEnabled['shippable']))
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="weightGrams">{{ __('admin.products.capabilities.weight_grams') }}</label>
+                                <input id="weightGrams" class="ag-input" type="number" min="0" wire:model="weightGrams">
+                                <p class="ag-field__hint">{{ __('admin.products.capabilities.weight_hint') }}</p>
+                            </div>
+                        @endif
+
                         <div>
                             <button type="button" class="ag-btn ag-btn--secondary" wire:click="saveCapabilities">
                                 {{ __('admin.products.capabilities.save') }}
