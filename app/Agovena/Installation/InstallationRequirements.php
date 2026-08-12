@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Throwable;
 
-final class InstallationRequirements
+class InstallationRequirements
 {
     public function __construct(private readonly ThemeManager $themes) {}
 

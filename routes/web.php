@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Storefront\SearchSuggestController;
-use App\Http\Middleware\EnsureAgovenaInstalled;
 use App\Http\Middleware\RedirectIfInstalled;
 use App\Http\Middleware\SyncStaffPermissions;
 use App\Livewire\Admin\Appearance\Customize as AppearanceCustomize;
@@ -46,11 +45,11 @@ Route::get('/cart', CartPage::class)->name('storefront.cart');
 Route::get('/checkout', CheckoutPage::class)->name('storefront.checkout');
 Route::get('/orders/{order}/confirmation', OrderConfirmation::class)->name('storefront.order.confirmation');
 
-Route::middleware([EnsureAgovenaInstalled::class, 'guest:staff'])->group(function (): void {
+Route::middleware('guest:staff')->group(function (): void {
     Route::get('/admin/login', Login::class)->name('admin.login');
 });
 
-Route::middleware([EnsureAgovenaInstalled::class, 'auth:staff', SyncStaffPermissions::class])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/products', ProductsIndex::class)->name('products.index');
     Route::get('/products/create', ProductsCreate::class)->name('products.create');

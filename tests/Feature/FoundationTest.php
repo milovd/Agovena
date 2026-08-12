@@ -10,10 +10,9 @@ test('storefront home renders catalog theme', function () {
     $this->get('/')->assertOk()->assertSee('Featured products', false);
 });
 
-test('installer welcome renders', function () {
+test('installer redirects when already installed', function () {
     $this->get('/install')
-        ->assertOk()
-        ->assertSee('Welcome to Agovena', false);
+        ->assertRedirect(route('admin.login'));
 });
 
 test('admin registrar is bound', function () {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Installation;
 
 use App\Agovena\Settings\SettingsRepository;
+use App\Models\Setting;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Throwable;
@@ -119,6 +120,29 @@ final class InstallationState
     public function markerPath(): string
     {
         return storage_path('app/agovena/installed.json');
+    }
+
+    /**
+     * Clear installation markers (tests / recovery tooling only).
+     */
+    public function reset(): void
+    {
+        try {
+            Setting::query()
+                ->where('group', self::SETTINGS_GROUP)
+                ->whereIn('key', [self::KEY_INSTALLED_AT, self::KEY_INSTALL_ID])
+                ->delete();
+        } catch (Throwable) {
+            // Settings table may be unavailable during early bootstrap failures.
+        }
+
+        $this->settings->forget(self::SETTINGS_GROUP, self::KEY_INSTALLED_AT);
+        $this->settings->forget(self::SETTINGS_GROUP, self::KEY_INSTALL_ID);
+
+        $path = $this->markerPath();
+        if (is_file($path)) {
+            File::delete($path);
+        }
     }
 
     private function writeMarkerFile(string $installId, string $installedAt): void
