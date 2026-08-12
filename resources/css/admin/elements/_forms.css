@@ -5,6 +5,10 @@
   margin-bottom: var(--ag-space-4);
 }
 
+.ag-field:last-child {
+  margin-bottom: 0;
+}
+
 .ag-field__label {
   font-weight: 600;
   font-size: 0.875rem;
@@ -35,6 +39,7 @@
 .ag-select {
   width: 100%;
   max-width: 28rem;
+  min-height: 2.375rem;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--ag-color-border);
   border-radius: var(--ag-radius-md);
@@ -44,8 +49,7 @@
 }
 
 .ag-input:focus-visible,
-.ag-select:focus-visible,
-.ag-checkbox:focus-visible {
+.ag-select:focus-visible {
   outline: none;
   box-shadow: var(--ag-focus-ring);
   border-color: var(--ag-color-primary);
@@ -65,5 +69,39 @@
 
 .ag-input--area {
   max-width: 40rem;
+  min-height: auto;
   resize: vertical;
+}
+
+.ag-form--product,
+.ag-form--constrained {
+  max-width: 52rem;
+}
+
+.ag-form--product .ag-input,
+.ag-form--product .ag-select,
+.ag-form--constrained .ag-input,
+.ag-form--constrained .ag-select,
+.ag-grid .ag-input,
+.ag-grid .ag-select,
+.ag-section .ag-input,
+.ag-section .ag-select {
+  max-width: none;
+}
+
+.ag-form--product .ag-input--area {
+  max-width: none;
+}
+
+.ag-fieldset {
+  margin: 0 0 var(--ag-space-6);
+  padding: 0;
+  border: 0;
+}
+
+.ag-fieldset__legend {
+  padding: 0;
+  margin: 0 0 var(--ag-space-4);
+  font-size: 1rem;
+  font-weight: 700;
 }

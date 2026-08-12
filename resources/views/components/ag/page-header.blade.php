@@ -5,6 +5,11 @@
 
 <header {{ $attributes->class(['admin-page__header']) }}>
     <div class="admin-page__header-text">
+        @isset($back)
+            <div class="admin-page__back">
+                {{ $back }}
+            </div>
+        @endisset
         <h2 class="admin-page__heading">{{ $heading }}</h2>
         @if ($lede)
             <p class="admin-page__lede">{{ $lede }}</p>

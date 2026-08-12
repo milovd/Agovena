@@ -1,0 +1,295 @@
+/* Switch — on/off configuration */
+.ag-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ag-switch__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ag-switch__track {
+  position: relative;
+  display: inline-block;
+  width: 2.5rem;
+  height: 1.375rem;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--ag-color-border-strong);
+  transition: background var(--ag-transition);
+}
+
+.ag-switch__thumb {
+  position: absolute;
+  top: 0.125rem;
+  left: 0.125rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--ag-shadow-sm);
+  transition: transform var(--ag-transition);
+}
+
+.ag-switch__input:checked + .ag-switch__track {
+  background: var(--ag-color-primary);
+}
+
+.ag-switch__input:checked + .ag-switch__track .ag-switch__thumb {
+  transform: translateX(1.125rem);
+}
+
+.ag-switch__input:focus-visible + .ag-switch__track {
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-switch__input:disabled + .ag-switch__track {
+  opacity: 0.55;
+}
+
+.ag-switch__input:disabled ~ .ag-switch__label,
+.ag-switch:has(.ag-switch__input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+.ag-switch__label {
+  font-size: 0.9375rem;
+  color: var(--ag-color-text);
+}
+
+.ag-switch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-5) var(--ag-space-6);
+  margin-bottom: var(--ag-space-4);
+}
+
+/* Checkbox — selection within a form/set */
+.ag-checkbox {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--ag-space-2);
+  margin: 0;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ag-checkbox__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ag-checkbox__box {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  border: 1.5px solid var(--ag-color-border-strong);
+  border-radius: 0.3rem;
+  background: var(--ag-color-surface);
+  transition: background var(--ag-transition), border-color var(--ag-transition);
+}
+
+.ag-checkbox__box::after {
+  content: "";
+  width: 0.35rem;
+  height: 0.6rem;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg) scale(0);
+  transition: transform var(--ag-transition);
+}
+
+.ag-checkbox__input:checked + .ag-checkbox__box {
+  background: var(--ag-color-primary);
+  border-color: var(--ag-color-primary);
+}
+
+.ag-checkbox__input:checked + .ag-checkbox__box::after {
+  transform: rotate(45deg) scale(1);
+}
+
+.ag-checkbox__input:focus-visible + .ag-checkbox__box {
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-checkbox__input:disabled + .ag-checkbox__box {
+  opacity: 0.55;
+}
+
+.ag-checkbox__input:disabled ~ .ag-checkbox__label,
+.ag-checkbox:has(.ag-checkbox__input:disabled) {
+  cursor: not-allowed;
+}
+
+.ag-checkbox__label {
+  font-size: 0.9375rem;
+  color: var(--ag-color-text);
+}
+
+/* File upload */
+.ag-file-upload {
+  display: grid;
+  gap: var(--ag-space-3);
+}
+
+.ag-file-upload__surface {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-3);
+  padding: var(--ag-space-3);
+  border: 1px dashed var(--ag-color-border-strong);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface-muted);
+}
+
+.ag-file-upload__preview {
+  position: relative;
+  flex-shrink: 0;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--ag-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--ag-color-border);
+  background: var(--ag-color-surface);
+}
+
+.ag-file-upload__preview img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ag-file-upload__placeholder {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--ag-radius-md);
+  border: 1px solid var(--ag-color-border);
+  background: var(--ag-color-surface);
+  color: var(--ag-color-text-muted);
+}
+
+.ag-file-upload__meta {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.ag-file-upload__name {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ag-color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ag-file-upload__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--ag-color-text-muted);
+}
+
+.ag-file-upload__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-2);
+  align-items: center;
+}
+
+.ag-file-upload__input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ag-file-upload__trigger {
+  cursor: pointer;
+}
+
+.ag-file-upload__input:focus-visible + .ag-file-upload__trigger {
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-file-upload.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.ag-file-upload__loading {
+  font-size: 0.8125rem;
+  color: var(--ag-color-text-muted);
+}
+
+/* Danger zone */
+.ag-danger-zone {
+  margin-top: var(--ag-space-6);
+  padding: var(--ag-space-5);
+  border: 1px solid rgb(220 38 38 / 0.28);
+  border-radius: var(--ag-radius-lg);
+  background: rgb(220 38 38 / 0.04);
+}
+
+.ag-danger-zone__header {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+  margin-bottom: var(--ag-space-2);
+  color: var(--ag-color-danger);
+}
+
+.ag-danger-zone__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ag-color-text);
+}
+
+.ag-danger-zone__text {
+  margin: 0 0 var(--ag-space-4);
+  max-width: 40rem;
+  color: var(--ag-color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.ag-danger-zone__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-2);
+}

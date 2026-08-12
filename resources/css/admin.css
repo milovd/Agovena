@@ -4,6 +4,7 @@
 @import './admin/generic/_reset.css';
 @import './admin/elements/_forms.css';
 @import './admin/components/_button.css';
+@import './admin/components/_controls.css';
 @import './admin/components/_badge.css';
 @import './admin/components/_alert.css';
 @import './admin/components/_modal.css';
