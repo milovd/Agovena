@@ -1,0 +1,315 @@
+.install-app {
+  min-height: 100vh;
+  font-family: var(--ag-font-sans);
+  color: var(--ag-color-text);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgb(21 94 239 / 0.14), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgb(2 132 199 / 0.1), transparent 50%),
+    linear-gradient(180deg, #f8fafc 0%, var(--ag-color-bg) 40%, #eef2f7 100%);
+}
+
+.install-shell {
+  width: min(44rem, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: var(--ag-space-8) 0 var(--ag-space-6);
+  display: grid;
+  gap: var(--ag-space-6);
+}
+
+.install-shell__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+}
+
+.install-shell__mark {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-primary);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.install-shell__product {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.install-shell__tagline {
+  margin: 0;
+  color: var(--ag-color-text-muted);
+  font-size: 0.875rem;
+}
+
+.install-shell__main {
+  min-width: 0;
+}
+
+.install-shell__footer {
+  color: var(--ag-color-text-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.install-wizard {
+  display: grid;
+  gap: var(--ag-space-5);
+}
+
+.install-progress {
+  display: grid;
+  gap: var(--ag-space-3);
+}
+
+.install-progress__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--ag-space-2);
+}
+
+.install-progress__item {
+  display: grid;
+  gap: var(--ag-space-1);
+  justify-items: center;
+  text-align: center;
+  color: var(--ag-color-text-muted);
+  font-size: 0.75rem;
+}
+
+.install-progress__index {
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--ag-color-border-strong);
+  background: var(--ag-color-surface);
+  font-weight: 600;
+}
+
+.install-progress__item.is-current {
+  color: var(--ag-color-text);
+}
+
+.install-progress__item.is-current .install-progress__index {
+  border-color: var(--ag-color-primary);
+  background: var(--ag-color-primary);
+  color: #fff;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.install-progress__item.is-done .install-progress__index {
+  border-color: var(--ag-color-success);
+  background: var(--ag-color-success);
+  color: #fff;
+}
+
+.install-progress__label {
+  display: none;
+}
+
+.install-progress__status {
+  margin: 0;
+  color: var(--ag-color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.install-panel {
+  background: var(--ag-color-surface);
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-lg);
+  box-shadow: var(--ag-shadow-md);
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.install-panel__title {
+  margin: 0 0 var(--ag-space-2);
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  letter-spacing: -0.02em;
+}
+
+.install-panel__lede {
+  margin: 0 0 var(--ag-space-5);
+  color: var(--ag-color-text-muted);
+  line-height: 1.5;
+}
+
+.install-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-3);
+  margin-top: var(--ag-space-6);
+}
+
+.install-form {
+  display: grid;
+  gap: var(--ag-space-4);
+}
+
+.install-readonly {
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface-muted);
+  border: 1px solid var(--ag-color-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  word-break: break-all;
+}
+
+.install-checks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ag-space-2);
+}
+
+.install-checks__item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--ag-space-3);
+  align-items: start;
+  padding: var(--ag-space-3);
+  border-radius: var(--ag-radius-md);
+  border: 1px solid var(--ag-color-border);
+  background: var(--ag-color-surface-muted);
+}
+
+.install-checks__status {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #fff;
+  border: 1px solid var(--ag-color-border);
+}
+
+.install-checks__item.is-pass .install-checks__status {
+  color: var(--ag-color-success);
+  border-color: rgb(5 150 105 / 0.35);
+}
+
+.install-checks__item.is-fail .install-checks__status {
+  color: var(--ag-color-danger);
+  border-color: rgb(220 38 38 / 0.35);
+}
+
+.install-checks__item.is-warn .install-checks__status {
+  color: #b45309;
+}
+
+.install-checks__label {
+  margin: 0;
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.install-checks__detail {
+  margin: 0.15rem 0 0;
+  color: var(--ag-color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.install-themes {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: var(--ag-space-3);
+}
+
+.install-theme {
+  display: block;
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  padding: var(--ag-space-4);
+  cursor: pointer;
+  transition: border-color var(--ag-transition), box-shadow var(--ag-transition), background var(--ag-transition);
+  background: var(--ag-color-surface-muted);
+}
+
+.install-theme:hover,
+.install-theme:focus-within {
+  border-color: var(--ag-color-primary);
+}
+
+.install-theme.is-selected {
+  border-color: var(--ag-color-primary);
+  background: var(--ag-color-primary-soft);
+  box-shadow: var(--ag-focus-ring);
+}
+
+.install-theme__input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.install-theme__body {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.install-theme__name {
+  font-weight: 700;
+}
+
+.install-theme__meta {
+  color: var(--ag-color-text-muted);
+  font-size: 0.8125rem;
+}
+
+.install-theme__desc {
+  color: var(--ag-color-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.install-complete__eyebrow {
+  margin: 0 0 var(--ag-space-2);
+  color: var(--ag-color-success);
+  font-weight: 700;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ag-btn:focus-visible,
+.ag-input:focus-visible,
+.install-theme:focus-within {
+  outline: none;
+}
+
+.ag-input:focus-visible {
+  box-shadow: var(--ag-focus-ring);
+  border-color: var(--ag-color-primary);
+}
+
+.ag-btn:focus-visible {
+  box-shadow: var(--ag-focus-ring);
+}
+
+@media (min-width: 640px) {
+  .install-progress__label {
+    display: block;
+  }
+}
+
+@media (max-width: 639px) {
+  .install-progress__list {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}

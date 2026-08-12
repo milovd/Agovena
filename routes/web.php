@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Storefront\SearchSuggestController;
+use App\Http\Middleware\EnsureAgovenaInstalled;
+use App\Http\Middleware\RedirectIfInstalled;
 use App\Http\Middleware\SyncStaffPermissions;
 use App\Livewire\Admin\Appearance\Customize as AppearanceCustomize;
 use App\Livewire\Admin\Appearance\ThemesIndex as AppearanceThemes;
@@ -19,6 +21,7 @@ use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
 use App\Livewire\Admin\Users\Index as UsersIndex;
+use App\Livewire\Installer\Wizard as InstallerWizard;
 use App\Livewire\Storefront\CartPage;
 use App\Livewire\Storefront\CatalogIndex;
 use App\Livewire\Storefront\CategoriesIndex as StorefrontCategoriesIndex;
@@ -29,7 +32,9 @@ use App\Livewire\Storefront\OrderConfirmation;
 use App\Livewire\Storefront\ProductShow;
 use Illuminate\Support\Facades\Route;
 
-Route::view('/install', 'installer.welcome')->name('install.welcome');
+Route::middleware(RedirectIfInstalled::class)->group(function (): void {
+    Route::get('/install', InstallerWizard::class)->name('install');
+});
 
 Route::get('/', CatalogIndex::class)->name('storefront.home');
 Route::get('/search/suggest', SearchSuggestController::class)
@@ -41,11 +46,11 @@ Route::get('/cart', CartPage::class)->name('storefront.cart');
 Route::get('/checkout', CheckoutPage::class)->name('storefront.checkout');
 Route::get('/orders/{order}/confirmation', OrderConfirmation::class)->name('storefront.order.confirmation');
 
-Route::middleware('guest:staff')->group(function (): void {
+Route::middleware([EnsureAgovenaInstalled::class, 'guest:staff'])->group(function (): void {
     Route::get('/admin/login', Login::class)->name('admin.login');
 });
 
-Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware([EnsureAgovenaInstalled::class, 'auth:staff', SyncStaffPermissions::class])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/products', ProductsIndex::class)->name('products.index');
     Route::get('/products/create', ProductsCreate::class)->name('products.create');

@@ -7,8 +7,5 @@
 @import './admin/components/_controls.css';
 @import './admin/components/_badge.css';
 @import './admin/components/_alert.css';
-@import './admin/components/_modal.css';
-@import './admin/components/_dropdown.css';
-@import './admin/components/_table.css';
-@import './admin/components/_admin-shell.css';
 @import './admin/utilities/_a11y.css';
+@import './installer/_shell.css';
