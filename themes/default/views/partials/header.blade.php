@@ -297,16 +297,56 @@
 
             <div class="store-header__actions">
                 @if ($showAccount)
-                    @auth('customer')
-                        <a class="store-header__utility" href="{{ route('customer.account') }}" aria-label="{{ __('storefront.nav.account') }}">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                            <span class="visually-hidden">{{ __('storefront.nav.account') }}</span>
-                        </a>
+                    @auth
+                        @php
+                            $accountUser = auth()->user();
+                            $canOpenAdmin = $accountUser instanceof \App\Models\User && $accountUser->canAccessAdmin();
+                        @endphp
+                        <div
+                            class="store-header__account"
+                            x-data="{ open: false }"
+                            @keydown.escape.window="open = false"
+                            @click.outside="open = false"
+                        >
+                            <button
+                                type="button"
+                                x-ref="accountTrigger"
+                                class="store-header__utility store-header__account-trigger"
+                                id="store-account-menu-button"
+                                @click="open = !open"
+                                @keydown.enter.prevent="open = !open"
+                                @keydown.space.prevent="open = !open"
+                                :aria-expanded="open.toString()"
+                                aria-haspopup="menu"
+                                aria-controls="store-account-menu"
+                                aria-label="{{ __('storefront.nav.account') }}"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+                                <span class="visually-hidden">{{ __('storefront.nav.account') }}</span>
+                            </button>
+                            <div
+                                id="store-account-menu"
+                                class="store-header__account-menu"
+                                x-show="open"
+                                x-cloak
+                                x-transition
+                                role="menu"
+                                aria-labelledby="store-account-menu-button"
+                                @keydown.escape.stop="open = false; $refs.accountTrigger?.focus()"
+                            >
+                                <a class="store-header__account-item" role="menuitem" href="{{ route('customer.account') }}" @click="open = false">{{ __('storefront.nav.dashboard') }}</a>
+                                <a class="store-header__account-item" role="menuitem" href="{{ route('customer.profile') }}" @click="open = false">{{ __('storefront.nav.account') }}</a>
+                                @if ($canOpenAdmin)
+                                    <a class="store-header__account-item" role="menuitem" href="{{ route('admin.dashboard') }}" @click="open = false">{{ __('storefront.nav.admin') }}</a>
+                                @endif
+                                <a class="store-header__account-item store-header__account-item--danger" role="menuitem" href="{{ route('customer.logout') }}" @click="open = false">{{ __('storefront.nav.logout') }}</a>
+                            </div>
+                        </div>
                     @else
-                        <a class="store-header__utility" href="{{ route('customer.login') }}" aria-label="{{ __('storefront.nav.account') }}">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                            <span class="visually-hidden">{{ __('storefront.nav.account') }}</span>
-                        </a>
+                        <div class="store-header__auth">
+                            <a class="store-header__auth-link" href="{{ route('login') }}">{{ __('storefront.nav.login') }}</a>
+                            <a class="store-header__auth-link store-header__auth-link--register" href="{{ route('register') }}">{{ __('storefront.nav.register') }}</a>
+                        </div>
                     @endauth
                 @endif
                 <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}" aria-label="{{ __('storefront.nav.cart') }}{{ ($cartCount ?? 0) > 0 ? ', '.trans_choice('storefront.cart.items', $cartCount, ['count' => $cartCount]) : '' }}">
@@ -391,6 +431,19 @@
                         ({{ $cartCount }})
                     @endif
                 </a>
+                @if ($showAccount)
+                    @auth
+                        <a class="store-drawer__link" href="{{ route('customer.account') }}" @click="navOpen = false">{{ __('storefront.nav.dashboard') }}</a>
+                        <a class="store-drawer__link" href="{{ route('customer.profile') }}" @click="navOpen = false">{{ __('storefront.nav.account') }}</a>
+                        @if (auth()->user() instanceof \App\Models\User && auth()->user()->canAccessAdmin())
+                            <a class="store-drawer__link" href="{{ route('admin.dashboard') }}" @click="navOpen = false">{{ __('storefront.nav.admin') }}</a>
+                        @endif
+                        <a class="store-drawer__link store-drawer__link--danger" href="{{ route('customer.logout') }}" @click="navOpen = false">{{ __('storefront.nav.logout') }}</a>
+                    @else
+                        <a class="store-drawer__link" href="{{ route('login') }}" @click="navOpen = false">{{ __('storefront.nav.login') }}</a>
+                        <a class="store-drawer__link" href="{{ route('register') }}" @click="navOpen = false">{{ __('storefront.nav.register') }}</a>
+                    @endauth
+                @endif
             </nav>
             <button type="button" class="store-btn" @click="navOpen = false">{{ __('storefront.close') }}</button>
         </div>
