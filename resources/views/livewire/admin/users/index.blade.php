@@ -29,7 +29,7 @@
             </div>
             <div class="ag-field">
                 <label class="ag-field__label" for="user-role">{{ __('common.role') }}</label>
-                <select id="user-role" class="ag-input" wire:model="role">
+                <select id="user-role" class="ag-select" wire:model="role">
                     @foreach ($roles as $roleOption)
                         <option value="{{ $roleOption->name }}">{{ $roleOption->name }}</option>
                     @endforeach

@@ -298,6 +298,9 @@
 .install-warnings__technical > summary {
   cursor: pointer;
   list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--ag-color-text-muted);
@@ -307,22 +310,13 @@
   display: none;
 }
 
-.install-warnings__technical > summary::after {
-  content: "";
-  display: inline-block;
-  width: 0.4rem;
-  height: 0.4rem;
-  margin-left: 0.4rem;
-  border-right: 1.5px solid currentColor;
-  border-bottom: 1.5px solid currentColor;
-  transform: rotate(45deg);
-  vertical-align: 0.15rem;
+.install-warnings__technical-chevron {
+  display: inline-flex;
   transition: transform var(--ag-transition);
 }
 
-.install-warnings__technical[open] > summary::after {
-  transform: rotate(225deg);
-  vertical-align: -0.05rem;
+.install-warnings__technical[open] > summary .install-warnings__technical-chevron {
+  transform: rotate(180deg);
 }
 
 .install-checks {

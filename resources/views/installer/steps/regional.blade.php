@@ -4,7 +4,7 @@
 <form wire:submit="next" class="install-form" novalidate>
     <div class="ag-field">
         <label class="ag-field__label" for="locale">{{ __('installer.fields.locale') }}</label>
-        <select id="locale" class="ag-input" wire:model="locale" required>
+        <select id="locale" class="ag-select" wire:model="locale" required>
             @foreach ($locales as $code => $label)
                 <option value="{{ $code }}">{{ $label }}</option>
             @endforeach
@@ -34,7 +34,7 @@
 
     <div class="ag-field">
         <label class="ag-field__label" for="currency">{{ __('installer.fields.currency') }}</label>
-        <select id="currency" class="ag-input" wire:model="currency" required>
+        <select id="currency" class="ag-select" wire:model="currency" required>
             @foreach ($currencies as $row)
                 <option value="{{ $row->code }}">{{ $row->code }} — {{ $row->name }}</option>
             @endforeach

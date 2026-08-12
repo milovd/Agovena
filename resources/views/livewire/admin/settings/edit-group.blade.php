@@ -39,7 +39,7 @@
                 @elseif ($field->type === 'select')
                     <select
                         id="setting-{{ $field->key }}"
-                        class="ag-input"
+                        class="ag-select"
                         wire:model="values.{{ $field->key }}"
                         @disabled(! $canUpdate)
                     >
@@ -57,7 +57,7 @@
                 @elseif ($field->type === 'currency')
                     <select
                         id="setting-{{ $field->key }}"
-                        class="ag-input"
+                        class="ag-select"
                         wire:model="values.{{ $field->key }}"
                         @disabled(! $canUpdate)
                     >

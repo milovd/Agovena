@@ -61,7 +61,12 @@
                             @endif
                             @if ($check->technicalDetail)
                                 <details class="install-warnings__technical">
-                                    <summary>{{ __('installer.welcome.technical_details') }}</summary>
+                                    <summary>
+                                        <span>{{ __('installer.welcome.technical_details') }}</span>
+                                        <span class="install-warnings__technical-chevron" aria-hidden="true">
+                                            <x-ag.icon name="chevron-down" :size="14" />
+                                        </span>
+                                    </summary>
                                     <p class="install-checks__detail">{{ $check->technicalDetail }}</p>
                                 </details>
                             @endif
