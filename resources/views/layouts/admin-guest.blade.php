@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Sign in' }} — {{ config('app.name', 'Agovena') }}</title>
+    <title>{{ $title ?? 'Sign in' }} | {{ config('app.name', 'Agovena') }}</title>
     @vite(['resources/css/admin.css', 'resources/js/admin.js'])
     @livewireStyles
 </head>

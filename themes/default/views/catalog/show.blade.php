@@ -48,8 +48,33 @@
                     scrollThumbs(dir) {
                         const track = this.$refs.track;
                         if (! track) return;
-                        const step = Math.max(track.clientWidth * 0.75, 160);
+                        const styles = getComputedStyle(track);
+                        const gap = parseFloat(styles.columnGap || styles.gap) || 12;
+                        const size = parseFloat(styles.getPropertyValue('--thumb-size')) || 72;
+                        const step = Math.max(size + gap, track.clientWidth * 0.85);
                         track.scrollBy({ left: dir * step, behavior: 'smooth' });
+                    },
+                    layoutThumbs() {
+                        const track = this.$refs.track;
+                        if (! track) return;
+                        const styles = getComputedStyle(track);
+                        const gap = parseFloat(styles.columnGap || styles.gap) || 12;
+                        const pad = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+                        const inner = Math.max(0, track.clientWidth - pad);
+                        const count = track.children.length;
+                        const minSize = 64;
+                        const slots = Math.max(1, Math.floor((inner + gap) / (minSize + gap)));
+
+                        if (count > slots && inner > 0) {
+                            const size = (inner - ((slots - 1) * gap)) / slots;
+                            track.style.setProperty('--thumb-size', size + 'px');
+                            track.classList.add('is-fill');
+                        } else {
+                            track.style.removeProperty('--thumb-size');
+                            track.classList.remove('is-fill');
+                        }
+
+                        this.updateScrollState();
                     },
                     updateScrollState() {
                         const track = this.$refs.track;
@@ -66,11 +91,14 @@
                     },
                     init() {
                         this.$nextTick(() => {
-                            this.updateScrollState();
+                            this.layoutThumbs();
                             const track = this.$refs.track;
                             if (! track) return;
                             track.addEventListener('scroll', () => this.updateScrollState(), { passive: true });
-                            window.addEventListener('resize', () => this.updateScrollState());
+                            window.addEventListener('resize', () => this.layoutThumbs());
+                            if (typeof ResizeObserver !== 'undefined') {
+                                new ResizeObserver(() => this.layoutThumbs()).observe(track);
+                            }
                         });
                     }
                 }"
@@ -89,7 +117,7 @@
             </div>
 
             @if (count($galleryUrls) > 1)
-                <div class="store-product__thumbs-wrap" :class="{ 'has-overflow': thumbsOverflow }">
+                <div class="store-product__thumbs-wrap">
                     <button
                         type="button"
                         class="store-product__thumbs-arrow store-product__thumbs-arrow--prev"
