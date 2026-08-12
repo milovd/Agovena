@@ -412,14 +412,24 @@ a.store-header__utility:hover {
 
 .store-cats__panel {
   position: absolute;
-  top: 100%;
+  top: calc(100% - 0.15rem);
   left: 0;
   z-index: 40;
-  padding-top: 0.55rem;
+  padding-top: 0.65rem;
   min-width: 28rem;
   background: transparent;
   border: 0;
   box-shadow: none;
+}
+
+/* Invisible bridge so the pointer never leaves the menu while moving down */
+.store-cats__panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.65rem;
 }
 
 .store-cats__panel-inner {
