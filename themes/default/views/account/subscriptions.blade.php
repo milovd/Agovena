@@ -28,6 +28,20 @@
                             @if ($subscription->cancel_at_period_end)
                                 <p class="store-muted">{{ __('subscriptions::customer.ends_at_period') }}</p>
                             @endif
+                            @if ($planTargets[$subscription->id]->isNotEmpty())
+                                <div>
+                                    <strong>{{ __('subscriptions::customer.change_plan') }}</strong>
+                                    @foreach ($planTargets[$subscription->id] as $target)
+                                        <button
+                                            type="button"
+                                            class="store-btn store-btn--secondary"
+                                            wire:click="requestPlanChange({{ $subscription->id }}, {{ $target->to_product_id }})"
+                                        >
+                                            {{ $target->toProduct->name }}
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                         @if ($subscription->canCancel() && ! $subscription->cancel_at_period_end)
                             <button type="button" class="store-btn store-btn--secondary" wire:click="cancel({{ $subscription->id }})">

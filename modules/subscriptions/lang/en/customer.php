@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 return [
+    'change_plan' => 'Change plan',
+    'plan_change_order_created' => 'Your plan change order is ready for payment.',
+    'plan_change_requested' => 'Your plan change was requested.',
     'title' => 'Subscriptions',
     'lede' => 'Your recurring plans with this store.',
     'empty' => 'You have no subscriptions yet.',

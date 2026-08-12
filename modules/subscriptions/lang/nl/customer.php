@@ -3,6 +3,9 @@
 declare(strict_types=1);
 
 return [
+    'change_plan' => 'Plan wijzigen',
+    'plan_change_order_created' => 'Je bestelling voor de planwijziging staat klaar voor betaling.',
+    'plan_change_requested' => 'Je planwijziging is aangevraagd.',
     'title' => 'Abonnementen',
     'lede' => 'Je terugkerende plannen bij deze winkel.',
     'empty' => 'Je hebt nog geen abonnementen.',
