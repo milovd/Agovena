@@ -17,7 +17,7 @@ final class CartPage extends Component
     {
         $removed = $cart->removeUnavailable();
         if ($removed !== []) {
-            session()->flash('status', 'Unavailable items were removed from your cart.');
+            session()->flash('status', __('storefront.flash.unavailable_removed'));
         }
 
         $this->refreshQuantities($cart);
@@ -47,7 +47,7 @@ final class CartPage extends Component
             'subtotal' => $subtotal,
             'theme' => $theme,
         ])->layout($theme->view('layouts.storefront'), [
-            'title' => 'Cart',
+            'title' => __('storefront.cart.title'),
             'theme' => $theme,
         ]);
     }

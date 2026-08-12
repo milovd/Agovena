@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ $title ?? 'Agovena Admin' }} | {{ $siteName ?? config('app.name', 'Agovena') }}</title>
+    <title>{{ $title ?? __('admin.fallback_title') }} | {{ $siteName ?? config('app.name', 'Agovena') }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
     @livewireStyles
 </head>
 <body class="admin-app" x-data="{ navOpen: false }" @keydown.escape.window="navOpen = false">
-    <a class="admin-skip-link" href="#main">Skip to content</a>
+    <a class="admin-skip-link" href="#main">{{ __('admin.skip_to_content') }}</a>
 
     <div
         class="admin-shell"
@@ -23,7 +23,7 @@
     >
         <div class="admin-shell__backdrop" x-show="navOpen" x-cloak @click="navOpen = false"></div>
 
-        <aside class="admin-sidebar" id="admin-sidebar" aria-label="Primary">
+        <aside class="admin-sidebar" id="admin-sidebar" aria-label="{{ __('admin.sidebar_aria') }}">
             <div class="admin-sidebar__brand">
                 @if (! empty($brandingLogoPath))
                     <img class="admin-sidebar__logo-img" src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brandingLogoPath) }}" alt="">
@@ -32,7 +32,7 @@
                 @endif
                 <span class="admin-sidebar__title">{{ $siteName ?? config('app.name', 'Agovena') }}</span>
             </div>
-            <nav class="admin-nav" aria-label="Admin">
+            <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
                 @php
                     use App\Agovena\Admin\AdminNavigation;
                     $staff = auth('staff')->user();
@@ -44,7 +44,7 @@
                 @endphp
                 @foreach ($groups as $group => $items)
                     <div class="admin-nav__section">
-                        <p class="admin-nav__group" id="nav-group-{{ \Illuminate\Support\Str::slug($group) }}">{{ $group }}</p>
+                        <p class="admin-nav__group" id="nav-group-{{ \Illuminate\Support\Str::slug($group) }}">{{ __($group) }}</p>
                         <ul class="admin-nav__list" role="list" aria-labelledby="nav-group-{{ \Illuminate\Support\Str::slug($group) }}">
                             @foreach ($items as $item)
                                 @php $active = AdminNavigation::isActive($item->href); @endphp
@@ -57,7 +57,7 @@
                                         @if ($item->icon)
                                             <x-ag.icon :name="$item->icon" class="admin-nav__icon" :size="18" />
                                         @endif
-                                        <span class="admin-nav__label">{{ $item->label }}</span>
+                                        <span class="admin-nav__label">{{ __($item->label) }}</span>
                                     </a>
                                 </li>
                             @endforeach
@@ -78,9 +78,9 @@
                         aria-controls="admin-sidebar"
                     >
                         <x-ag.icon name="menu" :size="18" />
-                        <span class="visually-hidden">Menu</span>
+                        <span class="visually-hidden">{{ __('admin.menu') }}</span>
                     </button>
-                    <h1 class="admin-topbar__title">{{ $title ?? 'Admin' }}</h1>
+                    <h1 class="admin-topbar__title">{{ $title ?? __('admin.fallback_title') }}</h1>
                 </div>
                 <div class="admin-topbar__actions">
                     <div
@@ -90,7 +90,7 @@
                         aria-live="polite"
                     >
                         <x-ag.icon name="loader" class="ag-icon--spin" :size="18" />
-                        <span class="visually-hidden">Loading</span>
+                        <span class="visually-hidden">{{ __('common.loading') }}</span>
                     </div>
                     <div
                         class="ag-dropdown"
@@ -105,7 +105,7 @@
                             :aria-expanded="open.toString()"
                             aria-haspopup="menu"
                         >
-                            {{ auth('staff')->user()?->name ?? 'Account' }}
+                            {{ auth('staff')->user()?->name ?? __('admin.account') }}
                         </button>
                         <div
                             class="ag-dropdown__menu"

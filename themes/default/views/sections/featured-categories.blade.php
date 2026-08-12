@@ -10,7 +10,7 @@
                 <p class="store-section__lede">{{ $section['lede'] }}</p>
             @endif
         </div>
-        <a class="store-section__link" href="{{ route('storefront.categories') }}">All categories</a>
+        <a class="store-section__link" href="{{ route('storefront.categories') }}">{{ __('storefront.nav.all_categories') }}</a>
     </div>
     <ul class="store-promo-tiles" role="list">
         @foreach ($categories->take(4) as $index => $category)
@@ -18,7 +18,7 @@
                 <a class="store-promo-tile store-promo-tile--{{ $tileTone[$index % 4] }}" href="{{ route('storefront.category', $category->slug) }}">
                     <span class="store-promo-tile__copy">
                         <span class="store-promo-tile__name">{{ $category->name }}</span>
-                        <span class="store-promo-tile__meta">{{ $category->products_count }} {{ $category->products_count === 1 ? 'item' : 'items' }}</span>
+                        <span class="store-promo-tile__meta">{{ trans_choice('storefront.categories.items', (int) $category->products_count, ['count' => (int) $category->products_count]) }}</span>
                     </span>
                     <span class="store-promo-tile__media" aria-hidden="true">
                         @if ($category->image_path)

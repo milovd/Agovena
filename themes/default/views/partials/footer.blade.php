@@ -6,7 +6,7 @@
 <footer class="store-footer">
     <div class="store-footer__inner">
         <div class="store-footer__brand">
-            <p class="store-footer__name">{{ $siteName ?? 'Store' }}</p>
+            <p class="store-footer__name">{{ $siteName ?? __('storefront.shop') }}</p>
             @if ($tagline !== '')
                 <p class="store-footer__tagline">{{ $tagline }}</p>
             @endif
@@ -14,7 +14,7 @@
 
         <div class="store-footer__columns">
             <div class="store-footer__col">
-                <p class="store-footer__heading">Explore</p>
+                <p class="store-footer__heading">{{ __('storefront.footer.explore') }}</p>
                 <ul class="store-footer__list" role="list">
                     @foreach ($themeFooterNav ?? [] as $item)
                         <li>
@@ -28,7 +28,7 @@
                 </ul>
             </div>
             <div class="store-footer__col">
-                <p class="store-footer__heading">Legal</p>
+                <p class="store-footer__heading">{{ __('storefront.footer.legal') }}</p>
                 <ul class="store-footer__list" role="list">
                     @foreach ($themeLegalNav ?? [] as $item)
                         <li>
@@ -44,6 +44,6 @@
         </div>
     </div>
     <div class="store-footer__bottom">
-        <p>&copy; {{ now()->year }} {{ $siteName ?? 'Store' }}. All rights reserved.</p>
+        <p>&copy; {{ now()->year }} {{ $siteName ?? __('storefront.shop') }}. {{ __('storefront.footer.rights') }}</p>
     </div>
 </footer>

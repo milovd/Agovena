@@ -91,14 +91,14 @@ final class Index extends Component
         if ($this->editingId === null) {
             Currency::query()->create($data);
             $catalog->forget($data['code']);
-            session()->flash('status', 'Currency created.');
+            session()->flash('status', __('admin.currencies.flash.created'));
         } else {
             $currency = Currency::query()->findOrFail($this->editingId);
             $previousCode = $currency->code;
             $currency->update($data);
             $catalog->forget($previousCode);
             $catalog->forget($data['code']);
-            session()->flash('status', 'Currency updated.');
+            session()->flash('status', __('admin.currencies.flash.updated'));
         }
 
         $this->resetForm();
@@ -111,7 +111,7 @@ final class Index extends Component
 
         $currency = Currency::query()->whereKey($currencyId)->where('is_active', true)->firstOrFail();
         $settings->set('general', 'base_currency', $currency->code);
-        session()->flash('status', $currency->code.' is now the base currency.');
+        session()->flash('status', __('admin.currencies.flash.base_set', ['code' => $currency->code]));
     }
 
     public function cancel(): void
@@ -126,7 +126,7 @@ final class Index extends Component
             'baseCurrency' => (string) $settings->get('general', 'base_currency', 'EUR'),
             'canSetBase' => auth('staff')->user()?->can('settings.update') ?? false,
         ])->layout('layouts.admin', [
-            'title' => 'Currencies',
+            'title' => __('admin.currencies.title'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

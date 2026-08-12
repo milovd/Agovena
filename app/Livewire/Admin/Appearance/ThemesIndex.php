@@ -13,7 +13,7 @@ final class ThemesIndex extends Component
     {
         $this->authorize('theme.manage');
         $themes->activate($id);
-        session()->flash('status', 'Theme activated.');
+        session()->flash('status', __('admin.appearance.themes.activated'));
     }
 
     public function render(ThemeManager $themes)
@@ -24,7 +24,7 @@ final class ThemesIndex extends Component
             'themes' => $themes->all(),
             'activeId' => $themes->active()->id,
         ])->layout('layouts.admin', [
-            'title' => 'Themes',
+            'title' => __('admin.appearance.themes.title'),
         ]);
     }
 }

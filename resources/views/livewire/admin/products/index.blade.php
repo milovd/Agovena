@@ -1,8 +1,8 @@
 <div class="admin-page">
-    <x-ag.page-header heading="Products" lede="Create, publish, and manage catalog products.">
+    <x-ag.page-header :heading="__('admin.products.title')" :lede="__('admin.products.lede')">
         <x-slot:actions>
             @can('products.create')
-                <a class="ag-btn ag-btn--primary" href="{{ route('admin.products.create') }}">Add product</a>
+                <a class="ag-btn ag-btn--primary" href="{{ route('admin.products.create') }}">{{ __('admin.products.add') }}</a>
             @endcan
         </x-slot:actions>
     </x-ag.page-header>
@@ -14,63 +14,63 @@
     <div class="ag-toolbar ag-toolbar--filters">
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="product-search">Search products</label>
+                <label class="visually-hidden" for="product-search">{{ __('admin.products.search_label') }}</label>
                 <input
                     id="product-search"
                     class="ag-input ag-input--search"
                     type="search"
                     wire:model.live.debounce.300ms="search"
-                    placeholder="Search name, SKU, slug"
+                    placeholder="{{ __('admin.products.search_placeholder') }}"
                 >
             </div>
             <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="product-status">Status</label>
+                <label class="visually-hidden" for="product-status">{{ __('common.status') }}</label>
                 <select id="product-status" class="ag-select" wire:model.live="status">
-                    <option value="">All statuses</option>
-                    <option value="active">Active</option>
-                    <option value="draft">Draft</option>
+                    <option value="">{{ __('admin.products.status_all') }}</option>
+                    <option value="active">{{ __('common.active') }}</option>
+                    <option value="draft">{{ __('common.draft') }}</option>
                 </select>
             </div>
             <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="product-category">Category</label>
+                <label class="visually-hidden" for="product-category">{{ __('common.category') }}</label>
                 <select id="product-category" class="ag-select" wire:model.live="category">
-                    <option value="">All categories</option>
+                    <option value="">{{ __('admin.products.category_all') }}</option>
                     @foreach ($categories as $category)
                         <option value="{{ $category->id }}">{{ $category->name }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="product-sort">Sort</label>
+                <label class="visually-hidden" for="product-sort">{{ __('admin.products.sort_label') }}</label>
                 <select id="product-sort" class="ag-select" wire:model.live="sort">
-                    <option value="newest">Newest</option>
-                    <option value="updated">Recently updated</option>
-                    <option value="name">Name</option>
-                    <option value="price_asc">Price ↑</option>
-                    <option value="price_desc">Price ↓</option>
+                    <option value="newest">{{ __('admin.products.sort.newest') }}</option>
+                    <option value="updated">{{ __('admin.products.sort.updated') }}</option>
+                    <option value="name">{{ __('admin.products.sort.name') }}</option>
+                    <option value="price_asc">{{ __('admin.products.sort.price_asc') }}</option>
+                    <option value="price_desc">{{ __('admin.products.sort.price_desc') }}</option>
                 </select>
             </div>
         </div>
     </div>
 
     <div wire:loading.flex class="ag-loading" wire:target="search,status,category,sort,gotoPage,previousPage,nextPage">
-        <span class="ag-loading__text">Loading products…</span>
+        <span class="ag-loading__text">{{ __('admin.products.loading') }}</span>
     </div>
 
     @if ($products->isEmpty())
         <div class="ag-empty" role="status">
-            <p class="ag-empty__title">{{ $search || $status || $category ? 'No matching products' : 'No products yet' }}</p>
+            <p class="ag-empty__title">{{ $search || $status || $category ? __('admin.products.empty.filtered_title') : __('admin.products.empty.title') }}</p>
             <p class="ag-empty__text">
                 @if ($search || $status || $category)
-                    Try adjusting search or filters.
+                    {{ __('admin.products.empty.filtered_text') }}
                 @else
-                    Create a product to publish it on the storefront.
+                    {{ __('admin.products.empty.text') }}
                 @endif
             </p>
             @can('products.create')
                 @if (! $search && ! $status && ! $category)
                     <p class="ag-empty__actions">
-                        <a class="ag-btn ag-btn--primary" href="{{ route('admin.products.create') }}">Add product</a>
+                        <a class="ag-btn ag-btn--primary" href="{{ route('admin.products.create') }}">{{ __('admin.products.add') }}</a>
                     </p>
                 @endif
             @endcan
@@ -80,13 +80,13 @@
             <table class="ag-table ag-table--products">
                 <thead>
                     <tr>
-                        <th scope="col" class="ag-table__thumb-col"><span class="visually-hidden">Image</span></th>
-                        <th scope="col">Product</th>
-                        <th scope="col" class="ag-table__col--md">Category</th>
-                        <th scope="col">Price</th>
-                        <th scope="col">Status</th>
-                        <th scope="col" class="ag-table__col--lg">Updated</th>
-                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                        <th scope="col" class="ag-table__thumb-col"><span class="visually-hidden">{{ __('common.image') }}</span></th>
+                        <th scope="col">{{ __('common.product') }}</th>
+                        <th scope="col" class="ag-table__col--md">{{ __('common.category') }}</th>
+                        <th scope="col">{{ __('common.price') }}</th>
+                        <th scope="col">{{ __('common.status') }}</th>
+                        <th scope="col" class="ag-table__col--lg">{{ __('common.updated') }}</th>
+                        <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -118,14 +118,14 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="ag-table__col--md">{{ $product->category?->name ?? '—' }}</td>
+                            <td class="ag-table__col--md">{{ $product->category?->name ?? __('common.em_dash') }}</td>
                             <td>{{ \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</td>
                             <td>
                                 <span @class([
                                     'ag-badge',
                                     'ag-badge--success' => $product->status->value === 'active',
                                     'ag-badge--muted' => $product->status->value === 'draft',
-                                ])>{{ $product->status->value === 'active' ? 'Active' : 'Draft' }}</span>
+                                ])>{{ $product->status->value === 'active' ? __('common.active') : __('common.draft') }}</span>
                             </td>
                             <td class="ag-table__col--lg">
                                 <span class="ag-muted" title="{{ $product->updated_at?->toDateTimeString() }}">
@@ -138,8 +138,8 @@
                                         <a
                                             class="ag-icon-btn"
                                             href="{{ route('admin.products.edit', $product) }}"
-                                            title="Edit product"
-                                            aria-label="Edit {{ $product->name }}"
+                                            title="{{ __('admin.products.actions.edit') }}"
+                                            aria-label="{{ __('admin.products.actions.edit_aria', ['name' => $product->name]) }}"
                                         >
                                             <x-ag.icon name="pencil" :size="16" />
                                         </a>
@@ -157,23 +157,23 @@
                                             @click="open = !open"
                                             :aria-expanded="open.toString()"
                                             aria-haspopup="menu"
-                                            title="More actions"
-                                            aria-label="More actions for {{ $product->name }}"
+                                            title="{{ __('admin.products.actions.more') }}"
+                                            aria-label="{{ __('admin.products.actions.more_aria', ['name' => $product->name]) }}"
                                         >
                                             <x-ag.icon name="more-horizontal" :size="16" />
                                         </button>
                                         <div class="ag-menu__panel" x-show="open" x-cloak role="menu">
                                             @can('products.update')
-                                                <a class="ag-menu__item" role="menuitem" href="{{ route('admin.products.edit', $product) }}">Edit</a>
+                                                <a class="ag-menu__item" role="menuitem" href="{{ route('admin.products.edit', $product) }}">{{ __('common.edit') }}</a>
                                                 @if ($product->status->value === 'active')
-                                                    <button type="button" class="ag-menu__item" role="menuitem" wire:click="setStatus({{ $product->id }}, 'draft')">Set as draft</button>
-                                                    <a class="ag-menu__item" role="menuitem" href="{{ route('storefront.product', $product->slug) }}" target="_blank" rel="noopener">Preview product</a>
+                                                    <button type="button" class="ag-menu__item" role="menuitem" wire:click="setStatus({{ $product->id }}, 'draft')">{{ __('admin.products.actions.set_draft') }}</button>
+                                                    <a class="ag-menu__item" role="menuitem" href="{{ route('storefront.product', $product->slug) }}" target="_blank" rel="noopener">{{ __('admin.products.actions.preview') }}</a>
                                                 @else
-                                                    <button type="button" class="ag-menu__item" role="menuitem" wire:click="setStatus({{ $product->id }}, 'active')">Set as active</button>
+                                                    <button type="button" class="ag-menu__item" role="menuitem" wire:click="setStatus({{ $product->id }}, 'active')">{{ __('admin.products.actions.set_active') }}</button>
                                                 @endif
                                             @endcan
                                             @can('products.delete')
-                                                <button type="button" class="ag-menu__item ag-menu__item--danger" role="menuitem" wire:click="confirmDelete({{ $product->id }})">Delete permanently…</button>
+                                                <button type="button" class="ag-menu__item ag-menu__item--danger" role="menuitem" wire:click="confirmDelete({{ $product->id }})">{{ __('admin.products.actions.delete_prompt') }}</button>
                                             @endcan
                                         </div>
                                     </div>
@@ -191,25 +191,24 @@
         <div class="ag-modal" role="dialog" aria-modal="true" aria-labelledby="delete-product-title">
             <div class="ag-modal__backdrop" wire:click="cancelDelete"></div>
             <div class="ag-modal__panel">
-                <h3 id="delete-product-title" class="ag-modal__title">Delete {{ $confirmingProduct->name }}?</h3>
+                <h3 id="delete-product-title" class="ag-modal__title">{{ __('admin.products.delete.title', ['name' => $confirmingProduct->name]) }}</h3>
                 @if ($confirmingReferenced)
                     <p class="ag-modal__text">
-                        This product appears on historical orders and <strong>cannot</strong> be permanently deleted.
-                        Set it to <strong>Draft</strong> instead so it is no longer sold on the storefront.
+                        {!! __('admin.products.delete.referenced_text_html') !!}
                     </p>
                     <div class="ag-modal__actions">
                         @can('products.update')
-                            <button type="button" class="ag-btn ag-btn--primary" wire:click="draftAndClose({{ $confirmingProduct->id }})">Set as draft</button>
+                            <button type="button" class="ag-btn ag-btn--primary" wire:click="draftAndClose({{ $confirmingProduct->id }})">{{ __('admin.products.actions.set_draft') }}</button>
                         @endcan
-                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">Close</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">{{ __('common.close') }}</button>
                     </div>
                 @else
                     <p class="ag-modal__text">
-                        This permanently deletes the product and its photos. This cannot be undone.
+                        {{ __('admin.products.delete.text') }}
                     </p>
                     <div class="ag-modal__actions">
-                        <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteProduct">Delete permanently</button>
-                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">Cancel</button>
+                        <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteProduct">{{ __('admin.products.actions.delete') }}</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">{{ __('common.cancel') }}</button>
                     </div>
                 @endif
             </div>

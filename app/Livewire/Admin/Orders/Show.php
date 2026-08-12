@@ -56,7 +56,7 @@ final class Show extends Component
 
         $this->order->refresh()->load(['items', 'payment']);
         $this->confirmingPayment = false;
-        session()->flash('status', 'Payment recorded.');
+        session()->flash('status', __('admin.orders.flash.payment_recorded'));
     }
 
     public function render(AdminRegistrar $admin)
@@ -69,7 +69,7 @@ final class Show extends Component
             'canRecord' => $canRecord,
             'navigation' => $admin->navigationItems(),
         ])->layout('layouts.admin', [
-            'title' => 'Order '.$this->order->number,
+            'title' => __('admin.orders.show.title', ['number' => $this->order->number]),
             'navigation' => $admin->navigationItems(),
         ]);
     }

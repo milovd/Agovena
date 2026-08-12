@@ -105,7 +105,7 @@ final class EditGroup extends Component
             $this->applyLogoPathAsFavicon($settings, (string) $this->values['logo_path']);
         }
 
-        session()->flash('status', $definition->label.' settings saved.');
+        session()->flash('status', __('admin.settings.saved', ['group' => __($definition->label)]));
     }
 
     public function useCurrentLogoAsFavicon(SettingsRepository $settings): void
@@ -115,7 +115,7 @@ final class EditGroup extends Component
         abort_if(! is_string($logo) || $logo === '', 422);
         $this->applyLogoPathAsFavicon($settings, $logo);
         $this->useLogoAsFavicon = true;
-        session()->flash('status', 'Favicon updated from logo.');
+        session()->flash('status', __('admin.settings.favicon_updated'));
     }
 
     public function render(AdminRegistrar $admin)
@@ -134,7 +134,7 @@ final class EditGroup extends Component
             'canUpdate' => auth('staff')->user()?->can('settings.update') ?? false,
             'currencyOptions' => $currencyOptions,
         ])->layout('layouts.admin', [
-            'title' => $group->label.' settings',
+            'title' => __('admin.settings.group_title', ['group' => __($group->label)]),
             'navigation' => $admin->navigationItems(),
         ]);
     }
@@ -144,7 +144,7 @@ final class EditGroup extends Component
     {
         return match ($field->type) {
             'boolean' => ['nullable', 'boolean'],
-            'select' => ['required', 'string', Rule::in($field->options ?? [])],
+            'select' => ['required', 'string', Rule::in($this->optionValues($field))],
             'currency' => [
                 'required',
                 'string',
@@ -156,6 +156,29 @@ final class EditGroup extends Component
             'image' => ['nullable', 'string', 'max:255'],
             default => ['nullable', 'string', 'max:255'],
         };
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function optionValues(SettingsField $field): array
+    {
+        $options = $field->options ?? [];
+        if ($options === []) {
+            return [];
+        }
+
+        if (array_is_list($options)) {
+            /** @var list<string> $values */
+            $values = array_map(static fn ($value): string => (string) $value, $options);
+
+            return $values;
+        }
+
+        /** @var list<string> $keys */
+        $keys = array_map(static fn ($value): string => (string) $value, array_keys($options));
+
+        return $keys;
     }
 
     private function normalizeForForm(SettingsField $field, mixed $stored): mixed

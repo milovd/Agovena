@@ -25,7 +25,7 @@ final class OrderConfirmation extends Component
             'order' => $this->order,
             'theme' => $theme,
         ])->layout($theme->view('layouts.storefront'), [
-            'title' => 'Order confirmed',
+            'title' => __('storefront.confirmation.page_title'),
             'theme' => $theme,
         ]);
     }

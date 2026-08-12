@@ -42,7 +42,7 @@ final class PlaceOrder
 
         if ($this->cart->isEmpty()) {
             throw ValidationException::withMessages([
-                'cart' => 'Your cart is empty.',
+                'cart' => __('storefront.errors.cart_empty'),
             ]);
         }
 
@@ -51,7 +51,7 @@ final class PlaceOrder
 
         if ($subtotal === null) {
             throw ValidationException::withMessages([
-                'cart' => 'Your cart is empty.',
+                'cart' => __('storefront.errors.cart_empty'),
             ]);
         }
 
@@ -116,7 +116,7 @@ final class PlaceOrder
             $allowed = (bool) config('agovena.payments.allow_development_instant_pay');
             if (! $allowed || app()->environment('production')) {
                 throw ValidationException::withMessages([
-                    'payment_method' => 'Development payment is not available.',
+                    'payment_method' => __('storefront.errors.development_payment_unavailable'),
                 ]);
             }
         }

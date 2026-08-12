@@ -62,14 +62,14 @@ final class NavigationIndex extends Component
         ]);
 
         $this->resetItemForm();
-        session()->flash('status', 'Menu item added.');
+        session()->flash('status', __('admin.content.navigation.item_added'));
     }
 
     public function deleteItem(int $id): void
     {
         $this->authorize('navigation.manage');
         MenuItem::query()->whereKey($id)->delete();
-        session()->flash('status', 'Menu item removed.');
+        session()->flash('status', __('admin.content.navigation.item_removed'));
     }
 
     public function render()
@@ -88,7 +88,7 @@ final class NavigationIndex extends Component
             'pages' => Page::query()->orderBy('title')->get(),
             'categories' => Category::query()->orderBy('name')->get(),
         ])->layout('layouts.admin', [
-            'title' => 'Navigation',
+            'title' => __('admin.content.navigation.title'),
         ]);
     }
 

@@ -114,15 +114,22 @@ class Product extends Model
             : strtoupper(str_replace('-', ' ', $this->slug));
 
         $overview = array_values(array_filter([
-            $this->category ? ['label' => 'Category', 'value' => $this->category->name] : null,
-            ['label' => 'SKU', 'value' => $sku],
-            ['label' => 'Currency', 'value' => strtoupper($this->currency)],
-            ['label' => 'Availability', 'value' => $this->status->value === 'active' ? 'Available' : ucfirst($this->status->value)],
+            $this->category
+                ? ['label' => (string) __('storefront.product.spec_category'), 'value' => $this->category->name]
+                : null,
+            ['label' => (string) __('storefront.product.spec_sku'), 'value' => $sku],
+            ['label' => (string) __('storefront.product.spec_currency'), 'value' => strtoupper($this->currency)],
+            [
+                'label' => (string) __('storefront.product.spec_availability'),
+                'value' => (string) ($this->status->value === 'active'
+                    ? __('storefront.product.spec_available')
+                    : __('storefront.product.spec_unavailable')),
+            ],
         ]));
 
         $groups = [
             [
-                'title' => 'Overview',
+                'title' => (string) __('storefront.product.spec_overview'),
                 'rows' => $overview,
             ],
         ];
@@ -141,7 +148,7 @@ class Product extends Model
 
         if ($rows !== []) {
             $groups[] = [
-                'title' => 'Specifications',
+                'title' => (string) __('storefront.product.spec_specifications'),
                 'rows' => $rows,
             ];
         }

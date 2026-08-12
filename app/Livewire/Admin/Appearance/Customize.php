@@ -54,13 +54,13 @@ final class Customize extends Component
         $flat['header.usp_items'] = $this->normalizeUspItems($this->uspItems);
         $themes->config()->setMany($flat);
 
-        session()->flash('status', 'Theme settings saved.');
+        session()->flash('status', __('admin.appearance.customize.saved'));
     }
 
     public function addUspItem(): void
     {
         $this->uspItems[] = [
-            'text' => 'New benefit',
+            'text' => __('admin.appearance.defaults.usp_text'),
             'short' => '',
             'emphasis' => '',
             'href' => '',
@@ -101,40 +101,43 @@ final class Customize extends Component
         $this->sections[] = match ($type) {
             'hero' => [
                 'type' => 'hero',
-                'eyebrow' => 'Welcome',
-                'title' => 'New hero',
+                'eyebrow' => __('admin.appearance.defaults.hero_eyebrow'),
+                'title' => __('admin.appearance.defaults.hero_title'),
                 'lede' => '',
-                'cta_label' => 'Browse',
+                'cta_label' => __('admin.appearance.defaults.hero_cta_label'),
                 'cta_href' => '#catalog',
             ],
             'featured_products' => [
                 'type' => 'featured_products',
-                'title' => 'Featured products',
+                'title' => __('admin.appearance.defaults.featured_products_title'),
                 'lede' => '',
                 'limit' => 8,
             ],
             'featured_categories' => [
                 'type' => 'featured_categories',
-                'title' => 'Shop by category',
+                'title' => __('admin.appearance.defaults.featured_categories_title'),
                 'lede' => '',
             ],
             'trust_strip' => [
                 'type' => 'trust_strip',
                 'items' => [
-                    ['title' => 'Benefit', 'text' => 'Describe a trust signal.'],
+                    [
+                        'title' => __('admin.appearance.defaults.trust_item_title'),
+                        'text' => __('admin.appearance.defaults.trust_item_text'),
+                    ],
                 ],
             ],
             'promo_split' => [
                 'type' => 'promo_split',
-                'title' => 'Promo title',
+                'title' => __('admin.appearance.defaults.promo_title'),
                 'body' => '',
-                'cta_label' => 'Learn more',
+                'cta_label' => __('admin.appearance.defaults.promo_cta_label'),
                 'cta_href' => '#catalog',
                 'image' => '',
             ],
             default => [
                 'type' => 'rich_text',
-                'title' => 'Section title',
+                'title' => __('admin.appearance.defaults.rich_text_title'),
                 'body' => '',
             ],
         };
@@ -152,7 +155,7 @@ final class Customize extends Component
             'theme' => $theme,
             'groups' => $groups,
         ])->layout('layouts.admin', [
-            'title' => 'Customize theme',
+            'title' => __('admin.appearance.customize.title'),
         ]);
     }
 

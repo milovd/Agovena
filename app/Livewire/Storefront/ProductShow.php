@@ -35,7 +35,7 @@ final class ProductShow extends Component
     public function addToCart(CartService $cart, GetStorefrontProduct $get): void
     {
         $this->addProduct($cart, $get);
-        session()->flash('status', 'Added to cart.');
+        session()->flash('status', __('storefront.flash.added_to_cart'));
         $this->redirect(route('storefront.cart'), navigate: true);
     }
 

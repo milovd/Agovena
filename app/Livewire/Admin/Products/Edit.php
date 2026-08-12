@@ -133,7 +133,7 @@ final class Edit extends Component
 
         $this->uploads = null;
         $this->product->refresh()->load('images');
-        session()->flash('status', 'Photos uploaded.');
+        session()->flash('status', __('admin.products.flash.photos_uploaded'));
     }
 
     public function setPrimaryImage(int $imageId): void
@@ -147,7 +147,7 @@ final class Edit extends Component
 
         $this->product->forceFill(['image_path' => $image->path])->save();
         $this->product->refresh()->load('images');
-        session()->flash('status', 'Primary photo updated.');
+        session()->flash('status', __('admin.products.flash.primary_updated'));
     }
 
     public function moveImage(int $imageId, string $direction): void
@@ -200,7 +200,7 @@ final class Edit extends Component
         }
 
         $this->product->refresh()->load('images');
-        session()->flash('status', 'Photo removed.');
+        session()->flash('status', __('admin.products.flash.photo_removed'));
     }
 
     public function save(UpdateProduct $update): void
@@ -252,7 +252,7 @@ final class Edit extends Component
         ]);
 
         $this->product->refresh()->load('images');
-        session()->flash('status', 'Product updated.');
+        session()->flash('status', __('admin.products.flash.updated'));
     }
 
     public function setDraft(): void
@@ -264,7 +264,7 @@ final class Edit extends Component
         ])->save();
 
         $this->status = ProductStatus::Draft->value;
-        session()->flash('status', 'Product set to draft.');
+        session()->flash('status', __('admin.products.flash.set_draft'));
     }
 
     public function confirmDelete(): void
@@ -284,7 +284,7 @@ final class Edit extends Component
 
         try {
             $delete->handle($this->product);
-            session()->flash('status', 'Product deleted.');
+            session()->flash('status', __('admin.products.flash.deleted'));
             $this->redirect(route('admin.products.index'), navigate: true);
         } catch (ValidationException $e) {
             $this->confirmingDelete = false;
@@ -301,7 +301,7 @@ final class Edit extends Component
             'galleryImages' => $this->product->images,
             'isReferenced' => $delete->isReferencedByOrders($this->product),
         ])->layout('layouts.admin', [
-            'title' => 'Edit product',
+            'title' => __('admin.products.form.edit_title'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

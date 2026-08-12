@@ -71,7 +71,7 @@ final class Index extends Component
             'orderStatuses' => OrderStatus::cases(),
             'paymentStatuses' => PaymentStatus::cases(),
         ])->layout('layouts.admin', [
-            'title' => 'Orders',
+            'title' => __('admin.orders.title'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

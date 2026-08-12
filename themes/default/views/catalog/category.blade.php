@@ -1,6 +1,6 @@
 <section class="store-catalog" aria-labelledby="category-heading">
-    <nav class="store-breadcrumbs" aria-label="Breadcrumb">
-        <a href="{{ route('storefront.home') }}">Home</a>
+    <nav class="store-breadcrumbs" aria-label="{{ __('storefront.breadcrumb_aria') }}">
+        <a href="{{ route('storefront.home') }}">{{ __('storefront.nav.home') }}</a>
         <span aria-hidden="true">/</span>
         <span aria-current="page">{{ $category->name }}</span>
     </nav>
@@ -14,24 +14,24 @@
 
     <form class="store-toolbar" method="get" action="{{ route('storefront.category', $category->slug) }}">
         <div class="store-toolbar__search">
-            <label class="visually-hidden" for="category-search">Filter in category</label>
-            <input id="category-search" class="store-input" type="search" name="q" value="{{ $searchQuery }}" placeholder="Filter products">
+            <label class="visually-hidden" for="category-search">{{ __('storefront.catalog.filter_label') }}</label>
+            <input id="category-search" class="store-input" type="search" name="q" value="{{ $searchQuery }}" placeholder="{{ __('storefront.catalog.filter_placeholder') }}">
         </div>
         <div class="store-toolbar__sort">
-            <label class="visually-hidden" for="category-sort">Sort</label>
+            <label class="visually-hidden" for="category-sort">{{ __('storefront.catalog.sort') }}</label>
             <select id="category-sort" class="store-input" name="sort" onchange="this.form.submit()">
-                <option value="name" @selected($sort === 'name')>Name</option>
-                <option value="price_asc" @selected($sort === 'price_asc')>Price: low to high</option>
-                <option value="price_desc" @selected($sort === 'price_desc')>Price: high to low</option>
+                <option value="name" @selected($sort === 'name')>{{ __('storefront.catalog.sort_name') }}</option>
+                <option value="price_asc" @selected($sort === 'price_asc')>{{ __('storefront.catalog.sort_price_asc') }}</option>
+                <option value="price_desc" @selected($sort === 'price_desc')>{{ __('storefront.catalog.sort_price_desc') }}</option>
             </select>
         </div>
-        <button type="submit" class="store-btn">Apply</button>
+        <button type="submit" class="store-btn">{{ __('storefront.catalog.apply') }}</button>
     </form>
 
     @if ($products->isEmpty())
         <div class="store-empty" role="status">
-            <p class="store-empty__title">No products in this category</p>
-            <p class="store-empty__text"><a href="{{ route('storefront.home') }}">Back to home</a></p>
+            <p class="store-empty__title">{{ __('storefront.catalog.empty_category_title') }}</p>
+            <p class="store-empty__text"><a href="{{ route('storefront.home') }}">{{ __('storefront.catalog.back_to_home') }}</a></p>
         </div>
     @else
         @include('theme::partials.product-grid', [

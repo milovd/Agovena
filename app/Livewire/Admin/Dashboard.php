@@ -60,7 +60,7 @@ final class Dashboard extends Component
             'paidRevenueByCurrency' => $paidRevenueByCurrency,
             'recentOrders' => $recentOrders,
         ])->layout('layouts.admin', [
-            'title' => 'Dashboard',
+            'title' => __('admin.nav.dashboard'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

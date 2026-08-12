@@ -6,12 +6,8 @@ namespace App\Livewire\Admin\Auth;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-use Livewire\Attributes\Layout;
-use Livewire\Attributes\Title;
 use Livewire\Component;
 
-#[Layout('layouts.admin-guest')]
-#[Title('Sign in')]
 final class Login extends Component
 {
     public string $email = '';
@@ -51,6 +47,8 @@ final class Login extends Component
 
     public function render()
     {
-        return view('livewire.admin.auth.login');
+        return view('livewire.admin.auth.login')->layout('layouts.admin-guest', [
+            'title' => __('auth.sign_in'),
+        ]);
     }
 }

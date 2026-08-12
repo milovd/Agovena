@@ -1,6 +1,6 @@
 @php $items = $section['items'] ?? []; @endphp
 @if (is_array($items) && $items !== [])
-<section class="store-section store-trust" aria-label="Why shop here">
+<section class="store-section store-trust" aria-label="{{ __('storefront.home.trust_aria') }}">
     <ul class="store-trust__list" role="list">
         @foreach ($items as $item)
             <li class="store-trust__item">

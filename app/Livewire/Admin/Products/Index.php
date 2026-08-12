@@ -63,7 +63,7 @@ final class Index extends Component
             'status' => ProductStatus::from($status),
         ])->save();
 
-        session()->flash('status', 'Product status updated.');
+        session()->flash('status', __('admin.products.flash.status_updated'));
     }
 
     public function confirmDelete(int $productId): void
@@ -95,7 +95,7 @@ final class Index extends Component
 
         try {
             $delete->handle($product);
-            session()->flash('status', 'Product deleted.');
+            session()->flash('status', __('admin.products.flash.deleted'));
         } catch (ValidationException $e) {
             $message = $e->errors()['product'][0] ?? $e->getMessage();
             session()->flash('error', $message);
@@ -145,7 +145,7 @@ final class Index extends Component
             'confirmingProduct' => $confirming,
             'confirmingReferenced' => $confirming ? $delete->isReferencedByOrders($confirming) : false,
         ])->layout('layouts.admin', [
-            'title' => 'Products',
+            'title' => __('admin.products.title'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

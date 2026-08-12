@@ -43,7 +43,7 @@
                     </a>
                 @endif
                 <a class="store-btn store-btn--outline store-btn--hero-secondary" href="{{ route('storefront.categories') }}">
-                    Browse categories
+                    {{ __('storefront.nav.browse_categories') }}
                 </a>
             </div>
         </div>

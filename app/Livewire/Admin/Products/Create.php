@@ -118,7 +118,7 @@ final class Create extends Component
             'category_id' => $data['category_id'],
         ]);
 
-        session()->flash('status', 'Product created. Add photos below.');
+        session()->flash('status', __('admin.products.flash.created'));
 
         $this->redirect(route('admin.products.edit', $product), navigate: true);
     }
@@ -131,7 +131,7 @@ final class Create extends Component
             'mode' => 'create',
             'galleryImages' => collect(),
         ])->layout('layouts.admin', [
-            'title' => 'Create product',
+            'title' => __('admin.products.form.create_title'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

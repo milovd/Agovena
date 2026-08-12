@@ -1,10 +1,10 @@
 <div class="admin-guest__card">
     <h1 class="admin-guest__title">{{ config('app.name', 'Agovena') }}</h1>
-    <p class="admin-guest__lede">Sign in to Admin</p>
+    <p class="admin-guest__lede">{{ __('auth.sign_in_lede') }}</p>
 
     <form wire:submit="login" class="admin-guest__form" novalidate>
         <div class="ag-field">
-            <label class="ag-field__label" for="email">Email</label>
+            <label class="ag-field__label" for="email">{{ __('common.email') }}</label>
             <input
                 id="email"
                 class="ag-input"
@@ -21,7 +21,7 @@
         </div>
 
         <div class="ag-field">
-            <label class="ag-field__label" for="password">Password</label>
+            <label class="ag-field__label" for="password">{{ __('common.password') }}</label>
             <input
                 id="password"
                 class="ag-input"
@@ -37,10 +37,10 @@
             @enderror
         </div>
 
-        <x-ag.checkbox id="remember" wire:model="remember" label="Remember me" />
+        <x-ag.checkbox id="remember" wire:model="remember" :label="__('auth.remember_me')" />
 
         <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled">
-            Sign in
+            {{ __('auth.sign_in') }}
         </button>
     </form>
 </div>

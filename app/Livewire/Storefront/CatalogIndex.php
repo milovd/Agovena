@@ -54,7 +54,7 @@ final class CatalogIndex extends Component
             'siteName' => $siteName,
             'isSearch' => $query !== '',
         ])->layout($theme->view('layouts.storefront'), [
-            'title' => $query !== '' ? 'Search' : 'Home',
+            'title' => $query !== '' ? __('storefront.search.heading') : __('storefront.nav.home'),
             'theme' => $theme,
             'themeConfig' => $config,
         ]);

@@ -14,13 +14,13 @@ final class DeleteCategory
     {
         if ($category->products()->exists()) {
             throw ValidationException::withMessages([
-                'category' => 'This category still has products. Move or reassign them first, or set the category inactive.',
+                'category' => __('admin.categories.validation.has_products'),
             ]);
         }
 
         if ($category->children()->exists()) {
             throw ValidationException::withMessages([
-                'category' => 'This category has subcategories. Remove or reassign them first.',
+                'category' => __('admin.categories.validation.has_children'),
             ]);
         }
 

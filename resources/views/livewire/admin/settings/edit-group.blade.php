@@ -1,13 +1,16 @@
 <div class="admin-page">
-    <nav class="admin-page__crumb" aria-label="Breadcrumb">
-        <a href="{{ route('admin.settings.index') }}">Settings</a>
+    <nav class="admin-page__crumb" aria-label="{{ __('admin.settings.breadcrumb_aria') }}">
+        <a href="{{ route('admin.settings.index') }}">{{ __('admin.settings.title') }}</a>
         <span aria-hidden="true"> / </span>
-        <span>{{ $groupDefinition->label }}</span>
+        <span>{{ __($groupDefinition->label) }}</span>
     </nav>
 
-    <x-ag.page-header :heading="$groupDefinition->label" :lede="$groupDefinition->description">
+    <x-ag.page-header
+        :heading="__($groupDefinition->label)"
+        :lede="$groupDefinition->description ? __($groupDefinition->description) : null"
+    >
         <x-slot:back>
-            <x-ag.back :href="route('admin.settings.index')" label="Settings" />
+            <x-ag.back :href="route('admin.settings.index')" :label="__('admin.settings.title')" />
         </x-slot:back>
     </x-ag.page-header>
 
@@ -15,7 +18,7 @@
         @foreach ($fields as $field)
             <div class="ag-field" wire:key="field-{{ $field->key }}">
                 @if ($field->type !== 'boolean' && $field->type !== 'image')
-                    <label class="ag-field__label" for="setting-{{ $field->key }}">{{ $field->label }}</label>
+                    <label class="ag-field__label" for="setting-{{ $field->key }}">{{ __($field->label) }}</label>
                 @endif
 
                 @if ($field->type === 'text')
@@ -30,7 +33,7 @@
                     <x-ag.switch
                         id="setting-{{ $field->key }}"
                         wire:model="values.{{ $field->key }}"
-                        :label="$field->label"
+                        :label="__($field->label)"
                         :disabled="! $canUpdate"
                     />
                 @elseif ($field->type === 'select')
@@ -40,8 +43,15 @@
                         wire:model="values.{{ $field->key }}"
                         @disabled(! $canUpdate)
                     >
-                        @foreach ($field->options ?? [] as $option)
-                            <option value="{{ $option }}">{{ ucfirst($option) }}</option>
+                        @foreach ($field->options ?? [] as $value => $label)
+                            @if (is_int($value))
+                                @php $optionKey = 'admin.settings.options.'.$field->key.'.'.$label; @endphp
+                                <option value="{{ $label }}">
+                                    {{ \Illuminate\Support\Facades\Lang::has($optionKey) ? __($optionKey) : ucfirst((string) $label) }}
+                                </option>
+                            @else
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endif
                         @endforeach
                     </select>
                 @elseif ($field->type === 'currency')
@@ -56,21 +66,19 @@
                                 {{ $currency->code }} — {{ $currency->name }} ({{ $currency->previewSample() }})
                             </option>
                         @empty
-                            <option value="">No active currencies — add one under Currencies</option>
+                            <option value="">{{ __('admin.settings.no_currencies') }}</option>
                         @endforelse
                     </select>
                     <p class="ag-field__help">
-                        Manage codes, prefixes and suffixes under
-                        <a href="{{ route('admin.currencies.index') }}">Currencies</a>.
+                        {{ __('admin.settings.currency_help') }}
+                        <a href="{{ route('admin.currencies.index') }}">{{ __('admin.nav.currencies') }}</a>.
                     </p>
                 @elseif ($field->type === 'image')
                     <x-ag.file-upload
                         id="setting-{{ $field->key }}"
-                        :label="$field->label"
-                        hint="PNG, JPG, WebP, or SVG recommended."
+                        :label="__($field->label)"
+                        :hint="__('admin.settings.image_hint')"
                         accept="image/*"
-                        button-label="Upload"
-                        replace-label="Replace"
                         :preview-url="! empty($values[$field->key]) ? \Illuminate\Support\Facades\Storage::disk('public')->url($values[$field->key]) : null"
                         loading-target="uploads.{{ $field->key }}"
                         :disabled="! $canUpdate"
@@ -81,11 +89,11 @@
 
                     @if ($group === 'branding' && $field->key === 'logo_path' && $canUpdate)
                         <div style="margin-top: var(--ag-space-3); display: grid; gap: var(--ag-space-3);">
-                            <x-ag.checkbox id="use-logo-as-favicon" wire:model="useLogoAsFavicon" label="Also use this logo as the favicon" />
+                            <x-ag.checkbox id="use-logo-as-favicon" wire:model="useLogoAsFavicon" :label="__('admin.settings.use_logo_as_favicon')" />
                             @if (! empty($values['logo_path']))
                                 <div>
                                     <button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="useCurrentLogoAsFavicon">
-                                        Use current logo as favicon
+                                        {{ __('admin.settings.use_current_logo_as_favicon') }}
                                     </button>
                                 </div>
                             @endif
@@ -102,7 +110,7 @@
                 @endif
 
                 @if ($field->help)
-                    <p class="ag-field__help">{{ $field->help }}</p>
+                    <p class="ag-field__help">{{ __($field->help) }}</p>
                 @endif
                 @error('values.'.$field->key) <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
             </div>
@@ -110,10 +118,10 @@
 
         @if ($canUpdate)
             <div class="ag-form__actions">
-                <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled">Save settings</button>
+                <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled">{{ __('admin.settings.save') }}</button>
             </div>
         @else
-            <p class="ag-field__help" role="status">You can view these settings but cannot change them.</p>
+            <p class="ag-field__help" role="status">{{ __('admin.settings.read_only') }}</p>
         @endif
     </form>
 </div>

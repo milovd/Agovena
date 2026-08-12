@@ -68,7 +68,7 @@ final class CheckoutPage extends Component
             'theme' => $theme,
             'developmentPayEnabled' => $this->developmentPayEnabled(),
         ])->layout($theme->view('layouts.storefront'), [
-            'title' => 'Checkout',
+            'title' => __('storefront.checkout.title'),
             'theme' => $theme,
         ]);
     }

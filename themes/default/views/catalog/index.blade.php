@@ -6,14 +6,14 @@
     @if ($isSearch)
         <section id="catalog" class="store-catalog" aria-labelledby="catalog-heading">
             <div class="store-section__header">
-                <h1 id="catalog-heading" class="store-section__title">Search</h1>
-                <p class="store-section__lede">Results for “{{ $searchQuery }}”</p>
+                <h1 id="catalog-heading" class="store-section__title">{{ __('storefront.search.heading') }}</h1>
+                <p class="store-section__lede">{{ __('storefront.search.results_for', ['query' => $searchQuery]) }}</p>
             </div>
 
             @if ($products->isEmpty())
                 <div class="store-empty" role="status">
-                    <p class="store-empty__title">No products match your search</p>
-                    <p class="store-empty__text">Try a different term, or <a href="{{ route('storefront.home') }}">clear search</a>.</p>
+                    <p class="store-empty__title">{{ __('storefront.search.no_products') }}</p>
+                    <p class="store-empty__text">{!! __('storefront.search.try_different', ['url' => route('storefront.home')]) !!}</p>
                 </div>
             @else
                 @include('theme::partials.product-grid', ['products' => $products, 'showExcerpt' => $showExcerpt])
@@ -52,8 +52,8 @@
         @if ($products->isEmpty() && collect($sections)->where('type', 'featured_products')->isEmpty())
             <section id="catalog" class="store-catalog" aria-labelledby="catalog-heading">
                 <div class="store-empty" role="status">
-                    <p class="store-empty__title">No products yet</p>
-                    <p class="store-empty__text">Published products will appear here. Run <code>php artisan agovena:seed-demo</code> locally.</p>
+                    <p class="store-empty__title">{{ __('storefront.catalog.empty_title') }}</p>
+                    <p class="store-empty__text">{!! __('storefront.catalog.empty_text') !!}</p>
                 </div>
             </section>
         @endif

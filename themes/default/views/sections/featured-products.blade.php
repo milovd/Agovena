@@ -8,8 +8,8 @@
 
     @if ($products->isEmpty())
         <div class="store-empty" role="status">
-            <p class="store-empty__title">No products yet</p>
-            <p class="store-empty__text">Published products will appear in this section.</p>
+            <p class="store-empty__title">{{ __('storefront.catalog.empty_title') }}</p>
+            <p class="store-empty__text">{{ __('storefront.catalog.section_empty_text') }}</p>
         </div>
     @else
         @include('theme::partials.product-grid', ['products' => $products, 'showExcerpt' => $showExcerpt])

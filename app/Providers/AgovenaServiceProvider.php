@@ -79,15 +79,15 @@ class AgovenaServiceProvider extends ServiceProvider
             $legal = $menus->handle('footer_legal');
 
             $view->with('themeMainNav', $main !== [] ? $this->flattenMenuLinks($main) : [
-                ['label' => 'Deals', 'url' => route('storefront.home').'#catalog'],
-                ['label' => 'About', 'url' => url('/about')],
+                ['label' => __('storefront.nav.deals'), 'url' => route('storefront.home').'#catalog'],
+                ['label' => __('storefront.nav.about'), 'url' => url('/about')],
             ]);
             $view->with('themeFooterNav', $footer !== [] ? $this->flattenMenuLinks($footer) : [
-                ['label' => 'Cart', 'url' => route('storefront.cart')],
+                ['label' => __('storefront.nav.cart'), 'url' => route('storefront.cart')],
             ]);
             $view->with('themeLegalNav', $legal !== [] ? $this->flattenMenuLinks($legal) : [
-                ['label' => 'Terms', 'url' => null],
-                ['label' => 'Privacy', 'url' => null],
+                ['label' => __('storefront.nav.terms'), 'url' => null],
+                ['label' => __('storefront.nav.privacy'), 'url' => null],
             ]);
 
             if (! array_key_exists('themeConfig', $view->getData())) {
@@ -118,8 +118,8 @@ class AgovenaServiceProvider extends ServiceProvider
     {
         $admin->navigation(new NavigationItem(
             id: 'dashboard',
-            label: 'Dashboard',
-            group: 'Overview',
+            label: 'admin.nav.dashboard',
+            group: 'admin.nav_groups.overview',
             href: '/admin',
             icon: 'layout-dashboard',
             sort: 0,
@@ -128,8 +128,8 @@ class AgovenaServiceProvider extends ServiceProvider
 
         $admin->navigation(new NavigationItem(
             id: 'products',
-            label: 'Products',
-            group: 'Commerce',
+            label: 'admin.nav.products',
+            group: 'admin.nav_groups.commerce',
             href: '/admin/products',
             icon: 'package',
             sort: 10,
@@ -138,8 +138,8 @@ class AgovenaServiceProvider extends ServiceProvider
 
         $admin->navigation(new NavigationItem(
             id: 'categories',
-            label: 'Categories',
-            group: 'Commerce',
+            label: 'admin.nav.categories',
+            group: 'admin.nav_groups.commerce',
             href: '/admin/categories',
             icon: 'folders',
             sort: 15,
@@ -148,8 +148,8 @@ class AgovenaServiceProvider extends ServiceProvider
 
         $admin->navigation(new NavigationItem(
             id: 'orders',
-            label: 'Orders',
-            group: 'Commerce',
+            label: 'admin.nav.orders',
+            group: 'admin.nav_groups.commerce',
             href: '/admin/orders',
             icon: 'shopping-bag',
             sort: 20,
@@ -158,8 +158,8 @@ class AgovenaServiceProvider extends ServiceProvider
 
         $admin->navigation(new NavigationItem(
             id: 'settings',
-            label: 'Settings',
-            group: 'Configuration',
+            label: 'admin.nav.settings',
+            group: 'admin.nav_groups.configuration',
             href: '/admin/settings',
             icon: 'settings',
             sort: 100,
@@ -168,8 +168,8 @@ class AgovenaServiceProvider extends ServiceProvider
 
         $admin->navigation(new NavigationItem(
             id: 'currencies',
-            label: 'Currencies',
-            group: 'Configuration',
+            label: 'admin.nav.currencies',
+            group: 'admin.nav_groups.configuration',
             href: '/admin/currencies',
             icon: 'coins',
             sort: 110,
@@ -177,19 +177,29 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
-            id: 'staff',
-            label: 'Staff',
-            group: 'Administration',
-            href: '/admin/staff',
+            id: 'users',
+            label: 'admin.nav.users',
+            group: 'admin.nav_groups.administration',
+            href: '/admin/users',
             icon: 'users',
             sort: 200,
-            permission: 'staff.view',
+            permission: 'users.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'roles',
+            label: 'admin.nav.roles',
+            group: 'admin.nav_groups.administration',
+            href: '/admin/roles',
+            icon: 'shield',
+            sort: 210,
+            permission: 'roles.view',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'themes',
-            label: 'Themes',
-            group: 'Appearance',
+            label: 'admin.nav.themes',
+            group: 'admin.nav_groups.appearance',
             href: '/admin/appearance/themes',
             icon: 'layout-template',
             sort: 300,
@@ -197,8 +207,8 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->navigation(new NavigationItem(
             id: 'theme-customize',
-            label: 'Customize',
-            group: 'Appearance',
+            label: 'admin.nav.customize',
+            group: 'admin.nav_groups.appearance',
             href: '/admin/appearance/customize',
             icon: 'palette',
             sort: 310,
@@ -206,8 +216,8 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->navigation(new NavigationItem(
             id: 'navigation',
-            label: 'Navigation',
-            group: 'Appearance',
+            label: 'admin.nav.navigation',
+            group: 'admin.nav_groups.appearance',
             href: '/admin/appearance/navigation',
             icon: 'menu',
             sort: 320,
@@ -215,8 +225,8 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->navigation(new NavigationItem(
             id: 'pages',
-            label: 'Pages',
-            group: 'Appearance',
+            label: 'admin.nav.pages',
+            group: 'admin.nav_groups.appearance',
             href: '/admin/appearance/pages',
             icon: 'file-text',
             sort: 330,
@@ -259,8 +269,13 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->permission('currencies.view', 'View currencies');
         $admin->permission('currencies.create', 'Create currencies');
         $admin->permission('currencies.update', 'Update currencies');
-        $admin->permission('staff.view', 'View staff');
-        $admin->permission('staff.create', 'Create staff');
+        $admin->permission('users.view', 'View users');
+        $admin->permission('users.create', 'Create users');
+        $admin->permission('users.update', 'Update users');
+        $admin->permission('roles.view', 'View roles');
+        $admin->permission('roles.create', 'Create roles');
+        $admin->permission('roles.update', 'Update roles');
+        $admin->permission('roles.delete', 'Delete roles');
         $admin->permission('theme.view', 'View themes');
         $admin->permission('theme.manage', 'Manage themes');
         $admin->permission('pages.view', 'View pages');
@@ -273,50 +288,52 @@ class AgovenaServiceProvider extends ServiceProvider
     {
         $admin->settingsGroup(new SettingsGroup(
             id: 'general',
-            label: 'General',
+            label: 'admin.settings.groups.general',
             permission: 'settings.view',
             sort: 10,
-            description: 'Site identity and regional defaults.',
+            description: 'admin.settings.group_help.general',
             icon: 'settings',
         ));
         $admin->settingsGroup(new SettingsGroup(
             id: 'branding',
-            label: 'Branding',
+            label: 'admin.settings.groups.branding',
             permission: 'settings.view',
             sort: 20,
-            description: 'Logo and favicon used across Admin and storefront.',
+            description: 'admin.settings.group_help.branding',
             icon: 'palette',
         ));
         $admin->settingsGroup(new SettingsGroup(
             id: 'store',
-            label: 'Store',
+            label: 'admin.settings.groups.store',
             permission: 'settings.view',
             sort: 30,
-            description: 'Commerce defaults that do not belong in environment secrets.',
+            description: 'admin.settings.group_help.store',
             icon: 'store',
         ));
 
         $admin->settingsField(new SettingsField(
             group: 'general',
             key: 'site_name',
-            label: 'Site name',
+            label: 'admin.settings.fields.site_name',
             type: 'string',
             default: config('app.name', 'Agovena'),
-            help: 'Shown in Admin and the default storefront header.',
+            help: 'admin.settings.field_help.site_name',
             sort: 10,
         ));
         $admin->settingsField(new SettingsField(
             group: 'general',
             key: 'locale',
-            label: 'Locale',
-            type: 'string',
+            label: 'admin.settings.fields.locale',
+            type: 'select',
             default: config('app.locale', 'en'),
+            help: 'admin.settings.locale_help',
             sort: 20,
+            options: config('agovena.locales', ['en' => 'English']),
         ));
         $admin->settingsField(new SettingsField(
             group: 'general',
             key: 'timezone',
-            label: 'Timezone',
+            label: 'admin.settings.fields.timezone',
             type: 'timezone',
             default: config('app.timezone', 'UTC'),
             sort: 30,
@@ -324,46 +341,46 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->settingsField(new SettingsField(
             group: 'general',
             key: 'base_currency',
-            label: 'Base currency',
+            label: 'admin.settings.fields.base_currency',
             type: 'currency',
             default: 'EUR',
-            help: 'Default catalog currency. Create currencies with prefix/suffix under System → Currencies.',
+            help: 'admin.settings.field_help.base_currency',
             sort: 40,
         ));
 
         $admin->settingsField(new SettingsField(
             group: 'branding',
             key: 'logo_path',
-            label: 'Logo',
+            label: 'admin.settings.fields.logo_path',
             type: 'image',
             default: null,
-            help: 'PNG, JPG, WebP or SVG. Max 2 MB. You can also use it as the favicon.',
+            help: 'admin.settings.field_help.logo_path',
             sort: 10,
         ));
         $admin->settingsField(new SettingsField(
             group: 'branding',
             key: 'favicon_path',
-            label: 'Favicon',
+            label: 'admin.settings.fields.favicon_path',
             type: 'image',
             default: null,
-            help: 'Optional. Leave empty and enable “use logo as favicon”, or upload a separate icon.',
+            help: 'admin.settings.field_help.favicon_path',
             sort: 20,
         ));
 
         $admin->settingsField(new SettingsField(
             group: 'store',
             key: 'customer_registration',
-            label: 'Customer registration',
+            label: 'admin.settings.fields.customer_registration',
             type: 'select',
             default: 'disabled',
             options: ['disabled', 'optional', 'required'],
-            help: 'Customer accounts are not required for guest checkout yet.',
+            help: 'admin.settings.field_help.customer_registration',
             sort: 10,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
             key: 'order_number_prefix',
-            label: 'Order number prefix',
+            label: 'admin.settings.fields.order_number_prefix',
             type: 'string',
             default: 'AGO',
             sort: 20,
@@ -371,10 +388,10 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->settingsField(new SettingsField(
             group: 'store',
             key: 'enable_reviews',
-            label: 'Enable product reviews',
+            label: 'admin.settings.fields.enable_reviews',
             type: 'boolean',
             default: true,
-            help: 'When off, review UI is hidden on all product pages. Per-product review content still deferred.',
+            help: 'admin.settings.field_help.enable_reviews',
             sort: 30,
         ));
     }
@@ -383,21 +400,21 @@ class AgovenaServiceProvider extends ServiceProvider
     {
         $admin->widget(new DashboardWidget(
             id: 'commerce-stats',
-            label: 'Commerce overview',
+            label: 'admin.dashboard.widgets.commerce_stats',
             view: 'admin.widgets.commerce-stats',
             permission: 'dashboard.view',
             sort: 10,
         ));
         $admin->widget(new DashboardWidget(
             id: 'recent-orders',
-            label: 'Recent orders',
+            label: 'admin.dashboard.widgets.recent_orders',
             view: 'admin.widgets.recent-orders',
             permission: 'orders.view',
             sort: 20,
         ));
         $admin->widget(new DashboardWidget(
             id: 'attention',
-            label: 'Needs attention',
+            label: 'admin.dashboard.widgets.attention',
             view: 'admin.widgets.attention',
             permission: 'dashboard.view',
             sort: 30,

@@ -34,7 +34,7 @@ final class MoneyFormatter
     public static function majorInputFromMinor(int $minorAmount, string $currency = 'EUR'): string
     {
         if ($minorAmount < 0) {
-            throw new InvalidArgumentException('Amount cannot be negative.');
+            throw new InvalidArgumentException(__('admin.products.validation.amount_negative'));
         }
 
         $precision = self::precisionFor($currency);
@@ -56,11 +56,11 @@ final class MoneyFormatter
     {
         $normalized = trim(str_replace(' ', '', $input));
         if ($normalized === '') {
-            throw new InvalidArgumentException('Price is required.');
+            throw new InvalidArgumentException(__('admin.products.validation.price_required'));
         }
 
         if (! preg_match('/^\d{1,12}([.,]\d{1,6})?$/', $normalized)) {
-            throw new InvalidArgumentException('Enter a valid price such as 45 or 45.00.');
+            throw new InvalidArgumentException(__('admin.products.validation.price_invalid'));
         }
 
         $precision = self::precisionFor($currency);
@@ -72,8 +72,8 @@ final class MoneyFormatter
         if (strlen($fraction) > $precision) {
             throw new InvalidArgumentException(
                 $precision === 0
-                    ? 'This currency does not allow decimal places.'
-                    : "Use at most {$precision} decimal places."
+                    ? __('admin.products.validation.price_no_decimals')
+                    : trans_choice('admin.products.validation.price_decimals', $precision, ['count' => $precision])
             );
         }
 

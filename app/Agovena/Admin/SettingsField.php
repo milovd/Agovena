@@ -7,7 +7,7 @@ namespace App\Agovena\Admin;
 final readonly class SettingsField
 {
     /**
-     * @param  list<string>|null  $options
+     * @param  list<string>|array<string, string>|null  $options  List of values, or value => label map
      */
     public function __construct(
         public string $group,

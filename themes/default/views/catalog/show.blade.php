@@ -13,8 +13,8 @@
 @endphp
 
 <article class="store-product">
-    <nav class="store-breadcrumbs store-breadcrumbs--compact" aria-label="Breadcrumb">
-        <a href="{{ route('storefront.home') }}">Home</a>
+    <nav class="store-breadcrumbs store-breadcrumbs--compact" aria-label="{{ __('storefront.breadcrumb_aria') }}">
+        <a href="{{ route('storefront.home') }}">{{ __('storefront.nav.home') }}</a>
         @if ($product->category)
             <span aria-hidden="true">/</span>
             @if ($product->category->parent)
@@ -127,7 +127,7 @@
                         :disabled="! canScrollLeft"
                         :aria-hidden="(! canScrollLeft).toString()"
                         @click="scrollThumbs(-1)"
-                        aria-label="Scroll thumbnails left"
+                        aria-label="{{ __('storefront.product.gallery_prev') }}"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>
                     </button>
@@ -142,7 +142,7 @@
                                     :class="{ 'is-active': index === {{ $i }} }"
                                     @click="select({{ $i }})"
                                     :aria-current="index === {{ $i }} ? 'true' : 'false'"
-                                    aria-label="Show image {{ $i + 1 }}"
+                                    aria-label="{{ __('storefront.product.show_image', ['number' => $i + 1]) }}"
                                 >
                                     <img src="{{ $url }}" alt="" loading="lazy">
                                 </button>
@@ -159,7 +159,7 @@
                         :disabled="! canScrollRight"
                         :aria-hidden="(! canScrollRight).toString()"
                         @click="scrollThumbs(1)"
-                        aria-label="Scroll thumbnails right"
+                        aria-label="{{ __('storefront.product.gallery_next') }}"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
                     </button>
@@ -171,7 +171,7 @@
             <h1 class="store-product__title">{{ $product->name }}</h1>
 
             @if ($enableReviews ?? true)
-                <div class="store-product__rating" aria-label="{{ number_format($ratingAverage, 1) }} out of 5 from {{ $reviewCount }} reviews">
+                <div class="store-product__rating" aria-label="{{ __('storefront.product.rating_aria', ['rating' => number_format($ratingAverage, 1), 'count' => $reviewCount]) }}">
                     <span class="store-product__stars" aria-hidden="true">
                         @for ($i = 1; $i <= 5; $i++)
                             <svg class="store-product__star {{ $i <= (int) round($ratingAverage) ? 'is-filled' : '' }}" width="16" height="16" viewBox="0 0 24 24" focusable="false">
@@ -184,7 +184,7 @@
                         class="store-product__rating-link"
                         href="#reviews"
                         @click.prevent="$dispatch('open-reviews')"
-                    >View {{ $reviewCount }} {{ $reviewCount === 1 ? 'review' : 'reviews' }}</a>
+                    >{{ trans_choice('storefront.product.view_reviews', $reviewCount, ['count' => $reviewCount]) }}</a>
                 </div>
             @endif
 
@@ -201,22 +201,22 @@
 
             <form wire:submit="addToCart" class="store-product__form">
                 <div class="store-product__buy">
-                    <div class="store-qty" role="group" aria-label="Quantity">
-                        <label class="visually-hidden" for="quantity">Quantity</label>
-                        <button type="button" class="store-qty__btn" wire:click="decrementQuantity" aria-label="Decrease quantity">−</button>
+                    <div class="store-qty" role="group" aria-label="{{ __('storefront.product.quantity') }}">
+                        <label class="visually-hidden" for="quantity">{{ __('storefront.product.quantity') }}</label>
+                        <button type="button" class="store-qty__btn" wire:click="decrementQuantity" aria-label="{{ __('storefront.product.decrease') }}">−</button>
                         <input id="quantity" class="store-qty__input" type="number" min="1" max="99" wire:model="quantity">
-                        <button type="button" class="store-qty__btn" wire:click="incrementQuantity" aria-label="Increase quantity">+</button>
+                        <button type="button" class="store-qty__btn" wire:click="incrementQuantity" aria-label="{{ __('storefront.product.increase') }}">+</button>
                     </div>
                 </div>
 
                 <div class="store-product__actions">
                     <button type="button" class="store-btn store-btn--primary store-btn--lg" wire:click="buyNow" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="buyNow">Buy now</span>
-                        <span wire:loading wire:target="buyNow">Working…</span>
+                        <span wire:loading.remove wire:target="buyNow">{{ __('storefront.product.buy_now') }}</span>
+                        <span wire:loading wire:target="buyNow">{{ __('storefront.product.working') }}</span>
                     </button>
                     <button type="submit" class="store-btn store-btn--outline store-btn--lg" wire:loading.attr="disabled" wire:target="addToCart">
-                        <span wire:loading.remove wire:target="addToCart">Add to cart</span>
-                        <span wire:loading wire:target="addToCart">Adding…</span>
+                        <span wire:loading.remove wire:target="addToCart">{{ __('storefront.product.add_to_cart') }}</span>
+                        <span wire:loading wire:target="addToCart">{{ __('storefront.product.adding') }}</span>
                     </button>
                 </div>
                 @error('quantity') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
@@ -228,8 +228,8 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13l2 7H6"/><circle cx="9" cy="19" r="1"/><circle cx="17" cy="19" r="1"/></svg>
                     </span>
                     <div>
-                        <p class="store-product__perk-title">Delivery</p>
-                        <p class="store-product__perk-text">Shipping options are shown at checkout.</p>
+                        <p class="store-product__perk-title">{{ __('storefront.product.delivery_title') }}</p>
+                        <p class="store-product__perk-text">{{ __('storefront.product.delivery_text') }}</p>
                     </div>
                 </div>
                 <div class="store-product__perk" role="listitem">
@@ -237,8 +237,8 @@
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16v12H4z"/><path d="M8 7V5h8v2"/></svg>
                     </span>
                     <div>
-                        <p class="store-product__perk-title">Returns</p>
-                        <p class="store-product__perk-text">Return details are set by the merchant.</p>
+                        <p class="store-product__perk-title">{{ __('storefront.product.returns_title') }}</p>
+                        <p class="store-product__perk-text">{{ __('storefront.product.returns_text') }}</p>
                     </div>
                 </div>
             </div>
@@ -272,7 +272,7 @@
         @open-reviews="openReviews()"
     >
         @if ($showDetailsPanel && $reviewsOn)
-            <div class="store-product-panels__tabs" role="tablist" aria-label="Product information">
+            <div class="store-product-panels__tabs" role="tablist" aria-label="{{ __('storefront.product.tabs_aria') }}">
                 <button
                     type="button"
                     class="store-product-panels__tab"
@@ -281,7 +281,7 @@
                     :aria-selected="(tab === 'details').toString()"
                     :class="{ 'is-active': tab === 'details' }"
                     @click="tab = 'details'; history.replaceState(null, '', '#details')"
-                >Details</button>
+                >{{ __('storefront.product.tab_details') }}</button>
                 <button
                     type="button"
                     class="store-product-panels__tab"
@@ -290,12 +290,12 @@
                     :aria-selected="(tab === 'reviews').toString()"
                     :class="{ 'is-active': tab === 'reviews' }"
                     @click="openReviews()"
-                >Reviews</button>
+                >{{ __('storefront.product.tab_reviews') }}</button>
             </div>
         @elseif ($showDetailsPanel)
-            <h2 class="store-product-details__heading">Details</h2>
+            <h2 class="store-product-details__heading">{{ __('storefront.product.tab_details') }}</h2>
         @elseif ($reviewsOn)
-            <h2 class="store-product-details__heading">Reviews</h2>
+            <h2 class="store-product-details__heading">{{ __('storefront.product.tab_reviews') }}</h2>
         @endif
 
         @if ($showDetailsPanel)
@@ -308,7 +308,7 @@
             <div class="store-product-details">
                 @if ($showDetails && $product->description)
                     <div class="store-product-details__copy">
-                        <h3 class="store-product-details__heading">About this product</h3>
+                        <h3 class="store-product-details__heading">{{ __('storefront.product.about') }}</h3>
                         <div class="store-product-details__body">{!! nl2br(e($product->description)) !!}</div>
                     </div>
                 @endif
@@ -344,18 +344,18 @@
             <div class="store-product-reviews">
                 <div class="store-product-reviews__main">
                     <div class="store-product-reviews__toolbar">
-                        <p class="store-product-reviews__sort" aria-hidden="true">Newest</p>
+                        <p class="store-product-reviews__sort" aria-hidden="true">{{ __('storefront.product.reviews_sort_newest') }}</p>
                     </div>
 
                     @if ($reviewCount === 0)
                         <div class="store-product-reviews__empty" role="status">
-                            <p class="store-product-reviews__empty-title">No reviews yet</p>
-                            <p class="store-product-reviews__empty-text">Be the first to share how this product holds up. Review writing ships with the customer portal.</p>
+                            <p class="store-product-reviews__empty-title">{{ __('storefront.product.reviews_empty_title') }}</p>
+                            <p class="store-product-reviews__empty-text">{{ __('storefront.product.reviews_empty_text') }}</p>
                         </div>
                     @endif
                 </div>
 
-                <aside class="store-product-reviews__summary" aria-label="Rating summary">
+                <aside class="store-product-reviews__summary" aria-label="{{ __('storefront.product.rating_summary_aria') }}">
                     <div class="store-product-reviews__score">
                         <p class="store-product-reviews__score-value">{{ number_format($ratingAverage, 1) }}</p>
                         <div>
@@ -366,7 +366,7 @@
                                     </svg>
                                 @endfor
                             </span>
-                            <p class="store-product-reviews__score-meta">{{ $reviewCount }} {{ $reviewCount === 1 ? 'review' : 'reviews' }}</p>
+                            <p class="store-product-reviews__score-meta">{{ trans_choice('storefront.product.reviews_count', $reviewCount, ['count' => $reviewCount]) }}</p>
                         </div>
                     </div>
 
@@ -390,7 +390,7 @@
 
     @if (($related ?? collect())->isNotEmpty())
         <section class="store-section store-related" aria-labelledby="related-heading">
-            <h2 id="related-heading" class="store-section__title">Related products</h2>
+            <h2 id="related-heading" class="store-section__title">{{ __('storefront.product.related') }}</h2>
             @include('theme::partials.product-grid', [
                 'products' => $related,
                 'showExcerpt' => $themeConfig?->bool('catalog.show_excerpt', false) ?? false,

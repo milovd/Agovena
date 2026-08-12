@@ -17,7 +17,7 @@ final class DeleteProduct
     {
         if ($this->isReferencedByOrders($product)) {
             throw ValidationException::withMessages([
-                'product' => 'This product appears on historical orders and cannot be permanently deleted. Set it to Draft instead.',
+                'product' => __('admin.products.validation.referenced'),
             ]);
         }
 

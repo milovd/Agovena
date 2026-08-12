@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Livewire\Admin\Staff;
+namespace App\Livewire\Admin\Users;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -32,38 +32,42 @@ final class Index extends Component
 
     public function mount(): void
     {
-        $this->authorize('staff.view');
+        $this->authorize('users.view');
     }
 
     public function create(): void
     {
-        $this->authorize('staff.create');
+        $this->authorize('users.create');
         $this->resetForm();
         $this->showForm = true;
     }
 
     public function save(SyncRegisteredPermissions $sync): void
     {
-        $this->authorize('staff.create');
+        $this->authorize('users.create');
         $sync();
+
+        $roleNames = Role::query()
+            ->where('guard_name', 'staff')
+            ->pluck('name')
+            ->all();
 
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('staff_users', 'email')],
             'password' => ['required', 'string', Password::defaults()],
-            'role' => ['required', 'string', Rule::in(['owner'])],
+            'role' => ['required', 'string', Rule::in($roleNames)],
         ]);
 
-        $staff = StaffUser::query()->create([
+        $user = StaffUser::query()->create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => Hash::make($data['password']),
         ]);
 
-        Role::findOrCreate($data['role'], 'staff');
-        $staff->syncRoles([$data['role']]);
+        $user->syncRoles([$data['role']]);
 
-        session()->flash('status', 'Staff user created.');
+        session()->flash('status', __('admin.users.created'));
         $this->resetForm();
         $this->resetPage();
     }
@@ -75,10 +79,11 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin)
     {
-        return view('livewire.admin.staff.index', [
-            'staffUsers' => StaffUser::query()->orderBy('name')->paginate(20),
+        return view('livewire.admin.users.index', [
+            'users' => StaffUser::query()->with('roles')->orderBy('name')->paginate(20),
+            'roles' => Role::query()->where('guard_name', 'staff')->orderBy('name')->get(),
         ])->layout('layouts.admin', [
-            'title' => 'Staff',
+            'title' => __('admin.users.title'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

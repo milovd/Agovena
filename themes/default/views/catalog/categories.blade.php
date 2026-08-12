@@ -1,13 +1,13 @@
 <article class="store-catalog">
     <header class="store-catalog__header">
-        <h1 class="store-title">Categories</h1>
-        <p class="store-catalog__lede">Browse collections and jump into a product group.</p>
+        <h1 class="store-title">{{ __('storefront.categories.title') }}</h1>
+        <p class="store-catalog__lede">{{ __('storefront.categories.lede') }}</p>
     </header>
 
     @if ($categories->isEmpty())
         <div class="store-empty" role="status">
-            <p class="store-empty__title">No categories yet</p>
-            <p class="store-empty__text">Categories will appear here once they are published.</p>
+            <p class="store-empty__title">{{ __('storefront.categories.empty_title') }}</p>
+            <p class="store-empty__text">{{ __('storefront.categories.empty_text') }}</p>
         </div>
     @else
         <ul class="store-category-grid store-category-grid--page" role="list">
@@ -24,8 +24,10 @@
                         <span class="store-category-card__body">
                             <span class="store-category-card__name">{{ $category->name }}</span>
                             <span class="store-category-card__meta">
-                                {{ (int) $category->products_count + (int) $category->children->sum('products_count') }}
-                                items
+                                @php
+                                    $itemCount = (int) $category->products_count + (int) $category->children->sum('products_count');
+                                @endphp
+                                {{ trans_choice('storefront.categories.items', $itemCount, ['count' => $itemCount]) }}
                             </span>
                         </span>
                     </a>

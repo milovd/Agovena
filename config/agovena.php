@@ -3,6 +3,17 @@
 declare(strict_types=1);
 
 return [
+    /*
+     * Available UI locales. Add a matching lang/{code}/ directory, then list
+     * the locale here so Settings → General can select it site-wide.
+     *
+     * @var array<string, string> code => native label
+     */
+    'locales' => [
+        'en' => 'English',
+        'nl' => 'Nederlands',
+    ],
+
     'payments' => [
         /*
      * When true, checkout may offer a development-only instant payment method.

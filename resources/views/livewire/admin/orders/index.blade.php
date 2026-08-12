@@ -1,27 +1,27 @@
 <div class="admin-page">
-    <x-ag.page-header heading="Orders" lede="Review guest checkouts and payment status." />
+    <x-ag.page-header :heading="__('admin.orders.title')" :lede="__('admin.orders.lede')" />
 
     <div class="ag-toolbar ag-toolbar--filters">
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="order-search">Search orders</label>
-                <input id="order-search" class="ag-input ag-input--search" type="search" wire:model.live.debounce.300ms="search" placeholder="Search number, name, email">
+                <label class="visually-hidden" for="order-search">{{ __('admin.orders.search_label') }}</label>
+                <input id="order-search" class="ag-input ag-input--search" type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.orders.search_placeholder') }}">
             </div>
             <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="order-status">Order status</label>
+                <label class="visually-hidden" for="order-status">{{ __('admin.orders.status_label') }}</label>
                 <select id="order-status" class="ag-select" wire:model.live="status">
-                    <option value="">All order statuses</option>
+                    <option value="">{{ __('admin.orders.status_all') }}</option>
                     @foreach ($orderStatuses as $case)
-                        <option value="{{ $case->value }}">{{ ucfirst($case->value) }}</option>
+                        <option value="{{ $case->value }}">{{ __('admin.orders.status.'.$case->value) }}</option>
                     @endforeach
                 </select>
             </div>
             <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="payment-status">Payment status</label>
+                <label class="visually-hidden" for="payment-status">{{ __('admin.orders.payment_status_label') }}</label>
                 <select id="payment-status" class="ag-select" wire:model.live="paymentStatus">
-                    <option value="">All payment statuses</option>
+                    <option value="">{{ __('admin.orders.payment_status_all') }}</option>
                     @foreach ($paymentStatuses as $case)
-                        <option value="{{ $case->value }}">{{ ucfirst($case->value) }}</option>
+                        <option value="{{ $case->value }}">{{ __('admin.orders.payment_status.'.$case->value) }}</option>
                     @endforeach
                 </select>
             </div>
@@ -30,9 +30,9 @@
 
     @if ($orders->isEmpty())
         <div class="ag-empty" role="status">
-            <p class="ag-empty__title">{{ $search || $status || $paymentStatus ? 'No matching orders' : 'No orders yet' }}</p>
+            <p class="ag-empty__title">{{ $search || $status || $paymentStatus ? __('admin.orders.empty.filtered_title') : __('admin.orders.empty.title') }}</p>
             <p class="ag-empty__text">
-                {{ $search || $status || $paymentStatus ? 'Try adjusting search or filters.' : 'Orders appear here after guest checkout on the storefront.' }}
+                {{ $search || $status || $paymentStatus ? __('admin.orders.empty.filtered_text') : __('admin.orders.empty.text') }}
             </p>
         </div>
     @else
@@ -40,13 +40,13 @@
             <table class="ag-table ag-table--orders">
                 <thead>
                     <tr>
-                        <th scope="col">Order</th>
-                        <th scope="col">Customer</th>
-                        <th scope="col">Total</th>
-                        <th scope="col">Status</th>
-                        <th scope="col" class="ag-table__col--md">Payment</th>
-                        <th scope="col" class="ag-table__col--lg">Created</th>
-                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                        <th scope="col">{{ __('admin.orders.order_column') }}</th>
+                        <th scope="col">{{ __('common.customer') }}</th>
+                        <th scope="col">{{ __('common.total') }}</th>
+                        <th scope="col">{{ __('common.status') }}</th>
+                        <th scope="col" class="ag-table__col--md">{{ __('admin.orders.payment_column') }}</th>
+                        <th scope="col" class="ag-table__col--lg">{{ __('common.created') }}</th>
+                        <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -66,7 +66,7 @@
                                     'ag-badge--success' => $order->status->value === 'paid',
                                     'ag-badge--warning' => $order->status->value === 'pending',
                                     'ag-badge--muted' => $order->status->value === 'cancelled',
-                                ])>{{ ucfirst($order->status->value) }}</span>
+                                ])>{{ __('admin.orders.status.'.$order->status->value) }}</span>
                             </td>
                             <td class="ag-table__col--md">
                                 @if ($order->payment)
@@ -75,9 +75,9 @@
                                         'ag-badge--success' => $order->payment->status->value === 'paid',
                                         'ag-badge--warning' => $order->payment->status->value === 'pending',
                                         'ag-badge--muted' => $order->payment->status->value === 'cancelled',
-                                    ])>{{ ucfirst($order->payment->status->value) }}</span>
+                                    ])>{{ __('admin.orders.payment_status.'.$order->payment->status->value) }}</span>
                                 @else
-                                    <span class="ag-muted">—</span>
+                                    <span class="ag-muted">{{ __('common.em_dash') }}</span>
                                 @endif
                             </td>
                             <td class="ag-table__col--lg">
@@ -89,8 +89,8 @@
                                 <a
                                     class="ag-icon-btn"
                                     href="{{ route('admin.orders.show', $order) }}"
-                                    title="Open order"
-                                    aria-label="Open order {{ $order->number }}"
+                                    title="{{ __('admin.orders.open') }}"
+                                    aria-label="{{ __('admin.orders.open_aria', ['number' => $order->number]) }}"
                                 >
                                     <x-ag.icon name="external-link" :size="16" />
                                 </a>

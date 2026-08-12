@@ -8,16 +8,16 @@ use App\Agovena\Theme\ThemeSettingsSchema;
 return new ThemeSettingsSchema([
     new ThemeSettingField(
         key: 'colors.accent',
-        label: 'Accent color',
+        label: 'admin.appearance.theme_fields.colors.accent',
         type: 'color',
         default: '#155EEF',
         group: 'branding',
-        help: 'Primary buttons and interactive accents.',
+        help: 'admin.appearance.theme_field_help.colors.accent',
         sort: 10,
     ),
     new ThemeSettingField(
         key: 'colors.accent_hover',
-        label: 'Accent hover',
+        label: 'admin.appearance.theme_fields.colors.accent_hover',
         type: 'color',
         default: '#1249C7',
         group: 'branding',
@@ -25,7 +25,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'colors.surface',
-        label: 'Surface',
+        label: 'admin.appearance.theme_fields.colors.surface',
         type: 'color',
         default: '#ffffff',
         group: 'branding',
@@ -33,7 +33,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'colors.background',
-        label: 'Background',
+        label: 'admin.appearance.theme_fields.colors.background',
         type: 'color',
         default: '#f4f6fa',
         group: 'branding',
@@ -41,7 +41,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'colors.text',
-        label: 'Text',
+        label: 'admin.appearance.theme_fields.colors.text',
         type: 'color',
         default: '#0f172a',
         group: 'branding',
@@ -49,16 +49,16 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'header.announcement_enabled',
-        label: 'Show USP / benefits bar',
+        label: 'admin.appearance.theme_fields.header.announcement_enabled',
         type: 'boolean',
         default: true,
         group: 'header',
-        help: 'Top strip with shipping, returns, and other store benefits.',
+        help: 'admin.appearance.theme_field_help.header.announcement_enabled',
         sort: 10,
     ),
     new ThemeSettingField(
         key: 'header.usp_items',
-        label: 'USP items',
+        label: 'admin.appearance.theme_fields.header.usp_items',
         type: 'usp_items',
         default: [
             [
@@ -84,12 +84,12 @@ return new ThemeSettingsSchema([
             ],
         ],
         group: 'header',
-        help: 'Benefits on the left; tick “Highlight callout” for a right-side CTA button (e.g. Shop now).',
+        help: 'admin.appearance.theme_field_help.header.usp_items',
         sort: 20,
     ),
     new ThemeSettingField(
         key: 'header.search_enabled',
-        label: 'Show search',
+        label: 'admin.appearance.theme_fields.header.search_enabled',
         type: 'boolean',
         default: true,
         group: 'header',
@@ -97,7 +97,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'header.sticky',
-        label: 'Sticky header',
+        label: 'admin.appearance.theme_fields.header.sticky',
         type: 'boolean',
         default: true,
         group: 'header',
@@ -105,7 +105,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'header.show_account',
-        label: 'Show account entry',
+        label: 'admin.appearance.theme_fields.header.show_account',
         type: 'boolean',
         default: true,
         group: 'header',
@@ -113,16 +113,16 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'header.show_discovery_bar',
-        label: 'Show discovery navigation',
+        label: 'admin.appearance.theme_fields.header.show_discovery_bar',
         type: 'boolean',
         default: true,
         group: 'header',
-        help: 'Secondary bar for menu links and category discovery.',
+        help: 'admin.appearance.theme_field_help.header.show_discovery_bar',
         sort: 70,
     ),
     new ThemeSettingField(
         key: 'footer.tagline',
-        label: 'Footer tagline',
+        label: 'admin.appearance.theme_fields.footer.tagline',
         type: 'string',
         default: 'Quality products, clear pricing, and a simple shopping experience.',
         group: 'footer',
@@ -130,7 +130,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'catalog.products_per_row',
-        label: 'Products per row',
+        label: 'admin.appearance.theme_fields.catalog.products_per_row',
         type: 'select',
         default: '4',
         group: 'catalog',
@@ -139,7 +139,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'catalog.image_ratio',
-        label: 'Card image ratio',
+        label: 'admin.appearance.theme_fields.catalog.image_ratio',
         type: 'select',
         default: '1/1',
         group: 'catalog',
@@ -148,7 +148,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'catalog.show_excerpt',
-        label: 'Show description excerpt on cards',
+        label: 'admin.appearance.theme_fields.catalog.show_excerpt',
         type: 'boolean',
         default: false,
         group: 'catalog',
@@ -156,7 +156,7 @@ return new ThemeSettingsSchema([
     ),
     new ThemeSettingField(
         key: 'homepage.sections',
-        label: 'Homepage sections',
+        label: 'admin.appearance.theme_fields.homepage.sections',
         type: 'sections',
         default: [
             [

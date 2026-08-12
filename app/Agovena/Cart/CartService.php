@@ -132,7 +132,7 @@ final class CartService
 
         if ($product === null || ! $product->isPurchasable()) {
             throw ValidationException::withMessages([
-                'product' => 'This product is not available for purchase.',
+                'product' => __('storefront.errors.product_unavailable'),
             ]);
         }
 

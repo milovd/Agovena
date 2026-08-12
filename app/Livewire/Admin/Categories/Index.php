@@ -115,7 +115,7 @@ final class Index extends Component
         if ($data['parent_id'] !== null) {
             $parent = Category::query()->find($data['parent_id']);
             if ($parent?->parent_id !== null) {
-                $this->addError('parent_id', 'Only one subcategory level is supported.');
+                $this->addError('parent_id', __('admin.categories.validation.one_level'));
 
                 return;
             }
@@ -147,10 +147,10 @@ final class Index extends Component
 
         if ($this->editingId === null) {
             Category::query()->create($payload);
-            session()->flash('status', 'Category created.');
+            session()->flash('status', __('admin.categories.flash.created'));
         } else {
             Category::query()->whereKey($this->editingId)->update($payload);
-            session()->flash('status', 'Category updated.');
+            session()->flash('status', __('admin.categories.flash.updated'));
         }
 
         $this->resetForm();
@@ -187,7 +187,7 @@ final class Index extends Component
 
         try {
             $delete->handle($category);
-            session()->flash('status', 'Category deleted.');
+            session()->flash('status', __('admin.categories.flash.deleted'));
         } catch (ValidationException $e) {
             session()->flash('error', $e->errors()['category'][0] ?? $e->getMessage());
         }
@@ -222,7 +222,7 @@ final class Index extends Component
                 ? Category::query()->withCount(['products', 'children'])->find($this->confirmingDeleteId)
                 : null,
         ])->layout('layouts.admin', [
-            'title' => 'Categories',
+            'title' => __('admin.categories.title'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

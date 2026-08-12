@@ -32,7 +32,7 @@ final class Hub extends Component
         return view('livewire.admin.settings.hub', [
             'groups' => $groups,
         ])->layout('layouts.admin', [
-            'title' => 'Settings',
+            'title' => __('admin.settings.title'),
             'navigation' => $admin->navigationItems(),
         ]);
     }

@@ -21,7 +21,7 @@
             }
         }
     @endphp
-    <div class="store-usp" role="region" aria-label="Store benefits">
+    <div class="store-usp" role="region" aria-label="{{ __('storefront.benefits_aria') }}">
         <div class="store-usp__inner">
             @if ($uspBenefits !== [])
                 <ul class="store-usp__benefits">
@@ -72,6 +72,11 @@
         suggestQuery: @js(request('q', '')),
         suggestUrl: @js($suggestUrl),
         suggestTimer: null,
+        labels: {
+            searching: @js(__('storefront.search.searching')),
+            noMatches: @js(__('storefront.search.no_matches')),
+            viewAll: @js(__('storefront.search.view_all')),
+        },
         async runSuggest() {
             const q = (this.suggestQuery || '').trim();
             if (q.length < 2) {
@@ -120,7 +125,7 @@
                 aria-controls="store-mobile-nav"
             >
                 <span class="store-header__menu-bars" aria-hidden="true"></span>
-                <span class="visually-hidden">Menu</span>
+                <span class="visually-hidden">{{ __('storefront.menu') }}</span>
             </button>
 
             <a class="store-brand" href="{{ route('storefront.home') }}">
@@ -128,14 +133,14 @@
                     <img
                         class="store-brand__logo"
                         src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brandingLogoPath) }}"
-                        alt="{{ $siteName ?? 'Store' }}"
+                        alt="{{ $siteName ?? __('storefront.shop') }}"
                     >
                 @else
-                    <span class="store-brand__name">{{ $siteName ?? 'Store' }}</span>
+                    <span class="store-brand__name">{{ $siteName ?? __('storefront.shop') }}</span>
                 @endif
             </a>
 
-            <nav class="store-nav" aria-label="Primary">
+            <nav class="store-nav" aria-label="{{ __('storefront.primary_nav') }}">
                 @if ($categoriesOn && $discoveryCategories->isNotEmpty())
                     <div
                         class="store-cats"
@@ -151,7 +156,7 @@
                             aria-controls="store-cats-panel"
                             aria-haspopup="true"
                         >
-                            Categories
+                            {{ __('storefront.nav.categories') }}
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                         </a>
                         <div
@@ -161,7 +166,7 @@
                             x-cloak
                             x-transition.opacity.duration.120ms
                             role="region"
-                            aria-label="Categories"
+                            aria-label="{{ __('storefront.nav.categories') }}"
                         >
                             <div class="store-cats__panel-inner">
                             <ul class="store-cats__roots" role="list">
@@ -192,7 +197,7 @@
                                         x-cloak
                                     >
                                         <p class="store-cats__subhead">{{ $category->name }}</p>
-                                        <a class="store-cats__all" href="{{ route('storefront.category', $category->slug) }}">Shop all {{ $category->name }}</a>
+                                        <a class="store-cats__all" href="{{ route('storefront.category', $category->slug) }}">{{ __('storefront.nav.shop_all', ['name' => $category->name]) }}</a>
                                         @if ($category->children->isNotEmpty())
                                             <ul class="store-cats__children" role="list">
                                                 @foreach ($category->children as $child)
@@ -202,7 +207,7 @@
                                                 @endforeach
                                             </ul>
                                         @else
-                                            <p class="store-cats__empty">Browse this collection for featured products.</p>
+                                            <p class="store-cats__empty">{{ __('storefront.nav.browse_collection') }}</p>
                                         @endif
                                     </div>
                                 @endforeach
@@ -222,7 +227,7 @@
             @if ($searchOn)
                 <div class="store-header__search-wrap" @click.outside="closeSuggest()">
                     <form class="store-header__search" action="{{ route('storefront.home') }}" method="get" role="search">
-                        <label class="visually-hidden" for="store-header-search">Search product</label>
+                        <label class="visually-hidden" for="store-header-search">{{ __('storefront.search.label') }}</label>
                         <input
                             id="store-header-search"
                             class="store-header__search-input"
@@ -231,7 +236,7 @@
                             x-model="suggestQuery"
                             @input="onSuggestInput()"
                             @focus="onSuggestInput()"
-                            placeholder="Search product"
+                            placeholder="{{ __('storefront.search.placeholder') }}"
                             autocomplete="off"
                             aria-autocomplete="list"
                             aria-controls="store-search-suggest"
@@ -242,14 +247,14 @@
                             x-show="(suggestQuery || '').length > 0"
                             x-cloak
                             @click="clearSuggest()"
-                            aria-label="Clear search"
+                            aria-label="{{ __('storefront.search.clear') }}"
                         >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                                 <path d="M18 6 6 18"/>
                                 <path d="m6 6 12 12"/>
                             </svg>
                         </button>
-                        <button type="submit" class="store-header__search-icon-btn" aria-label="Search">
+                        <button type="submit" class="store-header__search-icon-btn" aria-label="{{ __('storefront.search.label') }}">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
                         </button>
                     </form>
@@ -260,13 +265,13 @@
                         x-cloak
                         @mousedown.prevent
                         role="listbox"
-                        aria-label="Search suggestions"
+                        aria-label="{{ __('storefront.search.suggestions') }}"
                     >
                         <template x-if="suggestLoading">
-                            <p class="store-suggest__status">Searching…</p>
+                            <p class="store-suggest__status" x-text="labels.searching"></p>
                         </template>
                         <template x-if="!suggestLoading && suggestItems.length === 0 && (suggestQuery || '').trim().length >= 2">
-                            <p class="store-suggest__status">No matches</p>
+                            <p class="store-suggest__status" x-text="labels.noMatches"></p>
                         </template>
                         <template x-for="item in suggestItems" :key="item.slug">
                             <a class="store-suggest__item" :href="item.url" role="option">
@@ -284,7 +289,8 @@
                             class="store-suggest__all"
                             :href="'{{ route('storefront.home') }}?q=' + encodeURIComponent((suggestQuery || '').trim())"
                             x-show="(suggestQuery || '').trim().length >= 2"
-                        >View all results</a>
+                            x-text="labels.viewAll"
+                        ></a>
                     </div>
                 </div>
             @endif
@@ -293,16 +299,16 @@
                 @if ($showAccount)
                     <span
                         class="store-header__utility"
-                        title="Customer accounts will be available when the customer portal ships"
-                        aria-label="Account"
+                        title="{{ __('storefront.account_coming_soon') }}"
+                        aria-label="{{ __('storefront.nav.account') }}"
                     >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                        <span class="visually-hidden">Account</span>
+                        <span class="visually-hidden">{{ __('storefront.nav.account') }}</span>
                     </span>
                 @endif
-                <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}" aria-label="Cart{{ ($cartCount ?? 0) > 0 ? ', '.$cartCount.' items' : '' }}">
+                <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}" aria-label="{{ __('storefront.nav.cart') }}{{ ($cartCount ?? 0) > 0 ? ', '.trans_choice('storefront.cart.items', $cartCount, ['count' => $cartCount]) : '' }}">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
-                    <span class="visually-hidden">Cart</span>
+                    <span class="visually-hidden">{{ __('storefront.nav.cart') }}</span>
                     @if (($cartCount ?? 0) > 0)
                         <span class="store-header__cart-count" aria-hidden="true">{{ $cartCount }}</span>
                     @endif
@@ -313,7 +319,7 @@
         @if ($searchOn)
             <div class="store-header__search-wrap store-header__search-wrap--mobile" @click.outside="closeSuggest()">
                 <form class="store-header__search store-header__search--mobile" action="{{ route('storefront.home') }}" method="get" role="search">
-                    <label class="visually-hidden" for="store-header-search-mobile">Search products</label>
+                    <label class="visually-hidden" for="store-header-search-mobile">{{ __('storefront.search.label') }}</label>
                     <input
                         id="store-header-search-mobile"
                         class="store-header__search-input"
@@ -322,7 +328,7 @@
                         x-model="suggestQuery"
                         @input="onSuggestInput()"
                         @focus="onSuggestInput()"
-                        placeholder="Search product"
+                        placeholder="{{ __('storefront.search.placeholder') }}"
                         autocomplete="off"
                     >
                     <button
@@ -331,14 +337,14 @@
                         x-show="(suggestQuery || '').length > 0"
                         x-cloak
                         @click="clearSuggest()"
-                        aria-label="Clear search"
+                        aria-label="{{ __('storefront.search.clear') }}"
                     >
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
                             <path d="M18 6 6 18"/>
                             <path d="m6 6 12 12"/>
                         </svg>
                     </button>
-                    <button type="submit" class="store-header__search-icon-btn" aria-label="Search">
+                    <button type="submit" class="store-header__search-icon-btn" aria-label="{{ __('storefront.search.label') }}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
                     </button>
                 </form>
@@ -353,14 +359,14 @@
         x-cloak
         role="dialog"
         aria-modal="true"
-        aria-label="Menu"
+        aria-label="{{ __('storefront.menu') }}"
     >
         <div class="store-drawer__backdrop" @click="navOpen = false"></div>
         <div class="store-drawer__panel">
-            <p class="store-drawer__title">Menu</p>
-            <nav class="store-drawer__nav" aria-label="Mobile">
+            <p class="store-drawer__title">{{ __('storefront.menu') }}</p>
+            <nav class="store-drawer__nav" aria-label="{{ __('storefront.mobile_nav') }}">
                 @if ($categoriesOn)
-                    <a class="store-drawer__link" href="{{ route('storefront.categories') }}" @click="navOpen = false">Categories</a>
+                    <a class="store-drawer__link" href="{{ route('storefront.categories') }}" @click="navOpen = false">{{ __('storefront.nav.categories') }}</a>
                 @endif
                 @foreach ($themeMainNav ?? [] as $item)
                     @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
@@ -368,7 +374,7 @@
                     @endif
                 @endforeach
                 @if ($categoriesOn && $discoveryCategories->isNotEmpty())
-                    <p class="store-drawer__label">Browse categories</p>
+                    <p class="store-drawer__label">{{ __('storefront.nav.browse_categories') }}</p>
                     @foreach ($discoveryCategories as $category)
                         <a class="store-drawer__link" href="{{ route('storefront.category', $category->slug) }}" @click="navOpen = false">{{ $category->name }}</a>
                         @foreach ($category->children as $child)
@@ -377,13 +383,13 @@
                     @endforeach
                 @endif
                 <a class="store-drawer__link" href="{{ route('storefront.cart') }}" @click="navOpen = false">
-                    Cart
+                    {{ __('storefront.nav.cart') }}
                     @if (($cartCount ?? 0) > 0)
                         ({{ $cartCount }})
                     @endif
                 </a>
             </nav>
-            <button type="button" class="store-btn" @click="navOpen = false">Close</button>
+            <button type="button" class="store-btn" @click="navOpen = false">{{ __('storefront.close') }}</button>
         </div>
     </div>
 </header>

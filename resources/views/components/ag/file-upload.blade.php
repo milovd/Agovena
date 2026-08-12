@@ -5,8 +5,8 @@
     'multiple' => false,
     'previewUrl' => null,
     'previewAlt' => '',
-    'buttonLabel' => 'Upload',
-    'replaceLabel' => 'Replace',
+    'buttonLabel' => null,
+    'replaceLabel' => null,
     'removeWireClick' => null,
     'loadingTarget' => null,
     'disabled' => false,
@@ -16,7 +16,9 @@
 @php
     $id = $attributes->get('id') ?? 'upload-'.str_replace('.', '-', uniqid('', true));
     $hasPreview = filled($previewUrl);
-    $triggerLabel = $hasPreview ? $replaceLabel : $buttonLabel;
+    $triggerLabel = $hasPreview
+        ? ($replaceLabel ?? __('common.replace'))
+        : ($buttonLabel ?? __('common.upload'));
 @endphp
 
 <div
@@ -27,7 +29,7 @@
         if (!(input instanceof HTMLInputElement) || input.type !== 'file') return;
         const files = input.files;
         if (!files || files.length === 0) { fileLabel = ''; return; }
-        fileLabel = files.length === 1 ? files[0].name : (files.length + ' files selected');
+        fileLabel = files.length === 1 ? files[0].name : @js(__('common.files_selected', ['count' => ':count'])).replace(':count', String(files.length));
     "
 >
     @if ($label)
@@ -46,7 +48,7 @@
         @endif
 
         <div class="ag-file-upload__meta">
-            <p class="ag-file-upload__name" x-text="fileLabel || '{{ $hasPreview ? 'Current image' : 'No file selected' }}'"></p>
+            <p class="ag-file-upload__name" x-text="fileLabel || @js($hasPreview ? __('common.current_image') : __('common.no_file_selected'))"></p>
             @if ($hint)
                 <p class="ag-file-upload__hint">{{ $hint }}</p>
             @endif
@@ -73,14 +75,14 @@
                     class="ag-btn ag-btn--ghost ag-btn--sm"
                     wire:click="{{ $removeWireClick }}"
                 >
-                    Remove
+                    {{ __('common.remove') }}
                 </button>
             @endif
         </div>
     </div>
 
     @if ($loadingTarget)
-        <div wire:loading wire:target="{{ $loadingTarget }}" class="ag-file-upload__loading" role="status">Uploading…</div>
+        <div wire:loading wire:target="{{ $loadingTarget }}" class="ag-file-upload__loading" role="status">{{ __('common.uploading') }}</div>
     @endif
 
     @if ($error)

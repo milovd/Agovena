@@ -20,7 +20,7 @@ final class CategoriesIndex extends Component
             'theme' => $theme,
             'themeConfig' => $config,
         ])->layout($theme->view('layouts.storefront'), [
-            'title' => 'Categories',
+            'title' => __('storefront.categories.title'),
             'theme' => $theme,
             'themeConfig' => $config,
         ]);

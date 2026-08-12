@@ -70,14 +70,14 @@ final class PagesIndex extends Component
         }
 
         $this->resetForm();
-        session()->flash('status', 'Page saved.');
+        session()->flash('status', __('admin.content.pages.saved'));
     }
 
     public function delete(int $id): void
     {
         $this->authorize('pages.manage');
         Page::query()->whereKey($id)->delete();
-        session()->flash('status', 'Page deleted.');
+        session()->flash('status', __('admin.content.pages.deleted'));
     }
 
     public function render()
@@ -87,7 +87,7 @@ final class PagesIndex extends Component
         return view('livewire.admin.content.pages-index', [
             'pages' => Page::query()->orderBy('title')->paginate(20),
         ])->layout('layouts.admin', [
-            'title' => 'Pages',
+            'title' => __('admin.content.pages.title'),
         ]);
     }
 
