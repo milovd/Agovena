@@ -15,6 +15,9 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\SessionCartRepository;
 use App\Agovena\Catalog\ListStorefrontCategories;
 use App\Agovena\Content\MenuResolver;
+use App\Agovena\Installation\InstallAgovena;
+use App\Agovena\Installation\InstallationRequirements;
+use App\Agovena\Installation\InstallationState;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
@@ -29,6 +32,9 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ThemeManager::class);
         $this->app->singleton(SettingsRepository::class);
         $this->app->singleton(CurrencyCatalog::class);
+        $this->app->singleton(InstallationState::class);
+        $this->app->singleton(InstallationRequirements::class);
+        $this->app->singleton(InstallAgovena::class);
         $this->app->bind(CartRepository::class, SessionCartRepository::class);
 
         $this->mergeConfigFrom(__DIR__.'/../../config/agovena.php', 'agovena');

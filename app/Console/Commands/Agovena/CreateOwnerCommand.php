@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Agovena;
 
-use App\Agovena\Permissions\SyncRegisteredPermissions;
-use App\Models\StaffUser;
+use App\Agovena\Staff\CreateOwnerStaff;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 #[Signature('agovena:create-owner {email?} {--name=} {--password=}')]
 #[Description('Create the first staff Owner with all registered permissions')]
 final class CreateOwnerCommand extends Command
 {
-    public function handle(SyncRegisteredPermissions $sync): int
+    public function handle(CreateOwnerStaff $createOwner): int
     {
-        $sync();
-
         $email = $this->argument('email') ?? $this->ask('Owner email');
         $name = $this->option('name') ?: $this->ask('Owner name', 'Owner');
         $password = $this->option('password') ?: $this->secret('Owner password');
@@ -45,15 +41,7 @@ final class CreateOwnerCommand extends Command
         /** @var array{email: string, name: string, password: string} $data */
         $data = $validator->validated();
 
-        $user = StaffUser::query()->updateOrCreate(
-            ['email' => $data['email']],
-            [
-                'name' => $data['name'],
-                'password' => Hash::make($data['password']),
-            ],
-        );
-
-        $user->syncRoles(['owner']);
+        $user = $createOwner($data['name'], $data['email'], $data['password']);
 
         $this->info("Owner ready: {$user->email}");
 
