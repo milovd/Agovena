@@ -13,7 +13,7 @@ test('storefront home renders catalog theme', function () {
 test('installer welcome renders', function () {
     $this->get('/install')
         ->assertOk()
-        ->assertSee('Agovena installer', false);
+        ->assertSee('Welcome to Agovena', false);
 });
 
 test('admin registrar is bound', function () {

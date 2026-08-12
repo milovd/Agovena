@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Agovena\Installation\InstallationState;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Models\StaffUser;
 use Spatie\Permission\Models\Permission;
@@ -17,6 +18,10 @@ trait CreatesStaff
     protected function createStaff(array $attributes = [], ?array $permissions = null): StaffUser
     {
         app(SyncRegisteredPermissions::class)();
+
+        if (app(InstallationState::class)->notInstalled()) {
+            app(InstallationState::class)->markInstalled();
+        }
 
         $user = StaffUser::factory()->create($attributes);
 
