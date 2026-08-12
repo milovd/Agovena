@@ -1,0 +1,10 @@
+{
+    "id": "digital",
+    "name": "Digital",
+    "version": "1.0.0",
+    "description": "Digital product capability with downloadable assets and customer entitlements after payment.",
+    "author": "Agovena",
+    "agovena": "^0.1",
+    "provider": "Agovena\\Modules\\Digital\\DigitalServiceProvider",
+    "dependencies": []
+}

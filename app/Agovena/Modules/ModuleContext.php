@@ -6,6 +6,8 @@ namespace App\Agovena\Modules;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
+use App\Agovena\Customer\AccountNavItem;
+use App\Agovena\Customer\CustomerAccountNav;
 use App\Http\Middleware\SyncStaffPermissions;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +21,7 @@ final class ModuleContext
     public function __construct(
         private readonly AdminRegistrar $admin,
         private readonly ProductCapabilityRegistry $capabilities,
+        private readonly CustomerAccountNav $customerAccountNav,
         private readonly Dispatcher $events,
         private readonly string $moduleId,
     ) {}
@@ -36,6 +39,11 @@ final class ModuleContext
     public function capabilities(): ProductCapabilityRegistry
     {
         return $this->capabilities;
+    }
+
+    public function customerAccountNav(AccountNavItem $item): void
+    {
+        $this->customerAccountNav->register($item);
     }
 
     /**
@@ -57,6 +65,19 @@ final class ModuleContext
         Route::middleware(['web', 'auth:staff', SyncStaffPermissions::class])
             ->prefix('admin')
             ->name('admin.')
+            ->group($routes);
+    }
+
+    /**
+     * Register verified customer account routes under /account.
+     *
+     * @param  callable(): void  $routes
+     */
+    public function customerRoutes(callable $routes): void
+    {
+        Route::middleware(['web', 'auth:customer', 'customer.verified'])
+            ->prefix('account')
+            ->name('customer.')
             ->group($routes);
     }
 }

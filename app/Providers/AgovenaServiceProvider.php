@@ -19,6 +19,7 @@ use App\Agovena\Catalog\ListStorefrontCategories;
 use App\Agovena\Checkout\NullShippingQuoteResolver;
 use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Content\MenuResolver;
+use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Fulfillment\NullOrderFulfillmentPresenter;
 use App\Agovena\Fulfillment\OrderFulfillmentPresenter;
 use App\Agovena\Installation\EnsurePublicStorageLink;
@@ -44,6 +45,7 @@ class AgovenaServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AdminRegistrar::class, InMemoryAdminRegistrar::class);
+        $this->app->singleton(CustomerAccountNav::class);
         $this->app->singleton(ProductCapabilityRegistry::class);
         $this->app->singleton(ProductCapabilityManager::class);
         $this->app->singleton(ModuleManager::class);
@@ -134,6 +136,13 @@ class AgovenaServiceProvider extends ServiceProvider
                 $discoveryCategories = collect();
             }
             $view->with('discoveryCategories', $discoveryCategories);
+        });
+
+        View::composer('theme::account.partials.nav', function ($view): void {
+            $view->with(
+                'customerAccountNavItems',
+                $this->app->make(CustomerAccountNav::class)->items(),
+            );
         });
 
         View::composer('layouts.admin', function ($view): void {

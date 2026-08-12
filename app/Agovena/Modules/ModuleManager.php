@@ -6,6 +6,7 @@ namespace App\Agovena\Modules;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
+use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Modules\Contracts\Module;
 use App\Models\AgovenaModule;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -28,6 +29,7 @@ final class ModuleManager
         private readonly Application $app,
         private readonly AdminRegistrar $admin,
         private readonly ProductCapabilityRegistry $capabilities,
+        private readonly CustomerAccountNav $customerAccountNav,
         private readonly Dispatcher $events,
     ) {}
 
@@ -194,6 +196,7 @@ final class ModuleManager
         $context = new ModuleContext(
             $this->admin,
             $this->capabilities,
+            $this->customerAccountNav,
             $this->events,
             $manifest->id,
         );
