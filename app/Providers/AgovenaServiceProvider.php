@@ -38,9 +38,13 @@ use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\TicketStatus;
+use App\Events\OrderCreated;
 use App\Events\OrderPaid;
+use App\Events\PaymentRecorded;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
 use App\Listeners\IssueInvoiceWhenOrderPaid;
+use App\Listeners\SendOrderPlacedNotification;
+use App\Listeners\SendPaymentRecordedNotification;
 use App\Models\Customer;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
@@ -82,7 +86,9 @@ class AgovenaServiceProvider extends ServiceProvider
     {
         Event::listen(Registered::class, SendEmailVerificationNotification::class);
         Event::listen(Verified::class, AttachGuestOrdersWhenCustomerVerified::class);
+        Event::listen(OrderCreated::class, SendOrderPlacedNotification::class);
         Event::listen(OrderPaid::class, IssueInvoiceWhenOrderPaid::class);
+        Event::listen(PaymentRecorded::class, SendPaymentRecordedNotification::class);
 
         /** @var AdminRegistrar $admin */
         $admin = $this->app->make(AdminRegistrar::class);
@@ -264,6 +270,15 @@ class AgovenaServiceProvider extends ServiceProvider
             sort: 28,
             permission: 'taxes.view',
         ));
+        $admin->navigation(new NavigationItem(
+            id: 'plan-changes',
+            label: 'admin.nav.plan_changes',
+            group: 'admin.nav_groups.commerce',
+            href: '/admin/plan-changes',
+            icon: 'repeat',
+            sort: 29,
+            permission: 'plan-changes.view',
+        ));
 
         $admin->navigation(new NavigationItem(
             id: 'settings',
@@ -409,6 +424,8 @@ class AgovenaServiceProvider extends ServiceProvider
             'discounts.manage',
             'taxes.view',
             'taxes.manage',
+            'plan-changes.view',
+            'plan-changes.manage',
             'customers.view',
             'customers.manage',
             'tickets.view',

@@ -124,5 +124,9 @@ return [
         'storage_link_message' => 'Store logos and other public images may not appear until public file access is available on this server.',
         'storage_link_technical' => 'Could not create the public/storage link to storage/app/public. On the server, run: php artisan storage:link',
         'themes' => 'Theme availability',
+        'extensions_table' => 'Extensions table',
+        'tax_rates_table' => 'Tax rates table',
+        'queue_connection' => 'Queue connection',
+        'mail_default' => 'Mail transport',
     ],
 ];

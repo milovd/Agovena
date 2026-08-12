@@ -23,6 +23,7 @@ use App\Livewire\Admin\Invoices\Show as InvoicesShow;
 use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\Orders\Show as OrdersShow;
+use App\Livewire\Admin\PlanChanges\Index as PlanChangesIndex;
 use App\Livewire\Admin\Products\Create as ProductsCreate;
 use App\Livewire\Admin\Products\Edit as ProductsEdit;
 use App\Livewire\Admin\Products\Index as ProductsIndex;
@@ -127,6 +128,7 @@ Route::middleware(['auth:staff', SyncStaffPermissions::class])->prefix('admin')-
     Route::get('/invoices/{invoice}', InvoicesShow::class)->name('invoices.show');
     Route::get('/discounts', DiscountsIndex::class)->name('discounts.index');
     Route::get('/taxes', TaxesIndex::class)->name('taxes.index');
+    Route::get('/plan-changes', PlanChangesIndex::class)->name('plan-changes.index');
     Route::get('/customers', CustomersIndex::class)->name('customers.index');
     Route::get('/customers/{customer}', CustomersShow::class)->name('customers.show');
     Route::get('/tickets', TicketsIndex::class)->name('tickets.index');
