@@ -201,7 +201,7 @@
                         @can('products.update')
                             <button type="button" class="ag-btn ag-btn--primary" wire:click="draftAndClose({{ $confirmingProduct->id }})">Set as draft</button>
                         @endcan
-                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelDelete">Close</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">Close</button>
                     </div>
                 @else
                     <p class="ag-modal__text">
@@ -209,7 +209,7 @@
                     </p>
                     <div class="ag-modal__actions">
                         <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteProduct">Delete permanently</button>
-                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelDelete">Cancel</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">Cancel</button>
                     </div>
                 @endif
             </div>

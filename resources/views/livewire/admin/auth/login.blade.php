@@ -37,10 +37,7 @@
             @enderror
         </div>
 
-        <div class="ag-checkbox-row">
-            <input id="remember" class="ag-checkbox" type="checkbox" wire:model="remember">
-            <label for="remember">Remember me</label>
-        </div>
+        <x-ag.checkbox id="remember" wire:model="remember" label="Remember me" />
 
         <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled">
             Sign in

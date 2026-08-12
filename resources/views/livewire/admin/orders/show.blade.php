@@ -1,8 +1,8 @@
 <div class="admin-page admin-page--order">
     <x-ag.page-header :heading="'Order '.$order->number" lede="Order operations and payment recording.">
-        <x-slot:actions>
-            <a class="ag-btn ag-btn--ghost" href="{{ route('admin.orders.index') }}">Back to orders</a>
-        </x-slot:actions>
+        <x-slot:back>
+            <x-ag.back :href="route('admin.orders.index')" label="Orders" />
+        </x-slot:back>
     </x-ag.page-header>
 
     <div class="ag-order-layout">
@@ -128,7 +128,7 @@
                                     </div>
                                     <div class="ag-confirm__actions">
                                         <button type="button" class="ag-btn ag-btn--primary" wire:click="recordPayment">Confirm</button>
-                                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelRecordPayment">Cancel</button>
+                                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelRecordPayment">Cancel</button>
                                     </div>
                                 </div>
                             @endif

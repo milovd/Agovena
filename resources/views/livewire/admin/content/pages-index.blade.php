@@ -38,7 +38,7 @@
                 <div class="ag-toolbar">
                     <button type="submit" class="ag-btn ag-btn--primary">Save</button>
                     @if ($editingId)
-                        <button type="button" class="ag-btn" wire:click="create">Cancel</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="create">Cancel</button>
                     @endif
                 </div>
             </form>

@@ -1,11 +1,9 @@
 <div class="admin-page">
-    <header class="admin-page__header">
-        <div>
-            <h2 class="admin-page__heading">Themes</h2>
-            <p class="admin-page__lede">Installed Themes discovered under <code>themes/</code>. Only one Theme is active for the storefront.</p>
-        </div>
-        <a class="ag-btn" href="{{ route('admin.appearance.customize') }}">Customize active</a>
-    </header>
+    <x-ag.page-header heading="Themes" lede="Installed Themes discovered under themes/. Only one Theme is active for the storefront.">
+        <x-slot:actions>
+            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.appearance.customize') }}">Customize active</a>
+        </x-slot:actions>
+    </x-ag.page-header>
 
     @if (session('status'))
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>

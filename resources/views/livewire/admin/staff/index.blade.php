@@ -37,7 +37,7 @@
             </div>
             <div class="ag-form__actions">
                 <button type="submit" class="ag-btn ag-btn--primary">Create staff</button>
-                <button type="button" class="ag-btn ag-btn--ghost" wire:click="cancel">Cancel</button>
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancel">Cancel</button>
             </div>
         </form>
     @endif

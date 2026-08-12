@@ -1,11 +1,12 @@
 <div class="admin-page">
-    <header class="admin-page__header">
-        <div>
-            <h2 class="admin-page__heading">Customize — {{ $theme->name }}</h2>
-            <p class="admin-page__lede">Theme-owned settings for the active storefront Theme. Logos stay under Settings → Branding.</p>
-        </div>
-        <a class="ag-btn" href="{{ route('admin.appearance.themes') }}">All Themes</a>
-    </header>
+    <x-ag.page-header :heading="'Customize — '.$theme->name" lede="Theme-owned settings for the active storefront Theme. Logos stay under Settings → Branding.">
+        <x-slot:back>
+            <x-ag.back :href="route('admin.appearance.themes')" label="Themes" />
+        </x-slot:back>
+        <x-slot:actions>
+            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.appearance.themes') }}">All themes</a>
+        </x-slot:actions>
+    </x-ag.page-header>
 
     @if (session('status'))
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
@@ -18,10 +19,12 @@
                 @foreach ($fields as $field)
                     <div class="ag-field" wire:key="field-{{ $field->key }}">
                         @if ($field->type === 'boolean')
-                            <label class="ag-check">
-                                <input type="checkbox" wire:model="values.{{ str_replace('.', '.', $field->key) }}" value="1">
-                                <span>{{ $field->label }}</span>
-                            </label>
+                            <x-ag.switch
+                                id="tf-{{ md5($field->key) }}"
+                                wire:model="values.{{ str_replace('.', '.', $field->key) }}"
+                                value="1"
+                                :label="$field->label"
+                            />
                         @elseif ($field->type === 'select')
                             <label class="ag-field__label" for="tf-{{ md5($field->key) }}">{{ $field->label }}</label>
                             <select id="tf-{{ md5($field->key) }}" class="ag-select" wire:model="values.{{ $field->key }}">
@@ -75,16 +78,13 @@
                             <label class="ag-field__label">Link (optional)</label>
                             <input class="ag-input" type="text" wire:model="uspItems.{{ $index }}.href" placeholder="/shipping">
                         </div>
-                        <label class="ag-check">
-                            <input type="checkbox" wire:model="uspItems.{{ $index }}.highlight" value="1">
-                            <span>CTA button (right side)</span>
-                        </label>
+                        <x-ag.switch id="usp-highlight-{{ $index }}" wire:model="uspItems.{{ $index }}.highlight" value="1" label="CTA button (right side)" />
                     </div>
                 @endforeach
             </div>
 
             <div class="ag-toolbar" style="margin-top: 1rem;">
-                <button type="button" class="ag-btn" wire:click="addUspItem">Add USP item</button>
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="addUspItem">Add USP item</button>
             </div>
         </fieldset>
 
@@ -166,12 +166,12 @@
             </div>
 
             <div class="ag-toolbar" style="margin-top: 1rem;">
-                <button type="button" class="ag-btn" wire:click="addSection('hero')">Add hero</button>
-                <button type="button" class="ag-btn" wire:click="addSection('featured_products')">Add products</button>
-                <button type="button" class="ag-btn" wire:click="addSection('featured_categories')">Add categories</button>
-                <button type="button" class="ag-btn" wire:click="addSection('promo_split')">Add promo</button>
-                <button type="button" class="ag-btn" wire:click="addSection('rich_text')">Add rich text</button>
-                <button type="button" class="ag-btn" wire:click="addSection('trust_strip')">Add trust strip</button>
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="addSection('hero')">Add hero</button>
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="addSection('featured_products')">Add products</button>
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="addSection('featured_categories')">Add categories</button>
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="addSection('promo_split')">Add promo</button>
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="addSection('rich_text')">Add rich text</button>
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="addSection('trust_strip')">Add trust strip</button>
             </div>
         </fieldset>
 
