@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Invoices;
 
+use App\Agovena\Audit\AuditLogger;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
@@ -18,6 +19,7 @@ final class IssueInvoiceFromOrder
     public function __construct(
         private readonly InvoiceNumberGenerator $numbers,
         private readonly SettingsRepository $settings,
+        private readonly AuditLogger $audit,
     ) {}
 
     public function handle(Order $order): Invoice
@@ -137,7 +139,15 @@ final class IssueInvoiceFromOrder
                 ]);
             }
 
-            return $invoice->load('items');
+            $invoice = $invoice->load('items');
+
+            $this->audit->log('invoice.issued', $invoice, [
+                'invoice_number' => $invoice->number,
+                'order_id' => $locked->id,
+                'total_amount' => $invoice->total_amount,
+            ]);
+
+            return $invoice;
         });
     }
 

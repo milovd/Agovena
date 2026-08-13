@@ -115,11 +115,23 @@
                                         'ag-badge',
                                         'ag-badge--success' => $order->payment->status->value === 'paid',
                                         'ag-badge--warning' => $order->payment->status->value === 'pending',
-                                        'ag-badge--muted' => $order->payment->status->value === 'cancelled',
+                                        'ag-badge--muted' => in_array($order->payment->status->value, ['cancelled', 'failed'], true),
+                                        'ag-badge--info' => $order->payment->status->value === 'partially_refunded',
+                                        'ag-badge--danger' => $order->payment->status->value === 'refunded',
                                     ])>{{ __('admin.orders.payment_status.'.$order->payment->status->value) }}</span>
                                 </dd>
                             </div>
                             <div><dt>{{ __('common.amount') }}</dt><dd>{{ \App\Support\MoneyFormatter::format($order->payment->amount, $order->payment->currency) }}</dd></div>
+                            @if ($order->payment->refundedAmount() > 0)
+                                <div>
+                                    <dt>{{ __('admin.refunds.refunded') }}</dt>
+                                    <dd>{{ \App\Support\MoneyFormatter::format($order->payment->refundedAmount(), $order->payment->currency) }}</dd>
+                                </div>
+                                <div>
+                                    <dt>{{ __('admin.refunds.net_paid') }}</dt>
+                                    <dd>{{ \App\Support\MoneyFormatter::format($order->payment->amount - $order->payment->refundedAmount(), $order->payment->currency) }}</dd>
+                                </div>
+                            @endif
                             @if ($order->payment->paid_at)
                                 <div><dt>{{ __('admin.orders.show.paid_at') }}</dt><dd>{{ $order->payment->paid_at->toDayDateTimeString() }}</dd></div>
                             @endif
@@ -153,6 +165,30 @@
                     @endif
                 </div>
             </section>
+
+            @if ($order->invoice || $order->creditNotes->isNotEmpty())
+                <section class="ag-section" aria-labelledby="documents-heading">
+                    <header class="ag-section__header">
+                        <h3 id="documents-heading" class="ag-section__title">{{ __('admin.orders.show.documents') }}</h3>
+                    </header>
+                    <div class="ag-section__body">
+                        <dl class="ag-dl">
+                            @if ($order->invoice)
+                                <div>
+                                    <dt>{{ __('admin.invoices.number') }}</dt>
+                                    <dd><a href="{{ route('admin.invoices.show', $order->invoice) }}">{{ $order->invoice->number }}</a></dd>
+                                </div>
+                            @endif
+                            @foreach ($order->creditNotes as $note)
+                                <div>
+                                    <dt>{{ __('admin.credit_notes.singular') }}</dt>
+                                    <dd><a href="{{ route('admin.credit-notes.show', $note) }}">{{ $note->number }}</a></dd>
+                                </div>
+                            @endforeach
+                        </dl>
+                    </div>
+                </section>
+            @endif
         </aside>
     </div>
 </div>

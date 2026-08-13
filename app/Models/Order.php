@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use Database\Factories\OrderFactory;
@@ -113,9 +114,25 @@ class Order extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    /** @return HasMany<CreditNote, $this> */
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
+    /** @return HasMany<Refund, $this> */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class);
+    }
+
     public function isAwaitingPayment(): bool
     {
         if ($this->status !== OrderStatus::Pending) {
+            return false;
+        }
+
+        if ($this->invoice?->status === InvoiceStatus::Void) {
             return false;
         }
 

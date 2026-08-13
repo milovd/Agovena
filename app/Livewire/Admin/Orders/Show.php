@@ -27,7 +27,7 @@ final class Show extends Component
     public function mount(Order $order): void
     {
         $this->authorize('orders.view');
-        $this->order = $order->load(['items', 'payment']);
+        $this->order = $order->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
     }
 
     public function startRecordPayment(): void
@@ -54,7 +54,7 @@ final class Show extends Component
             filled($this->reference) ? $this->reference : null,
         );
 
-        $this->order->refresh()->load(['items', 'payment']);
+        $this->order->refresh()->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
         $this->confirmingPayment = false;
         session()->flash('status', __('admin.orders.flash.payment_recorded'));
     }

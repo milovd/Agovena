@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
+use App\Agovena\Invoices\AssertInvoiceCanBePaid;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -19,6 +20,10 @@ use Illuminate\Validation\ValidationException;
  */
 final class CompleteDevelopmentPayment
 {
+    public function __construct(
+        private readonly AssertInvoiceCanBePaid $assertInvoiceCanBePaid,
+    ) {}
+
     public function handle(Order $order): Payment
     {
         if (! (bool) config('agovena.payments.allow_development_instant_pay')) {
@@ -36,6 +41,9 @@ final class CompleteDevelopmentPayment
         return DB::transaction(function () use ($order): Payment {
             /** @var Order $locked */
             $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $locked->loadMissing('invoice');
+            $this->assertInvoiceCanBePaid->handle($locked);
+
             /** @var Payment $payment */
             $payment = Payment::query()->where('order_id', $locked->id)->lockForUpdate()->firstOrFail();
 

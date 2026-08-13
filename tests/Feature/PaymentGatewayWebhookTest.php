@@ -42,12 +42,13 @@ function placePendingOrderPayment(): Payment
     return $order->payment()->firstOrFail();
 }
 
-test('manual payment gateway registers via extension and refuses refunds', function () {
+test('manual payment gateway registers via extension and supports refunds', function () {
     app(ExtensionManager::class)->enable('manual-payment');
 
     $gateway = app(PaymentGatewayRegistry::class)->get('manual');
     expect($gateway)->toBeInstanceOf(ManualPaymentGateway::class)
-        ->and($gateway->capabilities()->refunds)->toBeFalse();
+        ->and($gateway->capabilities()->refunds)->toBeTrue()
+        ->and($gateway->capabilities()->partialRefunds)->toBeTrue();
 
     $payment = placePendingOrderPayment();
     $result = $gateway->refund(new RefundRequest(
@@ -56,7 +57,7 @@ test('manual payment gateway registers via extension and refuses refunds', funct
         currency: $payment->currency,
     ));
 
-    expect($result->success)->toBeFalse();
+    expect($result->success)->toBeTrue();
 });
 
 test('initiate gateway payment creates a payment attempt without polluting order', function () {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
+use App\Agovena\Invoices\AssertInvoiceCanBePaid;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
@@ -15,6 +16,7 @@ use App\Models\PaymentWebhookEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
@@ -24,6 +26,7 @@ final class HandlePaymentWebhook
 {
     public function __construct(
         private readonly PaymentGatewayRegistry $gateways,
+        private readonly AssertInvoiceCanBePaid $assertInvoiceCanBePaid,
     ) {}
 
     public function handle(string $gatewayId, Request $request): WebhookHandleResult
@@ -97,11 +100,19 @@ final class HandlePaymentWebhook
         $payment = Payment::query()->whereKey($attempt->payment_id)->lockForUpdate()->firstOrFail();
 
         if ($status === PaymentStatus::Paid && $payment->status !== PaymentStatus::Paid) {
+            $order = $payment->order()->lockForUpdate()->first();
+            if ($order !== null) {
+                try {
+                    $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoice'));
+                } catch (ValidationException) {
+                    return;
+                }
+            }
+
             $payment->status = PaymentStatus::Paid;
             $payment->paid_at = now();
             $payment->save();
 
-            $order = $payment->order()->lockForUpdate()->first();
             if ($order !== null && $order->status !== OrderStatus::Paid) {
                 $order->status = OrderStatus::Paid;
                 $order->save();

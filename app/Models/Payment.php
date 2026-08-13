@@ -6,11 +6,13 @@ namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\RefundStatus;
 use Database\Factories\PaymentFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
 /**
@@ -54,5 +56,27 @@ class Payment extends Model
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
+    }
+
+    /** @return HasMany<Refund, $this> */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class);
+    }
+
+    public function refundedAmount(): int
+    {
+        return (int) $this->refunds()
+            ->where('status', RefundStatus::Completed)
+            ->sum('amount');
+    }
+
+    public function remainingRefundable(): int
+    {
+        if (! in_array($this->status, [PaymentStatus::Paid, PaymentStatus::PartiallyRefunded], true)) {
+            return 0;
+        }
+
+        return max(0, (int) $this->amount - $this->refundedAmount());
     }
 }

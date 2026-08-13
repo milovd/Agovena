@@ -60,6 +60,9 @@ final class ModuleContext
     }
 
     /**
+     * Subscribe to a Core (or Module) event. Use for explicit policy such as refund consequences.
+     * Core emits RefundRecorded / CreditNoteIssued / InvoiceVoided; Modules decide what to revoke or keep.
+     *
      * @param  class-string  $event
      * @param  class-string|callable  $listener
      */

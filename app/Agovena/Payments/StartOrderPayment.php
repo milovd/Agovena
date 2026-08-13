@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
+use App\Agovena\Invoices\AssertInvoiceCanBePaid;
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
@@ -23,6 +24,7 @@ final class StartOrderPayment
     public function __construct(
         private readonly InitiateGatewayPayment $initiate,
         private readonly PaymentGatewayRegistry $gateways,
+        private readonly AssertInvoiceCanBePaid $assertInvoiceCanBePaid,
     ) {}
 
     public function handle(
@@ -32,7 +34,8 @@ final class StartOrderPayment
         string $cancelUrl,
         ?string $idempotencyKey = null,
     ): PaymentAttempt {
-        $order->loadMissing('payment');
+        $order->loadMissing('payment', 'invoice');
+        $this->assertInvoiceCanBePaid->handle($order);
         $payment = $order->payment;
 
         if ($payment === null) {

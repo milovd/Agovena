@@ -28,6 +28,16 @@ final class NotificationTemplateCatalog
                 placeholders: ['name', 'number', 'total', 'action_url', 'action_label'],
             ),
             new NotificationTemplateDefinition(
+                key: 'credit_note_issued',
+                label: 'admin.notifications.keys.credit_note_issued',
+                placeholders: ['name', 'number', 'total', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'refund_processed',
+                label: 'admin.notifications.keys.refund_processed',
+                placeholders: ['name', 'number', 'total', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
                 key: 'ticket_replied',
                 label: 'admin.notifications.keys.ticket_replied',
                 placeholders: ['name', 'number', 'subject', 'action_url', 'action_label'],

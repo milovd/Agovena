@@ -9,6 +9,16 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property int $invoice_id
+ * @property InvoiceItemKind $kind
+ * @property string $label
+ * @property int $quantity
+ * @property int $unit_amount
+ * @property int $line_total_amount
+ * @property string $currency
+ */
 #[Fillable([
     'invoice_id',
     'kind',

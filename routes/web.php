@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
 use App\Http\Controllers\InvoiceDocumentController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
@@ -12,6 +13,8 @@ use App\Livewire\Admin\Audit\Index as AuditIndex;
 use App\Livewire\Admin\Categories\Index as CategoriesIndex;
 use App\Livewire\Admin\Content\NavigationIndex as ContentNavigation;
 use App\Livewire\Admin\Content\PagesIndex as ContentPages;
+use App\Livewire\Admin\CreditNotes\Create as CreditNotesCreate;
+use App\Livewire\Admin\CreditNotes\Show as CreditNotesShow;
 use App\Livewire\Admin\Currencies\Index as CurrenciesIndex;
 use App\Livewire\Admin\Customers\Index as CustomersIndex;
 use App\Livewire\Admin\Customers\Properties as CustomerProperties;
@@ -41,6 +44,7 @@ use App\Livewire\Admin\Tickets\Index as TicketsIndex;
 use App\Livewire\Admin\Tickets\Show as TicketsShow;
 use App\Livewire\Admin\Users\Index as UsersIndex;
 use App\Livewire\Customer\Account\Addresses as CustomerAddresses;
+use App\Livewire\Customer\Account\CreditNoteShow as CustomerCreditNoteShow;
 use App\Livewire\Customer\Account\Credits as CustomerCredits;
 use App\Livewire\Customer\Account\Dashboard as CustomerDashboard;
 use App\Livewire\Customer\Account\InvoiceShow as CustomerInvoiceShow;
@@ -115,6 +119,9 @@ Route::middleware('auth')->prefix('account')->name('customer.')->group(function 
         Route::get('/invoices/{invoice}', CustomerInvoiceShow::class)->name('invoices.show');
         Route::get('/invoices/{invoice}/print', [InvoiceDocumentController::class, 'print'])->name('invoices.print');
         Route::get('/invoices/{invoice}/pdf', [InvoiceDocumentController::class, 'pdf'])->name('invoices.pdf');
+        Route::get('/credit-notes/{creditNote}', CustomerCreditNoteShow::class)->name('credit-notes.show');
+        Route::get('/credit-notes/{creditNote}/print', [CreditNoteDocumentController::class, 'print'])->name('credit-notes.print');
+        Route::get('/credit-notes/{creditNote}/pdf', [CreditNoteDocumentController::class, 'pdf'])->name('credit-notes.pdf');
         Route::get('/addresses', CustomerAddresses::class)->name('addresses');
         Route::get('/profile', CustomerProfile::class)->name('profile');
         Route::get('/tickets', CustomerTicketsIndex::class)->name('tickets.index');
@@ -138,8 +145,12 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access'])->prefix
     Route::get('/orders/{order}', OrdersShow::class)->name('orders.show');
     Route::get('/invoices', InvoicesIndex::class)->name('invoices.index');
     Route::get('/invoices/{invoice}', InvoicesShow::class)->name('invoices.show');
+    Route::get('/invoices/{invoice}/credit', CreditNotesCreate::class)->name('invoices.credit');
     Route::get('/invoices/{invoice}/print', [InvoiceDocumentController::class, 'print'])->name('invoices.print');
     Route::get('/invoices/{invoice}/pdf', [InvoiceDocumentController::class, 'pdf'])->name('invoices.pdf');
+    Route::get('/credit-notes/{creditNote}', CreditNotesShow::class)->name('credit-notes.show');
+    Route::get('/credit-notes/{creditNote}/print', [CreditNoteDocumentController::class, 'print'])->name('credit-notes.print');
+    Route::get('/credit-notes/{creditNote}/pdf', [CreditNoteDocumentController::class, 'pdf'])->name('credit-notes.pdf');
     Route::get('/discounts', DiscountsIndex::class)->name('discounts.index');
     Route::get('/taxes', TaxesIndex::class)->name('taxes.index');
     Route::get('/plan-changes', PlanChangesIndex::class)->name('plan-changes.index');

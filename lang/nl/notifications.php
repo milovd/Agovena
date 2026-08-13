@@ -18,6 +18,16 @@ return [
         'line' => 'Factuur :number is nu beschikbaar.',
         'action' => 'Factuur bekijken',
     ],
+    'credit_note_issued' => [
+        'subject' => 'Creditnota :number uitgegeven',
+        'line' => 'Creditnota :number is nu beschikbaar.',
+        'action' => 'Creditnota bekijken',
+    ],
+    'refund_processed' => [
+        'subject' => 'Terugbetaling verwerkt voor bestelling :number',
+        'line' => 'Een terugbetaling van :total is verwerkt voor bestelling :number.',
+        'action' => 'Bestelling bekijken',
+    ],
     'ticket_replied' => [
         'subject' => 'Antwoord op ticket :number',
         'line' => 'Een medewerker heeft gereageerd op “:subject”.',

@@ -25,3 +25,8 @@
   background: var(--ag-color-surface-muted);
   color: var(--ag-color-text-muted);
 }
+
+.ag-badge--danger {
+  background: rgb(220 38 38 / 0.12);
+  color: #b91c1c;
+}

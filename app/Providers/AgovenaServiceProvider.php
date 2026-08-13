@@ -47,17 +47,21 @@ use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\TicketStatus;
+use App\Events\CreditNoteIssued;
 use App\Events\OrderCreated;
 use App\Events\OrderPaid;
 use App\Events\PaymentRecorded;
+use App\Events\RefundRecorded;
 use App\Listeners\ApplyPlanChangeWhenOrderPaid;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
 use App\Listeners\IssueInvoiceWhenOrderCreated;
 use App\Listeners\IssueInvoiceWhenOrderPaid;
 use App\Listeners\LogFailedNotification;
 use App\Listeners\LogSentMail;
+use App\Listeners\SendCreditNoteIssuedNotification;
 use App\Listeners\SendOrderPlacedNotification;
 use App\Listeners\SendPaymentRecordedNotification;
+use App\Listeners\SendRefundProcessedNotification;
 use App\Models\Customer;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
@@ -121,6 +125,8 @@ class AgovenaServiceProvider extends ServiceProvider
         Event::listen(OrderPaid::class, IssueInvoiceWhenOrderPaid::class);
         Event::listen(OrderPaid::class, ApplyPlanChangeWhenOrderPaid::class);
         Event::listen(PaymentRecorded::class, SendPaymentRecordedNotification::class);
+        Event::listen(CreditNoteIssued::class, SendCreditNoteIssuedNotification::class);
+        Event::listen(RefundRecorded::class, SendRefundProcessedNotification::class);
         Event::listen(MessageSent::class, LogSentMail::class);
         Event::listen(NotificationFailed::class, LogFailedNotification::class);
 
@@ -513,7 +519,11 @@ class AgovenaServiceProvider extends ServiceProvider
             'categories.delete',
             'orders.view',
             'payments.record',
+            'payments.refund',
             'invoices.view',
+            'invoices.manage',
+            'invoices.credit',
+            'invoices.void',
             'discounts.view',
             'discounts.manage',
             'taxes.view',
@@ -703,12 +713,20 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
+            key: 'credit_note_number_prefix',
+            label: 'admin.settings.fields.credit_note_number_prefix',
+            type: 'string',
+            default: 'CN',
+            sort: 26,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
             key: 'seller_name',
             label: 'admin.settings.fields.seller_name',
             type: 'string',
             default: '',
             help: 'admin.settings.field_help.seller_name',
-            sort: 26,
+            sort: 27,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
@@ -717,7 +735,7 @@ class AgovenaServiceProvider extends ServiceProvider
             type: 'text',
             default: '',
             help: 'admin.settings.field_help.seller_address',
-            sort: 27,
+            sort: 28,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',

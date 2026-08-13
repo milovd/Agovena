@@ -18,6 +18,16 @@ return [
         'line' => 'Invoice :number is now available.',
         'action' => 'View invoice',
     ],
+    'credit_note_issued' => [
+        'subject' => 'Credit note :number issued',
+        'line' => 'Credit note :number is now available.',
+        'action' => 'View credit note',
+    ],
+    'refund_processed' => [
+        'subject' => 'Refund processed for order :number',
+        'line' => 'A refund of :total was processed for order :number.',
+        'action' => 'View order',
+    ],
     'ticket_replied' => [
         'subject' => 'Reply to ticket :number',
         'line' => 'A staff member replied to “:subject”.',

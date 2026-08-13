@@ -81,6 +81,27 @@
                 @foreach ($invoice->custom_properties_snapshot ?? [] as $property)
                     <p><strong>{{ $property['label'] ?? $property['key'] }}:</strong> {{ $property['value'] ?? '' }}</p>
                 @endforeach
+
+                @if ($invoice->order?->payment)
+                    <h2>{{ __('customer.account.payment_heading') }}</h2>
+                    <p>{{ __('customer.account.amount_paid', ['amount' => \App\Support\MoneyFormatter::format($invoice->order->payment->amount, $invoice->order->payment->currency)]) }}</p>
+                    @if ($invoice->order->payment->refundedAmount() > 0)
+                        <p>{{ __('customer.account.amount_refunded', ['amount' => \App\Support\MoneyFormatter::format($invoice->order->payment->refundedAmount(), $invoice->order->payment->currency)]) }}</p>
+                        <p>{{ __('customer.account.net_paid', ['amount' => \App\Support\MoneyFormatter::format($invoice->order->payment->amount - $invoice->order->payment->refundedAmount(), $invoice->order->payment->currency)]) }}</p>
+                    @endif
+                @endif
+
+                @if ($invoice->creditNotes->isNotEmpty())
+                    <h2>{{ __('customer.account.credit_notes_title') }}</h2>
+                    <ul>
+                        @foreach ($invoice->creditNotes as $note)
+                            <li>
+                                <a href="{{ route('customer.credit-notes.show', $note) }}">{{ $note->number }}</a>
+                                · {{ \App\Support\MoneyFormatter::format($note->total_amount, $note->currency) }}
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
             </div>
         </div>
     </section>

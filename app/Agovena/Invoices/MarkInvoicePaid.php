@@ -8,6 +8,7 @@ use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class MarkInvoicePaid
 {
@@ -22,7 +23,9 @@ final class MarkInvoicePaid
             }
 
             if ($locked->status === InvoiceStatus::Void) {
-                return $locked->load('items');
+                throw ValidationException::withMessages([
+                    'invoice' => __('admin.invoices.cannot_pay_void'),
+                ]);
             }
 
             $locked->status = InvoiceStatus::Paid;

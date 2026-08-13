@@ -38,8 +38,8 @@ final class DevelopmentPaymentGateway implements PaymentGateway
     public function capabilities(): PaymentGatewayCapabilities
     {
         return new PaymentGatewayCapabilities(
-            refunds: false,
-            partialRefunds: false,
+            refunds: true,
+            partialRefunds: true,
             recurring: false,
             webhooks: false,
             redirect: false,
@@ -82,7 +82,10 @@ final class DevelopmentPaymentGateway implements PaymentGateway
 
     public function refund(RefundRequest $request): RefundResult
     {
-        return RefundResult::fail(__('admin.payments.refunds_not_supported'));
+        return RefundResult::ok(
+            externalRefundId: 'dev-refund-'.$request->payment->id,
+            metadata: ['mode' => 'development'],
+        );
     }
 
     public function health(): HealthResult

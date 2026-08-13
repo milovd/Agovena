@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
+use App\Agovena\Invoices\AssertInvoiceCanBePaid;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\OrderPaid;
@@ -16,6 +17,10 @@ use Illuminate\Validation\ValidationException;
 
 final class RecordManualPayment
 {
+    public function __construct(
+        private readonly AssertInvoiceCanBePaid $assertInvoiceCanBePaid,
+    ) {}
+
     /**
      * Mark a pending manual payment as received. Idempotent: already-paid is a no-op success.
      */
@@ -28,6 +33,8 @@ final class RecordManualPayment
         return DB::transaction(function () use ($order, $reference): Payment {
             /** @var Order $locked */
             $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $locked->loadMissing('invoice');
+            $this->assertInvoiceCanBePaid->handle($locked);
             /** @var Payment $payment */
             $payment = Payment::query()->where('order_id', $locked->id)->lockForUpdate()->firstOrFail();
 

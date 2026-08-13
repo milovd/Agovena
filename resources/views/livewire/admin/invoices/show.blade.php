@@ -16,6 +16,20 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    @if (session('status'))
+        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
+    @endif
+
+    @if ($errors->any())
+        <div class="ag-alert ag-alert--danger" role="alert">
+            <ul>
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     <div class="ag-grid ag-grid--2">
         <section class="ag-section">
             <h2 class="ag-section__title">{{ __('admin.invoices.items') }}</h2>
@@ -41,18 +55,47 @@
                 <span>{{ __('common.total') }}</span>
                 <strong>{{ \App\Support\MoneyFormatter::format($invoice->total_amount, $invoice->currency) }}</strong>
             </p>
+            <p class="ag-muted">{{ __('admin.invoices.immutable_hint') }}</p>
         </section>
 
         <section class="ag-section">
             <h2 class="ag-section__title">{{ __('admin.invoices.details') }}</h2>
             <dl class="ag-dl">
-                <div><dt>{{ __('common.status') }}</dt><dd>{{ __('admin.invoices.status.'.$invoice->status->value) }}</dd></div>
+                <div>
+                    <dt>{{ __('common.status') }}</dt>
+                    <dd>
+                        <span @class([
+                            'ag-badge',
+                            'ag-badge--success' => $invoice->status->value === 'paid',
+                            'ag-badge--info' => $invoice->status->value === 'issued',
+                            'ag-badge--danger' => $invoice->status->value === 'void',
+                        ])>{{ __('admin.invoices.status.'.$invoice->status->value) }}</span>
+                    </dd>
+                </div>
                 <div><dt>{{ __('admin.invoices.issued') }}</dt><dd>{{ $invoice->issued_at?->format('Y-m-d') }}</dd></div>
                 <div><dt>{{ __('common.customer') }}</dt><dd>{{ $invoice->customer_name }} · {{ $invoice->customer_email }}</dd></div>
                 @if ($invoice->order)
                     <div>
                         <dt>{{ __('admin.invoices.order') }}</dt>
                         <dd><a href="{{ route('admin.orders.show', $invoice->order) }}">{{ $invoice->order->number }}</a></dd>
+                    </div>
+                @endif
+                <div>
+                    <dt>{{ __('admin.invoices.credited') }}</dt>
+                    <dd>{{ \App\Support\MoneyFormatter::format($invoice->creditedAmount(), $invoice->currency) }}</dd>
+                </div>
+                <div>
+                    <dt>{{ __('admin.invoices.remaining_creditable') }}</dt>
+                    <dd>{{ \App\Support\MoneyFormatter::format($invoice->remainingCreditable(), $invoice->currency) }}</dd>
+                </div>
+                @if ($payment)
+                    <div>
+                        <dt>{{ __('admin.refunds.refunded') }}</dt>
+                        <dd>{{ \App\Support\MoneyFormatter::format($payment->refundedAmount(), $payment->currency) }}</dd>
+                    </div>
+                    <div>
+                        <dt>{{ __('admin.refunds.remaining') }}</dt>
+                        <dd>{{ \App\Support\MoneyFormatter::format($payment->remainingRefundable(), $payment->currency) }}</dd>
                     </div>
                 @endif
                 @if ($invoice->billing_line1)
@@ -66,13 +109,112 @@
                         </dd>
                     </div>
                 @endif
-                @foreach ($invoice->custom_properties_snapshot ?? [] as $property)
-                    <div>
-                        <dt>{{ $property['label'] ?? $property['key'] }}</dt>
-                        <dd>{{ $property['value'] ?? '' }}</dd>
-                    </div>
-                @endforeach
             </dl>
         </section>
     </div>
+
+    @if ($canVoid || $canCredit || $canRefund)
+        <section class="ag-section">
+            <h2 class="ag-section__title">{{ __('admin.invoices.actions') }}</h2>
+            <div class="ag-actions">
+                @if ($canCredit)
+                    <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.credit', $invoice) }}">
+                        {{ __('admin.credit_notes.issue') }}
+                    </a>
+                @endif
+
+                @if ($canVoid)
+                    @if (! $confirmingVoid)
+                        <button type="button" class="ag-btn ag-btn--danger-outline" wire:click="startVoid">
+                            {{ __('admin.invoices.void_action') }}
+                        </button>
+                    @else
+                        <div class="ag-confirm" role="dialog" aria-labelledby="confirm-void-title" aria-modal="true">
+                            <h4 id="confirm-void-title">{{ __('admin.invoices.void_confirm_title') }}</h4>
+                            <p>{{ __('admin.invoices.void_confirm_text') }}</p>
+                            <div class="ag-confirm__actions">
+                                <button type="button" class="ag-btn ag-btn--danger" wire:click="voidInvoice">{{ __('common.confirm') }}</button>
+                                <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelVoid">{{ __('common.cancel') }}</button>
+                            </div>
+                        </div>
+                    @endif
+                @endif
+
+                @if ($canRefund)
+                    @if (! $confirmingRefund)
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="startRefund">
+                            {{ __('admin.refunds.record') }}
+                        </button>
+                    @else
+                        <div class="ag-confirm" role="dialog" aria-labelledby="confirm-refund-title" aria-modal="true">
+                            <h4 id="confirm-refund-title">{{ __('admin.refunds.confirm_title') }}</h4>
+                            <p>{{ __('admin.refunds.confirm_text') }}</p>
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="refund-amount">{{ __('admin.refunds.amount') }}</label>
+                                <input id="refund-amount" class="ag-input" type="text" wire:model="refundAmount" inputmode="decimal">
+                            </div>
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="refund-reason">{{ __('admin.refunds.reason') }}</label>
+                                <textarea id="refund-reason" class="ag-input" rows="3" wire:model="refundReason"></textarea>
+                            </div>
+                            @if ($invoice->creditNotes->isNotEmpty())
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="refund-credit-note">{{ __('admin.refunds.credit_note_optional') }}</label>
+                                    <select id="refund-credit-note" class="ag-select" wire:model="refundCreditNoteId">
+                                        <option value="">{{ __('admin.refunds.no_credit_note') }}</option>
+                                        @foreach ($invoice->creditNotes as $note)
+                                            <option value="{{ $note->id }}">{{ $note->number }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
+                            <div class="ag-confirm__actions">
+                                <button type="button" class="ag-btn ag-btn--primary" wire:click="recordRefund">{{ __('common.confirm') }}</button>
+                                <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelRefund">{{ __('common.cancel') }}</button>
+                            </div>
+                        </div>
+                    @endif
+                @endif
+            </div>
+        </section>
+    @endif
+
+    @if ($invoice->creditNotes->isNotEmpty())
+        <section class="ag-section">
+            <h2 class="ag-section__title">{{ __('admin.credit_notes.title') }}</h2>
+            <ul class="ag-list">
+                @foreach ($invoice->creditNotes as $note)
+                    <li class="ag-list__row">
+                        <div>
+                            <a href="{{ route('admin.credit-notes.show', $note) }}"><strong>{{ $note->number }}</strong></a>
+                            <p class="ag-muted">{{ $note->issued_at?->format('Y-m-d') }} · {{ $note->reason }}</p>
+                        </div>
+                        <strong>{{ \App\Support\MoneyFormatter::format($note->total_amount, $note->currency) }}</strong>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
+
+    @if ($invoice->refunds->isNotEmpty())
+        <section class="ag-section">
+            <h2 class="ag-section__title">{{ __('admin.refunds.history') }}</h2>
+            <ul class="ag-list">
+                @foreach ($invoice->refunds as $refund)
+                    <li class="ag-list__row">
+                        <div>
+                            <strong>{{ \App\Support\MoneyFormatter::format($refund->amount, $refund->currency) }}</strong>
+                            <p class="ag-muted">
+                                {{ __('admin.refunds.status.'.$refund->status->value) }}
+                                · {{ $refund->created_at?->toDayDateTimeString() }}
+                                @if ($refund->reason)
+                                    · {{ $refund->reason }}
+                                @endif
+                            </p>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endif
 </div>

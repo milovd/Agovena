@@ -56,6 +56,19 @@
                     <span>{{ __('customer.account.total') }}</span>
                     <strong>{{ \App\Support\MoneyFormatter::format($order->total_amount, $order->currency) }}</strong>
                 </p>
+                @if ($order->payment)
+                    <p>{{ __('customer.account.amount_paid', ['amount' => \App\Support\MoneyFormatter::format($order->payment->amount, $order->payment->currency)]) }}</p>
+                    @if ($order->payment->refundedAmount() > 0)
+                        <p>{{ __('customer.account.amount_refunded', ['amount' => \App\Support\MoneyFormatter::format($order->payment->refundedAmount(), $order->payment->currency)]) }}</p>
+                        <p>{{ __('customer.account.net_paid', ['amount' => \App\Support\MoneyFormatter::format($order->payment->amount - $order->payment->refundedAmount(), $order->payment->currency)]) }}</p>
+                    @endif
+                @endif
+                @if ($order->invoice)
+                    <p><a href="{{ route('customer.invoices.show', $order->invoice) }}">{{ $order->invoice->number }}</a></p>
+                @endif
+                @foreach ($order->creditNotes as $note)
+                    <p><a href="{{ route('customer.credit-notes.show', $note) }}">{{ $note->number }}</a></p>
+                @endforeach
             </div>
 
             <div>

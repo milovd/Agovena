@@ -185,3 +185,10 @@ a.ag-icon-btn {
 .ag-back .ag-icon {
   flex-shrink: 0;
 }
+
+.ag-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-3);
+  align-items: flex-start;
+}

@@ -24,7 +24,7 @@ final class OrderShow extends Component
             404,
         );
 
-        $this->order = $order->load(['items', 'payment', 'invoice']);
+        $this->order = $order->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
     }
 
     protected function unpaidOrder(): ?Order
@@ -34,7 +34,7 @@ final class OrderShow extends Component
 
     protected function afterPaymentAttempt(Order $order): void
     {
-        $this->order = $order->load(['items', 'payment', 'invoice']);
+        $this->order = $order->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
     }
 
     public function render(ThemeManager $themes, OrderFulfillmentPresenter $fulfillment)

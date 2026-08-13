@@ -48,7 +48,14 @@
                                 </div>
                             </td>
                             <td>{{ \App\Support\MoneyFormatter::format($invoice->total_amount, $invoice->currency) }}</td>
-                            <td>{{ __('admin.invoices.status.'.$invoice->status->value) }}</td>
+                            <td>
+                                <span @class([
+                                    'ag-badge',
+                                    'ag-badge--success' => $invoice->status->value === 'paid',
+                                    'ag-badge--info' => $invoice->status->value === 'issued',
+                                    'ag-badge--danger' => $invoice->status->value === 'void',
+                                ])>{{ __('admin.invoices.status.'.$invoice->status->value) }}</span>
+                            </td>
                             <td>{{ $invoice->issued_at?->format('Y-m-d') }}</td>
                             <td>
                                 <a class="ag-btn ag-btn--ghost" href="{{ route('admin.invoices.show', $invoice) }}">{{ __('common.view') }}</a>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use RuntimeException;
 
 /**
  * Issued invoices snapshot commercial data. Later profile/product/tax changes must not rewrite this row.
@@ -57,6 +59,13 @@ use Illuminate\Support\Carbon;
 ])]
 class Invoice extends Model
 {
+    protected static function booted(): void
+    {
+        static::deleting(function (): never {
+            throw new RuntimeException('Numbered invoices cannot be deleted.');
+        });
+    }
+
     protected function casts(): array
     {
         return [
@@ -90,5 +99,60 @@ class Invoice extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** @return HasMany<CreditNote, $this> */
+    public function creditNotes(): HasMany
+    {
+        return $this->hasMany(CreditNote::class);
+    }
+
+    /** @return HasMany<Refund, $this> */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class);
+    }
+
+    public function creditedAmount(): int
+    {
+        return (int) $this->creditNotes()->sum('total_amount');
+    }
+
+    public function remainingCreditable(): int
+    {
+        return max(0, (int) $this->total_amount - $this->creditedAmount());
+    }
+
+    public function creditedQuantityFor(InvoiceItem $item): int
+    {
+        return (int) CreditNoteItem::query()->where('invoice_item_id', $item->id)->sum('quantity');
+    }
+
+    public function remainingQuantityFor(InvoiceItem $item): int
+    {
+        return max(0, (int) $item->quantity - $this->creditedQuantityFor($item));
+    }
+
+    public function canVoid(): bool
+    {
+        return $this->status === InvoiceStatus::Issued
+            && $this->paid_at === null
+            && $this->creditNotes()->doesntExist();
+    }
+
+    public function canIssueCreditNote(): bool
+    {
+        return $this->status === InvoiceStatus::Paid && $this->remainingCreditable() > 0;
+    }
+
+    /** @return Collection<int, InvoiceItem> */
+    public function creditableItems(): Collection
+    {
+        return $this->items
+            ->filter(fn (InvoiceItem $item): bool => in_array($item->kind, [
+                InvoiceItemKind::Product,
+                InvoiceItemKind::Shipping,
+            ], true))
+            ->values();
     }
 }
