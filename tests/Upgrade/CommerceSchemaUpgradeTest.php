@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Customer;
+use App\Models\CustomerPropertyDefinition;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -54,5 +55,6 @@ test('custom property and product option schema can be applied onto an existing 
         ->and(Schema::hasColumn('orders', 'custom_properties_snapshot'))->toBeTrue()
         ->and(Schema::hasColumn('invoices', 'custom_properties_snapshot'))->toBeTrue()
         ->and(Schema::hasColumn('order_items', 'options_snapshot'))->toBeTrue()
-        ->and(Customer::query()->whereKey($customerId)->value('email'))->toBe($user->email);
+        ->and(Customer::query()->whereKey($customerId)->value('email'))->toBe($user->email)
+        ->and(CustomerPropertyDefinition::query()->count())->toBe(0);
 });
