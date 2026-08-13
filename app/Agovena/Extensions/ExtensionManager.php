@@ -6,6 +6,7 @@ namespace App\Agovena\Extensions;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Extensions\Contracts\Extension;
+use App\Agovena\Packages\PackageAutoload;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
@@ -35,7 +36,15 @@ final class ExtensionManager
         private readonly ProvisionerRegistry $provisioners,
         private readonly ShippingCarrierRegistry $shippingCarriers,
         private readonly ExtensionSettingsRepository $settings,
+        private readonly PackageAutoload $autoload,
     ) {}
+
+    public function refresh(): void
+    {
+        $this->discovered = null;
+        $this->booted = [];
+        $this->contexts = [];
+    }
 
     /**
      * @return list<ExtensionManifest>
@@ -348,33 +357,69 @@ final class ExtensionManager
         }
 
         $this->discovered = [];
-        $root = base_path('extensions');
-        if (! is_dir($root)) {
-            return $this->discovered;
-        }
-
-        foreach (File::directories($root) as $directory) {
-            $file = $directory.DIRECTORY_SEPARATOR.'extension.json';
-            if (! is_file($file)) {
+        foreach ($this->scanRoots() as $root) {
+            if (! is_dir($root)) {
                 continue;
             }
 
-            /** @var array<string, mixed>|null $data */
-            $data = json_decode((string) File::get($file), true);
-            if (! is_array($data)) {
-                continue;
-            }
+            foreach (File::directories($root) as $directory) {
+                $file = $directory.DIRECTORY_SEPARATOR.'extension.json';
+                if (! is_file($file)) {
+                    continue;
+                }
 
-            try {
-                $manifest = ExtensionManifest::fromArray($data, $directory);
-            } catch (\InvalidArgumentException) {
-                continue;
-            }
+                /** @var array<string, mixed>|null $data */
+                $data = json_decode((string) File::get($file), true);
+                if (! is_array($data)) {
+                    continue;
+                }
 
-            $this->discovered[$manifest->id] = $manifest;
+                try {
+                    $manifest = ExtensionManifest::fromArray($data, $directory);
+                } catch (\InvalidArgumentException) {
+                    continue;
+                }
+
+                if (isset($this->discovered[$manifest->id])) {
+                    continue;
+                }
+
+                $this->autoload->register($manifest->path, $this->autoloadMap($manifest));
+                $this->discovered[$manifest->id] = $manifest;
+            }
         }
 
         return $this->discovered;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function scanRoots(): array
+    {
+        $roots = [base_path('extensions'), storage_path('app/packages/extensions')];
+        foreach (config('agovena.packages.extra_extension_paths', []) as $path) {
+            if (is_string($path) && $path !== '') {
+                $roots[] = $path;
+            }
+        }
+
+        return $roots;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function autoloadMap(ExtensionManifest $manifest): array
+    {
+        if ($manifest->autoloadPsr4 !== []) {
+            return $manifest->autoloadPsr4;
+        }
+
+        $ns = substr($manifest->provider, 0, (int) strrpos($manifest->provider, '\\') + 1);
+        $src = is_dir($manifest->path.DIRECTORY_SEPARATOR.'src') ? 'src/' : '';
+
+        return $ns !== '' ? [$ns => $src] : [];
     }
 
     private function extensionsTableReady(): bool

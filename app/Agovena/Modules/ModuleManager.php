@@ -9,7 +9,9 @@ use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Modules\Contracts\Module;
+use App\Agovena\Packages\PackageAutoload;
 use App\Models\AgovenaModule;
+use Composer\Semver\Semver;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\Artisan;
@@ -33,7 +35,14 @@ final class ModuleManager
         private readonly CustomerAccountNav $customerAccountNav,
         private readonly CustomerAccountOverview $customerAccountOverview,
         private readonly Dispatcher $events,
+        private readonly PackageAutoload $autoload,
     ) {}
+
+    public function refresh(): void
+    {
+        $this->discovered = null;
+        $this->booted = [];
+    }
 
     /**
      * @return list<ModuleManifest>
@@ -90,6 +99,7 @@ final class ModuleManager
     public function install(string $moduleId): AgovenaModule
     {
         $manifest = $this->requireManifest($moduleId);
+        $this->assertCompatible($manifest);
         $this->assertDependencies($manifest, requireEnabled: false);
 
         $row = AgovenaModule::query()->firstOrNew(['module_id' => $moduleId]);
@@ -106,6 +116,7 @@ final class ModuleManager
     public function enable(string $moduleId): AgovenaModule
     {
         $manifest = $this->requireManifest($moduleId);
+        $this->assertCompatible($manifest);
         $this->assertDependencies($manifest, requireEnabled: true);
 
         $row = AgovenaModule::query()->where('module_id', $moduleId)->first();
@@ -163,7 +174,7 @@ final class ModuleManager
     }
 
     /**
-     * @return array{manifest: ModuleManifest, record: AgovenaModule|null, enabled: bool, installed: bool}
+     * @return array{manifest: ModuleManifest, record: AgovenaModule|null, enabled: bool, installed: bool, compatible: bool, compatibility_error: string|null}
      */
     public function status(string $moduleId): array
     {
@@ -172,11 +183,22 @@ final class ModuleManager
             ? AgovenaModule::query()->where('module_id', $moduleId)->first()
             : null;
 
+        $compatible = true;
+        $compatibilityError = null;
+        try {
+            $this->assertCompatible($manifest);
+        } catch (ValidationException $e) {
+            $compatible = false;
+            $compatibilityError = $e->errors()['module'][0] ?? $e->getMessage();
+        }
+
         return [
             'manifest' => $manifest,
             'record' => $record,
             'enabled' => $record?->enabled === true,
             'installed' => $record !== null,
+            'compatible' => $compatible,
+            'compatibility_error' => $compatibilityError,
         ];
     }
 
@@ -288,6 +310,24 @@ final class ModuleManager
         return $manifest;
     }
 
+    private function assertCompatible(ModuleManifest $manifest): void
+    {
+        $platform = (string) config('agovena.version', '0.1.0');
+        $constraint = $manifest->agovena;
+        if ($constraint === '*' || $constraint === '') {
+            return;
+        }
+
+        if (! Semver::satisfies($platform, $constraint)) {
+            throw ValidationException::withMessages([
+                'module' => __('admin.packages.incompatible', [
+                    'constraint' => $constraint,
+                    'platform' => $platform,
+                ]),
+            ]);
+        }
+    }
+
     /**
      * @return array<string, ModuleManifest>
      */
@@ -298,28 +338,64 @@ final class ModuleManager
         }
 
         $this->discovered = [];
-        $root = base_path('modules');
-        if (! is_dir($root)) {
-            return $this->discovered;
-        }
-
-        foreach (File::directories($root) as $directory) {
-            $file = $directory.DIRECTORY_SEPARATOR.'module.json';
-            if (! is_file($file)) {
+        foreach ($this->scanRoots() as $root) {
+            if (! is_dir($root)) {
                 continue;
             }
 
-            /** @var array<string, mixed>|null $data */
-            $data = json_decode((string) File::get($file), true);
-            if (! is_array($data) || ! isset($data['id'], $data['name'], $data['provider'])) {
-                continue;
-            }
+            foreach (File::directories($root) as $directory) {
+                $file = $directory.DIRECTORY_SEPARATOR.'module.json';
+                if (! is_file($file)) {
+                    continue;
+                }
 
-            $manifest = ModuleManifest::fromArray($data, $directory);
-            $this->discovered[$manifest->id] = $manifest;
+                /** @var array<string, mixed>|null $data */
+                $data = json_decode((string) File::get($file), true);
+                if (! is_array($data) || ! isset($data['id'], $data['name'], $data['provider'])) {
+                    continue;
+                }
+
+                $manifest = ModuleManifest::fromArray($data, $directory);
+                if (isset($this->discovered[$manifest->id])) {
+                    continue;
+                }
+
+                $this->autoload->register($manifest->path, $this->autoloadMap($manifest));
+                $this->discovered[$manifest->id] = $manifest;
+            }
         }
 
         return $this->discovered;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function scanRoots(): array
+    {
+        $roots = [base_path('modules'), storage_path('app/packages/modules')];
+        foreach (config('agovena.packages.extra_module_paths', []) as $path) {
+            if (is_string($path) && $path !== '') {
+                $roots[] = $path;
+            }
+        }
+
+        return $roots;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function autoloadMap(ModuleManifest $manifest): array
+    {
+        if ($manifest->autoloadPsr4 !== []) {
+            return $manifest->autoloadPsr4;
+        }
+
+        $ns = substr($manifest->provider, 0, (int) strrpos($manifest->provider, '\\') + 1);
+        $src = is_dir($manifest->path.DIRECTORY_SEPARATOR.'src') ? 'src/' : '';
+
+        return $ns !== '' ? [$ns => $src] : [];
     }
 
     private function modulesTableReady(): bool

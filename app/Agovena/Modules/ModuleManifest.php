@@ -8,6 +8,7 @@ final readonly class ModuleManifest
 {
     /**
      * @param  list<string>  $dependencies  Other module ids
+     * @param  array<string, string>  $autoloadPsr4
      */
     public function __construct(
         public string $id,
@@ -19,6 +20,7 @@ final readonly class ModuleManifest
         public string $agovena = '*',
         public array $dependencies = [],
         public string $author = 'Agovena',
+        public array $autoloadPsr4 = [],
     ) {}
 
     /**
@@ -31,6 +33,16 @@ final readonly class ModuleManifest
             $deps = [];
         }
 
+        $psr4 = [];
+        $autoload = $data['autoload']['psr-4'] ?? [];
+        if (is_array($autoload)) {
+            foreach ($autoload as $prefix => $relative) {
+                if (is_string($prefix) && is_string($relative)) {
+                    $psr4[$prefix] = $relative;
+                }
+            }
+        }
+
         return new self(
             id: (string) $data['id'],
             name: (string) $data['name'],
@@ -41,6 +53,7 @@ final readonly class ModuleManifest
             agovena: (string) ($data['agovena'] ?? '*'),
             dependencies: array_values(array_map('strval', $deps)),
             author: (string) ($data['author'] ?? 'Agovena'),
+            autoloadPsr4: $psr4,
         );
     }
 }

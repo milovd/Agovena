@@ -1,0 +1,205 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
+use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Packages\ComposerRunner;
+use App\Agovena\Packages\PackageInstaller;
+use App\Agovena\Packages\PackageSource;
+use App\Agovena\Packages\PackageSourceValidator;
+use App\Enums\PackageKind;
+use App\Enums\PackageSourceType;
+use App\Livewire\Admin\Modules\Index as ModulesIndex;
+use App\Models\AgovenaModule;
+use App\Models\AgovenaPackage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
+use Tests\Support\CreatesStaff;
+use Tests\Support\FakeComposerRunner;
+
+uses(CreatesStaff::class);
+
+afterEach(function (): void {
+    File::deleteDirectory(storage_path('app/packages'));
+});
+
+function sampleModulePath(): string
+{
+    return base_path('tests/fixtures/packages/modules/sample');
+}
+
+function sampleExtensionPath(): string
+{
+    return base_path('tests/fixtures/packages/extensions/sample-gateway');
+}
+
+test('path-installed module uses the same lifecycle as bundled modules', function () {
+    $installer = app(PackageInstaller::class);
+    $package = $installer->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Path,
+        locator: sampleModulePath(),
+    ));
+
+    $modules = app(ModuleManager::class);
+
+    expect($package->agovena_id)->toBe('sample')
+        ->and($package->source_type)->toBe(PackageSourceType::Path)
+        ->and($modules->isInstalled('sample'))->toBeTrue()
+        ->and($modules->isEnabled('sample'))->toBeFalse()
+        ->and(is_dir(storage_path('app/packages/modules/sample')))->toBeTrue();
+
+    $modules->enable('sample');
+
+    expect($modules->isEnabled('sample'))->toBeTrue()
+        ->and(app(ProductCapabilityRegistry::class)->has('sample'))->toBeTrue();
+
+    $modules->disable('sample');
+
+    expect($modules->isEnabled('sample'))->toBeFalse()
+        ->and(AgovenaModule::query()->where('module_id', 'sample')->exists())->toBeTrue();
+
+    $installer->uninstall(PackageKind::Module, 'sample');
+
+    expect($modules->isInstalled('sample'))->toBeFalse()
+        ->and(is_dir(storage_path('app/packages/modules/sample')))->toBeTrue();
+
+    $installer->purge(PackageKind::Module, 'sample');
+
+    expect(is_dir(storage_path('app/packages/modules/sample')))->toBeFalse()
+        ->and(AgovenaPackage::query()->where('agovena_id', 'sample')->exists())->toBeFalse();
+});
+
+test('composer source installs through the runner without a shell string', function () {
+    $fake = new FakeComposerRunner;
+    $fake->map('agovena-fixtures/sample-module', sampleModulePath());
+    $this->app->instance(ComposerRunner::class, $fake);
+
+    $package = app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Composer,
+        locator: 'agovena-fixtures/sample-module',
+        constraint: '^1.0',
+        composerName: 'agovena-fixtures/sample-module',
+    ));
+
+    expect($package->composer_name)->toBe('agovena-fixtures/sample-module')
+        ->and($fake->required)->toHaveCount(1)
+        ->and($fake->required[0]['name'])->toBe('agovena-fixtures/sample-module')
+        ->and($fake->required[0]['constraint'])->toBe('^1.0')
+        ->and(app(ModuleManager::class)->manifest('sample'))->not->toBeNull();
+});
+
+test('git source requires an allowlisted https repository', function () {
+    $fake = new FakeComposerRunner;
+    $fake->map('vendor/sample-module', sampleModulePath());
+    $this->app->instance(ComposerRunner::class, $fake);
+
+    $package = app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Vcs,
+        locator: 'https://github.com/vendor/sample-module',
+        constraint: '*',
+        composerName: 'vendor/sample-module',
+    ));
+
+    expect($package->source_type)->toBe(PackageSourceType::Vcs)
+        ->and($fake->required[0]['url'])->toBe('https://github.com/vendor/sample-module');
+});
+
+test('package source validator rejects unsafe names urls and traversal', function () {
+    $validator = app(PackageSourceValidator::class);
+
+    expect(fn () => $validator->assert(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Composer,
+        locator: 'vendor/pkg; rm -rf /',
+        composerName: 'vendor/pkg; rm -rf /',
+    )))->toThrow(ValidationException::class);
+
+    expect(fn () => $validator->assert(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Vcs,
+        locator: 'https://evil.example/vendor/pkg',
+        composerName: 'vendor/pkg',
+    )))->toThrow(ValidationException::class);
+
+    expect(fn () => $validator->assert(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Vcs,
+        locator: 'https://github.com/vendor/pkg?raw=1',
+        composerName: 'vendor/pkg',
+    )))->toThrow(ValidationException::class);
+
+    expect(fn () => $validator->assert(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Path,
+        locator: base_path('modules/../.env'),
+    )))->toThrow(ValidationException::class);
+
+    expect(fn () => $validator->assertComposerName('not a package'))->toThrow(ValidationException::class);
+});
+
+test('cannot replace or purge bundled first-party modules', function () {
+    expect(fn () => app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Path,
+        locator: sampleModulePath(),
+        composerName: null,
+    )))->not->toThrow(ValidationException::class);
+
+    File::copyDirectory(sampleModulePath(), storage_path('app/packages/staging/inventory'));
+    File::put(
+        storage_path('app/packages/staging/inventory/module.json'),
+        str_replace('"id": "sample"', '"id": "inventory"', (string) file_get_contents(sampleModulePath().DIRECTORY_SEPARATOR.'module.json')),
+    );
+
+    expect(fn () => app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Path,
+        locator: storage_path('app/packages/staging/inventory'),
+    )))->toThrow(ValidationException::class);
+
+    expect(fn () => app(PackageInstaller::class)->purge(PackageKind::Module, 'inventory'))
+        ->toThrow(ValidationException::class);
+});
+
+test('extension packages install enable and purge independently of modules', function () {
+    $installer = app(PackageInstaller::class);
+    $installer->install(new PackageSource(
+        kind: PackageKind::Extension,
+        sourceType: PackageSourceType::Path,
+        locator: sampleExtensionPath(),
+    ));
+
+    $extensions = app(ExtensionManager::class);
+    expect($extensions->manifest('sample-gateway'))->not->toBeNull();
+
+    $extensions->enable('sample-gateway');
+    expect($extensions->isEnabled('sample-gateway'))->toBeTrue();
+
+    $installer->purge(PackageKind::Extension, 'sample-gateway');
+    $extensions->refresh();
+    expect($extensions->manifest('sample-gateway'))->toBeNull();
+});
+
+test('staff can install a module from composer on the admin page', function () {
+    $fake = new FakeComposerRunner;
+    $fake->map('agovena-fixtures/sample-module', sampleModulePath());
+    $this->app->instance(ComposerRunner::class, $fake);
+
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(ModulesIndex::class)
+        ->set('packageName', 'agovena-fixtures/sample-module')
+        ->set('versionConstraint', '^1.0')
+        ->call('installRemote')
+        ->assertHasNoErrors()
+        ->assertSee('Sample');
+
+    expect(app(ModuleManager::class)->isInstalled('sample'))->toBeTrue();
+});

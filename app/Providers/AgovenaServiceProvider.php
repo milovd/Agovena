@@ -37,6 +37,8 @@ use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
+use App\Agovena\Packages\ComposerRunner;
+use App\Agovena\Packages\ProcessComposerRunner;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Settings\SettingsRepository;
@@ -68,6 +70,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ProductCapabilityRegistry::class);
         $this->app->singleton(ProductCapabilityManager::class);
         $this->app->singleton(ModuleManager::class);
+        $this->app->singleton(ComposerRunner::class, ProcessComposerRunner::class);
         $this->app->singleton(ExtensionSettingsRepository::class);
         $this->app->singleton(PaymentGatewayRegistry::class);
         $this->app->singleton(ProvisionerRegistry::class);

@@ -8,6 +8,10 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
+    @can('extensions.manage')
+        @include('livewire.admin.partials.package-install-form', ['kind' => 'extension'])
+    @endcan
+
     <div class="ag-toolbar" style="margin-bottom: 1rem;">
         <select class="ag-select" wire:model.live="category" aria-label="{{ __('admin.extensions.filter_category') }}">
             <option value="">{{ __('admin.extensions.all_categories') }}</option>
@@ -30,6 +34,7 @@
                         <th scope="col">{{ __('admin.extensions.column_name') }}</th>
                         <th scope="col">{{ __('admin.extensions.column_category') }}</th>
                         <th scope="col">{{ __('admin.extensions.column_version') }}</th>
+                        <th scope="col">{{ __('admin.packages.column_source') }}</th>
                         <th scope="col">{{ __('admin.extensions.column_author') }}</th>
                         <th scope="col">{{ __('admin.extensions.column_compatibility') }}</th>
                         <th scope="col">{{ __('common.status') }}</th>
@@ -52,6 +57,7 @@
                             </td>
                             <td>{{ __($manifest->category->labelKey()) }}</td>
                             <td>{{ $manifest->version }}</td>
+                            <td>{{ __('admin.packages.source.'.$row['source']->value) }}</td>
                             <td>{{ $manifest->author }}</td>
                             <td>
                                 @if ($row['compatible'])
@@ -61,12 +67,9 @@
                                 @endif
                             </td>
                             <td>
-                                @if ($row['enabled'])
-                                    {{ __('admin.extensions.status.enabled') }}
-                                @elseif ($row['installed'])
-                                    {{ __('admin.extensions.status.installed') }}
-                                @else
-                                    {{ __('admin.extensions.status.available') }}
+                                {{ __($row['lifecycle']->labelKey()) }}
+                                @if (! $row['compatible'])
+                                    <span class="ag-field__error">{{ $row['compatibility_error'] }}</span>
                                 @endif
                             </td>
                             <td>
@@ -92,6 +95,21 @@
                                                 {{ __('admin.extensions.actions.enable') }}
                                             </button>
                                         @endif
+                                        @if ($row['lifecycle']->value === 'update_available')
+                                            <button type="button" class="ag-btn ag-btn--ghost" wire:click="updatePackage('{{ $manifest->id }}')">
+                                                {{ __('admin.packages.actions.update') }}
+                                            </button>
+                                        @endif
+                                        @if ($row['installed'] && ! $row['enabled'])
+                                            <button type="button" class="ag-btn ag-btn--ghost" wire:click="uninstallPackage('{{ $manifest->id }}')">
+                                                {{ __('admin.packages.actions.uninstall') }}
+                                            </button>
+                                        @endif
+                                        @if ($row['can_purge'])
+                                            <button type="button" class="ag-btn ag-btn--ghost" wire:click="purgePackage('{{ $manifest->id }}')" wire:confirm="{{ __('admin.packages.purge_confirm') }}">
+                                                {{ __('admin.packages.actions.purge') }}
+                                            </button>
+                                        @endif
                                     @endcan
                                 </div>
                             </td>
@@ -101,6 +119,7 @@
             </table>
         </div>
         <p class="ag-muted">{{ __('admin.extensions.disable_preserves_data') }}</p>
+        <p class="ag-muted">{{ __('admin.packages.uninstall_vs_purge') }}</p>
     @endif
 
     @if ($settingsExtensionId)

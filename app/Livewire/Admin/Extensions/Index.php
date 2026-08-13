@@ -8,8 +8,11 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Extensions\ExtensionCategory;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Packages\PackageCatalog;
 use App\Agovena\Payments\HealthResult;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Enums\PackageKind;
+use App\Livewire\Admin\Concerns\InstallsRemotePackages;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -17,6 +20,7 @@ use Livewire\Component;
 final class Index extends Component
 {
     use AuthorizesRequests;
+    use InstallsRemotePackages;
 
     public string $category = '';
 
@@ -134,14 +138,14 @@ final class Index extends Component
         }
     }
 
-    public function render(AdminRegistrar $admin, ExtensionManager $extensions)
+    public function render(AdminRegistrar $admin, PackageCatalog $catalog)
     {
         $rows = [];
-        foreach ($extensions->discover() as $manifest) {
-            if ($this->category !== '' && $manifest->category->value !== $this->category) {
+        foreach ($catalog->extensions() as $row) {
+            if ($this->category !== '' && $row['manifest']->category->value !== $this->category) {
                 continue;
             }
-            $rows[] = $extensions->status($manifest->id);
+            $rows[] = $row;
         }
 
         return view('livewire.admin.extensions.index', [
@@ -152,5 +156,15 @@ final class Index extends Component
             'title' => __('admin.extensions.title'),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    protected function packageKind(): PackageKind
+    {
+        return PackageKind::Extension;
+    }
+
+    protected function packageManagePermission(): string
+    {
+        return 'extensions.manage';
     }
 }

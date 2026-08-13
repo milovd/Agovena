@@ -28,4 +28,22 @@ return [
             ? filter_var(env('AGOVENA_DEV_INSTANT_PAY'), FILTER_VALIDATE_BOOLEAN)
             : (env('APP_ENV') === 'local' && filter_var(env('APP_DEBUG', false), FILTER_VALIDATE_BOOLEAN)),
     ],
+
+    /*
+     * Module/Extension package installation. Composer/VCS sources are allowlisted.
+     * Isolated Composer project lives under storage/app/packages/composer.
+     */
+    'packages' => [
+        'allowed_hosts' => [
+            'github.com',
+            'gitlab.com',
+            'bitbucket.org',
+            'codeberg.org',
+        ],
+        'extra_path_prefixes' => [],
+        'extra_module_paths' => [],
+        'extra_extension_paths' => [],
+        'composer_timeout' => 180,
+        'composer_binary' => env('AGOVENA_COMPOSER_BINARY'),
+    ],
 ];

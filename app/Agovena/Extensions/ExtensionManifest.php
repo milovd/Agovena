@@ -9,6 +9,7 @@ final readonly class ExtensionManifest
     /**
      * @param  list<string>  $dependencies  Other extension ids
      * @param  list<array{key: string, label: string, type?: string, secret?: bool, required?: bool, default?: mixed}>  $settings
+     * @param  array<string, string>  $autoloadPsr4
      */
     public function __construct(
         public string $id,
@@ -22,6 +23,7 @@ final readonly class ExtensionManifest
         public array $dependencies = [],
         public string $author = 'Agovena',
         public array $settings = [],
+        public array $autoloadPsr4 = [],
     ) {}
 
     /**
@@ -64,6 +66,16 @@ final readonly class ExtensionManifest
             ];
         }
 
+        $psr4 = [];
+        $autoload = $data['autoload']['psr-4'] ?? [];
+        if (is_array($autoload)) {
+            foreach ($autoload as $prefix => $relative) {
+                if (is_string($prefix) && is_string($relative)) {
+                    $psr4[$prefix] = $relative;
+                }
+            }
+        }
+
         return new self(
             id: (string) $data['id'],
             name: (string) $data['name'],
@@ -76,6 +88,7 @@ final readonly class ExtensionManifest
             dependencies: array_values(array_map('strval', $deps)),
             author: (string) ($data['author'] ?? 'Agovena'),
             settings: $normalizedSettings,
+            autoloadPsr4: $psr4,
         );
     }
 }

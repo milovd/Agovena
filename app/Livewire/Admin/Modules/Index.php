@@ -6,7 +6,10 @@ namespace App\Livewire\Admin\Modules;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Packages\PackageCatalog;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Enums\PackageKind;
+use App\Livewire\Admin\Concerns\InstallsRemotePackages;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -14,6 +17,7 @@ use Livewire\Component;
 final class Index extends Component
 {
     use AuthorizesRequests;
+    use InstallsRemotePackages;
 
     public function mount(): void
     {
@@ -58,19 +62,23 @@ final class Index extends Component
         }
     }
 
-    public function render(AdminRegistrar $admin, ModuleManager $modules)
+    public function render(AdminRegistrar $admin, PackageCatalog $catalog)
     {
-        $rows = [];
-        foreach ($modules->discover() as $manifest) {
-            $status = $modules->status($manifest->id);
-            $rows[] = $status;
-        }
-
         return view('livewire.admin.modules.index', [
-            'modules' => $rows,
+            'modules' => $catalog->modules(),
         ])->layout('layouts.admin', [
             'title' => __('admin.modules.title'),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    protected function packageKind(): PackageKind
+    {
+        return PackageKind::Module;
+    }
+
+    protected function packageManagePermission(): string
+    {
+        return 'modules.manage';
     }
 }
