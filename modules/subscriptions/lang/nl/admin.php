@@ -21,6 +21,7 @@ return [
     'actions' => 'Acties',
     'cancel_period_end' => 'Opzeggen aan einde periode',
     'cancel_now' => 'Direct opzeggen',
+    'resume' => 'Opzegging ongedaan maken',
     'mark_past_due' => 'Markeer als achterstallig',
     'create_renewal' => 'Verlengingsbestelling maken',
     'renewals' => 'Verlengingen',
@@ -31,5 +32,6 @@ return [
     'cancelled_period_end' => 'Abonnement eindigt na de huidige periode.',
     'cancelled_now' => 'Abonnement opgezegd.',
     'marked_past_due' => 'Abonnement gemarkeerd als achterstallig.',
+    'resumed' => 'Opzegging ongedaan gemaakt.',
     'back' => 'Terug naar abonnementen',
 ];

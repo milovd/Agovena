@@ -21,6 +21,7 @@ return [
     'actions' => 'Actions',
     'cancel_period_end' => 'Cancel at period end',
     'cancel_now' => 'Cancel immediately',
+    'resume' => 'Undo cancellation',
     'mark_past_due' => 'Mark past due',
     'create_renewal' => 'Create renewal order',
     'renewals' => 'Renewals',
@@ -31,5 +32,6 @@ return [
     'cancelled_period_end' => 'Subscription will end after the current period.',
     'cancelled_now' => 'Subscription cancelled.',
     'marked_past_due' => 'Subscription marked past due.',
+    'resumed' => 'Cancellation undone.',
     'back' => 'Back to subscriptions',
 ];

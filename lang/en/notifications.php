@@ -42,5 +42,8 @@ return [
         'not_allowed' => 'This plan change is not allowed.',
         'currency_mismatch' => 'Plans with different currencies cannot be changed.',
         'order_line' => 'Plan change to :product',
+        'already_pending' => 'A plan change is already pending for this subscription.',
+        'cannot_apply' => 'This plan change cannot be applied.',
+        'cannot_cancel' => 'This plan change cannot be cancelled.',
     ],
 ];

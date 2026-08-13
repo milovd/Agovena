@@ -8,4 +8,5 @@ return [
     'cannot_renew' => 'This subscription cannot be renewed.',
     'renew_cancelled' => 'A subscription set to cancel at period end cannot renew.',
     'renewal_pending' => 'A pending renewal order already exists for this subscription.',
+    'cannot_resume' => 'This subscription cannot undo cancellation.',
 ];

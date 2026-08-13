@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\PlanChanges;
 
+use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -20,6 +21,12 @@ use Illuminate\Validation\ValidationException;
 
 final class RequestPlanChange
 {
+    public function __construct(
+        private readonly ListPriceDifferencePricer $pricer,
+        private readonly ApplyPlanChange $apply,
+        private readonly IssueInvoiceFromOrder $issueInvoice,
+    ) {}
+
     public function handle(
         Customer $customer,
         Product $from,
@@ -44,13 +51,25 @@ final class RequestPlanChange
             ]);
         }
 
+        if ($subscriptionId !== null) {
+            $pending = ProductPlanChangeRequest::query()
+                ->where('subscription_id', $subscriptionId)
+                ->where('status', 'pending')
+                ->exists();
+            if ($pending) {
+                throw ValidationException::withMessages([
+                    'plan' => __('notifications.plan_changes.already_pending'),
+                ]);
+            }
+        }
+
         return DB::transaction(function () use ($customer, $from, $to, $mapping, $subscriptionId): ProductPlanChangeRequest {
-            $difference = max(0, $to->price_amount - $from->price_amount);
+            $difference = $this->pricer->chargeAmount($from, $to);
             $order = $mapping->timing === 'immediate' && $difference > 0
                 ? $this->createOrder($customer, $to, $difference)
                 : null;
 
-            return ProductPlanChangeRequest::query()->create([
+            $request = ProductPlanChangeRequest::query()->create([
                 'product_plan_change_id' => $mapping->id,
                 'customer_id' => $customer->id,
                 'subscription_id' => $subscriptionId,
@@ -60,6 +79,16 @@ final class RequestPlanChange
                 'timing' => $mapping->timing,
                 'status' => 'pending',
             ]);
+
+            if ($order !== null) {
+                $this->issueInvoice->handle($order);
+            }
+
+            if ($request->timing === 'immediate' && $request->order_id === null) {
+                return $this->apply->handle($request);
+            }
+
+            return $request;
         });
     }
 

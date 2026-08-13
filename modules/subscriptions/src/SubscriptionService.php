@@ -9,6 +9,8 @@ use Agovena\Modules\Subscriptions\Enums\SubscriptionInterval;
 use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
+use App\Agovena\Invoices\IssueInvoiceFromOrder;
+use App\Agovena\PlanChanges\ApplyPlanChange;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -16,15 +18,23 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ProductPlanChangeRequest;
 use App\Notifications\SubscriptionCancelledNotification;
 use Carbon\CarbonImmutable;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class SubscriptionService
 {
+    public function __construct(
+        private readonly IssueInvoiceFromOrder $issueInvoice,
+        private readonly ApplyPlanChange $applyPlanChange,
+    ) {}
+
     public function createFromPaidOrder(Order $order): void
     {
         $order->loadMissing('items');
@@ -58,7 +68,7 @@ final class SubscriptionService
             $periodStart = $trialEnds ?? $now;
             $periodEnd = $this->addInterval($periodStart, $interval, $intervalCount);
 
-            Subscription::query()->create([
+            $subscription = Subscription::query()->create([
                 'number' => $this->generateNumber(),
                 'customer_id' => $order->customer_id,
                 'customer_email' => $order->customer_email,
@@ -78,6 +88,8 @@ final class SubscriptionService
                 'next_billing_at' => $periodEnd,
                 'cancel_at_period_end' => false,
             ]);
+
+            $this->linkServiceInstances((int) $subscription->id, $item->id);
         }
     }
 
@@ -107,6 +119,102 @@ final class SubscriptionService
         $this->notifyCancellation($subscription, false);
 
         return $subscription->fresh() ?? $subscription;
+    }
+
+    public function resume(Subscription $subscription): Subscription
+    {
+        if (! $subscription->cancel_at_period_end || $subscription->status !== SubscriptionStatus::Active) {
+            throw ValidationException::withMessages([
+                'subscription' => __('subscriptions::errors.cannot_resume'),
+            ]);
+        }
+
+        $subscription->cancel_at_period_end = false;
+        $subscription->cancelled_at = null;
+        $subscription->save();
+
+        return $subscription->fresh() ?? $subscription;
+    }
+
+    /**
+     * Create at most one renewal order per due period. Safe under overlapping scheduler runs.
+     */
+    public function processDue(?CarbonImmutable $now = null): int
+    {
+        $now ??= CarbonImmutable::now();
+        $processed = 0;
+
+        $lock = Cache::lock('agovena.subscriptions.process-due', 120);
+        if (! $lock->get()) {
+            return 0;
+        }
+
+        try {
+            $ids = Subscription::query()
+                ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::PastDue])
+                ->where(function ($query) use ($now): void {
+                    $query->where(function ($due) use ($now): void {
+                        $due->whereNotNull('next_billing_at')
+                            ->where('next_billing_at', '<=', $now);
+                    })->orWhere(function ($overdue) use ($now): void {
+                        $overdue->whereNotNull('current_period_end')
+                            ->where('current_period_end', '<=', $now);
+                    });
+                })
+                ->orderBy('id')
+                ->pluck('id');
+
+            foreach ($ids as $id) {
+                DB::transaction(function () use ($id, $now, &$processed): void {
+                    /** @var Subscription|null $subscription */
+                    $subscription = Subscription::query()->whereKey($id)->lockForUpdate()->first();
+                    if ($subscription === null) {
+                        return;
+                    }
+
+                    $this->applyDuePlanChanges($subscription);
+
+                    if ($subscription->cancel_at_period_end) {
+                        $periodEnd = $subscription->current_period_end;
+                        if ($periodEnd !== null && CarbonImmutable::parse($periodEnd)->lessThanOrEqualTo($now)) {
+                            $this->cancelPendingRenewals($subscription);
+                            $this->end($subscription);
+                            $processed++;
+                        }
+
+                        return;
+                    }
+
+                    $dueAt = $subscription->next_billing_at;
+                    if ($dueAt !== null && CarbonImmutable::parse($dueAt)->lessThanOrEqualTo($now)) {
+                        $this->ensureRenewalOrder($subscription);
+                        $this->markPastDueIfUnpaid($subscription->fresh() ?? $subscription, $now);
+                        $processed++;
+                    }
+                });
+            }
+        } finally {
+            $lock->release();
+        }
+
+        return $processed;
+    }
+
+    public function ensureRenewalOrder(Subscription $subscription): Order
+    {
+        $pending = SubscriptionRenewal::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('status', RenewalStatus::Pending)
+            ->first();
+
+        if ($pending !== null && $pending->order_id !== null) {
+            $existing = Order::query()->with(['items', 'payment'])->find($pending->order_id);
+            if ($existing !== null) {
+                return $existing;
+            }
+        }
+
+        return $this->createRenewalOrder($subscription);
     }
 
     public function markPastDue(Subscription $subscription): Subscription
@@ -186,6 +294,9 @@ final class SubscriptionService
             $label = $product !== null
                 ? $product->name
                 : (string) __('subscriptions::admin.renewal_item');
+            $originItem = $subscription->order_item_id !== null
+                ? OrderItem::query()->find($subscription->order_item_id)
+                : null;
             OrderItem::query()->create([
                 'order_id' => $order->id,
                 'product_id' => $subscription->product_id,
@@ -194,6 +305,7 @@ final class SubscriptionService
                 'unit_amount' => $subscription->price_amount,
                 'line_total_amount' => $lineTotal,
                 'currency' => $subscription->currency,
+                'options_snapshot' => $originItem->options_snapshot ?? [],
             ]);
 
             Payment::query()->create([
@@ -212,7 +324,10 @@ final class SubscriptionService
                 'status' => RenewalStatus::Pending,
             ]);
 
-            return $order->fresh(['items', 'payment']) ?? $order;
+            $created = $order->fresh(['items', 'payment']) ?? $order;
+            $this->issueInvoice->handle($created);
+
+            return $created;
         });
     }
 
@@ -280,5 +395,86 @@ final class SubscriptionService
         }
 
         Notification::route('mail', $subscription->customer_email)->notify($notification);
+    }
+
+    private function applyDuePlanChanges(Subscription $subscription): void
+    {
+        $pending = ProductPlanChangeRequest::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('timing', 'next_period')
+            ->where('status', 'pending')
+            ->orderBy('id')
+            ->get();
+
+        foreach ($pending as $request) {
+            $this->applyPlanChange->handle($request);
+        }
+
+        $subscription->refresh();
+    }
+
+    private function cancelPendingRenewals(Subscription $subscription): void
+    {
+        $renewals = SubscriptionRenewal::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('status', RenewalStatus::Pending)
+            ->get();
+
+        foreach ($renewals as $renewal) {
+            $renewal->status = RenewalStatus::Cancelled;
+            $renewal->save();
+
+            if ($renewal->order_id === null) {
+                continue;
+            }
+
+            $order = Order::query()->whereKey($renewal->order_id)->lockForUpdate()->first();
+            if ($order !== null && $order->status === OrderStatus::Pending) {
+                $order->status = OrderStatus::Cancelled;
+                $order->save();
+            }
+
+            $payment = Payment::query()->where('order_id', $renewal->order_id)->lockForUpdate()->first();
+            if ($payment !== null && $payment->status === PaymentStatus::Pending) {
+                $payment->status = PaymentStatus::Cancelled;
+                $payment->save();
+            }
+        }
+    }
+
+    private function markPastDueIfUnpaid(Subscription $subscription, CarbonImmutable $now): void
+    {
+        if ($subscription->status !== SubscriptionStatus::Active) {
+            return;
+        }
+
+        $periodEnd = $subscription->current_period_end;
+        if ($periodEnd === null || CarbonImmutable::parse($periodEnd)->greaterThan($now)) {
+            return;
+        }
+
+        $unpaid = SubscriptionRenewal::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('status', RenewalStatus::Pending)
+            ->exists();
+
+        if ($unpaid) {
+            $this->markPastDue($subscription);
+        }
+    }
+
+    private function linkServiceInstances(int $subscriptionId, int $orderItemId): void
+    {
+        if (! Schema::hasTable('service_instances')) {
+            return;
+        }
+
+        DB::table('service_instances')
+            ->where('order_item_id', $orderItemId)
+            ->whereNull('subscription_id')
+            ->update([
+                'subscription_id' => $subscriptionId,
+                'updated_at' => now(),
+            ]);
     }
 }

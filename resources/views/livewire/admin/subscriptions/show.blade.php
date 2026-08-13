@@ -47,6 +47,11 @@
                         {{ __('subscriptions::admin.cancel_now') }}
                     </button>
                 @endif
+                @if ($subscription->cancel_at_period_end && $subscription->status->value === 'active')
+                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="resume">
+                        {{ __('subscriptions::admin.resume') }}
+                    </button>
+                @endif
                 @if ($subscription->status->value === 'active')
                     <button type="button" class="ag-btn ag-btn--secondary" wire:click="markPastDue">
                         {{ __('subscriptions::admin.mark_past_due') }}

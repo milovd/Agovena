@@ -29,4 +29,19 @@ class ProductPlanChangeRequest extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
+    public function toProduct(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'to_product_id');
+    }
+
+    public function fromProduct(): BelongsTo
+    {
+        return $this->belongsTo(Product::class, 'from_product_id');
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

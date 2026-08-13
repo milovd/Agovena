@@ -42,5 +42,8 @@ return [
         'not_allowed' => 'Deze planwijziging is niet toegestaan.',
         'currency_mismatch' => 'Plannen met verschillende valuta kunnen niet worden gewijzigd.',
         'order_line' => 'Planwijziging naar :product',
+        'already_pending' => 'Er staat al een planwijziging open voor dit abonnement.',
+        'cannot_apply' => 'Deze planwijziging kan niet worden toegepast.',
+        'cannot_cancel' => 'Deze planwijziging kan niet worden geannuleerd.',
     ],
 ];

@@ -36,6 +36,13 @@ final class SubscriptionShow extends Component
         session()->flash('status', __('subscriptions::admin.cancelled_now'));
     }
 
+    public function resume(SubscriptionService $subscriptions): void
+    {
+        $this->authorize('subscriptions.manage');
+        $this->subscription = $subscriptions->resume($this->subscription);
+        session()->flash('status', __('subscriptions::admin.resumed'));
+    }
+
     public function markPastDue(SubscriptionService $subscriptions): void
     {
         $this->authorize('subscriptions.manage');

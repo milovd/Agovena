@@ -8,6 +8,8 @@ use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use App\Models\Order;
 use App\Models\Product;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -40,6 +42,12 @@ final class ProvisioningService
                 ? $config['provider_key']
                 : null;
 
+            $subscriptionId = null;
+            if (Schema::hasTable('subscriptions')) {
+                $subscriptionId = DB::table('subscriptions')->where('order_item_id', $item->id)->value('id');
+                $subscriptionId = is_numeric($subscriptionId) ? (int) $subscriptionId : null;
+            }
+
             for ($i = 0; $i < $item->quantity; $i++) {
                 ServiceInstance::query()->create([
                     'number' => $this->generateNumber(),
@@ -49,13 +57,14 @@ final class ProvisioningService
                     'customer_id' => $order->customer_id,
                     'customer_email' => $order->customer_email,
                     'customer_name' => $order->customer_name,
-                    'subscription_id' => null,
+                    'subscription_id' => $subscriptionId,
                     'status' => ServiceInstanceStatus::Pending,
                     'provider_key' => $providerKey,
                     'meta' => [
                         'label' => $item->label,
                         'unit_amount' => $item->unit_amount,
                         'currency' => $item->currency,
+                        'options_snapshot' => $item->options_snapshot ?? [],
                     ],
                 ]);
             }

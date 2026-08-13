@@ -7,6 +7,7 @@ namespace Agovena\Modules\Provisioning;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstanceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstancesIndex;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServicesIndex;
+use Agovena\Modules\Provisioning\Listeners\ApplyPlanChangeToService;
 use Agovena\Modules\Provisioning\Listeners\CreateServiceInstancesWhenOrderPaid;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use App\Agovena\Admin\NavigationItem;
@@ -16,6 +17,7 @@ use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Modules\ModuleContext;
 use App\Events\OrderPaid;
+use App\Events\PlanChangeApplied;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Route;
 
@@ -77,6 +79,7 @@ final class ProvisioningModule implements Module
         );
 
         $context->listen(OrderPaid::class, CreateServiceInstancesWhenOrderPaid::class);
+        $context->listen(PlanChangeApplied::class, ApplyPlanChangeToService::class);
 
         $context->adminRoutes(function (): void {
             Route::get('/provisioning', InstancesIndex::class)->name('provisioning.index');

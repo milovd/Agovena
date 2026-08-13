@@ -48,6 +48,7 @@ use App\Enums\TicketStatus;
 use App\Events\OrderCreated;
 use App\Events\OrderPaid;
 use App\Events\PaymentRecorded;
+use App\Listeners\ApplyPlanChangeWhenOrderPaid;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
 use App\Listeners\IssueInvoiceWhenOrderCreated;
 use App\Listeners\IssueInvoiceWhenOrderPaid;
@@ -106,6 +107,7 @@ class AgovenaServiceProvider extends ServiceProvider
         Event::listen(OrderCreated::class, SendOrderPlacedNotification::class);
         Event::listen(OrderCreated::class, IssueInvoiceWhenOrderCreated::class);
         Event::listen(OrderPaid::class, IssueInvoiceWhenOrderPaid::class);
+        Event::listen(OrderPaid::class, ApplyPlanChangeWhenOrderPaid::class);
         Event::listen(PaymentRecorded::class, SendPaymentRecordedNotification::class);
 
         /** @var AdminRegistrar $admin */
@@ -297,15 +299,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'coins',
             sort: 115,
             permission: 'taxes.view',
-        ));
-        $admin->navigation(new NavigationItem(
-            id: 'plan-changes',
-            label: 'admin.nav.plan_changes',
-            group: 'admin.nav_groups.commerce',
-            href: '/admin/plan-changes',
-            icon: 'repeat',
-            sort: 29,
-            permission: 'plan-changes.view',
         ));
 
         $admin->navigation(new NavigationItem(

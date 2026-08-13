@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Route;
 
 final class SubscriptionCancelledNotification extends Notification implements ShouldQueue
 {
@@ -36,6 +37,11 @@ final class SubscriptionCancelledNotification extends Notification implements Sh
                     : 'notifications.subscription_cancelled.immediate',
                 ['number' => $this->number],
             ))
-            ->action(__('notifications.subscription_cancelled.action'), route('customer.subscriptions'));
+            ->action(
+                __('notifications.subscription_cancelled.action'),
+                Route::has('customer.subscriptions')
+                    ? route('customer.subscriptions')
+                    : url('/account/subscriptions'),
+            );
     }
 }

@@ -6,7 +6,9 @@ namespace Agovena\Modules\Subscriptions;
 
 use Agovena\Modules\Subscriptions\Http\Livewire\Admin\SubscriptionShow;
 use Agovena\Modules\Subscriptions\Http\Livewire\Admin\SubscriptionsIndex;
+use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionShow as CustomerSubscriptionShow;
 use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionsIndex as CustomerSubscriptionsIndex;
+use Agovena\Modules\Subscriptions\Listeners\ApplyPlanChangeToSubscription;
 use Agovena\Modules\Subscriptions\Listeners\CreateSubscriptionsWhenOrderPaid;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use App\Agovena\Admin\NavigationItem;
@@ -16,6 +18,7 @@ use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Modules\ModuleContext;
 use App\Events\OrderPaid;
+use App\Events\PlanChangeApplied;
 use App\Models\Customer;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +51,16 @@ final class SubscriptionsModule implements Module
             permission: 'subscriptions.view',
         ));
 
+        $context->admin()->navigation(new NavigationItem(
+            id: 'plan-changes',
+            label: 'admin.nav.plan_changes',
+            group: 'admin.nav_groups.services',
+            href: '/admin/plan-changes',
+            icon: 'repeat',
+            sort: 18,
+            permission: 'plan-changes.view',
+        ));
+
         $context->customerAccountNav(new AccountNavItem(
             id: 'subscriptions',
             label: 'subscriptions::customer.nav',
@@ -77,6 +90,7 @@ final class SubscriptionsModule implements Module
         );
 
         $context->listen(OrderPaid::class, CreateSubscriptionsWhenOrderPaid::class);
+        $context->listen(PlanChangeApplied::class, ApplyPlanChangeToSubscription::class);
 
         $context->adminRoutes(function (): void {
             Route::get('/subscriptions', SubscriptionsIndex::class)->name('subscriptions.index');
@@ -85,6 +99,7 @@ final class SubscriptionsModule implements Module
 
         $context->customerRoutes(function (): void {
             Route::get('/subscriptions', CustomerSubscriptionsIndex::class)->name('subscriptions');
+            Route::get('/subscriptions/{subscription}', CustomerSubscriptionShow::class)->name('subscriptions.show');
         });
     }
 }
