@@ -351,3 +351,19 @@
   flex-wrap: wrap;
   gap: var(--ag-space-2);
 }
+
+.ag-code {
+  margin: var(--ag-space-3) 0;
+  padding: var(--ag-space-3) var(--ag-space-4);
+  overflow-x: auto;
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.ag-code code {
+  font: inherit;
+}

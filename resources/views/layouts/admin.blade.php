@@ -130,6 +130,15 @@
                 @if (session('error'))
                     <div class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</div>
                 @endif
+                @if (($schemaPendingCount ?? 0) > 0 && ! request()->routeIs('admin.updates') && auth()->user()?->can('settings.view'))
+                    <div class="ag-alert ag-alert--warning" role="status">
+                        <div class="ag-alert__body">
+                            <p class="ag-alert__title">{{ __('admin.updates.banner_title') }}</p>
+                            <p class="ag-alert__text">{{ __('admin.updates.banner_text') }}</p>
+                        </div>
+                        <a class="ag-btn ag-btn--secondary ag-btn--sm" href="{{ route('admin.updates') }}">{{ __('admin.updates.banner_action') }}</a>
+                    </div>
+                @endif
                 {{ $slot }}
             </main>
         </div>

@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Customer\EmailVerificationController;
 use App\Http\Controllers\InvoiceDocumentController;
-use App\Http\Controllers\SchemaUpdateRequiredController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
 use App\Http\Controllers\Webhooks\PaymentWebhookController;
 use App\Http\Middleware\RedirectIfInstalled;
@@ -33,6 +32,7 @@ use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
 use App\Livewire\Admin\Store\Presets as StorePresets;
+use App\Livewire\Admin\System\Updates as SystemUpdates;
 use App\Livewire\Admin\Taxes\Index as TaxesIndex;
 use App\Livewire\Admin\Tickets\Index as TicketsIndex;
 use App\Livewire\Admin\Tickets\Show as TicketsShow;
@@ -68,8 +68,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(RedirectIfInstalled::class)->group(function (): void {
     Route::get('/install', InstallerWizard::class)->name('install');
 });
-
-Route::get('/update-required', SchemaUpdateRequiredController::class)->name('schema.update-required');
 
 Route::get('/', CatalogIndex::class)->name('storefront.home');
 Route::get('/search/suggest', SearchSuggestController::class)
@@ -148,6 +146,7 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access'])->prefix
     Route::get('/tickets', TicketsIndex::class)->name('tickets.index');
     Route::get('/tickets/{ticket}', TicketsShow::class)->name('tickets.show');
     Route::get('/audit', AuditIndex::class)->name('audit.index');
+    Route::get('/updates', SystemUpdates::class)->name('updates');
     Route::get('/modules', ModulesIndex::class)->name('modules.index');
     Route::get('/store-presets', StorePresets::class)->name('store-presets');
     Route::get('/extensions', ExtensionsIndex::class)->name('extensions.index');

@@ -196,13 +196,20 @@ class AgovenaServiceProvider extends ServiceProvider
         });
 
         View::composer('layouts.admin', function ($view): void {
-            if (array_key_exists('navigation', $view->getData())) {
-                return;
+            if (! array_key_exists('navigation', $view->getData())) {
+                /** @var AdminRegistrar $admin */
+                $admin = $this->app->make(AdminRegistrar::class);
+                $view->with('navigation', $admin->navigationItems());
             }
 
-            /** @var AdminRegistrar $admin */
-            $admin = $this->app->make(AdminRegistrar::class);
-            $view->with('navigation', $admin->navigationItems());
+            try {
+                $view->with(
+                    'schemaPendingCount',
+                    $this->app->make(ApplicationSchemaStatus::class)->pendingCount(),
+                );
+            } catch (\Throwable) {
+                $view->with('schemaPendingCount', 0);
+            }
         });
     }
 
@@ -386,6 +393,16 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'file-text',
             sort: 220,
             permission: 'audit.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'updates',
+            label: 'admin.nav.updates',
+            group: 'admin.nav_groups.administration',
+            href: '/admin/updates',
+            icon: 'repeat',
+            sort: 230,
+            permission: 'settings.view',
         ));
 
         $admin->navigation(new NavigationItem(

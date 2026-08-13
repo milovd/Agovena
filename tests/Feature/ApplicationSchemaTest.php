@@ -25,31 +25,50 @@ test('pending customer property migration is detected instead of assumed present
         ->toContain('2026_08_13_090000_create_customer_custom_properties_tables');
 });
 
-test('customer properties admin does not 500 when the schema is pending', function () {
+test('storefront stays available when the schema is pending', function () {
+    $this->dropCustomerPropertySchema();
+    app(ApplicationSchemaStatus::class)->refresh();
+
+    $this->get(route('storefront.home'))
+        ->assertOk()
+        ->assertDontSee(__('admin.updates.pending_title'), false)
+        ->assertDontSee('php artisan agovena:upgrade', false)
+        ->assertDontSee('SQLSTATE', false);
+});
+
+test('admin updates shows pending migrations instead of a public takeover page', function () {
+    $staff = $this->createStaff();
+    $this->dropCustomerPropertySchema();
+    app(ApplicationSchemaStatus::class)->refresh();
+
+    $this->actingAs($staff)
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee(__('admin.updates.banner_title'), false)
+        ->assertSee(__('admin.updates.banner_action'), false)
+        ->assertDontSee('install-panel', false);
+
+    $this->actingAs($staff)
+        ->get(route('admin.updates'))
+        ->assertOk()
+        ->assertSee(__('admin.updates.title'), false)
+        ->assertSee(__('admin.updates.pending_title'), false)
+        ->assertSee('php artisan agovena:upgrade', false)
+        ->assertSee('2026_08_13_090000_create_customer_custom_properties_tables', false)
+        ->assertDontSee('install-panel', false)
+        ->assertDontSee('SQLSTATE', false);
+});
+
+test('customer properties admin sends operators to updates instead of a SQL 500', function () {
     $staff = $this->createStaff();
     $this->dropCustomerPropertySchema();
     app(ApplicationSchemaStatus::class)->refresh();
 
     $this->actingAs($staff)
         ->get(route('admin.customers.properties'))
-        ->assertStatus(503)
-        ->assertSee(__('schema.update_required.heading'), false)
-        ->assertSee('php artisan agovena:upgrade', false)
+        ->assertRedirect(route('admin.updates'))
         ->assertDontSee('SQLSTATE', false)
         ->assertDontSee('no such table', false);
-});
-
-test('registration and checkout do not 500 when custom property schema is pending', function () {
-    $this->dropCustomerPropertySchema();
-    app(ApplicationSchemaStatus::class)->refresh();
-
-    $this->get(route('register'))
-        ->assertStatus(503)
-        ->assertSee(__('schema.update_required.heading'), false);
-
-    $this->get(route('storefront.checkout'))
-        ->assertStatus(503)
-        ->assertDontSee('SQLSTATE', false);
 });
 
 test('doctor fails when application migrations are pending', function () {
@@ -82,6 +101,12 @@ test('agovena upgrade applies pending schema and restores the properties screen'
         ->assertSee(__('admin.customer_properties.title'), false)
         ->assertDontSee('SQLSTATE', false);
 
+    $this->actingAs($staff)
+        ->get(route('admin.updates'))
+        ->assertOk()
+        ->assertSee(__('admin.updates.current_title'), false)
+        ->assertDontSee(__('admin.updates.banner_title'), false);
+
     Livewire::actingAs($staff)
         ->test(CustomerProperties::class)
         ->assertOk()
@@ -95,6 +120,6 @@ test('agovena upgrade applies pending schema and restores the properties screen'
     expect(CustomerPropertyDefinition::query()->where('key', 'vat_number')->exists())->toBeTrue();
 });
 
-test('update-required page redirects once the schema is current', function () {
-    $this->get(route('schema.update-required'))->assertRedirect(route('storefront.home'));
+test('the public update-required url is not a storefront page', function () {
+    $this->get('/update-required')->assertNotFound();
 });

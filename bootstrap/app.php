@@ -2,7 +2,6 @@
 
 use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Http\Middleware\EnsureAgovenaInstalled;
-use App\Http\Middleware\EnsureApplicationSchemaIsCurrent;
 use App\Http\Middleware\EnsureCanAccessAdmin;
 use App\Http\Middleware\EnsureCustomerEmailIsVerified;
 use App\Http\Middleware\SetLocale;
@@ -12,6 +11,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -28,7 +28,6 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [
             EnsureAgovenaInstalled::class,
-            EnsureApplicationSchemaIsCurrent::class,
         ]);
         $middleware->web(append: [
             SetLocale::class,
@@ -67,12 +66,18 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            $isAdmin = $request->is('admin') || $request->is('admin/*');
+            if (! $isAdmin) {
+                return null;
+            }
+
             if ($request->expectsJson() || $request->is('livewire/*') || $request->is('api/*')) {
                 return response()->json([
-                    'message' => __('schema.update_required.title'),
+                    'message' => __('admin.updates.pending_title'),
+                    'redirect' => route('admin.updates'),
                 ], 503);
             }
 
-            return response()->view('schema.update-required', $schema->viewData(), 503);
+            return new RedirectResponse(route('admin.updates'));
         });
     })->create();

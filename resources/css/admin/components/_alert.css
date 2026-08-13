@@ -1,8 +1,18 @@
 .ag-alert {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ag-space-4);
+  flex-wrap: wrap;
   padding: var(--ag-space-3) var(--ag-space-4);
   border-radius: var(--ag-radius-md);
   border: 1px solid var(--ag-color-border);
   background: var(--ag-color-surface);
+}
+
+.ag-alert__body {
+  min-width: 0;
+  flex: 1;
 }
 
 .ag-alert--success {
