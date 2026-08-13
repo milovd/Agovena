@@ -100,6 +100,9 @@
                     <h2>{{ __('customer.account.shipments') }}</h2>
                     @foreach ($shipments as $shipment)
                         <article class="store-shipment" wire:key="shipment-{{ $loop->index }}">
+                            @if ($shipment->shippingMethod)
+                                <p>{{ __('customer.account.shipping_method') }}: {{ $shipment->shippingMethod }}</p>
+                            @endif
                             <p>
                                 <strong>{{ $shipment->statusLabel }}</strong>
                                 @if ($shipment->carrierName)
@@ -118,6 +121,9 @@
                             @endif
                             @if ($shipment->shippedAt)
                                 <p>{{ __('customer.account.shipped_at') }}: {{ $shipment->shippedAt }}</p>
+                            @endif
+                            @if ($shipment->deliveredAt)
+                                <p>{{ __('customer.account.delivered_at') }}: {{ $shipment->deliveredAt }}</p>
                             @endif
                             <ul>
                                 @foreach ($shipment->items as $item)

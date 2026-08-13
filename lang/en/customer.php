@@ -118,8 +118,11 @@ return [
         'items' => 'Items',
         'billing' => 'Billing',
         'shipments' => 'Shipments',
+        'shipping_method' => 'Shipping method',
+        'carrier' => 'Carrier',
         'tracking' => 'Tracking',
         'shipped_at' => 'Shipped',
+        'delivered_at' => 'Delivered',
         'quantity' => 'Qty :count',
         'order_statuses' => [
             'pending' => 'Pending',

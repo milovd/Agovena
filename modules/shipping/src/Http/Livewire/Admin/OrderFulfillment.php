@@ -7,10 +7,15 @@ namespace Agovena\Modules\Shipping\Http\Livewire\Admin;
 use Agovena\Modules\Shipping\Enums\ShipmentStatus;
 use Agovena\Modules\Shipping\Models\Shipment;
 use Agovena\Modules\Shipping\ShipmentService;
+use App\Agovena\Shipping\Contracts\CreatesCarrierShipments;
+use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Models\Order;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 final class OrderFulfillment extends Component
 {
@@ -23,6 +28,8 @@ final class OrderFulfillment extends Component
     public string $tracking_number = '';
 
     public string $tracking_url = '';
+
+    public string $carrier_id = '';
 
     public function mount(Order $order): void
     {
@@ -87,6 +94,43 @@ final class OrderFulfillment extends Component
         session()->flash('status', __('shipping::admin.saved'));
     }
 
+    public function createCarrierShipment(int $shipmentId, ShipmentService $shipments): void
+    {
+        $this->authorize('shipping.manage');
+        try {
+            $carrierId = $this->carrier_id !== '' ? $this->carrier_id : (string) ($this->availableCarriers()[0]['id'] ?? '');
+            $shipments->dispatchCarrier($this->findShipment($shipmentId), $carrierId);
+            session()->flash('status', __('shipping::admin.saved'));
+        } catch (ValidationException $e) {
+            session()->flash('error', collect($e->errors())->flatten()->first() ?? $e->getMessage());
+        }
+    }
+
+    public function syncCarrierTracking(int $shipmentId, ShipmentService $shipments): void
+    {
+        $this->authorize('shipping.manage');
+        try {
+            $shipments->syncTracking($this->findShipment($shipmentId));
+            session()->flash('status', __('shipping::admin.saved'));
+        } catch (ValidationException $e) {
+            session()->flash('error', collect($e->errors())->flatten()->first() ?? $e->getMessage());
+        }
+    }
+
+    public function downloadLabel(int $shipmentId): ?StreamedResponse
+    {
+        $this->authorize('shipping.manage');
+        $shipment = $this->findShipment($shipmentId);
+        $path = $shipment->label_path;
+        if ($path === null || $path === '' || ! Storage::disk('local')->exists($path)) {
+            session()->flash('error', __('shipping::admin.no_shipments'));
+
+            return null;
+        }
+
+        return Storage::disk('local')->download($path, 'shipment-'.$shipment->id.'.pdf');
+    }
+
     public function render()
     {
         $shipments = Shipment::query()
@@ -103,10 +147,36 @@ final class OrderFulfillment extends Component
             $this->tracking_url = (string) ($first->tracking_url ?? '');
         }
 
+        $carriers = $this->availableCarriers();
+        if ($this->carrier_id === '' && $carriers !== []) {
+            $this->carrier_id = $carriers[0]['id'];
+        }
+
         return view('livewire.admin.shipping.order-fulfillment', [
             'shipments' => $shipments,
             'statuses' => ShipmentStatus::cases(),
+            'carriers' => $carriers,
         ]);
+    }
+
+    /**
+     * @return list<array{id: string, label: string}>
+     */
+    private function availableCarriers(): array
+    {
+        $out = [];
+        foreach (app(ShippingCarrierRegistry::class)->all() as $carrier) {
+            if (! $carrier instanceof CreatesCarrierShipments) {
+                continue;
+            }
+            $label = $carrier->label();
+            $out[] = [
+                'id' => $carrier->id(),
+                'label' => Lang::has($label) ? (string) __($label) : $label,
+            ];
+        }
+
+        return $out;
     }
 
     private function findShipment(int $id): Shipment

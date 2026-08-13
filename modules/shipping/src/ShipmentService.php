@@ -9,10 +9,14 @@ use Agovena\Modules\Shipping\Models\Shipment;
 use Agovena\Modules\Shipping\Models\ShipmentItem;
 use Agovena\Modules\Shipping\Models\ShippingMethod;
 use App\Agovena\Notifications\SendsCataloguedMail;
+use App\Agovena\Shipping\DispatchCarrierShipment;
+use App\Agovena\Shipping\ShippingCarrierRegistry;
+use App\Agovena\Shipping\SyncCarrierTracking;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Lang;
 use Illuminate\Validation\ValidationException;
 
 final class ShipmentService
@@ -67,6 +71,67 @@ final class ShipmentService
         });
     }
 
+    public function dispatchCarrier(Shipment $shipment, string $carrierId, string $serviceCode = ''): Shipment
+    {
+        if ($shipment->external_ref !== null && $shipment->external_ref !== '') {
+            return $shipment;
+        }
+
+        $order = $shipment->order()->firstOrFail();
+        if ($order->status->value !== 'paid') {
+            throw ValidationException::withMessages([
+                'shipping' => __('shipping::errors.order_not_fulfillable'),
+            ]);
+        }
+
+        $result = app(DispatchCarrierShipment::class)->handle($order, $carrierId, $serviceCode);
+
+        $shipment->carrier_id = $carrierId;
+        $shipment->external_ref = $result->externalId;
+        $shipment->carrier_name = $this->carrierLabel($carrierId);
+        $shipment->tracking_number = $result->trackingNumber;
+        $shipment->tracking_url = $result->trackingUrl;
+        $shipment->label_path = $result->labelPath;
+        $shipment->save();
+
+        if ($shipment->status === ShipmentStatus::Pending) {
+            $this->markProcessing($shipment->fresh() ?? $shipment);
+        }
+
+        return $shipment->fresh() ?? $shipment;
+    }
+
+    public function syncTracking(Shipment $shipment): Shipment
+    {
+        if ($shipment->carrier_id === null || $shipment->external_ref === null || $shipment->external_ref === '') {
+            return $shipment;
+        }
+
+        $remote = app(SyncCarrierTracking::class)->handle($shipment->carrier_id, $shipment->external_ref);
+        if (($remote['tracking_number']) !== null) {
+            $shipment->tracking_number = $remote['tracking_number'];
+        }
+        if (($remote['tracking_url']) !== null) {
+            $shipment->tracking_url = $remote['tracking_url'];
+        }
+        $shipment->save();
+
+        $status = $remote['status'];
+        $fresh = $shipment->fresh() ?? $shipment;
+        if ($status === 'shipped' && $fresh->status !== ShipmentStatus::Shipped && $fresh->status !== ShipmentStatus::Delivered) {
+            return $this->markShipped($fresh, $fresh->carrier_name, $fresh->tracking_number, $fresh->tracking_url);
+        }
+        if ($status === 'delivered' && $fresh->status !== ShipmentStatus::Delivered) {
+            if (in_array($fresh->status, [ShipmentStatus::Pending, ShipmentStatus::Processing], true)) {
+                $fresh = $this->markShipped($fresh, $fresh->carrier_name, $fresh->tracking_number, $fresh->tracking_url);
+            }
+
+            return $this->markDelivered($fresh);
+        }
+
+        return $fresh;
+    }
+
     public function markProcessing(Shipment $shipment): Shipment
     {
         return $this->transition($shipment, ShipmentStatus::Processing);
@@ -101,7 +166,34 @@ final class ShipmentService
 
     public function cancel(Shipment $shipment): Shipment
     {
+        if ($shipment->status === ShipmentStatus::Delivered) {
+            throw ValidationException::withMessages([
+                'status' => __('shipping::errors.cannot_cancel_delivered'),
+            ]);
+        }
+
+        if ($shipment->carrier_id !== null && $shipment->external_ref !== null && $shipment->external_ref !== '') {
+            try {
+                app(DispatchCarrierShipment::class)->cancel($shipment->carrier_id, $shipment->external_ref);
+            } catch (ValidationException $exception) {
+                if ($shipment->status === ShipmentStatus::Shipped) {
+                    throw $exception;
+                }
+            }
+        }
+
         return $this->transition($shipment, ShipmentStatus::Cancelled);
+    }
+
+    private function carrierLabel(string $carrierId): string
+    {
+        $carrier = app(ShippingCarrierRegistry::class)->get($carrierId);
+        if ($carrier === null) {
+            return $carrierId;
+        }
+        $label = $carrier->label();
+
+        return Lang::has($label) ? (string) __($label) : $label;
     }
 
     public function updateTracking(

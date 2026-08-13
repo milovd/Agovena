@@ -46,6 +46,29 @@
                         </div>
                         <div class="ag-toolbar">
                             <button type="button" class="ag-btn ag-btn--ghost" wire:click="saveTracking({{ $shipment->id }})">{{ __('shipping::admin.save') }}</button>
+                            @if ($shipment->status->value === 'pending' && $carriers !== [])
+                                <div class="ag-field">
+                                    <label class="ag-field__label">{{ __('shipping::admin.carrier_provider') }}</label>
+                                    <select class="ag-input" wire:model="carrier_id">
+                                        @foreach ($carriers as $carrier)
+                                            <option value="{{ $carrier['id'] }}">{{ $carrier['label'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <button type="button" class="ag-btn ag-btn--primary" wire:click="createCarrierShipment({{ $shipment->id }})">
+                                    {{ __('shipping::admin.create_carrier_shipment') }}
+                                </button>
+                            @endif
+                            @if ($shipment->external_ref)
+                                <button type="button" class="ag-btn ag-btn--secondary" wire:click="syncCarrierTracking({{ $shipment->id }})">
+                                    {{ __('shipping::admin.sync_tracking') }}
+                                </button>
+                            @endif
+                            @if ($shipment->label_path)
+                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="downloadLabel({{ $shipment->id }})">
+                                    {{ __('shipping::admin.download_label') }}
+                                </button>
+                            @endif
                             @if ($shipment->status->value === 'pending')
                                 <button type="button" class="ag-btn ag-btn--secondary" wire:click="markProcessing({{ $shipment->id }})">{{ __('shipping::admin.mark_processing') }}</button>
                             @endif

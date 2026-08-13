@@ -21,5 +21,6 @@ final readonly class FulfillmentShipmentView
         public ?string $shippedAt,
         public ?string $deliveredAt,
         public array $items = [],
+        public ?string $shippingMethod = null,
     ) {}
 }

@@ -21,8 +21,11 @@ use Illuminate\Support\Collection;
  * @property int $shipping_amount
  * @property string $currency
  * @property string|null $carrier_name
+ * @property string|null $carrier_id
+ * @property string|null $external_ref
  * @property string|null $tracking_number
  * @property string|null $tracking_url
+ * @property string|null $label_path
  * @property Carbon|null $shipped_at
  * @property Carbon|null $delivered_at
  * @property string|null $notes
@@ -41,8 +44,11 @@ final class Shipment extends Model
         'shipping_amount',
         'currency',
         'carrier_name',
+        'carrier_id',
+        'external_ref',
         'tracking_number',
         'tracking_url',
+        'label_path',
         'shipped_at',
         'delivered_at',
         'notes',

@@ -29,6 +29,8 @@ Lifecycle: discover → install → enable / disable → uninstall. Disable pres
 `extensions/mollie` is the first production Payment Extension: hosted checkout, webhooks, refunds, and status sync behind the generic `PaymentGateway` contracts.
 `extensions/pterodactyl` is the first production Provisioning Extension: panel lifecycle behind the generic `Provisioner` contracts.
 
+`extensions/postnl` is the first production Shipping Extension: barcodes, labels, and tracking behind the generic `ShippingCarrier` contracts.
+
 ## Implementing a Payment Extension
 
 1. Add `extensions/{id}/extension.json` with `category: payment_gateway`
@@ -47,4 +49,12 @@ Lifecycle: discover → install → enable / disable → uninstall. Disable pres
 4. Product mapping belongs in Extension-owned `provider_settings` on the provisionable capability — never Core columns such as vendor ids
 5. Disable preserves Service Instance data
 
-Mollie/Stripe/Pterodactyl-specific types must not appear in Core or Modules.
+## Implementing a Shipping Extension
+
+1. `category: shipping`
+2. Implement `ShippingCarrier` plus optional `QuotesShippingRates`, `CreatesCarrierShipments`, `TracksShipments`
+3. Register via `$context->shippingCarrier(...)`
+4. Provider service codes, labels, and tracking stay Extension-owned. Generic Shipment may store `carrier_id`, `external_ref`, tracking, and a private label path
+5. Tests must fake provider HTTP. CI must not require live credentials
+
+Mollie/Stripe/Pterodactyl/PostNL-specific types must not appear in Core or Modules.

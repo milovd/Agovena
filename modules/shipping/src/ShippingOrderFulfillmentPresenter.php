@@ -41,6 +41,7 @@ final class ShippingOrderFulfillmentPresenter implements OrderFulfillmentPresent
                 shippedAt: $shipment->shipped_at?->toDateTimeString(),
                 deliveredAt: $shipment->delivered_at?->toDateTimeString(),
                 items: $items,
+                shippingMethod: $shipment->shipping_method_label,
             );
         }
 

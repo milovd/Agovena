@@ -118,8 +118,11 @@ return [
         'items' => 'Artikelen',
         'billing' => 'Factuurgegevens',
         'shipments' => 'Zendingen',
+        'shipping_method' => 'Verzendmethode',
+        'carrier' => 'Vervoerder',
         'tracking' => 'Tracking',
         'shipped_at' => 'Verzonden',
+        'delivered_at' => 'Bezorgd',
         'quantity' => 'Aantal :count',
         'order_statuses' => [
             'pending' => 'In behandeling',
