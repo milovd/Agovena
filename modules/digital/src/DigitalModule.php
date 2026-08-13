@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Agovena\Modules\Digital;
 
+use Agovena\Modules\Digital\Http\Controllers\Api\DownloadApiController;
 use Agovena\Modules\Digital\Http\Controllers\DownloadController;
 use Agovena\Modules\Digital\Http\Livewire\Admin\AssetsIndex;
+use Agovena\Modules\Digital\Http\Livewire\Admin\CustomerDownloads;
 use Agovena\Modules\Digital\Http\Livewire\Customer\DownloadsIndex;
 use Agovena\Modules\Digital\Listeners\GrantDigitalEntitlementsWhenOrderPaid;
 use Agovena\Modules\Digital\Models\DigitalEntitlement;
+use App\Agovena\Admin\CustomerDetailSection;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Customer\AccountNavItem;
@@ -78,6 +81,13 @@ final class DigitalModule implements Module
 
         $context->listen(OrderPaid::class, GrantDigitalEntitlementsWhenOrderPaid::class);
 
+        $context->admin()->customerDetailSection(new CustomerDetailSection(
+            id: 'digital-downloads',
+            component: CustomerDownloads::class,
+            sort: 30,
+            permission: 'digital.view',
+        ));
+
         $context->adminRoutes(function (): void {
             Route::get('/digital/assets', AssetsIndex::class)->name('digital.assets');
         });
@@ -85,6 +95,11 @@ final class DigitalModule implements Module
         $context->customerRoutes(function (): void {
             Route::get('/downloads', DownloadsIndex::class)->name('downloads');
             Route::get('/downloads/{token}', DownloadController::class)->name('downloads.file');
+        });
+
+        $context->apiRoutes(function (): void {
+            Route::get('/downloads', [DownloadApiController::class, 'index'])->name('downloads.index');
+            Route::middleware('throttle:api-sensitive')->get('/downloads/{token}', [DownloadApiController::class, 'file'])->name('downloads.file');
         });
     }
 }

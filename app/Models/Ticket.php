@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -18,6 +19,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property int|null $staff_user_id
  * @property TicketStatus $status
  * @property TicketPriority $priority
+ * @property Carbon|null $last_reply_at
  */
 #[Fillable([
     'number', 'customer_id', 'staff_user_id', 'subject', 'status', 'priority',

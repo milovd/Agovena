@@ -10,6 +10,7 @@
         "barryvdh/laravel-dompdf": "3.1.2",
         "composer/semver": "^3.4",
         "laravel/framework": "^13.8",
+        "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.4",
         "spatie/laravel-permission": "^6.0"
@@ -38,6 +39,7 @@
                 "Agovena\\Modules\\Digital\\": "modules/digital/src/",
                 "Agovena\\Modules\\Subscriptions\\": "modules/subscriptions/src/",
                 "Agovena\\Modules\\Provisioning\\": "modules/provisioning/src/",
+                "Agovena\\Modules\\Events\\": "modules/events/src/",
                 "Agovena\\Extensions\\ManualPayment\\": "extensions/manual-payment/src/"
             }
     },

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Agovena\Modules\Provisioning;
 
+use Agovena\Modules\Provisioning\Http\Controllers\Api\ServiceApiController;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\CustomerServices;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstanceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstancesIndex;
@@ -104,6 +105,11 @@ final class ProvisioningModule implements Module
         $context->customerRoutes(function (): void {
             Route::get('/services', ServicesIndex::class)->name('services');
             Route::get('/services/{instance}', ServiceShow::class)->name('services.show');
+        });
+
+        $context->apiRoutes(function (): void {
+            Route::get('/services', [ServiceApiController::class, 'index'])->name('services.index');
+            Route::get('/services/{instance}', [ServiceApiController::class, 'show'])->name('services.show');
         });
     }
 }

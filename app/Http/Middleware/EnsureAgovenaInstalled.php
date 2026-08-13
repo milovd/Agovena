@@ -26,6 +26,13 @@ final class EnsureAgovenaInstalled
             return $next($request);
         }
 
+        if ($request->is('api') || $request->is('api/*')) {
+            return response()->json([
+                'message' => __('api.not_installed'),
+                'code' => 'not_installed',
+            ], 503);
+        }
+
         return redirect()->route('install');
     }
 

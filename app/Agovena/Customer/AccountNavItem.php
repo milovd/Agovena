@@ -10,11 +10,15 @@ namespace App\Agovena\Customer;
  */
 final class AccountNavItem
 {
+    /**
+     * @param  (callable(): bool)|null  $visible
+     */
     public function __construct(
         public readonly string $id,
         public readonly string $label,
         public readonly string $route,
         public readonly string $section,
         public readonly int $sort = 50,
+        public readonly mixed $visible = null,
     ) {}
 }

@@ -82,6 +82,7 @@ return [
             'void' => 'Void',
         ],
         'nav_profile' => 'Profile',
+        'nav_api_tokens' => 'API tokens',
         'welcome' => 'Welcome, :name',
         'overview_lede' => 'Your recent activity with this store.',
         'email_status' => 'Email security',

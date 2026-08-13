@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Agovena\Modules\Subscriptions;
 
+use Agovena\Modules\Subscriptions\Http\Controllers\Api\SubscriptionApiController;
 use Agovena\Modules\Subscriptions\Http\Livewire\Admin\CustomerSubscriptions;
 use Agovena\Modules\Subscriptions\Http\Livewire\Admin\SubscriptionShow;
 use Agovena\Modules\Subscriptions\Http\Livewire\Admin\SubscriptionsIndex;
@@ -109,6 +110,11 @@ final class SubscriptionsModule implements Module
         $context->customerRoutes(function (): void {
             Route::get('/subscriptions', CustomerSubscriptionsIndex::class)->name('subscriptions');
             Route::get('/subscriptions/{subscription}', CustomerSubscriptionShow::class)->name('subscriptions.show');
+        });
+
+        $context->apiRoutes(function (): void {
+            Route::get('/subscriptions', [SubscriptionApiController::class, 'index'])->name('subscriptions.index');
+            Route::get('/subscriptions/{subscription}', [SubscriptionApiController::class, 'show'])->name('subscriptions.show');
         });
     }
 }

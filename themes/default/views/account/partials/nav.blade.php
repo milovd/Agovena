@@ -48,6 +48,11 @@
             href="{{ route('customer.profile') }}"
             @if ($section === 'profile') aria-current="page" @endif
         >{{ __('customer.account.nav_profile') }}</a>
+        <a
+            class="store-account__link {{ $section === 'api-tokens' ? 'is-active' : '' }}"
+            href="{{ route('customer.api-tokens') }}"
+            @if ($section === 'api-tokens') aria-current="page" @endif
+        >{{ __('customer.account.nav_api_tokens') }}</a>
         <a class="store-account__link store-account__link--muted" href="{{ route('customer.logout') }}">
             {{ __('customer.auth.logout') }}
         </a>

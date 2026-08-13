@@ -23,6 +23,7 @@ use RuntimeException;
  * @property int|null $order_id
  * @property int|null $customer_id
  * @property Carbon|null $paid_at
+ * @property Carbon|null $issued_at
  * @property-read Collection<int, InvoiceItem> $items
  * @property-read Order|null $order
  */

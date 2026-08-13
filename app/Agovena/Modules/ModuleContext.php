@@ -104,4 +104,21 @@ final class ModuleContext
         app(Router::class)->getRoutes()->refreshNameLookups();
         app(Router::class)->getRoutes()->refreshActionLookups();
     }
+
+    /**
+     * Register authenticated customer API routes under /api/v1.
+     *
+     * @param  callable(): void  $routes
+     */
+    public function apiRoutes(callable $routes): void
+    {
+        Route::group([
+            'middleware' => ['api', 'auth:sanctum', 'throttle:api'],
+            'prefix' => 'api/v1',
+            'as' => 'api.v1.',
+        ], $routes);
+
+        app(Router::class)->getRoutes()->refreshNameLookups();
+        app(Router::class)->getRoutes()->refreshActionLookups();
+    }
 }

@@ -82,6 +82,7 @@ return [
             'void' => 'Vervallen',
         ],
         'nav_profile' => 'Profiel',
+        'nav_api_tokens' => 'API-tokens',
         'welcome' => 'Welkom, :name',
         'overview_lede' => 'Je recente activiteit bij deze winkel.',
         'email_status' => 'E-mailbeveiliging',

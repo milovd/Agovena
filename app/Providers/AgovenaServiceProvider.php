@@ -13,6 +13,7 @@ use App\Agovena\Admin\SettingsGroup;
 use App\Agovena\Cart\CartRepository;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\SessionCartRepository;
+use App\Agovena\Cart\TokenCartRepository;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\ListStorefrontCategories;
@@ -51,6 +52,7 @@ use App\Events\CreditNoteIssued;
 use App\Events\OrderCreated;
 use App\Events\OrderPaid;
 use App\Events\PaymentRecorded;
+use App\Events\PlanChangeApplied;
 use App\Events\RefundRecorded;
 use App\Listeners\ApplyPlanChangeWhenOrderPaid;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
@@ -61,6 +63,7 @@ use App\Listeners\LogSentMail;
 use App\Listeners\SendCreditNoteIssuedNotification;
 use App\Listeners\SendOrderPlacedNotification;
 use App\Listeners\SendPaymentRecordedNotification;
+use App\Listeners\SendPlanChangeAppliedNotification;
 use App\Listeners\SendRefundProcessedNotification;
 use App\Models\Customer;
 use Illuminate\Auth\Events\Registered;
@@ -103,7 +106,14 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(InstallationRequirements::class);
         $this->app->singleton(EnsurePublicStorageLink::class);
         $this->app->singleton(InstallAgovena::class);
-        $this->app->bind(CartRepository::class, SessionCartRepository::class);
+        $this->app->bind(CartRepository::class, function ($app) {
+            $request = $app->make('request');
+            if ($request->is('api') || $request->is('api/*')) {
+                return $app->make(TokenCartRepository::class);
+            }
+
+            return $app->make(SessionCartRepository::class);
+        });
         $this->app->singleton(CartRequirementComposer::class, function ($app): CartRequirementComposer {
             return new CartRequirementComposer([
                 $app->make(CoreCheckoutContributor::class),
@@ -127,6 +137,7 @@ class AgovenaServiceProvider extends ServiceProvider
         Event::listen(PaymentRecorded::class, SendPaymentRecordedNotification::class);
         Event::listen(CreditNoteIssued::class, SendCreditNoteIssuedNotification::class);
         Event::listen(RefundRecorded::class, SendRefundProcessedNotification::class);
+        Event::listen(PlanChangeApplied::class, SendPlanChangeAppliedNotification::class);
         Event::listen(MessageSent::class, LogSentMail::class);
         Event::listen(NotificationFailed::class, LogFailedNotification::class);
 
@@ -391,6 +402,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'api-tokens',
+            label: 'admin.nav.api_tokens',
+            group: 'admin.nav_groups.configuration',
+            href: '/admin/api-tokens',
+            icon: 'key',
+            sort: 122,
+            permission: 'api.tokens',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'users',
             label: 'admin.nav.users',
             group: 'admin.nav_groups.administration',
@@ -562,6 +583,7 @@ class AgovenaServiceProvider extends ServiceProvider
             'notifications.manage',
             'jobs.view',
             'jobs.manage',
+            'api.tokens',
         ] as $ability) {
             $admin->permission($ability, 'admin.permissions.'.$ability);
         }

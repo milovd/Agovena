@@ -22,7 +22,16 @@ final class CustomerAccountNav
      */
     public function items(): array
     {
-        $items = $this->items;
+        $items = array_values(array_filter(
+            $this->items,
+            static function (AccountNavItem $item): bool {
+                if (! is_callable($item->visible)) {
+                    return true;
+                }
+
+                return (bool) ($item->visible)();
+            },
+        ));
         usort($items, static fn (AccountNavItem $a, AccountNavItem $b): int => $a->sort <=> $b->sort);
 
         return $items;
