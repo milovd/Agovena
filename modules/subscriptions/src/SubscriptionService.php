@@ -11,6 +11,7 @@ use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Agovena\PlanChanges\ApplyPlanChange;
+use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -28,7 +29,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-final class SubscriptionService
+final class SubscriptionService implements ProcessesSubscriptionRenewals
 {
     public function __construct(
         private readonly IssueInvoiceFromOrder $issueInvoice,

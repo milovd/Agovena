@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Products;
 
-use Agovena\Modules\Inventory\InventoryService;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
+use App\Agovena\Catalog\Contracts\ProductStock;
 use App\Agovena\Catalog\DeleteProduct;
 use App\Agovena\Catalog\UpdateProduct;
 use App\Enums\ProductStatus;
@@ -125,8 +125,8 @@ final class Edit extends Component
             }
         }
 
-        if (app()->bound(InventoryService::class)) {
-            $this->stockQuantity = app(InventoryService::class)
+        if (app()->bound(ProductStock::class)) {
+            $this->stockQuantity = app(ProductStock::class)
                 ->quantityFor($product);
         }
     }
@@ -425,9 +425,9 @@ final class Edit extends Component
 
         if (
             $this->product->hasCapability('inventory')
-            && app()->bound(InventoryService::class)
+            && app()->bound(ProductStock::class)
         ) {
-            app(InventoryService::class)
+            app(ProductStock::class)
                 ->setQuantity($this->product, max(0, $this->stockQuantity));
         }
 

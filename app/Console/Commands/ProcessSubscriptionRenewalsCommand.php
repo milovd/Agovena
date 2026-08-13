@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Console\Command;
 
 final class ProcessSubscriptionRenewalsCommand extends Command
@@ -16,13 +16,13 @@ final class ProcessSubscriptionRenewalsCommand extends Command
 
     public function handle(ModuleManager $modules): int
     {
-        if (! $modules->isEnabled('subscriptions')) {
+        if (! $modules->isEnabled('subscriptions') || ! $this->laravel->bound(ProcessesSubscriptionRenewals::class)) {
             $this->comment('Subscriptions module is not enabled.');
 
             return self::SUCCESS;
         }
 
-        $processed = app(SubscriptionService::class)->processDue();
+        $processed = app(ProcessesSubscriptionRenewals::class)->processDue();
         $this->info("Processed {$processed} subscription(s).");
 
         return self::SUCCESS;

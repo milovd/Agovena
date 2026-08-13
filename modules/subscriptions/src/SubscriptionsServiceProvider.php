@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Agovena\Modules\Subscriptions;
 
 use App\Agovena\Modules\Contracts\Module;
+use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Support\ServiceProvider;
 
 final class SubscriptionsServiceProvider extends ServiceProvider
@@ -13,6 +14,7 @@ final class SubscriptionsServiceProvider extends ServiceProvider
     {
         $this->app->singleton(SubscriptionsModule::class);
         $this->app->singleton(SubscriptionService::class);
+        $this->app->bind(ProcessesSubscriptionRenewals::class, SubscriptionService::class);
     }
 
     public function boot(): void
