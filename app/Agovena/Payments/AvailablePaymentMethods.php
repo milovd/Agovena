@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
+use App\Agovena\Payments\Contracts\OffersCheckoutMethods;
+use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
+use App\Agovena\Payments\Gateways\ManualPaymentGateway;
+
 /**
- * Checkout-facing discovery of enabled PaymentGateway ids.
+ * Checkout-facing discovery of enabled PaymentGateway methods.
  */
 final class AvailablePaymentMethods
 {
@@ -18,35 +22,58 @@ final class AvailablePaymentMethods
      */
     public function ids(): array
     {
-        $ids = $this->gateways->ids();
-        if ($ids !== []) {
-            return $ids;
-        }
-
-        // Core fallback when no payment Extensions are enabled yet.
-        $fallback = ['manual'];
-        if ((bool) config('agovena.payments.allow_development_instant_pay')) {
-            $fallback[] = 'development';
-        }
-
-        return $fallback;
+        return array_map(static fn (array $option): string => $option['id'], $this->options());
     }
 
     /**
-     * @return list<array{id: string, label: string}>
+     * @return list<array{id: string, label: string, gateway_id?: string, icon?: string|null}>
      */
     public function options(): array
     {
+        $gateways = $this->gateways->all();
+        if ($gateways === []) {
+            return $this->coreFallbackOptions();
+        }
+
         $options = [];
-        foreach ($this->ids() as $id) {
-            $gateway = $this->gateways->get($id);
-            $label = $gateway?->label() ?? match ($id) {
-                'development' => 'storefront.checkout.payment_development',
-                default => 'storefront.checkout.payment_manual',
-            };
+        foreach ($gateways as $gateway) {
+            if ($gateway instanceof OffersCheckoutMethods) {
+                foreach ($gateway->checkoutMethods() as $method) {
+                    $options[] = $method->toArray();
+                }
+
+                continue;
+            }
+
             $options[] = [
-                'id' => $id,
-                'label' => $label,
+                'id' => $gateway->id(),
+                'gateway_id' => $gateway->id(),
+                'label' => $gateway->label(),
+                'icon' => null,
+            ];
+        }
+
+        return $options;
+    }
+
+    /**
+     * @return list<array{id: string, label: string, gateway_id: string, icon: null}>
+     */
+    private function coreFallbackOptions(): array
+    {
+        $options = [[
+            'id' => 'manual',
+            'gateway_id' => 'manual',
+            'label' => (new ManualPaymentGateway)->label(),
+            'icon' => null,
+        ]];
+
+        if ((bool) config('agovena.payments.allow_development_instant_pay')) {
+            $options[] = [
+                'id' => 'development',
+                'gateway_id' => 'development',
+                'label' => app(DevelopmentPaymentGateway::class)->label(),
+                'icon' => null,
             ];
         }
 

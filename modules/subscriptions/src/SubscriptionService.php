@@ -18,7 +18,6 @@ use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\PlanChanges\ApplyPlanChange;
 use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use App\Enums\OrderStatus;
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -339,7 +338,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
 
             Payment::query()->create([
                 'order_id' => $order->id,
-                'method' => PaymentMethod::Manual,
+                'method' => 'manual',
                 'status' => PaymentStatus::Pending,
                 'amount' => $lineTotal,
                 'currency' => $subscription->currency,

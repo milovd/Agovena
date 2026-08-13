@@ -22,7 +22,7 @@ use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
 use App\Agovena\Theme\ThemeManager;
-use App\Enums\PaymentMethod;
+use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
@@ -107,7 +107,8 @@ final class CheckoutPage extends Component
         }
 
         $this->idempotency_key = (string) Str::uuid();
-        $this->payment_method = PaymentMethod::Manual->value;
+        $ids = app(AvailablePaymentMethods::class)->ids();
+        $this->payment_method = $ids[0] ?? 'manual';
 
         /** @var Customer|null $customer */
         $customer = current_customer();
@@ -225,15 +226,24 @@ final class CheckoutPage extends Component
             $attempt = $startPayment->handle(
                 $order,
                 $data['payment_method'],
-                route('storefront.order.confirmation', $order),
-                route('storefront.order.confirmation', $order),
+                route('storefront.payment.status', $order),
+                route('storefront.payment.status', $order),
                 'checkout-'.$order->id,
             );
+            if ($attempt->status === PaymentAttemptStatus::Failed) {
+                $this->addError('payment_method', __('storefront.errors.payment_unavailable'));
+
+                return;
+            }
             if (is_string($attempt->redirect_url) && $attempt->redirect_url !== '') {
                 $this->redirect($attempt->redirect_url);
 
                 return;
             }
+
+            $this->redirect(route('storefront.payment.status', $order), navigate: true);
+
+            return;
         }
 
         $this->redirect(route('storefront.order.confirmation', $order), navigate: true);

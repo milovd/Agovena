@@ -117,6 +117,27 @@ return [
         'back' => 'Terug naar catalogus',
     ],
 
+    'payment_status' => [
+        'page_title' => 'Betalingsstatus',
+        'waiting' => 'Wachten op bevestiging van de betaalprovider. Deze pagina wordt automatisch bijgewerkt.',
+        'view_order' => 'Bestelling bekijken',
+        'retry' => 'Nu betalen',
+        'title' => [
+            'pending' => 'Betaling in afwachting',
+            'paid' => 'Betaling geslaagd',
+            'failed' => 'Betaling mislukt',
+            'cancelled' => 'Betaling geannuleerd',
+            'expired' => 'Betaling verlopen',
+        ],
+        'lede' => [
+            'pending' => 'Bestelling :number wacht op betalingsbevestiging.',
+            'paid' => 'Bestelling :number is betaald.',
+            'failed' => 'De betaling voor bestelling :number kon niet worden afgerond.',
+            'cancelled' => 'De betaling voor bestelling :number is geannuleerd.',
+            'expired' => 'De betaling voor bestelling :number is verlopen. Je kunt het opnieuw proberen.',
+        ],
+    ],
+
     'product' => [
         'quantity' => 'Aantal',
         'decrease' => 'Aantal verlagen',

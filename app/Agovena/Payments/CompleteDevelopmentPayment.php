@@ -6,7 +6,6 @@ namespace App\Agovena\Payments;
 
 use App\Agovena\Invoices\AssertInvoiceCanBePaid;
 use App\Enums\OrderStatus;
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Events\OrderPaid;
 use App\Events\PaymentRecorded;
@@ -51,7 +50,7 @@ final class CompleteDevelopmentPayment
                 return $payment;
             }
 
-            if ($payment->method !== PaymentMethod::Development) {
+            if ($payment->method !== 'development') {
                 throw ValidationException::withMessages([
                     'payment' => 'This order is not using the development payment method.',
                 ]);

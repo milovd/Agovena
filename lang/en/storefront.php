@@ -117,6 +117,27 @@ return [
         'back' => 'Back to catalog',
     ],
 
+    'payment_status' => [
+        'page_title' => 'Payment status',
+        'waiting' => 'Waiting for confirmation from the payment provider. This page updates automatically.',
+        'view_order' => 'View order',
+        'retry' => 'Pay now',
+        'title' => [
+            'pending' => 'Payment pending',
+            'paid' => 'Payment successful',
+            'failed' => 'Payment failed',
+            'cancelled' => 'Payment cancelled',
+            'expired' => 'Payment expired',
+        ],
+        'lede' => [
+            'pending' => 'Order :number is waiting for payment confirmation.',
+            'paid' => 'Order :number has been paid.',
+            'failed' => 'Payment for order :number could not be completed.',
+            'cancelled' => 'Payment for order :number was cancelled.',
+            'expired' => 'Payment for order :number expired. You can try again.',
+        ],
+    ],
+
     'product' => [
         'quantity' => 'Quantity',
         'decrease' => 'Decrease quantity',

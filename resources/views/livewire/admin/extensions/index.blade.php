@@ -136,10 +136,16 @@
                     @foreach ($settingsForm as $key => $value)
                         @php
                             $settingLabel = $key;
+                            $settingType = 'string';
+                            $settingSecret = false;
+                            $settingHelp = '';
                             if ($settingsManifest !== null) {
                                 foreach ($settingsManifest->settings as $definition) {
                                     if ($definition['key'] === $key) {
                                         $settingLabel = $definition['label'];
+                                        $settingType = (string) ($definition['type'] ?? 'string');
+                                        $settingSecret = (bool) ($definition['secret'] ?? false);
+                                        $settingHelp = (string) ($definition['help'] ?? '');
                                         break;
                                     }
                                 }
@@ -147,7 +153,29 @@
                         @endphp
                         <div class="ag-field">
                             <label class="ag-field__label" for="ext-setting-{{ $key }}">{{ __($settingLabel) }}</label>
-                            <input id="ext-setting-{{ $key }}" class="ag-input" type="{{ str_contains($key, 'secret') ? 'password' : 'text' }}" wire:model="settingsForm.{{ $key }}" autocomplete="off">
+                            @if ($settingType === 'boolean')
+                                <label class="ag-check">
+                                    <input id="ext-setting-{{ $key }}" type="checkbox" wire:model="settingsForm.{{ $key }}" value="1">
+                                    <span>{{ __($settingLabel) }}</span>
+                                </label>
+                            @elseif ($settingType === 'text')
+                                <textarea id="ext-setting-{{ $key }}" class="ag-input" rows="4" wire:model="settingsForm.{{ $key }}"></textarea>
+                            @else
+                                <input
+                                    id="ext-setting-{{ $key }}"
+                                    class="ag-input"
+                                    type="{{ $settingSecret ? 'password' : 'text' }}"
+                                    wire:model="settingsForm.{{ $key }}"
+                                    autocomplete="off"
+                                    placeholder="{{ ($secretConfigured[$key] ?? false) ? __('admin.extensions.secret_placeholder') : '' }}"
+                                >
+                            @endif
+                            @if ($settingSecret && ($secretConfigured[$key] ?? false))
+                                <p class="ag-field__hint">{{ __('admin.extensions.secret_configured') }}</p>
+                            @endif
+                            @if ($settingHelp !== '')
+                                <p class="ag-field__hint">{{ __($settingHelp) }}</p>
+                            @endif
                         </div>
                     @endforeach
                     <div class="ag-modal__actions">

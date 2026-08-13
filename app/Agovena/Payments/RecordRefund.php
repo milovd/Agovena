@@ -8,7 +8,6 @@ use App\Agovena\Audit\AuditLogger;
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
 use App\Events\RefundRecorded;
@@ -101,6 +100,7 @@ final class RecordRefund
                 amount: $amount,
                 currency: $locked->currency,
                 reason: $reason,
+                idempotencyKey: 'refund-'.$refund->id,
             ));
 
             if (! $result->success) {
@@ -155,11 +155,18 @@ final class RecordRefund
 
     private function resolveGateway(Payment $payment): PaymentGateway
     {
-        $gateway = $this->gateways->get($payment->method->value)
+        $gateway = $this->gateways->get($payment->method)
             ?? match ($payment->method) {
-                PaymentMethod::Manual => app(ManualPaymentGateway::class),
-                PaymentMethod::Development => app(DevelopmentPaymentGateway::class),
+                'manual' => app(ManualPaymentGateway::class),
+                'development' => app(DevelopmentPaymentGateway::class),
+                default => null,
             };
+
+        if ($gateway === null) {
+            throw ValidationException::withMessages([
+                'payment' => __('admin.payments.refunds_not_supported'),
+            ]);
+        }
 
         return $gateway;
     }

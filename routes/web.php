@@ -71,6 +71,7 @@ use App\Livewire\Storefront\CategoryShow;
 use App\Livewire\Storefront\CheckoutPage;
 use App\Livewire\Storefront\ContentPage;
 use App\Livewire\Storefront\OrderConfirmation;
+use App\Livewire\Storefront\PaymentStatusPage;
 use App\Livewire\Storefront\ProductShow;
 use Illuminate\Support\Facades\Route;
 
@@ -87,6 +88,7 @@ Route::get('/categories/{slug}', CategoryShow::class)->name('storefront.category
 Route::get('/cart', CartPage::class)->name('storefront.cart');
 Route::get('/checkout', CheckoutPage::class)->name('storefront.checkout');
 Route::get('/orders/{order}/confirmation', OrderConfirmation::class)->name('storefront.order.confirmation');
+Route::get('/orders/{order}/payment', PaymentStatusPage::class)->name('storefront.payment.status');
 
 Route::post('/webhooks/payments/{gateway}', PaymentWebhookController::class)
     ->name('webhooks.payments');

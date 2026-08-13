@@ -48,7 +48,7 @@ test('guest can add product to cart and checkout', function () {
         ->and($order->items->first()->unit_amount)->toBe(1500)
         ->and($order->items->first()->line_total_amount)->toBe(3000)
         ->and($order->payment->status)->toBe(PaymentStatus::Pending)
-        ->and($order->payment->method->value)->toBe('manual');
+        ->and($order->payment->method)->toBe('manual');
 });
 
 test('client submitted prices are ignored; server prices are authoritative', function () {

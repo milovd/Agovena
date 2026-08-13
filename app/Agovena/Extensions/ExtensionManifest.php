@@ -8,7 +8,7 @@ final readonly class ExtensionManifest
 {
     /**
      * @param  list<string>  $dependencies  Other extension ids
-     * @param  list<array{key: string, label: string, type?: string, secret?: bool, required?: bool, default?: mixed}>  $settings
+     * @param  list<array{key: string, label: string, type?: string, secret?: bool, required?: bool, default?: mixed, help?: string}>  $settings
      * @param  array<string, string>  $autoloadPsr4
      */
     public function __construct(
@@ -63,6 +63,7 @@ final readonly class ExtensionManifest
                 'secret' => (bool) ($setting['secret'] ?? false),
                 'required' => (bool) ($setting['required'] ?? false),
                 'default' => $setting['default'] ?? null,
+                'help' => (string) ($setting['help'] ?? ''),
             ];
         }
 

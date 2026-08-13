@@ -6,5 +6,6 @@ parameters:
     paths:
         - app
         - modules
+        - extensions
     level: 5
     tmpDir: .phpstan.cache

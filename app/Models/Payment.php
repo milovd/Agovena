@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
 use Database\Factories\PaymentFactory;
@@ -23,7 +22,7 @@ use Illuminate\Support\Carbon;
  * @property int $order_id
  * @property int $amount
  * @property string $currency
- * @property PaymentMethod $method
+ * @property string $method Gateway id (not a closed vendor enum).
  * @property PaymentStatus $status
  * @property Carbon|null $paid_at
  * @property string|null $reference
@@ -46,7 +45,7 @@ class Payment extends Model
     {
         return [
             'amount' => 'integer',
-            'method' => PaymentMethod::class,
+            'method' => 'string',
             'status' => PaymentStatus::class,
             'paid_at' => 'datetime',
         ];
@@ -62,6 +61,12 @@ class Payment extends Model
     public function refunds(): HasMany
     {
         return $this->hasMany(Refund::class);
+    }
+
+    /** @return HasMany<PaymentAttempt, $this> */
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(PaymentAttempt::class);
     }
 
     public function refundedAmount(): int

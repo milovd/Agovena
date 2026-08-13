@@ -33,7 +33,7 @@ test('development instant payment completes order when enabled', function () {
         'payment_method' => PaymentMethod::Development->value,
     ]);
 
-    expect($order->payment->method)->toBe(PaymentMethod::Development)
+    expect($order->payment->method)->toBe('development')
         ->and($order->payment->status)->toBe(PaymentStatus::Paid)
         ->and($order->fresh()->status->value)->toBe('paid');
 });
@@ -61,7 +61,7 @@ test('development payment action fails closed in production', function () {
         'order_id' => $order->id,
         'amount' => 1000,
         'currency' => 'EUR',
-        'method' => PaymentMethod::Development,
+        'method' => 'development',
         'status' => PaymentStatus::Pending,
     ]);
 

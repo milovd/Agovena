@@ -124,6 +124,7 @@ class AgovenaServiceProvider extends ServiceProvider
         });
 
         $this->mergeConfigFrom(__DIR__.'/../../config/agovena.php', 'agovena');
+        $this->loadFirstPartyExtensionMigrations();
     }
 
     public function boot(): void
@@ -833,5 +834,23 @@ class AgovenaServiceProvider extends ServiceProvider
             ),
             50,
         );
+    }
+
+    private function loadFirstPartyExtensionMigrations(): void
+    {
+        $root = base_path('extensions');
+        if (! is_dir($root)) {
+            return;
+        }
+
+        foreach (scandir($root) ?: [] as $directory) {
+            if ($directory === '.' || $directory === '..') {
+                continue;
+            }
+            $path = $root.DIRECTORY_SEPARATOR.$directory.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
+            if (is_dir($path)) {
+                $this->loadMigrationsFrom($path);
+            }
+        }
     }
 }

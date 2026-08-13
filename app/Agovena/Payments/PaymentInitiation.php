@@ -18,5 +18,6 @@ final readonly class PaymentInitiation
         public string $returnUrl,
         public string $cancelUrl,
         public array $metadata = [],
+        public ?string $idempotencyKey = null,
     ) {}
 }

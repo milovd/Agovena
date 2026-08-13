@@ -111,7 +111,7 @@
                 <div class="ag-section__body">
                     @if ($order->payment)
                         <dl class="ag-dl">
-                            <div><dt>{{ __('common.method') }}</dt><dd>{{ __('admin.orders.method.'.$order->payment->method->value) }}</dd></div>
+                            <div><dt>{{ __('common.method') }}</dt><dd>{{ $paymentGatewayLabel }}</dd></div>
                             <div>
                                 <dt>{{ __('common.status') }}</dt>
                                 <dd>
@@ -119,7 +119,7 @@
                                         'ag-badge',
                                         'ag-badge--success' => $order->payment->status->value === 'paid',
                                         'ag-badge--warning' => $order->payment->status->value === 'pending',
-                                        'ag-badge--muted' => in_array($order->payment->status->value, ['cancelled', 'failed'], true),
+                                        'ag-badge--muted' => in_array($order->payment->status->value, ['cancelled', 'failed', 'expired'], true),
                                         'ag-badge--info' => $order->payment->status->value === 'partially_refunded',
                                         'ag-badge--danger' => $order->payment->status->value === 'refunded',
                                     ])>{{ __('admin.orders.payment_status.'.$order->payment->status->value) }}</span>
@@ -143,6 +143,47 @@
                                 <div><dt>{{ __('common.reference') }}</dt><dd>{{ $order->payment->reference }}</dd></div>
                             @endif
                         </dl>
+
+                        @if ($order->payment->attempts->isNotEmpty())
+                            <h4 class="ag-section__title" style="margin-top:1rem;">{{ __('admin.orders.show.attempts') }}</h4>
+                            <div class="ag-table-wrap">
+                                <table class="ag-table">
+                                    <thead>
+                                        <tr>
+                                            <th scope="col">{{ __('admin.orders.show.gateway') }}</th>
+                                            <th scope="col">{{ __('admin.orders.show.provider_reference') }}</th>
+                                            <th scope="col">{{ __('common.status') }}</th>
+                                            <th scope="col">{{ __('common.created') }}</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($order->payment->attempts as $attempt)
+                                            <tr>
+                                                <td>{{ $attempt->gateway_id }}</td>
+                                                <td>{{ $attempt->external_id ?: '—' }}</td>
+                                                <td>{{ __('admin.orders.attempt_status.'.$attempt->status->value) }}</td>
+                                                <td>{{ $attempt->created_at?->toDayDateTimeString() }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        @endif
+
+                        @if ($order->refunds->isNotEmpty())
+                            <h4 class="ag-section__title" style="margin-top:1rem;">{{ __('admin.orders.show.refunds') }}</h4>
+                            <ul class="ag-list">
+                                @foreach ($order->refunds as $refund)
+                                    <li>
+                                        {{ \App\Support\MoneyFormatter::format($refund->amount, $refund->currency) }}
+                                        — {{ __('admin.refunds.status.'.$refund->status->value) }}
+                                        @if ($refund->provider_reference)
+                                            ({{ $refund->provider_reference }})
+                                        @endif
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
 
                         @if ($canRecord)
                             @if (! $confirmingPayment)

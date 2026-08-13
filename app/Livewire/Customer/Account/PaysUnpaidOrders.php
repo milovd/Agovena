@@ -17,7 +17,7 @@ trait PaysUnpaidOrders
     abstract protected function unpaidOrder(): ?Order;
 
     /**
-     * @return list<array{id: string, label: string}>
+     * @return list<array{id: string, label: string, gateway_id?: string, icon?: string|null}>
      */
     public function paymentGatewayOptions(): array
     {
@@ -38,8 +38,8 @@ trait PaysUnpaidOrders
             $attempt = $start->handle(
                 $order,
                 $gatewayId,
-                route('customer.orders.show', $order),
-                route('customer.orders.show', $order),
+                route('storefront.payment.status', $order),
+                route('storefront.payment.status', $order),
             );
         } catch (ValidationException $exception) {
             $this->addError('pay_gateway', collect($exception->errors())->flatten()->first() ?: $exception->getMessage());

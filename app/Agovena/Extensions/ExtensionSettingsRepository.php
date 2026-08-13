@@ -5,15 +5,22 @@ declare(strict_types=1);
 namespace App\Agovena\Extensions;
 
 use App\Models\ExtensionSetting;
+use Illuminate\Support\Env;
 use Illuminate\Support\Facades\Crypt;
 
 /**
  * Per-extension settings store. Secrets are encrypted at rest.
+ * Environment overrides use AGOVENA_EXT_{EXTENSION}_{KEY} (hyphens become underscores).
  */
 final class ExtensionSettingsRepository
 {
     public function get(string $extensionId, string $key, mixed $default = null): mixed
     {
+        $fromEnv = $this->envOverride($extensionId, $key);
+        if ($fromEnv !== null) {
+            return $fromEnv;
+        }
+
         $row = ExtensionSetting::query()
             ->where('extension_id', $extensionId)
             ->where('key', $key)
@@ -34,6 +41,20 @@ final class ExtensionSettingsRepository
         $decoded = json_decode((string) $row->value, true);
 
         return json_last_error() === JSON_ERROR_NONE ? $decoded : $row->value;
+    }
+
+    public function isConfigured(string $extensionId, string $key): bool
+    {
+        if ($this->envOverride($extensionId, $key) !== null) {
+            return true;
+        }
+
+        return ExtensionSetting::query()
+            ->where('extension_id', $extensionId)
+            ->where('key', $key)
+            ->whereNotNull('value')
+            ->where('value', '!=', '')
+            ->exists();
     }
 
     public function set(string $extensionId, string $key, mixed $value, bool $secret = false): void
@@ -68,5 +89,16 @@ final class ExtensionSettingsRepository
             ->where('extension_id', $extensionId)
             ->where('key', $key)
             ->delete();
+    }
+
+    private function envOverride(string $extensionId, string $key): mixed
+    {
+        $name = 'AGOVENA_EXT_'.strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $extensionId.'_'.$key) ?? '');
+        $value = Env::get($name);
+        if (! is_string($value) || trim($value) === '') {
+            return null;
+        }
+
+        return $value;
     }
 }

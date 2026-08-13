@@ -13,5 +13,6 @@ final readonly class RefundRequest
         public int $amount,
         public string $currency,
         public ?string $reason = null,
+        public ?string $idempotencyKey = null,
     ) {}
 }

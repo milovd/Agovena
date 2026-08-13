@@ -13,6 +13,7 @@ use App\Models\PaymentAttempt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Creates a PaymentAttempt and asks the gateway to initiate provider payment.
@@ -23,8 +24,14 @@ final class InitiateGatewayPayment
         private readonly PaymentGatewayRegistry $gateways,
     ) {}
 
-    public function handle(Payment $payment, string $gatewayId, string $returnUrl, string $cancelUrl, ?string $idempotencyKey = null): PaymentAttempt
-    {
+    public function handle(
+        Payment $payment,
+        string $gatewayId,
+        string $returnUrl,
+        string $cancelUrl,
+        ?string $idempotencyKey = null,
+        ?string $checkoutMethod = null,
+    ): PaymentAttempt {
         $gateway = $this->requireGateway($gatewayId);
         $payment->loadMissing('order');
 
@@ -35,7 +42,8 @@ final class InitiateGatewayPayment
             }
         }
 
-        return DB::transaction(function () use ($payment, $gateway, $returnUrl, $cancelUrl, $idempotencyKey): PaymentAttempt {
+        return DB::transaction(function () use ($payment, $gateway, $returnUrl, $cancelUrl, $idempotencyKey, $checkoutMethod): PaymentAttempt {
+            $key = $idempotencyKey ?: 'att-'.Str::uuid()->toString();
             $attempt = PaymentAttempt::query()->create([
                 'payment_id' => $payment->id,
                 'order_id' => $payment->order_id,
@@ -43,16 +51,33 @@ final class InitiateGatewayPayment
                 'status' => PaymentAttemptStatus::Pending,
                 'amount' => $payment->amount,
                 'currency' => $payment->currency,
-                'idempotency_key' => $idempotencyKey ?: 'att-'.Str::uuid()->toString(),
+                'idempotency_key' => $key,
+                'request_meta' => $this->redact(array_filter([
+                    'checkout_method' => $checkoutMethod,
+                ])),
                 'initiated_at' => now(),
             ]);
 
-            $result = $gateway->initiate(new PaymentInitiation(
-                order: $payment->order,
-                payment: $payment,
-                returnUrl: $returnUrl,
-                cancelUrl: $cancelUrl,
-            ));
+            try {
+                $result = $gateway->initiate(new PaymentInitiation(
+                    order: $payment->order,
+                    payment: $payment,
+                    returnUrl: $returnUrl,
+                    cancelUrl: $cancelUrl,
+                    metadata: array_filter([
+                        'checkout_method' => $checkoutMethod,
+                    ]),
+                    idempotencyKey: $key,
+                ));
+            } catch (Throwable $exception) {
+                report($exception);
+                $attempt->status = PaymentAttemptStatus::Failed;
+                $attempt->completed_at = now();
+                $attempt->response_meta = ['error' => 'provider_unavailable'];
+                $attempt->save();
+
+                return $attempt;
+            }
 
             $attempt->external_id = $result->externalId;
             $attempt->redirect_url = $result->redirectUrl;

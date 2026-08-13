@@ -4,19 +4,11 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
-use App\Agovena\Invoices\AssertInvoiceCanBePaid;
-use App\Enums\OrderStatus;
-use App\Enums\PaymentAttemptStatus;
-use App\Enums\PaymentStatus;
-use App\Events\OrderPaid;
-use App\Events\PaymentRecorded;
-use App\Models\Payment;
 use App\Models\PaymentAttempt;
 use App\Models\PaymentWebhookEvent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 /**
@@ -26,7 +18,7 @@ final class HandlePaymentWebhook
 {
     public function __construct(
         private readonly PaymentGatewayRegistry $gateways,
-        private readonly AssertInvoiceCanBePaid $assertInvoiceCanBePaid,
+        private readonly ApplyNormalizedPaymentStatus $applyStatus,
     ) {}
 
     public function handle(string $gatewayId, Request $request): WebhookHandleResult
@@ -80,7 +72,7 @@ final class HandlePaymentWebhook
                     ->first();
 
                 if ($attempt !== null) {
-                    $this->applyAttemptStatus($attempt, $payload->status);
+                    $this->applyStatus->handle($attempt, $payload->status);
                 }
             }
 
@@ -94,48 +86,6 @@ final class HandlePaymentWebhook
         return new WebhookHandleResult($processed, duplicate: false);
     }
 
-    private function applyAttemptStatus(PaymentAttempt $attempt, PaymentStatus $status): void
-    {
-        /** @var Payment $payment */
-        $payment = Payment::query()->whereKey($attempt->payment_id)->lockForUpdate()->firstOrFail();
-
-        if ($status === PaymentStatus::Paid && $payment->status !== PaymentStatus::Paid) {
-            $order = $payment->order()->lockForUpdate()->first();
-            if ($order !== null) {
-                try {
-                    $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoice'));
-                } catch (ValidationException) {
-                    return;
-                }
-            }
-
-            $payment->status = PaymentStatus::Paid;
-            $payment->paid_at = now();
-            $payment->save();
-
-            if ($order !== null && $order->status !== OrderStatus::Paid) {
-                $order->status = OrderStatus::Paid;
-                $order->save();
-                event(new PaymentRecorded($payment->fresh() ?? $payment));
-                event(new OrderPaid($order->fresh(['items', 'payment']) ?? $order));
-            }
-
-            $attempt->status = PaymentAttemptStatus::Succeeded;
-            $attempt->completed_at = now();
-            $attempt->save();
-
-            return;
-        }
-
-        if (in_array($status, [PaymentStatus::Failed, PaymentStatus::Cancelled], true)) {
-            $attempt->status = $status === PaymentStatus::Cancelled
-                ? PaymentAttemptStatus::Cancelled
-                : PaymentAttemptStatus::Failed;
-            $attempt->completed_at = now();
-            $attempt->save();
-        }
-    }
-
     /**
      * @param  array<string, mixed>  $raw
      * @return array<string, mixed>
@@ -145,7 +95,13 @@ final class HandlePaymentWebhook
         $out = [];
         foreach ($raw as $key => $value) {
             $lower = strtolower((string) $key);
-            if (str_contains($lower, 'secret') || str_contains($lower, 'token') || str_contains($lower, 'password') || str_contains($lower, 'signature')) {
+            if (str_contains($lower, 'secret')
+                || str_contains($lower, 'token')
+                || str_contains($lower, 'password')
+                || str_contains($lower, 'signature')
+                || str_contains($lower, 'api_key')
+                || $lower === 'key'
+                || str_ends_with($lower, '_key')) {
                 $out[$key] = '[redacted]';
 
                 continue;

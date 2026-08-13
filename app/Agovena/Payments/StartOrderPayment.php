@@ -9,7 +9,6 @@ use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Enums\PaymentAttemptStatus;
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
@@ -33,7 +32,12 @@ final class StartOrderPayment
         string $returnUrl,
         string $cancelUrl,
         ?string $idempotencyKey = null,
+        ?string $checkoutMethod = null,
     ): PaymentAttempt {
+        $selection = str_contains($gatewayId, ':')
+            ? CheckoutPaymentSelection::parse($gatewayId)
+            : new CheckoutPaymentSelection($gatewayId, $gatewayId, $checkoutMethod);
+
         $order->loadMissing('payment', 'invoice');
         $this->assertInvoiceCanBePaid->handle($order);
         $payment = $order->payment;
@@ -56,22 +60,21 @@ final class StartOrderPayment
             ]);
         }
 
-        $this->requireGateway($gatewayId);
+        $this->requireGateway($selection->gatewayId);
 
-        if (in_array($payment->status, [PaymentStatus::Failed, PaymentStatus::Cancelled], true)) {
+        if (in_array($payment->status, [PaymentStatus::Failed, PaymentStatus::Cancelled, PaymentStatus::Expired], true)) {
             $payment->status = PaymentStatus::Pending;
             $payment->save();
         }
 
-        $method = PaymentMethod::tryFrom($gatewayId);
-        if ($method !== null && $payment->method !== $method) {
-            $payment->method = $method;
+        if ($payment->method !== $selection->gatewayId) {
+            $payment->method = $selection->gatewayId;
             $payment->save();
         }
 
         $open = PaymentAttempt::query()
             ->where('payment_id', $payment->id)
-            ->where('gateway_id', $gatewayId)
+            ->where('gateway_id', $selection->gatewayId)
             ->whereIn('status', [PaymentAttemptStatus::Pending, PaymentAttemptStatus::Processing])
             ->latest('id')
             ->first();
@@ -82,10 +85,11 @@ final class StartOrderPayment
 
         return $this->initiate->handle(
             $payment->fresh() ?? $payment,
-            $gatewayId,
+            $selection->gatewayId,
             $returnUrl,
             $cancelUrl,
             $idempotencyKey,
+            $selection->method ?? $checkoutMethod,
         );
     }
 

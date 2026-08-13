@@ -29,6 +29,9 @@ final class Index extends Component
     /** @var array<string, mixed> */
     public array $settingsForm = [];
 
+    /** @var array<string, bool> */
+    public array $secretConfigured = [];
+
     public function mount(): void
     {
         $this->authorize('extensions.view');
@@ -78,10 +81,12 @@ final class Index extends Component
         $status = $extensions->status($extensionId);
         $this->settingsExtensionId = $extensionId;
         $this->settingsForm = [];
+        $this->secretConfigured = [];
         foreach ($status['manifest']->settings as $definition) {
             $key = $definition['key'];
             $secret = (bool) ($definition['secret'] ?? false);
             $current = $settings->get($extensionId, $key, $definition['default'] ?? '');
+            $this->secretConfigured[$key] = $secret && $settings->isConfigured($extensionId, $key);
             $this->settingsForm[$key] = $secret ? '' : $current;
         }
     }
@@ -90,6 +95,7 @@ final class Index extends Component
     {
         $this->settingsExtensionId = null;
         $this->settingsForm = [];
+        $this->secretConfigured = [];
     }
 
     public function saveSettings(ExtensionManager $extensions, ExtensionSettingsRepository $settings): void

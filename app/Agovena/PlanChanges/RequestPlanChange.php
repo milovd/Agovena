@@ -6,7 +6,6 @@ namespace App\Agovena\PlanChanges;
 
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Enums\OrderStatus;
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Models\Customer;
 use App\Models\Order;
@@ -119,7 +118,7 @@ final class RequestPlanChange
 
         Payment::query()->create([
             'order_id' => $order->id,
-            'method' => PaymentMethod::Manual,
+            'method' => 'manual',
             'status' => PaymentStatus::Pending,
             'amount' => $difference,
             'currency' => $target->currency,

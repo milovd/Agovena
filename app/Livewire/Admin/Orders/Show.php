@@ -8,12 +8,14 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\InMemoryAdminRegistrar;
 use App\Agovena\Orders\CancelUnpaidOrder;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Lang;
 use Livewire\Component;
 
 final class Show extends Component
@@ -31,7 +33,7 @@ final class Show extends Component
     public function mount(Order $order): void
     {
         $this->authorize('orders.view');
-        $this->order = $order->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+        $this->order = $order->load(['items', 'payment.attempts', 'invoice', 'creditNotes', 'refunds']);
     }
 
     public function startRecordPayment(): void
@@ -64,7 +66,7 @@ final class Show extends Component
         $staff = Auth::user();
 
         $this->order = $cancel->handle($this->order, UnpaidOrderCancelSource::Staff, $staff)
-            ->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+            ->load(['items', 'payment.attempts', 'invoice', 'creditNotes', 'refunds']);
         $this->confirmingCancel = false;
         session()->flash('status', __('admin.orders.flash.cancelled'));
     }
@@ -82,7 +84,7 @@ final class Show extends Component
             filled($this->reference) ? $this->reference : null,
         );
 
-        $this->order->refresh()->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+        $this->order->refresh()->load(['items', 'payment.attempts', 'invoice', 'creditNotes', 'refunds']);
         $this->confirmingPayment = false;
         session()->flash('status', __('admin.orders.flash.payment_recorded'));
     }
@@ -101,10 +103,28 @@ final class Show extends Component
             'canCancelUnpaid' => $canCancelUnpaid,
             'orderDetailSections' => $admin->orderDetailSections(),
             'navigation' => $admin->navigationItems(),
+            'paymentGatewayLabel' => $this->paymentGatewayLabel(),
         ])->layout('layouts.admin', [
             'title' => __('admin.orders.show.title', ['number' => $this->order->number]),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    private function paymentGatewayLabel(): string
+    {
+        $method = $this->order->payment?->method;
+        if (! is_string($method) || $method === '') {
+            return '—';
+        }
+
+        $gateway = app(PaymentGatewayRegistry::class)->get($method);
+        if ($gateway !== null) {
+            return __($gateway->label());
+        }
+
+        $key = 'admin.orders.method.'.$method;
+
+        return Lang::has($key) ? __($key) : $method;
     }
 
     private function authorizeCancelUnpaid(): void
