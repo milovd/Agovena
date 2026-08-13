@@ -27,6 +27,8 @@ use App\Enums\PaymentStatus;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\TaxRate;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -96,16 +98,12 @@ final class CheckoutPage extends Component
     public function mount(CartService $cart, CustomerRegistration $registration, CustomerPropertyService $properties): void
     {
         if ($cart->isEmpty()) {
-            $this->redirect(route('storefront.cart'), navigate: true);
-
-            return;
+            throw new HttpResponseException(new RedirectResponse(route('storefront.cart')));
         }
 
         if ($registration->requiresAccountForCheckout() && ! Auth::check()) {
             session()->put('url.intended', route('storefront.checkout'));
-            $this->redirect(route('login'), navigate: true);
-
-            return;
+            throw new HttpResponseException(new RedirectResponse(route('login')));
         }
 
         $this->idempotency_key = (string) Str::uuid();

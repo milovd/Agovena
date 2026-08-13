@@ -101,7 +101,7 @@
                             <td><span class="ag-badge">{{ $definition->is_active ? __('common.active') : __('common.inactive') }}</span></td>
                             <td>
                                 <button class="ag-btn ag-btn--ghost" type="button" wire:click="edit({{ $definition->id }})">{{ __('common.edit') }}</button>
-                                <button class="ag-btn ag-btn--ghost" type="button" wire:click="delete({{ $definition->id }})" wire:confirm="{{ __('admin.customer_properties.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                <button class="ag-btn ag-btn--danger-outline" type="button" wire:click="delete({{ $definition->id }})" wire:confirm="{{ __('admin.customer_properties.delete_confirm') }}">{{ __('common.delete') }}</button>
                             </td>
                         </tr>
                     @endforeach

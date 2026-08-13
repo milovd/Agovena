@@ -13,7 +13,6 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Collection;
 use Livewire\Component;
 
 final class Dashboard extends Component
@@ -40,10 +39,12 @@ final class Dashboard extends Component
         $orderCount = Order::query()->count();
         $pendingPaymentCount = Payment::query()->where('status', PaymentStatus::Pending)->count();
 
-        $paidPayments = Payment::query()->where('status', PaymentStatus::Paid)->get(['amount', 'currency']);
-        $paidRevenueByCurrency = $paidPayments
+        $paidRevenueByCurrency = Payment::query()
+            ->where('status', PaymentStatus::Paid)
             ->groupBy('currency')
-            ->map(fn (Collection $rows): int => (int) $rows->sum('amount'));
+            ->selectRaw('currency, COALESCE(SUM(amount), 0) as total')
+            ->pluck('total', 'currency')
+            ->map(fn (mixed $total): int => (int) $total);
 
         $recentOrders = Order::query()
             ->with('payment')

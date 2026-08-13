@@ -8,8 +8,6 @@ use App\Agovena\Catalog\ListStorefrontCategories;
 use App\Agovena\Catalog\ListStorefrontProducts;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
-use App\Models\Product;
-use Illuminate\Support\Collection;
 use Livewire\Component;
 
 final class CatalogIndex extends Component
@@ -29,18 +27,11 @@ final class CatalogIndex extends Component
     ) {
         $theme = $themes->active();
         $config = $themes->config($theme);
-        /** @var Collection<int, Product> $products */
-        $products = $list->handle();
-
         $query = trim($this->search);
-        if ($query !== '') {
-            $products = $products
-                ->filter(fn (Product $product): bool => str_contains(
-                    mb_strtolower($product->name.' '.($product->description ?? '')),
-                    mb_strtolower($query),
-                ))
-                ->values();
-        }
+        $products = $list->handle(
+            search: $query !== '' ? $query : null,
+            limit: $query !== '' ? 48 : 24,
+        );
 
         $siteName = (string) $settings->get('general', 'site_name', config('app.name', 'Shop'));
 

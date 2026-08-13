@@ -32,9 +32,13 @@ final class Index extends Component
         return view('livewire.admin.customers.index', [
             'customers' => Customer::query()
                 ->with('user')
-                ->when($this->search !== '', fn ($query) => $query
-                    ->where('name', 'like', '%'.$this->search.'%')
-                    ->orWhere('email', 'like', '%'.$this->search.'%'))
+                ->when($this->search !== '', function ($query): void {
+                    $term = '%'.$this->search.'%';
+                    $query->where(function ($nested) use ($term): void {
+                        $nested->where('name', 'like', $term)
+                            ->orWhere('email', 'like', $term);
+                    });
+                })
                 ->latest('id')
                 ->paginate(20),
         ])->layout('layouts.admin', [

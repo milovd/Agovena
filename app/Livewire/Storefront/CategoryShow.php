@@ -39,21 +39,14 @@ final class CategoryShow extends Component
             ->map(fn ($id): int => (int) $id)
             ->all();
 
-        $products = $list->handle(categoryIds: $categoryIds);
+        $products = $list->handle(
+            categoryIds: $categoryIds,
+            search: trim($this->search) !== '' ? trim($this->search) : null,
+            sort: $this->sort,
+            limit: 96,
+        );
 
         $query = trim($this->search);
-        if ($query !== '') {
-            $products = $products->filter(fn ($p) => str_contains(
-                mb_strtolower($p->name),
-                mb_strtolower($query),
-            ))->values();
-        }
-
-        $products = match ($this->sort) {
-            'price_asc' => $products->sortBy('price_amount')->values(),
-            'price_desc' => $products->sortByDesc('price_amount')->values(),
-            default => $products->sortBy('name')->values(),
-        };
 
         return view($theme->view('catalog.category'), [
             'category' => $category,

@@ -13,6 +13,7 @@ use App\Agovena\Customer\CustomerAccountOverview;
 use App\Http\Middleware\SyncStaffPermissions;
 use App\Models\Customer;
 use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -74,10 +75,14 @@ final class ModuleContext
      */
     public function adminRoutes(callable $routes): void
     {
-        Route::middleware(['web', 'auth', SyncStaffPermissions::class, 'admin.access'])
-            ->prefix('admin')
-            ->name('admin.')
-            ->group($routes);
+        Route::group([
+            'middleware' => ['web', 'auth', SyncStaffPermissions::class, 'admin.access'],
+            'prefix' => 'admin',
+            'as' => 'admin.',
+        ], $routes);
+
+        app(Router::class)->getRoutes()->refreshNameLookups();
+        app(Router::class)->getRoutes()->refreshActionLookups();
     }
 
     /**
@@ -87,9 +92,13 @@ final class ModuleContext
      */
     public function customerRoutes(callable $routes): void
     {
-        Route::middleware(['web', 'auth', 'customer.verified'])
-            ->prefix('account')
-            ->name('customer.')
-            ->group($routes);
+        Route::group([
+            'middleware' => ['web', 'auth', 'customer.verified'],
+            'prefix' => 'account',
+            'as' => 'customer.',
+        ], $routes);
+
+        app(Router::class)->getRoutes()->refreshNameLookups();
+        app(Router::class)->getRoutes()->refreshActionLookups();
     }
 }
