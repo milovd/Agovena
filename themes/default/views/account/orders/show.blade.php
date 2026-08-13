@@ -14,6 +14,30 @@
             </p>
         </header>
 
+        @if (session('status'))
+            <p class="store-alert store-alert--success" role="status">{{ session('status') }}</p>
+        @endif
+
+        @error('pay_gateway')
+            <p class="store-alert store-alert--error" role="alert">{{ $message }}</p>
+        @enderror
+
+        @if ($order->isAwaitingPayment())
+            <form class="store-account-panel__section" wire:submit="payNow">
+                <h2>{{ __('customer.account.pay_now') }}</h2>
+                <p>{{ __('customer.account.amount_due', ['amount' => \App\Support\MoneyFormatter::format($order->payment?->amount ?? $order->total_amount, $order->currency)]) }}</p>
+                <label>
+                    {{ __('customer.account.payment_method') }}
+                    <select wire:model="pay_gateway">
+                        @foreach ($paymentOptions as $option)
+                            <option value="{{ $option['id'] }}">{{ __($option['label']) }}</option>
+                        @endforeach
+                    </select>
+                </label>
+                <button type="submit" class="store-btn store-btn--primary">{{ __('customer.account.pay_now') }}</button>
+            </form>
+        @endif
+
         <div class="store-account-panel__grid">
             <div>
                 <h2>{{ __('customer.account.items') }}</h2>

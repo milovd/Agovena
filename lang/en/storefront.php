@@ -201,6 +201,8 @@ return [
         'cart_empty' => 'Your cart is empty.',
         'development_payment_unavailable' => 'Development payment is not available.',
         'payment_method_unavailable' => 'The selected payment method is not available.',
+        'payment_unavailable' => 'This order cannot be paid right now.',
+        'already_paid' => 'This order is already paid.',
         'shipping_address_required' => 'A shipping address is required for shippable items.',
         'shipping_method_required' => 'Please choose a shipping method.',
         'shipping_method_unavailable' => 'The selected shipping method is not available.',

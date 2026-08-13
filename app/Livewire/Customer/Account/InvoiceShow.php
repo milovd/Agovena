@@ -6,10 +6,13 @@ namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Invoice;
+use App\Models\Order;
 use Livewire\Component;
 
 final class InvoiceShow extends Component
 {
+    use PaysUnpaidOrders;
+
     public Invoice $invoice;
 
     public function mount(Invoice $invoice): void
@@ -21,7 +24,19 @@ final class InvoiceShow extends Component
             404,
         );
 
-        $this->invoice = $invoice->load('items');
+        $this->invoice = $invoice->load(['items', 'order.payment']);
+    }
+
+    protected function unpaidOrder(): ?Order
+    {
+        $order = $this->invoice->order;
+
+        return $order !== null && $order->isAwaitingPayment() ? $order : null;
+    }
+
+    protected function afterPaymentAttempt(Order $order): void
+    {
+        $this->invoice = $this->invoice->fresh(['items', 'order.payment']) ?? $this->invoice;
     }
 
     public function render(ThemeManager $themes)
@@ -32,6 +47,7 @@ final class InvoiceShow extends Component
             'theme' => $theme,
             'invoice' => $this->invoice,
             'accountSection' => 'invoices',
+            'paymentOptions' => $this->paymentGatewayOptions(),
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.account.invoice_title', ['number' => $this->invoice->number]),
             'theme' => $theme,

@@ -201,6 +201,8 @@ return [
         'cart_empty' => 'Je winkelwagen is leeg.',
         'development_payment_unavailable' => 'Ontwikkelbetaling is niet beschikbaar.',
         'payment_method_unavailable' => 'De gekozen betaalmethode is niet beschikbaar.',
+        'payment_unavailable' => 'Deze bestelling kan nu niet worden betaald.',
+        'already_paid' => 'Deze bestelling is al betaald.',
         'shipping_address_required' => 'Een verzendadres is verplicht voor verzendbare artikelen.',
         'shipping_method_required' => 'Kies een verzendmethode.',
         'shipping_method_unavailable' => 'De gekozen verzendmethode is niet beschikbaar.',

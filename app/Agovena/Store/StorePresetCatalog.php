@@ -39,12 +39,6 @@ final class StorePresetCatalog
                 moduleIds: ['subscriptions'],
             ),
             new StorePreset(
-                id: 'events',
-                labelKey: 'admin.store_presets.events',
-                ledeKey: 'admin.store_presets.events_lede',
-                moduleIds: [],
-            ),
-            new StorePreset(
                 id: 'custom',
                 labelKey: 'admin.store_presets.custom',
                 ledeKey: 'admin.store_presets.custom_lede',

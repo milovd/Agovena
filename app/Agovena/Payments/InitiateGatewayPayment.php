@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\PaymentGateway;
+use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
+use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Enums\PaymentAttemptStatus;
 use App\Models\Payment;
 use App\Models\PaymentAttempt;
@@ -73,6 +75,12 @@ final class InitiateGatewayPayment
     public function requireGateway(string $gatewayId): PaymentGateway
     {
         $gateway = $this->gateways->get($gatewayId);
+        if ($gateway === null && $gatewayId === 'manual') {
+            $gateway = app(ManualPaymentGateway::class);
+        }
+        if ($gateway === null && $gatewayId === 'development' && (bool) config('agovena.payments.allow_development_instant_pay')) {
+            $gateway = app(DevelopmentPaymentGateway::class);
+        }
         if ($gateway === null) {
             throw ValidationException::withMessages([
                 'payment_method' => __('storefront.errors.payment_method_unavailable'),

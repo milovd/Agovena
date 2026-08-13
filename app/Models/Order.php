@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Collection;
@@ -106,9 +107,24 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    /** @return HasOne<DiscountRedemption, $this> */
-    public function discountRedemption(): HasOne
+    /** @return HasOne<Invoice, $this> */
+    public function invoice(): HasOne
     {
-        return $this->hasOne(DiscountRedemption::class);
+        return $this->hasOne(Invoice::class);
+    }
+
+    public function isAwaitingPayment(): bool
+    {
+        if ($this->status !== OrderStatus::Pending) {
+            return false;
+        }
+
+        $status = $this->payment?->status;
+
+        return in_array($status, [
+            PaymentStatus::Pending,
+            PaymentStatus::Failed,
+            PaymentStatus::Cancelled,
+        ], true);
     }
 }

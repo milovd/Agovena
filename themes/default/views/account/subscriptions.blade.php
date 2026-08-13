@@ -18,36 +18,23 @@
                 @foreach ($subscriptions as $subscription)
                     <li class="store-order-items__row" wire:key="customer-sub-{{ $subscription->id }}">
                         <div>
-                            <strong>{{ $subscription->product?->name ?? $subscription->number }}</strong>
+                            <strong>
+                                <a href="{{ route('customer.subscriptions.show', $subscription) }}">
+                                    {{ $subscription->product?->name ?? $subscription->number }}
+                                </a>
+                            </strong>
                             <p>{{ __('subscriptions::customer.status') }}: {{ __('subscriptions::status.'.$subscription->status->value) }}</p>
-                            <p>{{ __('subscriptions::customer.period') }}:
-                                {{ $subscription->current_period_start?->toDateString() }}
-                                →
-                                {{ $subscription->current_period_end?->toDateString() }}
+                            <p>{{ __('subscriptions::customer.next_renewal') }}: {{ $subscription->next_billing_at?->toDateString() ?? '—' }}</p>
+                            <p>{{ __('subscriptions::customer.price') }}:
+                                {{ \App\Support\MoneyFormatter::format($subscription->price_amount * $subscription->quantity, $subscription->currency) }}
                             </p>
                             @if ($subscription->cancel_at_period_end)
                                 <p class="store-muted">{{ __('subscriptions::customer.ends_at_period') }}</p>
                             @endif
-                            @if ($planTargets[$subscription->id]->isNotEmpty())
-                                <div>
-                                    <strong>{{ __('subscriptions::customer.change_plan') }}</strong>
-                                    @foreach ($planTargets[$subscription->id] as $target)
-                                        <button
-                                            type="button"
-                                            class="store-btn store-btn--secondary"
-                                            wire:click="requestPlanChange({{ $subscription->id }}, {{ $target->to_product_id }})"
-                                        >
-                                            {{ $target->toProduct->name }}
-                                        </button>
-                                    @endforeach
-                                </div>
-                            @endif
                         </div>
-                        @if ($subscription->canCancel() && ! $subscription->cancel_at_period_end)
-                            <button type="button" class="store-btn store-btn--secondary" wire:click="cancel({{ $subscription->id }})">
-                                {{ __('subscriptions::customer.cancel') }}
-                            </button>
-                        @endif
+                        <a class="store-btn store-btn--secondary" href="{{ route('customer.subscriptions.show', $subscription) }}">
+                            {{ __('subscriptions::customer.manage') }}
+                        </a>
                     </li>
                 @endforeach
             </ul>

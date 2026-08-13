@@ -10,6 +10,8 @@ return [
     'overview_label' => 'Services',
     'overview_hint' => 'Active hosted services',
     'status' => 'Status',
+    'plan' => 'Plan',
     'reference' => 'Reference',
+    'linked_subscription' => 'Linked subscription',
     'action_completed' => 'Service action completed.',
 ];

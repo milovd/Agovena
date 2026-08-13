@@ -10,6 +10,8 @@ return [
     'overview_label' => 'Services',
     'overview_hint' => 'Actieve gehoste services',
     'status' => 'Status',
+    'plan' => 'Plan',
     'reference' => 'Referentie',
+    'linked_subscription' => 'Gekoppeld abonnement',
     'action_completed' => 'Serviceactie voltooid.',
 ];

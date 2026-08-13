@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Agovena\Modules\Subscriptions\Enums\RenewalStatus;
 use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
+use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionShow as CustomerSubscriptionShow;
 use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionsIndex;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
@@ -112,6 +113,32 @@ test('customer portal lists subscriptions and can cancel at period end', functio
 
     expect($subscription->fresh()->cancel_at_period_end)->toBeTrue()
         ->and($subscription->fresh()->status)->toBe(SubscriptionStatus::Active);
+});
+
+test('customer can undo period-end cancellation from subscription detail', function () {
+    enableSubscriptionsModule();
+    $customer = Customer::factory()->create();
+    $product = makeSubscribableProduct();
+
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+        'customer_id' => $customer->id,
+        'billing' => billingForSubscription(),
+    ]);
+    app(RecordManualPayment::class)->handle($order, $this->createStaff());
+
+    $subscription = Subscription::query()->firstOrFail();
+    app(SubscriptionService::class)->cancel($subscription, atPeriodEnd: true);
+
+    Livewire::actingAs($customer->user)
+        ->test(CustomerSubscriptionShow::class, ['subscription' => $subscription->fresh()])
+        ->assertSee($product->name)
+        ->call('resume')
+        ->assertHasNoErrors();
+
+    expect($subscription->fresh()->cancel_at_period_end)->toBeFalse();
 });
 
 test('admin can create renewal order and payment advances period', function () {

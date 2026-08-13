@@ -10,6 +10,14 @@
             @endforeach
         </ul>
         <p>{{ __('storefront.confirmation.total', ['amount' => \App\Support\MoneyFormatter::format($order->total_amount, $order->currency)]) }}</p>
+        <p>{{ __('customer.account.payment_status') }}:
+            {{ __('customer.account.payment_statuses.'.($order->payment?->status->value ?? 'pending')) }}
+        </p>
+        @if ($order->isAwaitingPayment() && auth()->check())
+            <p>
+                <a class="store-btn" href="{{ route('customer.orders.show', $order) }}">{{ __('customer.account.continue_payment') }}</a>
+            </p>
+        @endif
     </section>
 
     <p class="store-note">{{ __('storefront.confirmation.note') }}</p>

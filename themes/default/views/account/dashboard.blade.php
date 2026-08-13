@@ -35,6 +35,27 @@
             @endforeach
         </div>
 
+        @if (($unpaidOrders ?? collect())->isNotEmpty())
+            <div class="store-account-panel__section">
+                <div class="store-account-panel__section-head">
+                    <h2>{{ __('customer.account.unpaid_heading') }}</h2>
+                </div>
+                <ul class="store-order-list" role="list">
+                    @foreach ($unpaidOrders as $order)
+                        <li class="store-order-list__item">
+                            <div>
+                                <a class="store-order-list__number" href="{{ route('customer.orders.show', $order) }}">{{ $order->number }}</a>
+                                <p class="store-order-list__meta">{{ __('customer.account.payment_statuses.'.($order->payment?->status->value ?? 'pending')) }}</p>
+                            </div>
+                            <div class="store-order-list__status">
+                                <a class="store-btn store-btn--primary" href="{{ route('customer.orders.show', $order) }}">{{ __('customer.account.pay_now') }}</a>
+                            </div>
+                        </li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
         <div class="store-account-panel__section">
             <div class="store-account-panel__section-head">
                 <h2>{{ __('customer.account.recent_orders') }}</h2>

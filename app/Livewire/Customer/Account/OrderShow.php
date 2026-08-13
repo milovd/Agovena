@@ -11,6 +11,8 @@ use Livewire\Component;
 
 final class OrderShow extends Component
 {
+    use PaysUnpaidOrders;
+
     public Order $order;
 
     public function mount(Order $order): void
@@ -22,7 +24,17 @@ final class OrderShow extends Component
             404,
         );
 
-        $this->order = $order->load(['items', 'payment']);
+        $this->order = $order->load(['items', 'payment', 'invoice']);
+    }
+
+    protected function unpaidOrder(): ?Order
+    {
+        return $this->order->isAwaitingPayment() ? $this->order : null;
+    }
+
+    protected function afterPaymentAttempt(Order $order): void
+    {
+        $this->order = $order->load(['items', 'payment', 'invoice']);
     }
 
     public function render(ThemeManager $themes, OrderFulfillmentPresenter $fulfillment)
@@ -34,6 +46,7 @@ final class OrderShow extends Component
             'order' => $this->order,
             'shipments' => $fulfillment->forOrder($this->order),
             'accountSection' => 'orders',
+            'paymentOptions' => $this->paymentGatewayOptions(),
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.account.order_title', ['number' => $this->order->number]),
             'theme' => $theme,

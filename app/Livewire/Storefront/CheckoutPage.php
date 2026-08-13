@@ -18,10 +18,12 @@ use App\Agovena\Customer\SaveCustomerAddress;
 use App\Agovena\Discounts\DiscountApplicator;
 use App\Agovena\Money\Money;
 use App\Agovena\Payments\AvailablePaymentMethods;
+use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\TaxRate;
@@ -131,7 +133,7 @@ final class CheckoutPage extends Component
         $this->propertyValues = $properties->emptyValues($properties->definitionsFor('checkout'), $customer);
     }
 
-    public function placeOrder(PlaceOrder $placeOrder, CustomerRegistration $registration, CartService $cart, SaveCustomerAddress $saveAddress, CustomerPropertyService $properties, CartRequirementComposer $composer): void
+    public function placeOrder(PlaceOrder $placeOrder, CustomerRegistration $registration, CartService $cart, SaveCustomerAddress $saveAddress, CustomerPropertyService $properties, CartRequirementComposer $composer, StartOrderPayment $startPayment): void
     {
         if ($registration->requiresAccountForCheckout() && ! Auth::check()) {
             session()->put('url.intended', route('storefront.checkout'));
@@ -219,6 +221,22 @@ final class CheckoutPage extends Component
             'apply_credit' => (bool) ($data['apply_credit'] ?? false),
             'custom_properties' => $data['propertyValues'] ?? $this->propertyValues,
         ]);
+
+        $order->loadMissing('payment');
+        if ($order->payment?->status !== PaymentStatus::Paid) {
+            $attempt = $startPayment->handle(
+                $order,
+                $data['payment_method'],
+                route('storefront.order.confirmation', $order),
+                route('storefront.order.confirmation', $order),
+                'checkout-'.$order->id,
+            );
+            if (is_string($attempt->redirect_url) && $attempt->redirect_url !== '') {
+                $this->redirect($attempt->redirect_url);
+
+                return;
+            }
+        }
 
         $this->redirect(route('storefront.order.confirmation', $order), navigate: true);
     }

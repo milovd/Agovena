@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Store\ApplyStorePresets;
+use App\Agovena\Store\StorePresetCatalog;
 use App\Livewire\Admin\Store\Presets as StorePresets;
 use App\Models\AgovenaModule;
 use Livewire\Livewire;
@@ -34,7 +35,9 @@ test('custom preset enables no modules and core still works with zero modules', 
     $enabled = app(ApplyStorePresets::class)->handle(['custom']);
 
     expect($enabled)->toBe([])
-        ->and(AgovenaModule::query()->where('enabled', true)->count())->toBe(0);
+        ->and(AgovenaModule::query()->where('enabled', true)->count())->toBe(0)
+        ->and(collect(app(StorePresetCatalog::class)->all())->pluck('id')->all())
+        ->not->toContain('events');
 });
 
 test('staff can apply store presets from admin', function () {

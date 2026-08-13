@@ -20,6 +20,19 @@
                         <div>
                             <strong>{{ $instance->product?->name ?? $instance->number }}</strong>
                             <p>{{ __('provisioning::customer.status') }}: {{ __('provisioning::status.'.$instance->status->value) }}</p>
+                            @if ($instance->product)
+                                <p>{{ __('provisioning::customer.plan') }}: {{ $instance->product->name }}</p>
+                            @endif
+                            @if (! empty($instance->meta['options_snapshot']))
+                                <ul>
+                                    @foreach ($instance->meta['options_snapshot'] as $option)
+                                        <li>{{ $option['label'] ?? $option['key'] ?? '' }}: {{ $option['display'] ?? $option['value'] ?? '' }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            @if ($instance->subscription_id)
+                                <p>{{ __('provisioning::customer.linked_subscription') }}: {{ $instance->subscription_id }}</p>
+                            @endif
                             @if ($instance->external_ref)
                                 <p>{{ __('provisioning::customer.reference') }}: {{ $instance->external_ref }}</p>
                             @endif
