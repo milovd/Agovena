@@ -17,6 +17,12 @@
   color: var(--ag-color-danger);
 }
 
+.ag-alert--warning {
+  border-color: rgb(217 119 6 / 0.4);
+  background: rgb(245 158 11 / 0.12);
+  color: #b45309;
+}
+
 .ag-alert__title {
   margin: 0 0 var(--ag-space-1);
   font-weight: 650;

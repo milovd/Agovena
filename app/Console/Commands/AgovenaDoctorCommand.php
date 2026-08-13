@@ -8,7 +8,6 @@ use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Installation\RequirementCheck;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Schema;
 
 final class AgovenaDoctorCommand extends Command
 {
@@ -73,17 +72,16 @@ final class AgovenaDoctorCommand extends Command
     {
         $queue = (string) config('queue.default', '');
         $mail = (string) config('mail.default', '');
+        $env = (string) config('app.env');
+        $debugOff = $env !== 'production' || ! (bool) config('app.debug');
 
         return [
             new RequirementCheck(
-                id: 'extensions_table',
-                label: 'installer.checks.extensions_table',
-                passed: Schema::hasTable('agovena_extensions'),
-            ),
-            new RequirementCheck(
-                id: 'tax_rates_table',
-                label: 'installer.checks.tax_rates_table',
-                passed: Schema::hasTable('tax_rates'),
+                id: 'production_debug',
+                label: 'installer.checks.production_debug',
+                passed: $debugOff,
+                required: $env === 'production',
+                detail: 'APP_ENV='.$env.' APP_DEBUG='.(config('app.debug') ? 'true' : 'false'),
             ),
             new RequirementCheck(
                 id: 'queue_connection',

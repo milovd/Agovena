@@ -151,6 +151,25 @@ final class ModuleManager
     }
 
     /**
+     * Apply pending migrations for every installed Module (enabled or disabled).
+     * Used by `agovena:upgrade` so pulled Module schema changes land without enable/disable.
+     */
+    public function migrateInstalled(): void
+    {
+        if (! $this->modulesTableReady()) {
+            return;
+        }
+
+        foreach ($this->discover() as $manifest) {
+            if (! $this->isInstalled($manifest->id)) {
+                continue;
+            }
+
+            $this->runModuleMigrations($manifest);
+        }
+    }
+
+    /**
      * Explicit uninstall marker. Does not drop module tables by default.
      */
     public function uninstall(string $moduleId, bool $purgeData = false): void

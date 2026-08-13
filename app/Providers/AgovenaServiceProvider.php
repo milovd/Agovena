@@ -31,6 +31,7 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Fulfillment\NullOrderFulfillmentPresenter;
 use App\Agovena\Fulfillment\OrderFulfillmentPresenter;
+use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Agovena\Installation\EnsurePublicStorageLink;
 use App\Agovena\Installation\InstallAgovena;
 use App\Agovena\Installation\InstallationRequirements;
@@ -84,6 +85,12 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(SettingsRepository::class);
         $this->app->singleton(CurrencyCatalog::class);
         $this->app->singleton(InstallationState::class);
+        $this->app->singleton(ApplicationSchemaStatus::class, function ($app): ApplicationSchemaStatus {
+            return new ApplicationSchemaStatus(
+                $app->make('migrator'),
+                $app->make(ModuleManager::class),
+            );
+        });
         $this->app->singleton(InstallationRequirements::class);
         $this->app->singleton(EnsurePublicStorageLink::class);
         $this->app->singleton(InstallAgovena::class);

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Customer\EmailVerificationController;
 use App\Http\Controllers\InvoiceDocumentController;
+use App\Http\Controllers\SchemaUpdateRequiredController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
 use App\Http\Controllers\Webhooks\PaymentWebhookController;
 use App\Http\Middleware\RedirectIfInstalled;
@@ -67,6 +68,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(RedirectIfInstalled::class)->group(function (): void {
     Route::get('/install', InstallerWizard::class)->name('install');
 });
+
+Route::get('/update-required', SchemaUpdateRequiredController::class)->name('schema.update-required');
 
 Route::get('/', CatalogIndex::class)->name('storefront.home');
 Route::get('/search/suggest', SearchSuggestController::class)

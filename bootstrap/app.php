@@ -1,11 +1,14 @@
 <?php
 
+use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Http\Middleware\EnsureAgovenaInstalled;
+use App\Http\Middleware\EnsureApplicationSchemaIsCurrent;
 use App\Http\Middleware\EnsureCanAccessAdmin;
 use App\Http\Middleware\EnsureCustomerEmailIsVerified;
 use App\Http\Middleware\SetLocale;
 use App\Models\User;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [
             EnsureAgovenaInstalled::class,
+            EnsureApplicationSchemaIsCurrent::class,
         ]);
         $middleware->web(append: [
             SetLocale::class,
@@ -52,4 +56,23 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        $exceptions->render(function (QueryException $e, Request $request) {
+            try {
+                $schema = app(ApplicationSchemaStatus::class);
+                if (! $schema->isMissingRelationException($e) || $schema->isCurrent()) {
+                    return null;
+                }
+            } catch (Throwable) {
+                return null;
+            }
+
+            if ($request->expectsJson() || $request->is('livewire/*') || $request->is('api/*')) {
+                return response()->json([
+                    'message' => __('schema.update_required.title'),
+                ], 503);
+            }
+
+            return response()->view('schema.update-required', $schema->viewData(), 503);
+        });
     })->create();

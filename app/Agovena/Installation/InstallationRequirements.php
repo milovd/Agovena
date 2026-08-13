@@ -6,7 +6,6 @@ namespace App\Agovena\Installation;
 
 use App\Agovena\Theme\ThemeManager;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class InstallationRequirements
@@ -14,6 +13,7 @@ class InstallationRequirements
     public function __construct(
         private readonly ThemeManager $themes,
         private readonly EnsurePublicStorageLink $storageLink,
+        private readonly ApplicationSchemaStatus $schema,
     ) {}
 
     /**
@@ -77,23 +77,18 @@ class InstallationRequirements
     private function migrationsCheck(): RequirementCheck
     {
         try {
-            if (! Schema::hasTable('migrations')) {
-                return $this->check('migrations', 'installer.checks.migrations', false, true, 'migrations table missing');
-            }
-
-            $ran = Schema::hasTable('users')
-                && Schema::hasTable('customers')
-                && Schema::hasTable('settings')
-                && Schema::hasTable('currencies')
-                && Schema::hasTable('roles')
-                && Schema::hasTable('permissions');
+            $pending = $this->schema->pending();
+            $current = $pending === [];
+            $detail = $current
+                ? null
+                : count($pending).' pending ('.implode(', ', $pending).') — php artisan agovena:upgrade';
 
             return $this->check(
                 'migrations',
                 'installer.checks.migrations',
-                $ran,
+                $current,
                 true,
-                $ran ? null : 'Run php artisan migrate before installing',
+                $detail,
             );
         } catch (Throwable $e) {
             return $this->check('migrations', 'installer.checks.migrations', false, true, $e->getMessage());
