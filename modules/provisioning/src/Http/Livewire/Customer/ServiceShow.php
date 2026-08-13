@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Agovena\Modules\Provisioning\Http\Livewire\Customer;
 
+use Agovena\Modules\Provisioning\EloquentProvisionedServiceResolver;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use App\Agovena\Provisioning\Contracts\ProvisionerActions;
@@ -42,7 +43,7 @@ final class ServiceShow extends Component
         $theme = $themes->active();
         $registry = app(ProvisionerRegistry::class);
         $provisioner = $this->instance->provider_key !== null ? $registry->get($this->instance->provider_key) : null;
-        $info = RunProvisionerAction::info($this->instance);
+        $info = EloquentProvisionedServiceResolver::info($this->instance);
 
         $subscription = null;
         if ($this->instance->subscription_id !== null

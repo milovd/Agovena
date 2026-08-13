@@ -4,29 +4,31 @@ declare(strict_types=1);
 
 namespace App\Agovena\Provisioning;
 
-use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use App\Agovena\Provisioning\Contracts\ProvisionerActions;
+use App\Agovena\Provisioning\Contracts\ResolvesProvisionedServices;
 use App\Models\Customer;
 use Illuminate\Validation\ValidationException;
 
 final class RunProvisionerAction
 {
-    public function __construct(private readonly ProvisionerRegistry $provisioners) {}
+    public function __construct(
+        private readonly ProvisionerRegistry $provisioners,
+        private readonly ?ResolvesProvisionedServices $services = null,
+    ) {}
 
     public function handle(Customer $customer, int $instanceId, string $actionId): void
     {
-        $instance = ServiceInstance::query()
-            ->whereKey($instanceId)
-            ->where(function ($query) use ($customer): void {
-                $query->where('customer_id', $customer->id)
-                    ->orWhere(function ($query) use ($customer): void {
-                        $query->whereNull('customer_id')->where('customer_email', $customer->email);
-                    });
-            })
-            ->firstOrFail();
+        if ($this->services === null) {
+            abort(404);
+        }
 
-        $provisioner = $instance->provider_key !== null
-            ? $this->provisioners->get($instance->provider_key)
+        $info = $this->services->resolveForCustomer($customer, $instanceId);
+        if ($info === null) {
+            abort(404);
+        }
+
+        $provisioner = $info->providerKey !== null
+            ? $this->provisioners->get($info->providerKey)
             : null;
 
         if (! $provisioner instanceof ProvisionerActions) {
@@ -35,7 +37,6 @@ final class RunProvisionerAction
             ]);
         }
 
-        $info = self::info($instance);
         $isAllowed = collect($provisioner->actions($info))
             ->contains(static fn (ProvisionerAction $action): bool => $action->id === $actionId);
 
@@ -46,17 +47,5 @@ final class RunProvisionerAction
         }
 
         $provisioner->runAction($info, $actionId);
-    }
-
-    public static function info(ServiceInstance $instance): ServiceInstanceInfo
-    {
-        return new ServiceInstanceInfo(
-            id: $instance->id,
-            label: (string) ($instance->meta['label'] ?? $instance->number),
-            status: $instance->status->value,
-            providerKey: $instance->provider_key,
-            externalRef: $instance->external_ref,
-            meta: $instance->meta ?? [],
-        );
     }
 }

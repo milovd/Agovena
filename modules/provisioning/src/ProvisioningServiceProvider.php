@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Agovena\Modules\Provisioning;
 
 use App\Agovena\Modules\Contracts\Module;
+use App\Agovena\Provisioning\Contracts\ResolvesProvisionedServices;
 use Illuminate\Support\ServiceProvider;
 
 final class ProvisioningServiceProvider extends ServiceProvider
@@ -13,6 +14,7 @@ final class ProvisioningServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ProvisioningModule::class);
         $this->app->singleton(ProvisioningService::class);
+        $this->app->bind(ResolvesProvisionedServices::class, EloquentProvisionedServiceResolver::class);
     }
 
     public function boot(): void
