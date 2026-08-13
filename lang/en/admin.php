@@ -180,6 +180,8 @@ return [
             'customer_registration' => 'Customer registration',
             'order_number_prefix' => 'Order number prefix',
             'invoice_number_prefix' => 'Invoice number prefix',
+            'seller_name' => 'Seller name on invoices',
+            'seller_address' => 'Seller address on invoices',
             'enable_reviews' => 'Enable product reviews',
             'prices_include_tax' => 'Prices include tax',
         ],
@@ -192,6 +194,8 @@ return [
             'customer_registration' => 'Allow customers to create accounts. Guest checkout stays available unless registration is required.',
             'enable_reviews' => 'When off, review UI is hidden on all product pages. Per-product review content still deferred.',
             'prices_include_tax' => 'When enabled, catalog prices already include tax; checkout extracts the tax amount instead of adding it.',
+            'seller_name' => 'Snapshotted onto invoices when they are issued. Later changes do not rewrite issued invoices.',
+            'seller_address' => 'Legal or trading address printed on invoices. Snapshotted at issue time.',
         ],
 
         'options' => [
@@ -700,6 +704,7 @@ return [
         'show_title' => 'Invoice :number',
         'show_lede' => 'Invoice snapshot for accounting and customer download.',
         'print' => 'Print invoice',
+        'download_pdf' => 'Download PDF',
         'search_label' => 'Search invoices',
         'search_placeholder' => 'Number, customer…',
         'status_label' => 'Status',

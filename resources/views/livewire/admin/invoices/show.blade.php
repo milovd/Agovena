@@ -7,9 +7,12 @@
             <x-ag.back :href="route('admin.invoices.index')" :label="__('admin.invoices.title')" />
         </x-slot:back>
         <x-slot:actions>
-            <button type="button" class="ag-btn ag-btn--secondary admin-invoice__print" onclick="window.print()">
+            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.print', $invoice) }}">
                 {{ __('admin.invoices.print') }}
-            </button>
+            </a>
+            <a class="ag-btn ag-btn--primary" href="{{ route('admin.invoices.pdf', $invoice) }}">
+                {{ __('admin.invoices.download_pdf') }}
+            </a>
         </x-slot:actions>
     </x-ag.page-header>
 

@@ -37,6 +37,7 @@ return [
     'subtotal' => 'Subtotaal',
     'shipping' => 'Verzending',
     'discount' => 'Korting',
+    'credit' => 'Tegoed',
     'tax' => 'Btw',
     'customer' => 'Klant',
     'method' => 'Methode',

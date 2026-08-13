@@ -62,6 +62,7 @@ return [
         'view_invoice' => 'View invoice',
         'back_to_invoices' => 'Back to invoices',
         'print_invoice' => 'Print invoice',
+        'download_invoice_pdf' => 'Download PDF',
         'invoice_statuses' => [
             'issued' => 'Issued',
             'paid' => 'Paid',

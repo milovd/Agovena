@@ -62,6 +62,7 @@ return [
         'view_invoice' => 'Bekijk factuur',
         'back_to_invoices' => 'Terug naar facturen',
         'print_invoice' => 'Factuur afdrukken',
+        'download_invoice_pdf' => 'PDF downloaden',
         'invoice_statuses' => [
             'issued' => 'Uitgegeven',
             'paid' => 'Betaald',

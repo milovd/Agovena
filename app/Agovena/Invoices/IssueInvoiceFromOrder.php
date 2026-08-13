@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Invoices;
 
 use App\Agovena\Settings\SettingsRepository;
+use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Invoice;
@@ -56,13 +57,18 @@ final class IssueInvoiceFromOrder
                 'billing_postal_code' => $locked->billing_postal_code,
                 'billing_country' => $locked->billing_country,
                 'billing_phone' => $locked->billing_phone,
-                'merchant_name' => (string) $this->settings->get('general', 'site_name', config('app.name')),
-                'merchant_address' => null,
+                'merchant_name' => $this->nullableString($this->settings->get('store', 'seller_name'))
+                    ?? (string) $this->settings->get('general', 'site_name', config('app.name')),
+                'merchant_address' => $this->nullableString($this->settings->get('store', 'seller_address')),
                 'issued_at' => now()->toDateString(),
+                'paid_at' => $status === InvoiceStatus::Paid ? ($locked->payment->paid_at ?? now()) : null,
                 'due_at' => null,
                 'subtotal_amount' => $locked->subtotal_amount,
                 'discount_amount' => $locked->discount_amount,
+                'credit_amount' => (int) $locked->credit_amount,
                 'tax_amount' => $locked->tax_amount,
+                'tax_rate_name' => $locked->tax_rate_name,
+                'tax_rate_bps' => $locked->tax_rate_bps,
                 'total_amount' => $locked->total_amount,
                 'currency' => $locked->currency,
                 'custom_properties_snapshot' => $locked->custom_properties_snapshot,
@@ -71,17 +77,20 @@ final class IssueInvoiceFromOrder
             foreach ($locked->items as $item) {
                 InvoiceItem::query()->create([
                     'invoice_id' => $invoice->id,
+                    'kind' => InvoiceItemKind::Product,
                     'label' => $item->label,
                     'quantity' => $item->quantity,
                     'unit_amount' => $item->unit_amount,
                     'line_total_amount' => $item->line_total_amount,
                     'currency' => $item->currency,
+                    'options_snapshot' => $item->options_snapshot,
                 ]);
             }
 
             if ((int) $locked->shipping_amount > 0) {
                 InvoiceItem::query()->create([
                     'invoice_id' => $invoice->id,
+                    'kind' => InvoiceItemKind::Shipping,
                     'label' => $locked->shipping_method_label ?: __('common.shipping'),
                     'quantity' => 1,
                     'unit_amount' => (int) $locked->shipping_amount,
@@ -93,7 +102,8 @@ final class IssueInvoiceFromOrder
             if ((int) $locked->discount_amount > 0) {
                 InvoiceItem::query()->create([
                     'invoice_id' => $invoice->id,
-                    'label' => __('common.discount').' '.($locked->discount_code ?: ''),
+                    'kind' => InvoiceItemKind::Discount,
+                    'label' => trim(__('common.discount').' '.($locked->discount_code ?: '')),
                     'quantity' => 1,
                     'unit_amount' => (int) $locked->discount_amount,
                     'line_total_amount' => (int) $locked->discount_amount,
@@ -101,11 +111,24 @@ final class IssueInvoiceFromOrder
                 ]);
             }
 
+            if ((int) $locked->credit_amount > 0) {
+                InvoiceItem::query()->create([
+                    'invoice_id' => $invoice->id,
+                    'kind' => InvoiceItemKind::Credit,
+                    'label' => __('common.credit'),
+                    'quantity' => 1,
+                    'unit_amount' => (int) $locked->credit_amount,
+                    'line_total_amount' => (int) $locked->credit_amount,
+                    'currency' => $locked->currency,
+                ]);
+            }
+
             $exclusiveTax = (int) $locked->total_amount
-                > ((int) $locked->subtotal_amount - (int) $locked->discount_amount + (int) $locked->shipping_amount);
+                > ((int) $locked->subtotal_amount - (int) $locked->discount_amount - (int) $locked->credit_amount + (int) $locked->shipping_amount);
             if ($exclusiveTax && (int) $locked->tax_amount > 0) {
                 InvoiceItem::query()->create([
                     'invoice_id' => $invoice->id,
+                    'kind' => InvoiceItemKind::Tax,
                     'label' => $locked->tax_rate_name ?: __('common.tax'),
                     'quantity' => 1,
                     'unit_amount' => (int) $locked->tax_amount,
@@ -116,5 +139,16 @@ final class IssueInvoiceFromOrder
 
             return $invoice->load('items');
         });
+    }
+
+    private function nullableString(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+
+        return $trimmed === '' ? null : $trimmed;
     }
 }

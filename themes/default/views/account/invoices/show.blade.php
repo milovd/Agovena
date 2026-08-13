@@ -13,9 +13,12 @@
                 {{ $invoice->issued_at?->format('Y-m-d') }}
             </p>
             <div class="store-account-panel__actions store-invoice__print">
-                <button type="button" class="store-btn store-btn--secondary" onclick="window.print()">
+                <a class="store-btn store-btn--secondary" href="{{ route('customer.invoices.print', $invoice) }}">
                     {{ __('customer.account.print_invoice') }}
-                </button>
+                </a>
+                <a class="store-btn store-btn--primary" href="{{ route('customer.invoices.pdf', $invoice) }}">
+                    {{ __('customer.account.download_invoice_pdf') }}
+                </a>
             </div>
         </header>
 

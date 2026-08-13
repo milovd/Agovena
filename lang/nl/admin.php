@@ -180,6 +180,8 @@ return [
             'customer_registration' => 'Klantregistratie',
             'order_number_prefix' => 'Prefix bestelnummer',
             'invoice_number_prefix' => 'Prefix factuurnummer',
+            'seller_name' => 'Verkopersnaam op facturen',
+            'seller_address' => 'Verkopersadres op facturen',
             'enable_reviews' => 'Productbeoordelingen inschakelen',
             'prices_include_tax' => 'Prijzen zijn inclusief btw',
         ],
@@ -192,6 +194,8 @@ return [
             'customer_registration' => 'Sta klanten toe accounts te maken. Gastafrekenen blijft mogelijk tenzij registratie verplicht is.',
             'enable_reviews' => 'Wanneer uit, is de beoordelings-UI verborgen op alle productpagina’s. Beoordelingen per product volgen later.',
             'prices_include_tax' => 'Wanneer ingeschakeld bevatten catalogusprijzen al btw; bij het afrekenen wordt het btw-bedrag uitgesplitst in plaats van toegevoegd.',
+            'seller_name' => 'Wordt op facturen vastgelegd op het moment van uitgifte. Latere wijzigingen herschrijven uitgegeven facturen niet.',
+            'seller_address' => 'Juridisch of handelsadres op facturen. Vastgelegd op het moment van uitgifte.',
         ],
 
         'options' => [
@@ -700,6 +704,7 @@ return [
         'show_title' => 'Factuur :number',
         'show_lede' => 'Factuursnapshot voor administratie en klantendownload.',
         'print' => 'Factuur afdrukken',
+        'download_pdf' => 'PDF downloaden',
         'search_label' => 'Facturen zoeken',
         'search_placeholder' => 'Nummer, klant…',
         'status_label' => 'Status',

@@ -49,6 +49,7 @@ use App\Events\OrderCreated;
 use App\Events\OrderPaid;
 use App\Events\PaymentRecorded;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
+use App\Listeners\IssueInvoiceWhenOrderCreated;
 use App\Listeners\IssueInvoiceWhenOrderPaid;
 use App\Listeners\SendOrderPlacedNotification;
 use App\Listeners\SendPaymentRecordedNotification;
@@ -103,6 +104,7 @@ class AgovenaServiceProvider extends ServiceProvider
         Event::listen(Registered::class, SendEmailVerificationNotification::class);
         Event::listen(Verified::class, AttachGuestOrdersWhenCustomerVerified::class);
         Event::listen(OrderCreated::class, SendOrderPlacedNotification::class);
+        Event::listen(OrderCreated::class, IssueInvoiceWhenOrderCreated::class);
         Event::listen(OrderPaid::class, IssueInvoiceWhenOrderPaid::class);
         Event::listen(PaymentRecorded::class, SendPaymentRecordedNotification::class);
 
@@ -602,6 +604,24 @@ class AgovenaServiceProvider extends ServiceProvider
             type: 'string',
             default: 'INV',
             sort: 25,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'seller_name',
+            label: 'admin.settings.fields.seller_name',
+            type: 'string',
+            default: '',
+            help: 'admin.settings.field_help.seller_name',
+            sort: 26,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'seller_address',
+            label: 'admin.settings.fields.seller_address',
+            type: 'text',
+            default: '',
+            help: 'admin.settings.field_help.seller_address',
+            sort: 27,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',

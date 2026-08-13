@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Customer\EmailVerificationController;
+use App\Http\Controllers\InvoiceDocumentController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
 use App\Http\Controllers\Webhooks\PaymentWebhookController;
 use App\Http\Middleware\RedirectIfInstalled;
@@ -108,6 +109,8 @@ Route::middleware('auth')->prefix('account')->name('customer.')->group(function 
         Route::get('/orders/{order}', CustomerOrderShow::class)->name('orders.show');
         Route::get('/invoices', CustomerInvoicesIndex::class)->name('invoices.index');
         Route::get('/invoices/{invoice}', CustomerInvoiceShow::class)->name('invoices.show');
+        Route::get('/invoices/{invoice}/print', [InvoiceDocumentController::class, 'print'])->name('invoices.print');
+        Route::get('/invoices/{invoice}/pdf', [InvoiceDocumentController::class, 'pdf'])->name('invoices.pdf');
         Route::get('/addresses', CustomerAddresses::class)->name('addresses');
         Route::get('/profile', CustomerProfile::class)->name('profile');
         Route::get('/tickets', CustomerTicketsIndex::class)->name('tickets.index');
@@ -131,6 +134,8 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access'])->prefix
     Route::get('/orders/{order}', OrdersShow::class)->name('orders.show');
     Route::get('/invoices', InvoicesIndex::class)->name('invoices.index');
     Route::get('/invoices/{invoice}', InvoicesShow::class)->name('invoices.show');
+    Route::get('/invoices/{invoice}/print', [InvoiceDocumentController::class, 'print'])->name('invoices.print');
+    Route::get('/invoices/{invoice}/pdf', [InvoiceDocumentController::class, 'pdf'])->name('invoices.pdf');
     Route::get('/discounts', DiscountsIndex::class)->name('discounts.index');
     Route::get('/taxes', TaxesIndex::class)->name('taxes.index');
     Route::get('/plan-changes', PlanChangesIndex::class)->name('plan-changes.index');
