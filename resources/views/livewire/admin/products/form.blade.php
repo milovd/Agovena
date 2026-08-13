@@ -356,9 +356,27 @@
                             @if (! empty($capabilityEnabled['provisionable']))
                                 <div class="ag-field">
                                     <label class="ag-field__label" for="providerKey">{{ __('admin.products.capabilities.provider_key') }}</label>
-                                    <input id="providerKey" class="ag-input" type="text" wire:model="providerKey">
+                                    <select id="providerKey" class="ag-select" wire:model.live="providerKey">
+                                        <option value="">{{ __('common.none') }}</option>
+                                        @foreach ($provisioners ?? [] as $provisioner)
+                                            <option value="{{ $provisioner['id'] }}">{{ $provisioner['label'] }}</option>
+                                        @endforeach
+                                    </select>
                                     <p class="ag-field__hint">{{ __('admin.products.capabilities.provider_key_hint') }}</p>
                                 </div>
+                                @foreach ($providerSettingDefinitions ?? [] as $definition)
+                                    <div class="ag-field">
+                                        <label class="ag-field__label" for="provider-setting-{{ $definition->key }}">{{ __($definition->label) }}</label>
+                                        @if ($definition->type === 'text')
+                                            <textarea id="provider-setting-{{ $definition->key }}" class="ag-input" rows="4" wire:model="providerSettings.{{ $definition->key }}"></textarea>
+                                        @else
+                                            <input id="provider-setting-{{ $definition->key }}" class="ag-input" type="text" wire:model="providerSettings.{{ $definition->key }}">
+                                        @endif
+                                        @if ($definition->help !== '')
+                                            <p class="ag-field__hint">{{ __($definition->help) }}</p>
+                                        @endif
+                                    </div>
+                                @endforeach
                             @endif
                         </div>
                     </details>

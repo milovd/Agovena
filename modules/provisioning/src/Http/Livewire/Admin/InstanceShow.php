@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace Agovena\Modules\Provisioning\Http\Livewire\Admin;
 
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
+use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
 use Agovena\Modules\Provisioning\ProvisioningService;
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Provisioning\Contracts\ProvisionerLifecycle;
+use App\Agovena\Provisioning\ProvisionerRegistry;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
 final class InstanceShow extends Component
@@ -46,6 +50,24 @@ final class InstanceShow extends Component
         session()->flash('status', __('provisioning::admin.marked_provisioning'));
     }
 
+    public function retryProvisioning(ProvisioningOrchestrator $orchestrator): void
+    {
+        $this->authorize('provisioning.manage');
+        $this->instance = $orchestrator->provision($this->instance);
+        session()->flash('status', __('provisioning::admin.provisioned'));
+    }
+
+    public function syncStatus(ProvisioningOrchestrator $orchestrator): void
+    {
+        $this->authorize('provisioning.manage');
+        try {
+            $this->instance = $orchestrator->sync($this->instance);
+            session()->flash('status', __('provisioning::admin.synced'));
+        } catch (ValidationException $exception) {
+            session()->flash('error', $exception->errors()['instance'][0] ?? $exception->getMessage());
+        }
+    }
+
     public function activate(ProvisioningService $provisioning): void
     {
         $this->authorize('provisioning.manage');
@@ -56,27 +78,73 @@ final class InstanceShow extends Component
         session()->flash('status', __('provisioning::admin.activated'));
     }
 
-    public function suspend(ProvisioningService $provisioning): void
+    public function suspend(ProvisioningOrchestrator $orchestrator, ProvisioningService $provisioning): void
     {
         $this->authorize('provisioning.manage');
-        $this->instance = $provisioning->suspend($this->instance);
-        session()->flash('status', __('provisioning::admin.suspended'));
+        try {
+            $this->instance = $this->usesLifecycle()
+                ? $orchestrator->suspend($this->instance)
+                : $provisioning->suspend($this->instance);
+            session()->flash('status', __('provisioning::admin.suspended'));
+        } catch (ValidationException $exception) {
+            session()->flash('error', $exception->errors()['instance'][0] ?? $exception->getMessage());
+        }
     }
 
-    public function terminate(ProvisioningService $provisioning): void
+    public function unsuspend(ProvisioningOrchestrator $orchestrator, ProvisioningService $provisioning): void
     {
         $this->authorize('provisioning.manage');
-        $this->instance = $provisioning->terminate($this->instance);
-        session()->flash('status', __('provisioning::admin.terminated'));
+        try {
+            $this->instance = $this->usesLifecycle()
+                ? $orchestrator->unsuspend($this->instance)
+                : $provisioning->unsuspend($this->instance);
+            session()->flash('status', __('provisioning::admin.unsuspended'));
+        } catch (ValidationException $exception) {
+            session()->flash('error', $exception->errors()['instance'][0] ?? $exception->getMessage());
+        }
     }
 
-    public function render(AdminRegistrar $admin)
+    public function terminate(ProvisioningOrchestrator $orchestrator, ProvisioningService $provisioning): void
     {
+        $this->authorize('provisioning.manage');
+        try {
+            $this->instance = $this->usesLifecycle()
+                ? $orchestrator->terminate($this->instance)
+                : $provisioning->terminate($this->instance);
+            session()->flash('status', __('provisioning::admin.terminated'));
+        } catch (ValidationException $exception) {
+            session()->flash('error', $exception->errors()['instance'][0] ?? $exception->getMessage());
+        }
+    }
+
+    public function render(AdminRegistrar $admin, ProvisionerRegistry $provisioners)
+    {
+        $provisioner = $this->instance->provider_key !== null
+            ? $provisioners->get($this->instance->provider_key)
+            : null;
+
+        $settings = $this->instance->meta['provider_settings'] ?? [];
+        $settings = is_array($settings) ? $settings : [];
+
         return view('livewire.admin.provisioning.show', [
             'instance' => $this->instance,
+            'usesLifecycle' => $this->usesLifecycle(),
+            'providerLabel' => $provisioner?->label() ?? $this->instance->provider_key,
+            'providerSettings' => $settings,
         ])->layout('layouts.admin', [
             'title' => __('provisioning::admin.show_title', ['number' => $this->instance->number]),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    private function usesLifecycle(): bool
+    {
+        if ($this->instance->provider_key === null || $this->instance->provider_key === '') {
+            return false;
+        }
+
+        $provisioner = app(ProvisionerRegistry::class)->get($this->instance->provider_key);
+
+        return $provisioner instanceof ProvisionerLifecycle;
     }
 }

@@ -11,6 +11,9 @@ use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\Contracts\ProductStock;
 use App\Agovena\Catalog\DeleteProduct;
 use App\Agovena\Catalog\UpdateProduct;
+use App\Agovena\Extensions\ExtensionSettingDefinition;
+use App\Agovena\Provisioning\Contracts\ConfiguresProvisionedProducts;
+use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Enums\ProductStatus;
 use App\Models\Category;
 use App\Models\Currency;
@@ -84,6 +87,9 @@ final class Edit extends Component
 
     public string $providerKey = '';
 
+    /** @var array<string, mixed> */
+    public array $providerSettings = [];
+
     public function mount(Product $product): void
     {
         $this->authorize('products.update');
@@ -122,6 +128,8 @@ final class Edit extends Component
             }
             if ($row->capability === 'provisionable') {
                 $this->providerKey = (string) ($row->config['provider_key'] ?? '');
+                $settings = $row->config['provider_settings'] ?? [];
+                $this->providerSettings = is_array($settings) ? $settings : [];
             }
         }
 
@@ -404,6 +412,7 @@ final class Edit extends Component
             if ($key === 'provisionable') {
                 $config = [
                     'provider_key' => trim($this->providerKey) !== '' ? trim($this->providerKey) : null,
+                    'provider_settings' => $this->providerSettings,
                 ];
             }
             if (! $this->product->hasCapability($key)) {
@@ -475,8 +484,41 @@ final class Edit extends Component
         }
     }
 
+    public function updatedProviderKey(): void
+    {
+        $defaults = [];
+        foreach ($this->providerSettingDefinitions() as $definition) {
+            $defaults[$definition->key] = $this->providerSettings[$definition->key] ?? $definition->default ?? '';
+        }
+        $this->providerSettings = $defaults;
+    }
+
+    /**
+     * @return list<ExtensionSettingDefinition>
+     */
+    private function providerSettingDefinitions(): array
+    {
+        if ($this->providerKey === '') {
+            return [];
+        }
+
+        $provisioner = app(ProvisionerRegistry::class)->get($this->providerKey);
+        if (! $provisioner instanceof ConfiguresProvisionedProducts) {
+            return [];
+        }
+
+        return $provisioner->productSettings();
+    }
+
     public function render(AdminRegistrar $admin, DeleteProduct $delete, ProductCapabilityRegistry $capabilities)
     {
+        $provisioners = collect(app(ProvisionerRegistry::class)->all())
+            ->map(static fn ($provisioner): array => [
+                'id' => $provisioner->id(),
+                'label' => $provisioner->label(),
+            ])
+            ->all();
+
         return view('livewire.admin.products.form', [
             'categories' => Category::query()->orderBy('name')->get(),
             'currencies' => Currency::query()->where('is_active', true)->orderBy('code')->get(['code', 'name']),
@@ -484,6 +526,8 @@ final class Edit extends Component
             'galleryImages' => $this->product->images,
             'isReferenced' => $delete->isReferencedByOrders($this->product),
             'availableCapabilities' => $capabilities->available(),
+            'provisioners' => $provisioners,
+            'providerSettingDefinitions' => $this->providerSettingDefinitions(),
         ])->layout('layouts.admin', [
             'title' => __('admin.products.form.edit_title'),
             'navigation' => $admin->navigationItems(),

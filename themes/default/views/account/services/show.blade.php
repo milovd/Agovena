@@ -75,7 +75,13 @@
                     @foreach ($panel->fields as $field)
                         <div>
                             <dt>{{ $field['label'] }}</dt>
-                            <dd>{{ $field['value'] }}</dd>
+                            <dd>
+                                @if (is_string($field['value']) && preg_match('#^https?://#', $field['value']) === 1)
+                                    <a href="{{ $field['value'] }}" rel="noopener noreferrer" target="_blank">{{ $field['value'] }}</a>
+                                @else
+                                    {{ $field['value'] }}
+                                @endif
+                            </dd>
                         </div>
                     @endforeach
                 </dl>

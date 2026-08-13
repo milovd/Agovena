@@ -67,9 +67,25 @@ final class ProvisioningService
                         'unit_amount' => $item->unit_amount,
                         'currency' => $item->currency,
                         'options_snapshot' => $item->options_snapshot ?? [],
+                        'provider_settings' => is_array($config['provider_settings'] ?? null) ? $config['provider_settings'] : [],
                     ],
                 ]);
             }
+        }
+
+        $this->provisionPendingForOrder($order);
+    }
+
+    public function provisionPendingForOrder(Order $order): void
+    {
+        $orchestrator = app(ProvisioningOrchestrator::class);
+        $pending = ServiceInstance::query()
+            ->where('order_id', $order->id)
+            ->where('status', ServiceInstanceStatus::Pending)
+            ->get();
+
+        foreach ($pending as $instance) {
+            $orchestrator->provision($instance);
         }
     }
 
@@ -124,6 +140,21 @@ final class ProvisioningService
         $instance->save();
 
         return $this->notifyLifecycle($instance->fresh() ?? $instance, 'service_suspended');
+    }
+
+    public function unsuspend(ServiceInstance $instance): ServiceInstance
+    {
+        if ($instance->status !== ServiceInstanceStatus::Suspended) {
+            throw ValidationException::withMessages([
+                'instance' => __('provisioning::errors.cannot_unsuspend'),
+            ]);
+        }
+
+        $instance->status = ServiceInstanceStatus::Active;
+        $instance->suspended_at = null;
+        $instance->save();
+
+        return $this->notifyLifecycle($instance->fresh() ?? $instance, 'service_activated');
     }
 
     public function terminate(ServiceInstance $instance): ServiceInstance
