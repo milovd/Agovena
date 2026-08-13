@@ -76,18 +76,21 @@ test('each first-party module admin screen renders when that module is enabled a
     'digital' => ['digital', '/admin/digital/assets'],
     'subscriptions' => ['subscriptions', '/admin/subscriptions'],
     'provisioning' => ['provisioning', '/admin/provisioning'],
+    'events' => ['events', '/admin/events'],
 ]);
 
 test('all first-party modules together expose admin and account surfaces', function () {
     $staff = $this->createStaff();
     $customer = Customer::factory()->create();
-    enableFirstPartyModules(['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning']);
+    enableFirstPartyModules(['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', 'events']);
 
     $nav = collect(app(AdminRegistrar::class)->navigationItems())->pluck('id');
     expect($nav)->toContain('inventory-stocks')
         ->and($nav)->toContain('digital-assets')
         ->and($nav)->toContain('subscriptions')
-        ->and($nav)->toContain('provisioning');
+        ->and($nav)->toContain('provisioning')
+        ->and($nav)->toContain('events')
+        ->and($nav)->toContain('events-checkin');
 
     $shippingNames = collect(app('router')->getRoutes()->getRoutes())
         ->map(fn ($route) => $route->getName())
@@ -106,6 +109,8 @@ test('all first-party modules together expose admin and account surfaces', funct
         '/admin/subscriptions',
         '/admin/provisioning',
         '/admin/plan-changes',
+        '/admin/events',
+        '/admin/events/check-in',
     ] as $uri) {
         $this->get($uri)->assertOk()->assertDontSee('SQLSTATE', false);
     }
@@ -115,6 +120,7 @@ test('all first-party modules together expose admin and account surfaces', funct
         '/account/downloads',
         '/account/subscriptions',
         '/account/services',
+        '/account/event-tickets',
     ] as $uri) {
         $this->get($uri)->assertOk()->assertDontSee('SQLSTATE', false);
     }

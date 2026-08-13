@@ -37,7 +37,7 @@ test('custom preset enables no modules and core still works with zero modules', 
     expect($enabled)->toBe([])
         ->and(AgovenaModule::query()->where('enabled', true)->count())->toBe(0)
         ->and(collect(app(StorePresetCatalog::class)->all())->pluck('id')->all())
-        ->not->toContain('events');
+        ->toContain('events');
 });
 
 test('staff can apply store presets from admin', function () {
