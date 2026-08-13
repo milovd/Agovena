@@ -28,5 +28,5 @@ Extension, not separate Extensions.
 ## Recurring
 
 `ChargesRecurringPayments` can create an off-session recurring payment when a
-mandate exists. Subscriptions still create unpaid renewal orders for manual Pay now
-until that Module is wired to this optional seam.
+mandate exists. Subscriptions request that charge through Core
+`ChargeRecurringPayment` and never import Mollie types.

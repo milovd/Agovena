@@ -27,6 +27,7 @@ Lifecycle: discover → install → enable / disable → uninstall. Disable pres
 
 `extensions/manual-payment` is the lifecycle reference adapter (manual + optional development).
 `extensions/mollie` is the first production Payment Extension: hosted checkout, webhooks, refunds, and status sync behind the generic `PaymentGateway` contracts.
+`extensions/stripe` is the second production Payment Extension: Stripe Checkout, signed webhooks, refunds, and off-session charges behind the same contracts.
 `extensions/pterodactyl` is the first production Provisioning Extension: panel lifecycle behind the generic `Provisioner` contracts.
 
 `extensions/postnl` is the first production Shipping Extension: barcodes, labels, and tracking behind the generic `ShippingCarrier` contracts.

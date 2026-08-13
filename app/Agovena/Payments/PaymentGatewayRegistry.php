@@ -21,12 +21,18 @@ final class PaymentGatewayRegistry
 
     public function get(string $id): ?PaymentGateway
     {
-        return $this->gateways[$id] ?? null;
+        if (isset($this->gateways[$id])) {
+            return $this->gateways[$id];
+        }
+
+        $gatewayId = CheckoutPaymentSelection::parse($id)->gatewayId;
+
+        return $this->gateways[$gatewayId] ?? null;
     }
 
     public function has(string $id): bool
     {
-        return isset($this->gateways[$id]);
+        return $this->get($id) !== null;
     }
 
     /**
