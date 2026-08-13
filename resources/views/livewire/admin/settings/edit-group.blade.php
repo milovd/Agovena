@@ -103,7 +103,7 @@
                     <input
                         id="setting-{{ $field->key }}"
                         class="ag-input"
-                        type="text"
+                        type="{{ $field->type === 'email' ? 'email' : 'text' }}"
                         wire:model="values.{{ $field->key }}"
                         @disabled(! $canUpdate)
                     >

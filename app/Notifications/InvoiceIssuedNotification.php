@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Agovena\Notifications\RendersNotificationMail;
 use App\Models\Invoice;
 use App\Support\MoneyFormatter;
 use Illuminate\Bus\Queueable;
@@ -15,6 +16,8 @@ final class InvoiceIssuedNotification extends Notification implements ShouldQueu
 {
     use Queueable;
 
+    public const KEY = 'invoice_issued';
+
     public function __construct(private readonly Invoice $invoice)
     {
         $this->afterCommit();
@@ -23,17 +26,17 @@ final class InvoiceIssuedNotification extends Notification implements ShouldQueu
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return app(RendersNotificationMail::class)->isEnabled(self::KEY) ? ['mail'] : [];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject(__('notifications.invoice_issued.subject', ['number' => $this->invoice->number]))
-            ->line(__('notifications.invoice_issued.line', ['number' => $this->invoice->number]))
-            ->line(__('notifications.total', [
-                'total' => MoneyFormatter::format($this->invoice->total_amount, $this->invoice->currency),
-            ]))
-            ->action(__('notifications.invoice_issued.action'), route('customer.invoices.show', $this->invoice));
+        return app(RendersNotificationMail::class)->mail(self::KEY, [
+            'name' => $this->invoice->customer_name,
+            'number' => $this->invoice->number,
+            'total' => MoneyFormatter::format($this->invoice->total_amount, $this->invoice->currency),
+            'action_url' => route('customer.invoices.show', $this->invoice),
+            'action_label' => __('notifications.invoice_issued.action'),
+        ]);
     }
 }

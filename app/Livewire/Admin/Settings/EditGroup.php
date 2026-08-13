@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Settings;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\SettingsField;
+use App\Agovena\Mail\ApplyMailSettings;
 use App\Agovena\Settings\SettingsRepository;
 use App\Models\Currency;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -105,6 +106,10 @@ final class EditGroup extends Component
             $this->applyLogoPathAsFavicon($settings, (string) $this->values['logo_path']);
         }
 
+        if ($this->group === 'mail') {
+            app(ApplyMailSettings::class)();
+        }
+
         session()->flash('status', __('admin.settings.saved', ['group' => __($definition->label)]));
     }
 
@@ -152,6 +157,7 @@ final class EditGroup extends Component
                 Rule::exists('currencies', 'code')->where(fn ($q) => $q->where('is_active', true)),
             ],
             'timezone' => ['required', 'timezone'],
+            'email' => ['nullable', 'email', 'max:255'],
             'text' => ['nullable', 'string', 'max:5000'],
             'image' => ['nullable', 'string', 'max:255'],
             default => ['nullable', 'string', 'max:255'],

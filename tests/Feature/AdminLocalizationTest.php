@@ -19,6 +19,10 @@ function adminLocalizedRoutes(): array
         '/admin/settings/general',
         '/admin/settings/branding',
         '/admin/settings/store',
+        '/admin/settings/mail',
+        '/admin/notifications',
+        '/admin/email-log',
+        '/admin/failed-jobs',
         '/admin/appearance/themes',
         '/admin/appearance/customize',
         '/admin/appearance/pages',
@@ -34,6 +38,9 @@ test('admin screens never render raw translation keys', function () {
             ->get($uri)
             ->assertOk()
             ->assertDontSeeText('admin.settings.')
+            ->assertDontSeeText('admin.notifications.')
+            ->assertDontSeeText('admin.email_log.')
+            ->assertDontSeeText('admin.failed_jobs.')
             ->assertDontSeeText('admin.dashboard.')
             ->assertDontSeeText('admin.appearance.')
             ->assertDontSeeText('admin.content.')

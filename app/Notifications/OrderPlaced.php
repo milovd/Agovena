@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Notifications;
 
+use App\Agovena\Notifications\RendersNotificationMail;
 use App\Models\Order;
 use App\Support\MoneyFormatter;
 use Illuminate\Bus\Queueable;
@@ -15,6 +16,8 @@ final class OrderPlaced extends Notification implements ShouldQueue
 {
     use Queueable;
 
+    public const KEY = 'order_placed';
+
     public function __construct(private readonly Order $order)
     {
         $this->afterCommit();
@@ -23,21 +26,17 @@ final class OrderPlaced extends Notification implements ShouldQueue
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        return app(RendersNotificationMail::class)->isEnabled(self::KEY) ? ['mail'] : [];
     }
 
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-            ->subject(__('notifications.order_placed.subject', ['number' => $this->order->number]))
-            ->greeting(__('notifications.greeting', ['name' => $this->order->customer_name]))
-            ->line(__('notifications.order_placed.line', ['number' => $this->order->number]))
-            ->line(__('notifications.total', [
-                'total' => MoneyFormatter::format($this->order->total_amount, $this->order->currency),
-            ]))
-            ->action(
-                __('notifications.order_placed.action'),
-                route('storefront.order.confirmation', $this->order),
-            );
+        return app(RendersNotificationMail::class)->mail(self::KEY, [
+            'name' => $this->order->customer_name,
+            'number' => $this->order->number,
+            'total' => MoneyFormatter::format($this->order->total_amount, $this->order->currency),
+            'action_url' => route('storefront.order.confirmation', $this->order),
+            'action_label' => __('notifications.order_placed.action'),
+        ]);
     }
 }

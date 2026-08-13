@@ -39,5 +39,7 @@ test('admin registrar exposes settings and widgets', function () {
 
     expect($admin->settingsGroups())->not->toBeEmpty()
         ->and($admin->widgets())->not->toBeEmpty()
-        ->and($admin->permissions())->toHaveKey('settings.update');
+        ->and($admin->permissions())->toHaveKey('settings.update')
+        ->and($admin->permissions())->toHaveKey('notifications.manage')
+        ->and($admin->permissions())->toHaveKey('jobs.view');
 });

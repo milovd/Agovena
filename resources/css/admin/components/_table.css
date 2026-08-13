@@ -66,6 +66,20 @@
   gap: var(--ag-space-4);
 }
 
+.ag-plain-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ag-plain-list .ag-btn {
+  width: 100%;
+  justify-content: flex-start;
+}
+
 .ag-toolbar {
   display: flex;
   flex-wrap: wrap;

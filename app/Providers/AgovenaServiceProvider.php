@@ -36,6 +36,7 @@ use App\Agovena\Installation\EnsurePublicStorageLink;
 use App\Agovena\Installation\InstallAgovena;
 use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
+use App\Agovena\Mail\ApplyMailSettings;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Packages\ComposerRunner;
@@ -53,12 +54,16 @@ use App\Listeners\ApplyPlanChangeWhenOrderPaid;
 use App\Listeners\AttachGuestOrdersWhenCustomerVerified;
 use App\Listeners\IssueInvoiceWhenOrderCreated;
 use App\Listeners\IssueInvoiceWhenOrderPaid;
+use App\Listeners\LogFailedNotification;
+use App\Listeners\LogSentMail;
 use App\Listeners\SendOrderPlacedNotification;
 use App\Listeners\SendPaymentRecordedNotification;
 use App\Models\Customer;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -116,6 +121,10 @@ class AgovenaServiceProvider extends ServiceProvider
         Event::listen(OrderPaid::class, IssueInvoiceWhenOrderPaid::class);
         Event::listen(OrderPaid::class, ApplyPlanChangeWhenOrderPaid::class);
         Event::listen(PaymentRecorded::class, SendPaymentRecordedNotification::class);
+        Event::listen(MessageSent::class, LogSentMail::class);
+        Event::listen(NotificationFailed::class, LogFailedNotification::class);
+
+        $this->app->make(ApplyMailSettings::class)();
 
         /** @var AdminRegistrar $admin */
         $admin = $this->app->make(AdminRegistrar::class);
@@ -326,6 +335,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'notification-templates',
+            label: 'admin.nav.notifications',
+            group: 'admin.nav_groups.configuration',
+            href: '/admin/notifications',
+            icon: 'mail',
+            sort: 105,
+            permission: 'notifications.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'currencies',
             label: 'admin.nav.currencies',
             group: 'admin.nav_groups.configuration',
@@ -393,6 +412,26 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'file-text',
             sort: 220,
             permission: 'audit.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'email-log',
+            label: 'admin.nav.email_log',
+            group: 'admin.nav_groups.administration',
+            href: '/admin/email-log',
+            icon: 'mail',
+            sort: 225,
+            permission: 'notifications.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'failed-jobs',
+            label: 'admin.nav.failed_jobs',
+            group: 'admin.nav_groups.administration',
+            href: '/admin/failed-jobs',
+            icon: 'circle-alert',
+            sort: 228,
+            permission: 'jobs.view',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -508,6 +547,10 @@ class AgovenaServiceProvider extends ServiceProvider
             'pages.manage',
             'navigation.view',
             'navigation.manage',
+            'notifications.view',
+            'notifications.manage',
+            'jobs.view',
+            'jobs.manage',
         ] as $ability) {
             $admin->permission($ability, 'admin.permissions.'.$ability);
         }
@@ -530,6 +573,14 @@ class AgovenaServiceProvider extends ServiceProvider
             sort: 20,
             description: 'admin.settings.group_help.branding',
             icon: 'palette',
+        ));
+        $admin->settingsGroup(new SettingsGroup(
+            id: 'mail',
+            label: 'admin.settings.groups.mail',
+            permission: 'settings.view',
+            sort: 25,
+            description: 'admin.settings.group_help.mail',
+            icon: 'mail',
         ));
         $admin->settingsGroup(new SettingsGroup(
             id: 'store',
@@ -594,6 +645,34 @@ class AgovenaServiceProvider extends ServiceProvider
             default: null,
             help: 'admin.settings.field_help.favicon_path',
             sort: 20,
+        ));
+
+        $admin->settingsField(new SettingsField(
+            group: 'mail',
+            key: 'from_name',
+            label: 'admin.settings.fields.from_name',
+            type: 'string',
+            default: '',
+            help: 'admin.settings.field_help.from_name',
+            sort: 10,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'mail',
+            key: 'from_address',
+            label: 'admin.settings.fields.from_address',
+            type: 'email',
+            default: '',
+            help: 'admin.settings.field_help.from_address',
+            sort: 20,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'mail',
+            key: 'reply_to',
+            label: 'admin.settings.fields.reply_to',
+            type: 'email',
+            default: '',
+            help: 'admin.settings.field_help.reply_to',
+            sort: 30,
         ));
 
         $admin->settingsField(new SettingsField(

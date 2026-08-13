@@ -386,8 +386,15 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
 
     private function notifyCancellation(Subscription $subscription, bool $atPeriodEnd): void
     {
-        $notification = new SubscriptionCancelledNotification($subscription->number, $atPeriodEnd);
-        $customer = $subscription->customer()->first();
+        $customer = $subscription->customer;
+        $name = $customer !== null
+            ? (string) $customer->name
+            : (string) ($subscription->customer_name ?? '');
+        $notification = new SubscriptionCancelledNotification(
+            $subscription->number,
+            $atPeriodEnd,
+            $name,
+        );
 
         if ($customer !== null) {
             $customer->notify($notification);
