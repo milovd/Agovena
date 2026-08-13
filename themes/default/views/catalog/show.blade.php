@@ -197,9 +197,10 @@
                 <p class="store-product__lede">{{ $lede }}</p>
             @endif
 
-            <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</p>
+            <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice ?? $product->money()) }}</p>
 
             <form wire:submit="addToCart" class="store-product__form">
+                @include('theme::partials.product-options')
                 <div class="store-product__buy">
                     <div class="store-qty" role="group" aria-label="{{ __('storefront.product.quantity') }}">
                         <label class="visually-hidden" for="quantity">{{ __('storefront.product.quantity') }}</label>

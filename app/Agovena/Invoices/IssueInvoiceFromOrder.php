@@ -65,6 +65,7 @@ final class IssueInvoiceFromOrder
                 'tax_amount' => $locked->tax_amount,
                 'total_amount' => $locked->total_amount,
                 'currency' => $locked->currency,
+                'custom_properties_snapshot' => $locked->custom_properties_snapshot,
             ]);
 
             foreach ($locked->items as $item) {

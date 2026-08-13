@@ -90,4 +90,10 @@ class Customer extends Model
     {
         return $this->hasOne(CustomerCreditAccount::class);
     }
+
+    /** @return HasMany<CustomerPropertyValue, $this> */
+    public function propertyValues(): HasMany
+    {
+        return $this->hasMany(CustomerPropertyValue::class);
+    }
 }

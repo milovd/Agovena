@@ -6,11 +6,14 @@ namespace App\Livewire\Storefront;
 
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\AddressValidation;
+use App\Agovena\Checkout\CartRequirement;
+use App\Agovena\Checkout\CartRequirementComposer;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\CustomerRegistration;
+use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Agovena\Customer\SaveCustomerAddress;
 use App\Agovena\Discounts\DiscountApplicator;
 use App\Agovena\Money\Money;
@@ -85,7 +88,10 @@ final class CheckoutPage extends Component
 
     public bool $apply_credit = false;
 
-    public function mount(CartService $cart, CustomerRegistration $registration): void
+    /** @var array<string, mixed> */
+    public array $propertyValues = [];
+
+    public function mount(CartService $cart, CustomerRegistration $registration, CustomerPropertyService $properties): void
     {
         if ($cart->isEmpty()) {
             $this->redirect(route('storefront.cart'), navigate: true);
@@ -121,9 +127,11 @@ final class CheckoutPage extends Component
                 $this->billing_name = $customer->name;
             }
         }
+
+        $this->propertyValues = $properties->emptyValues($properties->definitionsFor('checkout'), $customer);
     }
 
-    public function placeOrder(PlaceOrder $placeOrder, CustomerRegistration $registration, CartService $cart, SaveCustomerAddress $saveAddress): void
+    public function placeOrder(PlaceOrder $placeOrder, CustomerRegistration $registration, CartService $cart, SaveCustomerAddress $saveAddress, CustomerPropertyService $properties, CartRequirementComposer $composer): void
     {
         if ($registration->requiresAccountForCheckout() && ! Auth::check()) {
             session()->put('url.intended', route('storefront.checkout'));
@@ -134,6 +142,9 @@ final class CheckoutPage extends Component
 
         $allowed = app(AvailablePaymentMethods::class)->ids();
 
+        $requirements = $composer->compose($cart);
+        $requiresShipping = $requirements->requiresShipping();
+        $checkoutProperties = $properties->definitionsFor('checkout');
         $rules = [
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email', 'max:255'],
@@ -142,9 +153,8 @@ final class CheckoutPage extends Component
             ...AddressValidation::rules('billing'),
             'save_billing_address' => ['boolean'],
             'apply_credit' => ['boolean'],
+            ...$properties->livewireRules($checkoutProperties),
         ];
-
-        $requiresShipping = $cart->requiresShipping();
         if ($requiresShipping) {
             $rules['shipping_same_as_billing'] = ['boolean'];
             $rules['shipping_method_id'] = ['required', 'integer'];
@@ -207,6 +217,7 @@ final class CheckoutPage extends Component
             'shipping_method_id' => $requiresShipping ? (int) ($data['shipping_method_id'] ?? 0) : null,
             'discount_code' => $this->applied_coupon_code !== '' ? $this->applied_coupon_code : null,
             'apply_credit' => (bool) ($data['apply_credit'] ?? false),
+            'custom_properties' => $data['propertyValues'] ?? $this->propertyValues,
         ]);
 
         $this->redirect(route('storefront.order.confirmation', $order), navigate: true);
@@ -241,11 +252,14 @@ final class CheckoutPage extends Component
         TaxCalculator $taxes,
         SettingsRepository $settings,
         CustomerCreditLedger $creditLedger,
+        CartRequirementComposer $composer,
+        CustomerPropertyService $properties,
     ) {
         $theme = $themes->active();
         $lines = $cart->pricedLines();
         $subtotal = $cart->subtotal();
-        $requiresShipping = $cart->requiresShipping();
+        $requirements = $composer->compose($cart);
+        $requiresShipping = $requirements->requiresShipping();
         /** @var Customer|null $customer */
         $customer = current_customer();
         $creditBalance = $customer === null || $subtotal === null
@@ -323,6 +337,9 @@ final class CheckoutPage extends Component
             'customerLoggedIn' => Auth::check(),
             'registrationEnabled' => $registration->allowsRegistration(),
             'requiresShipping' => $requiresShipping,
+            'requiresCustomProperties' => $requirements->has(CartRequirement::CustomProperties),
+            'propertyDefinitions' => $properties->definitionsFor('checkout'),
+            'actor' => 'customer',
             'pricesIncludeTax' => $pricesIncludeTax,
             'creditBalance' => $creditBalance,
         ])->layout($theme->view('layouts.storefront'), [

@@ -18,6 +18,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'unit_amount',
     'line_total_amount',
     'currency',
+    'options_snapshot',
 ])]
 class OrderItem extends Model
 {
@@ -30,6 +31,7 @@ class OrderItem extends Model
             'quantity' => 'integer',
             'unit_amount' => 'integer',
             'line_total_amount' => 'integer',
+            'options_snapshot' => 'array',
         ];
     }
 

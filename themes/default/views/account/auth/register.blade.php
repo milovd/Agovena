@@ -20,6 +20,8 @@
             @error('password') <p class="store-field__error">{{ $message }}</p> @enderror
         </div>
 
+        @include('partials.custom-property-fields', ['actor' => 'customer'])
+
         <div class="store-field">
             <label class="store-label" for="customer-password-confirmation">{{ __('customer.auth.password_confirmation') }}</label>
             <input id="customer-password-confirmation" class="store-input" type="password" wire:model="password_confirmation" autocomplete="new-password" required>

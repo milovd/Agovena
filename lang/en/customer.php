@@ -124,6 +124,7 @@ return [
         'email_verified_hint' => 'This email address is confirmed.',
         'email_needs_verification' => 'Needs verification.',
         'email_needs_verification_hint' => 'Saving a new email address will require you to verify it.',
+        'extra_heading' => 'Additional details',
     ],
 
     'checkout' => [

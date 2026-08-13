@@ -36,6 +36,15 @@ final class ExportCustomerData
             'tickets' => $customer->tickets()->get([
                 'number', 'subject', 'status', 'priority', 'created_at',
             ])->toArray(),
+            'custom_properties' => $customer->propertyValues()
+                ->with('definition')
+                ->get()
+                ->map(static fn ($row): array => [
+                    'key' => $row->definition?->key,
+                    'label' => $row->definition?->label,
+                    'value' => $row->value,
+                ])
+                ->all(),
         ];
     }
 }

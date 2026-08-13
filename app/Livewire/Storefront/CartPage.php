@@ -10,7 +10,7 @@ use Livewire\Component;
 
 final class CartPage extends Component
 {
-    /** @var array<int, int> */
+    /** @var array<string, int> */
     public array $quantities = [];
 
     public function mount(CartService $cart): void
@@ -23,17 +23,17 @@ final class CartPage extends Component
         $this->refreshQuantities($cart);
     }
 
-    public function updateLine(int $productId, CartService $cart): void
+    public function updateLine(string $lineKey, CartService $cart): void
     {
-        $qty = (int) ($this->quantities[$productId] ?? 0);
-        $cart->update($productId, $qty);
+        $qty = (int) ($this->quantities[$lineKey] ?? 0);
+        $cart->update($lineKey, $qty);
         $this->refreshQuantities($cart);
     }
 
-    public function removeLine(int $productId, CartService $cart): void
+    public function removeLine(string $lineKey, CartService $cart): void
     {
-        $cart->remove($productId);
-        unset($this->quantities[$productId]);
+        $cart->remove($lineKey);
+        unset($this->quantities[$lineKey]);
     }
 
     public function render(CartService $cart, ThemeManager $themes)
@@ -56,7 +56,7 @@ final class CartPage extends Component
     {
         $this->quantities = [];
         foreach ($cart->pricedLines() as $line) {
-            $this->quantities[$line->productId] = $line->quantity;
+            $this->quantities[$line->lineKey] = $line->quantity;
         }
     }
 }

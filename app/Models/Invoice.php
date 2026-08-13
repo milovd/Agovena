@@ -45,6 +45,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
     'tax_amount',
     'total_amount',
     'currency',
+    'custom_properties_snapshot',
 ])]
 class Invoice extends Model
 {
@@ -58,6 +59,7 @@ class Invoice extends Model
             'discount_amount' => 'integer',
             'tax_amount' => 'integer',
             'total_amount' => 'integer',
+            'custom_properties_snapshot' => 'array',
         ];
     }
 

@@ -1,5 +1,11 @@
 <div class="admin-page">
-    <x-ag.page-header :heading="__('admin.customers.title')" :lede="__('admin.customers.lede')" />
+    <x-ag.page-header :heading="__('admin.customers.title')" :lede="__('admin.customers.lede')">
+        <x-slot:actions>
+            @can('customers.manage')
+                <a class="ag-btn ag-btn--secondary" href="{{ route('admin.customers.properties') }}">{{ __('admin.customer_properties.title') }}</a>
+            @endcan
+        </x-slot:actions>
+    </x-ag.page-header>
     <div class="admin-panel">
         <label class="ag-field__label" for="customer-search">{{ __('common.search') }}</label>
         <input id="customer-search" class="ag-input" type="search" wire:model.live.debounce.300ms="search">

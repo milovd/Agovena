@@ -9,11 +9,12 @@ interface CartRepository
     /** @return list<CartLine> */
     public function lines(): array;
 
-    public function add(int $productId, int $quantity = 1): void;
+    /** @param array<string, mixed> $selections */
+    public function add(int $productId, int $quantity = 1, array $selections = []): void;
 
-    public function update(int $productId, int $quantity): void;
+    public function update(string $lineKey, int $quantity): void;
 
-    public function remove(int $productId): void;
+    public function remove(string $lineKey): void;
 
     public function clear(): void;
 }

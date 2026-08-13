@@ -124,6 +124,7 @@ return [
         'email_verified_hint' => 'Dit e-mailadres is bevestigd.',
         'email_needs_verification' => 'Bevestiging nodig.',
         'email_needs_verification_hint' => 'Na het opslaan van een nieuw e-mailadres moet je het opnieuw bevestigen.',
+        'extra_heading' => 'Aanvullende gegevens',
     ],
 
     'checkout' => [

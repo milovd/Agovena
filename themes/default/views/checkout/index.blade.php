@@ -34,6 +34,13 @@
                 </div>
             </fieldset>
 
+            @if (($propertyDefinitions ?? collect())->isNotEmpty())
+                <fieldset class="store-panel">
+                    <legend class="store-panel__title">{{ __('storefront.checkout.additional_details') }}</legend>
+                    @include('partials.custom-property-fields', ['actor' => 'customer'])
+                </fieldset>
+            @endif
+
             <fieldset class="store-panel">
                 <legend class="store-panel__title">{{ __('storefront.checkout.billing') }}</legend>
                 <div class="store-field">

@@ -23,6 +23,7 @@ final class AnonymizeCustomer
 
         $customer = DB::transaction(function () use ($customer): Customer {
             $customer->addresses()->delete();
+            $customer->propertyValues()->delete();
             $customer->tickets()
                 ->where('status', '!=', TicketStatus::Closed->value)
                 ->update(['status' => TicketStatus::Closed->value]);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Customer;
 
+use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\DB;
@@ -13,10 +14,11 @@ final class RegisterCustomer
 {
     public function __construct(
         private readonly CustomerRegistration $registration,
+        private readonly CustomerPropertyService $properties,
     ) {}
 
     /**
-     * @param  array{name: string, email: string, password: string}  $data
+     * @param  array{name: string, email: string, password: string, properties?: array<string, mixed>}  $data
      */
     public function handle(array $data): User
     {
@@ -27,11 +29,19 @@ final class RegisterCustomer
         }
 
         $user = DB::transaction(function () use ($data): User {
-            return User::query()->create([
+            $user = User::query()->create([
                 'name' => $data['name'],
                 'email' => $data['email'],
                 'password' => $data['password'],
             ]);
+
+            $submitted = is_array($data['properties'] ?? null) ? $data['properties'] : [];
+            if ($submitted !== []) {
+                $definitions = $this->properties->definitionsFor('registration');
+                $this->properties->save($user->ensureCustomer(), $definitions, $submitted, 'customer');
+            }
+
+            return $user;
         });
 
         event(new Registered($user));

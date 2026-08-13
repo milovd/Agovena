@@ -63,6 +63,12 @@
                         </dd>
                     </div>
                 @endif
+                @foreach ($invoice->custom_properties_snapshot ?? [] as $property)
+                    <div>
+                        <dt>{{ $property['label'] ?? $property['key'] }}</dt>
+                        <dd>{{ $property['value'] ?? '' }}</dd>
+                    </div>
+                @endforeach
             </dl>
         </section>
     </div>

@@ -24,6 +24,8 @@
                 @error('email') <p class="store-field__error">{{ $message }}</p> @enderror
             </div>
 
+            @include('partials.custom-property-fields', ['actor' => 'customer'])
+
             <button class="store-btn store-btn--primary" type="submit">{{ __('customer.profile.save') }}</button>
         </form>
 

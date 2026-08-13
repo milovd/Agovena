@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace App\Agovena\Checkout;
 
 use App\Agovena\Cart\CartService;
+use App\Agovena\Catalog\Options\ProductOptionPricer;
 use App\Agovena\Credits\ApplyCreditToOrder;
 use App\Agovena\Customer\AddressData;
+use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Agovena\Discounts\DiscountApplicator;
 use App\Agovena\Money\Money;
 use App\Agovena\Payments\CompleteDevelopmentPayment;
@@ -22,6 +24,7 @@ use App\Models\DiscountRedemption;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\Product;
 use App\Models\TaxRate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -37,6 +40,9 @@ final class PlaceOrder
         private readonly DiscountApplicator $discounts,
         private readonly TaxCalculator $taxes,
         private readonly ApplyCreditToOrder $applyCredit,
+        private readonly ProductOptionPricer $optionPricer,
+        private readonly CustomerPropertyService $properties,
+        private readonly CartRequirementComposer $requirements,
     ) {}
 
     /**
@@ -52,7 +58,8 @@ final class PlaceOrder
      *     shipping_method_id?: int|null,
      *     discount_code?: string|null,
      *     apply_credit?: bool,
-     *     credit_amount?: int|null
+     *     credit_amount?: int|null,
+     *     custom_properties?: array<string, mixed>
      * }  $guest
      */
     public function handle(array $guest): Order
@@ -71,6 +78,8 @@ final class PlaceOrder
                 'cart' => __('storefront.errors.cart_empty'),
             ]);
         }
+
+        $this->cart->assertConfigured();
 
         $lines = $this->cart->pricedLines();
         $subtotal = $this->cart->subtotal();
@@ -99,7 +108,8 @@ final class PlaceOrder
         $shippingLabel = null;
         $shippingMethodId = isset($guest['shipping_method_id']) ? (int) $guest['shipping_method_id'] : null;
 
-        if ($this->cart->requiresShipping()) {
+        $requirements = $this->requirements->compose($this->cart);
+        if ($requirements->requiresShipping()) {
             if ($shipping === null) {
                 throw ValidationException::withMessages([
                     'shipping' => __('storefront.errors.shipping_address_required'),
@@ -195,6 +205,18 @@ final class PlaceOrder
                 $payload = [...$payload, ...$shipping->toOrderShippingColumns()];
             }
 
+            $propertyOverlay = is_array($guest['custom_properties'] ?? null) ? $guest['custom_properties'] : [];
+            $customer = $customerId !== null ? Customer::query()->find($customerId) : null;
+            if ($customer !== null && $propertyOverlay !== []) {
+                $this->properties->save(
+                    $customer,
+                    $this->properties->definitionsFor('checkout'),
+                    $propertyOverlay,
+                    'customer',
+                );
+            }
+            $payload['custom_properties_snapshot'] = $this->properties->snapshot($customer, $propertyOverlay, invoiceOnly: true);
+
             $order = Order::query()->create($payload);
 
             $creditAmount = 0;
@@ -211,6 +233,7 @@ final class PlaceOrder
             }
 
             foreach ($lines as $line) {
+                $product = Product::query()->find($line->productId);
                 OrderItem::query()->create([
                     'order_id' => $order->id,
                     'product_id' => $line->productId,
@@ -219,6 +242,9 @@ final class PlaceOrder
                     'unit_amount' => $line->unitPrice->amount,
                     'line_total_amount' => $line->lineTotal->amount,
                     'currency' => $line->unitPrice->currency,
+                    'options_snapshot' => $product === null
+                        ? []
+                        : $this->optionPricer->snapshot($product, $line->selections),
                 ]);
             }
 

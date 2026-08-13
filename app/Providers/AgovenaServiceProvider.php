@@ -16,6 +16,11 @@ use App\Agovena\Cart\SessionCartRepository;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\ListStorefrontCategories;
+use App\Agovena\Checkout\CartRequirementComposer;
+use App\Agovena\Checkout\Contributors\CoreCheckoutContributor;
+use App\Agovena\Checkout\Contributors\CustomPropertyRequirementContributor;
+use App\Agovena\Checkout\Contributors\ProductConfigurationContributor;
+use App\Agovena\Checkout\Contributors\ShippableRequirementContributor;
 use App\Agovena\Checkout\NullShippingQuoteResolver;
 use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Content\MenuResolver;
@@ -78,6 +83,14 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(EnsurePublicStorageLink::class);
         $this->app->singleton(InstallAgovena::class);
         $this->app->bind(CartRepository::class, SessionCartRepository::class);
+        $this->app->singleton(CartRequirementComposer::class, function ($app): CartRequirementComposer {
+            return new CartRequirementComposer([
+                $app->make(CoreCheckoutContributor::class),
+                $app->make(ShippableRequirementContributor::class),
+                $app->make(ProductConfigurationContributor::class),
+                $app->make(CustomPropertyRequirementContributor::class),
+            ]);
+        });
 
         $this->mergeConfigFrom(__DIR__.'/../../config/agovena.php', 'agovena');
     }
@@ -189,6 +202,16 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'users',
             sort: 30,
             permission: 'customers.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'customer-properties',
+            label: 'admin.nav.customer_properties',
+            group: 'admin.nav_groups.commerce',
+            href: '/admin/customers/properties',
+            icon: 'users',
+            sort: 31,
+            permission: 'customers.manage',
         ));
 
         $admin->navigation(new NavigationItem(

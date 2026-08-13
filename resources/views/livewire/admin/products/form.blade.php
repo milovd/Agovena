@@ -372,6 +372,10 @@
             </div>
         </section>
 
+        @if ($mode === 'edit')
+            <livewire:admin.products.options-editor :product-id="$product->id" :key="'product-options-'.$product->id" />
+        @endif
+
         @can('products.delete')
             <div class="ag-form--product">
                 <x-ag.danger-zone

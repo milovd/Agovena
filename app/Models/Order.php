@@ -65,6 +65,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'total_amount',
     'currency',
     'idempotency_key',
+    'custom_properties_snapshot',
 ])]
 class Order extends Model
 {
@@ -81,6 +82,7 @@ class Order extends Model
             'tax_amount' => 'integer',
             'credit_amount' => 'integer',
             'tax_rate_bps' => 'integer',
+            'custom_properties_snapshot' => 'array',
             'total_amount' => 'integer',
             'shipping_same_as_billing' => 'boolean',
         ];

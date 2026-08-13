@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Customer\ChangeCustomerPassword;
+use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Agovena\Customer\UpdateCustomerProfile;
 use App\Agovena\Privacy\ExportCustomerData;
 use App\Agovena\Privacy\RequestAccountDeletion;
@@ -26,24 +27,31 @@ final class Profile extends Component
 
     public string $password_confirmation = '';
 
-    public function mount(): void
+    /** @var array<string, mixed> */
+    public array $propertyValues = [];
+
+    public function mount(CustomerPropertyService $properties): void
     {
         /** @var Customer $customer */
         $customer = authenticated_customer();
         $this->name = $customer->name;
         $this->email = $customer->email;
+        $this->propertyValues = $properties->emptyValues($properties->definitionsFor('account'), $customer);
     }
 
-    public function saveProfile(UpdateCustomerProfile $update): void
+    public function saveProfile(UpdateCustomerProfile $update, CustomerPropertyService $properties): void
     {
+        $definitions = $properties->definitionsFor('account');
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
+            ...$properties->livewireRules($definitions),
         ]);
 
         /** @var Customer $customer */
         $customer = authenticated_customer();
         $update->handle($customer, $data);
+        $properties->save($customer, $definitions, $data['propertyValues'] ?? $this->propertyValues, 'customer');
 
         session()->flash('status', __('customer.profile.saved'));
 
@@ -91,7 +99,7 @@ final class Profile extends Component
         session()->flash('status', __('customer.privacy.deletion_requested'));
     }
 
-    public function render(ThemeManager $themes)
+    public function render(ThemeManager $themes, CustomerPropertyService $properties)
     {
         $theme = $themes->active();
         $customer = authenticated_customer();
@@ -101,6 +109,8 @@ final class Profile extends Component
             'emailVerified' => $customer->hasVerifiedEmail(),
             'deletionRequested' => $customer->deletion_requested_at !== null,
             'accountSection' => 'profile',
+            'propertyDefinitions' => $properties->definitionsFor('account'),
+            'actor' => 'customer',
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.account.profile_title'),
             'theme' => $theme,

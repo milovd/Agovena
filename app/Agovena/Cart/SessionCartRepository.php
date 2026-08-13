@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Cart;
 
+use App\Agovena\Catalog\Options\CartLineKey;
 use Illuminate\Contracts\Session\Session;
 
 final class SessionCartRepository implements CartRepository
@@ -16,46 +17,84 @@ final class SessionCartRepository implements CartRepository
     {
         $lines = [];
 
-        foreach ($this->raw() as $productId => $quantity) {
-            $qty = (int) $quantity;
-            if ($qty > 0) {
-                $lines[] = new CartLine((int) $productId, $qty);
+        foreach ($this->raw() as $row) {
+            $qty = (int) $row['quantity'];
+            if ($qty < 1) {
+                continue;
             }
+            $productId = (int) $row['product_id'];
+            if ($productId < 1) {
+                continue;
+            }
+            $selections = $row['selections'];
+            $lines[] = new CartLine($productId, $qty, CartLineKey::normalize($selections));
         }
 
         return $lines;
     }
 
-    public function add(int $productId, int $quantity = 1): void
+    public function add(int $productId, int $quantity = 1, array $selections = []): void
     {
         if ($quantity < 1) {
             return;
         }
 
+        $normalized = CartLineKey::normalize($selections);
+        $lineKey = CartLineKey::make($productId, $normalized);
         $items = $this->raw();
-        $current = array_key_exists($productId, $items) ? $items[$productId] : 0;
-        $items[$productId] = $current + $quantity;
-        $this->session->put(self::KEY, $items);
-    }
+        $found = false;
 
-    public function update(int $productId, int $quantity): void
-    {
-        $items = $this->raw();
-
-        if ($quantity < 1) {
-            unset($items[$productId]);
-        } else {
-            $items[$productId] = $quantity;
+        foreach ($items as $index => $row) {
+            $existing = new CartLine(
+                (int) $row['product_id'],
+                (int) $row['quantity'],
+                $row['selections'],
+            );
+            if ($existing->lineKey === $lineKey) {
+                $items[$index]['quantity'] = (int) $row['quantity'] + $quantity;
+                $found = true;
+                break;
+            }
         }
 
-        $this->session->put(self::KEY, $items);
+        if (! $found) {
+            $items[] = [
+                'product_id' => $productId,
+                'quantity' => $quantity,
+                'selections' => $normalized,
+            ];
+        }
+
+        $this->persist($items);
     }
 
-    public function remove(int $productId): void
+    public function update(string $lineKey, int $quantity): void
     {
         $items = $this->raw();
-        unset($items[$productId]);
-        $this->session->put(self::KEY, $items);
+
+        foreach ($items as $index => $row) {
+            $existing = new CartLine(
+                (int) $row['product_id'],
+                (int) $row['quantity'],
+                $row['selections'],
+            );
+            if ($existing->lineKey !== $lineKey) {
+                continue;
+            }
+            if ($quantity < 1) {
+                unset($items[$index]);
+            } else {
+                $items[$index]['quantity'] = $quantity;
+            }
+            break;
+        }
+
+        $this->persist($items);
+    }
+
+    public function remove(string $lineKey): void
+    {
+        $this->update($lineKey, 0);
     }
 
     public function clear(): void
@@ -63,7 +102,28 @@ final class SessionCartRepository implements CartRepository
         $this->session->forget(self::KEY);
     }
 
-    /** @return array<int, int> */
+    /**
+     * @param  list<array{product_id: int, quantity: int, selections: array<string, mixed>}>  $items
+     */
+    private function persist(array $items): void
+    {
+        $lines = [];
+        foreach ($items as $row) {
+            $lines[] = $row;
+        }
+
+        if ($lines === []) {
+            $this->session->forget(self::KEY);
+
+            return;
+        }
+
+        $this->session->put(self::KEY, ['v' => 2, 'lines' => $lines]);
+    }
+
+    /**
+     * @return list<array{product_id: int, quantity: int, selections: array<string, mixed>}>
+     */
     private function raw(): array
     {
         /** @var mixed $raw */
@@ -73,12 +133,34 @@ final class SessionCartRepository implements CartRepository
             return [];
         }
 
-        $items = [];
+        if (($raw['v'] ?? null) === 2 && isset($raw['lines']) && is_array($raw['lines'])) {
+            $lines = [];
+            foreach ($raw['lines'] as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $lines[] = [
+                    'product_id' => (int) ($row['product_id'] ?? 0),
+                    'quantity' => (int) ($row['quantity'] ?? 0),
+                    'selections' => isset($row['selections']) && is_array($row['selections']) ? $row['selections'] : [],
+                ];
+            }
 
-        foreach ($raw as $productId => $quantity) {
-            $items[(int) $productId] = (int) $quantity;
+            return $lines;
         }
 
-        return $items;
+        $legacy = [];
+        foreach ($raw as $productId => $quantity) {
+            if (is_array($quantity)) {
+                continue;
+            }
+            $legacy[] = [
+                'product_id' => (int) $productId,
+                'quantity' => (int) $quantity,
+                'selections' => [],
+            ];
+        }
+
+        return $legacy;
     }
 }

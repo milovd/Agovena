@@ -13,6 +13,7 @@ use App\Livewire\Admin\Content\NavigationIndex as ContentNavigation;
 use App\Livewire\Admin\Content\PagesIndex as ContentPages;
 use App\Livewire\Admin\Currencies\Index as CurrenciesIndex;
 use App\Livewire\Admin\Customers\Index as CustomersIndex;
+use App\Livewire\Admin\Customers\Properties as CustomerProperties;
 use App\Livewire\Admin\Customers\Show as CustomersShow;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Discounts\Index as DiscountsIndex;
@@ -133,6 +134,7 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access'])->prefix
     Route::get('/taxes', TaxesIndex::class)->name('taxes.index');
     Route::get('/plan-changes', PlanChangesIndex::class)->name('plan-changes.index');
     Route::get('/customers', CustomersIndex::class)->name('customers.index');
+    Route::get('/customers/properties', CustomerProperties::class)->name('customers.properties');
     Route::get('/customers/{customer}', CustomersShow::class)->name('customers.show');
     Route::get('/tickets', TicketsIndex::class)->name('tickets.index');
     Route::get('/tickets/{ticket}', TicketsShow::class)->name('tickets.show');

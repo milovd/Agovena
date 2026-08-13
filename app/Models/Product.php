@@ -17,7 +17,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Generic sellable product. Capabilities are attached via product_capabilities (composable).
- * Variants/SKUs and configurable purchase options remain separate future concepts.
+ * Variants/SKUs remain separate from configurable purchase options.
  *
  * @property int $id
  * @property string $name
@@ -109,6 +109,12 @@ class Product extends Model
     public function capabilities(): HasMany
     {
         return $this->hasMany(ProductCapability::class);
+    }
+
+    /** @return HasMany<ProductOption, $this> */
+    public function purchaseOptions(): HasMany
+    {
+        return $this->hasMany(ProductOption::class)->orderBy('sort')->orderBy('id');
     }
 
     public function hasCapability(string $capability): bool

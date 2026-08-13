@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Agovena\Cart;
 
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
+use App\Agovena\Catalog\Options\ProductOptionPricer;
+use App\Agovena\Catalog\Options\ProductOptionValidator;
 use App\Agovena\Money\Money;
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
@@ -14,31 +16,51 @@ final class CartService
     public function __construct(
         private readonly CartRepository $cart,
         private readonly ProductCapabilityRegistry $capabilities,
+        private readonly ProductOptionValidator $optionValidator,
+        private readonly ProductOptionPricer $optionPricer,
     ) {}
 
-    public function add(int $productId, int $quantity = 1): void
+    /**
+     * @param  array<string, mixed>  $selections
+     */
+    public function add(int $productId, int $quantity = 1, array $selections = []): void
     {
         $product = $this->requirePurchasable($productId);
-        $this->cart->add($product->id, $quantity);
+        $clean = $this->optionValidator->validate($product, $selections);
+        $this->cart->add($product->id, $quantity, $clean);
     }
 
-    public function update(int $productId, int $quantity): void
+    public function update(int|string $productIdOrLineKey, int $quantity): void
     {
+        $lineKey = (string) $productIdOrLineKey;
         if ($quantity > 0) {
-            $this->requirePurchasable($productId);
+            $line = $this->lineByKey($lineKey);
+            if ($line !== null) {
+                $this->requirePurchasable($line->productId);
+            }
         }
 
-        $this->cart->update($productId, $quantity);
+        $this->cart->update($lineKey, $quantity);
     }
 
-    public function remove(int $productId): void
+    public function remove(int|string $productIdOrLineKey): void
     {
-        $this->cart->remove($productId);
+        $this->cart->remove((string) $productIdOrLineKey);
     }
 
     public function clear(): void
     {
         $this->cart->clear();
+    }
+
+    /**
+     * @return list<CartLine>
+     */
+    public function lines(): array
+    {
+        $this->removeUnavailable();
+
+        return $this->cart->lines();
     }
 
     /**
@@ -54,7 +76,7 @@ final class CartService
             $product = Product::query()->find($line->productId);
 
             if ($product === null || ! $product->isPurchasable()) {
-                $this->cart->remove($line->productId);
+                $this->cart->remove($line->lineKey);
                 $removed[] = $line->productId;
             }
         }
@@ -80,13 +102,26 @@ final class CartService
                 continue;
             }
 
-            $unit = $product->money();
+            $unit = $this->optionPricer->unitPrice($product, $line->selections);
+            $snapshot = $this->optionPricer->snapshot($product, $line->selections);
+            $optionLabels = [];
+            foreach ($snapshot as $row) {
+                $optionLabels[] = [
+                    'key' => $row['key'],
+                    'label' => $row['label'],
+                    'display' => $row['display'],
+                ];
+            }
+
             $priced[] = new PricedCartLine(
                 productId: $product->id,
                 label: $product->name,
                 quantity: $line->quantity,
                 unitPrice: $unit,
                 lineTotal: $unit->multiply($line->quantity),
+                lineKey: $line->lineKey,
+                selections: $line->selections,
+                optionLabels: $optionLabels,
             );
         }
 
@@ -172,6 +207,28 @@ final class CartService
         }
 
         return $shippable;
+    }
+
+    public function assertConfigured(): void
+    {
+        foreach ($this->cart->lines() as $line) {
+            $product = Product::query()->find($line->productId);
+            if ($product === null) {
+                continue;
+            }
+            $this->optionValidator->validate($product, $line->selections);
+        }
+    }
+
+    private function lineByKey(string $lineKey): ?CartLine
+    {
+        foreach ($this->cart->lines() as $line) {
+            if ($line->lineKey === $lineKey) {
+                return $line;
+            }
+        }
+
+        return null;
     }
 
     private function requirePurchasable(int $productId): Product

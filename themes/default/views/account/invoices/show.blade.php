@@ -51,6 +51,9 @@
                     <p>{{ $invoice->billing_country }}</p>
                 @endif
                 <p>{{ $invoice->customer_email }}</p>
+                @foreach ($invoice->custom_properties_snapshot ?? [] as $property)
+                    <p><strong>{{ $property['label'] ?? $property['key'] }}:</strong> {{ $property['value'] ?? '' }}</p>
+                @endforeach
             </div>
         </div>
     </section>

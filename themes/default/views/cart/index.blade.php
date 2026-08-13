@@ -12,28 +12,35 @@
     @else
         <div class="store-cart__layout">
             <ul class="store-cart-list">
-                @foreach ($lines as $line)
-                    <li class="store-cart-list__item" wire:key="cart-{{ $line->productId }}">
+                    @foreach ($lines as $line)
+                    <li class="store-cart-list__item" wire:key="cart-{{ $line->lineKey }}">
                         <div>
                             <p class="store-cart-list__name">{{ $line->label }}</p>
+                            @if ($line->optionLabels !== [])
+                                <ul class="store-cart-list__options">
+                                    @foreach ($line->optionLabels as $option)
+                                        <li>{{ $option['label'] }}: {{ $option['display'] }}</li>
+                                    @endforeach
+                                </ul>
+                            @endif
                             <p class="store-cart-list__meta">{{ \App\Support\MoneyFormatter::format($line->unitPrice) }} {{ __('storefront.cart.each') }}</p>
                         </div>
                         <div class="store-cart-list__controls">
-                            <label class="visually-hidden" for="qty-{{ $line->productId }}">{{ __('storefront.cart.quantity_for', ['name' => $line->label]) }}</label>
+                            <label class="visually-hidden" for="qty-{{ $line->lineKey }}">{{ __('storefront.cart.quantity_for', ['name' => $line->label]) }}</label>
                             <input
-                                id="qty-{{ $line->productId }}"
+                                id="qty-{{ $line->lineKey }}"
                                 class="store-input store-input--narrow"
                                 type="number"
                                 min="0"
                                 max="99"
-                                wire:model="quantities.{{ $line->productId }}"
+                                wire:model="quantities.{{ $line->lineKey }}"
                             >
-                            <button type="button" class="store-btn" wire:click="updateLine({{ $line->productId }})">{{ __('common.update') }}</button>
-                            <button type="button" class="store-btn store-btn--ghost" wire:click="removeLine({{ $line->productId }})">{{ __('common.remove') }}</button>
+                            <button type="button" class="store-btn" wire:click="updateLine(@js($line->lineKey))">{{ __('common.update') }}</button>
+                            <button type="button" class="store-btn store-btn--ghost" wire:click="removeLine(@js($line->lineKey))">{{ __('common.remove') }}</button>
                         </div>
                         <p class="store-cart-list__line">{{ \App\Support\MoneyFormatter::format($line->lineTotal) }}</p>
                     </li>
-                @endforeach
+                    @endforeach
             </ul>
 
             <aside class="store-summary" aria-label="{{ __('storefront.cart.summary_aria') }}">

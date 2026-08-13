@@ -8,6 +8,18 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    @if (($propertyDefinitions ?? collect())->isNotEmpty())
+        <section class="admin-panel">
+            <h2 class="admin-panel__title">{{ __('admin.customer_properties.values_heading') }}</h2>
+            <form class="ag-form" wire:submit="saveProperties">
+                @include('partials.custom-property-fields')
+                @can('customers.manage')
+                    <button class="ag-btn ag-btn--primary" type="submit">{{ __('admin.customer_properties.save_values') }}</button>
+                @endcan
+            </form>
+        </section>
+    @endif
+
     <section class="admin-panel">
         <h2 class="admin-panel__title">{{ __('admin.customers.credit_heading') }}</h2>
         <p>{{ __('admin.customers.balance') }}: <strong>{{ \App\Support\MoneyFormatter::format(\App\Agovena\Money\Money::of($balanceAmount, $currency)) }}</strong></p>
