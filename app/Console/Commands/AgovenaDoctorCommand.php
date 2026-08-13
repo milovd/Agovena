@@ -7,6 +7,7 @@ namespace App\Console\Commands;
 use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Installation\RequirementCheck;
+use App\Agovena\Operations\SchedulerHealth;
 use Illuminate\Console\Command;
 
 final class AgovenaDoctorCommand extends Command
@@ -15,7 +16,7 @@ final class AgovenaDoctorCommand extends Command
 
     protected $description = 'Check Agovena runtime requirements and installation readiness';
 
-    public function handle(InstallationRequirements $requirements, InstallationState $state): int
+    public function handle(InstallationRequirements $requirements, InstallationState $state, SchedulerHealth $scheduler): int
     {
         $this->info('Agovena doctor');
         $this->newLine();
@@ -23,7 +24,7 @@ final class AgovenaDoctorCommand extends Command
         $failed = 0;
         $warnings = 0;
 
-        foreach ([...$requirements->checks(), ...$this->platformChecks()] as $check) {
+        foreach ([...$requirements->checks(), ...$this->platformChecks($scheduler)] as $check) {
             $this->line($this->formatCheck($check));
 
             if (! $check->passed && $check->required) {
@@ -68,12 +69,13 @@ final class AgovenaDoctorCommand extends Command
     }
 
     /** @return list<RequirementCheck> */
-    private function platformChecks(): array
+    private function platformChecks(SchedulerHealth $scheduler): array
     {
         $queue = (string) config('queue.default', '');
         $mail = (string) config('mail.default', '');
         $env = (string) config('app.env');
         $debugOff = $env !== 'production' || ! (bool) config('app.debug');
+        $last = $scheduler->lastHeartbeat();
 
         return [
             new RequirementCheck(
@@ -96,6 +98,13 @@ final class AgovenaDoctorCommand extends Command
                 passed: $mail !== '' && $mail !== 'log',
                 required: false,
                 detail: $mail,
+            ),
+            new RequirementCheck(
+                id: 'scheduler',
+                label: 'installer.checks.scheduler',
+                passed: ! $scheduler->isStale(),
+                required: false,
+                detail: $last?->toIso8601String() ?? 'none',
             ),
         ];
     }

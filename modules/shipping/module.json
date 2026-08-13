@@ -5,6 +5,7 @@
     "description": "Shippable products, shipping methods/zones, and first-class Shipment fulfillment.",
     "author": "Agovena",
     "agovena": "^0.1",
-    "provider": "Agovena\\Modules\\Shipping\\ShippingServiceProvider",
+    "group": "commerce",
+  "provider": "Agovena\\Modules\\Shipping\\ShippingServiceProvider",
     "dependencies": []
 }

@@ -10,6 +10,7 @@ use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Agovena\Privacy\AnonymizeCustomer;
 use App\Models\Customer;
 use App\Models\CustomerCreditAccount;
+use App\Models\Refund;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
@@ -84,6 +85,11 @@ final class Show extends Component
             'recentInvoices' => $this->customer->invoices()->latest('id')->limit(8)->get(),
             'recentCreditNotes' => $this->customer->creditNotes()->latest('id')->limit(8)->get(),
             'recentTickets' => $this->customer->tickets()->latest('id')->limit(8)->get(),
+            'recentRefunds' => Refund::query()
+                ->whereHas('order', fn ($query) => $query->where('customer_id', $this->customer->id))
+                ->latest('id')
+                ->limit(8)
+                ->get(),
             'customerDetailSections' => $admin->customerDetailSections(),
             'propertyDefinitions' => $properties->definitionsFor('staff'),
             'actor' => 'staff',

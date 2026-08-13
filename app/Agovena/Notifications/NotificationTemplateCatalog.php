@@ -47,6 +47,46 @@ final class NotificationTemplateCatalog
                 label: 'admin.notifications.keys.subscription_cancelled',
                 placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
             ),
+            new NotificationTemplateDefinition(
+                key: 'shipment_sent',
+                label: 'admin.notifications.keys.shipment_sent',
+                placeholders: ['name', 'number', 'total', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'subscription_renewal',
+                label: 'admin.notifications.keys.subscription_renewal',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'subscription_past_due',
+                label: 'admin.notifications.keys.subscription_past_due',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'plan_change_applied',
+                label: 'admin.notifications.keys.plan_change_applied',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'service_activated',
+                label: 'admin.notifications.keys.service_activated',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'service_suspended',
+                label: 'admin.notifications.keys.service_suspended',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'digital_entitlement_granted',
+                label: 'admin.notifications.keys.digital_entitlement_granted',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'event_ticket_issued',
+                label: 'admin.notifications.keys.event_ticket_issued',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
         ];
     }
 

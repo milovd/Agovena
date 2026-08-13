@@ -12,5 +12,7 @@ final readonly class PaymentGatewayCapabilities
         public bool $recurring = false,
         public bool $webhooks = false,
         public bool $redirect = false,
+        public bool $statusSync = false,
+        public bool $cancelPending = false,
     ) {}
 }

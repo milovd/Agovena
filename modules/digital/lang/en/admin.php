@@ -15,4 +15,5 @@ return [
     'saved' => 'Digital asset saved.',
     'deleted' => 'Digital asset deleted.',
     'empty' => 'No digital assets yet.',
+    'customer_heading' => 'Downloads',
 ];

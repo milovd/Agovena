@@ -12,6 +12,7 @@ use Agovena\Modules\Subscriptions\Events\SubscriptionEnded;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
+use App\Agovena\Notifications\SendsCataloguedMail;
 use App\Agovena\Orders\CancelUnpaidOrder;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\PlanChanges\ApplyPlanChange;
@@ -29,6 +30,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -238,7 +240,21 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         $subscription->status = SubscriptionStatus::PastDue;
         $subscription->save();
 
-        return $subscription->fresh() ?? $subscription;
+        $fresh = $subscription->fresh() ?? $subscription;
+        app(SendsCataloguedMail::class)->toOrderCustomer(
+            $fresh->customer_id,
+            (string) $fresh->customer_email,
+            'subscription_past_due',
+            [
+                'name' => (string) ($fresh->customer_name ?? $fresh->customer_email),
+                'number' => $fresh->number,
+                'detail' => $fresh->number,
+                'action_url' => Route::has('customer.subscriptions') ? route('customer.subscriptions') : url('/'),
+                'action_label' => __('notifications.subscription_past_due.action'),
+            ],
+        );
+
+        return $fresh;
     }
 
     public function end(Subscription $subscription): Subscription
@@ -339,6 +355,19 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
 
             $created = $order->fresh(['items', 'payment']) ?? $order;
             $this->issueInvoice->handle($created);
+
+            app(SendsCataloguedMail::class)->toOrderCustomer(
+                $subscription->customer_id,
+                (string) $subscription->customer_email,
+                'subscription_renewal',
+                [
+                    'name' => (string) ($subscription->customer_name ?? $subscription->customer_email),
+                    'number' => $subscription->number,
+                    'detail' => $created->number,
+                    'action_url' => route('customer.orders.show', $created),
+                    'action_label' => __('notifications.subscription_renewal.action'),
+                ],
+            );
 
             return $created;
         });

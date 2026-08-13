@@ -39,6 +39,46 @@ return [
         'immediate' => 'Subscription :number has been cancelled.',
         'action' => 'View subscriptions',
     ],
+    'shipment_sent' => [
+        'subject' => 'Order :number has shipped',
+        'line' => 'A shipment for order :number is on its way.',
+        'action' => 'View order',
+    ],
+    'subscription_renewal' => [
+        'subject' => 'Renewal invoice for :number',
+        'line' => 'A renewal order :detail is ready for subscription :number.',
+        'action' => 'View order',
+    ],
+    'subscription_past_due' => [
+        'subject' => 'Subscription :number is past due',
+        'line' => 'Payment for subscription :number is overdue.',
+        'action' => 'View subscriptions',
+    ],
+    'plan_change_applied' => [
+        'subject' => 'Plan change applied',
+        'line' => 'Your plan change for :number is now active.',
+        'action' => 'View subscriptions',
+    ],
+    'service_activated' => [
+        'subject' => 'Service :number is active',
+        'line' => 'Service :number has been activated.',
+        'action' => 'View service',
+    ],
+    'service_suspended' => [
+        'subject' => 'Service :number is paused',
+        'line' => 'Service :number has been suspended.',
+        'action' => 'View service',
+    ],
+    'digital_entitlement_granted' => [
+        'subject' => 'Your download is ready',
+        'line' => 'Downloads for order :number are now available.',
+        'action' => 'View downloads',
+    ],
+    'event_ticket_issued' => [
+        'subject' => 'Your tickets for order :number',
+        'line' => 'Event tickets for order :number are now available.',
+        'action' => 'View tickets',
+    ],
     'provisioning' => [
         'manual' => 'Manual',
         'refresh_status' => 'Refresh status',

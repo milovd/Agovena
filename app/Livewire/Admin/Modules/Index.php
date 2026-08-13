@@ -64,8 +64,26 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, PackageCatalog $catalog)
     {
+        $grouped = [];
+        foreach ($catalog->modules() as $row) {
+            $group = $row['manifest']->group !== '' ? $row['manifest']->group : 'other';
+            $grouped[$group][] = $row;
+        }
+
+        $order = ['commerce', 'recurring', 'experiences', 'other'];
+        $ordered = [];
+        foreach ($order as $group) {
+            if (isset($grouped[$group])) {
+                $ordered[$group] = $grouped[$group];
+                unset($grouped[$group]);
+            }
+        }
+        foreach ($grouped as $group => $rows) {
+            $ordered[$group] = $rows;
+        }
+
         return view('livewire.admin.modules.index', [
-            'modules' => $catalog->modules(),
+            'groups' => $ordered,
         ])->layout('layouts.admin', [
             'title' => __('admin.modules.title'),
             'navigation' => $admin->navigationItems(),

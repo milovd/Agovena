@@ -83,7 +83,7 @@ final class RendersNotificationMail
         if ($line === $lineKey) {
             $line = (string) ($vars['detail'] ?? '');
         }
-        $total = in_array($key, ['ticket_replied', 'subscription_cancelled'], true)
+        $total = $this->omitsTotal($key)
             ? ''
             : (string) __('notifications.total', $langVars);
 
@@ -100,13 +100,29 @@ final class RendersNotificationMail
         if ($line === $lineKey) {
             $line = ':detail';
         }
-        $total = in_array($key, ['ticket_replied', 'subscription_cancelled'], true)
+        $total = $this->omitsTotal($key)
             ? ''
             : (string) __('notifications.total');
 
         $parts = array_values(array_filter([$greeting, is_string($line) ? $line : '', $total]));
 
         return implode("\n\n", $parts);
+    }
+
+    private function omitsTotal(string $key): bool
+    {
+        return in_array($key, [
+            'ticket_replied',
+            'subscription_cancelled',
+            'shipment_sent',
+            'subscription_renewal',
+            'subscription_past_due',
+            'plan_change_applied',
+            'service_activated',
+            'service_suspended',
+            'digital_entitlement_granted',
+            'event_ticket_issued',
+        ], true);
     }
 
     /**

@@ -8,6 +8,7 @@ use Agovena\Modules\Shipping\Enums\ShipmentStatus;
 use Agovena\Modules\Shipping\Models\Shipment;
 use Agovena\Modules\Shipping\Models\ShipmentItem;
 use Agovena\Modules\Shipping\Models\ShippingMethod;
+use App\Agovena\Notifications\SendsCataloguedMail;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
@@ -131,6 +132,23 @@ final class ShipmentService
         $shipment->status = $next;
         $shipment->save();
 
-        return $shipment->fresh(['items']) ?? $shipment;
+        $fresh = $shipment->fresh(['items']) ?? $shipment;
+        if ($next === ShipmentStatus::Shipped) {
+            $order = $fresh->order;
+            app(SendsCataloguedMail::class)->toOrderCustomer(
+                $order->customer_id,
+                (string) $order->customer_email,
+                'shipment_sent',
+                [
+                    'name' => (string) $order->customer_name,
+                    'number' => $order->number,
+                    'total' => '',
+                    'action_url' => route('customer.orders.show', $order),
+                    'action_label' => __('notifications.shipment_sent.action'),
+                ],
+            );
+        }
+
+        return $fresh;
     }
 }

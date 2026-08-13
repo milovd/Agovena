@@ -162,6 +162,30 @@
                     </div>
                 </div>
             @endcan
+
+            @if ($recentRefunds->isNotEmpty())
+                <div>
+                    <h3 class="ag-section__title">{{ __('admin.customers.refunds_heading') }}</h3>
+                    <div class="ag-table-wrap">
+                        <table class="ag-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('admin.customers.activity_number') }}</th>
+                                    <th>{{ __('common.status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($recentRefunds as $refund)
+                                    <tr>
+                                        <td>{{ $refund->amount }} {{ $refund->currency }}</td>
+                                        <td>{{ __('admin.refunds.status.'.$refund->status->value) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endif
         </div>
     </section>
 

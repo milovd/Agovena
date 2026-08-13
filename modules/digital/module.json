@@ -5,6 +5,7 @@
     "description": "Digital product capability with downloadable assets and customer entitlements after payment.",
     "author": "Agovena",
     "agovena": "^0.1",
+    "group": "commerce",
     "provider": "Agovena\\Modules\\Digital\\DigitalServiceProvider",
     "dependencies": []
 }

@@ -39,6 +39,46 @@ return [
         'immediate' => 'Abonnement :number is opgezegd.',
         'action' => 'Abonnementen bekijken',
     ],
+    'shipment_sent' => [
+        'subject' => 'Bestelling :number is verzonden',
+        'line' => 'Er is een zending onderweg voor bestelling :number.',
+        'action' => 'Bestelling bekijken',
+    ],
+    'subscription_renewal' => [
+        'subject' => 'Verlengingsfactuur voor :number',
+        'line' => 'Verlengingsbestelling :detail is klaar voor abonnement :number.',
+        'action' => 'Bestelling bekijken',
+    ],
+    'subscription_past_due' => [
+        'subject' => 'Abonnement :number is achterstallig',
+        'line' => 'De betaling voor abonnement :number is te laat.',
+        'action' => 'Abonnementen bekijken',
+    ],
+    'plan_change_applied' => [
+        'subject' => 'Planwijziging toegepast',
+        'line' => 'Je planwijziging voor :number is nu actief.',
+        'action' => 'Abonnementen bekijken',
+    ],
+    'service_activated' => [
+        'subject' => 'Dienst :number is actief',
+        'line' => 'Dienst :number is geactiveerd.',
+        'action' => 'Dienst bekijken',
+    ],
+    'service_suspended' => [
+        'subject' => 'Dienst :number is gepauzeerd',
+        'line' => 'Dienst :number is gepauzeerd.',
+        'action' => 'Dienst bekijken',
+    ],
+    'digital_entitlement_granted' => [
+        'subject' => 'Je download is klaar',
+        'line' => 'Downloads voor bestelling :number zijn nu beschikbaar.',
+        'action' => 'Downloads bekijken',
+    ],
+    'event_ticket_issued' => [
+        'subject' => 'Je tickets voor bestelling :number',
+        'line' => 'Evenementtickets voor bestelling :number zijn nu beschikbaar.',
+        'action' => 'Tickets bekijken',
+    ],
     'provisioning' => [
         'manual' => 'Handmatig',
         'refresh_status' => 'Status vernieuwen',

@@ -7,7 +7,7 @@ namespace App\Agovena\Provisioning\Contracts;
 /**
  * Provider seam for provisioning Extensions.
  * Core and the Provisioning Module must not hardcode vendor SDKs.
- * Extensions optionally implement ProvisionerActions and ProvisionerPanel.
+ * Extensions optionally implement ProvisionerActions, ProvisionerPanel, and ProvisionerLifecycle.
  */
 interface Provisioner
 {

@@ -21,6 +21,7 @@ final readonly class ModuleManifest
         public array $dependencies = [],
         public string $author = 'Agovena',
         public array $autoloadPsr4 = [],
+        public string $group = 'other',
     ) {}
 
     /**
@@ -54,6 +55,7 @@ final readonly class ModuleManifest
             dependencies: array_values(array_map('strval', $deps)),
             author: (string) ($data['author'] ?? 'Agovena'),
             autoloadPsr4: $psr4,
+            group: (string) ($data['group'] ?? 'other'),
         );
     }
 }

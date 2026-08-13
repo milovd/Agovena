@@ -129,5 +129,6 @@ return [
         'production_debug' => 'Productie-debug uitgeschakeld',
         'queue_connection' => 'Wachtrijverbinding',
         'mail_default' => 'E-mailtransport',
+        'scheduler' => 'Scheduler-heartbeat',
     ],
 ];

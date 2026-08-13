@@ -5,6 +5,7 @@
     "description": "Recurring product capability with first-class Subscriptions, periods, and renewal orders.",
     "author": "Agovena",
     "agovena": "^0.1",
-    "provider": "Agovena\\Modules\\Subscriptions\\SubscriptionsServiceProvider",
+    "group": "recurring",
+  "provider": "Agovena\\Modules\\Subscriptions\\SubscriptionsServiceProvider",
     "dependencies": []
 }

@@ -15,4 +15,5 @@ return [
     'saved' => 'Digitaal bestand opgeslagen.',
     'deleted' => 'Digitaal bestand verwijderd.',
     'empty' => 'Nog geen digitale bestanden.',
+    'customer_heading' => 'Downloads',
 ];

@@ -6,9 +6,11 @@ namespace Agovena\Modules\Provisioning;
 
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
+use App\Agovena\Notifications\SendsCataloguedMail;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -106,7 +108,7 @@ final class ProvisioningService
         }
         $instance->save();
 
-        return $instance->fresh() ?? $instance;
+        return $this->notifyLifecycle($instance->fresh() ?? $instance, 'service_activated');
     }
 
     public function suspend(ServiceInstance $instance): ServiceInstance
@@ -121,7 +123,7 @@ final class ProvisioningService
         $instance->suspended_at = now();
         $instance->save();
 
-        return $instance->fresh() ?? $instance;
+        return $this->notifyLifecycle($instance->fresh() ?? $instance, 'service_suspended');
     }
 
     public function terminate(ServiceInstance $instance): ServiceInstance
@@ -169,5 +171,29 @@ final class ProvisioningService
         } while (ServiceInstance::query()->where('number', $number)->exists());
 
         return $number;
+    }
+
+    private function notifyLifecycle(ServiceInstance $instance, string $key): ServiceInstance
+    {
+        $route = $key === 'service_activated' || $key === 'service_suspended'
+            ? (Route::has('customer.services.show')
+                ? route('customer.services.show', $instance)
+                : url('/'))
+            : url('/');
+
+        app(SendsCataloguedMail::class)->toOrderCustomer(
+            $instance->customer_id,
+            (string) $instance->customer_email,
+            $key,
+            [
+                'name' => (string) ($instance->customer_name ?? $instance->customer_email),
+                'number' => $instance->number,
+                'detail' => $instance->number,
+                'action_url' => $route,
+                'action_label' => __('notifications.'.$key.'.action'),
+            ],
+        );
+
+        return $instance;
     }
 }

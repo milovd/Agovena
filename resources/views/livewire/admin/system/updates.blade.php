@@ -1,6 +1,54 @@
 <div class="admin-page">
     <x-ag.page-header :heading="__('admin.updates.title')" :lede="__('admin.updates.lede')" />
 
+    <section class="admin-panel">
+        <h3 class="admin-panel__title">{{ __('admin.updates.operations_heading') }}</h3>
+        <dl class="ag-dl">
+            <div>
+                <dt>{{ __('admin.updates.platform_version') }}</dt>
+                <dd>{{ $platformVersion }}</dd>
+            </div>
+            <div>
+                <dt>{{ __('admin.updates.scheduler') }}</dt>
+                <dd>
+                    @if ($scheduler['stale'])
+                        {{ __('admin.updates.scheduler_stale', ['time' => $scheduler['last'] ?? __('admin.updates.scheduler_never')]) }}
+                    @elseif ($scheduler['last'])
+                        {{ __('admin.updates.scheduler_ok', ['time' => $scheduler['last']]) }}
+                    @else
+                        {{ __('admin.updates.scheduler_idle') }}
+                    @endif
+                </dd>
+            </div>
+            <div>
+                <dt>{{ __('admin.updates.queue') }}</dt>
+                <dd>{{ $queue }}</dd>
+            </div>
+            <div>
+                <dt>{{ __('admin.updates.mail') }}</dt>
+                <dd>{{ $mail }}</dd>
+            </div>
+            <div>
+                <dt>{{ __('admin.failed_jobs.title') }}</dt>
+                <dd>{{ __('admin.updates.failed_jobs_count', ['count' => $failedJobs]) }}</dd>
+            </div>
+        </dl>
+        <p class="ag-muted">{{ __('admin.updates.no_core_self_update') }}</p>
+    </section>
+
+    <section class="admin-panel">
+        <h3 class="admin-panel__title">{{ __('admin.updates.packages_heading') }}</h3>
+        @if ($packageUpdates === [])
+            <p class="ag-muted">{{ __('admin.updates.packages_current') }}</p>
+        @else
+            <ul>
+                @foreach ($packageUpdates as $package)
+                    <li>{{ $package['name'] }} ({{ $package['version'] }})</li>
+                @endforeach
+            </ul>
+        @endif
+    </section>
+
     @if ($pendingCount === 0)
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ __('admin.updates.current_title') }}</p>

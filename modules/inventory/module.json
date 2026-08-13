@@ -5,6 +5,7 @@
     "description": "Stock tracking for physical products via the inventory product capability.",
     "author": "Agovena",
     "agovena": "^0.1",
-    "provider": "Agovena\\Modules\\Inventory\\InventoryServiceProvider",
+    "group": "commerce",
+  "provider": "Agovena\\Modules\\Inventory\\InventoryServiceProvider",
     "dependencies": []
 }

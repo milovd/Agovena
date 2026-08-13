@@ -6,9 +6,11 @@ namespace Agovena\Modules\Digital;
 
 use Agovena\Modules\Digital\Models\DigitalAsset;
 use Agovena\Modules\Digital\Models\DigitalEntitlement;
+use App\Agovena\Notifications\SendsCataloguedMail;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -19,6 +21,7 @@ final class DigitalDeliveryService
     public function grantForPaidOrder(Order $order): void
     {
         $order->loadMissing('items');
+        $granted = 0;
 
         foreach ($order->items as $item) {
             if ($item->product_id === null) {
@@ -56,7 +59,25 @@ final class DigitalDeliveryService
                     'download_count' => 0,
                     'granted_at' => now(),
                 ]);
+                $granted++;
             }
+        }
+
+        if ($granted > 0) {
+            app(SendsCataloguedMail::class)->toOrderCustomer(
+                $order->customer_id,
+                (string) $order->customer_email,
+                'digital_entitlement_granted',
+                [
+                    'name' => (string) $order->customer_name,
+                    'number' => $order->number,
+                    'detail' => $order->number,
+                    'action_url' => Route::has('customer.downloads')
+                        ? route('customer.downloads')
+                        : url('/'),
+                    'action_label' => __('notifications.digital_entitlement_granted.action'),
+                ],
+            );
         }
     }
 
