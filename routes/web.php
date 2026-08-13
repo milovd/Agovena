@@ -30,6 +30,7 @@ use App\Livewire\Admin\Products\Index as ProductsIndex;
 use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
+use App\Livewire\Admin\Store\Presets as StorePresets;
 use App\Livewire\Admin\Taxes\Index as TaxesIndex;
 use App\Livewire\Admin\Tickets\Index as TicketsIndex;
 use App\Livewire\Admin\Tickets\Show as TicketsShow;
@@ -140,6 +141,7 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access'])->prefix
     Route::get('/tickets/{ticket}', TicketsShow::class)->name('tickets.show');
     Route::get('/audit', AuditIndex::class)->name('audit.index');
     Route::get('/modules', ModulesIndex::class)->name('modules.index');
+    Route::get('/store-presets', StorePresets::class)->name('store-presets');
     Route::get('/extensions', ExtensionsIndex::class)->name('extensions.index');
     Route::get('/settings', SettingsHub::class)->name('settings.index');
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');

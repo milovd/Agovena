@@ -324,6 +324,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'store-presets',
+            label: 'admin.nav.store_presets',
+            group: 'admin.nav_groups.configuration',
+            href: '/admin/store-presets',
+            icon: 'package',
+            sort: 119,
+            permission: 'modules.manage',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'modules',
             label: 'admin.nav.modules',
             group: 'admin.nav_groups.configuration',

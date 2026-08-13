@@ -1,0 +1,51 @@
+<?php
+
+declare(strict_types=1);
+
+use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Store\ApplyStorePresets;
+use App\Livewire\Admin\Store\Presets as StorePresets;
+use App\Models\AgovenaModule;
+use Livewire\Livewire;
+use Tests\Support\CreatesStaff;
+
+uses(CreatesStaff::class);
+
+test('store presets enable the union of modules without disabling others', function () {
+    expect(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse()
+        ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeFalse();
+
+    $enabled = app(ApplyStorePresets::class)->handle(['physical', 'digital']);
+
+    expect($enabled)->toContain('inventory', 'shipping', 'digital')
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeTrue()
+        ->and(app(ApplyStorePresets::class)->selected())->toBe(['physical', 'digital']);
+
+    app(ModuleManager::class)->enable('subscriptions');
+    app(ApplyStorePresets::class)->handle(['physical']);
+
+    expect(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeTrue();
+});
+
+test('custom preset enables no modules and core still works with zero modules', function () {
+    $enabled = app(ApplyStorePresets::class)->handle(['custom']);
+
+    expect($enabled)->toBe([])
+        ->and(AgovenaModule::query()->where('enabled', true)->count())->toBe(0);
+});
+
+test('staff can apply store presets from admin', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(StorePresets::class)
+        ->set('selected', ['hosting'])
+        ->call('apply')
+        ->assertHasNoErrors();
+
+    expect(app(ModuleManager::class)->isEnabled('provisioning'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue();
+});
