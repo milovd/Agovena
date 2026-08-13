@@ -6,6 +6,8 @@ namespace App\Livewire\Admin\Orders;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\InMemoryAdminRegistrar;
+use App\Agovena\Orders\CancelUnpaidOrder;
+use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
@@ -24,6 +26,8 @@ final class Show extends Component
 
     public bool $confirmingPayment = false;
 
+    public bool $confirmingCancel = false;
+
     public function mount(Order $order): void
     {
         $this->authorize('orders.view');
@@ -39,6 +43,30 @@ final class Show extends Component
     public function cancelRecordPayment(): void
     {
         $this->confirmingPayment = false;
+    }
+
+    public function startCancelUnpaid(): void
+    {
+        $this->authorizeCancelUnpaid();
+        $this->confirmingCancel = true;
+    }
+
+    public function abortCancelUnpaid(): void
+    {
+        $this->confirmingCancel = false;
+    }
+
+    public function cancelUnpaid(CancelUnpaidOrder $cancel): void
+    {
+        $this->authorizeCancelUnpaid();
+
+        /** @var User $staff */
+        $staff = Auth::user();
+
+        $this->order = $cancel->handle($this->order, UnpaidOrderCancelSource::Staff, $staff)
+            ->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+        $this->confirmingCancel = false;
+        session()->flash('status', __('admin.orders.flash.cancelled'));
     }
 
     public function recordPayment(RecordManualPayment $action): void
@@ -62,16 +90,30 @@ final class Show extends Component
     public function render(AdminRegistrar $admin)
     {
         /** @var InMemoryAdminRegistrar $admin */
-        $canRecord = Auth::user()?->can('payments.record') === true
+        $user = Auth::user();
+        $canRecord = $user?->can('payments.record') === true
             && $this->order->payment?->status === PaymentStatus::Pending;
+        $canCancelUnpaid = $this->order->canCancelUnpaid()
+            && ($user?->can('orders.cancel') === true || $user?->can('invoices.void') === true);
 
         return view('livewire.admin.orders.show', [
             'canRecord' => $canRecord,
+            'canCancelUnpaid' => $canCancelUnpaid,
             'orderDetailSections' => $admin->orderDetailSections(),
             'navigation' => $admin->navigationItems(),
         ])->layout('layouts.admin', [
             'title' => __('admin.orders.show.title', ['number' => $this->order->number]),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    private function authorizeCancelUnpaid(): void
+    {
+        $user = Auth::user();
+        abort_unless(
+            $user instanceof User
+                && ($user->can('orders.cancel') || $user->can('invoices.void')),
+            403,
+        );
     }
 }

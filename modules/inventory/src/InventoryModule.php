@@ -7,10 +7,12 @@ namespace Agovena\Modules\Inventory;
 use Agovena\Modules\Inventory\Http\Livewire\Admin\StocksIndex;
 use Agovena\Modules\Inventory\Listeners\AssertStockBeforeOrderPlacing;
 use Agovena\Modules\Inventory\Listeners\ReserveStockWhenOrderCreated;
+use Agovena\Modules\Inventory\Listeners\RestockWhenOrderCancelled;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Modules\ModuleContext;
+use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
 use App\Events\OrderPlacing;
 use Illuminate\Support\Facades\Route;
@@ -54,6 +56,7 @@ final class InventoryModule implements Module
 
         $context->listen(OrderPlacing::class, AssertStockBeforeOrderPlacing::class);
         $context->listen(OrderCreated::class, ReserveStockWhenOrderCreated::class);
+        $context->listen(OrderCancelled::class, RestockWhenOrderCancelled::class);
 
         $context->adminRoutes(function (): void {
             Route::get('/inventory', StocksIndex::class)->name('inventory.index');

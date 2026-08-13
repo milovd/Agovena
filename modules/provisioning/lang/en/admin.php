@@ -30,5 +30,7 @@ return [
     'activated' => 'Service activated.',
     'suspended' => 'Service suspended.',
     'terminated' => 'Service terminated.',
+    'suspend_confirm' => 'Suspend this service? The instance stays on record.',
+    'terminate_confirm' => 'Terminate this service? This cannot be undone from the customer portal.',
     'back' => 'Back to provisioning',
 ];

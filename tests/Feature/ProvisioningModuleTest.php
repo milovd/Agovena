@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
+use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServicesIndex;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Provisioning\ProvisioningService;
@@ -155,8 +156,10 @@ test('manual provisioner exposes and safely runs its proof action', function () 
     app(RunProvisionerAction::class)->handle($customer, $instance->id, 'refresh_status');
 
     Livewire::actingAs($customer->user)
-        ->test(ServicesIndex::class)
-        ->assertSee(__('notifications.provisioning.refresh_status'));
+        ->test(ServiceShow::class, ['instance' => $instance])
+        ->assertSee(__('notifications.provisioning.refresh_status'))
+        ->call('runAction', 'refresh_status')
+        ->assertHasNoErrors();
 });
 
 test('provisioning module disable preserves service instances', function () {

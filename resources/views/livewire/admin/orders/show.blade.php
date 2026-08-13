@@ -5,6 +5,10 @@
         </x-slot:back>
     </x-ag.page-header>
 
+    @if (session('status'))
+        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
+    @endif
+
     <div class="ag-order-layout">
         <div class="ag-order-layout__main">
             <section class="ag-section" aria-labelledby="order-items-heading">
@@ -162,6 +166,23 @@
                         @endif
                     @else
                         <p class="ag-muted">{{ __('admin.orders.show.no_payment') }}</p>
+                    @endif
+
+                    @if ($canCancelUnpaid)
+                        @if (! $confirmingCancel)
+                            <button type="button" class="ag-btn ag-btn--danger" wire:click="startCancelUnpaid" style="margin-top: var(--ag-space-3);">
+                                {{ __('admin.orders.show.cancel_unpaid') }}
+                            </button>
+                        @else
+                            <div class="ag-confirm" role="dialog" aria-labelledby="confirm-cancel-title" aria-modal="true">
+                                <h4 id="confirm-cancel-title">{{ __('admin.orders.show.cancel_confirm_title') }}</h4>
+                                <p>{{ __('admin.orders.show.cancel_confirm_text') }}</p>
+                                <div class="ag-confirm__actions">
+                                    <button type="button" class="ag-btn ag-btn--danger" wire:click="cancelUnpaid">{{ __('common.confirm') }}</button>
+                                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="abortCancelUnpaid">{{ __('common.cancel') }}</button>
+                                </div>
+                            </div>
+                        @endif
                     @endif
                 </div>
             </section>

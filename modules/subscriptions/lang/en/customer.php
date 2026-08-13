@@ -27,8 +27,11 @@ return [
     'cancel' => 'Cancel at period end',
     'resume' => 'Undo cancellation',
     'cancelled' => 'Your subscription will end after the current period.',
+    'cancel_confirm' => 'Cancel this subscription at the end of the current period?',
     'resumed' => 'Cancellation was undone. Your subscription will renew as scheduled.',
     'ends_at_period' => 'Ends after the current period.',
+    'linked_services' => 'Linked services',
+    'view_service' => 'View service',
     'renewal_history' => 'Renewal and payment history',
     'renewals_empty' => 'No renewal orders yet.',
     'timing' => [

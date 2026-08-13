@@ -30,5 +30,7 @@ return [
     'activated' => 'Service geactiveerd.',
     'suspended' => 'Service opgeschort.',
     'terminated' => 'Service beëindigd.',
+    'suspend_confirm' => 'Deze service opschorten? De instantie blijft bewaard.',
+    'terminate_confirm' => 'Deze service beëindigen? Dit kan de klant niet ongedaan maken.',
     'back' => 'Terug naar provisioning',
 ];

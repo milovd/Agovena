@@ -7,12 +7,14 @@ namespace Agovena\Modules\Shipping;
 use Agovena\Modules\Shipping\Http\Livewire\Admin\MethodsIndex;
 use Agovena\Modules\Shipping\Http\Livewire\Admin\OrderFulfillment;
 use Agovena\Modules\Shipping\Http\Livewire\Admin\ZonesIndex;
+use Agovena\Modules\Shipping\Listeners\CancelShipmentsWhenOrderCancelled;
 use Agovena\Modules\Shipping\Listeners\CreateShipmentWhenOrderCreated;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Admin\OrderDetailSection;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Modules\ModuleContext;
+use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
 use Illuminate\Support\Facades\Route;
 
@@ -61,6 +63,7 @@ final class ShippingModule implements Module
         ));
 
         $context->listen(OrderCreated::class, CreateShipmentWhenOrderCreated::class);
+        $context->listen(OrderCancelled::class, CancelShipmentsWhenOrderCancelled::class);
 
         $context->adminRoutes(function (): void {
             Route::get('/shipping/methods', MethodsIndex::class)->name('shipping.methods');

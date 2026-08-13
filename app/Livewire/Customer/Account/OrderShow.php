@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Fulfillment\OrderFulfillmentPresenter;
+use App\Agovena\Orders\CancelUnpaidOrder;
+use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Order;
 use Livewire\Component;
@@ -25,6 +27,16 @@ final class OrderShow extends Component
         );
 
         $this->order = $order->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+    }
+
+    public function cancelUnpaid(CancelUnpaidOrder $cancel): void
+    {
+        $customer = authenticated_customer();
+        abort_unless((int) $this->order->customer_id === (int) $customer->id, 404);
+
+        $this->order = $cancel->handle($this->order, UnpaidOrderCancelSource::Customer)
+            ->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+        session()->flash('status', __('customer.account.order_cancelled'));
     }
 
     protected function unpaidOrder(): ?Order

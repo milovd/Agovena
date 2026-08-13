@@ -20,6 +20,8 @@ interface AdminRegistrar
 
     public function orderDetailSection(OrderDetailSection $section): void;
 
+    public function customerDetailSection(CustomerDetailSection $section): void;
+
     /** @return list<NavigationItem> */
     public function navigationItems(): array;
 
@@ -42,4 +44,7 @@ interface AdminRegistrar
 
     /** @return list<OrderDetailSection> */
     public function orderDetailSections(): array;
+
+    /** @return list<CustomerDetailSection> */
+    public function customerDetailSections(): array;
 }

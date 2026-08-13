@@ -40,10 +40,10 @@
             </header>
             <div class="ag-section__body" style="display:flex; gap:.75rem; flex-wrap:wrap;">
                 @if ($subscription->canCancel() && ! $subscription->cancel_at_period_end)
-                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelAtPeriodEnd">
+                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelAtPeriodEnd" wire:confirm="{{ __('subscriptions::admin.cancel_period_end_confirm') }}">
                         {{ __('subscriptions::admin.cancel_period_end') }}
                     </button>
-                    <button type="button" class="ag-btn ag-btn--danger" wire:click="cancelNow">
+                    <button type="button" class="ag-btn ag-btn--danger" wire:click="cancelNow" wire:confirm="{{ __('subscriptions::admin.cancel_now_confirm') }}">
                         {{ __('subscriptions::admin.cancel_now') }}
                     </button>
                 @endif

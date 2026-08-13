@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Agovena\Modules\Subscriptions;
 
+use Agovena\Modules\Subscriptions\Http\Livewire\Admin\CustomerSubscriptions;
 use Agovena\Modules\Subscriptions\Http\Livewire\Admin\SubscriptionShow;
 use Agovena\Modules\Subscriptions\Http\Livewire\Admin\SubscriptionsIndex;
 use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionShow as CustomerSubscriptionShow;
@@ -11,6 +12,7 @@ use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionsIndex as C
 use Agovena\Modules\Subscriptions\Listeners\ApplyPlanChangeToSubscription;
 use Agovena\Modules\Subscriptions\Listeners\CreateSubscriptionsWhenOrderPaid;
 use Agovena\Modules\Subscriptions\Models\Subscription;
+use App\Agovena\Admin\CustomerDetailSection;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Customer\AccountNavItem;
@@ -91,6 +93,13 @@ final class SubscriptionsModule implements Module
 
         $context->listen(OrderPaid::class, CreateSubscriptionsWhenOrderPaid::class);
         $context->listen(PlanChangeApplied::class, ApplyPlanChangeToSubscription::class);
+
+        $context->admin()->customerDetailSection(new CustomerDetailSection(
+            id: 'subscriptions',
+            component: CustomerSubscriptions::class,
+            sort: 10,
+            permission: 'subscriptions.view',
+        ));
 
         $context->adminRoutes(function (): void {
             Route::get('/subscriptions', SubscriptionsIndex::class)->name('subscriptions.index');

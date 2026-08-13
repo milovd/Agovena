@@ -31,6 +31,8 @@ return [
     'renewal_created' => 'Verlengingsbestelling :number aangemaakt.',
     'cancelled_period_end' => 'Abonnement eindigt na de huidige periode.',
     'cancelled_now' => 'Abonnement opgezegd.',
+    'cancel_period_end_confirm' => 'Dit abonnement opzeggen aan het einde van de periode?',
+    'cancel_now_confirm' => 'Dit abonnement direct opzeggen? Gekoppelde services kunnen worden opgeschort.',
     'marked_past_due' => 'Abonnement gemarkeerd als achterstallig.',
     'resumed' => 'Opzegging ongedaan gemaakt.',
     'back' => 'Terug naar abonnementen',

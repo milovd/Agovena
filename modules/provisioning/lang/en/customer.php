@@ -14,4 +14,11 @@ return [
     'reference' => 'Reference',
     'linked_subscription' => 'Linked subscription',
     'action_completed' => 'Service action completed.',
+    'show_title' => 'Service :number',
+    'back' => 'Back to services',
+    'manage' => 'Manage',
+    'order' => 'Order',
+    'options' => 'Configuration',
+    'actions' => 'Actions',
+    'action_confirm' => 'Run this service action?',
 ];

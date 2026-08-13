@@ -63,12 +63,12 @@
                     </button>
                 @endif
                 @if ($instance->canSuspend())
-                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="suspend">
+                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="suspend" wire:confirm="{{ __('provisioning::admin.suspend_confirm') }}">
                         {{ __('provisioning::admin.suspend') }}
                     </button>
                 @endif
                 @if ($instance->canTerminate())
-                    <button type="button" class="ag-btn ag-btn--danger" wire:click="terminate">
+                    <button type="button" class="ag-btn ag-btn--danger" wire:click="terminate" wire:confirm="{{ __('provisioning::admin.terminate_confirm') }}">
                         {{ __('provisioning::admin.terminate') }}
                     </button>
                 @endif

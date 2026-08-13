@@ -144,4 +144,9 @@ class Order extends Model
             PaymentStatus::Cancelled,
         ], true);
     }
+
+    public function canCancelUnpaid(): bool
+    {
+        return $this->isAwaitingPayment();
+    }
 }

@@ -36,6 +36,16 @@
                 </label>
                 <button type="submit" class="store-btn store-btn--primary">{{ __('customer.account.pay_now') }}</button>
             </form>
+            <p>
+                <button
+                    type="button"
+                    class="store-btn store-btn--secondary"
+                    wire:click="cancelUnpaid"
+                    wire:confirm="{{ __('customer.account.cancel_order_confirm') }}"
+                >
+                    {{ __('customer.account.cancel_order') }}
+                </button>
+            </p>
         @endif
 
         <div class="store-account-panel__grid">

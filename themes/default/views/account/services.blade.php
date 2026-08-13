@@ -18,51 +18,19 @@
                 @foreach ($instances as $instance)
                     <li class="store-order-items__row" wire:key="customer-svc-{{ $instance->id }}">
                         <div>
-                            <strong>{{ $instance->product?->name ?? $instance->number }}</strong>
+                            <strong>
+                                <a href="{{ route('customer.services.show', $instance) }}">
+                                    {{ $instance->product?->name ?? $instance->number }}
+                                </a>
+                            </strong>
                             <p>{{ __('provisioning::customer.status') }}: {{ __('provisioning::status.'.$instance->status->value) }}</p>
-                            @if ($instance->product)
-                                <p>{{ __('provisioning::customer.plan') }}: {{ $instance->product->name }}</p>
-                            @endif
-                            @if (! empty($instance->meta['options_snapshot']))
-                                <ul>
-                                    @foreach ($instance->meta['options_snapshot'] as $option)
-                                        <li>{{ $option['label'] ?? $option['key'] ?? '' }}: {{ $option['display'] ?? $option['value'] ?? '' }}</li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                            @if ($instance->subscription_id)
-                                <p>{{ __('provisioning::customer.linked_subscription') }}: {{ $instance->subscription_id }}</p>
-                            @endif
                             @if ($instance->external_ref)
                                 <p>{{ __('provisioning::customer.reference') }}: {{ $instance->external_ref }}</p>
                             @endif
-                            @if ($providerData[$instance->id]['panel'])
-                                <section aria-labelledby="provider-panel-{{ $instance->id }}">
-                                    <h2 id="provider-panel-{{ $instance->id }}">{{ $providerData[$instance->id]['panel']->title }}</h2>
-                                    <dl>
-                                        @foreach ($providerData[$instance->id]['panel']->fields as $field)
-                                            <div>
-                                                <dt>{{ $field['label'] }}</dt>
-                                                <dd>{{ $field['value'] }}</dd>
-                                            </div>
-                                        @endforeach
-                                    </dl>
-                                </section>
-                            @endif
                         </div>
-                        @if ($providerData[$instance->id]['actions'] !== [])
-                            <div>
-                                @foreach ($providerData[$instance->id]['actions'] as $action)
-                                    <button
-                                        type="button"
-                                        class="store-btn {{ $action->dangerous ? 'store-btn--danger' : 'store-btn--secondary' }}"
-                                        wire:click="runAction({{ $instance->id }}, @js($action->id))"
-                                    >
-                                        {{ $action->label }}
-                                    </button>
-                                @endforeach
-                            </div>
-                        @endif
+                        <a class="store-btn store-btn--secondary" href="{{ route('customer.services.show', $instance) }}">
+                            {{ __('provisioning::customer.manage') }}
+                        </a>
                     </li>
                 @endforeach
             </ul>

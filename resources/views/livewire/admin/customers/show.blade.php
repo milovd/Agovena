@@ -59,6 +59,118 @@
         </div>
     </section>
 
+    <section class="admin-panel">
+        <h2 class="admin-panel__title">{{ __('admin.customers.activity_heading') }}</h2>
+        <div class="ag-grid ag-grid--2">
+            @can('orders.view')
+                <div>
+                    <h3 class="ag-section__title">{{ __('admin.orders.title') }}</h3>
+                    <div class="ag-table-wrap">
+                        <table class="ag-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('admin.customers.activity_number') }}</th>
+                                    <th>{{ __('common.status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($recentOrders as $order)
+                                    <tr>
+                                        <td><a href="{{ route('admin.orders.show', $order) }}">{{ $order->number }}</a></td>
+                                        <td>{{ __('admin.orders.status.'.$order->status->value) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="2">{{ __('admin.customers.no_orders') }}</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endcan
+
+            @can('invoices.view')
+                <div>
+                    <h3 class="ag-section__title">{{ __('admin.invoices.title') }}</h3>
+                    <div class="ag-table-wrap">
+                        <table class="ag-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('admin.customers.activity_number') }}</th>
+                                    <th>{{ __('common.status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($recentInvoices as $invoice)
+                                    <tr>
+                                        <td><a href="{{ route('admin.invoices.show', $invoice) }}">{{ $invoice->number }}</a></td>
+                                        <td>{{ __('admin.invoices.status.'.$invoice->status->value) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="2">{{ __('admin.customers.no_invoices') }}</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="ag-section__title">{{ __('admin.credit_notes.title') }}</h3>
+                    <div class="ag-table-wrap">
+                        <table class="ag-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('admin.customers.activity_number') }}</th>
+                                    <th>{{ __('common.status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($recentCreditNotes as $note)
+                                    <tr>
+                                        <td><a href="{{ route('admin.credit-notes.show', $note) }}">{{ $note->number }}</a></td>
+                                        <td>{{ __('admin.credit_notes.status.'.$note->status->value) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="2">{{ __('admin.customers.no_credit_notes') }}</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endcan
+
+            @can('tickets.view')
+                <div>
+                    <h3 class="ag-section__title">{{ __('admin.tickets.title') }}</h3>
+                    <div class="ag-table-wrap">
+                        <table class="ag-table">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('admin.customers.activity_number') }}</th>
+                                    <th>{{ __('common.status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($recentTickets as $ticket)
+                                    <tr>
+                                        <td><a href="{{ route('admin.tickets.show', $ticket) }}">{{ $ticket->number }}</a></td>
+                                        <td>{{ __('admin.tickets.status.'.$ticket->status->value) }}</td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="2">{{ __('admin.customers.no_tickets') }}</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endcan
+        </div>
+    </section>
+
+    @foreach ($customerDetailSections ?? [] as $section)
+        @if ($section->permission === null || auth()->user()?->can($section->permission))
+            @livewire($section->component, ['customer' => $customer], key($section->id.'-'.$customer->id))
+        @endif
+    @endforeach
+
     @can('customers.manage')
         @if (! $customer->anonymized_at)
             <x-ag.danger-zone :title="__('admin.customers.anonymize_heading')" :description="__('admin.customers.anonymize_lede')">

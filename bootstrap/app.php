@@ -24,6 +24,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('agovena:process-subscription-renewals')
             ->everyMinute()
             ->withoutOverlapping(10);
+        $schedule->command('agovena:cancel-stale-unpaid-orders')
+            ->hourly()
+            ->withoutOverlapping(30);
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [

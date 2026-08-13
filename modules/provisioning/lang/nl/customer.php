@@ -14,4 +14,11 @@ return [
     'reference' => 'Referentie',
     'linked_subscription' => 'Gekoppeld abonnement',
     'action_completed' => 'Serviceactie voltooid.',
+    'show_title' => 'Service :number',
+    'back' => 'Terug naar services',
+    'manage' => 'Beheren',
+    'order' => 'Bestelling',
+    'options' => 'Configuratie',
+    'actions' => 'Acties',
+    'action_confirm' => 'Deze serviceactie uitvoeren?',
 ];

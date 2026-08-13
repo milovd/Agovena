@@ -27,8 +27,11 @@ return [
     'cancel' => 'Opzeggen aan einde periode',
     'resume' => 'Opzegging ongedaan maken',
     'cancelled' => 'Je abonnement eindigt na de huidige periode.',
+    'cancel_confirm' => 'Dit abonnement opzeggen aan het einde van de huidige periode?',
     'resumed' => 'Opzegging ongedaan gemaakt. Je abonnement verlengt volgens schema.',
     'ends_at_period' => 'Eindigt na de huidige periode.',
+    'linked_services' => 'Gekoppelde services',
+    'view_service' => 'Bekijk service',
     'renewal_history' => 'Verlengings- en betalingsgeschiedenis',
     'renewals_empty' => 'Nog geen verlengingsbestellingen.',
     'timing' => [

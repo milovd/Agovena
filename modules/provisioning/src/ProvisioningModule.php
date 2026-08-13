@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace Agovena\Modules\Provisioning;
 
+use Agovena\Modules\Provisioning\Http\Livewire\Admin\CustomerServices;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstanceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstancesIndex;
+use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServicesIndex;
 use Agovena\Modules\Provisioning\Listeners\ApplyPlanChangeToService;
 use Agovena\Modules\Provisioning\Listeners\CreateServiceInstancesWhenOrderPaid;
+use Agovena\Modules\Provisioning\Listeners\SuspendServicesWhenSubscriptionEnded;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
+use Agovena\Modules\Subscriptions\Events\SubscriptionEnded;
+use App\Agovena\Admin\CustomerDetailSection;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Customer\AccountNavItem;
@@ -80,6 +85,16 @@ final class ProvisioningModule implements Module
 
         $context->listen(OrderPaid::class, CreateServiceInstancesWhenOrderPaid::class);
         $context->listen(PlanChangeApplied::class, ApplyPlanChangeToService::class);
+        if (class_exists(SubscriptionEnded::class)) {
+            $context->listen(SubscriptionEnded::class, SuspendServicesWhenSubscriptionEnded::class);
+        }
+
+        $context->admin()->customerDetailSection(new CustomerDetailSection(
+            id: 'provisioning-services',
+            component: CustomerServices::class,
+            sort: 20,
+            permission: 'provisioning.view',
+        ));
 
         $context->adminRoutes(function (): void {
             Route::get('/provisioning', InstancesIndex::class)->name('provisioning.index');
@@ -88,6 +103,7 @@ final class ProvisioningModule implements Module
 
         $context->customerRoutes(function (): void {
             Route::get('/services', ServicesIndex::class)->name('services');
+            Route::get('/services/{instance}', ServiceShow::class)->name('services.show');
         });
     }
 }

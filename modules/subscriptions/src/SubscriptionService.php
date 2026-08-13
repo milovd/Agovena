@@ -7,9 +7,13 @@ namespace Agovena\Modules\Subscriptions;
 use Agovena\Modules\Subscriptions\Enums\RenewalStatus;
 use Agovena\Modules\Subscriptions\Enums\SubscriptionInterval;
 use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
+use Agovena\Modules\Subscriptions\Events\SubscriptionCancelled;
+use Agovena\Modules\Subscriptions\Events\SubscriptionEnded;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
+use App\Agovena\Orders\CancelUnpaidOrder;
+use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\PlanChanges\ApplyPlanChange;
 use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use App\Enums\OrderStatus;
@@ -34,6 +38,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
     public function __construct(
         private readonly IssueInvoiceFromOrder $issueInvoice,
         private readonly ApplyPlanChange $applyPlanChange,
+        private readonly CancelUnpaidOrder $cancelUnpaidOrder,
     ) {}
 
     public function createFromPaidOrder(Order $order): void
@@ -107,6 +112,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
             $subscription->cancelled_at = now();
             $subscription->save();
             $this->notifyCancellation($subscription, true);
+            event(new SubscriptionCancelled($subscription, true));
 
             return $subscription->fresh() ?? $subscription;
         }
@@ -118,8 +124,11 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         $subscription->next_billing_at = null;
         $subscription->save();
         $this->notifyCancellation($subscription, false);
+        $fresh = $subscription->fresh() ?? $subscription;
+        event(new SubscriptionCancelled($fresh, false));
+        event(new SubscriptionEnded($fresh));
 
-        return $subscription->fresh() ?? $subscription;
+        return $fresh;
     }
 
     public function resume(Subscription $subscription): Subscription
@@ -243,7 +252,10 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         $subscription->next_billing_at = null;
         $subscription->save();
 
-        return $subscription->fresh() ?? $subscription;
+        $fresh = $subscription->fresh() ?? $subscription;
+        event(new SubscriptionEnded($fresh));
+
+        return $fresh;
     }
 
     /**
@@ -436,16 +448,9 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
                 continue;
             }
 
-            $order = Order::query()->whereKey($renewal->order_id)->lockForUpdate()->first();
-            if ($order !== null && $order->status === OrderStatus::Pending) {
-                $order->status = OrderStatus::Cancelled;
-                $order->save();
-            }
-
-            $payment = Payment::query()->where('order_id', $renewal->order_id)->lockForUpdate()->first();
-            if ($payment !== null && $payment->status === PaymentStatus::Pending) {
-                $payment->status = PaymentStatus::Cancelled;
-                $payment->save();
+            $order = Order::query()->with(['invoice', 'payment'])->whereKey($renewal->order_id)->lockForUpdate()->first();
+            if ($order !== null && $order->isAwaitingPayment()) {
+                $this->cancelUnpaidOrder->handle($order, UnpaidOrderCancelSource::Scheduler);
             }
         }
     }

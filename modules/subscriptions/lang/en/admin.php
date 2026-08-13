@@ -31,6 +31,8 @@ return [
     'renewal_created' => 'Renewal order :number created.',
     'cancelled_period_end' => 'Subscription will end after the current period.',
     'cancelled_now' => 'Subscription cancelled.',
+    'cancel_period_end_confirm' => 'Cancel this subscription at period end?',
+    'cancel_now_confirm' => 'Cancel this subscription immediately? Linked services may be suspended.',
     'marked_past_due' => 'Subscription marked past due.',
     'resumed' => 'Cancellation undone.',
     'back' => 'Back to subscriptions',

@@ -13,6 +13,8 @@ use App\Agovena\Theme\ThemeManager;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductPlanChangeRequest;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Livewire\Component;
 
 final class SubscriptionShow extends Component
@@ -95,11 +97,20 @@ final class SubscriptionShow extends Component
             ->latest('id')
             ->first();
 
+        $serviceInstances = collect();
+        if (Schema::hasTable('service_instances')) {
+            $serviceInstances = DB::table('service_instances')
+                ->where('subscription_id', $this->subscription->id)
+                ->orderByDesc('id')
+                ->get(['id', 'number', 'status', 'product_id']);
+        }
+
         return view($theme->view('account.subscriptions.show'), [
             'theme' => $theme,
             'subscription' => $this->subscription,
             'planTargets' => $targets,
             'pendingChange' => $pendingChange,
+            'serviceInstances' => $serviceInstances,
             'accountSection' => 'subscriptions',
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('subscriptions::customer.show_title', ['number' => $this->subscription->number]),

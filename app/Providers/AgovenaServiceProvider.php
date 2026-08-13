@@ -518,6 +518,7 @@ class AgovenaServiceProvider extends ServiceProvider
             'categories.update',
             'categories.delete',
             'orders.view',
+            'orders.cancel',
             'payments.record',
             'payments.refund',
             'invoices.view',
@@ -736,6 +737,15 @@ class AgovenaServiceProvider extends ServiceProvider
             default: '',
             help: 'admin.settings.field_help.seller_address',
             sort: 28,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'unpaid_order_cancel_after_days',
+            label: 'admin.settings.fields.unpaid_order_cancel_after_days',
+            type: 'integer',
+            default: 0,
+            help: 'admin.settings.field_help.unpaid_order_cancel_after_days',
+            sort: 29,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',

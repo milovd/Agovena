@@ -49,7 +49,12 @@
                 </button>
             @endif
         @elseif ($subscription->canCancel())
-            <button type="button" class="store-btn store-btn--secondary" wire:click="cancel">
+            <button
+                type="button"
+                class="store-btn store-btn--secondary"
+                wire:click="cancel"
+                wire:confirm="{{ __('subscriptions::customer.cancel_confirm') }}"
+            >
                 {{ __('subscriptions::customer.cancel') }}
             </button>
         @endif
@@ -82,6 +87,25 @@
                         {{ $target->toProduct->name }}
                     </button>
                 @endforeach
+            </section>
+        @endif
+
+        @if (($serviceInstances ?? collect())->isNotEmpty())
+            <section class="store-account-panel__section">
+                <h2>{{ __('subscriptions::customer.linked_services') }}</h2>
+                <ul class="store-order-items" role="list">
+                    @foreach ($serviceInstances as $service)
+                        <li class="store-order-items__row">
+                            <div>
+                                <strong>{{ $service->number }}</strong>
+                                <p>{{ $service->status }}</p>
+                            </div>
+                            @if (\Illuminate\Support\Facades\Route::has('customer.services.show'))
+                                <a href="{{ route('customer.services.show', $service->id) }}">{{ __('subscriptions::customer.view_service') }}</a>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
             </section>
         @endif
 

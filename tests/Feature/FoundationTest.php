@@ -43,5 +43,6 @@ test('admin registrar exposes settings and widgets', function () {
         ->and($admin->permissions())->toHaveKey('notifications.manage')
         ->and($admin->permissions())->toHaveKey('jobs.view')
         ->and($admin->permissions())->toHaveKey('invoices.credit')
-        ->and($admin->permissions())->toHaveKey('payments.refund');
+        ->and($admin->permissions())->toHaveKey('payments.refund')
+        ->and($admin->permissions())->toHaveKey('orders.cancel');
 });
