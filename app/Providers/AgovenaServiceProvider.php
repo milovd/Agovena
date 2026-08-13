@@ -772,6 +772,33 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
+            key: 'subscription_auto_charge',
+            label: 'admin.settings.fields.subscription_auto_charge',
+            type: 'boolean',
+            default: true,
+            help: 'admin.settings.field_help.subscription_auto_charge',
+            sort: 31,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'subscription_retry_max',
+            label: 'admin.settings.fields.subscription_retry_max',
+            type: 'integer',
+            default: 3,
+            help: 'admin.settings.field_help.subscription_retry_max',
+            sort: 32,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'subscription_retry_hours',
+            label: 'admin.settings.fields.subscription_retry_hours',
+            type: 'integer',
+            default: 24,
+            help: 'admin.settings.field_help.subscription_retry_hours',
+            sort: 33,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
             key: 'enable_reviews',
             label: 'admin.settings.fields.enable_reviews',
             type: 'boolean',

@@ -151,6 +151,9 @@ final class FakeMollieApi implements MollieApi
     public function markPaid(string $id): void
     {
         $this->payments[$id]['status'] = 'paid';
+        if (($this->payments[$id]['mandate_id'] ?? null) === null) {
+            $this->payments[$id]['mandate_id'] = 'mdt_fake';
+        }
     }
 
     public function markStatus(string $id, string $status): void

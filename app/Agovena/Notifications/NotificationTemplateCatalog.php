@@ -58,6 +58,16 @@ final class NotificationTemplateCatalog
                 placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
             ),
             new NotificationTemplateDefinition(
+                key: 'subscription_renewal_paid',
+                label: 'admin.notifications.keys.subscription_renewal_paid',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
+                key: 'subscription_renewal_failed',
+                label: 'admin.notifications.keys.subscription_renewal_failed',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
                 key: 'subscription_past_due',
                 label: 'admin.notifications.keys.subscription_past_due',
                 placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],

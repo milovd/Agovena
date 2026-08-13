@@ -49,6 +49,16 @@ return [
         'line' => 'Verlengingsbestelling :detail is klaar voor abonnement :number.',
         'action' => 'Bestelling bekijken',
     ],
+    'subscription_renewal_paid' => [
+        'subject' => 'Verlenging betaald voor :number',
+        'line' => 'De automatische verlenging van abonnement :number is betaald. Bestelling :detail.',
+        'action' => 'Bestelling bekijken',
+    ],
+    'subscription_renewal_failed' => [
+        'subject' => 'Verlengingsbetaling mislukt voor :number',
+        'line' => 'De automatische verlenging van abonnement :number kon niet worden afgeschreven. Bestelling :detail wacht op betaling.',
+        'action' => 'Nu betalen',
+    ],
     'subscription_past_due' => [
         'subject' => 'Abonnement :number is achterstallig',
         'line' => 'De betaling voor abonnement :number is te laat.',

@@ -22,6 +22,22 @@
                 {{ $subscription->current_period_start?->toDateString() }} → {{ $subscription->current_period_end?->toDateString() }}
             </p>
             <p><strong>{{ __('subscriptions::admin.next_billing') }}:</strong> {{ $subscription->next_billing_at?->toDateString() ?? '—' }}</p>
+            <p><strong>{{ __('subscriptions::admin.renewal_mode') }}:</strong>
+                {{ $billing->isAutomatic() ? __('subscriptions::admin.renewal_mode_automatic') : __('subscriptions::admin.renewal_mode_manual') }}
+            </p>
+            <p><strong>{{ __('subscriptions::admin.payment_gateway') }}:</strong> {{ $billing->gatewayLabel }}</p>
+            <p><strong>{{ __('subscriptions::admin.authorization') }}:</strong>
+                {{ $billing->authorizationAvailable ? __('subscriptions::admin.authorization_available') : __('subscriptions::admin.authorization_unavailable') }}
+            </p>
+            @if ($billing->chargeAttempts > 0)
+                <p><strong>{{ __('subscriptions::admin.charge_attempts') }}:</strong> {{ $billing->chargeAttempts }}</p>
+            @endif
+            @if ($billing->lastError)
+                <p><strong>{{ __('subscriptions::admin.last_renewal_error') }}:</strong> {{ $billing->lastError }}</p>
+            @endif
+            @if ($billing->nextRetryAt)
+                <p><strong>{{ __('subscriptions::admin.next_retry') }}:</strong> {{ $billing->nextRetryAt->format('Y-m-d H:i') }}</p>
+            @endif
             <p><strong>{{ __('subscriptions::admin.cancel_at_period_end') }}:</strong>
                 {{ $subscription->cancel_at_period_end ? __('common.yes') : __('common.no') }}
             </p>

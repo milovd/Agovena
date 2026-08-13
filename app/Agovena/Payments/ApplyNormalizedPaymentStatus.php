@@ -47,16 +47,16 @@ final class ApplyNormalizedPaymentStatus
             $payment->paid_at = now();
             $payment->save();
 
+            $attempt->status = PaymentAttemptStatus::Succeeded;
+            $attempt->completed_at = now();
+            $attempt->save();
+
             if ($order !== null && $order->status !== OrderStatus::Paid) {
                 $order->status = OrderStatus::Paid;
                 $order->save();
                 event(new PaymentRecorded($payment->fresh() ?? $payment));
                 event(new OrderPaid($order->fresh(['items', 'payment']) ?? $order));
             }
-
-            $attempt->status = PaymentAttemptStatus::Succeeded;
-            $attempt->completed_at = now();
-            $attempt->save();
 
             return $attempt->fresh() ?? $attempt;
         }

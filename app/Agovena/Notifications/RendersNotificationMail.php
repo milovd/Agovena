@@ -116,6 +116,8 @@ final class RendersNotificationMail
             'subscription_cancelled',
             'shipment_sent',
             'subscription_renewal',
+            'subscription_renewal_paid',
+            'subscription_renewal_failed',
             'subscription_past_due',
             'plan_change_applied',
             'service_activated',

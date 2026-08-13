@@ -17,6 +17,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonInterface $period_start
  * @property CarbonInterface $period_end
  * @property RenewalStatus $status
+ * @property int $charge_attempts
+ * @property CarbonInterface|null $last_charged_at
+ * @property CarbonInterface|null $next_retry_at
+ * @property string|null $last_error
+ * @property bool $auto_charge_attempted
+ * @property bool $require_manual_payment
+ * @property CarbonInterface|null $failure_notified_at
  */
 final class SubscriptionRenewal extends Model
 {
@@ -28,6 +35,13 @@ final class SubscriptionRenewal extends Model
         'period_start',
         'period_end',
         'status',
+        'charge_attempts',
+        'last_charged_at',
+        'next_retry_at',
+        'last_error',
+        'auto_charge_attempted',
+        'require_manual_payment',
+        'failure_notified_at',
     ];
 
     protected function casts(): array
@@ -36,6 +50,12 @@ final class SubscriptionRenewal extends Model
             'period_start' => 'datetime',
             'period_end' => 'datetime',
             'status' => RenewalStatus::class,
+            'charge_attempts' => 'integer',
+            'last_charged_at' => 'datetime',
+            'next_retry_at' => 'datetime',
+            'auto_charge_attempted' => 'boolean',
+            'require_manual_payment' => 'boolean',
+            'failure_notified_at' => 'datetime',
         ];
     }
 

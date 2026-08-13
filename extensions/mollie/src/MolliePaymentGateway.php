@@ -10,6 +10,7 @@ use App\Agovena\Payments\CheckoutPaymentMethod;
 use App\Agovena\Payments\Contracts\CancelsPayments;
 use App\Agovena\Payments\Contracts\ChargesRecurringPayments;
 use App\Agovena\Payments\Contracts\OffersCheckoutMethods;
+use App\Agovena\Payments\Contracts\OffersReusablePaymentAuthorization;
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Contracts\SynchronizesPayments;
 use App\Agovena\Payments\HealthResult;
@@ -18,6 +19,7 @@ use App\Agovena\Payments\PaymentInitiation;
 use App\Agovena\Payments\PaymentInitiationResult;
 use App\Agovena\Payments\RefundRequest;
 use App\Agovena\Payments\RefundResult;
+use App\Agovena\Payments\ReusablePaymentAuthorization;
 use App\Agovena\Payments\WebhookPayload;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
@@ -29,7 +31,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
-final class MolliePaymentGateway implements CancelsPayments, ChargesRecurringPayments, OffersCheckoutMethods, PaymentGateway, SynchronizesPayments
+final class MolliePaymentGateway implements CancelsPayments, ChargesRecurringPayments, OffersCheckoutMethods, OffersReusablePaymentAuthorization, PaymentGateway, SynchronizesPayments
 {
     public const ID = 'mollie';
 
@@ -149,6 +151,16 @@ final class MolliePaymentGateway implements CancelsPayments, ChargesRecurringPay
         );
     }
 
+    public function reusableAuthorization(?int $customerId, string $customerEmail): ReusablePaymentAuthorization
+    {
+        $row = $this->mandateRow($customerId, $customerEmail);
+        if ($row === null || $row->mandate_id === null || $row->mandate_id === '') {
+            return ReusablePaymentAuthorization::missing(self::ID);
+        }
+
+        return ReusablePaymentAuthorization::active(self::ID, $row->updated_at);
+    }
+
     public function charge(PaymentInitiation $request): PaymentInitiationResult
     {
         $api = $this->client();
@@ -158,7 +170,9 @@ final class MolliePaymentGateway implements CancelsPayments, ChargesRecurringPay
 
         $mandate = $this->mandateFor($request);
         if ($mandate === null || $mandate->mandate_id === null || $mandate->mandate_id === '') {
-            return PaymentInitiationResult::failed(__('mollie::messages.errors.recurring_unavailable'));
+            return PaymentInitiationResult::failed(__('mollie::messages.errors.recurring_unavailable'), [
+                'reason' => 'authorization_missing',
+            ]);
         }
 
         try {
@@ -232,6 +246,7 @@ final class MolliePaymentGateway implements CancelsPayments, ChargesRecurringPay
 
         $status = $this->statusFromProviderPayment($payment);
         $externalId = (string) ($payment['id'] ?? '');
+        $this->captureMandateFromRemote($payment);
 
         return new WebhookPayload(
             externalEventId: $externalId.':'.$status->value,
@@ -418,10 +433,28 @@ final class MolliePaymentGateway implements CancelsPayments, ChargesRecurringPay
     /**
      * @param  array<string, mixed>  $remote
      */
+    private function captureMandateFromRemote(array $remote): void
+    {
+        $paymentId = $remote['metadata']['payment_id'] ?? null;
+        if (! is_numeric($paymentId)) {
+            return;
+        }
+
+        $payment = Payment::query()->find((int) $paymentId);
+        if ($payment === null) {
+            return;
+        }
+
+        $this->rememberMandateFromPayment($payment, $remote);
+    }
+
+    /**
+     * @param  array<string, mixed>  $remote
+     */
     private function rememberMandateFromPayment(Payment $payment, array $remote): void
     {
-        $customerId = $remote['customer_id'] ?? null;
-        $mandateId = $remote['mandate_id'] ?? null;
+        $customerId = $remote['customer_id'] ?? $remote['customerId'] ?? null;
+        $mandateId = $remote['mandate_id'] ?? $remote['mandateId'] ?? null;
         if (! is_string($customerId) || $customerId === '') {
             return;
         }
@@ -474,11 +507,18 @@ final class MolliePaymentGateway implements CancelsPayments, ChargesRecurringPay
 
     private function mandateFor(PaymentInitiation $request): ?MollieMandate
     {
+        return $this->mandateRow(
+            $request->order->customer_id !== null ? (int) $request->order->customer_id : null,
+            (string) $request->order->customer_email,
+        );
+    }
+
+    private function mandateRow(?int $customerId, string $email): ?MollieMandate
+    {
         if (! Schema::hasTable('mollie_mandates')) {
             return null;
         }
 
-        $customerId = $request->order->customer_id;
         if ($customerId !== null) {
             $row = MollieMandate::query()->where('customer_id', $customerId)->first();
             if ($row !== null) {
@@ -486,7 +526,6 @@ final class MolliePaymentGateway implements CancelsPayments, ChargesRecurringPay
             }
         }
 
-        $email = (string) $request->order->customer_email;
         if ($email === '') {
             return null;
         }

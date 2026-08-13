@@ -49,6 +49,16 @@ return [
         'line' => 'A renewal order :detail is ready for subscription :number.',
         'action' => 'View order',
     ],
+    'subscription_renewal_paid' => [
+        'subject' => 'Renewal paid for :number',
+        'line' => 'Automatic renewal for subscription :number was paid. Order :detail.',
+        'action' => 'View order',
+    ],
+    'subscription_renewal_failed' => [
+        'subject' => 'Renewal payment failed for :number',
+        'line' => 'Automatic renewal for subscription :number could not be charged. Order :detail is waiting for payment.',
+        'action' => 'Pay now',
+    ],
     'subscription_past_due' => [
         'subject' => 'Subscription :number is past due',
         'line' => 'Payment for subscription :number is overdue.',

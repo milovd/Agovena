@@ -36,10 +36,26 @@
                 <dd>{{ $subscription->next_billing_at?->toDateString() ?? '—' }}</dd>
             </div>
             <div>
+                <dt>{{ __('subscriptions::customer.renewal_mode') }}</dt>
+                <dd>{{ $billing->isAutomatic() ? __('subscriptions::customer.renewal_mode_automatic') : __('subscriptions::customer.renewal_mode_manual') }}</dd>
+            </div>
+            <div>
+                <dt>{{ __('subscriptions::customer.payment_method') }}</dt>
+                <dd>{{ $billing->gatewayLabel }}</dd>
+            </div>
+            <div>
+                <dt>{{ __('subscriptions::customer.authorization') }}</dt>
+                <dd>{{ $billing->authorizationAvailable ? __('subscriptions::customer.authorization_available') : __('subscriptions::customer.authorization_unavailable') }}</dd>
+            </div>
+            <div>
                 <dt>{{ __('subscriptions::customer.period') }}</dt>
                 <dd>{{ $subscription->current_period_start?->toDateString() }} → {{ $subscription->current_period_end?->toDateString() }}</dd>
             </div>
         </dl>
+
+        @if ($billing->lastError)
+            <p class="store-alert store-alert--error" role="status">{{ __('subscriptions::customer.renewal_failed') }}</p>
+        @endif
 
         @if ($subscription->cancel_at_period_end)
             <p class="store-muted">{{ __('subscriptions::customer.ends_at_period') }}</p>

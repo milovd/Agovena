@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Agovena\Modules\Subscriptions\Http\Livewire\Admin;
 
+use Agovena\Modules\Subscriptions\DescribesSubscriptionBilling;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\Admin\AdminRegistrar;
@@ -54,14 +55,16 @@ final class SubscriptionShow extends Component
     {
         $this->authorize('subscriptions.manage');
         $order = $subscriptions->createRenewalOrder($this->subscription);
+        $subscriptions->processRenewalCharge($this->subscription, $order, true);
         $this->subscription = $this->subscription->fresh(['product', 'order', 'renewals.order']) ?? $this->subscription;
         session()->flash('status', __('subscriptions::admin.renewal_created', ['number' => $order->number]));
     }
 
-    public function render(AdminRegistrar $admin)
+    public function render(AdminRegistrar $admin, DescribesSubscriptionBilling $billing)
     {
         return view('livewire.admin.subscriptions.show', [
             'subscription' => $this->subscription,
+            'billing' => $billing->describe($this->subscription),
         ])->layout('layouts.admin', [
             'title' => __('subscriptions::admin.show_title', ['number' => $this->subscription->number]),
             'navigation' => $admin->navigationItems(),

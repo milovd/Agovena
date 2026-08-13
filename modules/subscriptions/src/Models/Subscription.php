@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $price_amount
  * @property string $currency
  * @property int $quantity
+ * @property string|null $payment_gateway
  * @property CarbonInterface|null $trial_ends_at
  * @property CarbonInterface|null $current_period_start
  * @property CarbonInterface|null $current_period_end
@@ -56,6 +57,7 @@ final class Subscription extends Model
         'price_amount',
         'currency',
         'quantity',
+        'payment_gateway',
         'trial_ends_at',
         'current_period_start',
         'current_period_end',

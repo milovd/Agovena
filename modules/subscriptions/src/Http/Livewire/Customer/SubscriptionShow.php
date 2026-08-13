@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Agovena\Modules\Subscriptions\Http\Livewire\Customer;
 
+use Agovena\Modules\Subscriptions\DescribesSubscriptionBilling;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\PlanChanges\CancelPlanChangeRequest;
@@ -108,6 +109,7 @@ final class SubscriptionShow extends Component
         return view($theme->view('account.subscriptions.show'), [
             'theme' => $theme,
             'subscription' => $this->subscription,
+            'billing' => app(DescribesSubscriptionBilling::class)->describe($this->subscription),
             'planTargets' => $targets,
             'pendingChange' => $pendingChange,
             'serviceInstances' => $serviceInstances,

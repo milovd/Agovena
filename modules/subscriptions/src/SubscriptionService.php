@@ -15,13 +15,20 @@ use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Agovena\Notifications\SendsCataloguedMail;
 use App\Agovena\Orders\CancelUnpaidOrder;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
+use App\Agovena\Payments\ChargeRecurringPayment;
+use App\Agovena\Payments\CheckoutPaymentSelection;
+use App\Agovena\Payments\RecurringChargeOutcome;
+use App\Agovena\Payments\RecurringChargeResult;
 use App\Agovena\PlanChanges\ApplyPlanChange;
+use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
+use App\Models\PaymentAttempt;
 use App\Models\Product;
 use App\Models\ProductPlanChangeRequest;
 use App\Notifications\SubscriptionCancelledNotification;
@@ -40,11 +47,17 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         private readonly IssueInvoiceFromOrder $issueInvoice,
         private readonly ApplyPlanChange $applyPlanChange,
         private readonly CancelUnpaidOrder $cancelUnpaidOrder,
+        private readonly ChargeRecurringPayment $chargeRecurring,
+        private readonly SettingsRepository $settings,
     ) {}
 
     public function createFromPaidOrder(Order $order): void
     {
-        $order->loadMissing('items');
+        $order->loadMissing('items', 'payment');
+
+        if (SubscriptionRenewal::query()->where('order_id', $order->id)->exists()) {
+            return;
+        }
 
         foreach ($order->items as $item) {
             if ($item->product_id === null) {
@@ -75,7 +88,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
             $periodStart = $trialEnds ?? $now;
             $periodEnd = $this->addInterval($periodStart, $interval, $intervalCount);
 
-            $subscription = Subscription::query()->create([
+            $attributes = [
                 'number' => $this->generateNumber(),
                 'customer_id' => $order->customer_id,
                 'customer_email' => $order->customer_email,
@@ -94,7 +107,12 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
                 'current_period_end' => $periodEnd,
                 'next_billing_at' => $periodEnd,
                 'cancel_at_period_end' => false,
-            ]);
+            ];
+            if (Schema::hasColumn('subscriptions', 'payment_gateway')) {
+                $attributes['payment_gateway'] = $this->gatewayIdFromOrder($order);
+            }
+
+            $subscription = Subscription::query()->create($attributes);
 
             $this->linkServiceInstances((int) $subscription->id, $item->id);
         }
@@ -198,7 +216,9 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
 
                     $dueAt = $subscription->next_billing_at;
                     if ($dueAt !== null && CarbonImmutable::parse($dueAt)->lessThanOrEqualTo($now)) {
-                        $this->ensureRenewalOrder($subscription);
+                        $created = ! $this->hasPendingRenewal($subscription);
+                        $order = $this->ensureRenewalOrder($subscription);
+                        $this->processRenewalCharge($subscription->fresh() ?? $subscription, $order, $created, $now);
                         $this->markPastDueIfUnpaid($subscription->fresh() ?? $subscription, $now);
                         $processed++;
                     }
@@ -274,7 +294,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
     }
 
     /**
-     * Create a pending renewal Order for the next billing period (no payment gateway).
+     * Create a pending renewal Order for the next billing period.
      */
     public function createRenewalOrder(Subscription $subscription): Order
     {
@@ -303,8 +323,9 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         $periodStart = CarbonImmutable::parse($subscription->current_period_end ?? now());
         $periodEnd = $this->addInterval($periodStart, $subscription->interval, $subscription->interval_count);
         $lineTotal = $subscription->price_amount * $subscription->quantity;
+        $gatewayId = $this->gatewayIdFromSubscription($subscription);
 
-        return DB::transaction(function () use ($subscription, $periodStart, $periodEnd, $lineTotal): Order {
+        return DB::transaction(function () use ($subscription, $periodStart, $periodEnd, $lineTotal, $gatewayId): Order {
             $order = Order::query()->create([
                 'number' => $this->generateOrderNumber(),
                 'status' => OrderStatus::Pending,
@@ -338,7 +359,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
 
             Payment::query()->create([
                 'order_id' => $order->id,
-                'method' => 'manual',
+                'method' => $gatewayId,
                 'status' => PaymentStatus::Pending,
                 'amount' => $lineTotal,
                 'currency' => $subscription->currency,
@@ -355,21 +376,66 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
             $created = $order->fresh(['items', 'payment']) ?? $order;
             $this->issueInvoice->handle($created);
 
-            app(SendsCataloguedMail::class)->toOrderCustomer(
-                $subscription->customer_id,
-                (string) $subscription->customer_email,
-                'subscription_renewal',
-                [
-                    'name' => (string) ($subscription->customer_name ?? $subscription->customer_email),
-                    'number' => $subscription->number,
-                    'detail' => $created->number,
-                    'action_url' => route('customer.orders.show', $created),
-                    'action_label' => __('notifications.subscription_renewal.action'),
-                ],
-            );
-
             return $created;
         });
+    }
+
+    public function processRenewalCharge(Subscription $subscription, Order $order, bool $isNewOrder, ?CarbonImmutable $now = null): RecurringChargeResult
+    {
+        $now ??= CarbonImmutable::now();
+        $renewal = SubscriptionRenewal::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('order_id', $order->id)
+            ->where('status', RenewalStatus::Pending)
+            ->first();
+
+        if ($renewal === null) {
+            return RecurringChargeResult::skipped('no_pending_renewal');
+        }
+
+        $order->loadMissing('payment');
+        if ($order->payment?->status === PaymentStatus::Paid) {
+            return RecurringChargeResult::charged();
+        }
+
+        if (! $this->autoChargeEnabled()) {
+            $this->markManualPaymentRequired($renewal);
+            if ($isNewOrder) {
+                $this->notifyRenewalPayable($subscription, $order);
+            }
+
+            return RecurringChargeResult::skipped('auto_charge_disabled');
+        }
+
+        if ($renewal->require_manual_payment) {
+            if ($isNewOrder) {
+                $this->notifyRenewalPayable($subscription, $order);
+            }
+
+            return RecurringChargeResult::skipped('manual_required');
+        }
+
+        $maxAttempts = $this->retryMax();
+        if ((int) $renewal->charge_attempts >= $maxAttempts) {
+            return RecurringChargeResult::skipped('retries_exhausted');
+        }
+
+        $waiting = $renewal->next_retry_at !== null && CarbonImmutable::parse($renewal->next_retry_at)->greaterThan($now);
+        if ($waiting) {
+            if ($this->hasReconcileableAttempt($order)) {
+                $result = $this->chargeRecurring->handle($order);
+                $this->applyChargeResult($subscription, $order, $renewal->fresh() ?? $renewal, $result, false, $now);
+
+                return $result;
+            }
+
+            return RecurringChargeResult::skipped('retry_waiting');
+        }
+
+        $result = $this->chargeRecurring->handle($order);
+        $this->applyChargeResult($subscription, $order, $renewal->fresh() ?? $renewal, $result, $isNewOrder, $now);
+
+        return $result;
     }
 
     public function applyPaidRenewal(Order $order): void
@@ -394,6 +460,26 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         $subscription->current_period_end = $renewal->period_end;
         $subscription->next_billing_at = $renewal->period_end;
         $subscription->save();
+
+        if ($this->wasAutoCharged($order)) {
+            $this->notifyRenewalPaid($subscription, $order);
+        }
+    }
+
+    private function wasAutoCharged(Order $order): bool
+    {
+        $payment = $order->payment;
+        if ($payment === null) {
+            return false;
+        }
+
+        return PaymentAttempt::query()
+            ->where('payment_id', $payment->id)
+            ->where('status', PaymentAttemptStatus::Succeeded)
+            ->get()
+            ->contains(static function (PaymentAttempt $attempt): bool {
+                return ($attempt->request_meta['purpose'] ?? null) === 'recurring';
+            });
     }
 
     public function addInterval(CarbonImmutable $from, SubscriptionInterval $interval, int $count): CarbonImmutable
@@ -500,8 +586,213 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
             ->exists();
 
         if ($unpaid) {
-            $this->markPastDue($subscription);
+            $order = $this->pendingRenewalOrder($subscription);
+            if ($order === null || ! $this->hasReconcileableAttempt($order)) {
+                $this->markPastDue($subscription);
+            }
         }
+    }
+
+    private function pendingRenewalOrder(Subscription $subscription): ?Order
+    {
+        $renewal = SubscriptionRenewal::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('status', RenewalStatus::Pending)
+            ->first();
+
+        if ($renewal?->order_id === null) {
+            return null;
+        }
+
+        return Order::query()->with('payment')->find($renewal->order_id);
+    }
+
+    private function hasPendingRenewal(Subscription $subscription): bool
+    {
+        return SubscriptionRenewal::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('status', RenewalStatus::Pending)
+            ->exists();
+    }
+
+    private function hasReconcileableAttempt(Order $order): bool
+    {
+        if ($order->payment === null) {
+            return false;
+        }
+
+        return PaymentAttempt::query()
+            ->where('payment_id', $order->payment->id)
+            ->whereIn('status', [PaymentAttemptStatus::Pending, PaymentAttemptStatus::Processing])
+            ->whereNotNull('external_id')
+            ->where('external_id', '!=', '')
+            ->exists();
+    }
+
+    private function applyChargeResult(
+        Subscription $subscription,
+        Order $order,
+        SubscriptionRenewal $renewal,
+        RecurringChargeResult $result,
+        bool $isNewOrder,
+        CarbonImmutable $now,
+    ): void {
+        $renewal = $renewal->fresh() ?? $renewal;
+        $renewal->last_charged_at = $now;
+
+        if ($result->outcome === RecurringChargeOutcome::Charged) {
+            $renewal->auto_charge_attempted = true;
+            $renewal->last_error = null;
+            $renewal->next_retry_at = null;
+            $renewal->save();
+
+            return;
+        }
+
+        if ($result->outcome === RecurringChargeOutcome::Pending) {
+            $renewal->auto_charge_attempted = true;
+            $renewal->save();
+
+            return;
+        }
+
+        if ($result->authorizationMissing || $result->outcome === RecurringChargeOutcome::Skipped) {
+            $this->markManualPaymentRequired($renewal, $result->message);
+            if ($isNewOrder) {
+                $this->notifyRenewalPayable($subscription, $order);
+            }
+
+            return;
+        }
+
+        $renewal->auto_charge_attempted = true;
+        $renewal->charge_attempts = (int) $renewal->charge_attempts + 1;
+        $renewal->last_error = $this->safeError($result->message);
+        if ((int) $renewal->charge_attempts < $this->retryMax()) {
+            $renewal->next_retry_at = $now->addHours($this->retryHours());
+        } else {
+            $renewal->next_retry_at = null;
+        }
+        $renewal->save();
+
+        if ($renewal->failure_notified_at === null) {
+            $this->notifyRenewalFailed($subscription, $order);
+            $renewal->failure_notified_at = $now;
+            $renewal->save();
+        }
+    }
+
+    private function markManualPaymentRequired(SubscriptionRenewal $renewal, ?string $message = null): void
+    {
+        $renewal->require_manual_payment = true;
+        $renewal->next_retry_at = null;
+        if ($message !== null && $message !== '') {
+            $renewal->last_error = $this->safeError($message);
+        }
+        $renewal->save();
+    }
+
+    private function notifyRenewalPayable(Subscription $subscription, Order $order): void
+    {
+        app(SendsCataloguedMail::class)->toOrderCustomer(
+            $subscription->customer_id,
+            (string) $subscription->customer_email,
+            'subscription_renewal',
+            [
+                'name' => (string) ($subscription->customer_name ?? $subscription->customer_email),
+                'number' => $subscription->number,
+                'detail' => $order->number,
+                'action_url' => route('customer.orders.show', $order),
+                'action_label' => __('notifications.subscription_renewal.action'),
+            ],
+        );
+    }
+
+    private function notifyRenewalFailed(Subscription $subscription, Order $order): void
+    {
+        app(SendsCataloguedMail::class)->toOrderCustomer(
+            $subscription->customer_id,
+            (string) $subscription->customer_email,
+            'subscription_renewal_failed',
+            [
+                'name' => (string) ($subscription->customer_name ?? $subscription->customer_email),
+                'number' => $subscription->number,
+                'detail' => $order->number,
+                'action_url' => route('customer.orders.show', $order),
+                'action_label' => __('notifications.subscription_renewal_failed.action'),
+            ],
+        );
+    }
+
+    private function notifyRenewalPaid(Subscription $subscription, Order $order): void
+    {
+        app(SendsCataloguedMail::class)->toOrderCustomer(
+            $subscription->customer_id,
+            (string) $subscription->customer_email,
+            'subscription_renewal_paid',
+            [
+                'name' => (string) ($subscription->customer_name ?? $subscription->customer_email),
+                'number' => $subscription->number,
+                'detail' => $order->number,
+                'action_url' => route('customer.orders.show', $order),
+                'action_label' => __('notifications.subscription_renewal_paid.action'),
+            ],
+        );
+    }
+
+    private function gatewayIdFromOrder(Order $order): string
+    {
+        $payment = $order->payment;
+        $method = $payment !== null ? (string) $payment->method : 'manual';
+        $gatewayId = CheckoutPaymentSelection::parse($method)->gatewayId;
+
+        return $gatewayId !== '' ? $gatewayId : 'manual';
+    }
+
+    private function gatewayIdFromSubscription(Subscription $subscription): string
+    {
+        $stored = trim((string) ($subscription->payment_gateway ?? ''));
+        if ($stored !== '') {
+            return CheckoutPaymentSelection::parse($stored)->gatewayId;
+        }
+
+        if ($subscription->order_id !== null) {
+            $origin = Order::query()->with('payment')->find($subscription->order_id);
+            if ($origin !== null) {
+                return $this->gatewayIdFromOrder($origin);
+            }
+        }
+
+        return 'manual';
+    }
+
+    private function autoChargeEnabled(): bool
+    {
+        return (bool) $this->settings->get('store', 'subscription_auto_charge', true);
+    }
+
+    private function retryMax(): int
+    {
+        return max(1, (int) $this->settings->get('store', 'subscription_retry_max', 3));
+    }
+
+    private function retryHours(): int
+    {
+        return max(1, (int) $this->settings->get('store', 'subscription_retry_hours', 24));
+    }
+
+    private function safeError(?string $message): ?string
+    {
+        if ($message === null || $message === '') {
+            return null;
+        }
+
+        $trimmed = trim($message);
+        if (strlen($trimmed) > 255) {
+            $trimmed = substr($trimmed, 0, 252).'...';
+        }
+
+        return $trimmed;
     }
 
     private function linkServiceInstances(int $subscriptionId, int $orderItemId): void

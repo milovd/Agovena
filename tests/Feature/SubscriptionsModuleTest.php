@@ -168,6 +168,7 @@ test('admin can create renewal order and payment advances period', function () {
     $subscription->refresh();
     expect(SubscriptionRenewal::query()->where('order_id', $renewalOrder->id)->value('status'))
         ->toBe(RenewalStatus::Paid)
+        ->and(Subscription::query()->count())->toBe(1)
         ->and($subscription->status)->toBe(SubscriptionStatus::Active)
         ->and($subscription->current_period_start?->toDateTimeString())->toBe($periodEnd)
         ->and($subscription->current_period_end?->greaterThan($subscription->current_period_start))->toBeTrue();
