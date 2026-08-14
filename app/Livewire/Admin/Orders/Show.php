@@ -11,6 +11,7 @@ use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Enums\PaymentStatus;
+use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -21,6 +22,7 @@ use Livewire\Component;
 final class Show extends Component
 {
     use AuthorizesRequests;
+    use RequiresRecentPassword;
 
     public Order $order;
 
@@ -74,6 +76,10 @@ final class Show extends Component
     public function recordPayment(RecordManualPayment $action): void
     {
         $this->authorize('payments.record');
+
+        if (! $this->requireRecentPassword('recordPayment')) {
+            return;
+        }
 
         /** @var User $staff */
         $staff = Auth::user();

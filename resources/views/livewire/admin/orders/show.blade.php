@@ -253,4 +253,6 @@
             @endif
         </aside>
     </div>
+
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

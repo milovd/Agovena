@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Customer\Account;
 
+use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Enums\PaymentAttemptStatus;
@@ -34,12 +35,16 @@ trait PaysUnpaidOrders
             ? $this->pay_gateway
             : (string) ($options[0]['id'] ?? 'manual');
 
+        $access = app(StorefrontOrderAccess::class);
+        $access->remember($order);
+        $returnUrl = $access->paymentStatusUrl($order);
+
         try {
             $attempt = $start->handle(
                 $order,
                 $gatewayId,
-                route('storefront.payment.status', $order),
-                route('storefront.payment.status', $order),
+                $returnUrl,
+                $returnUrl,
             );
         } catch (ValidationException $exception) {
             $this->addError('pay_gateway', collect($exception->errors())->flatten()->first() ?: $exception->getMessage());

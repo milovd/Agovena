@@ -22,8 +22,10 @@ use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Agovena\Customer\SaveCustomerAddress;
 use App\Agovena\Discounts\DiscountApplicator;
 use App\Agovena\Money\Money;
+use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\CheckoutPaymentSelection;
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
@@ -314,12 +316,15 @@ final class CheckoutPage extends Component
         ]);
 
         $order->loadMissing('payment');
+        $access = app(StorefrontOrderAccess::class);
+        $access->remember($order);
+        $returnUrl = $access->paymentStatusUrl($order);
         if ($order->payment?->status !== PaymentStatus::Paid) {
             $attempt = $startPayment->handle(
                 $order,
                 $data['payment_method'],
-                route('storefront.payment.status', $order),
-                route('storefront.payment.status', $order),
+                $returnUrl,
+                $returnUrl,
                 'checkout-'.$order->id,
             );
             if ($attempt->status === PaymentAttemptStatus::Failed) {
@@ -333,12 +338,12 @@ final class CheckoutPage extends Component
                 return;
             }
 
-            $this->redirect(route('storefront.payment.status', $order), navigate: true);
+            $this->redirect($returnUrl, navigate: true);
 
             return;
         }
 
-        $this->redirect(route('storefront.order.confirmation', $order), navigate: true);
+        $this->redirect($access->confirmationUrl($order), navigate: true);
     }
 
     public function applyCoupon(CartService $cart, DiscountApplicator $discounts): void
@@ -606,16 +611,17 @@ final class CheckoutPage extends Component
     private function primaryActionLabel(CheckoutStep $current, ?CheckoutStep $next, ?Money $amountDue): string
     {
         if ($current === CheckoutStep::Payment || $next === null) {
-            $gateway = CheckoutPaymentSelection::parse($this->payment_method)->gatewayId;
-            if ($gateway === 'mollie') {
-                return __('storefront.checkout.continue_to_provider', ['provider' => 'Mollie']);
-            }
-            if ($gateway === 'stripe') {
-                return __('storefront.checkout.continue_to_provider', ['provider' => 'Stripe']);
-            }
-            if ($gateway === 'development' && $amountDue !== null) {
+            $gatewayId = CheckoutPaymentSelection::parse($this->payment_method)->gatewayId;
+            if ($gatewayId === 'development' && $amountDue !== null) {
                 return __('storefront.checkout.pay_amount', [
                     'amount' => MoneyFormatter::format($amountDue),
+                ]);
+            }
+
+            $gateway = app(PaymentGatewayRegistry::class)->get($gatewayId);
+            if ($gateway !== null && $gateway->capabilities()->redirect) {
+                return __('storefront.checkout.continue_to_provider', [
+                    'provider' => __($gateway->label()),
                 ]);
             }
 

@@ -1,5 +1,6 @@
 <?php
 
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
@@ -67,6 +68,7 @@ test('phase 2 vertical slice end to end with persisted data', function () {
     expect($order->fresh()->items->first()->unit_amount)->toBe(1999);
 
     $this->actingAs($staff);
+    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
 
     Livewire::test(Show::class, ['order' => $order])
         ->call('startRecordPayment')

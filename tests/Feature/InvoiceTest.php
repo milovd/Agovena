@@ -8,11 +8,14 @@ use App\Agovena\Customer\AddressData;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Settings\SettingsRepository;
+use App\Enums\CreditNoteStatus;
 use App\Enums\InvoiceStatus;
 use App\Enums\ProductOptionType;
 use App\Livewire\Admin\Invoices\Index as AdminInvoicesIndex;
 use App\Livewire\Admin\Invoices\Show as AdminInvoiceShow;
+use App\Livewire\Customer\Account\CreditNoteShow;
 use App\Livewire\Customer\Account\InvoiceShow;
+use App\Models\CreditNote;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
@@ -89,6 +92,63 @@ test('customer can view own invoice but not another customers', function () {
 
     Livewire::actingAs($intruder->user)
         ->test(InvoiceShow::class, ['invoice' => $invoice])
+        ->assertNotFound();
+
+    $this->actingAs($intruder->user)
+        ->get(route('customer.invoices.pdf', $invoice))
+        ->assertNotFound();
+
+    $this->actingAs($intruder->user)
+        ->get(route('customer.invoices.print', $invoice))
+        ->assertNotFound();
+});
+
+test('customer cannot view another customers credit note or pdf', function () {
+    $owner = Customer::factory()->create();
+    $intruder = Customer::factory()->create();
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-TEST-CN-00001',
+        'status' => InvoiceStatus::Paid,
+        'order_id' => null,
+        'customer_id' => $owner->id,
+        'customer_name' => $owner->name,
+        'customer_email' => $owner->email,
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+    $creditNote = CreditNote::query()->create([
+        'number' => 'CN-TEST-00001',
+        'status' => CreditNoteStatus::Issued,
+        'invoice_id' => $invoice->id,
+        'customer_id' => $owner->id,
+        'customer_name' => $owner->name,
+        'customer_email' => $owner->email,
+        'issued_at' => now()->toDateString(),
+        'reason' => 'Test credit',
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+
+    Livewire::actingAs($owner->user)
+        ->test(CreditNoteShow::class, ['creditNote' => $creditNote])
+        ->assertOk()
+        ->assertSee('CN-TEST-00001');
+
+    Livewire::actingAs($intruder->user)
+        ->test(CreditNoteShow::class, ['creditNote' => $creditNote])
+        ->assertNotFound();
+
+    $this->actingAs($intruder->user)
+        ->get(route('customer.credit-notes.pdf', $creditNote))
+        ->assertNotFound();
+
+    $this->actingAs($intruder->user)
+        ->get(route('customer.credit-notes.print', $creditNote))
         ->assertNotFound();
 });
 

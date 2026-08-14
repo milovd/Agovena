@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Payments;
 
 use App\Agovena\Invoices\AssertInvoiceCanBePaid;
+use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\Contracts\ChargesRecurringPayments;
 use App\Agovena\Payments\Contracts\OffersReusablePaymentAuthorization;
 use App\Agovena\Payments\Contracts\PaymentGateway;
@@ -162,7 +163,7 @@ final class ChargeRecurringPayment
         PaymentAttempt $attempt,
     ): RecurringChargeResult {
         $returnUrl = Route::has('storefront.payment.status')
-            ? route('storefront.payment.status', $order)
+            ? app(StorefrontOrderAccess::class)->paymentStatusUrl($order)
             : url('/');
 
         try {

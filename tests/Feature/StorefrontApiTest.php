@@ -71,7 +71,8 @@ test('token auth returns the secret once and scopes orders to the owner', functi
     $this->withToken($created['token'])
         ->getJson('/api/v1/orders/'.$aliceOrder->id)
         ->assertOk()
-        ->assertJsonPath('data.number', $aliceOrder->number);
+        ->assertJsonPath('data.number', $aliceOrder->number)
+        ->assertJsonMissing(['storefront_token']);
 
     $this->withToken($created['token'])
         ->getJson('/api/v1/orders/'.$bobOrder->id)

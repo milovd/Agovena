@@ -1,5 +1,6 @@
 <?php
 
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Payments\RecordManualPayment;
@@ -51,6 +52,33 @@ test('staff without payments.record cannot record payment', function () {
     Livewire::test(Show::class, ['order' => $order])
         ->call('startRecordPayment')
         ->assertForbidden();
+});
+
+test('recording a payment from admin requires a recent password', function () {
+    $staff = $this->createStaff();
+    $order = createPendingOrder();
+
+    Livewire::actingAs($staff)
+        ->test(Show::class, ['order' => $order])
+        ->call('startRecordPayment')
+        ->call('recordPayment')
+        ->assertSet('showingPasswordConfirmation', true);
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Pending)
+        ->and($order->payment->fresh()->status)->toBe(PaymentStatus::Pending);
+
+    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+
+    Livewire::actingAs($staff)
+        ->test(Show::class, ['order' => $order])
+        ->call('startRecordPayment')
+        ->set('reference', 'BANK-UI')
+        ->call('recordPayment')
+        ->assertHasNoErrors()
+        ->assertSet('showingPasswordConfirmation', false);
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Paid)
+        ->and($order->payment->fresh()->reference)->toBe('BANK-UI');
 });
 
 test('admin order detail shows record payment action for pending payments', function () {

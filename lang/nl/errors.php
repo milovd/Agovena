@@ -34,4 +34,9 @@ return [
         'heading' => 'De winkel is tijdelijk niet beschikbaar',
         'lede' => 'Agovena wordt bijgewerkt of is in onderhoud. Probeer het zo opnieuw.',
     ],
+    '429' => [
+        'title' => 'Te veel verzoeken',
+        'heading' => 'Te veel verzoeken',
+        'lede' => 'Wacht even en probeer het opnieuw.',
+    ],
 ];

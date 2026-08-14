@@ -10,6 +10,7 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
@@ -169,6 +170,8 @@ test('return url does not mark the order paid', function () {
         route('storefront.payment.status', $payment->order),
         route('storefront.payment.status', $payment->order),
     );
+
+    app(StorefrontOrderAccess::class)->remember($payment->order);
 
     Livewire::test(PaymentStatusPage::class, ['order' => $payment->order])
         ->assertOk()

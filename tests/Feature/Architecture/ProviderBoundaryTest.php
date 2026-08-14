@@ -6,7 +6,7 @@ use App\Agovena\Payments\PaymentGatewayRegistry;
 use Tests\Support\ProviderContracts\ProviderContractAssertions;
 
 test('core application and modules do not import first-party provider extension namespaces', function () {
-    $roots = [base_path('app'), base_path('modules')];
+    $roots = [base_path('app'), base_path('modules'), base_path('themes')];
     $needles = [
         'Agovena\\Extensions\\Mollie\\',
         'Agovena\\Extensions\\Stripe\\',
@@ -39,6 +39,15 @@ test('core application and modules do not import first-party provider extension 
     }
 
     expect($violations)->toBe([]);
+});
+
+test('core checkout does not branch on payment extension identifiers', function () {
+    $checkout = (string) file_get_contents(base_path('app/Livewire/Storefront/CheckoutPage.php'));
+
+    expect($checkout)->not->toContain("=== 'mollie'")
+        ->and($checkout)->not->toContain('=== "mollie"')
+        ->and($checkout)->not->toContain("=== 'stripe'")
+        ->and($checkout)->not->toContain('=== "stripe"');
 });
 
 test('core payment gateways satisfy the provider contract kit', function () {

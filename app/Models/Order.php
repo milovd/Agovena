@@ -9,6 +9,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int $total_amount
  * @property string $currency
  * @property string|null $idempotency_key
+ * @property string|null $storefront_token
  * @property-read Collection<int, OrderItem> $items
  * @property-read Payment|null $payment
  */
@@ -71,10 +73,29 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'idempotency_key',
     'custom_properties_snapshot',
 ])]
+#[Hidden(['storefront_token'])]
 class Order extends Model
 {
     /** @use HasFactory<OrderFactory> */
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::creating(static function (Order $order): void {
+            if (! filled($order->storefront_token)) {
+                $order->storefront_token = static::generateStorefrontToken();
+            }
+        });
+    }
+
+    public static function generateStorefrontToken(): string
+    {
+        do {
+            $token = bin2hex(random_bytes(32));
+        } while (static::query()->where('storefront_token', $token)->exists());
+
+        return $token;
+    }
 
     protected function casts(): array
     {

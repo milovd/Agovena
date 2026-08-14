@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Notifications;
 
 use App\Agovena\Notifications\RendersNotificationMail;
+use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Models\Order;
 use App\Support\MoneyFormatter;
 use Illuminate\Bus\Queueable;
@@ -35,7 +36,7 @@ final class OrderPlaced extends Notification implements ShouldQueue
             'name' => $this->order->customer_name,
             'number' => $this->order->number,
             'total' => MoneyFormatter::format($this->order->total_amount, $this->order->currency),
-            'action_url' => route('storefront.order.confirmation', $this->order),
+            'action_url' => app(StorefrontOrderAccess::class)->confirmationUrl($this->order),
             'action_label' => __('notifications.order_placed.action'),
         ]);
     }

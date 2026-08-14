@@ -54,6 +54,10 @@ final class Show extends Component
     {
         $this->authorize('invoices.void');
 
+        if (! $this->requireRecentPassword('voidInvoice')) {
+            return;
+        }
+
         /** @var User $staff */
         $staff = Auth::user();
         $action->handle($this->invoice, $staff);

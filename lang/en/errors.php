@@ -34,4 +34,9 @@ return [
         'heading' => 'The store is temporarily unavailable',
         'lede' => 'Agovena is being updated or is in maintenance. Please try again shortly.',
     ],
+    '429' => [
+        'title' => 'Too many requests',
+        'heading' => 'Too many requests',
+        'lede' => 'Please wait a moment and try again.',
+    ],
 ];

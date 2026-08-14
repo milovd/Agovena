@@ -48,6 +48,22 @@ test('expired sessions use a branded 419 page', function () {
         ->assertSee(__('errors.419.heading'), false);
 });
 
+test('rate limits and maintenance use branded pages', function () {
+    config(['app.debug' => false]);
+
+    Route::middleware('web')->get('/__forced-429', fn () => abort(429));
+    Route::middleware('web')->get('/__forced-503', fn () => abort(503));
+
+    $this->get('/__forced-429')
+        ->assertStatus(429)
+        ->assertSee(__('errors.429.heading'), false);
+
+    $this->get('/__forced-503')
+        ->assertStatus(503)
+        ->assertSee(__('errors.503.heading'), false)
+        ->assertDontSee('SQLSTATE', false);
+});
+
 test('doctor fails when debug is enabled in production', function () {
     config([
         'app.env' => 'production',

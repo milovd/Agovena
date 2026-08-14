@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Livewire\Storefront;
 
+use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\ReconcilePaymentStatus;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
+use Illuminate\Http\Request;
 use Livewire\Component;
 
 /**
@@ -18,8 +20,9 @@ final class PaymentStatusPage extends Component
 {
     public Order $order;
 
-    public function mount(Order $order): void
+    public function mount(Request $request, StorefrontOrderAccess $access, Order $order): void
     {
+        $access->authorize($request, $order);
         $this->order = $order->load(['items', 'payment.attempts']);
     }
 
