@@ -153,8 +153,13 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->registerWidgets($admin);
         $this->registerCustomerAccountCards();
 
-        $this->app->make(ModuleManager::class)->bootEnabled();
-        $this->app->make(ExtensionManager::class)->bootEnabled();
+        // Feature tests rebuild the schema after the application boots. Persistent
+        // databases still contain the previous test's enabled packages at this
+        // point; booting them here would bind real provider clients before fakes.
+        if (! $this->app->runningUnitTests()) {
+            $this->app->make(ModuleManager::class)->bootEnabled();
+            $this->app->make(ExtensionManager::class)->bootEnabled();
+        }
 
         $theme = $this->app->make(ThemeManager::class)->active();
         View::addNamespace('theme', $theme->viewsPath);

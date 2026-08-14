@@ -2,6 +2,8 @@
 
 namespace Tests;
 
+use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Modules\ModuleManager;
 use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\RefreshDatabaseState;
@@ -28,6 +30,7 @@ abstract class TestCase extends BaseTestCase
         if ($this->usesPersistentSqlServer()) {
             $this->artisan('migrate:fresh', $this->migrateFreshUsing());
             $this->app[Kernel::class]->setArtisan(null);
+            $this->resetPackageRuntime();
 
             return;
         }
@@ -45,5 +48,15 @@ abstract class TestCase extends BaseTestCase
     protected function usesPersistentSqlServer(): bool
     {
         return in_array($this->app['db']->connection()->getDriverName(), ['mysql', 'mariadb'], true);
+    }
+
+    /**
+     * Application boot may have registered packages from leftover rows before
+     * migrate:fresh. Rebuild from the now-empty schema so fakes can bind first.
+     */
+    protected function resetPackageRuntime(): void
+    {
+        $this->app->make(ExtensionManager::class)->rebuildRuntime();
+        $this->app->make(ModuleManager::class)->bootEnabled();
     }
 }
