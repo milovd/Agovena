@@ -18,10 +18,31 @@ Agovena is in early development.
 
 **Requirements**
 
-- PHP 8.3+
+- PHP 8.3 or 8.4
 - Composer 2
 - Node.js 22+ (asset build only)
-- MariaDB/MySQL (SQLite OK for local/dev)
+- MariaDB/MySQL for production (SQLite is OK for local/dev)
+
+PHP 8.3 and 8.4 are exercised in CI. MariaDB 11 is exercised in CI for migrations and the test suite. That is not a claim that every host OS is production-verified.
+
+**Deployment**
+
+The application is distro-agnostic PHP. A practical production layout is Nginx + PHP-FPM + MariaDB, with a queue worker and scheduler:
+
+```bash
+php artisan migrate --force   # or agovena:install / agovena:upgrade
+php artisan queue:work
+php artisan schedule:work     # or cron: * * * * * php artisan schedule:run
+```
+
+`docker-compose.prod.yml` is a starting point (nginx, php-fpm, worker, scheduler, MariaDB, Redis). It does **not** auto-migrate. Install and upgrade stay explicit commands. Container healthchecks cover MariaDB, Redis, and nginx `/up`. Worker/scheduler health is the existing doctor/heartbeat, not a fake HTTP server.
+
+OS status:
+
+- Application/runtime compatible: any OS that can run PHP 8.3+ with the extensions CI uses
+- Officially validated host images: none yet
+- Community/unverified: Ubuntu 22.04/24.04, Debian 12/13, Rocky Linux 9, AlmaLinux 9
+- Unsupported: EOL releases
 
 ```bash
 composer install
@@ -34,6 +55,8 @@ npm run build
 php artisan agovena:create-owner
 php artisan agovena:seed-demo
 php artisan agovena:doctor
+php artisan agovena:verify-providers   # connection health only; never live charges
+php artisan agovena:prune-logs
 php artisan serve
 ```
 
