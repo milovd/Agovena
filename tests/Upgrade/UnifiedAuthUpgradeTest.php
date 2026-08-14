@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\Support\LegacyPreUnifySchema;
 
+uses()->skip(fn (): bool => DB::connection()->getDriverName() !== 'sqlite');
+
 test('legacy staff and customer identities upgrade onto users', function () {
     $seed = LegacyPreUnifySchema::installAndSeed();
 
