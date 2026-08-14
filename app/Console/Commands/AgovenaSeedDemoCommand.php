@@ -279,13 +279,14 @@ final class AgovenaSeedDemoCommand extends Command
                 ])
                 ->get($url);
 
-            if ($response->successful() && strlen($response->body()) > 1000) {
-                Storage::disk('public')->put($relative, $response->body());
+            $body = $response->body();
+            if ($response->successful() && strlen($body) > 1000 && @getimagesizefromstring($body) !== false) {
+                Storage::disk('public')->put($relative, $body);
 
                 return $relative;
             }
         } catch (\Throwable) {
-            // Fall through to a minimal local JPEG so seeding still works offline.
+            // Use the bundled placeholder so the storefront never emits a broken image.
         }
 
         Storage::disk('public')->put($relative, $this->fallbackJpeg());
@@ -295,7 +296,12 @@ final class AgovenaSeedDemoCommand extends Command
 
     private function fallbackJpeg(): string
     {
-        // 1x1 JPEG so the storefront still has a file path when downloads fail.
-        return base64_decode('/9j/4AAQSkZJRgABAQAAAQABAAD/2wCEAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQH/wAALCAABAAEBAREA/8QAFQABAQAAAAAAAAAAAAAAAAAAAAn/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIQAxAAAAGcP//EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAQUCf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQMBAT8Bf//EABQRAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQIBAT8Bf//Z');
+        $placeholder = resource_path('images/demo-placeholder.jpg');
+        $bytes = is_file($placeholder) ? (string) file_get_contents($placeholder) : '';
+        if ($bytes === '' || @getimagesizefromstring($bytes) === false) {
+            throw new \RuntimeException('Bundled demo placeholder image is missing or unreadable.');
+        }
+
+        return $bytes;
     }
 }
