@@ -14,6 +14,7 @@ return [
         'welcome' => 'Welcome',
         'owner' => 'Owner',
         'store' => 'Store',
+        'catalog' => 'Catalog',
         'regional' => 'Regional',
         'branding' => 'Branding',
         'theme' => 'Theme',
@@ -67,6 +68,13 @@ return [
         'heading' => 'Store identity',
         'lede' => 'Only what is needed to name your store. You can refine settings later in Admin.',
         'url_help' => 'Configured via APP_URL in your environment. Change it there if this address is wrong.',
+    ],
+
+    'catalog' => [
+        'heading' => 'What will you sell?',
+        'lede' => 'Select one or more catalogs. Each choice enables the matching Modules. You can change this later.',
+        'not_locked' => 'This does not lock a store type. Skip if you want to enable Modules yourself.',
+        'choose' => 'Catalogs',
     ],
 
     'regional' => [
@@ -131,5 +139,6 @@ return [
         'mail_default' => 'Mail transport',
         'scheduler' => 'Scheduler heartbeat',
         'https' => 'HTTPS in production',
+        'install_restore' => 'Install lock matches storage marker',
     ],
 ];

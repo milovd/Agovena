@@ -14,6 +14,7 @@ return [
         'welcome' => 'Welkom',
         'owner' => 'Eigenaar',
         'store' => 'Winkel',
+        'catalog' => 'Aanbod',
         'regional' => 'Regio',
         'branding' => 'Branding',
         'theme' => 'Thema',
@@ -67,6 +68,13 @@ return [
         'heading' => 'Winkelidentiteit',
         'lede' => 'Alleen wat nodig is om je winkel te benoemen. Je kunt later meer verfijnen in Admin.',
         'url_help' => 'Ingesteld via APP_URL in je omgeving. Pas dat daar aan als dit adres onjuist is.',
+    ],
+
+    'catalog' => [
+        'heading' => 'Wat ga je verkopen?',
+        'lede' => 'Kies één of meer catalogi. Elke keuze schakelt de bijbehorende Modules in. Je kunt dit later wijzigen.',
+        'not_locked' => 'Dit vergrendelt geen winkeltype. Sla over als je Modules zelf wilt inschakelen.',
+        'choose' => 'Catalogi',
     ],
 
     'regional' => [
@@ -131,5 +139,6 @@ return [
         'mail_default' => 'E-mailtransport',
         'scheduler' => 'Scheduler-heartbeat',
         'https' => 'HTTPS in productie',
+        'install_restore' => 'Installatielock komt overeen met opslagmarker',
     ],
 ];

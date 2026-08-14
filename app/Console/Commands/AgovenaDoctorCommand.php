@@ -24,7 +24,7 @@ final class AgovenaDoctorCommand extends Command
         $failed = 0;
         $warnings = 0;
 
-        foreach ([...$requirements->checks(), ...$this->platformChecks($scheduler)] as $check) {
+        foreach ([...$requirements->checks(), ...$this->platformChecks($scheduler, $state)] as $check) {
             $this->line($this->formatCheck($check));
 
             if (! $check->passed && $check->required) {
@@ -69,13 +69,19 @@ final class AgovenaDoctorCommand extends Command
     }
 
     /** @return list<RequirementCheck> */
-    private function platformChecks(SchedulerHealth $scheduler): array
+    private function platformChecks(SchedulerHealth $scheduler, InstallationState $state): array
     {
         $queue = (string) config('queue.default', '');
         $mail = (string) config('mail.default', '');
         $env = (string) config('app.env');
         $debugOff = $env !== 'production' || ! (bool) config('app.debug');
         $last = $scheduler->lastHeartbeat();
+        $marker = $state->markerFile();
+        $dbInstalled = $state->installed();
+        $dbId = $state->installId();
+        $markerOnly = $marker !== null && ! $dbInstalled;
+        $dbWithoutMarker = $dbInstalled && $marker === null;
+        $idMismatch = $marker !== null && $dbId !== null && $marker['install_id'] !== $dbId;
 
         return [
             new RequirementCheck(
@@ -113,6 +119,28 @@ final class AgovenaDoctorCommand extends Command
                 required: false,
                 detail: (string) config('app.url'),
             ),
+            new RequirementCheck(
+                id: 'install_restore',
+                label: 'installer.checks.install_restore',
+                passed: ! $markerOnly && ! $dbWithoutMarker && ! $idMismatch,
+                required: false,
+                detail: $this->restoreDetail($markerOnly, $dbWithoutMarker, $idMismatch),
+            ),
         ];
+    }
+
+    private function restoreDetail(bool $markerOnly, bool $dbWithoutMarker, bool $idMismatch): string
+    {
+        if ($markerOnly) {
+            return 'storage marker exists without a database install lock';
+        }
+        if ($dbWithoutMarker) {
+            return 'database is installed but storage/app/agovena/installed.json is missing';
+        }
+        if ($idMismatch) {
+            return 'database install id does not match the storage marker';
+        }
+
+        return 'database lock and storage marker agree';
     }
 }

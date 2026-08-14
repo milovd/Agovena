@@ -27,6 +27,7 @@ use Illuminate\Validation\Rules\Password;
     {--timezone= : Default timezone}
     {--currency= : Base currency code}
     {--theme= : Theme id to activate}
+    {--presets= : Comma-separated store presets (physical,digital,hosting,subscriptions,events,custom)}
 ')]
 #[Description('Install Agovena: create owner and minimum store configuration')]
 final class InstallCommand extends Command
@@ -134,6 +135,7 @@ final class InstallCommand extends Command
                 timezone: $timezone,
                 currencyCode: strtoupper($currency),
                 themeId: $theme,
+                presetIds: $this->presetIds(),
             ));
         } catch (InstallationException $e) {
             $this->error($e->getMessage());
@@ -147,6 +149,27 @@ final class InstallCommand extends Command
         $this->line('Admin: '.url('/admin/login'));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function presetIds(): array
+    {
+        $raw = $this->stringOption('presets');
+        if ($raw === null) {
+            return [];
+        }
+
+        $ids = [];
+        foreach (explode(',', $raw) as $id) {
+            $id = trim($id);
+            if ($id !== '') {
+                $ids[] = $id;
+            }
+        }
+
+        return $ids;
     }
 
     private function stringOption(string $name): ?string

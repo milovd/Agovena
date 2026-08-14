@@ -22,6 +22,8 @@
             @include('installer.steps.owner')
         @elseif ($step === 'store')
             @include('installer.steps.store')
+        @elseif ($step === 'catalog')
+            @include('installer.steps.catalog')
         @elseif ($step === 'regional')
             @include('installer.steps.regional')
         @elseif ($step === 'branding')

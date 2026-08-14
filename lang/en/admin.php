@@ -312,6 +312,19 @@ return [
             'review_orders' => 'Review orders',
             'all_clear' => 'Nothing needs attention right now.',
         ],
+
+        'getting_started' => [
+            'title' => 'Getting started',
+            'lede' => 'Optional next steps for this store. Dismiss anytime — Admin stays available.',
+            'dismiss' => 'Dismiss',
+            'done' => 'Done',
+            'product' => 'Create your first product',
+            'payment' => 'Connect Mollie or Stripe for hosted checkout',
+            'shipping' => 'Add a shipping method',
+            'provisioning' => 'Connect a provisioner for hosted services',
+            'theme' => 'Add your store logo',
+            'mail' => 'Set the store from-address',
+        ],
     ],
 
     'appearance' => [
@@ -935,6 +948,7 @@ return [
     'packages' => [
         'install_title' => 'Install from Composer or Git',
         'install_lede' => 'Enter a Composer package name. Optionally add an HTTPS Git repository (GitHub, GitLab, Bitbucket, or Codeberg). ZIP uploads are not supported.',
+        'trust_warning' => 'Installed Modules and Extensions are trusted PHP that runs with the rest of Agovena. They are not sandboxed. Only install packages you trust; there is no anonymous marketplace.',
         'composer_name' => 'Composer package',
         'constraint' => 'Version constraint',
         'repository_url' => 'Git repository URL (optional)',

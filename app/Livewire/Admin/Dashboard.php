@@ -6,6 +6,7 @@ namespace App\Livewire\Admin;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\DashboardWidget;
+use App\Agovena\Admin\GettingStartedChecklist;
 use App\Agovena\Admin\InMemoryAdminRegistrar;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
@@ -24,7 +25,13 @@ final class Dashboard extends Component
         $this->authorize('dashboard.view');
     }
 
-    public function render(AdminRegistrar $admin)
+    public function dismissGettingStarted(GettingStartedChecklist $checklist): void
+    {
+        $this->authorize('dashboard.view');
+        $checklist->dismiss();
+    }
+
+    public function render(AdminRegistrar $admin, GettingStartedChecklist $gettingStarted)
     {
         /** @var InMemoryAdminRegistrar $admin */
         $staff = auth()->user();
@@ -54,6 +61,7 @@ final class Dashboard extends Component
 
         return view('livewire.admin.dashboard', [
             'widgets' => $widgets,
+            'gettingStarted' => $gettingStarted->items(),
             'productCount' => $productCount,
             'activeProductCount' => $activeProductCount,
             'orderCount' => $orderCount,

@@ -9,6 +9,7 @@ use App\Agovena\Installation\InstallationException;
 use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Installation\InstallRequest;
+use App\Agovena\Store\StorePresetCatalog;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Currency;
 use Illuminate\Support\Facades\Storage;
@@ -25,6 +26,7 @@ final class Wizard extends Component
         'welcome',
         'owner',
         'store',
+        'catalog',
         'regional',
         'branding',
         'theme',
@@ -50,6 +52,9 @@ final class Wizard extends Component
     public string $currency = 'EUR';
 
     public string $themeId = 'default';
+
+    /** @var list<string> */
+    public array $presetIds = [];
 
     public bool $useLogoAsFavicon = true;
 
@@ -83,6 +88,7 @@ final class Wizard extends Component
             'welcome' => $this->advanceFromWelcome($requirements),
             'owner' => $this->advanceFromOwner(),
             'store' => $this->advanceFromStore(),
+            'catalog' => $this->advanceFromCatalog(),
             'regional' => $this->advanceFromRegional(),
             'branding' => $this->advanceFromBranding(),
             'theme' => null,
@@ -99,6 +105,12 @@ final class Wizard extends Component
         }
 
         $this->step = self::STEPS[$index - 1];
+    }
+
+    public function skipCatalog(): void
+    {
+        $this->presetIds = [];
+        $this->step = 'regional';
     }
 
     public function skipBranding(): void
@@ -141,6 +153,7 @@ final class Wizard extends Component
                 themeId: $this->themeId,
                 logoPath: $logoPath,
                 faviconPath: $faviconPath,
+                presetIds: $this->presetIds,
             ));
         } catch (InstallationException $e) {
             if ($logoPath !== null) {
@@ -161,7 +174,7 @@ final class Wizard extends Component
         $this->step = 'complete';
     }
 
-    public function render(InstallationRequirements $requirements, ThemeManager $themes)
+    public function render(InstallationRequirements $requirements, ThemeManager $themes, StorePresetCatalog $catalog)
     {
         $locales = config('agovena.locales', ['en' => 'English']);
         $currencies = Currency::query()->where('is_active', true)->orderBy('code')->get();
@@ -173,6 +186,7 @@ final class Wizard extends Component
             'locales' => $locales,
             'currencies' => $currencies,
             'themes' => $themeList,
+            'catalog' => $catalog->all(),
             'timezones' => \DateTimeZone::listIdentifiers(),
             'appUrl' => (string) config('app.url'),
             'stepIndex' => (int) array_search($this->step, self::STEPS, true),
@@ -218,6 +232,21 @@ final class Wizard extends Component
         ], [], [
             'siteName' => __('installer.fields.site_name'),
         ]);
+
+        $this->step = 'catalog';
+    }
+
+    private function advanceFromCatalog(): void
+    {
+        $allowed = [];
+        foreach (app(StorePresetCatalog::class)->all() as $preset) {
+            $allowed[] = $preset->id;
+        }
+
+        $this->presetIds = array_values(array_filter(
+            $this->presetIds,
+            static fn (string $id): bool => in_array($id, $allowed, true),
+        ));
 
         $this->step = 'regional';
     }

@@ -7,6 +7,7 @@ namespace App\Agovena\Installation;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Staff\CreateOwnerStaff;
+use App\Agovena\Store\ApplyStorePresets;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Currency;
 use App\Models\User;
@@ -24,6 +25,7 @@ final class InstallAgovena
         private readonly SettingsRepository $settings,
         private readonly ThemeManager $themes,
         private readonly CurrencyCatalog $currencies,
+        private readonly ApplyStorePresets $presets,
     ) {}
 
     public function __invoke(InstallRequest $request, bool $enforceRequirements = true): User
@@ -41,7 +43,7 @@ final class InstallAgovena
         $this->validateRequest($request);
 
         try {
-            return DB::transaction(function () use ($request): User {
+            $owner = DB::transaction(function () use ($request): User {
                 $this->state->assertNotInstalled();
 
                 $owner = ($this->createOwner)(
@@ -81,6 +83,12 @@ final class InstallAgovena
         } catch (Throwable $e) {
             throw $e;
         }
+
+        if ($request->presetIds !== []) {
+            $this->presets->handle($request->presetIds);
+        }
+
+        return $owner;
     }
 
     private function validateRequest(InstallRequest $request): void

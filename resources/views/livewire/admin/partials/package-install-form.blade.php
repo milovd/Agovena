@@ -1,6 +1,7 @@
 <section class="admin-panel" style="margin-bottom: 1.5rem;">
     <h2 class="admin-panel__title">{{ __('admin.packages.install_title') }}</h2>
     <p class="ag-muted">{{ __('admin.packages.install_lede') }}</p>
+    <p class="ag-alert ag-alert--warning" role="note">{{ __('admin.packages.trust_warning') }}</p>
     <form wire:submit="installRemote" class="ag-stack">
         <div class="ag-field">
             <label class="ag-field__label" for="package-name-{{ $kind }}">{{ __('admin.packages.composer_name') }}</label>

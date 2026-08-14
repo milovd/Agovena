@@ -8,6 +8,7 @@ use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Installation\InstallRequest;
 use App\Agovena\Installation\RequirementCheck;
+use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
@@ -81,6 +82,9 @@ test('web installation creates owner settings currency theme and lock', function
         ->assertSet('step', 'store')
         ->set('siteName', 'Demo Shop')
         ->call('next')
+        ->assertSet('step', 'catalog')
+        ->assertSee(__('installer.catalog.heading'), false)
+        ->call('next')
         ->assertSet('step', 'regional')
         ->set('locale', 'nl')
         ->set('timezone', 'Europe/Amsterdam')
@@ -121,6 +125,67 @@ test('web installation creates owner settings currency theme and lock', function
     $this->get('/')->assertOk();
     $this->get('/admin/login')->assertRedirect(route('login'));
     $this->get('/install')->assertRedirect(route('admin.dashboard'));
+});
+
+test('installer catalog presets enable modules without locking a store type', function () {
+    Livewire::test(Wizard::class)
+        ->call('next')
+        ->set('ownerName', 'Preset Owner')
+        ->set('ownerEmail', 'presets@example.com')
+        ->set('ownerPassword', 'Secret-Pass-123')
+        ->set('ownerPasswordConfirmation', 'Secret-Pass-123')
+        ->call('next')
+        ->set('siteName', 'Preset Shop')
+        ->call('next')
+        ->assertSet('step', 'catalog')
+        ->set('presetIds', ['physical', 'digital'])
+        ->call('next')
+        ->set('locale', 'en')
+        ->set('timezone', 'UTC')
+        ->set('currency', 'EUR')
+        ->call('next')
+        ->call('skipBranding')
+        ->call('install')
+        ->assertSet('step', 'complete');
+
+    $modules = app(ModuleManager::class);
+    expect($modules->isEnabled('inventory'))->toBeTrue()
+        ->and($modules->isEnabled('shipping'))->toBeTrue()
+        ->and($modules->isEnabled('digital'))->toBeTrue()
+        ->and(app(SettingsRepository::class)->get('store', 'presets'))->toBe(['physical', 'digital']);
+});
+
+test('cli installation can enable store presets', function () {
+    $this->artisan('agovena:install', [
+        '--name' => 'Cli Preset',
+        '--email' => 'clipreset@example.com',
+        '--password' => 'Secret-Pass-123',
+        '--site-name' => 'CLI Preset Shop',
+        '--locale' => 'en',
+        '--timezone' => 'UTC',
+        '--currency' => 'EUR',
+        '--theme' => 'default',
+        '--presets' => 'events',
+        '--no-interaction' => true,
+    ])->assertSuccessful();
+
+    expect(app(ModuleManager::class)->isEnabled('events'))->toBeTrue();
+});
+
+test('doctor warns when install lock and storage marker disagree', function () {
+    $state = app(InstallationState::class);
+    $state->reset();
+    $state->markInstalled();
+
+    file_put_contents($state->markerPath(), json_encode([
+        'install_id' => '00000000-0000-0000-0000-000000000000',
+        'installed_at' => now()->toIso8601String(),
+        'app' => 'agovena',
+    ], JSON_THROW_ON_ERROR));
+
+    $this->artisan('agovena:doctor')
+        ->expectsOutputToContain('database install id does not match the storage marker')
+        ->assertSuccessful();
 });
 
 test('installer is inaccessible after installation', function () {

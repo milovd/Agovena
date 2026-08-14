@@ -26,9 +26,11 @@ use App\Agovena\Provisioning\Contracts\Provisioner;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Provisioning\RunProvisionerAction;
 use App\Models\Customer;
+use App\Models\ExtensionSetting;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -56,6 +58,19 @@ function enablePterodactyl(?FakePterodactylApi $api = null): FakePterodactylApi
 
     return $api;
 }
+
+test('pterodactyl credentials are encrypted and never redisplayed', function () {
+    enablePterodactyl();
+    $row = ExtensionSetting::query()
+        ->where('extension_id', 'pterodactyl')
+        ->where('key', 'application_api_key')
+        ->first();
+
+    expect($row)->not->toBeNull()
+        ->and($row->is_secret)->toBeTrue()
+        ->and($row->value)->not->toContain('ptla_NEVER_LOG_THIS_SECRET')
+        ->and(Crypt::decryptString((string) $row->value))->toBe('ptla_NEVER_LOG_THIS_SECRET');
+});
 
 function pterodactylBilling(): AddressData
 {

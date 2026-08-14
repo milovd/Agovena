@@ -17,5 +17,7 @@ final readonly class InstallRequest
         public string $themeId,
         public ?string $logoPath = null,
         public ?string $faviconPath = null,
+        /** @var list<string> */
+        public array $presetIds = [],
     ) {}
 }

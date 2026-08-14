@@ -312,6 +312,19 @@ return [
             'review_orders' => 'Bestellingen bekijken',
             'all_clear' => 'Er is nu niets dat aandacht vraagt.',
         ],
+
+        'getting_started' => [
+            'title' => 'Aan de slag',
+            'lede' => 'Optionele volgende stappen voor deze winkel. Je kunt dit altijd sluiten — Admin blijft beschikbaar.',
+            'dismiss' => 'Sluiten',
+            'done' => 'Klaar',
+            'product' => 'Maak je eerste product',
+            'payment' => 'Koppel Mollie of Stripe voor hosted checkout',
+            'shipping' => 'Voeg een verzendmethode toe',
+            'provisioning' => 'Koppel een provisioner voor hosted diensten',
+            'theme' => 'Voeg je winkellogo toe',
+            'mail' => 'Stel het afzenderadres in',
+        ],
     ],
 
     'appearance' => [
@@ -935,6 +948,7 @@ return [
     'packages' => [
         'install_title' => 'Installeren via Composer of Git',
         'install_lede' => 'Voer een Composer-pakketnaam in. Optioneel een HTTPS Git-repository (GitHub, GitLab, Bitbucket of Codeberg). ZIP-uploads worden niet ondersteund.',
+        'trust_warning' => 'Geïnstalleerde Modules en Extensies zijn vertrouwde PHP die met Agovena meedraait. Ze zijn niet gesandboxt. Installeer alleen pakketten die je vertrouwt; er is geen anonieme marktplaats.',
         'composer_name' => 'Composer-pakket',
         'constraint' => 'Versieconstraint',
         'repository_url' => 'Git-repository-URL (optioneel)',
