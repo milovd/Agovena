@@ -177,7 +177,7 @@ return new ThemeSettingsSchema([
                 'type' => 'featured_products',
                 'title' => 'Featured products',
                 'lede' => 'Popular picks from the catalog.',
-                'limit' => 8,
+                'limit' => 16,
             ],
             [
                 'type' => 'promo_split',

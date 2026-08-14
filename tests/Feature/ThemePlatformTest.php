@@ -1,5 +1,6 @@
 <?php
 
+use App\Agovena\Catalog\ListStorefrontProducts;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
 use App\Livewire\Admin\Appearance\Customize;
@@ -57,7 +58,10 @@ test('demo seeder populates catalog and refuses production', function () {
         ->and(Category::query()->whereNotNull('parent_id')->count())->toBe(2)
         ->and(Page::query()->published()->count())->toBeGreaterThan(0);
 
-    $this->get('/')->assertOk()->assertSee('Nova Phone 14', false);
+    $featured = app(ListStorefrontProducts::class)->handle(limit: 8);
+    expect($featured)->not->toBeEmpty();
+
+    $this->get('/')->assertOk()->assertSee($featured->first()->name, false);
     $this->get('/categories/phones')->assertOk();
     $this->get('/categories/android')->assertOk();
     $this->get('/about')->assertOk()->assertSee('About', false);
