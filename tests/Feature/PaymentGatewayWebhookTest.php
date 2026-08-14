@@ -143,6 +143,79 @@ test('payment webhook is idempotent for duplicate external event ids', function 
         ->and($payment->fresh()->order->status)->toBe(OrderStatus::Paid);
 });
 
+test('stale failure webhook does not downgrade a paid payment', function () {
+    $gateway = new FakeWebhookGateway;
+    app(PaymentGatewayRegistry::class)->register($gateway);
+
+    $payment = placePendingOrderPayment();
+    PaymentAttempt::query()->create([
+        'payment_id' => $payment->id,
+        'order_id' => $payment->order_id,
+        'gateway_id' => 'fake-webhook',
+        'status' => PaymentAttemptStatus::Processing,
+        'external_id' => 'ext-stale-1',
+        'amount' => $payment->amount,
+        'currency' => $payment->currency,
+        'initiated_at' => now(),
+    ]);
+
+    $paid = Request::create('/webhooks/payments/fake-webhook', 'POST', [
+        'event_id' => 'evt-paid-1',
+        'payment_id' => 'ext-stale-1',
+        'status' => 'paid',
+    ], server: ['HTTP_X_WEBHOOK_SECRET' => 'test-secret']);
+    app(HandlePaymentWebhook::class)->handle('fake-webhook', $paid);
+
+    $failed = Request::create('/webhooks/payments/fake-webhook', 'POST', [
+        'event_id' => 'evt-failed-later',
+        'payment_id' => 'ext-stale-1',
+        'status' => 'failed',
+    ], server: ['HTTP_X_WEBHOOK_SECRET' => 'test-secret']);
+    app(HandlePaymentWebhook::class)->handle('fake-webhook', $failed);
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($payment->fresh()->order->status)->toBe(OrderStatus::Paid);
+});
+
+test('unprocessed webhook rows are completed on retry instead of skipped', function () {
+    $gateway = new FakeWebhookGateway;
+    app(PaymentGatewayRegistry::class)->register($gateway);
+
+    $payment = placePendingOrderPayment();
+    PaymentAttempt::query()->create([
+        'payment_id' => $payment->id,
+        'order_id' => $payment->order_id,
+        'gateway_id' => 'fake-webhook',
+        'status' => PaymentAttemptStatus::Processing,
+        'external_id' => 'ext-retry-1',
+        'amount' => $payment->amount,
+        'currency' => $payment->currency,
+        'initiated_at' => now(),
+    ]);
+
+    PaymentWebhookEvent::query()->create([
+        'gateway_id' => 'fake-webhook',
+        'external_event_id' => 'evt-crash-1',
+        'external_payment_id' => 'ext-retry-1',
+        'status' => 'paid',
+        'processing_status' => 'received',
+        'payload' => [],
+    ]);
+
+    $request = Request::create('/webhooks/payments/fake-webhook', 'POST', [
+        'event_id' => 'evt-crash-1',
+        'payment_id' => 'ext-retry-1',
+        'status' => 'paid',
+    ], server: ['HTTP_X_WEBHOOK_SECRET' => 'test-secret']);
+
+    $result = app(HandlePaymentWebhook::class)->handle('fake-webhook', $request);
+
+    expect($result->duplicate)->toBeFalse()
+        ->and($result->event->processing_status)->toBe('processed')
+        ->and($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and(PaymentWebhookEvent::query()->where('external_event_id', 'evt-crash-1')->count())->toBe(1);
+});
+
 test('http webhook route returns 403 on verification failure', function () {
     app(PaymentGatewayRegistry::class)->register(new FakeWebhookGateway);
 

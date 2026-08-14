@@ -33,6 +33,7 @@ use App\Models\Product;
 use App\Models\ProductPlanChangeRequest;
 use App\Notifications\SubscriptionCancelledNotification;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -322,62 +323,89 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
 
         $periodStart = CarbonImmutable::parse($subscription->current_period_end ?? now());
         $periodEnd = $this->addInterval($periodStart, $subscription->interval, $subscription->interval_count);
+
+        $existingPeriod = SubscriptionRenewal::query()
+            ->where('subscription_id', $subscription->id)
+            ->where('period_start', $periodStart)
+            ->first();
+        if ($existingPeriod !== null && $existingPeriod->order_id !== null) {
+            $existingOrder = Order::query()->with(['items', 'payment'])->find($existingPeriod->order_id);
+            if ($existingOrder !== null) {
+                return $existingOrder;
+            }
+        }
+
         $lineTotal = $subscription->price_amount * $subscription->quantity;
         $gatewayId = $this->gatewayIdFromSubscription($subscription);
 
-        return DB::transaction(function () use ($subscription, $periodStart, $periodEnd, $lineTotal, $gatewayId): Order {
-            $order = Order::query()->create([
-                'number' => $this->generateOrderNumber(),
-                'status' => OrderStatus::Pending,
-                'customer_id' => $subscription->customer_id,
-                'customer_name' => $subscription->customer_name ?? $subscription->customer_email,
-                'customer_email' => $subscription->customer_email,
-                'currency' => $subscription->currency,
-                'subtotal_amount' => $lineTotal,
-                'shipping_amount' => 0,
-                'total_amount' => $lineTotal,
-                'shipping_same_as_billing' => true,
-            ]);
+        try {
+            return DB::transaction(function () use ($subscription, $periodStart, $periodEnd, $lineTotal, $gatewayId): Order {
+                $order = Order::query()->create([
+                    'number' => $this->generateOrderNumber(),
+                    'status' => OrderStatus::Pending,
+                    'customer_id' => $subscription->customer_id,
+                    'customer_name' => $subscription->customer_name ?? $subscription->customer_email,
+                    'customer_email' => $subscription->customer_email,
+                    'currency' => $subscription->currency,
+                    'subtotal_amount' => $lineTotal,
+                    'shipping_amount' => 0,
+                    'total_amount' => $lineTotal,
+                    'shipping_same_as_billing' => true,
+                ]);
 
-            $product = $subscription->product;
-            $label = $product !== null
-                ? $product->name
-                : (string) __('subscriptions::admin.renewal_item');
-            $originItem = $subscription->order_item_id !== null
-                ? OrderItem::query()->find($subscription->order_item_id)
-                : null;
-            OrderItem::query()->create([
-                'order_id' => $order->id,
-                'product_id' => $subscription->product_id,
-                'label' => $label,
-                'quantity' => $subscription->quantity,
-                'unit_amount' => $subscription->price_amount,
-                'line_total_amount' => $lineTotal,
-                'currency' => $subscription->currency,
-                'options_snapshot' => $originItem->options_snapshot ?? [],
-            ]);
+                $product = $subscription->product;
+                $label = $product !== null
+                    ? $product->name
+                    : (string) __('subscriptions::admin.renewal_item');
+                $originItem = $subscription->order_item_id !== null
+                    ? OrderItem::query()->find($subscription->order_item_id)
+                    : null;
+                OrderItem::query()->create([
+                    'order_id' => $order->id,
+                    'product_id' => $subscription->product_id,
+                    'label' => $label,
+                    'quantity' => $subscription->quantity,
+                    'unit_amount' => $subscription->price_amount,
+                    'line_total_amount' => $lineTotal,
+                    'currency' => $subscription->currency,
+                    'options_snapshot' => $originItem->options_snapshot ?? [],
+                ]);
 
-            Payment::query()->create([
-                'order_id' => $order->id,
-                'method' => $gatewayId,
-                'status' => PaymentStatus::Pending,
-                'amount' => $lineTotal,
-                'currency' => $subscription->currency,
-            ]);
+                Payment::query()->create([
+                    'order_id' => $order->id,
+                    'method' => $gatewayId,
+                    'status' => PaymentStatus::Pending,
+                    'amount' => $lineTotal,
+                    'currency' => $subscription->currency,
+                ]);
 
-            SubscriptionRenewal::query()->create([
-                'subscription_id' => $subscription->id,
-                'order_id' => $order->id,
-                'period_start' => $periodStart,
-                'period_end' => $periodEnd,
-                'status' => RenewalStatus::Pending,
-            ]);
+                SubscriptionRenewal::query()->create([
+                    'subscription_id' => $subscription->id,
+                    'order_id' => $order->id,
+                    'period_start' => $periodStart,
+                    'period_end' => $periodEnd,
+                    'status' => RenewalStatus::Pending,
+                ]);
 
-            $created = $order->fresh(['items', 'payment']) ?? $order;
-            $this->issueInvoice->handle($created);
+                $created = $order->fresh(['items', 'payment']) ?? $order;
+                $this->issueInvoice->handle($created);
 
-            return $created;
-        });
+                return $created;
+            });
+        } catch (UniqueConstraintViolationException $e) {
+            $winner = SubscriptionRenewal::query()
+                ->where('subscription_id', $subscription->id)
+                ->where('period_start', $periodStart)
+                ->first();
+            if ($winner?->order_id !== null) {
+                $existingOrder = Order::query()->with(['items', 'payment'])->find($winner->order_id);
+                if ($existingOrder !== null) {
+                    return $existingOrder;
+                }
+            }
+
+            throw $e;
+        }
     }
 
     public function processRenewalCharge(Subscription $subscription, Order $order, bool $isNewOrder, ?CarbonImmutable $now = null): RecurringChargeResult

@@ -6,6 +6,7 @@ namespace App\Agovena\Payments;
 
 use App\Models\PaymentAttempt;
 use App\Models\PaymentWebhookEvent;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -37,31 +38,17 @@ final class HandlePaymentWebhook
 
         $payload = $gateway->parseWebhook($request);
         $externalEventId = $payload->externalEventId;
-
-        if ($externalEventId !== null && $externalEventId !== '') {
-            $existing = PaymentWebhookEvent::query()
-                ->where('gateway_id', $gatewayId)
-                ->where('external_event_id', $externalEventId)
-                ->first();
-            if ($existing !== null) {
-                return new WebhookHandleResult($existing, duplicate: true);
-            }
+        if ($externalEventId === '') {
+            $externalEventId = null;
         }
 
-        $event = PaymentWebhookEvent::query()->create([
-            'gateway_id' => $gatewayId,
-            'external_event_id' => $externalEventId,
-            'external_payment_id' => $payload->externalPaymentId,
-            'status' => $payload->status->value,
-            'processing_status' => 'received',
-            'payload' => $this->redact($payload->raw),
-        ]);
+        $event = $this->findOrCreateEvent($gatewayId, $externalEventId, $payload->externalPaymentId, $payload->status->value, $payload->raw);
 
-        $processed = DB::transaction(function () use ($event, $payload, $gatewayId): PaymentWebhookEvent {
+        $processed = DB::transaction(function () use ($event, $payload, $gatewayId): array {
             /** @var PaymentWebhookEvent $locked */
             $locked = PaymentWebhookEvent::query()->whereKey($event->id)->lockForUpdate()->firstOrFail();
             if ($locked->processing_status === 'processed') {
-                return $locked;
+                return ['event' => $locked, 'duplicate' => true];
             }
 
             if ($payload->externalPaymentId !== null) {
@@ -80,10 +67,56 @@ final class HandlePaymentWebhook
             $locked->processed_at = now();
             $locked->save();
 
-            return $locked->fresh() ?? $locked;
+            return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
         });
 
-        return new WebhookHandleResult($processed, duplicate: false);
+        return new WebhookHandleResult($processed['event'], duplicate: $processed['duplicate']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $raw
+     */
+    private function findOrCreateEvent(
+        string $gatewayId,
+        ?string $externalEventId,
+        ?string $externalPaymentId,
+        string $status,
+        array $raw,
+    ): PaymentWebhookEvent {
+        if ($externalEventId !== null) {
+            $existing = PaymentWebhookEvent::query()
+                ->where('gateway_id', $gatewayId)
+                ->where('external_event_id', $externalEventId)
+                ->first();
+            if ($existing !== null) {
+                return $existing;
+            }
+        }
+
+        try {
+            return PaymentWebhookEvent::query()->create([
+                'gateway_id' => $gatewayId,
+                'external_event_id' => $externalEventId,
+                'external_payment_id' => $externalPaymentId,
+                'status' => $status,
+                'processing_status' => 'received',
+                'payload' => $this->redact($raw),
+            ]);
+        } catch (UniqueConstraintViolationException $e) {
+            if ($externalEventId === null) {
+                throw $e;
+            }
+
+            $existing = PaymentWebhookEvent::query()
+                ->where('gateway_id', $gatewayId)
+                ->where('external_event_id', $externalEventId)
+                ->first();
+            if ($existing === null) {
+                throw $e;
+            }
+
+            return $existing;
+        }
     }
 
     /**
