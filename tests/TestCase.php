@@ -2,12 +2,10 @@
 
 namespace Tests;
 
-use App\Agovena\Extensions\ExtensionManager;
-use App\Agovena\Modules\ModuleManager;
-use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\RefreshDatabaseState;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -18,45 +16,23 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutVite();
+        $this->isolateEnabledPackages();
     }
 
     /**
-     * Module enablement runs DDL. MySQL/MariaDB cannot roll that back, so
-     * leftover enabled modules leak into later tests. Rebuild the schema
-     * for each persistent SQL test instead of wrapping in a transaction.
+     * Module/extension enablement that committed through MariaDB DDL must not
+     * leak into the next Feature test. RefreshDatabase already remigrates when
+     * the previous test left no open transaction; this keeps isEnabled() clean
+     * even when leftover rows survive inside the current transaction.
      */
-    protected function refreshTestDatabase()
+    protected function isolateEnabledPackages(): void
     {
-        if ($this->usesPersistentSqlServer()) {
-            $this->artisan('migrate:fresh', $this->migrateFreshUsing());
-            $this->app[Kernel::class]->setArtisan(null);
-            $this->resetPackageRuntime();
-
-            return;
+        if (Schema::hasTable('agovena_modules')) {
+            DB::table('agovena_modules')->where('enabled', true)->update(['enabled' => false]);
         }
 
-        if (! RefreshDatabaseState::$migrated) {
-            $this->migrateDatabases();
-            $this->app[Kernel::class]->setArtisan(null);
-            $this->updateLocalCacheOfInMemoryDatabases();
-            RefreshDatabaseState::$migrated = true;
+        if (Schema::hasTable('agovena_extensions')) {
+            DB::table('agovena_extensions')->where('enabled', true)->update(['enabled' => false]);
         }
-
-        $this->beginDatabaseTransaction();
-    }
-
-    protected function usesPersistentSqlServer(): bool
-    {
-        return in_array($this->app['db']->connection()->getDriverName(), ['mysql', 'mariadb'], true);
-    }
-
-    /**
-     * Application boot may have registered packages from leftover rows before
-     * migrate:fresh. Rebuild from the now-empty schema so fakes can bind first.
-     */
-    protected function resetPackageRuntime(): void
-    {
-        $this->app->make(ExtensionManager::class)->rebuildRuntime();
-        $this->app->make(ModuleManager::class)->bootEnabled();
     }
 }
