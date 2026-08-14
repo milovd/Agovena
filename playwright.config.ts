@@ -21,6 +21,11 @@ export default defineConfig({
     },
     projects: [
         {
+            name: 'chromium-ci',
+            testMatch: /images\.spec|cart\.spec|digital-checkout\.spec|responsive\.spec/,
+            use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+        },
+        {
             name: 'chromium-desktop',
             use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
         },

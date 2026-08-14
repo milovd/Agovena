@@ -26,8 +26,10 @@ test.describe('cart', () => {
         await page.goto('/cart');
         await page.getByRole('link', { name: 'Checkout' }).click();
         await expect(page).toHaveURL(/\/checkout/);
-        await expect(page.locator('.store-chrome--reduced')).toBeVisible();
-        await expect(page.getByRole('link', { name: 'Back to cart' })).toBeVisible();
+        await expect(page.locator('.store-chrome')).toBeVisible();
+        await expect(page.locator('.store-chrome--reduced')).toHaveCount(0);
+        await expect(page.getByRole('search').first()).toBeVisible();
+        await expect(page.getByRole('link', { name: /Cart, \d+ items?/ })).toBeVisible();
         await expect(page.locator('.store-brand__logo')).toBeVisible();
         await assertImageNotBroken(page.locator('.store-brand__logo'));
     });

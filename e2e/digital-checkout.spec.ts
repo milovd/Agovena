@@ -5,7 +5,7 @@ test('digital checkout is details then payment then complete', async ({ page }) 
     await addProductToCart(page, 'e2e-digital');
     await page.goto('/checkout');
 
-    await expect(page.locator('.store-stepper')).toBeVisible();
+    await expect(page.getByTestId('checkout-stepper')).toBeVisible();
     await expect(page.getByText('Details', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Payment', { exact: true }).first()).toBeVisible();
     await expect(page.getByText('Delivery', { exact: true })).toHaveCount(0);
@@ -19,8 +19,8 @@ test('digital checkout is details then payment then complete', async ({ page }) 
     await expect(page.locator('input[name*="card"], input[autocomplete="cc-number"]')).toHaveCount(0);
     await assertImageNotBroken(page.locator('.store-summary-line img, .store-brand__logo'));
 
-    const action = page.getByRole('button', { name: /Place order|Pay |Continue to / });
-    await expect(action).toBeVisible();
+    await expect(page.getByTestId('checkout-submit')).toBeVisible();
+    await expect(page.getByTestId('checkout-payment-methods').getByRole('radio').first()).toBeVisible();
     await placeOrder(page);
 
     await expect(page.getByRole('heading').first()).toBeVisible();

@@ -8,14 +8,14 @@ test('browser back from payment returns to details', async ({ page }) => {
     await continueCheckout(page);
     await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
     await page.goBack();
-    await expect(page.locator('#customer_name')).toBeVisible();
+    await expect(page.getByLabel('Name', { exact: true })).toBeVisible();
 });
 
 test('coupon applies from the checkout summary', async ({ page }) => {
     await addProductToCart(page, 'e2e-digital');
     await page.goto('/checkout');
     await fillCheckoutDetails(page);
-    await page.locator('#coupon-code').fill('E2ESAVE');
+    await page.getByLabel('Discount code').fill('E2ESAVE');
     await page.getByRole('button', { name: 'Apply' }).click();
     await expect(page.getByText(/E2ESAVE/)).toBeVisible();
     await expect(page.locator('.store-totals dt').filter({ hasText: 'Discount' })).toBeVisible();
@@ -50,7 +50,7 @@ test('final CTA disables while placing the order', async ({ page }) => {
     await page.goto('/checkout');
     await fillCheckoutDetails(page);
     await continueCheckout(page);
-    const action = page.getByRole('button', { name: /Place order|Pay |Continue to / });
+    const action = page.getByTestId('checkout-submit');
     await action.dblclick();
     await expect(page).toHaveURL(/\/orders\//, { timeout: 20_000 });
 });

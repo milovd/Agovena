@@ -8,13 +8,13 @@ test('mixed cart composes delivery and configure then payment', async ({ page })
     await addProductToCart(page, 'e2e-ticket');
     await page.goto('/checkout');
 
-    await expect(page.locator('.store-stepper__label').filter({ hasText: 'Delivery & configure' })).toBeVisible();
+    await expect(page.getByTestId('checkout-stepper').getByText('Delivery & configure')).toBeVisible();
     await fillCheckoutDetails(page, { ...guest, email: `mixed-${Date.now()}@example.test` });
     await continueCheckout(page);
 
-    await expect(page.locator('.store-choice--row').first()).toBeVisible();
-    await expect(page.locator('.store-checkout__config-name').filter({ hasText: 'E2E Nova VPS' })).toBeVisible();
-    await page.locator('.store-choice--row input[type="radio"]').first().check();
+    await expect(page.getByRole('radio').first()).toBeVisible();
+    await expect(page.getByText('E2E Nova VPS').first()).toBeVisible();
+    await page.getByRole('radio').first().check();
     await continueCheckout(page);
 
     await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();

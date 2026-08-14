@@ -18,19 +18,19 @@ test('cart and checkout keep keyboard focus and control labels', async ({ page }
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/checkout/);
 
-    await expect(page.locator('.store-stepper')).toHaveAttribute('aria-label', /progress/i);
+    await expect(page.getByTestId('checkout-stepper')).toHaveAttribute('aria-label', /progress/i);
     await expect(page.locator('[aria-current="step"]')).toBeVisible();
 
     await fillCheckoutDetails(page);
-    await page.getByRole('button', { name: /^Continue to / }).press('Enter');
+    await page.getByTestId('checkout-continue').press('Enter');
     await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
 
-    const method = page.locator('.store-choice--row input[type="radio"]').first();
+    const method = page.getByTestId('checkout-payment-methods').getByRole('radio').first();
     await method.focus();
     await expect(method).toBeFocused();
     await page.keyboard.press('Space');
     await expect(method).toBeChecked();
 
-    await page.getByRole('button', { name: /Place order|Pay / }).focus();
-    await expect(page.getByRole('button', { name: /Place order|Pay / })).toBeFocused();
+    await page.getByTestId('checkout-submit').focus();
+    await expect(page.getByTestId('checkout-submit')).toBeFocused();
 });

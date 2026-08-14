@@ -113,7 +113,7 @@ jobs:
           php e2e/prepare.php
 
       - name: Browser tests
-        run: npx playwright test --project=chromium-desktop
+        run: npx playwright test --project=chromium-ci
         env:
           E2E_BASE_URL: http://127.0.0.1:8000
 

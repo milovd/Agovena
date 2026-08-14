@@ -10,8 +10,8 @@ test('configurable checkout walks details configure and payment', async ({ page 
     await continueCheckout(page);
 
     await expect(page.getByRole('heading', { name: /Configure|Configuration/ })).toBeVisible();
-    await expect(page.locator('.store-checkout__config-name').filter({ hasText: 'E2E Nova VPS' })).toBeVisible();
-    await expect(page.locator('.store-checkout__config-options').getByText('Ubuntu')).toBeVisible();
+    await expect(page.getByText('E2E Nova VPS').first()).toBeVisible();
+    await expect(page.getByText('Ubuntu').first()).toBeVisible();
     await expect(page.getByText('pterodactyl', { exact: false })).toHaveCount(0);
     await continueCheckout(page);
 
