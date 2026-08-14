@@ -7,10 +7,17 @@ use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Product;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
+
+test('same-origin api remains cookie-stateful', function () {
+    $api = app('router')->getMiddlewareGroups()['api'] ?? [];
+
+    expect($api)->toContain(EnsureFrontendRequestsAreStateful::class);
+});
 
 test('catalog endpoints are public and paginated', function () {
     Product::factory()->active()->create(['name' => 'Public lamp', 'slug' => 'public-lamp']);

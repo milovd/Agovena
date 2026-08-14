@@ -4,7 +4,7 @@
 ])
 
 @php
-    $src = asset('vendor/agovena/logo.png');
+    $src = '/vendor/agovena/logo.png';
     $class = $variant === 'hero' ? 'ag-logo ag-logo--hero' : 'ag-logo';
 @endphp
 

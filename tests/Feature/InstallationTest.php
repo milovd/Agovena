@@ -37,7 +37,7 @@ test('installer welcome is available when not installed', function () {
         ->assertSee(__('installer.welcome.heading'), false)
         ->assertSee(__('installer.welcome.ready_title'), false)
         ->assertDontSee(__('installer.checks.ext_openssl'), false)
-        ->assertSee(asset('vendor/agovena/logo.png'), false)
+        ->assertSee('/vendor/agovena/logo.png', false)
         ->assertDontSee('install-welcome__logo', false);
 });
 
@@ -361,6 +361,6 @@ test('blocking requirement failure is surfaced and blocks continue', function ()
 test('official Agovena logo is independent from merchant branding', function () {
     $this->get('/install')
         ->assertOk()
-        ->assertSee(asset('vendor/agovena/logo.png'), false)
+        ->assertSee('/vendor/agovena/logo.png', false)
         ->assertDontSee('storage/branding', false);
 });
