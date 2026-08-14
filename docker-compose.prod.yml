@@ -1,8 +1,11 @@
-# Production-oriented Compose starting point. Not an OS image and not live-verified
-# on a specific host OS. Does not run migrations on start.
+# Optional production Compose stack. Native Linux (Nginx/PHP-FPM/MariaDB) is the
+# primary self-host path — see deploy/README.md. This file is convenience only.
+# Not an OS image and not live-verified on a specific host OS.
+# Does not run migrations on start.
 #
-# Install: docker compose -f docker-compose.prod.yml exec app php artisan agovena:install
-# Upgrade: docker compose -f docker-compose.prod.yml exec app php artisan agovena:upgrade
+# Native install does not use this file.
+# Optional: docker compose -f docker-compose.prod.yml exec app php artisan agovena:install
+# Optional: docker compose -f docker-compose.prod.yml exec app php artisan agovena:upgrade
 
 services:
   web:

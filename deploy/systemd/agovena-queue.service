@@ -1,0 +1,19 @@
+[Unit]
+Description=Agovena queue worker
+After=network.target
+# Do not Require= MariaDB or Redis. Agovena can use database queues without Redis.
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5
+TimeoutStopSec=70
+WorkingDirectory=/var/www/agovena
+ExecStart=/usr/bin/php /var/www/agovena/artisan queue:work --sleep=1 --tries=3 --timeout=60 --backoff=5 --max-time=3600
+KillSignal=SIGTERM
+# After a deploy: systemctl restart agovena-queue.service
+
+[Install]
+WantedBy=multi-user.target

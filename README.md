@@ -14,28 +14,26 @@
 
 ## Getting started
 
-Agovena is in early development.
+Agovena is in early development. It is a normal self-hosted Laravel application.
+
+**Native Linux is the primary production path.** Docker is optional convenience, not a runtime requirement.
 
 **Requirements**
 
-- PHP 8.3 or 8.4
+- PHP 8.3 or 8.4 with PHP-FPM
 - Composer 2
-- Node.js 22+ (asset build only)
-- MariaDB/MySQL for production (SQLite is OK for local/dev)
+- MariaDB/MySQL for production (SQLite is OK for local/dev; it is not equivalent for concurrency)
+- Nginx (recommended) or Apache, document root = `public/`
+- A queue worker (`php artisan queue:work`) and cron `* * * * * php artisan schedule:run`
+- Node.js 22+ only to **build** frontend assets from a source checkout. Release artifacts should include `public/build`. Merchants should not need npm merely to install a stable release.
 
 PHP 8.3 and 8.4 are exercised in CI. MariaDB 11 is exercised in CI for migrations and the test suite. That is not a claim that every host OS is production-verified.
 
-**Deployment**
+See [deploy/README.md](deploy/README.md) for Nginx/Apache, systemd, cron, permissions, backup, and upgrade.
 
-The application is distro-agnostic PHP. A practical production layout is Nginx + PHP-FPM + MariaDB, with a queue worker and scheduler:
+Redis is recommended for multi-node cache/queue/locks. A single VPS can use `QUEUE_CONNECTION=database` without Redis.
 
-```bash
-php artisan migrate --force   # or agovena:install / agovena:upgrade
-php artisan queue:work
-php artisan schedule:work     # or cron: * * * * * php artisan schedule:run
-```
-
-`docker-compose.prod.yml` is a starting point (nginx, php-fpm, worker, scheduler, MariaDB, Redis). It does **not** auto-migrate. Install and upgrade stay explicit commands. Container healthchecks cover MariaDB, Redis, and nginx `/up`. Worker/scheduler health is the existing doctor/heartbeat, not a fake HTTP server.
+`docker-compose.prod.yml` is an optional stack (nginx, php-fpm, worker, scheduler, MariaDB, Redis). It does **not** auto-migrate.
 
 OS status:
 
@@ -50,22 +48,18 @@ cp .env.example .env
 php artisan key:generate
 # configure DB in .env, then:
 php artisan migrate
-npm install
-npm run build
-php artisan agovena:create-owner
-php artisan agovena:seed-demo
+# source checkouts only — skip when public/build is already present:
+npm install && npm run build
+php artisan agovena:install   # or open /install
 php artisan agovena:doctor
 php artisan agovena:verify-providers   # connection health only; never live charges
-php artisan agovena:prune-logs
-php artisan serve
 ```
 
-`agovena:seed-demo` loads local-only sample products, categories, pages, and menus (refuses in production). Use `--force` to replace existing catalog demo data.
+`agovena:seed-demo` loads local-only sample products (refuses in production).
 
-- Storefront (default Theme): `/`
-- Admin: `/admin` (sign in at `/admin/login`)
-- Appearance: Themes, Customize, Navigation, Pages under `/admin/appearance/*`
-- Installer placeholder: `/install`
+- Storefront: `/`
+- Admin: `/admin` (everyone signs in at `/login`; Admin is permission-based)
+- Installer: `/install` until the store is installed, then it stays closed
 
 ## Stack
 

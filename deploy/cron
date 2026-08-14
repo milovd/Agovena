@@ -1,0 +1,6 @@
+# Native Laravel scheduler. Install as the application user (often www-data).
+# crontab -u www-data /var/www/agovena/deploy/cron
+#
+# Docker is not required. A long-running `schedule:work` process is optional.
+
+* * * * * cd /var/www/agovena && php artisan schedule:run >> /dev/null 2>&1
