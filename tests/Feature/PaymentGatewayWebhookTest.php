@@ -6,11 +6,14 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Orders\CancelUnpaidOrder;
+use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\InitiateGatewayPayment;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RefundRequest;
+use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
@@ -226,4 +229,39 @@ test('http webhook route returns 403 on verification failure', function () {
         'X-Webhook-Secret' => 'nope',
     ])->assertForbidden()
         ->assertJson(['ok' => false]);
+});
+
+test('paid webhook after unpaid cancel does not resurrect the order', function () {
+    $gateway = new FakeWebhookGateway;
+    app(PaymentGatewayRegistry::class)->register($gateway);
+
+    $payment = placePendingOrderPayment();
+    PaymentAttempt::query()->create([
+        'payment_id' => $payment->id,
+        'order_id' => $payment->order_id,
+        'gateway_id' => 'fake-webhook',
+        'status' => PaymentAttemptStatus::Processing,
+        'external_id' => 'ext-cancel-race-1',
+        'amount' => $payment->amount,
+        'currency' => $payment->currency,
+        'initiated_at' => now(),
+    ]);
+
+    app(CancelUnpaidOrder::class)->handle(
+        $payment->order->fresh(['invoice', 'payment']),
+        UnpaidOrderCancelSource::Customer,
+    );
+
+    $request = Request::create('/webhooks/payments/fake-webhook', 'POST', [
+        'event_id' => 'evt-after-cancel',
+        'payment_id' => 'ext-cancel-race-1',
+        'status' => 'paid',
+    ], server: ['HTTP_X_WEBHOOK_SECRET' => 'test-secret']);
+
+    $result = app(HandlePaymentWebhook::class)->handle('fake-webhook', $request);
+
+    expect($result->event->processing_status)->toBe('ignored')
+        ->and($payment->fresh()->status)->toBe(PaymentStatus::Cancelled)
+        ->and($payment->fresh()->order->status)->toBe(OrderStatus::Cancelled)
+        ->and($payment->fresh()->order->invoice?->status)->toBe(InvoiceStatus::Void);
 });

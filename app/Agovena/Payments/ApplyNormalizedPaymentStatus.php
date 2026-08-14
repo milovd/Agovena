@@ -24,13 +24,13 @@ final class ApplyNormalizedPaymentStatus
         private readonly AssertInvoiceCanBePaid $assertInvoiceCanBePaid,
     ) {}
 
-    public function handle(PaymentAttempt $attempt, PaymentStatus $status): PaymentAttempt
+    public function handle(PaymentAttempt $attempt, PaymentStatus $status): PaymentStatusApplyResult
     {
         /** @var Payment $payment */
         $payment = Payment::query()->whereKey($attempt->payment_id)->lockForUpdate()->firstOrFail();
 
         if ($this->isPaidLike($payment) && $this->isFailure($status)) {
-            return $attempt;
+            return new PaymentStatusApplyResult($attempt, applied: false);
         }
 
         if ($status === PaymentStatus::Paid && $payment->status !== PaymentStatus::Paid) {
@@ -39,7 +39,11 @@ final class ApplyNormalizedPaymentStatus
                 try {
                     $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoice'));
                 } catch (ValidationException) {
-                    return $attempt;
+                    return new PaymentStatusApplyResult(
+                        $attempt,
+                        applied: false,
+                        blockedByTerminalState: true,
+                    );
                 }
             }
 
@@ -58,16 +62,18 @@ final class ApplyNormalizedPaymentStatus
                 event(new OrderPaid($order->fresh(['items', 'payment']) ?? $order));
             }
 
-            return $attempt->fresh() ?? $attempt;
+            return new PaymentStatusApplyResult($attempt->fresh() ?? $attempt, applied: true);
         }
 
         if ($status === PaymentStatus::Refunded || $status === PaymentStatus::PartiallyRefunded) {
             if (in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::PartiallyRefunded, PaymentStatus::Refunded], true)) {
                 $payment->status = $status;
                 $payment->save();
+
+                return new PaymentStatusApplyResult($attempt, applied: true);
             }
 
-            return $attempt;
+            return new PaymentStatusApplyResult($attempt, applied: false);
         }
 
         if ($this->isFailure($status)) {
@@ -78,9 +84,11 @@ final class ApplyNormalizedPaymentStatus
             };
             $attempt->completed_at = now();
             $attempt->save();
+
+            return new PaymentStatusApplyResult($attempt->fresh() ?? $attempt, applied: true);
         }
 
-        return $attempt->fresh() ?? $attempt;
+        return new PaymentStatusApplyResult($attempt->fresh() ?? $attempt, applied: false);
     }
 
     private function isPaidLike(Payment $payment): bool

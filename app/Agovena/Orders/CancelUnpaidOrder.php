@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Agovena\Orders;
 
 use App\Agovena\Audit\AuditLogger;
+use App\Agovena\Payments\Contracts\CancelsPayments;
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
@@ -17,13 +19,16 @@ use App\Models\Payment;
 use App\Models\PaymentAttempt;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use RuntimeException;
+use Throwable;
 
 final class CancelUnpaidOrder
 {
     public function __construct(
         private readonly AuditLogger $audit,
+        private readonly PaymentGatewayRegistry $gateways,
     ) {}
 
     public function handle(Order $order, UnpaidOrderCancelSource $source, ?User $staff = null): Order
@@ -34,10 +39,34 @@ final class CancelUnpaidOrder
             }
         }
 
+        $order->loadMissing('payment');
+        if (! $order->isAwaitingPayment()) {
+            throw ValidationException::withMessages([
+                'order' => $source === UnpaidOrderCancelSource::Customer
+                    ? __('customer.account.cannot_cancel_order')
+                    : __('admin.orders.cannot_cancel'),
+            ]);
+        }
+
+        if ($order->payment !== null) {
+            $this->attemptProviderCancel($order->payment);
+        }
+
         return DB::transaction(function () use ($order, $source, $staff): Order {
             /** @var Order $locked */
             $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
-            $locked->load(['invoice', 'payment']);
+
+            $payment = Payment::query()->where('order_id', $locked->id)->lockForUpdate()->first();
+            $locked->setRelation('payment', $payment);
+            $locked->load(['invoice']);
+
+            if ($payment !== null && $payment->status === PaymentStatus::Paid) {
+                throw ValidationException::withMessages([
+                    'order' => $source === UnpaidOrderCancelSource::Customer
+                        ? __('customer.account.cannot_cancel_order')
+                        : __('admin.orders.cannot_cancel'),
+                ]);
+            }
 
             if (! $locked->isAwaitingPayment()) {
                 throw ValidationException::withMessages([
@@ -66,7 +95,6 @@ final class CancelUnpaidOrder
                 $locked->save();
             }
 
-            $payment = Payment::query()->where('order_id', $locked->id)->lockForUpdate()->first();
             if ($payment !== null && in_array($payment->status, [
                 PaymentStatus::Pending,
                 PaymentStatus::Failed,
@@ -106,5 +134,28 @@ final class CancelUnpaidOrder
 
             return $fresh;
         });
+    }
+
+    private function attemptProviderCancel(Payment $payment): void
+    {
+        $method = (string) $payment->method;
+        if ($method === '' || in_array($method, ['manual', 'development'], true)) {
+            return;
+        }
+
+        $gateway = $this->gateways->get($method);
+        if (! $gateway instanceof CancelsPayments) {
+            return;
+        }
+
+        try {
+            $gateway->cancel($payment);
+        } catch (Throwable $exception) {
+            Log::warning('payment.provider_cancel_failed', [
+                'payment_id' => $payment->id,
+                'gateway_id' => $gateway->id(),
+                'error' => $exception->getMessage(),
+            ]);
+        }
     }
 }

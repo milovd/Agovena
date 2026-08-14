@@ -47,10 +47,11 @@ final class HandlePaymentWebhook
         $processed = DB::transaction(function () use ($event, $payload, $gatewayId): array {
             /** @var PaymentWebhookEvent $locked */
             $locked = PaymentWebhookEvent::query()->whereKey($event->id)->lockForUpdate()->firstOrFail();
-            if ($locked->processing_status === 'processed') {
+            if (in_array($locked->processing_status, ['processed', 'ignored'], true)) {
                 return ['event' => $locked, 'duplicate' => true];
             }
 
+            $blocked = false;
             if ($payload->externalPaymentId !== null) {
                 $attempt = PaymentAttempt::query()
                     ->where('gateway_id', $gatewayId)
@@ -59,8 +60,22 @@ final class HandlePaymentWebhook
                     ->first();
 
                 if ($attempt !== null) {
-                    $this->applyStatus->handle($attempt, $payload->status);
+                    $result = $this->applyStatus->handle($attempt, $payload->status);
+                    $blocked = $result->blockedByTerminalState;
                 }
+            }
+
+            if ($blocked) {
+                $locked->processing_status = 'ignored';
+                $locked->processed_at = now();
+                $locked->save();
+                Log::warning('payment.webhook.ignored_terminal_order', [
+                    'gateway_id' => $gatewayId,
+                    'external_payment_id' => $payload->externalPaymentId,
+                    'webhook_event_id' => $locked->id,
+                ]);
+
+                return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
             }
 
             $locked->processing_status = 'processed';

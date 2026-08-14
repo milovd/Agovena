@@ -15,6 +15,7 @@ use Agovena\Modules\Shipping\Models\ShippingMethod;
 use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\SubscriptionService;
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -165,6 +166,37 @@ test('staff without cancel or void permission cannot cancel an unpaid order', fu
         ->test(AdminOrderShow::class, ['order' => $order])
         ->call('cancelUnpaid')
         ->assertForbidden();
+});
+
+test('staff unpaid cancel requires recent password confirmation', function () {
+    $customer = Customer::factory()->create();
+    $product = Product::factory()->active()->create(['price_amount' => 1100]);
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+        'customer_id' => $customer->id,
+        'billing' => lifecycleBilling(),
+    ]);
+
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(AdminOrderShow::class, ['order' => $order])
+        ->call('cancelUnpaid')
+        ->assertSet('showingPasswordConfirmation', true);
+
+    expect($order->fresh()->status->value)->toBe('pending');
+
+    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+
+    Livewire::actingAs($staff)
+        ->test(AdminOrderShow::class, ['order' => $order])
+        ->call('cancelUnpaid')
+        ->assertHasNoErrors()
+        ->assertSet('showingPasswordConfirmation', false);
+
+    expect($order->fresh()->status->value)->toBe('cancelled');
 });
 
 test('stale unpaid orders are cancelled only when the grace setting is enabled', function () {

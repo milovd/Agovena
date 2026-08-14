@@ -64,6 +64,10 @@ final class Show extends Component
     {
         $this->authorizeCancelUnpaid();
 
+        if (! $this->requireRecentPassword('cancelUnpaid')) {
+            return;
+        }
+
         /** @var User $staff */
         $staff = Auth::user();
 
