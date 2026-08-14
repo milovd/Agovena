@@ -121,6 +121,45 @@ test('mixed carts combine delivery and configuration into fulfillment', function
         ->assertDontSee(__('storefront.checkout.steps.review'), false);
 });
 
+test('configurable checkout continues from configure without extra fields', function () {
+    $vps = Product::factory()->active()->create(['name' => 'VPS', 'price_amount' => 4000]);
+    $option = ProductOption::query()->create([
+        'product_id' => $vps->id,
+        'key' => 'os',
+        'label' => 'Operating system',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 1,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+    ProductOptionChoice::query()->create([
+        'product_option_id' => $option->id,
+        'value' => 'ubuntu',
+        'label' => 'Ubuntu',
+        'price_adjustment_amount' => 0,
+        'sort' => 1,
+        'is_active' => true,
+    ]);
+
+    app(CartService::class)->add($vps->id, 1, ['os' => 'ubuntu']);
+
+    Livewire::test(CheckoutPage::class)
+        ->assertSee(__('storefront.checkout.steps.configuration'))
+        ->set('customer_name', 'Config Buyer')
+        ->set('customer_email', 'config@example.com')
+        ->set('billing_name', 'Config Buyer')
+        ->set('billing_line1', 'Dam 1')
+        ->set('billing_city', 'Amsterdam')
+        ->set('billing_postal_code', '1012 JS')
+        ->set('billing_country', 'NL')
+        ->call('continueStep')
+        ->assertSet('step', CheckoutStep::Configuration->value)
+        ->call('continueStep')
+        ->assertSet('step', CheckoutStep::Payment->value);
+});
+
 test('checkout cannot skip ahead of an incomplete step', function () {
     $product = Product::factory()->active()->create(['price_amount' => 900]);
     app(CartService::class)->add($product->id, 1);

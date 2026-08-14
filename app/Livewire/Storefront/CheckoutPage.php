@@ -146,7 +146,6 @@ final class CheckoutPage extends Component
         }
 
         $this->propertyValues = $properties->emptyValues($properties->definitionsFor('checkout'), $customer);
-        $this->step = CheckoutStep::Details->value;
     }
 
     public function applySavedAddress(int $addressId): void
@@ -168,7 +167,10 @@ final class CheckoutPage extends Component
     {
         $requirements = $composer->compose($cart);
         $current = $this->resolvedStep($flow, $requirements);
-        $this->validate($this->rulesForStep($current, $properties));
+        $rules = $this->rulesForStep($current, $properties);
+        if ($rules !== []) {
+            $this->validate($rules);
+        }
         $this->markCompleted($current);
         $next = $flow->next($requirements, $current);
         if ($next === null) {

@@ -354,13 +354,22 @@
             </div>
         </div>
 
-        <aside class="store-summary store-checkout__aside" aria-label="{{ __('storefront.cart.summary_aria') }}">
-            <details class="store-checkout__summary-disclosure" open>
-                <summary class="store-checkout__summary-toggle">
-                    <span>{{ __('storefront.checkout.order_summary') }}</span>
-                    <strong>{{ \App\Support\MoneyFormatter::format($due) }}</strong>
-                </summary>
-                <div class="store-checkout__summary-body">
+        <aside
+            class="store-summary store-checkout__aside"
+            aria-label="{{ __('storefront.cart.summary_aria') }}"
+            x-data="{ open: false }"
+            :class="{ 'is-open': open }"
+        >
+            <button
+                type="button"
+                class="store-checkout__summary-toggle"
+                @click="open = !open"
+                :aria-expanded="open.toString()"
+            >
+                <span>{{ __('storefront.checkout.order_summary') }}</span>
+                <strong>{{ \App\Support\MoneyFormatter::format($due) }}</strong>
+            </button>
+            <div class="store-checkout__summary-body">
                     <h2 class="store-summary__title">{{ __('storefront.checkout.order_summary') }}</h2>
                     <ul class="store-summary-lines">
                         @foreach ($lines as $line)
@@ -374,11 +383,11 @@
                                 </span>
                                 <span class="store-summary-line__copy">
                                     <span class="store-summary-line__name">{{ $line->label }}</span>
-                                    <span class="store-summary-line__meta">{{ $line->quantity }} × {{ \App\Support\MoneyFormatter::format($line->unitPrice) }}</span>
+                                    <span class="store-summary-line__meta">{{ __('storefront.checkout.summary_qty_price', ['qty' => $line->quantity, 'price' => \App\Support\MoneyFormatter::format($line->unitPrice)]) }}</span>
                                     @if ($line->optionLabels !== [])
                                         <span class="store-summary-line__options">
                                             @foreach ($line->optionLabels as $option)
-                                                {{ $option['display'] }}@if (! $loop->last), @endif
+                                                {{ $option['label'] }}: {{ $option['display'] }}@if (! $loop->last); @endif
                                             @endforeach
                                         </span>
                                     @endif
@@ -443,7 +452,6 @@
                         </div>
                     </dl>
                 </div>
-            </details>
         </aside>
     </div>
 </div>

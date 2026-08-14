@@ -302,7 +302,10 @@
 
             <div class="store-header__actions">
                 @if ($reducedChrome)
-                    <a class="store-header__back" href="{{ route('storefront.cart') }}">{{ __('storefront.checkout.back_to_cart') }}</a>
+                    <a class="store-header__back" href="{{ route('storefront.cart') }}">
+                        <span class="store-header__back-full">{{ __('storefront.checkout.back_to_cart') }}</span>
+                        <span class="store-header__back-short">{{ __('storefront.checkout.back_to_cart_short') }}</span>
+                    </a>
                 @endif
                 @if ($showAccount)
                     @auth
