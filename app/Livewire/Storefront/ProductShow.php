@@ -64,10 +64,11 @@ final class ProductShow extends Component
         $config = $themes->config($theme);
         $product = $get->handle($this->slug);
 
-        $related = $list->handle($product->category_id)
-            ->where('id', '!=', $product->id)
-            ->take(4)
-            ->values();
+        $related = $list->handle(
+            categoryId: $product->category_id,
+            limit: 4,
+            excludeId: $product->id,
+        );
 
         $enableReviews = filter_var(
             app(SettingsRepository::class)->get('store', 'enable_reviews', true),

@@ -264,6 +264,9 @@ return [
         'section_empty_text' => 'Published products will appear in this section.',
         'empty_category_title' => 'No products in this category',
         'back_to_home' => 'Back to home',
+        'pagination' => 'Product pages',
+        'previous' => 'Previous',
+        'next' => 'Next',
     ],
 
     'home' => [

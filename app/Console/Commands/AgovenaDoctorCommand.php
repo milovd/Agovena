@@ -9,6 +9,8 @@ use App\Agovena\Installation\InstallationState;
 use App\Agovena\Installation\RequirementCheck;
 use App\Agovena\Operations\SchedulerHealth;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 final class AgovenaDoctorCommand extends Command
 {
@@ -125,6 +127,60 @@ final class AgovenaDoctorCommand extends Command
                 passed: ! $markerOnly && ! $dbWithoutMarker && ! $idMismatch,
                 required: false,
                 detail: $this->restoreDetail($markerOnly, $dbWithoutMarker, $idMismatch),
+            ),
+            ...$this->runtimeHealthChecks($env),
+        ];
+    }
+
+    /** @return list<RequirementCheck> */
+    private function runtimeHealthChecks(string $env): array
+    {
+        $logs = storage_path('logs');
+        $logsWritable = is_dir($logs) ? is_writable($logs) : is_writable(storage_path());
+        $failedJobs = Schema::hasTable('failed_jobs') ? (int) DB::table('failed_jobs')->count() : 0;
+        $hasAssets = is_file(public_path('build/manifest.json'))
+            || is_file(public_path('build/.vite/manifest.json'));
+        $privateServe = (bool) config('filesystems.disks.local.serve', false);
+        $storage = str_replace('\\', '/', storage_path());
+        $ephemeral = str_contains($storage, '/tmp/')
+            || str_ends_with($storage, '/tmp')
+            || str_contains(strtolower($storage), '/temp/');
+
+        return [
+            new RequirementCheck(
+                id: 'logs_writable',
+                label: 'installer.checks.logs_writable',
+                passed: $logsWritable,
+                required: true,
+                detail: $logs,
+            ),
+            new RequirementCheck(
+                id: 'failed_jobs',
+                label: 'installer.checks.failed_jobs',
+                passed: $failedJobs === 0,
+                required: false,
+                detail: (string) $failedJobs,
+            ),
+            new RequirementCheck(
+                id: 'frontend_assets',
+                label: 'installer.checks.frontend_assets',
+                passed: $env !== 'production' || $hasAssets,
+                required: false,
+                detail: $hasAssets ? 'public/build/manifest.json' : 'missing public/build (run npm run build, or ship a release artifact)',
+            ),
+            new RequirementCheck(
+                id: 'private_disk',
+                label: 'installer.checks.private_disk',
+                passed: ! $privateServe,
+                required: $env === 'production',
+                detail: 'filesystems.disks.local.serve='.($privateServe ? 'true' : 'false'),
+            ),
+            new RequirementCheck(
+                id: 'storage_persistent',
+                label: 'installer.checks.storage_persistent',
+                passed: ! $ephemeral,
+                required: false,
+                detail: $storage,
             ),
         ];
     }

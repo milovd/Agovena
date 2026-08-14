@@ -17,7 +17,6 @@ use App\Notifications\PaymentRecordedNotification;
 use App\Notifications\RefundProcessedNotification;
 use App\Notifications\SubscriptionCancelledNotification;
 use App\Notifications\TicketRepliedNotification;
-use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
@@ -137,13 +136,10 @@ test('commerce notifications are queued for async delivery', function () {
 });
 
 test('scheduler registers heartbeat renewals provisioning and unpaid cancel', function () {
-    $summary = collect(app(Schedule::class)->events())
-        ->map(fn ($event) => $event->command ?? $event->description ?? $event->getSummaryForDisplay())
-        ->implode("\n");
-
-    expect($summary)
-        ->toContain('process-subscription-renewals')
-        ->toContain('sync-provisioning')
-        ->toContain('cancel-stale-unpaid-orders')
-        ->toContain('prune-logs');
+    $this->artisan('schedule:list')
+        ->expectsOutputToContain('process-subscription-renewals')
+        ->expectsOutputToContain('sync-provisioning')
+        ->expectsOutputToContain('cancel-stale-unpaid-orders')
+        ->expectsOutputToContain('prune-logs')
+        ->assertSuccessful();
 });

@@ -39,11 +39,11 @@ final class CategoryShow extends Component
             ->map(fn ($id): int => (int) $id)
             ->all();
 
-        $products = $list->handle(
+        $products = $list->paginate(
             categoryIds: $categoryIds,
             search: trim($this->search) !== '' ? trim($this->search) : null,
             sort: $this->sort,
-            limit: 96,
+            perPage: 24,
         );
 
         $query = trim($this->search);

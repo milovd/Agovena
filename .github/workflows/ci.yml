@@ -178,13 +178,20 @@ jobs:
           mkdir -p storage/logs
           php vendor/bin/pest --configuration=phpunit.mariadb.xml --testsuite=Upgrade --log-junit storage/logs/mariadb-upgrade-junit.xml 2>&1 | tee storage/logs/mariadb-upgrade.log
 
+      - name: MariaDB concurrency tests
+        if: success() || failure()
+        run: |
+          set -o pipefail
+          mkdir -p storage/logs
+          php vendor/bin/pest --configuration=phpunit.mariadb.xml --testsuite=Concurrency --log-junit storage/logs/mariadb-concurrency-junit.xml 2>&1 | tee storage/logs/mariadb-concurrency.log
+
       - name: Annotate MariaDB failures
         if: failure()
         run: |
           python3 <<'PY'
           import os
           import xml.etree.ElementTree as ET
-          for path in ("storage/logs/mariadb-junit.xml", "storage/logs/mariadb-upgrade-junit.xml"):
+          for path in ("storage/logs/mariadb-junit.xml", "storage/logs/mariadb-upgrade-junit.xml", "storage/logs/mariadb-concurrency-junit.xml"):
               if not os.path.exists(path):
                   continue
               for case in ET.parse(path).iter("testcase"):
@@ -196,7 +203,7 @@ jobs:
                   name = f"{case.get('classname', '')}::{case.get('name', '')}"
                   msg = " ".join((node.get("message") or node.text or "failed").split())[:400]
                   print(f"::error title={name}::{msg}")
-          for log in ("storage/logs/mariadb-feature.log", "storage/logs/mariadb-upgrade.log"):
+          for log in ("storage/logs/mariadb-feature.log", "storage/logs/mariadb-upgrade.log", "storage/logs/mariadb-concurrency.log"):
               if os.path.exists(log):
                   print(f"::group::{log}")
                   print(open(log, encoding="utf-8", errors="replace").read()[-8000:])
@@ -211,5 +218,7 @@ jobs:
           path: |
             storage/logs/mariadb-junit.xml
             storage/logs/mariadb-upgrade-junit.xml
+            storage/logs/mariadb-concurrency-junit.xml
             storage/logs/mariadb-feature.log
             storage/logs/mariadb-upgrade.log
+            storage/logs/mariadb-concurrency.log

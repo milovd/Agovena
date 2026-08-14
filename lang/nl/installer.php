@@ -140,5 +140,10 @@ return [
         'scheduler' => 'Scheduler-heartbeat',
         'https' => 'HTTPS in productie',
         'install_restore' => 'Installatielock komt overeen met opslagmarker',
+        'failed_jobs' => 'Mislukte jobs',
+        'logs_writable' => 'Logmap schrijfbaar',
+        'frontend_assets' => 'Vooraf gebouwde frontend-assets',
+        'private_disk' => 'Privé-opslag wordt niet publiek geserveerd',
+        'storage_persistent' => 'Opslagpad lijkt persistent',
     ],
 ];

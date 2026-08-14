@@ -6,6 +6,7 @@ use App\Livewire\Admin\Currencies\Index;
 use App\Livewire\Admin\Settings\EditGroup;
 use App\Models\Currency;
 use App\Support\MoneyFormatter;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -104,4 +105,14 @@ test('branding page can set favicon from logo path without merging settings keys
 
     expect($settings->get('branding', 'logo_path'))->toBe('branding/logo.png')
         ->and($settings->get('branding', 'favicon_path'))->toBe('branding/logo.png');
+});
+
+test('branding uploads reject svg files', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(EditGroup::class, ['group' => 'branding'])
+        ->set('uploads.logo_path', UploadedFile::fake()->create('logo.svg', 20, 'image/svg+xml'))
+        ->call('save')
+        ->assertHasErrors(['uploads.logo_path']);
 });

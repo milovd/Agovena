@@ -4,7 +4,7 @@ use App\Agovena\Installation\InstallationState;
 use Tests\TestCase;
 use Tests\UpgradeTestCase;
 
-pest()->extend(TestCase::class)->in('Feature', 'Unit');
+pest()->extend(TestCase::class)->in('Feature', 'Unit', 'Concurrency');
 pest()->extend(UpgradeTestCase::class)->in('Upgrade');
 
 pest()->beforeEach(function (): void {
@@ -17,4 +17,10 @@ pest()->beforeEach(function (): void {
     if ($state->notInstalled()) {
         $state->markInstalled();
     }
-})->in('Feature');
+})->in('Feature', 'Concurrency');
+
+pest()->beforeEach(function (): void {
+    if (config('database.default') !== 'mysql') {
+        test()->markTestSkipped('MariaDB concurrency suite');
+    }
+})->in('Concurrency');

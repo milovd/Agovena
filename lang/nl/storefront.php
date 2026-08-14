@@ -264,6 +264,9 @@ return [
         'section_empty_text' => 'Gepubliceerde producten verschijnen in deze sectie.',
         'empty_category_title' => 'Geen producten in deze categorie',
         'back_to_home' => 'Terug naar de homepage',
+        'pagination' => 'Productpagina’s',
+        'previous' => 'Vorige',
+        'next' => 'Volgende',
     ],
 
     'home' => [

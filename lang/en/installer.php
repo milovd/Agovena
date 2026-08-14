@@ -140,5 +140,10 @@ return [
         'scheduler' => 'Scheduler heartbeat',
         'https' => 'HTTPS in production',
         'install_restore' => 'Install lock matches storage marker',
+        'failed_jobs' => 'Failed jobs',
+        'logs_writable' => 'Log directory writable',
+        'frontend_assets' => 'Prebuilt frontend assets',
+        'private_disk' => 'Private storage is not publicly served',
+        'storage_persistent' => 'Storage path looks persistent',
     ],
 ];

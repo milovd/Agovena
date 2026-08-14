@@ -105,6 +105,19 @@ test('cart lines show a placeholder when the product image file is missing', fun
         ->assertDontSee(__('common.update'), false);
 });
 
+test('long names and zero prices still render on the product page', function () {
+    $name = str_repeat('Aurora Lantern ', 12).'XL';
+    $product = Product::factory()->active()->create([
+        'name' => $name,
+        'price_amount' => 0,
+    ]);
+
+    $this->get(route('storefront.product', $product->slug))
+        ->assertOk()
+        ->assertSee($name, false)
+        ->assertDontSee('SQLSTATE', false);
+});
+
 test('checkout keeps the storefront header and bundled logo', function () {
     $product = Product::factory()->active()->create(['price_amount' => 1500]);
     app(CartService::class)->add($product->id, 1);

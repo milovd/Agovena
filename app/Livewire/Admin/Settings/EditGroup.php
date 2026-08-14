@@ -65,7 +65,7 @@ final class EditGroup extends Component
         foreach ($fields as $field) {
             $rules['values.'.$field->key] = $this->rulesFor($field);
             if ($field->type === 'image') {
-                $rules['uploads.'.$field->key] = ['nullable', 'image', 'max:2048'];
+                $rules['uploads.'.$field->key] = ['nullable', 'file', 'mimes:jpeg,jpg,png,webp,gif', 'max:2048'];
             }
         }
 

@@ -22,7 +22,7 @@ final class SuggestStorefrontProducts
 
         return Product::query()
             ->active()
-            ->with('category')
+            ->with(['category', 'images'])
             ->where(function ($builder) use ($term): void {
                 $builder
                     ->where('name', 'like', '%'.$term.'%')

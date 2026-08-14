@@ -203,3 +203,17 @@ test('staff can install a module from composer on the admin page', function () {
 
     expect(app(ModuleManager::class)->isInstalled('sample'))->toBeTrue();
 });
+
+test('malformed package manifests fail without breaking the application boot', function () {
+    $dir = storage_path('app/packages/staging/broken-manifest');
+    File::ensureDirectoryExists($dir);
+    File::put($dir.DIRECTORY_SEPARATOR.'module.json', '{not-json');
+
+    expect(fn () => app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Path,
+        locator: $dir,
+    )))->toThrow(ValidationException::class);
+
+    expect(app(ModuleManager::class)->isInstalled('broken-manifest'))->toBeFalse();
+});

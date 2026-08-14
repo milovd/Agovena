@@ -34,7 +34,7 @@ final class SchedulerHealth
 
     public function isRequired(): bool
     {
-        if ($this->modules->isEnabled('subscriptions')) {
+        if ($this->modules->isEnabled('subscriptions') || $this->modules->isEnabled('provisioning')) {
             return true;
         }
 

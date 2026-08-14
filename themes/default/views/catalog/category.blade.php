@@ -38,5 +38,6 @@
             'products' => $products,
             'showExcerpt' => $themeConfig?->bool('catalog.show_excerpt', true) ?? true,
         ])
+        @include('theme::partials.pagination', ['paginator' => $products])
     @endif
 </section>

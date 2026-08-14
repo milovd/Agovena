@@ -2014,6 +2014,48 @@ button.store-header__utility[aria-expanded="true"] {
   margin: var(--theme-space-5) 0 0;
 }
 
+.store-pagination {
+  margin-top: var(--theme-space-8);
+}
+
+.store-pagination .pagination {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--theme-space-2);
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.store-pagination .pagination > li > a,
+.store-pagination .pagination > li > span,
+.store-pagination .page-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.5rem;
+  padding: 0 var(--theme-space-3);
+  color: var(--theme-color-text);
+  text-decoration: none;
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-md);
+  background: var(--theme-color-surface);
+}
+
+.store-pagination .pagination .active > span,
+.store-pagination .pagination .active > a,
+.store-pagination .page-item.active .page-link {
+  color: var(--theme-color-on-accent, #fff);
+  background: var(--theme-color-accent);
+  border-color: var(--theme-color-accent);
+}
+
+.store-pagination .pagination .disabled > span,
+.store-pagination .page-item.disabled .page-link {
+  color: var(--theme-color-text-muted);
+  pointer-events: none;
+}
+
 .store-flash {
   padding: var(--theme-space-3) var(--theme-space-4);
   margin-bottom: var(--theme-space-5);
