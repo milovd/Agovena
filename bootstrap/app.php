@@ -42,6 +42,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('agovena:cancel-stale-unpaid-orders')
             ->hourly()
             ->withoutOverlapping(30);
+        $schedule->command('agovena:prune-logs')
+            ->daily()
+            ->withoutOverlapping(120);
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
