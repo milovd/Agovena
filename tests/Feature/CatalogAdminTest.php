@@ -9,6 +9,7 @@ use App\Livewire\Admin\Products\Index;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -151,4 +152,14 @@ test('product referenced by order items cannot be deleted', function () {
         ->toThrow(ValidationException::class);
 
     expect(Product::query()->whereKey($product->id)->exists())->toBeTrue();
+});
+
+test('product gallery uploads reject svg files', function () {
+    $staff = $this->createStaff();
+    $product = Product::factory()->active()->create();
+
+    Livewire::actingAs($staff)
+        ->test(Edit::class, ['product' => $product])
+        ->set('uploads', [UploadedFile::fake()->create('evil.svg', 20, 'image/svg+xml')])
+        ->assertHasErrors(['uploads.0']);
 });

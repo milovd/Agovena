@@ -1,0 +1,15 @@
+{
+    "id": "broken-migrate",
+    "name": "Broken Migrate",
+    "version": "1.0.0",
+    "description": "Fixture Module whose migrations intentionally fail.",
+    "author": "Agovena",
+    "agovena": "^0.1",
+    "provider": "Agovena\\Modules\\BrokenMigrate\\BrokenMigrateServiceProvider",
+    "dependencies": [],
+    "autoload": {
+        "psr-4": {
+            "Agovena\\Modules\\BrokenMigrate\\": "src/"
+        }
+    }
+}

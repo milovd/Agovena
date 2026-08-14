@@ -271,8 +271,8 @@ final class Wizard extends Component
     private function advanceFromBranding(): void
     {
         $this->validate([
-            'logo' => ['nullable', 'image', 'max:2048'],
-            'favicon' => ['nullable', 'image', 'max:2048'],
+            'logo' => ['nullable', 'file', 'mimes:jpeg,jpg,png,webp,gif', 'max:2048'],
+            'favicon' => ['nullable', 'file', 'mimes:jpeg,jpg,png,webp,gif', 'max:2048'],
         ]);
 
         $this->step = 'theme';

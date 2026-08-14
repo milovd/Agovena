@@ -109,7 +109,12 @@ final class ModuleManager
         $row->enabled = false;
         $row->save();
 
-        $this->runModuleMigrations($manifest);
+        try {
+            $this->runModuleMigrations($manifest);
+        } catch (\Throwable $exception) {
+            $row->delete();
+            throw $exception;
+        }
 
         return $row->fresh() ?? $row;
     }
@@ -278,11 +283,19 @@ final class ModuleManager
             return;
         }
 
-        Artisan::call('migrate', [
-            '--path' => $this->relativePath($path),
-            '--force' => true,
-        ]);
-        RecoversTestTransaction::afterDdl();
+        $exitCode = 1;
+        try {
+            $exitCode = Artisan::call('migrate', [
+                '--path' => $this->relativePath($path),
+                '--force' => true,
+            ]);
+        } finally {
+            RecoversTestTransaction::afterDdl();
+        }
+
+        if ($exitCode !== 0) {
+            throw new RuntimeException("Module [{$manifest->id}] migrations failed with exit code {$exitCode}.");
+        }
     }
 
     private function relativePath(string $absolute): string

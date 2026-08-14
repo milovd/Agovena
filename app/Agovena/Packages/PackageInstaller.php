@@ -52,10 +52,15 @@ final class PackageInstaller
         $package->is_bundled = false;
         $package->save();
 
-        if ($manifest['kind'] === PackageKind::Module) {
-            $this->modules->install($manifest['id']);
-        } else {
-            $this->extensions->install($manifest['id']);
+        try {
+            if ($manifest['kind'] === PackageKind::Module) {
+                $this->modules->install($manifest['id']);
+            } else {
+                $this->extensions->install($manifest['id']);
+            }
+        } catch (\Throwable $exception) {
+            $this->rollbackFailedInstall($package, $destination, $manifest['kind'], $manifest['id']);
+            throw $exception;
         }
 
         return $package->fresh() ?? $package;
@@ -194,6 +199,36 @@ final class PackageInstaller
                 'package' => __('admin.packages.cannot_replace_bundled', ['id' => $id]),
             ]);
         }
+    }
+
+    private function rollbackFailedInstall(
+        AgovenaPackage $package,
+        string $destination,
+        PackageKind $kind,
+        string $agovenaId,
+    ): void {
+        try {
+            if ($kind === PackageKind::Module) {
+                $this->modules->uninstall($agovenaId, purgeData: false);
+            } else {
+                $this->extensions->uninstall($agovenaId, purgeData: false);
+            }
+        } catch (\Throwable) {
+            // Best-effort cleanup after a failed install.
+        }
+
+        $package->delete();
+
+        $root = $this->normalize($this->installRoot($kind));
+        $resolved = realpath($destination);
+        if ($resolved !== false) {
+            $normalized = $this->normalize($resolved);
+            if ($normalized !== $root && str_starts_with($normalized, $root.DIRECTORY_SEPARATOR)) {
+                File::deleteDirectory($resolved);
+            }
+        }
+
+        $this->refreshManagers();
     }
 
     private function purgeFiles(AgovenaPackage $package): void

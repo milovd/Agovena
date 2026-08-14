@@ -32,13 +32,17 @@ PHP `upload_max_filesize` / `post_max_size` and Nginx `client_max_body_size` / A
 3. Create a MariaDB database and user.
 4. `cp .env.example .env` and set `APP_URL`, database, and `APP_KEY` (`php artisan key:generate`).
 5. `composer install --no-dev --optimize-autoloader`
-6. If this tree has no `public/build` (source checkout, not a release), run `npm ci && npm run build` once. **Releases should ship prebuilt assets.**
+6. If this tree has no `public/build` (source checkout, not a release), run `npm ci && npm run build` once. **Releases should ship prebuilt assets** (see `scripts/build-release.sh`).
 7. Make `storage` and `bootstrap/cache` writable by the FPM/queue user.
 8. Point Nginx/Apache at `public/` (see `nginx.conf` / `apache.conf`). Use `nginx-https.conf` for TLS. Match FPM with `php-fpm-pool.conf`.
 9. Open `/install` or run `php artisan agovena:install`.
 10. Enable `deploy/systemd/agovena-queue.service`.
 11. Install `deploy/cron` for `schedule:run`.
 12. Terminate TLS at Nginx/Apache. Set `APP_URL=https://…`. Optionally `TRUSTED_PROXIES` for a reverse proxy you control — never `*` on the public internet.
+
+## Release artifacts
+
+`scripts/build-release.sh` produces a tarball that includes `vendor/` (no-dev) and `public/build`. Merchants extracting a release should not need Node/npm merely to start Agovena.
 
 The browser installer is **application setup** (owner, store, modules, theme). It is not a Linux provisioning panel.
 

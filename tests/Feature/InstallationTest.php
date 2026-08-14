@@ -15,6 +15,7 @@ use App\Agovena\Theme\ThemeManager;
 use App\Livewire\Installer\Wizard;
 use App\Models\Product;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -363,4 +364,12 @@ test('official Agovena logo is independent from merchant branding', function () 
         ->assertOk()
         ->assertSee('/vendor/agovena/logo.png', false)
         ->assertDontSee('storage/branding', false);
+});
+
+test('installer branding rejects svg uploads', function () {
+    Livewire::test(Wizard::class)
+        ->set('step', 'branding')
+        ->set('logo', UploadedFile::fake()->create('logo.svg', 20, 'image/svg+xml'))
+        ->call('next')
+        ->assertHasErrors(['logo']);
 });

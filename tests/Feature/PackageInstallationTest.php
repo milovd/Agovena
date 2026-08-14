@@ -235,3 +235,17 @@ test('composer failure leaves no package registration behind', function () {
         ->and(app(ModuleManager::class)->isInstalled('sample'))->toBeFalse()
         ->and(is_dir(storage_path('app/packages/modules/sample')))->toBeFalse();
 });
+
+test('migration failure rolls back package registration and files', function () {
+    $path = base_path('tests/fixtures/packages/modules/broken-migrate');
+
+    expect(fn () => app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Path,
+        locator: $path,
+    )))->toThrow(RuntimeException::class);
+
+    expect(AgovenaPackage::query()->where('agovena_id', 'broken-migrate')->exists())->toBeFalse()
+        ->and(app(ModuleManager::class)->isInstalled('broken-migrate'))->toBeFalse()
+        ->and(is_dir(storage_path('app/packages/modules/broken-migrate')))->toBeFalse();
+});
