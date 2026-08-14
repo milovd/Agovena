@@ -114,17 +114,20 @@ jobs:
       - name: Fresh migrations
         run: php artisan migrate --force
 
+      # Collision's `artisan test` always injects phpunit.xml. A second
+      # --configuration makes Pest warn and exit 1 even when tests pass.
       - name: MariaDB feature tests
         run: |
           set -o pipefail
           mkdir -p storage/logs
-          php artisan test --configuration=phpunit.mariadb.xml --testsuite=Unit,Feature --log-junit storage/logs/mariadb-junit.xml 2>&1 | tee storage/logs/mariadb-feature.log
+          php vendor/bin/pest --configuration=phpunit.mariadb.xml --testsuite=Unit,Feature --log-junit storage/logs/mariadb-junit.xml 2>&1 | tee storage/logs/mariadb-feature.log
 
       - name: MariaDB upgrade tests
+        if: success() || failure()
         run: |
           set -o pipefail
           mkdir -p storage/logs
-          php artisan test --configuration=phpunit.mariadb.xml --testsuite=Upgrade --log-junit storage/logs/mariadb-upgrade-junit.xml 2>&1 | tee storage/logs/mariadb-upgrade.log
+          php vendor/bin/pest --configuration=phpunit.mariadb.xml --testsuite=Upgrade --log-junit storage/logs/mariadb-upgrade-junit.xml 2>&1 | tee storage/logs/mariadb-upgrade.log
 
       - name: Annotate MariaDB failures
         if: failure()
