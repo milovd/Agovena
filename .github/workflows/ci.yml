@@ -68,6 +68,55 @@ jobs:
         if: matrix.php == '8.3'
         run: npm audit --audit-level=high
 
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, bcmath, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Install Chromium
+        run: npx playwright install chromium --with-deps
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
+          sed -i 's/^# DB_DATABASE=.*/DB_DATABASE=database\/database.sqlite/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=database\/database.sqlite/' .env
+          sed -i 's/^APP_URL=.*/APP_URL=http:\/\/127.0.0.1:8000/' .env
+          php artisan migrate --force
+          php artisan agovena:install --no-interaction --name="E2E Owner" --email="e2e-owner@example.test" --password="password" --site-name="Agovena" --locale=en --timezone=UTC --currency=EUR --theme=default --presets=physical,digital,hosting,subscriptions,events
+          php e2e/prepare.php
+
+      - name: Browser tests
+        run: npx playwright test --project=chromium-desktop
+        env:
+          E2E_BASE_URL: http://127.0.0.1:8000
+
   mariadb:
     runs-on: ubuntu-latest
     services:

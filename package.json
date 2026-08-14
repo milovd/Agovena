@@ -4,9 +4,12 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test:e2e": "playwright test",
+        "test:e2e:review": "node e2e/capture-review.mjs"
     },
     "devDependencies": {
+        "@playwright/test": "^1.62.1",
         "laravel-vite-plugin": "^3.1",
         "vite": "^8.0.0"
     }

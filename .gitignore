@@ -95,3 +95,7 @@ CLAUDE.md
 /tmp/
 /temp/
 *.log
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
