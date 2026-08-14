@@ -50,7 +50,7 @@ final class SecurityHeaders
         $connect = "'self'";
 
         if (app()->environment('local') && (bool) config('app.debug')) {
-            $vite = 'http://localhost:5173 http://127.0.0.1:5173 ws://localhost:5173 ws://127.0.0.1:5173';
+            $vite = $this->viteDevOrigins();
             $script .= ' '.$vite;
             $style .= ' '.$vite;
             $connect .= ' '.$vite;
@@ -74,5 +74,28 @@ final class SecurityHeaders
         }
 
         return implode('; ', $directives);
+    }
+
+    private function viteDevOrigins(): string
+    {
+        $origins = [
+            'http://localhost:5173',
+            'http://127.0.0.1:5173',
+            'http://[::1]:5173',
+            'ws://localhost:5173',
+            'ws://127.0.0.1:5173',
+            'ws://[::1]:5173',
+        ];
+
+        $hot = public_path('hot');
+        if (is_file($hot)) {
+            $url = trim((string) file_get_contents($hot));
+            if ($url !== '' && preg_match('#^https?://#i', $url) === 1) {
+                $origins[] = $url;
+                $origins[] = (string) preg_replace('#^http#i', 'ws', $url);
+            }
+        }
+
+        return implode(' ', array_unique($origins));
     }
 }
