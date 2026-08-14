@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * MySQL/MariaDB DDL implicitly commits the test transaction. Laravel's
- * nesting counter is then stale, so later DB::transaction() / lockForUpdate
- * raise PDOException instead of running.
+ * nesting counter is then stale, so later DB::transaction() raises PDOException.
+ * Reset the counter without opening a new transaction so RefreshDatabase can
+ * still see the implicit commit and remigrate the next test.
  */
 final class RecoversTestTransaction
 {
@@ -26,6 +27,5 @@ final class RecoversTestTransaction
         }
 
         $connection->setPdo($pdo);
-        $connection->beginTransaction();
     }
 }
