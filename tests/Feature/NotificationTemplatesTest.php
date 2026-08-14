@@ -10,7 +10,15 @@ use App\Livewire\Admin\System\FailedJobs;
 use App\Models\EmailLog;
 use App\Models\NotificationTemplate;
 use App\Models\Order;
+use App\Notifications\CreditNoteIssuedNotification;
+use App\Notifications\InvoiceIssuedNotification;
 use App\Notifications\OrderPlaced;
+use App\Notifications\PaymentRecordedNotification;
+use App\Notifications\RefundProcessedNotification;
+use App\Notifications\SubscriptionCancelledNotification;
+use App\Notifications\TicketRepliedNotification;
+use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -110,4 +118,32 @@ test('failed jobs admin page renders empty state', function () {
         ->test(FailedJobs::class)
         ->assertOk()
         ->assertSee(__('admin.failed_jobs.empty_text'), false);
+});
+
+test('commerce notifications are queued for async delivery', function () {
+    $queued = [
+        OrderPlaced::class,
+        InvoiceIssuedNotification::class,
+        CreditNoteIssuedNotification::class,
+        PaymentRecordedNotification::class,
+        RefundProcessedNotification::class,
+        SubscriptionCancelledNotification::class,
+        TicketRepliedNotification::class,
+    ];
+
+    foreach ($queued as $class) {
+        expect(is_subclass_of($class, ShouldQueue::class))->toBeTrue($class);
+    }
+});
+
+test('scheduler registers heartbeat renewals provisioning and unpaid cancel', function () {
+    $summary = collect(app(Schedule::class)->events())
+        ->map(fn ($event) => $event->command ?? $event->description ?? $event->getSummaryForDisplay())
+        ->implode("\n");
+
+    expect($summary)
+        ->toContain('process-subscription-renewals')
+        ->toContain('sync-provisioning')
+        ->toContain('cancel-stale-unpaid-orders')
+        ->toContain('prune-logs');
 });

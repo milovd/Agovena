@@ -135,6 +135,36 @@ test('paid digital order grants entitlements and download limit is enforced', fu
         ->assertForbidden();
 });
 
+test('digital downloads stay on the private disk and reject other customers', function () {
+    enableDigitalModule();
+    $owner = Customer::factory()->create();
+    $intruder = Customer::factory()->create();
+    $product = makeDigitalProduct();
+    $asset = attachDigitalAsset($product, downloadLimit: 5);
+
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => $owner->name,
+        'customer_email' => $owner->email,
+        'customer_id' => $owner->id,
+        'billing' => billingForDigital(),
+    ]);
+    app(RecordManualPayment::class)->handle($order, $this->createStaff(), 'DIG-2');
+
+    $entitlement = DigitalEntitlement::query()->where('order_id', $order->id)->first();
+    expect($entitlement)->not->toBeNull()
+        ->and($asset->disk)->toBe('local');
+
+    $this->get('/storage/'.$asset->path)->assertNotFound();
+
+    $this->get(route('customer.downloads.file', $entitlement->token))
+        ->assertRedirect(route('login'));
+
+    $this->actingAs($intruder->user)
+        ->get(route('customer.downloads.file', $entitlement->token))
+        ->assertNotFound();
+});
+
 test('mixed physical and digital order only grants digital entitlements for digital lines', function () {
     enableDigitalModule();
     app(ModuleManager::class)->enable('shipping');
