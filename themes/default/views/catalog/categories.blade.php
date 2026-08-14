@@ -15,8 +15,9 @@
                 <li>
                     <a class="store-category-card" href="{{ route('storefront.category', $category->slug) }}">
                         <span class="store-category-card__media" aria-hidden="true">
-                            @if ($category->image_path)
-                                <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($category->image_path) }}" alt="" loading="lazy">
+                            @php $categoryImageUrl = \App\Agovena\Media\PublicMedia::url($category->image_path); @endphp
+                            @if ($categoryImageUrl)
+                                <img src="{{ $categoryImageUrl }}" alt="" loading="lazy">
                             @else
                                 <span class="store-category-card__placeholder">{{ mb_substr($category->name, 0, 1) }}</span>
                             @endif

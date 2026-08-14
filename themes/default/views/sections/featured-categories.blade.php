@@ -21,8 +21,9 @@
                         <span class="store-promo-tile__meta">{{ trans_choice('storefront.categories.items', (int) $category->products_count, ['count' => (int) $category->products_count]) }}</span>
                     </span>
                     <span class="store-promo-tile__media" aria-hidden="true">
-                        @if ($category->image_path)
-                            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($category->image_path) }}" alt="" loading="lazy">
+                        @php $categoryImageUrl = \App\Agovena\Media\PublicMedia::url($category->image_path); @endphp
+                        @if ($categoryImageUrl)
+                            <img src="{{ $categoryImageUrl }}" alt="" loading="lazy">
                         @else
                             <span class="store-promo-tile__fallback">{{ mb_substr($category->name, 0, 1) }}</span>
                         @endif

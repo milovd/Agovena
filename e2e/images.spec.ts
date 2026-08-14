@@ -1,11 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { addProductToCart, assertImageNotBroken } from './helpers';
 
-test('storefront logo and missing product images never render as broken', async ({ page }) => {
+test('storefront logo and images never render as broken', async ({ page }) => {
     await page.goto('/');
-    const logo = page.locator('.store-brand__logo').first();
-    await expect(logo).toBeVisible();
-    await assertImageNotBroken(logo);
+    await expect(page.locator('.store-brand__logo').first()).toBeVisible();
+    await assertImageNotBroken(page.locator('img'));
 
     await addProductToCart(page, 'e2e-digital');
     await page.goto('/cart');

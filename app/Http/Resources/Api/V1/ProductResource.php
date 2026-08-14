@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Agovena\Media\PublicMedia;
 use App\Models\Product;
 use App\Support\MoneyFormatter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @mixin Product
@@ -22,9 +22,13 @@ final class ProductResource extends JsonResource
         $product = $this->resource;
         $product->loadMissing(['category', 'images', 'capabilities', 'purchaseOptions.choices']);
 
-        $images = $product->images->map(static fn ($image): string => Storage::disk('public')->url($image->path))->values();
-        if ($images->isEmpty() && is_string($product->image_path) && $product->image_path !== '') {
-            $images = collect([Storage::disk('public')->url($product->image_path)]);
+        $images = $product->images
+            ->map(static fn ($image): ?string => PublicMedia::url($image->path))
+            ->filter()
+            ->values();
+        if ($images->isEmpty()) {
+            $primary = PublicMedia::url($product->image_path);
+            $images = $primary === null ? collect() : collect([$primary]);
         }
 
         return [

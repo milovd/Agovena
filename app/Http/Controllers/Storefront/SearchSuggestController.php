@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Storefront;
 
 use App\Agovena\Catalog\SuggestStorefrontProducts;
+use App\Agovena\Media\ProductMedia;
 use App\Support\MoneyFormatter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 final class SearchSuggestController
 {
@@ -18,16 +18,12 @@ final class SearchSuggestController
         $products = $suggest->handle($query);
 
         $items = $products->map(function ($product): array {
-            $image = $product->image_path
-                ? Storage::disk('public')->url($product->image_path)
-                : null;
-
             return [
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'url' => route('storefront.product', $product->slug),
                 'price' => MoneyFormatter::format($product->price_amount, $product->currency),
-                'image' => $image,
+                'image' => ProductMedia::primaryUrl($product),
                 'category' => $product->category?->name,
             ];
         })->values();

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Agovena\Media\PublicMedia;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 /**
  * @mixin Category
@@ -24,9 +24,7 @@ final class CategoryResource extends JsonResource
             'id' => $category->id,
             'name' => $category->name,
             'slug' => $category->slug,
-            'image' => is_string($category->image_path) && $category->image_path !== ''
-                ? Storage::disk('public')->url($category->image_path)
-                : null,
+            'image' => PublicMedia::url($category->image_path),
             'products_count' => (int) ($category->products_count ?? 0),
             'children' => $category->relationLoaded('children')
                 ? $category->children->map(static fn (Category $child): array => [

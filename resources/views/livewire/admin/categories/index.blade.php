@@ -78,7 +78,7 @@
                             :hint="__('admin.categories.image_hint')"
                             :button-label="__('admin.categories.upload_image')"
                             :replace-label="__('admin.categories.replace_image')"
-                            :preview-url="($existingImagePath && ! $removeExistingImage) ? \Illuminate\Support\Facades\Storage::disk('public')->url($existingImagePath) : null"
+                            :preview-url="(! $removeExistingImage) ? \App\Agovena\Media\PublicMedia::url($existingImagePath) : null"
                             remove-wire-click="clearImage"
                             loading-target="image"
                             wire:model="image"
@@ -118,8 +118,9 @@
                     @foreach ($categories as $category)
                         <tr wire:key="category-{{ $category->id }}">
                             <td class="ag-table__thumb-col">
-                                @if ($category->image_path)
-                                    <img class="ag-thumb" src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($category->image_path) }}" alt="" width="40" height="40" loading="lazy">
+                                @php $categoryThumbUrl = \App\Agovena\Media\PublicMedia::url($category->image_path); @endphp
+                                @if ($categoryThumbUrl)
+                                    <img class="ag-thumb" src="{{ $categoryThumbUrl }}" alt="" width="40" height="40" loading="lazy">
                                 @else
                                     <span class="ag-thumb ag-thumb--empty" aria-hidden="true"></span>
                                 @endif

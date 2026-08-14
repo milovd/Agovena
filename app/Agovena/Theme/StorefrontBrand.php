@@ -28,7 +28,7 @@ final class StorefrontBrand
         $configured = $this->settings->get('branding', 'logo_path');
         $url = is_string($configured) ? PublicMedia::url($configured) : null;
 
-        return $url ?? asset(self::BUNDLED_LOGO);
+        return $url ?? '/'.ltrim(self::BUNDLED_LOGO, '/');
     }
 
     public function faviconUrl(): ?string

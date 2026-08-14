@@ -191,7 +191,10 @@
                             @php $isPrimary = $product->image_path === $image->path; @endphp
                             <li class="ag-media-tile {{ $isPrimary ? 'is-primary' : '' }}" wire:key="img-{{ $image->id }}">
                                 <div class="ag-media-tile__preview">
-                                    <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($image->path) }}" alt="" width="112" height="112">
+                                    @php $previewUrl = \App\Agovena\Media\PublicMedia::url($image->path); @endphp
+                                    @if ($previewUrl)
+                                        <img src="{{ $previewUrl }}" alt="" width="112" height="112">
+                                    @endif
                                     @if ($isPrimary)
                                         <span class="ag-media-tile__badge">{{ __('admin.products.form.primary_badge') }}</span>
                                     @endif

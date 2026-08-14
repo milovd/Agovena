@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Public-disk URLs only when the file is actually present.
+ *
+ * URLs are origin-relative (`/storage/...`) so `<img src>` stays same-origin
+ * when APP_URL (localhost vs 127.0.0.1) does not match the browser.
  */
 final class PublicMedia
 {
@@ -22,11 +25,10 @@ final class PublicMedia
             return null;
         }
 
-        $disk = Storage::disk('public');
-        if (! $disk->exists($path)) {
+        if (! Storage::disk('public')->exists($path)) {
             return null;
         }
 
-        return $disk->url($path);
+        return '/storage/'.implode('/', array_map('rawurlencode', explode('/', $path)));
     }
 }

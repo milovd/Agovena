@@ -79,7 +79,7 @@
                         :label="__($field->label)"
                         :hint="__('admin.settings.image_hint')"
                         accept="image/*"
-                        :preview-url="! empty($values[$field->key]) ? \Illuminate\Support\Facades\Storage::disk('public')->url($values[$field->key]) : null"
+                        :preview-url="\App\Agovena\Media\PublicMedia::url($values[$field->key] ?? null)"
                         loading-target="uploads.{{ $field->key }}"
                         :disabled="! $canUpdate"
                         wire:model="uploads.{{ $field->key }}"

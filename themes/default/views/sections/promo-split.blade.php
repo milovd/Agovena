@@ -4,7 +4,7 @@
     if (is_string($image) && $image !== '') {
         $imageUrl = str_starts_with($image, 'http')
             ? $image
-            : \Illuminate\Support\Facades\Storage::disk('public')->url($image);
+            : \App\Agovena\Media\PublicMedia::url($image);
     }
 @endphp
 

@@ -32,7 +32,7 @@ test('storefront header uses branding logo when configured', function () {
     $this->get('/')
         ->assertOk()
         ->assertSee('store-brand__logo', false)
-        ->assertSee(Storage::disk('public')->url($path), false);
+        ->assertSee('/storage/'.$path, false);
 });
 
 test('catalog search filters products by name', function () {

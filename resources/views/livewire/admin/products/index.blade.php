@@ -93,10 +93,11 @@
                     @foreach ($products as $product)
                         <tr wire:key="product-{{ $product->id }}">
                             <td class="ag-table__thumb-col">
-                                @if ($product->image_path)
+                                @php $thumbUrl = \App\Agovena\Media\PublicMedia::url($product->image_path); @endphp
+                                @if ($thumbUrl)
                                     <img
                                         class="ag-thumb"
-                                        src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($product->image_path) }}"
+                                        src="{{ $thumbUrl }}"
                                         alt=""
                                         width="40"
                                         height="40"

@@ -4,11 +4,11 @@
     if (is_string($image) && $image !== '') {
         $imageUrl = str_starts_with($image, 'http')
             ? $image
-            : \Illuminate\Support\Facades\Storage::disk('public')->url($image);
+            : \App\Agovena\Media\PublicMedia::url($image);
     }
 
     $spotlight = collect($spotlightProducts ?? [])
-        ->filter(fn ($product) => filled($product->image_path))
+        ->filter(fn ($product) => filled(\App\Agovena\Media\ProductMedia::primaryUrl($product)))
         ->take(3)
         ->values();
 
@@ -62,7 +62,7 @@
                     tabindex="-1"
                 >
                     <img
-                        src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($product->image_path) }}"
+                        src="{{ \App\Agovena\Media\ProductMedia::primaryUrl($product) }}"
                         alt=""
                         loading="eager"
                     >
