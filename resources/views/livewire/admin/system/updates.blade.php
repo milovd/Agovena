@@ -37,6 +37,31 @@
     </section>
 
     <section class="admin-panel">
+        <h3 class="admin-panel__title">{{ __('admin.updates.providers_heading') }}</h3>
+        @if ($providerHealth === [])
+            <p class="ag-muted">{{ __('admin.updates.providers_empty') }}</p>
+        @else
+            <dl class="ag-dl">
+                @foreach ($providerHealth as $provider)
+                    <div wire:key="provider-health-{{ $provider['id'] }}">
+                        <dt>{{ $provider['name'] }}</dt>
+                        <dd>
+                            @if ($provider['ok'])
+                                {{ __('admin.updates.providers_ok') }}
+                            @else
+                                {{ __('admin.updates.providers_fail') }}
+                            @endif
+                            @if ($provider['message'] !== '')
+                                — {{ $provider['message'] }}
+                            @endif
+                        </dd>
+                    </div>
+                @endforeach
+            </dl>
+        @endif
+    </section>
+
+    <section class="admin-panel">
         <h3 class="admin-panel__title">{{ __('admin.updates.packages_heading') }}</h3>
         @if ($packageUpdates === [])
             <p class="ag-muted">{{ __('admin.updates.packages_current') }}</p>

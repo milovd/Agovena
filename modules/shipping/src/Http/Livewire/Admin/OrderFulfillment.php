@@ -128,7 +128,10 @@ final class OrderFulfillment extends Component
             return null;
         }
 
-        return Storage::disk('local')->download($path, 'shipment-'.$shipment->id.'.pdf');
+        return Storage::disk('local')->download($path, 'shipment-'.$shipment->id.'.pdf', [
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     public function render()

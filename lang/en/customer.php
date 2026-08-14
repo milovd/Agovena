@@ -37,6 +37,19 @@ return [
         'verified' => 'Your email address has been verified.',
         'reset_password_subject' => 'Reset your password',
         'logout' => 'Sign out',
+        'two_factor' => [
+            'title' => 'Two-factor authentication',
+            'heading' => 'Enter your authentication code',
+            'lede' => 'Open your authenticator app and enter the 6-digit code, or use a recovery code.',
+            'code' => 'Authentication code',
+            'recovery_code' => 'Recovery code',
+            'verify' => 'Continue',
+            'use_recovery' => 'Use a recovery code',
+            'use_code' => 'Use an authenticator code',
+            'invalid' => 'That code is invalid.',
+            'expired' => 'Your sign-in session expired. Sign in again.',
+            'throttle' => 'Too many attempts. Please try again in :seconds seconds.',
+        ],
     ],
 
     'account' => [

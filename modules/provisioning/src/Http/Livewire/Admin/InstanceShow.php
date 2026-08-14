@@ -10,6 +10,7 @@ use Agovena\Modules\Provisioning\ProvisioningService;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Provisioning\Contracts\ProvisionerLifecycle;
 use App\Agovena\Provisioning\ProvisionerRegistry;
+use App\Livewire\Concerns\RequiresRecentPassword;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -17,6 +18,7 @@ use Livewire\Component;
 final class InstanceShow extends Component
 {
     use AuthorizesRequests;
+    use RequiresRecentPassword;
 
     public ServiceInstance $instance;
 
@@ -107,6 +109,10 @@ final class InstanceShow extends Component
     public function terminate(ProvisioningOrchestrator $orchestrator, ProvisioningService $provisioning): void
     {
         $this->authorize('provisioning.manage');
+
+        if (! $this->requireRecentPassword('terminate')) {
+            return;
+        }
         try {
             $this->instance = $this->usesLifecycle()
                 ? $orchestrator->terminate($this->instance)

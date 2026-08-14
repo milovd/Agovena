@@ -433,6 +433,15 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'security',
+            label: 'admin.nav.security',
+            group: 'admin.nav_groups.administration',
+            href: '/admin/security',
+            icon: 'shield',
+            sort: 215,
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'audit',
             label: 'admin.nav.audit',
             group: 'admin.nav_groups.administration',

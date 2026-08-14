@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Customer\Auth;
 
+use App\Agovena\Auth\TotpTwoFactor;
 use App\Agovena\Customer\CustomerRegistration;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\User;
@@ -22,6 +23,12 @@ final class Login extends Component
 
     public function mount(): void
     {
+        if (session()->has(TotpTwoFactor::SESSION_PENDING_ID)) {
+            $this->redirect(route('two-factor.challenge'), navigate: true);
+
+            return;
+        }
+
         if (Auth::check()) {
             $this->redirect($this->destination(Auth::user()), navigate: true);
         }
@@ -59,7 +66,21 @@ final class Login extends Component
         RateLimiter::clear($key);
         session()->regenerate();
 
-        $this->redirect($this->destination(Auth::user()), navigate: true);
+        $user = Auth::user();
+        if ($user instanceof User && $user->hasTwoFactorEnabled()) {
+            $intended = (string) (session()->pull('url.intended') ?: '');
+            Auth::logout();
+            session([
+                TotpTwoFactor::SESSION_PENDING_ID => $user->id,
+                TotpTwoFactor::SESSION_PENDING_REMEMBER => $this->remember,
+                TotpTwoFactor::SESSION_PENDING_INTENDED => $intended,
+            ]);
+            $this->redirect(route('two-factor.challenge'), navigate: true);
+
+            return;
+        }
+
+        $this->redirect($this->destination($user), navigate: true);
     }
 
     public function render(ThemeManager $themes, CustomerRegistration $registration)

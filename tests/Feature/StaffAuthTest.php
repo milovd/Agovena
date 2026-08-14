@@ -23,7 +23,7 @@ test('user can sign in and reach admin dashboard when authorized', function () {
     $staff = $this->createStaff([
         'email' => 'owner@example.com',
         'password' => 'password',
-    ]);
+    ], withTwoFactor: false);
 
     $this->get('/admin')->assertRedirect(route('login'));
 
@@ -34,6 +34,8 @@ test('user can sign in and reach admin dashboard when authorized', function () {
         ->assertRedirect(route('admin.dashboard'));
 
     $this->assertAuthenticatedAs($staff);
+
+    $this->get('/admin')->assertRedirect(route('admin.security.two-factor'));
 });
 
 test('staff without dashboard permission is forbidden', function () {

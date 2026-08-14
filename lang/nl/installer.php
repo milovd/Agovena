@@ -130,5 +130,6 @@ return [
         'queue_connection' => 'Wachtrijverbinding',
         'mail_default' => 'E-mailtransport',
         'scheduler' => 'Scheduler-heartbeat',
+        'https' => 'HTTPS in productie',
     ],
 ];

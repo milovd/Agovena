@@ -7,6 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
+        "bacon/bacon-qr-code": "^3.0",
         "barryvdh/laravel-dompdf": "3.1.2",
         "composer/semver": "^3.4",
         "laravel/framework": "^13.8",
@@ -14,6 +15,7 @@
         "laravel/tinker": "^3.0",
         "livewire/livewire": "^4.4",
         "mollie/mollie-api-php": "^3.13",
+        "pragmarx/google2fa": "^8.0",
         "spatie/laravel-permission": "^6.0",
         "stripe/stripe-php": "^17.0"
     },

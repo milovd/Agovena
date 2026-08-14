@@ -7,6 +7,7 @@ namespace App\Livewire\Admin\Invoices;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Invoices\VoidInvoice;
 use App\Agovena\Payments\RecordRefund;
+use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\Invoice;
 use App\Models\User;
 use App\Support\MoneyFormatter;
@@ -18,6 +19,7 @@ use Livewire\Component;
 final class Show extends Component
 {
     use AuthorizesRequests;
+    use RequiresRecentPassword;
 
     public Invoice $invoice;
 
@@ -74,6 +76,10 @@ final class Show extends Component
     public function recordRefund(RecordRefund $action): void
     {
         $this->authorize('payments.refund');
+
+        if (! $this->requireRecentPassword('recordRefund')) {
+            return;
+        }
 
         $payment = $this->invoice->order?->payment;
         abort_unless($payment !== null, 404);

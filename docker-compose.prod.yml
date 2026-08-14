@@ -1,0 +1,102 @@
+# Production-oriented Compose starting point. Not an OS image and not live-verified
+# on a specific host OS. Does not run migrations on start.
+#
+# Install: docker compose -f docker-compose.prod.yml exec app php artisan agovena:install
+# Upgrade: docker compose -f docker-compose.prod.yml exec app php artisan agovena:upgrade
+
+services:
+  web:
+    image: nginx:1.27-alpine
+    depends_on:
+      - app
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fpm
+    volumes:
+      - .:/var/www/html
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: mysql
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_DATABASE: agovena
+      DB_USERNAME: agovena
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+      SESSION_DRIVER: redis
+    depends_on:
+      - mariadb
+      - redis
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fpm
+    command: php artisan queue:work --sleep=1 --tries=3
+    volumes:
+      - .:/var/www/html
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: mysql
+      DB_HOST: mariadb
+      DB_DATABASE: agovena
+      DB_USERNAME: agovena
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+    depends_on:
+      - mariadb
+      - redis
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.fpm
+    command: php artisan schedule:work
+    volumes:
+      - .:/var/www/html
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: mysql
+      DB_HOST: mariadb
+      DB_DATABASE: agovena
+      DB_USERNAME: agovena
+      DB_PASSWORD: secret
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+      CACHE_STORE: redis
+    depends_on:
+      - mariadb
+      - redis
+
+  mariadb:
+    image: mariadb:11.4
+    environment:
+      MYSQL_DATABASE: agovena
+      MYSQL_USER: agovena
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: rootsecret
+    volumes:
+      - agovena-mariadb:/var/lib/mysql
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - agovena-redis:/data
+
+volumes:
+  agovena-mariadb:
+  agovena-redis:

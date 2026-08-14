@@ -119,4 +119,5 @@
     @endcan
 
     <p><a href="{{ route('admin.provisioning.index') }}">{{ __('provisioning::admin.back') }}</a></p>
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Support;
 
+use App\Agovena\Auth\TotpTwoFactor;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Models\User;
@@ -15,7 +16,7 @@ trait CreatesStaff
     /**
      * @param  list<string>|null  $permissions
      */
-    protected function createStaff(array $attributes = [], ?array $permissions = null): User
+    protected function createStaff(array $attributes = [], ?array $permissions = null, bool $withTwoFactor = true): User
     {
         app(SyncRegisteredPermissions::class)();
 
@@ -27,16 +28,21 @@ trait CreatesStaff
 
         if ($permissions === null) {
             $user->assignRole('owner');
-
-            return $user;
+        } else {
+            $role = Role::findOrCreate('staff_limited', User::GUARD);
+            foreach ($permissions as $permission) {
+                Permission::findOrCreate($permission, User::GUARD);
+            }
+            $role->syncPermissions($permissions);
+            $user->syncRoles([$role]);
         }
 
-        $role = Role::findOrCreate('staff_limited', User::GUARD);
-        foreach ($permissions as $permission) {
-            Permission::findOrCreate($permission, User::GUARD);
+        if ($withTwoFactor) {
+            $user->forceFill([
+                'two_factor_secret' => app(TotpTwoFactor::class)->generateSecret(),
+                'two_factor_confirmed_at' => now(),
+            ])->save();
         }
-        $role->syncPermissions($permissions);
-        $user->syncRoles([$role]);
 
         return $user;
     }

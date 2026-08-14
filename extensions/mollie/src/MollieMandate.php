@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Agovena\Extensions\Mollie;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * Extension-owned mapping from Agovena customers to Mollie customer/mandate ids.
@@ -14,8 +15,8 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $customer_email
  * @property string $mollie_customer_id
  * @property string|null $mandate_id
- * @property \Illuminate\Support\Carbon|null $created_at
- * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property Carbon|null $created_at
+ * @property Carbon|null $updated_at
  */
 final class MollieMandate extends Model
 {

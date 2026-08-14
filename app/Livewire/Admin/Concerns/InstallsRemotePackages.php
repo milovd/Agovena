@@ -8,10 +8,13 @@ use App\Agovena\Packages\PackageInstaller;
 use App\Agovena\Packages\PackageSource;
 use App\Enums\PackageKind;
 use App\Enums\PackageSourceType;
+use App\Livewire\Concerns\RequiresRecentPassword;
 use Illuminate\Validation\ValidationException;
 
 trait InstallsRemotePackages
 {
+    use RequiresRecentPassword;
+
     public string $packageName = '';
 
     public string $versionConstraint = '*';
@@ -66,6 +69,10 @@ trait InstallsRemotePackages
     public function purgePackage(string $id, PackageInstaller $installer): void
     {
         $this->authorize($this->packageManagePermission());
+
+        if (! $this->requireRecentPassword('purgePackage', ['id' => $id])) {
+            return;
+        }
 
         try {
             $installer->purge($this->packageKind(), $id);

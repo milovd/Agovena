@@ -130,5 +130,6 @@ return [
         'queue_connection' => 'Queue connection',
         'mail_default' => 'Mail transport',
         'scheduler' => 'Scheduler heartbeat',
+        'https' => 'HTTPS in production',
     ],
 ];

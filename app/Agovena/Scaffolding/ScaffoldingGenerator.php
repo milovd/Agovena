@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Scaffolding;
 
+use App\Agovena\Extensions\ExtensionCategory;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -37,9 +38,10 @@ final class ScaffoldingGenerator
         return $root;
     }
 
-    public function extension(string $id, bool $force): string
+    public function extension(string $id, bool $force, string $category = 'other'): string
     {
         $this->assertSafeId($id);
+        $category = $this->assertExtensionCategory($category);
         $root = base_path('extensions/'.$id);
         $this->assertWritable($root, $force);
         $class = Str::studly($id);
@@ -51,7 +53,7 @@ final class ScaffoldingGenerator
             'version' => '0.1.0',
             'description' => '',
             'author' => '',
-            'category' => 'integration',
+            'category' => $category,
             'agovena' => '^0.1',
             'provider' => $namespace.'\\'.$class.'ServiceProvider',
             'dependencies' => [],
@@ -86,6 +88,21 @@ final class ScaffoldingGenerator
         if (! preg_match('/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/', $id)) {
             throw new InvalidArgumentException('IDs must use lowercase letters, numbers, and single hyphens.');
         }
+    }
+
+    private function assertExtensionCategory(string $category): string
+    {
+        $resolved = ExtensionCategory::tryFrom($category);
+        if ($resolved === null) {
+            $allowed = implode(', ', array_map(
+                static fn (ExtensionCategory $case): string => $case->value,
+                ExtensionCategory::cases(),
+            ));
+
+            throw new InvalidArgumentException("Unknown extension category [{$category}]. Use one of: {$allowed}.");
+        }
+
+        return $resolved->value;
     }
 
     private function assertWritable(string $root, bool $force): void

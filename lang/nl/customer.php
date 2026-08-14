@@ -37,6 +37,19 @@ return [
         'verified' => 'Je e-mailadres is bevestigd.',
         'reset_password_subject' => 'Reset je wachtwoord',
         'logout' => 'Uitloggen',
+        'two_factor' => [
+            'title' => 'Tweestapsverificatie',
+            'heading' => 'Voer je authenticatiecode in',
+            'lede' => 'Open je authenticator-app en voer de 6-cijferige code in, of gebruik een herstelcode.',
+            'code' => 'Authenticatiecode',
+            'recovery_code' => 'Herstelcode',
+            'verify' => 'Doorgaan',
+            'use_recovery' => 'Herstelcode gebruiken',
+            'use_code' => 'Authenticatorcode gebruiken',
+            'invalid' => 'Die code is ongeldig.',
+            'expired' => 'Je aanmeldsessie is verlopen. Log opnieuw in.',
+            'throttle' => 'Te veel pogingen. Probeer het opnieuw over :seconds seconden.',
+        ],
     ],
 
     'account' => [

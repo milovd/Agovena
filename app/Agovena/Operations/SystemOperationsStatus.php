@@ -16,6 +16,7 @@ final class SystemOperationsStatus
         private readonly ApplicationSchemaStatus $schema,
         private readonly SchedulerHealth $scheduler,
         private readonly PackageCatalog $packages,
+        private readonly ProviderHealthSummary $providers,
     ) {}
 
     /**
@@ -43,6 +44,7 @@ final class SystemOperationsStatus
             'mail' => (string) config('mail.default', ''),
             'failedJobs' => $this->failedJobCount(),
             'packageUpdates' => $updates,
+            'providerHealth' => $this->providers->rows(),
         ];
     }
 

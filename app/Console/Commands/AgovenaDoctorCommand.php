@@ -106,6 +106,13 @@ final class AgovenaDoctorCommand extends Command
                 required: false,
                 detail: $last?->toIso8601String() ?? 'none',
             ),
+            new RequirementCheck(
+                id: 'https',
+                label: 'installer.checks.https',
+                passed: $env !== 'production' || str_starts_with((string) config('app.url'), 'https://'),
+                required: false,
+                detail: (string) config('app.url'),
+            ),
         ];
     }
 }

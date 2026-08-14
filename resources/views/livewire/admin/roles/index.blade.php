@@ -115,4 +115,5 @@
         </table>
     </div>
     {{ $roles->links() }}
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

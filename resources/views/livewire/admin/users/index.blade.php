@@ -73,4 +73,5 @@
         </table>
     </div>
     {{ $users->links() }}
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

@@ -46,4 +46,17 @@ return [
         'composer_timeout' => 180,
         'composer_binary' => env('AGOVENA_COMPOSER_BINARY'),
     ],
+
+    'security' => [
+        'privileged_two_factor' => filter_var(env('AGOVENA_PRIVILEGED_2FA', true), FILTER_VALIDATE_BOOLEAN),
+        'password_timeout' => (int) env('AGOVENA_PASSWORD_TIMEOUT', 900),
+        'headers' => [
+            'enabled' => filter_var(env('AGOVENA_SECURITY_HEADERS', true), FILTER_VALIDATE_BOOLEAN),
+            'csp' => env('AGOVENA_CSP'),
+            'hsts' => filter_var(env('AGOVENA_HSTS', true), FILTER_VALIDATE_BOOLEAN),
+            'hsts_max_age' => (int) env('AGOVENA_HSTS_MAX_AGE', 31536000),
+            'frame' => env('AGOVENA_FRAME_OPTIONS', 'DENY'),
+            'referrer' => env('AGOVENA_REFERRER_POLICY', 'strict-origin-when-cross-origin'),
+        ],
+    ],
 ];

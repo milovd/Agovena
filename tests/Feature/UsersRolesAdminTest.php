@@ -1,5 +1,6 @@
 <?php
 
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Users\Index as UsersIndex;
 use App\Models\User;
@@ -19,6 +20,8 @@ test('owner can list and create users with a role', function () {
         ->assertOk()
         ->assertSee(__('admin.users.title'), false);
 
+    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+
     Livewire::actingAs($staff)
         ->test(UsersIndex::class)
         ->call('create')
@@ -36,6 +39,8 @@ test('owner can list and create users with a role', function () {
 
 test('owner can create a role with permissions', function () {
     $staff = $this->createStaff();
+
+    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
 
     Livewire::actingAs($staff)
         ->test(RolesIndex::class)
@@ -55,6 +60,8 @@ test('owner can create a role with permissions', function () {
 test('owner role cannot be deleted', function () {
     $staff = $this->createStaff();
     $owner = Role::findOrCreate('owner', 'web');
+
+    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
 
     Livewire::actingAs($staff)
         ->test(RolesIndex::class)

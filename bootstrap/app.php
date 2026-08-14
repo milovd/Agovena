@@ -5,6 +5,8 @@ use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Http\Middleware\EnsureAgovenaInstalled;
 use App\Http\Middleware\EnsureCanAccessAdmin;
 use App\Http\Middleware\EnsureCustomerEmailIsVerified;
+use App\Http\Middleware\EnsurePrivilegedTwoFactor;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use App\Models\User;
 use Illuminate\Auth\AuthenticationException;
@@ -34,6 +36,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('agovena:process-subscription-renewals')
             ->everyMinute()
             ->withoutOverlapping(10);
+        $schedule->command('agovena:sync-provisioning')
+            ->everyMinute()
+            ->withoutOverlapping(10);
         $schedule->command('agovena:cancel-stale-unpaid-orders')
             ->hourly()
             ->withoutOverlapping(30);
@@ -45,16 +50,19 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->web(append: [
             SetLocale::class,
+            SecurityHeaders::class,
         ]);
         $middleware->api(prepend: [
             EnsureAgovenaInstalled::class,
         ]);
         $middleware->api(append: [
             SetLocale::class,
+            SecurityHeaders::class,
         ]);
         $middleware->alias([
             'customer.verified' => EnsureCustomerEmailIsVerified::class,
             'admin.access' => EnsureCanAccessAdmin::class,
+            'admin.2fa' => EnsurePrivilegedTwoFactor::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'webhooks/*',

@@ -10,14 +10,18 @@ use Throwable;
 
 final class MakeExtensionCommand extends Command
 {
-    protected $signature = 'agovena:make-extension {id} {--force}';
+    protected $signature = 'agovena:make-extension {id} {--category=other : payment_gateway, provisioning, shipping, authentication, storage, notifications, analytics, tax, or other} {--force}';
 
     protected $description = 'Create an Agovena extension scaffold';
 
     public function handle(ScaffoldingGenerator $generator): int
     {
         try {
-            $path = $generator->extension((string) $this->argument('id'), (bool) $this->option('force'));
+            $path = $generator->extension(
+                (string) $this->argument('id'),
+                (bool) $this->option('force'),
+                (string) $this->option('category'),
+            );
         } catch (Throwable $exception) {
             $this->error($exception->getMessage());
 

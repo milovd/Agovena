@@ -186,4 +186,5 @@
             </div>
         </div>
     @endif
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

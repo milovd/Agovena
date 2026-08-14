@@ -217,4 +217,5 @@
             </ul>
         </section>
     @endif
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

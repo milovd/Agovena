@@ -1,3 +1,7 @@
+# Local/dev Compose stack. PHP built-in server is not a production web front.
+# For a self-host starting point with php-fpm + nginx, see docker-compose.prod.yml.
+# Do not run migrations automatically on container start; use install/upgrade commands.
+
 services:
   app:
     build:

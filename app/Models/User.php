@@ -28,6 +28,9 @@ use Spatie\Permission\Traits\HasRoles;
  * @property Carbon|null $email_verified_at
  * @property Carbon|null $anonymized_at
  * @property Carbon|null $deletion_requested_at
+ * @property string|null $two_factor_secret
+ * @property array<int, string>|null $two_factor_recovery_codes
+ * @property Carbon|null $two_factor_confirmed_at
  */
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
@@ -113,6 +116,11 @@ class User extends Authenticatable implements MustVerifyEmail
     public function canAccessAdmin(): bool
     {
         return $this->getAllPermissions()->isNotEmpty();
+    }
+
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && filled($this->two_factor_secret);
     }
 
     public function sendEmailVerificationNotification(): void

@@ -34,6 +34,7 @@ use App\Livewire\Admin\Products\Create as ProductsCreate;
 use App\Livewire\Admin\Products\Edit as ProductsEdit;
 use App\Livewire\Admin\Products\Index as ProductsIndex;
 use App\Livewire\Admin\Roles\Index as RolesIndex;
+use App\Livewire\Admin\Security\TwoFactor as AdminTwoFactor;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
 use App\Livewire\Admin\Store\Presets as StorePresets;
@@ -44,6 +45,7 @@ use App\Livewire\Admin\Taxes\Index as TaxesIndex;
 use App\Livewire\Admin\Tickets\Index as TicketsIndex;
 use App\Livewire\Admin\Tickets\Show as TicketsShow;
 use App\Livewire\Admin\Users\Index as UsersIndex;
+use App\Livewire\Auth\TwoFactorChallenge;
 use App\Livewire\Customer\Account\Addresses as CustomerAddresses;
 use App\Livewire\Customer\Account\ApiTokens as CustomerApiTokens;
 use App\Livewire\Customer\Account\CreditNoteShow as CustomerCreditNoteShow;
@@ -95,6 +97,7 @@ Route::post('/webhooks/payments/{gateway}', PaymentWebhookController::class)
 
 Route::middleware('guest')->group(function (): void {
     Route::get('/login', CustomerLogin::class)->name('login');
+    Route::get('/login/two-factor', TwoFactorChallenge::class)->name('two-factor.challenge');
     Route::get('/register', CustomerRegister::class)->name('register');
     Route::get('/forgot-password', CustomerForgotPassword::class)->name('password.request');
     Route::get('/reset-password/{token}', CustomerResetPassword::class)->name('password.reset');
@@ -136,7 +139,7 @@ Route::middleware('auth')->prefix('account')->name('customer.')->group(function 
     });
 });
 
-Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access'])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access', 'admin.2fa'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/products', ProductsIndex::class)->name('products.index');
     Route::get('/products/create', ProductsCreate::class)->name('products.create');
@@ -145,6 +148,7 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access'])->prefix
     Route::get('/currencies', CurrenciesIndex::class)->name('currencies.index');
     Route::get('/users', UsersIndex::class)->name('users.index');
     Route::get('/roles', RolesIndex::class)->name('roles.index');
+    Route::get('/security', AdminTwoFactor::class)->name('security.two-factor');
     Route::redirect('/staff', '/admin/users')->name('staff.index');
     Route::get('/orders', OrdersIndex::class)->name('orders.index');
     Route::get('/orders/{order}', OrdersShow::class)->name('orders.show');

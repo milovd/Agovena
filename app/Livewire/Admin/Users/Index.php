@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Users;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,7 @@ use Spatie\Permission\Models\Role;
 final class Index extends Component
 {
     use AuthorizesRequests;
+    use RequiresRecentPassword;
     use WithPagination;
 
     public bool $showForm = false;
@@ -44,6 +46,10 @@ final class Index extends Component
     public function save(SyncRegisteredPermissions $sync): void
     {
         $this->authorize('users.create');
+
+        if (! $this->requireRecentPassword('save')) {
+            return;
+        }
         $sync();
 
         $roleNames = Role::query()

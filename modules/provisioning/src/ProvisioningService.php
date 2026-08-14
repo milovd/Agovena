@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Agovena\Modules\Provisioning;
 
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
+use Agovena\Modules\Provisioning\Jobs\ProvisionServiceInstance;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use App\Agovena\Notifications\SendsCataloguedMail;
+use App\Agovena\Provisioning\Contracts\PollsProvisionedInstances;
 use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
@@ -15,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
-final class ProvisioningService
+final class ProvisioningService implements PollsProvisionedInstances
 {
     public function createFromPaidOrder(Order $order): void
     {
@@ -78,15 +80,36 @@ final class ProvisioningService
 
     public function provisionPendingForOrder(Order $order): void
     {
-        $orchestrator = app(ProvisioningOrchestrator::class);
         $pending = ServiceInstance::query()
             ->where('order_id', $order->id)
             ->where('status', ServiceInstanceStatus::Pending)
             ->get();
 
         foreach ($pending as $instance) {
-            $orchestrator->provision($instance);
+            ProvisionServiceInstance::dispatch($instance->id);
         }
+    }
+
+    public function pollProvisioning(): int
+    {
+        $orchestrator = app(ProvisioningOrchestrator::class);
+        $instances = ServiceInstance::query()
+            ->where('status', ServiceInstanceStatus::Provisioning)
+            ->orderBy('id')
+            ->limit(50)
+            ->get();
+
+        $synced = 0;
+        foreach ($instances as $instance) {
+            try {
+                $orchestrator->sync($instance);
+                $synced++;
+            } catch (ValidationException) {
+                continue;
+            }
+        }
+
+        return $synced;
     }
 
     public function markProvisioning(ServiceInstance $instance): ServiceInstance

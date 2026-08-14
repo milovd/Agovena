@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Roles;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
@@ -17,6 +18,7 @@ use Spatie\Permission\Models\Role;
 final class Index extends Component
 {
     use AuthorizesRequests;
+    use RequiresRecentPassword;
     use WithPagination;
 
     public bool $showForm = false;
@@ -58,6 +60,10 @@ final class Index extends Component
             $this->authorize('roles.create');
         } else {
             $this->authorize('roles.update');
+        }
+
+        if (! $this->requireRecentPassword('save')) {
+            return;
         }
 
         $sync();
@@ -110,6 +116,10 @@ final class Index extends Component
     public function delete(int $roleId): void
     {
         $this->authorize('roles.delete');
+
+        if (! $this->requireRecentPassword('delete', ['roleId' => $roleId])) {
+            return;
+        }
         $role = Role::query()->where('guard_name', User::GUARD)->findOrFail($roleId);
 
         if ($role->name === 'owner') {

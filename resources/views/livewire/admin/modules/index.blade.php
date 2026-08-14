@@ -103,4 +103,5 @@
         <p class="ag-muted">{{ __('admin.modules.disable_preserves_data') }}</p>
         <p class="ag-muted">{{ __('admin.packages.uninstall_vs_purge') }}</p>
     @endif
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>
