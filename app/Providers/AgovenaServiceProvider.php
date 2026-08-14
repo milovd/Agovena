@@ -46,6 +46,7 @@ use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
+use App\Agovena\Theme\StorefrontBrand;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\TicketStatus;
 use App\Events\CreditNoteIssued;
@@ -165,27 +166,13 @@ class AgovenaServiceProvider extends ServiceProvider
         View::addNamespace('theme', $theme->viewsPath);
 
         View::composer(['layouts.admin', 'layouts.admin-guest', 'theme::layouts.storefront', 'theme::layouts.checkout'], function ($view): void {
-            /** @var SettingsRepository $settings */
-            $settings = $this->app->make(SettingsRepository::class);
-            $siteName = (string) $settings->get('general', 'site_name', config('app.name', 'Agovena'));
-            $logoPath = $settings->get('branding', 'logo_path');
-            $faviconPath = $settings->get('branding', 'favicon_path');
-            $view->with('siteName', $siteName);
-            $view->with('brandingLogoPath', is_string($logoPath) && $logoPath !== '' ? $logoPath : null);
-            $favicon = is_string($faviconPath) && $faviconPath !== '' ? $faviconPath : null;
-            if ($favicon === null && is_string($logoPath) && $logoPath !== '') {
-                $favicon = $logoPath;
-            }
-            $view->with('brandingFaviconPath', $favicon);
+            $brand = $this->app->make(StorefrontBrand::class);
+            $view->with('siteName', $brand->siteName());
+            $view->with('brandingLogoUrl', $brand->logoUrl());
+            $view->with('brandingFaviconUrl', $brand->faviconUrl());
         });
 
-        View::composer('theme::layouts.checkout', function ($view): void {
-            if (! array_key_exists('themeConfig', $view->getData())) {
-                $view->with('themeConfig', $this->app->make(ThemeManager::class)->config());
-            }
-        });
-
-        View::composer('theme::layouts.storefront', function ($view): void {
+        View::composer(['theme::layouts.storefront', 'theme::layouts.checkout'], function ($view): void {
             $cartCount = 0;
             try {
                 $cartCount = $this->app->make(CartService::class)->itemCount();

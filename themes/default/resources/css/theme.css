@@ -3,4 +3,5 @@
 @import './settings/_tokens.css';
 @import './generic/_reset.css';
 @import './components/_store.css';
+@import './components/_checkout.css';
 @import './utilities/_a11y.css';

@@ -21,5 +21,7 @@ final readonly class PricedCartLine
         public string $lineKey = '',
         public array $selections = [],
         public array $optionLabels = [],
+        public ?string $slug = null,
+        public ?string $imageUrl = null,
     ) {}
 }

@@ -38,7 +38,7 @@ test('digital checkout omits delivery from the progress indicator', function () 
     Livewire::test(CheckoutPage::class)
         ->assertSee(__('storefront.checkout.steps.details'))
         ->assertSee(__('storefront.checkout.steps.payment'))
-        ->assertSee(__('storefront.checkout.steps.review'))
+        ->assertDontSee(__('storefront.checkout.steps.review'), false)
         ->assertDontSee(__('storefront.checkout.steps.delivery'), false)
         ->assertSet('step', CheckoutStep::Details->value);
 });
@@ -58,9 +58,8 @@ test('checkout continues from details to payment for a digital cart', function (
         ->call('continueStep')
         ->assertSet('step', CheckoutStep::Payment->value)
         ->assertSee(__('storefront.checkout.hosted_payment_note'))
-        ->call('continueStep')
-        ->assertSet('step', CheckoutStep::Review->value)
-        ->assertSee('Ada Guest');
+        ->assertSee(__('storefront.checkout.place_order'))
+        ->assertDontSee(__('storefront.checkout.steps.review'), false);
 });
 
 test('physical checkout includes delivery and keeps totals on the server', function () {
@@ -86,7 +85,7 @@ test('physical checkout includes delivery and keeps totals on the server', funct
     expect($component->get('shipping_quote_key'))->toStartWith('method:');
 });
 
-test('mixed carts add a configuration step after delivery', function () {
+test('mixed carts combine delivery and configuration into fulfillment', function () {
     checkoutEnableShipping();
     $shirt = Product::factory()->active()->create(['name' => 'Shirt', 'price_amount' => 2000]);
     app(ProductCapabilityManager::class)->enable($shirt, 'physical');
@@ -118,8 +117,8 @@ test('mixed carts add a configuration step after delivery', function () {
     $cart->add($vps->id, 1, ['location' => 'ams']);
 
     Livewire::test(CheckoutPage::class)
-        ->assertSee(__('storefront.checkout.steps.configuration'))
-        ->assertSee(__('storefront.checkout.steps.delivery'));
+        ->assertSee(__('storefront.checkout.steps.fulfillment'))
+        ->assertDontSee(__('storefront.checkout.steps.review'), false);
 });
 
 test('checkout cannot skip ahead of an incomplete step', function () {
@@ -129,7 +128,7 @@ test('checkout cannot skip ahead of an incomplete step', function () {
     Livewire::test(CheckoutPage::class)
         ->set('step', CheckoutStep::Payment->value)
         ->assertSet('step', CheckoutStep::Details->value)
-        ->call('goToStep', CheckoutStep::Review->value)
+        ->call('goToStep', CheckoutStep::Payment->value)
         ->assertSet('step', CheckoutStep::Details->value);
 });
 
@@ -174,10 +173,10 @@ test('changing country invalidates delivery without clearing contact details', f
         ->assertSet('step', CheckoutStep::Payment->value)
         ->set('billing_country', 'BE')
         ->assertSet('customer_name', 'Ship Buyer')
-        ->assertSet('step', CheckoutStep::Details->value);
+        ->assertSet('step', CheckoutStep::Delivery->value);
 });
 
-test('digital checkout review places a manual order without collecting card data', function () {
+test('digital checkout payment places a manual order without collecting card data', function () {
     $product = Product::factory()->active()->create(['price_amount' => 2200]);
     app(CartService::class)->add($product->id, 1);
 
@@ -194,14 +193,12 @@ test('digital checkout review places a manual order without collecting card data
         ->assertSee(__('storefront.checkout.hosted_payment_note'))
         ->assertDontSee('CVC', false)
         ->assertDontSee('CVV', false)
-        ->call('continueStep')
-        ->assertSet('step', CheckoutStep::Review->value)
         ->assertSee(__('storefront.checkout.place_order'))
         ->call('placeOrder')
         ->assertRedirect();
 });
 
-test('physical checkout walks details delivery payment and review', function () {
+test('physical checkout walks details delivery and payment', function () {
     checkoutEnableShipping();
     $product = Product::factory()->active()->create(['price_amount' => 2500]);
     app(ProductCapabilityManager::class)->enable($product, 'physical');
@@ -221,8 +218,6 @@ test('physical checkout walks details delivery payment and review', function () 
         ->assertSee('Standard')
         ->call('continueStep')
         ->assertSet('step', CheckoutStep::Payment->value)
-        ->call('continueStep')
-        ->assertSet('step', CheckoutStep::Review->value)
         ->assertSee(__('storefront.checkout.place_order'))
         ->call('placeOrder')
         ->assertRedirect();

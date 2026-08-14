@@ -5,7 +5,8 @@
         $galleryPaths = collect([$product->image_path]);
     }
     $galleryUrls = $galleryPaths
-        ->map(fn (string $path) => \Illuminate\Support\Facades\Storage::disk('public')->url($path))
+        ->map(fn (string $path) => \App\Agovena\Media\PublicMedia::url($path))
+        ->filter()
         ->values()
         ->all();
     $reviewCount = 0;

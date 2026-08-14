@@ -57,6 +57,7 @@ return [
         'summary_aria' => 'Order summary',
         'subtotal' => 'Subtotal',
         'checkout' => 'Checkout',
+        'remove_item' => 'Remove :name',
         'items' => '{1} :count item|[2,*] :count items',
     ],
 
@@ -73,7 +74,8 @@ return [
         'steps' => [
             'details' => 'Details',
             'delivery' => 'Delivery',
-            'configuration' => 'Configuration',
+            'configuration' => 'Configure',
+            'fulfillment' => 'Delivery & configure',
             'payment' => 'Payment',
             'review' => 'Review',
         ],
@@ -82,6 +84,7 @@ return [
         'continue' => 'Continue',
         'continue_to' => 'Continue to :step',
         'continue_to_secure_payment' => 'Continue to payment',
+        'continue_to_provider' => 'Continue to :provider',
         'pay_amount' => 'Pay :amount',
         'working' => 'Working…',
         'edit' => 'Edit',
@@ -91,12 +94,15 @@ return [
         'hosted_payment_note' => 'Card details are entered with the payment provider. Agovena does not collect card numbers.',
         'no_payment_methods' => 'No payment methods are available right now.',
         'configuration_note' => 'These choices were set when the items were added. Return to the cart to change them.',
-        'contact' => 'Contact',
+        'contact' => 'Contact information',
         'additional_details' => 'Additional details',
         'name' => 'Name',
         'email' => 'Email',
+        'email_hint' => 'We’ll send the order confirmation here.',
         'billing' => 'Billing address',
         'shipping' => 'Shipping address',
+        'saved_address' => 'Use a saved address',
+        'confirm_title' => 'Confirm order',
         'address_name' => 'Full name',
         'company' => 'Company',
         'line1' => 'Address line 1',
@@ -145,12 +151,40 @@ return [
 
     'confirmation' => [
         'page_title' => 'Order confirmed',
-        'title' => 'Thank you',
-        'lede' => 'Order <strong>:number</strong> is confirmed. Payment is pending until recorded by staff.',
+        'kicker' => 'Order complete',
+        'title' => 'Order confirmed',
+        'lede' => 'Order <strong>:number</strong> is confirmed.',
+        'next' => 'What happens next',
         'items' => 'Items',
         'total' => 'Total: :amount',
         'note' => 'Keep your order number for reference. Signed-in customers can also find orders under My account.',
         'back' => 'Back to catalog',
+        'cards' => [
+            'shipping' => [
+                'title' => 'Shipping',
+                'text' => 'Physical items will be prepared for shipment. Tracking appears in your account when available.',
+            ],
+            'physical' => [
+                'title' => 'Fulfillment',
+                'text' => 'The merchant will fulfill the physical items in this order.',
+            ],
+            'digital' => [
+                'title' => 'Downloads',
+                'text' => 'Digital files appear in your account when they are ready. Availability depends on payment.',
+            ],
+            'subscription' => [
+                'title' => 'Subscription',
+                'text' => 'Subscription status is shown in your account after payment is confirmed.',
+            ],
+            'hosting' => [
+                'title' => 'Service provisioning',
+                'text' => 'Hosting setup runs after payment. This can take a little time and is not instant.',
+            ],
+            'event' => [
+                'title' => 'Tickets',
+                'text' => 'Tickets appear in your account when the order is paid.',
+            ],
+        ],
     ],
 
     'payment_status' => [

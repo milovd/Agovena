@@ -12,17 +12,18 @@ final class CheckoutFlow
     public function stepsFor(CartRequirements $requirements): array
     {
         $steps = [CheckoutStep::Details];
+        $needsDelivery = $requirements->requiresShipping();
+        $needsConfiguration = $requirements->has(CartRequirement::ProductConfiguration);
 
-        if ($requirements->requiresShipping()) {
+        if ($needsDelivery && $needsConfiguration) {
+            $steps[] = CheckoutStep::Fulfillment;
+        } elseif ($needsDelivery) {
             $steps[] = CheckoutStep::Delivery;
-        }
-
-        if ($requirements->has(CartRequirement::ProductConfiguration)) {
+        } elseif ($needsConfiguration) {
             $steps[] = CheckoutStep::Configuration;
         }
 
         $steps[] = CheckoutStep::Payment;
-        $steps[] = CheckoutStep::Review;
 
         return $steps;
     }

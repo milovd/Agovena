@@ -2,9 +2,11 @@
 
 use App\Agovena\Cart\CartService;
 use App\Agovena\Settings\SettingsRepository;
+use App\Livewire\Storefront\CartPage;
 use App\Models\Product;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 
 test('storefront chrome includes navigation cart and footer placeholders', function () {
     $this->get('/')
@@ -75,4 +77,60 @@ test('cart prunes deleted products and clears badge', function () {
     $this->get('/')
         ->assertOk()
         ->assertDontSee('aria-label="Cart, 1 items"', false);
+});
+
+test('missing merchant logo falls back to the bundled storefront mark', function () {
+    app(SettingsRepository::class)->set('branding', 'logo_path', 'branding/missing-logo.png');
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('store-brand__logo', false)
+        ->assertSee('vendor/agovena/logo.png', false)
+        ->assertDontSee('storage/branding/missing-logo.png', false);
+});
+
+test('cart lines show a placeholder when the product image file is missing', function () {
+    $product = Product::factory()->active()->create([
+        'name' => 'Nova Phone 14',
+        'image_path' => 'products/missing.png',
+    ]);
+    app(CartService::class)->add($product->id, 1);
+
+    $this->get('/cart')
+        ->assertOk()
+        ->assertSee('Nova Phone 14', false)
+        ->assertSee('store-cart-line__media', false)
+        ->assertSee('store-product-card__placeholder', false)
+        ->assertDontSee('storage/products/missing.png', false)
+        ->assertDontSee(__('common.update'), false);
+});
+
+test('checkout keeps the storefront header and bundled logo', function () {
+    $product = Product::factory()->active()->create(['price_amount' => 1500]);
+    app(CartService::class)->add($product->id, 1);
+
+    $this->get('/checkout')
+        ->assertOk()
+        ->assertSee('store-chrome--reduced', false)
+        ->assertSee('vendor/agovena/logo.png', false)
+        ->assertSee(__('storefront.checkout.back_to_cart'), false)
+        ->assertDontSee('store-checkout-chrome', false)
+        ->assertDontSee(__('storefront.checkout.steps.review'), false);
+});
+
+test('cart quantity stepper updates the line without a separate update action', function () {
+    $product = Product::factory()->active()->create(['name' => 'Nova Phone 14']);
+    app(CartService::class)->add($product->id, 1);
+
+    $component = Livewire::test(CartPage::class);
+    $lineKey = array_key_first($component->get('quantities'));
+
+    expect($lineKey)->not->toBeNull();
+
+    $component
+        ->call('incrementLine', $lineKey)
+        ->assertSet('quantities.'.$lineKey, 2)
+        ->call('decrementLine', $lineKey)
+        ->assertSet('quantities.'.$lineKey, 1)
+        ->assertDontSee(__('common.update'), false);
 });

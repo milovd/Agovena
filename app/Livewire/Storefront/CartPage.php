@@ -23,9 +23,27 @@ final class CartPage extends Component
         $this->refreshQuantities($cart);
     }
 
+    public function incrementLine(string $lineKey, CartService $cart): void
+    {
+        $qty = min(99, ((int) ($this->quantities[$lineKey] ?? 1)) + 1);
+        $cart->update($lineKey, $qty);
+        $this->refreshQuantities($cart);
+    }
+
+    public function decrementLine(string $lineKey, CartService $cart): void
+    {
+        $qty = (int) ($this->quantities[$lineKey] ?? 1);
+        if ($qty <= 1) {
+            return;
+        }
+
+        $cart->update($lineKey, $qty - 1);
+        $this->refreshQuantities($cart);
+    }
+
     public function updateLine(string $lineKey, CartService $cart): void
     {
-        $qty = (int) ($this->quantities[$lineKey] ?? 0);
+        $qty = max(1, min(99, (int) ($this->quantities[$lineKey] ?? 1)));
         $cart->update($lineKey, $qty);
         $this->refreshQuantities($cart);
     }

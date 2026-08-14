@@ -7,6 +7,7 @@ namespace App\Agovena\Cart;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\Options\ProductOptionPricer;
 use App\Agovena\Catalog\Options\ProductOptionValidator;
+use App\Agovena\Media\ProductMedia;
 use App\Agovena\Money\Money;
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
@@ -96,7 +97,7 @@ final class CartService
         $priced = [];
 
         foreach ($this->cart->lines() as $line) {
-            $product = Product::query()->find($line->productId);
+            $product = Product::query()->with('images')->find($line->productId);
 
             if ($product === null || ! $product->isPurchasable()) {
                 continue;
@@ -122,6 +123,8 @@ final class CartService
                 lineKey: $line->lineKey,
                 selections: $line->selections,
                 optionLabels: $optionLabels,
+                slug: $product->slug,
+                imageUrl: ProductMedia::primaryUrl($product),
             );
         }
 

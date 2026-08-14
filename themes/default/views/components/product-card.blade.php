@@ -1,7 +1,8 @@
 <a class="store-product-card__link" href="{{ route('storefront.product', $product->slug) }}">
     <div class="store-product-card__media">
-        @if ($product->image_path)
-            <img src="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($product->image_path) }}" alt="" loading="lazy">
+        @php $imageUrl = \App\Agovena\Media\ProductMedia::primaryUrl($product); @endphp
+        @if ($imageUrl)
+            <img src="{{ $imageUrl }}" alt="" loading="lazy">
         @else
             <span class="store-product-card__placeholder" aria-hidden="true"></span>
         @endif

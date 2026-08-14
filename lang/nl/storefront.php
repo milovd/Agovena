@@ -57,6 +57,7 @@ return [
         'summary_aria' => 'Besteloverzicht',
         'subtotal' => 'Subtotaal',
         'checkout' => 'Afrekenen',
+        'remove_item' => ':name verwijderen',
         'items' => '{1} :count artikel|[2,*] :count artikelen',
     ],
 
@@ -74,6 +75,7 @@ return [
             'details' => 'Gegevens',
             'delivery' => 'Bezorging',
             'configuration' => 'Configuratie',
+            'fulfillment' => 'Bezorging en configuratie',
             'payment' => 'Betaling',
             'review' => 'Controle',
         ],
@@ -82,6 +84,7 @@ return [
         'continue' => 'Doorgaan',
         'continue_to' => 'Doorgaan naar :step',
         'continue_to_secure_payment' => 'Doorgaan naar betaling',
+        'continue_to_provider' => 'Doorgaan naar :provider',
         'pay_amount' => 'Betaal :amount',
         'working' => 'Bezig…',
         'edit' => 'Wijzigen',
@@ -91,12 +94,15 @@ return [
         'hosted_payment_note' => 'Kaartgegevens vul je in bij de betaalprovider. Agovena vraagt geen kaartnummers.',
         'no_payment_methods' => 'Er zijn nu geen betaalmethoden beschikbaar.',
         'configuration_note' => 'Deze keuzes zijn ingesteld toen de producten in de winkelwagen gingen. Ga terug naar de winkelwagen om ze te wijzigen.',
-        'contact' => 'Contact',
+        'contact' => 'Contactgegevens',
         'additional_details' => 'Aanvullende gegevens',
         'name' => 'Naam',
         'email' => 'E-mail',
+        'email_hint' => 'Hierheen sturen we de orderbevestiging.',
         'billing' => 'Factuuradres',
         'shipping' => 'Verzendadres',
+        'saved_address' => 'Opgeslagen adres gebruiken',
+        'confirm_title' => 'Bestelling bevestigen',
         'address_name' => 'Volledige naam',
         'company' => 'Bedrijf',
         'line1' => 'Adresregel 1',
@@ -145,12 +151,40 @@ return [
 
     'confirmation' => [
         'page_title' => 'Bestelling bevestigd',
-        'title' => 'Bedankt',
-        'lede' => 'Bestelling <strong>:number</strong> is bevestigd. Betaling staat in afwachting tot een medewerker deze registreert.',
+        'kicker' => 'Bestelling afgerond',
+        'title' => 'Bestelling bevestigd',
+        'lede' => 'Bestelling <strong>:number</strong> is bevestigd.',
+        'next' => 'Wat er nu gebeurt',
         'items' => 'Artikelen',
         'total' => 'Totaal: :amount',
         'note' => 'Bewaar je bestelnummer ter referentie. Ingelogde klanten vinden bestellingen ook onder Mijn account.',
         'back' => 'Terug naar catalogus',
+        'cards' => [
+            'shipping' => [
+                'title' => 'Verzending',
+                'text' => 'Fysieke producten worden klaargemaakt voor verzending. Tracking verschijnt in je account wanneer die beschikbaar is.',
+            ],
+            'physical' => [
+                'title' => 'Afhandeling',
+                'text' => 'De winkel handelt de fysieke producten in deze bestelling af.',
+            ],
+            'digital' => [
+                'title' => 'Downloads',
+                'text' => 'Digitale bestanden verschijnen in je account wanneer ze klaar zijn. Beschikbaarheid hangt af van de betaling.',
+            ],
+            'subscription' => [
+                'title' => 'Abonnement',
+                'text' => 'De abonnementsstatus zie je in je account nadat de betaling is bevestigd.',
+            ],
+            'hosting' => [
+                'title' => 'Dienstprovisioning',
+                'text' => 'Hosting wordt na betaling ingericht. Dat kan even duren en is niet direct klaar.',
+            ],
+            'event' => [
+                'title' => 'Tickets',
+                'text' => 'Tickets verschijnen in je account wanneer de bestelling is betaald.',
+            ],
+        ],
     ],
 
     'payment_status' => [

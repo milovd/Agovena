@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
-    @if (! empty($brandingFaviconPath))
-        <link rel="icon" href="{{ \Illuminate\Support\Facades\Storage::disk('public')->url($brandingFaviconPath) }}">
+    @if (! empty($brandingFaviconUrl))
+        <link rel="icon" href="{{ $brandingFaviconUrl }}">
     @endif
     @php
         $config = $themeConfig ?? null;
@@ -36,9 +36,9 @@
     @vite([$cssEntry])
     @livewireStyles
 </head>
-<body class="store store--checkout">
+<body class="store store--checkout store--sticky-header">
     <a class="store-skip" href="#main">{{ __('storefront.skip_to_content') }}</a>
-    @include('theme::partials.checkout-header')
+    @include('theme::partials.header', ['themeConfig' => $config, 'reducedChrome' => true])
     <main id="main" class="store-main store-main--checkout" tabindex="-1">
         @if (session('status'))
             <p class="store-flash" role="status">{{ session('status') }}</p>
@@ -48,13 +48,7 @@
         @endif
         {{ $slot }}
     </main>
-    <footer class="store-checkout-footer">
-        <p>
-            <a href="{{ route('storefront.cart') }}">{{ __('storefront.checkout.back_to_cart') }}</a>
-            <span aria-hidden="true">·</span>
-            <a href="{{ route('storefront.home') }}">{{ __('storefront.cart.continue_shopping') }}</a>
-        </p>
-    </footer>
+    @include('theme::partials.footer', ['themeConfig' => $config])
     @livewireScripts
 </body>
 </html>

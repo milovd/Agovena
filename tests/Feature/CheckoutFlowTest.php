@@ -7,7 +7,7 @@ use App\Agovena\Checkout\CartRequirements;
 use App\Agovena\Checkout\CheckoutFlow;
 use App\Agovena\Checkout\CheckoutStep;
 
-test('digital carts compose details payment and review', function () {
+test('digital carts compose details then payment', function () {
     $flow = new CheckoutFlow;
     $steps = $flow->stepsFor(new CartRequirements([
         CartRequirement::Billing,
@@ -18,7 +18,6 @@ test('digital carts compose details payment and review', function () {
     expect($steps)->toBe([
         CheckoutStep::Details,
         CheckoutStep::Payment,
-        CheckoutStep::Review,
     ]);
 });
 
@@ -36,11 +35,10 @@ test('physical carts insert delivery between details and payment', function () {
         CheckoutStep::Details,
         CheckoutStep::Delivery,
         CheckoutStep::Payment,
-        CheckoutStep::Review,
     ]);
 });
 
-test('mixed carts include configuration without duplicating checkout implementations', function () {
+test('mixed carts combine delivery and configuration into one fulfillment step', function () {
     $flow = new CheckoutFlow;
     $requirements = new CartRequirements([
         CartRequirement::Billing,
@@ -54,10 +52,23 @@ test('mixed carts include configuration without duplicating checkout implementat
 
     expect($flow->stepsFor($requirements))->toBe([
         CheckoutStep::Details,
-        CheckoutStep::Delivery,
+        CheckoutStep::Fulfillment,
+        CheckoutStep::Payment,
+    ]);
+});
+
+test('configuration-only carts insert configure between details and payment', function () {
+    $flow = new CheckoutFlow;
+    $steps = $flow->stepsFor(new CartRequirements([
+        CartRequirement::Billing,
+        CartRequirement::ProductConfiguration,
+        CartRequirement::Payment,
+    ]));
+
+    expect($steps)->toBe([
+        CheckoutStep::Details,
         CheckoutStep::Configuration,
         CheckoutStep::Payment,
-        CheckoutStep::Review,
     ]);
 });
 

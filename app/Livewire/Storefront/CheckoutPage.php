@@ -149,11 +149,26 @@ final class CheckoutPage extends Component
         $this->step = CheckoutStep::Details->value;
     }
 
+    public function applySavedAddress(int $addressId): void
+    {
+        $customer = current_customer();
+        if ($customer === null) {
+            return;
+        }
+
+        $address = $customer->addresses()->whereKey($addressId)->first();
+        if ($address === null) {
+            return;
+        }
+
+        $this->fillBillingFromAddress($address);
+    }
+
     public function continueStep(CartService $cart, CartRequirementComposer $composer, CustomerPropertyService $properties, CheckoutFlow $flow): void
     {
         $requirements = $composer->compose($cart);
         $current = $this->resolvedStep($flow, $requirements);
-        $this->validate($this->rulesForStep($current, $cart, $composer, $properties));
+        $this->validate($this->rulesForStep($current, $properties));
         $this->markCompleted($current);
         $next = $flow->next($requirements, $current);
         if ($next === null) {
@@ -444,7 +459,7 @@ final class CheckoutPage extends Component
             $this->step = $currentStep->value;
         }
         if (! $flow->canVisit($requirements, $currentStep, $this->completedSteps) && $currentStep !== CheckoutStep::Details) {
-            $currentStep = CheckoutStep::Details;
+            $currentStep = $this->firstOpenStep($flow, $requirements);
             $this->step = $currentStep->value;
         }
 
@@ -480,9 +495,11 @@ final class CheckoutPage extends Component
             'nextStep' => $nextStep,
             'countryOptions' => CheckoutCountries::options(),
             'primaryActionLabel' => $this->primaryActionLabel($currentStep, $nextStep, $amountDue),
+            'savedAddresses' => $customer?->addresses()->orderByDesc('is_default_billing')->orderBy('id')->get() ?? collect(),
         ])->layout($theme->view('layouts.checkout'), [
             'title' => __('storefront.checkout.title'),
             'theme' => $theme,
+            'reducedChrome' => true,
         ]);
     }
 
@@ -507,13 +524,8 @@ final class CheckoutPage extends Component
     /**
      * @return array<string, mixed>
      */
-    private function rulesForStep(
-        CheckoutStep $step,
-        CartService $cart,
-        CartRequirementComposer $composer,
-        CustomerPropertyService $properties,
-    ): array {
-        $requirements = $composer->compose($cart);
+    private function rulesForStep(CheckoutStep $step, CustomerPropertyService $properties): array
+    {
         $allowed = app(AvailablePaymentMethods::class)->ids();
 
         return match ($step) {
@@ -523,7 +535,7 @@ final class CheckoutPage extends Component
                 ...AddressValidation::rules('billing'),
                 ...$properties->livewireRules($properties->definitionsFor('checkout')),
             ],
-            CheckoutStep::Delivery => [
+            CheckoutStep::Delivery, CheckoutStep::Fulfillment => [
                 'shipping_same_as_billing' => ['boolean'],
                 'shipping_quote_key' => ['required', 'string'],
                 ...($this->shipping_same_as_billing ? [] : AddressValidation::rules('shipping')),
@@ -533,31 +545,18 @@ final class CheckoutPage extends Component
                 'payment_method' => ['required', 'string', Rule::in($allowed)],
                 'apply_credit' => ['boolean'],
             ],
-            CheckoutStep::Review => $this->reviewRules($requirements, $properties, $allowed),
         };
     }
 
-    /**
-     * @param  list<string>  $allowed
-     * @return array<string, mixed>
-     */
-    private function reviewRules(CartRequirements $requirements, CustomerPropertyService $properties, array $allowed): array
+    private function firstOpenStep(CheckoutFlow $flow, CartRequirements $requirements): CheckoutStep
     {
-        $rules = [
-            'customer_name' => ['required', 'string', 'max:255'],
-            'customer_email' => ['required', 'email', 'max:255'],
-            'payment_method' => ['required', 'string', Rule::in($allowed)],
-            ...AddressValidation::rules('billing'),
-            ...$properties->livewireRules($properties->definitionsFor('checkout')),
-        ];
-        if ($requirements->requiresShipping()) {
-            $rules['shipping_quote_key'] = ['required', 'string'];
-            if (! $this->shipping_same_as_billing) {
-                $rules = [...$rules, ...AddressValidation::rules('shipping')];
+        foreach ($flow->stepsFor($requirements) as $step) {
+            if (! in_array($step->value, $this->completedSteps, true)) {
+                return $step;
             }
         }
 
-        return $rules;
+        return CheckoutStep::Details;
     }
 
     private function markCompleted(CheckoutStep $step): void
@@ -569,18 +568,15 @@ final class CheckoutPage extends Component
 
     private function invalidateFrom(CheckoutStep $from): void
     {
-        $order = [
-            CheckoutStep::Details->value,
-            CheckoutStep::Delivery->value,
-            CheckoutStep::Configuration->value,
-            CheckoutStep::Payment->value,
-            CheckoutStep::Review->value,
-        ];
-        $index = array_search($from->value, $order, true);
-        if ($index === false) {
-            return;
-        }
-        $drop = array_slice($order, $index);
+        $drop = match ($from) {
+            CheckoutStep::Delivery, CheckoutStep::Fulfillment, CheckoutStep::Configuration => [
+                CheckoutStep::Delivery->value,
+                CheckoutStep::Fulfillment->value,
+                CheckoutStep::Configuration->value,
+                CheckoutStep::Payment->value,
+            ],
+            default => [$from->value, CheckoutStep::Payment->value],
+        };
         $this->completedSteps = array_values(array_filter(
             $this->completedSteps,
             static fn (string $step): bool => ! in_array($step, $drop, true),
@@ -608,10 +604,13 @@ final class CheckoutPage extends Component
 
     private function primaryActionLabel(CheckoutStep $current, ?CheckoutStep $next, ?Money $amountDue): string
     {
-        if ($current === CheckoutStep::Review) {
+        if ($current === CheckoutStep::Payment || $next === null) {
             $gateway = CheckoutPaymentSelection::parse($this->payment_method)->gatewayId;
-            if (in_array($gateway, ['mollie', 'stripe'], true)) {
-                return __('storefront.checkout.continue_to_secure_payment');
+            if ($gateway === 'mollie') {
+                return __('storefront.checkout.continue_to_provider', ['provider' => 'Mollie']);
+            }
+            if ($gateway === 'stripe') {
+                return __('storefront.checkout.continue_to_provider', ['provider' => 'Stripe']);
             }
             if ($gateway === 'development' && $amountDue !== null) {
                 return __('storefront.checkout.pay_amount', [
@@ -620,10 +619,6 @@ final class CheckoutPage extends Component
             }
 
             return __('storefront.checkout.place_order');
-        }
-
-        if ($next === null) {
-            return __('storefront.checkout.continue');
         }
 
         return __('storefront.checkout.continue_to', [
