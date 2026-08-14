@@ -115,4 +115,11 @@ jobs:
         run: php artisan migrate --force
 
       - name: MariaDB tests
-        run: php artisan test --configuration=phpunit.mariadb.xml
+        run: php artisan test --configuration=phpunit.mariadb.xml --log-junit storage/logs/mariadb-junit.xml
+
+      - name: Upload MariaDB test report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mariadb-junit
+          path: storage/logs/mariadb-junit.xml

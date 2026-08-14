@@ -18,17 +18,29 @@ return new class extends Migration
         });
 
         Schema::table('orders', function (Blueprint $table): void {
-            $table->index(['customer_id', 'status', 'created_at'], 'orders_customer_status_created_index');
-            $table->index(['status', 'created_at'], 'orders_status_created_index');
+            if (! Schema::hasIndex('orders', 'orders_customer_status_created_index')) {
+                $table->index(['customer_id', 'status', 'created_at'], 'orders_customer_status_created_index');
+            }
+            if (! Schema::hasIndex('orders', 'orders_status_created_index')) {
+                $table->index(['status', 'created_at'], 'orders_status_created_index');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('orders', function (Blueprint $table): void {
-            $table->dropIndex('orders_customer_status_created_index');
-            $table->dropIndex('orders_status_created_index');
-            $table->dropColumn(['shipping_carrier_id', 'shipping_service_code']);
+            if (Schema::hasIndex('orders', 'orders_customer_status_created_index')) {
+                $table->dropIndex('orders_customer_status_created_index');
+            }
+            if (Schema::hasIndex('orders', 'orders_status_created_index')) {
+                $table->dropIndex('orders_status_created_index');
+            }
+            foreach (['shipping_carrier_id', 'shipping_service_code'] as $column) {
+                if (Schema::hasColumn('orders', $column)) {
+                    $table->dropColumn($column);
+                }
+            }
         });
     }
 };

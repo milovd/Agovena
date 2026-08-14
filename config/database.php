@@ -3,6 +3,13 @@
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
+$mysqlSslCa = 1007;
+if (class_exists(Mysql::class)) {
+    $mysqlSslCa = Mysql::ATTR_SSL_CA;
+} elseif (defined('PDO::MYSQL_ATTR_SSL_CA')) {
+    $mysqlSslCa = constant('PDO::MYSQL_ATTR_SSL_CA');
+}
+
 return [
 
     /*
@@ -60,7 +67,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                $mysqlSslCa => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 
@@ -80,7 +87,7 @@ return [
             'strict' => true,
             'engine' => null,
             'options' => extension_loaded('pdo_mysql') ? array_filter([
-                Mysql::ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
+                $mysqlSslCa => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
 

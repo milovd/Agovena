@@ -13,5 +13,9 @@ abstract class UpgradeTestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutVite();
+
+        // SQLite :memory: is discarded when Feature tests disconnect.
+        // MariaDB keeps leftover rows/module tables. Rebuild from a clean schema.
+        $this->artisan('migrate:fresh');
     }
 }
