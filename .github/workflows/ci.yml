@@ -114,12 +114,37 @@ jobs:
       - name: Fresh migrations
         run: php artisan migrate --force
 
-      - name: MariaDB tests
-        run: php artisan test --configuration=phpunit.mariadb.xml --log-junit storage/logs/mariadb-junit.xml
+      - name: MariaDB feature tests
+        run: php artisan test --configuration=phpunit.mariadb.xml --testsuite=Unit,Feature --log-junit storage/logs/mariadb-junit.xml
+
+      - name: MariaDB upgrade tests
+        run: php artisan test --configuration=phpunit.mariadb.xml --testsuite=Upgrade --log-junit storage/logs/mariadb-upgrade-junit.xml
+
+      - name: Annotate MariaDB failures
+        if: failure()
+        run: |
+          python3 <<'PY'
+          import os
+          import xml.etree.ElementTree as ET
+          for path in ("storage/logs/mariadb-junit.xml", "storage/logs/mariadb-upgrade-junit.xml"):
+              if not os.path.exists(path):
+                  continue
+              for case in ET.parse(path).iter("testcase"):
+                  node = case.find("failure")
+                  if node is None:
+                      node = case.find("error")
+                  if node is None:
+                      continue
+                  name = f"{case.get('classname', '')}::{case.get('name', '')}"
+                  msg = " ".join((node.get("message") or node.text or "failed").split())[:400]
+                  print(f"::error title={name}::{msg}")
+          PY
 
       - name: Upload MariaDB test report
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: mariadb-junit
-          path: storage/logs/mariadb-junit.xml
+          path: |
+            storage/logs/mariadb-junit.xml
+            storage/logs/mariadb-upgrade-junit.xml
