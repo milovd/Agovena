@@ -57,6 +57,7 @@ final class PlaceOrder
      *     shipping?: AddressData|null,
      *     shipping_same_as_billing?: bool,
      *     shipping_method_id?: int|null,
+     *     shipping_quote_key?: string|null,
      *     discount_code?: string|null,
      *     apply_credit?: bool,
      *     credit_amount?: int|null,
@@ -108,6 +109,11 @@ final class PlaceOrder
         $shippingAmount = Money::of(0, $subtotal->currency);
         $shippingLabel = null;
         $shippingMethodId = isset($guest['shipping_method_id']) ? (int) $guest['shipping_method_id'] : null;
+        $shippingCarrierId = null;
+        $shippingServiceCode = null;
+        $quoteKey = is_string($guest['shipping_quote_key'] ?? null)
+            ? trim($guest['shipping_quote_key'])
+            : '';
 
         $requirements = $this->requirements->compose($this->cart);
         if ($requirements->requiresShipping()) {
@@ -118,18 +124,34 @@ final class PlaceOrder
             }
 
             $country = strtoupper($shipping->country);
-            if ($shippingMethodId === null || $shippingMethodId < 1) {
+            $destination = new ShippingDestination(
+                country: $country,
+                postalCode: $shipping->postalCode,
+                city: $shipping->city,
+                line1: $shipping->line1,
+            );
+
+            if ($quoteKey === '' && ($shippingMethodId === null || $shippingMethodId < 1)) {
                 throw ValidationException::withMessages([
                     'shipping_method_id' => __('storefront.errors.shipping_method_required'),
                 ]);
             }
 
-            $quote = $this->shippingQuotes->quote(
-                $this->cart->shippableLines(),
-                $country,
-                $subtotal->currency,
-                $shippingMethodId,
-            );
+            $quote = $quoteKey !== ''
+                ? $this->shippingQuotes->quoteByKey(
+                    $this->cart->shippableLines(),
+                    $country,
+                    $subtotal->currency,
+                    $quoteKey,
+                    $destination,
+                )
+                : $this->shippingQuotes->quote(
+                    $this->cart->shippableLines(),
+                    $country,
+                    $subtotal->currency,
+                    (int) $shippingMethodId,
+                    $destination,
+                );
 
             if ($quote === null) {
                 throw ValidationException::withMessages([
@@ -139,6 +161,9 @@ final class PlaceOrder
 
             $shippingAmount = $quote->amount;
             $shippingLabel = $quote->label;
+            $shippingMethodId = $quote->isCarrierQuote() ? null : $quote->methodId;
+            $shippingCarrierId = $quote->carrierId;
+            $shippingServiceCode = $quote->serviceCode;
         }
 
         $discount = $this->discounts->apply($guest['discount_code'] ?? null, $subtotal, $customerId);
@@ -168,6 +193,8 @@ final class PlaceOrder
             $shippingAmount,
             $shippingLabel,
             $shippingMethodId,
+            $shippingCarrierId,
+            $shippingServiceCode,
             $discount,
             $tax,
             $idempotencyKey,
@@ -186,6 +213,8 @@ final class PlaceOrder
                 'subtotal_amount' => $subtotal->amount,
                 'shipping_amount' => $shippingAmount->amount,
                 'shipping_method_label' => $shippingLabel,
+                'shipping_carrier_id' => $shippingCarrierId,
+                'shipping_service_code' => $shippingServiceCode,
                 'discount_amount' => $discount?->amount->amount ?? 0,
                 'tax_amount' => $tax->tax->amount,
                 'credit_amount' => 0,

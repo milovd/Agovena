@@ -58,6 +58,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'subtotal_amount',
     'shipping_amount',
     'shipping_method_label',
+    'shipping_carrier_id',
+    'shipping_service_code',
     'discount_amount',
     'tax_amount',
     'credit_amount',

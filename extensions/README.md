@@ -53,7 +53,7 @@ Lifecycle: discover → install → enable / disable → uninstall. Disable pres
 ## Implementing a Shipping Extension
 
 1. `category: shipping`
-2. Implement `ShippingCarrier` plus optional `QuotesShippingRates`, `CreatesCarrierShipments`, `TracksShipments`
+2. Implement `ShippingCarrier` plus optional `QuotesShippingRates`, `QuotesCartRates`, `CreatesCarrierShipments`, `TracksShipments`
 3. Register via `$context->shippingCarrier(...)`
 4. Provider service codes, labels, and tracking stay Extension-owned. Generic Shipment may store `carrier_id`, `external_ref`, tracking, and a private label path
 5. Tests must fake provider HTTP. CI must not require live credentials

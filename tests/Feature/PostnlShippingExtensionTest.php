@@ -13,6 +13,8 @@ use Agovena\Modules\Shipping\ShipmentService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Checkout\ShippingDestination;
+use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
@@ -23,7 +25,9 @@ use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Enums\OrderStatus;
 use App\Models\Customer;
+use App\Models\ExtensionSetting;
 use App\Models\Product;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesStaff;
@@ -93,6 +97,19 @@ test('postnl registers only when the extension is enabled', function () {
     expect(app(ShippingCarrierRegistry::class)->get('postnl'))->toBeInstanceOf(PostnlCarrier::class);
     app(ExtensionManager::class)->disable('postnl');
     expect(app(ShippingCarrierRegistry::class)->get('postnl'))->toBeNull();
+});
+
+test('postnl credentials are encrypted and never redisplayed', function () {
+    enablePostnl();
+    $row = ExtensionSetting::query()
+        ->where('extension_id', 'postnl')
+        ->where('key', 'api_key')
+        ->first();
+
+    expect($row)->not->toBeNull()
+        ->and($row->is_secret)->toBeTrue()
+        ->and($row->value)->not->toContain('test-postnl-key-not-real')
+        ->and(Crypt::decryptString((string) $row->value))->toBe('test-postnl-key-not-real');
 });
 
 test('postnl can quote normalized rates without exposing raw payloads', function () {
@@ -250,6 +267,53 @@ test('rate unavailable returns no quotes so manual shipping methods remain', fun
     $api->rateUnavailable = true;
     $shipment = paidShippableOrder();
     expect(app(PostnlCarrier::class)->quote($shipment->order))->toBe([]);
+});
+
+test('checkout composes merchant rates with live carrier quotes and keeps manual fallback', function () {
+    $api = enablePostnl();
+    $product = Product::factory()->active()->create(['price_amount' => 2500]);
+    app(ProductCapabilityManager::class)->enable($product, 'physical');
+    app(ProductCapabilityManager::class)->enable($product, 'shippable', ['weight_grams' => 400]);
+    $method = ShippingMethod::query()->create([
+        'name' => 'Counter pickup',
+        'code' => 'pickup-'.uniqid(),
+        'type' => ShippingMethodType::Flat,
+        'config' => ['amount' => 0],
+        'currency' => 'EUR',
+        'is_active' => true,
+        'sort' => 1,
+    ]);
+    app(CartService::class)->add($product->id, 1);
+
+    $destination = new ShippingDestination(
+        country: 'NL',
+        postalCode: '1012PH',
+        city: 'Amsterdam',
+        line1: 'Kalverstraat 12',
+    );
+    $quotes = app(ShippingQuoteResolver::class)->quotes(
+        app(CartService::class)->shippableLines(),
+        'NL',
+        'EUR',
+        $destination,
+    );
+    $keys = array_map(static fn ($quote) => $quote->key(), $quotes);
+
+    expect($keys)->toContain('method:'.$method->id)
+        ->and($keys)->toContain('carrier:postnl:3085')
+        ->and($api->checkoutCalls)->toBe(1);
+
+    $api->timeout = true;
+    $fallback = app(ShippingQuoteResolver::class)->quotes(
+        app(CartService::class)->shippableLines(),
+        'NL',
+        'EUR',
+        $destination,
+    );
+    $fallbackKeys = array_map(static fn ($quote) => $quote->key(), $fallback);
+
+    expect($fallbackKeys)->toContain('method:'.$method->id)
+        ->and($fallbackKeys)->not->toContain('carrier:postnl:3085');
 });
 
 test('core and modules do not import postnl types', function () {

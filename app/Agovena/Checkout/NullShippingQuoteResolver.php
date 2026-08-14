@@ -9,12 +9,17 @@ namespace App\Agovena\Checkout;
  */
 final class NullShippingQuoteResolver implements ShippingQuoteResolver
 {
-    public function quotes(array $lines, string $countryCode, string $currency): array
+    public function quotes(array $lines, string $countryCode, string $currency, ?ShippingDestination $destination = null): array
     {
         return [];
     }
 
-    public function quote(array $lines, string $countryCode, string $currency, int $methodId): ?ShippingQuote
+    public function quote(array $lines, string $countryCode, string $currency, int $methodId, ?ShippingDestination $destination = null): ?ShippingQuote
+    {
+        return null;
+    }
+
+    public function quoteByKey(array $lines, string $countryCode, string $currency, string $key, ?ShippingDestination $destination = null): ?ShippingQuote
     {
         return null;
     }

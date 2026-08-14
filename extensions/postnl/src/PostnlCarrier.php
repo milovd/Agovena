@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Agovena\Extensions\Postnl;
 
+use App\Agovena\Checkout\ShippingDestination;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\HealthResult;
 use App\Agovena\Shipping\CarrierShipmentResult;
 use App\Agovena\Shipping\Contracts\CreatesCarrierShipments;
+use App\Agovena\Shipping\Contracts\QuotesCartRates;
 use App\Agovena\Shipping\Contracts\QuotesShippingRates;
 use App\Agovena\Shipping\Contracts\ShippingCarrier;
 use App\Agovena\Shipping\Contracts\TracksShipments;
@@ -19,7 +21,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
-final class PostnlCarrier implements CreatesCarrierShipments, QuotesShippingRates, ShippingCarrier, TracksShipments
+final class PostnlCarrier implements CreatesCarrierShipments, QuotesCartRates, QuotesShippingRates, ShippingCarrier, TracksShipments
 {
     public const ID = 'postnl';
 
@@ -65,9 +67,17 @@ final class PostnlCarrier implements CreatesCarrierShipments, QuotesShippingRate
 
     public function quote(Order $order): array
     {
+        return $this->quoteCart([], $this->destinationFromOrder($order), $order->currency);
+    }
+
+    public function quoteCart(array $lines, ShippingDestination $destination, string $currency): array
+    {
+        if (! $destination->isComplete()) {
+            return [];
+        }
+
         try {
-            $address = $this->shippingAddress($order);
-            $parsed = PostnlStreetParser::parse($address['line1']);
+            $parsed = PostnlStreetParser::parse($destination->line1);
             $options = $this->client()->checkout([
                 'OrderDate' => now()->toIso8601String(),
                 'ShippingDuration' => 1,
@@ -76,22 +86,15 @@ final class PostnlCarrier implements CreatesCarrierShipments, QuotesShippingRate
                 'Options' => ['Daytime'],
                 'Destination' => [
                     'AddressType' => '01',
-                    'City' => $address['city'],
-                    'Countrycode' => $address['country'],
+                    'City' => $destination->city,
+                    'Countrycode' => $destination->country,
                     'Street' => $parsed['street'],
                     'HouseNr' => $parsed['house'],
-                    'Zipcode' => preg_replace('/\s+/', '', $address['postal']),
+                    'Zipcode' => preg_replace('/\s+/', '', $destination->postalCode),
                 ],
             ]);
-        } catch (PostnlProviderException $exception) {
-            if ($exception->errorKey === 'postnl::messages.errors.rate_unavailable'
-                || $exception->errorKey === 'postnl::messages.errors.unsupported_destination') {
-                return [];
-            }
-
-            throw ValidationException::withMessages([
-                'shipping' => __($exception->errorKey),
-            ]);
+        } catch (PostnlProviderException) {
+            return [];
         }
 
         $quotes = [];
@@ -100,13 +103,13 @@ final class PostnlCarrier implements CreatesCarrierShipments, QuotesShippingRate
             if ($code === '') {
                 continue;
             }
-            $amount = $this->minorAmount($option['Price'] ?? $option['price'] ?? 0, $order->currency);
+            $amount = $this->minorAmount($option['Price'] ?? $option['price'] ?? 0, $currency);
             $quotes[] = new ShippingRateQuote(
                 carrierId: self::ID,
                 serviceCode: $code,
                 serviceLabel: $this->serviceLabel($code, (string) ($option['Description'] ?? $option['description'] ?? $code)),
                 amount: $amount,
-                currency: $order->currency,
+                currency: $currency,
                 transitDays: isset($option['DeliveryDays']) ? (int) $option['DeliveryDays'] : null,
                 estimatedDelivery: isset($option['DeliveryDate']) ? (string) $option['DeliveryDate'] : null,
             );
@@ -346,6 +349,16 @@ final class PostnlCarrier implements CreatesCarrierShipments, QuotesShippingRate
             'postal' => $postal,
             'country' => $country,
         ];
+    }
+
+    private function destinationFromOrder(Order $order): ShippingDestination
+    {
+        return new ShippingDestination(
+            country: strtoupper((string) ($order->shipping_country ?: $order->billing_country ?: 'NL')),
+            postalCode: (string) ($order->shipping_postal_code ?: $order->billing_postal_code),
+            city: (string) ($order->shipping_city ?: $order->billing_city),
+            line1: (string) ($order->shipping_line1 ?: $order->billing_line1),
+        );
     }
 
     private function weightGrams(Order $order): int
