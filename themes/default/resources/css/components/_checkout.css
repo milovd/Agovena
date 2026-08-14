@@ -551,7 +551,7 @@
   }
 
   .store-cart-list {
-    padding-bottom: 11rem;
+    padding-bottom: 14rem;
   }
 
   .store-cart__summary {
@@ -559,9 +559,16 @@
     bottom: 0;
     z-index: 8;
     margin-top: var(--theme-space-4);
+    padding: var(--theme-space-4);
+    padding-bottom: max(var(--theme-space-4), env(safe-area-inset-bottom));
+    background: var(--theme-color-surface);
     border-top-left-radius: var(--theme-radius-lg);
     border-top-right-radius: var(--theme-radius-lg);
     box-shadow: 0 -12px 32px color-mix(in srgb, #0f172a 10%, transparent);
+  }
+
+  .store-cart__summary .store-summary__title {
+    margin-bottom: var(--theme-space-3);
   }
 
   .store-checkout__layout {

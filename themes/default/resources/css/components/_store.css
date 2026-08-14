@@ -2409,10 +2409,6 @@ a.store-cart-line__name:hover {
   color: var(--theme-color-text-muted);
 }
 
-.store-checkout__form {
-  max-width: 28rem;
-}
-
 .store-confirmation section {
   margin-bottom: var(--theme-space-6);
 }
