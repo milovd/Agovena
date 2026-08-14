@@ -8,7 +8,12 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\AddressValidation;
 use App\Agovena\Checkout\CartRequirement;
 use App\Agovena\Checkout\CartRequirementComposer;
+use App\Agovena\Checkout\CartRequirements;
+use App\Agovena\Checkout\CheckoutCountries;
+use App\Agovena\Checkout\CheckoutFlow;
+use App\Agovena\Checkout\CheckoutStep;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Checkout\ShippingDestination;
 use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\AddressData;
@@ -18,6 +23,7 @@ use App\Agovena\Customer\SaveCustomerAddress;
 use App\Agovena\Discounts\DiscountApplicator;
 use App\Agovena\Money\Money;
 use App\Agovena\Payments\AvailablePaymentMethods;
+use App\Agovena\Payments\CheckoutPaymentSelection;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
@@ -27,11 +33,13 @@ use App\Enums\PaymentStatus;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\TaxRate;
+use App\Support\MoneyFormatter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 final class CheckoutPage extends Component
@@ -42,9 +50,17 @@ final class CheckoutPage extends Component
 
     public string $idempotency_key = '';
 
+    #[Url(as: 'step', history: true)]
+    public string $step = 'details';
+
+    /** @var list<string> */
+    public array $completedSteps = [];
+
     public string $payment_method = 'manual';
 
     public ?int $shipping_method_id = null;
+
+    public string $shipping_quote_key = '';
 
     public string $billing_name = '';
 
@@ -130,6 +146,60 @@ final class CheckoutPage extends Component
         }
 
         $this->propertyValues = $properties->emptyValues($properties->definitionsFor('checkout'), $customer);
+        $this->step = CheckoutStep::Details->value;
+    }
+
+    public function continueStep(CartService $cart, CartRequirementComposer $composer, CustomerPropertyService $properties, CheckoutFlow $flow): void
+    {
+        $requirements = $composer->compose($cart);
+        $current = $this->resolvedStep($flow, $requirements);
+        $this->validate($this->rulesForStep($current, $cart, $composer, $properties));
+        $this->markCompleted($current);
+        $next = $flow->next($requirements, $current);
+        if ($next === null) {
+            return;
+        }
+        $this->step = $next->value;
+    }
+
+    public function goToStep(string $step, CartService $cart, CartRequirementComposer $composer, CheckoutFlow $flow): void
+    {
+        $requirements = $composer->compose($cart);
+        $target = $flow->resolve($requirements, $step);
+        if (! $flow->canVisit($requirements, $target, $this->completedSteps) && $target !== CheckoutStep::Details) {
+            return;
+        }
+        $this->step = $target->value;
+    }
+
+    public function back(CartService $cart, CartRequirementComposer $composer, CheckoutFlow $flow): void
+    {
+        $requirements = $composer->compose($cart);
+        $previous = $flow->previous($requirements, $this->resolvedStep($flow, $requirements));
+        if ($previous !== null) {
+            $this->step = $previous->value;
+        }
+    }
+
+    public function updatedBillingCountry(): void
+    {
+        $this->invalidateFrom(CheckoutStep::Delivery);
+        $this->shipping_quote_key = '';
+        $this->shipping_method_id = null;
+    }
+
+    public function updatedShippingCountry(): void
+    {
+        $this->invalidateFrom(CheckoutStep::Delivery);
+        $this->shipping_quote_key = '';
+        $this->shipping_method_id = null;
+    }
+
+    public function updatedShippingSameAsBilling(): void
+    {
+        $this->invalidateFrom(CheckoutStep::Delivery);
+        $this->shipping_quote_key = '';
+        $this->shipping_method_id = null;
     }
 
     public function placeOrder(PlaceOrder $placeOrder, CustomerRegistration $registration, CartService $cart, SaveCustomerAddress $saveAddress, CustomerPropertyService $properties, CartRequirementComposer $composer, StartOrderPayment $startPayment): void
@@ -139,6 +209,10 @@ final class CheckoutPage extends Component
             $this->redirect(route('login'), navigate: true);
 
             return;
+        }
+
+        if ($this->shipping_quote_key === '' && $this->shipping_method_id !== null && $this->shipping_method_id > 0) {
+            $this->shipping_quote_key = 'method:'.$this->shipping_method_id;
         }
 
         $allowed = app(AvailablePaymentMethods::class)->ids();
@@ -158,7 +232,7 @@ final class CheckoutPage extends Component
         ];
         if ($requiresShipping) {
             $rules['shipping_same_as_billing'] = ['boolean'];
-            $rules['shipping_method_id'] = ['required', 'integer'];
+            $rules['shipping_quote_key'] = ['required', 'string'];
             if (! $this->shipping_same_as_billing) {
                 $rules = [...$rules, ...AddressValidation::rules('shipping')];
             }
@@ -215,7 +289,8 @@ final class CheckoutPage extends Component
             'billing' => $billing,
             'shipping' => $shipping,
             'shipping_same_as_billing' => $shippingSame,
-            'shipping_method_id' => $requiresShipping ? (int) ($data['shipping_method_id'] ?? 0) : null,
+            'shipping_method_id' => $requiresShipping ? $this->shipping_method_id : null,
+            'shipping_quote_key' => $requiresShipping ? ($data['shipping_quote_key'] ?? $this->shipping_quote_key) : null,
             'discount_code' => $this->applied_coupon_code !== '' ? $this->applied_coupon_code : null,
             'apply_credit' => (bool) ($data['apply_credit'] ?? false),
             'custom_properties' => $data['propertyValues'] ?? $this->propertyValues,
@@ -280,6 +355,7 @@ final class CheckoutPage extends Component
         CustomerCreditLedger $creditLedger,
         CartRequirementComposer $composer,
         CustomerPropertyService $properties,
+        CheckoutFlow $flow,
     ) {
         $theme = $themes->active();
         $lines = $cart->pricedLines();
@@ -294,23 +370,38 @@ final class CheckoutPage extends Component
 
         $quotes = [];
         $shippingTotal = null;
+        $destination = $this->shippingDestination();
         if ($requiresShipping && $subtotal !== null) {
-            $country = $this->shipping_same_as_billing
-                ? $this->billing_country
-                : $this->shipping_country;
+            $country = $destination->country !== '' ? $destination->country : 'NL';
             $quotes = $shippingQuotes->quotes(
                 $cart->shippableLines(),
-                strtoupper($country !== '' ? $country : 'NL'),
+                $country,
                 $subtotal->currency,
+                $destination->isComplete() ? $destination : null,
             );
-            if ($this->shipping_method_id === null && $quotes !== []) {
-                $this->shipping_method_id = $quotes[0]->methodId;
-            }
+            $selected = null;
             foreach ($quotes as $quote) {
-                if ($quote->methodId === $this->shipping_method_id) {
-                    $shippingTotal = $quote->amount;
+                if ($quote->key() === $this->shipping_quote_key) {
+                    $selected = $quote;
                     break;
                 }
+            }
+            if ($selected === null && $this->shipping_method_id !== null) {
+                foreach ($quotes as $quote) {
+                    if (! $quote->isCarrierQuote() && $quote->methodId === $this->shipping_method_id) {
+                        $selected = $quote;
+                        $this->shipping_quote_key = $quote->key();
+                        break;
+                    }
+                }
+            }
+            if ($selected === null && $quotes !== []) {
+                $selected = $quotes[0];
+                $this->shipping_quote_key = $selected->key();
+            }
+            if ($selected !== null) {
+                $shippingTotal = $selected->amount;
+                $this->shipping_method_id = $selected->isCarrierQuote() ? null : $selected->methodId;
             }
         }
 
@@ -348,6 +439,21 @@ final class CheckoutPage extends Component
             }
         }
 
+        $currentStep = $this->resolvedStep($flow, $requirements);
+        if ($this->step !== $currentStep->value) {
+            $this->step = $currentStep->value;
+        }
+        if (! $flow->canVisit($requirements, $currentStep, $this->completedSteps) && $currentStep !== CheckoutStep::Details) {
+            $currentStep = CheckoutStep::Details;
+            $this->step = $currentStep->value;
+        }
+
+        $nextStep = $flow->next($requirements, $currentStep);
+        $amountDue = $orderTotal;
+        if ($amountDue !== null && $creditTotal !== null) {
+            $amountDue = $amountDue->subtract($creditTotal);
+        }
+
         return view($theme->view('checkout.index'), [
             'lines' => $lines,
             'subtotal' => $subtotal,
@@ -357,6 +463,7 @@ final class CheckoutPage extends Component
             'taxTotal' => $taxTotal,
             'orderTotal' => $orderTotal,
             'creditTotal' => $creditTotal,
+            'amountDue' => $amountDue,
             'theme' => $theme,
             'paymentOptions' => app(AvailablePaymentMethods::class)->options(),
             'developmentPayEnabled' => $this->developmentPayEnabled(),
@@ -368,7 +475,12 @@ final class CheckoutPage extends Component
             'actor' => 'customer',
             'pricesIncludeTax' => $pricesIncludeTax,
             'creditBalance' => $creditBalance,
-        ])->layout($theme->view('layouts.storefront'), [
+            'currentStep' => $currentStep,
+            'progressItems' => $flow->progress($requirements, $currentStep, $this->completedSteps),
+            'nextStep' => $nextStep,
+            'countryOptions' => CheckoutCountries::options(),
+            'primaryActionLabel' => $this->primaryActionLabel($currentStep, $nextStep, $amountDue),
+        ])->layout($theme->view('layouts.checkout'), [
             'title' => __('storefront.checkout.title'),
             'theme' => $theme,
         ]);
@@ -385,6 +497,138 @@ final class CheckoutPage extends Component
         $this->billing_postal_code = $address->postal_code;
         $this->billing_country = $address->country;
         $this->billing_phone = (string) ($address->phone ?? '');
+    }
+
+    private function resolvedStep(CheckoutFlow $flow, CartRequirements $requirements): CheckoutStep
+    {
+        return $flow->resolve($requirements, $this->step);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function rulesForStep(
+        CheckoutStep $step,
+        CartService $cart,
+        CartRequirementComposer $composer,
+        CustomerPropertyService $properties,
+    ): array {
+        $requirements = $composer->compose($cart);
+        $allowed = app(AvailablePaymentMethods::class)->ids();
+
+        return match ($step) {
+            CheckoutStep::Details => [
+                'customer_name' => ['required', 'string', 'max:255'],
+                'customer_email' => ['required', 'email', 'max:255'],
+                ...AddressValidation::rules('billing'),
+                ...$properties->livewireRules($properties->definitionsFor('checkout')),
+            ],
+            CheckoutStep::Delivery => [
+                'shipping_same_as_billing' => ['boolean'],
+                'shipping_quote_key' => ['required', 'string'],
+                ...($this->shipping_same_as_billing ? [] : AddressValidation::rules('shipping')),
+            ],
+            CheckoutStep::Configuration => [],
+            CheckoutStep::Payment => [
+                'payment_method' => ['required', 'string', Rule::in($allowed)],
+                'apply_credit' => ['boolean'],
+            ],
+            CheckoutStep::Review => $this->reviewRules($requirements, $properties, $allowed),
+        };
+    }
+
+    /**
+     * @param  list<string>  $allowed
+     * @return array<string, mixed>
+     */
+    private function reviewRules(CartRequirements $requirements, CustomerPropertyService $properties, array $allowed): array
+    {
+        $rules = [
+            'customer_name' => ['required', 'string', 'max:255'],
+            'customer_email' => ['required', 'email', 'max:255'],
+            'payment_method' => ['required', 'string', Rule::in($allowed)],
+            ...AddressValidation::rules('billing'),
+            ...$properties->livewireRules($properties->definitionsFor('checkout')),
+        ];
+        if ($requirements->requiresShipping()) {
+            $rules['shipping_quote_key'] = ['required', 'string'];
+            if (! $this->shipping_same_as_billing) {
+                $rules = [...$rules, ...AddressValidation::rules('shipping')];
+            }
+        }
+
+        return $rules;
+    }
+
+    private function markCompleted(CheckoutStep $step): void
+    {
+        if (! in_array($step->value, $this->completedSteps, true)) {
+            $this->completedSteps[] = $step->value;
+        }
+    }
+
+    private function invalidateFrom(CheckoutStep $from): void
+    {
+        $order = [
+            CheckoutStep::Details->value,
+            CheckoutStep::Delivery->value,
+            CheckoutStep::Configuration->value,
+            CheckoutStep::Payment->value,
+            CheckoutStep::Review->value,
+        ];
+        $index = array_search($from->value, $order, true);
+        if ($index === false) {
+            return;
+        }
+        $drop = array_slice($order, $index);
+        $this->completedSteps = array_values(array_filter(
+            $this->completedSteps,
+            static fn (string $step): bool => ! in_array($step, $drop, true),
+        ));
+    }
+
+    private function shippingDestination(): ShippingDestination
+    {
+        if ($this->shipping_same_as_billing) {
+            return new ShippingDestination(
+                country: strtoupper($this->billing_country),
+                postalCode: $this->billing_postal_code,
+                city: $this->billing_city,
+                line1: $this->billing_line1,
+            );
+        }
+
+        return new ShippingDestination(
+            country: strtoupper($this->shipping_country !== '' ? $this->shipping_country : $this->billing_country),
+            postalCode: $this->shipping_postal_code !== '' ? $this->shipping_postal_code : $this->billing_postal_code,
+            city: $this->shipping_city !== '' ? $this->shipping_city : $this->billing_city,
+            line1: $this->shipping_line1 !== '' ? $this->shipping_line1 : $this->billing_line1,
+        );
+    }
+
+    private function primaryActionLabel(CheckoutStep $current, ?CheckoutStep $next, ?Money $amountDue): string
+    {
+        if ($current === CheckoutStep::Review) {
+            $gateway = CheckoutPaymentSelection::parse($this->payment_method)->gatewayId;
+            if (in_array($gateway, ['mollie', 'stripe'], true)) {
+                return __('storefront.checkout.continue_to_secure_payment');
+            }
+            if ($gateway === 'development' && $amountDue !== null) {
+                return __('storefront.checkout.pay_amount', [
+                    'amount' => MoneyFormatter::format($amountDue),
+                ]);
+            }
+
+            return __('storefront.checkout.place_order');
+        }
+
+        if ($next === null) {
+            return __('storefront.checkout.continue');
+        }
+
+        return __('storefront.checkout.continue_to', [
+            'step' => __($next->labelKey()),
+        ]);
     }
 
     private function developmentPayEnabled(): bool

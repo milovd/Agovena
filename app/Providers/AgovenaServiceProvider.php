@@ -159,7 +159,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $theme = $this->app->make(ThemeManager::class)->active();
         View::addNamespace('theme', $theme->viewsPath);
 
-        View::composer(['layouts.admin', 'layouts.admin-guest', 'theme::layouts.storefront'], function ($view): void {
+        View::composer(['layouts.admin', 'layouts.admin-guest', 'theme::layouts.storefront', 'theme::layouts.checkout'], function ($view): void {
             /** @var SettingsRepository $settings */
             $settings = $this->app->make(SettingsRepository::class);
             $siteName = (string) $settings->get('general', 'site_name', config('app.name', 'Agovena'));
@@ -172,6 +172,12 @@ class AgovenaServiceProvider extends ServiceProvider
                 $favicon = $logoPath;
             }
             $view->with('brandingFaviconPath', $favicon);
+        });
+
+        View::composer('theme::layouts.checkout', function ($view): void {
+            if (! array_key_exists('themeConfig', $view->getData())) {
+                $view->with('themeConfig', $this->app->make(ThemeManager::class)->config());
+            }
         });
 
         View::composer('theme::layouts.storefront', function ($view): void {
