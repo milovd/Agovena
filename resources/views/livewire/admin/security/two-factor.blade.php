@@ -19,6 +19,9 @@
             <h3 class="admin-panel__title">{{ __('admin.security.enabled_heading') }}</h3>
             <p class="ag-muted">{{ __('admin.security.enabled_text') }}</p>
             <div class="ag-form__actions">
+                <button type="button" class="ag-btn ag-btn--secondary" wire:click="regenerateRecoveryCodes">
+                    {{ __('admin.security.regenerate_recovery') }}
+                </button>
                 <button type="button" class="ag-btn ag-btn--danger" wire:click="disable">
                     {{ __('admin.security.disable') }}
                 </button>

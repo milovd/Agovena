@@ -65,11 +65,33 @@ final class TwoFactor extends Component
         $plain = $totp->generateRecoveryCodes();
         $totp->enable($user, $secret, $totp->hashRecoveryCodes($plain));
         session()->forget(TotpTwoFactor::SESSION_SETUP_SECRET);
+        $totp->markVerified($user);
 
         $this->recoveryCodes = $plain;
         $this->showingRecoveryCodes = true;
         $this->code = '';
         session()->flash('status', __('admin.security.enabled'));
+    }
+
+    public function regenerateRecoveryCodes(TotpTwoFactor $totp): void
+    {
+        $user = $this->staff();
+        if (! $user->hasTwoFactorEnabled()) {
+            return;
+        }
+
+        if (! $this->requireRecentPassword('regenerateRecoveryCodes')) {
+            return;
+        }
+
+        $plain = $totp->generateRecoveryCodes();
+        $user->forceFill([
+            'two_factor_recovery_codes' => $totp->hashRecoveryCodes($plain),
+        ])->save();
+
+        $this->recoveryCodes = $plain;
+        $this->showingRecoveryCodes = true;
+        session()->flash('status', __('admin.security.recovery_regenerated'));
     }
 
     public function hideRecoveryCodes(): void

@@ -186,6 +186,8 @@ return [
         'recovery_heading' => 'Recovery codes',
         'recovery_text' => 'Store these codes somewhere safe. Each code can be used once if you lose your authenticator. They will not be shown again.',
         'recovery_done' => 'I have stored these codes',
+        'regenerate_recovery' => 'Regenerate recovery codes',
+        'recovery_regenerated' => 'New recovery codes were generated. Store them somewhere safe.',
         'confirm_password_title' => 'Confirm your password',
         'confirm_password_text' => 'This action is sensitive. Enter your current password to continue.',
         'password' => 'Current password',

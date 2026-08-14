@@ -67,6 +67,10 @@ final class Login extends Component
         session()->regenerate();
 
         $user = Auth::user();
+        session([
+            TotpTwoFactor::SESSION_PRIVILEGED_AT_LOGIN => $user instanceof User && $user->canAccessAdmin(),
+        ]);
+
         if ($user instanceof User && $user->hasTwoFactorEnabled()) {
             $intended = (string) (session()->pull('url.intended') ?: '');
             Auth::logout();

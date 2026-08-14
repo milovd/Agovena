@@ -186,6 +186,8 @@ return [
         'recovery_heading' => 'Herstelcodes',
         'recovery_text' => 'Bewaar deze codes op een veilige plek. Elke code kan één keer worden gebruikt als je je authenticator kwijtraakt. Ze worden niet opnieuw getoond.',
         'recovery_done' => 'Ik heb deze codes bewaard',
+        'regenerate_recovery' => 'Herstelcodes opnieuw genereren',
+        'recovery_regenerated' => 'Nieuwe herstelcodes zijn gegenereerd. Bewaar ze op een veilige plek.',
         'confirm_password_title' => 'Bevestig je wachtwoord',
         'confirm_password_text' => 'Deze actie is gevoelig. Voer je huidige wachtwoord in om door te gaan.',
         'password' => 'Huidig wachtwoord',

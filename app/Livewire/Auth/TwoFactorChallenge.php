@@ -66,6 +66,7 @@ final class TwoFactorChallenge extends Component
 
         Auth::login($user, $remember);
         session()->regenerate();
+        $totp->markVerified($user);
 
         $this->redirect($this->destination($user, $intended), navigate: true);
     }

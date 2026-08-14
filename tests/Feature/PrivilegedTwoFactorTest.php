@@ -2,12 +2,15 @@
 
 use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Auth\TotpTwoFactor;
+use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Livewire\Admin\Security\TwoFactor;
 use App\Livewire\Auth\TwoFactorChallenge;
 use App\Livewire\Customer\Auth\Login;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Livewire\Livewire;
 use PragmaRX\Google2FA\Google2FA;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
@@ -166,4 +169,68 @@ test('wrong password does not confirm a sensitive action', function () {
 
     expect($staff->fresh()?->hasTwoFactorEnabled())->toBeTrue()
         ->and(app(ConfirmsRecentPassword::class)->confirmed())->toBeFalse();
+});
+
+test('customers who gain admin access after login must complete privileged totp', function () {
+    app(SyncRegisteredPermissions::class)();
+    $user = User::factory()->create(['password' => 'password']);
+    $totp = app(TotpTwoFactor::class);
+    $secret = $totp->generateSecret();
+    $totp->enable($user, $secret, $totp->hashRecoveryCodes(['AAAA-BBBB']));
+
+    $this->actingAs($user)
+        ->withSession([TotpTwoFactor::SESSION_PRIVILEGED_AT_LOGIN => false])
+        ->get(route('admin.dashboard'))
+        ->assertForbidden();
+
+    $user->assignRole('owner');
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    $this->actingAs($user->fresh())
+        ->withSession([TotpTwoFactor::SESSION_PRIVILEGED_AT_LOGIN => false])
+        ->get(route('admin.dashboard'))
+        ->assertRedirect(route('two-factor.challenge'));
+
+    $this->assertGuest();
+    expect(session(TotpTwoFactor::SESSION_PENDING_ID))->toBe($user->id);
+});
+
+test('remembered privileged sessions must pass totp before admin', function () {
+    $staff = $this->createStaff();
+    $this->actingAs($staff);
+
+    $guard = Auth::guard('web');
+    $property = new ReflectionProperty($guard, 'viaRemember');
+    $property->setValue($guard, true);
+
+    $this->get(route('admin.dashboard'))
+        ->assertRedirect(route('two-factor.challenge'));
+
+    $this->assertGuest();
+});
+
+test('removing admin access denies the existing session', function () {
+    $staff = $this->createStaff();
+    $staff->syncRoles([]);
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    $this->actingAs($staff->fresh())
+        ->get(route('admin.dashboard'))
+        ->assertForbidden();
+});
+
+test('privileged user can regenerate recovery codes after password confirmation', function () {
+    $staff = $this->createStaff(['password' => 'password']);
+
+    $component = Livewire::actingAs($staff)
+        ->test(TwoFactor::class)
+        ->call('regenerateRecoveryCodes')
+        ->assertSet('showingPasswordConfirmation', true)
+        ->set('recentPassword', 'password')
+        ->call('confirmRecentPassword')
+        ->assertHasNoErrors()
+        ->assertSet('showingRecoveryCodes', true);
+
+    expect($component->get('recoveryCodes'))->toHaveCount(8)
+        ->and($staff->fresh()?->two_factor_recovery_codes)->toHaveCount(8);
 });

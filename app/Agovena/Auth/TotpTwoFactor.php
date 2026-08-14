@@ -24,6 +24,10 @@ final class TotpTwoFactor
 
     public const SESSION_PENDING_INTENDED = 'auth.two_factor.intended';
 
+    public const SESSION_PRIVILEGED_AT_LOGIN = 'auth.privileged_at_login';
+
+    public const SESSION_VERIFIED_USER = 'auth.two_factor.verified_user_id';
+
     public function __construct(private readonly Google2FA $google2fa) {}
 
     public function generateSecret(): string
@@ -119,5 +123,33 @@ final class TotpTwoFactor
             'two_factor_recovery_codes' => null,
             'two_factor_confirmed_at' => null,
         ])->save();
+    }
+
+    public function markVerified(User $user): void
+    {
+        session([
+            self::SESSION_VERIFIED_USER => $user->id,
+            self::SESSION_PRIVILEGED_AT_LOGIN => $user->canAccessAdmin(),
+        ]);
+    }
+
+    public function isVerified(User $user): bool
+    {
+        return (int) session(self::SESSION_VERIFIED_USER) === (int) $user->id;
+    }
+
+    public function loggedInWithoutPrivilege(): bool
+    {
+        return session()->has(self::SESSION_PRIVILEGED_AT_LOGIN)
+            && session(self::SESSION_PRIVILEGED_AT_LOGIN) === false;
+    }
+
+    public function requiresPrivilegedChallenge(User $user, bool $viaRemember): bool
+    {
+        if (! $user->canAccessAdmin() || ! $user->hasTwoFactorEnabled()) {
+            return false;
+        }
+
+        return $viaRemember || $this->loggedInWithoutPrivilege();
     }
 }
