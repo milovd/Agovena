@@ -281,45 +281,6 @@
   min-width: 0;
 }
 
-.store-chrome--reduced .store-header__inner {
-  grid-template-columns: auto 1fr;
-}
-
-.store-chrome--reduced .store-header__auth {
-  display: inline-flex;
-}
-
-.store-chrome--reduced .store-header__auth-register {
-  color: var(--theme-color-text);
-  background: transparent;
-  border: 1px solid var(--theme-color-border);
-}
-
-.store-chrome--reduced .store-header__auth-register:hover,
-.store-chrome--reduced .store-header__auth-register:focus-visible,
-.store-chrome--reduced .store-header__auth-register:active {
-  color: var(--theme-color-accent);
-  background: var(--theme-color-accent-soft);
-  border-color: var(--theme-color-border);
-}
-
-.store-header__back {
-  font-size: 0.875rem;
-  font-weight: 650;
-  color: var(--theme-color-text-muted);
-  text-decoration: none;
-  white-space: nowrap;
-  margin-right: var(--theme-space-2);
-}
-
-.store-header__back-short {
-  display: none;
-}
-
-.store-header__back:hover {
-  color: var(--theme-color-accent);
-}
-
 .store-brand__logo {
   max-height: 2.25rem;
   width: auto;

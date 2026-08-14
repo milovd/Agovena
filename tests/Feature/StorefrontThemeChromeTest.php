@@ -111,9 +111,12 @@ test('checkout keeps the storefront header and bundled logo', function () {
 
     $this->get('/checkout')
         ->assertOk()
-        ->assertSee('store-chrome--reduced', false)
+        ->assertSee('store-chrome', false)
+        ->assertDontSee('store-chrome--reduced', false)
+        ->assertSee('store-header__search', false)
+        ->assertSee('store-header__cart', false)
         ->assertSee('vendor/agovena/logo.png', false)
-        ->assertSee(__('storefront.checkout.back_to_cart'), false)
+        ->assertDontSee(__('storefront.checkout.back_to_cart'), false)
         ->assertDontSee('store-checkout-chrome', false)
         ->assertDontSee(__('storefront.checkout.steps.review'), false);
 });

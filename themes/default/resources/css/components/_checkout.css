@@ -592,18 +592,6 @@
 }
 
 @media (max-width: 430px) {
-  .store-header__back-full {
-    display: none;
-  }
-
-  .store-header__back-short {
-    display: inline;
-  }
-
-  .store-chrome--reduced .store-header__auth-register {
-    display: none;
-  }
-
   .store-cart-line {
     grid-template-columns: 4.25rem minmax(0, 1fr);
     gap: var(--theme-space-3);

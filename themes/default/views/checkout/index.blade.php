@@ -19,7 +19,7 @@
         @endif
     </header>
 
-    <nav class="store-stepper" aria-label="{{ __('storefront.checkout.progress_aria') }}">
+    <nav class="store-stepper" aria-label="{{ __('storefront.checkout.progress_aria') }}" data-testid="checkout-stepper">
         <div class="store-stepper__mobile">
             <p class="store-stepper__mobile-meta" aria-live="polite">
                 {{ __('storefront.checkout.step_of', [
@@ -279,7 +279,7 @@
                 <section class="store-checkout__section" aria-labelledby="checkout-payment-heading">
                     <h2 id="checkout-payment-heading" class="store-checkout__section-title">{{ __('storefront.checkout.payment') }}</h2>
                     <p class="store-note">{{ __('storefront.checkout.hosted_payment_note') }}</p>
-                    <div class="store-checkout__methods">
+                    <div class="store-checkout__methods" data-testid="checkout-payment-methods">
                         @forelse ($paymentOptions as $option)
                             <label class="store-choice store-choice--row" wire:key="pay-{{ $option['id'] }}">
                                 <input type="radio" wire:model.live="payment_method" value="{{ $option['id'] }}">
@@ -341,12 +341,12 @@
                     <button type="button" class="store-btn store-btn--ghost" wire:click="back">{{ __('storefront.checkout.back') }}</button>
                 @endif
                 @if ($currentStep === CheckoutStep::Payment)
-                    <button type="button" class="store-btn store-btn--primary store-btn--checkout" wire:click="placeOrder" wire:loading.attr="disabled" wire:target="placeOrder">
+                    <button type="button" class="store-btn store-btn--primary store-btn--checkout" data-testid="checkout-submit" wire:click="placeOrder" wire:loading.attr="disabled" wire:target="placeOrder">
                         <span wire:loading.remove wire:target="placeOrder">{{ $primaryActionLabel }}</span>
                         <span wire:loading wire:target="placeOrder">{{ __('storefront.checkout.working') }}</span>
                     </button>
                 @else
-                    <button type="button" class="store-btn store-btn--primary store-btn--checkout" wire:click="continueStep" wire:loading.attr="disabled" wire:target="continueStep">
+                    <button type="button" class="store-btn store-btn--primary store-btn--checkout" data-testid="checkout-continue" wire:click="continueStep" wire:loading.attr="disabled" wire:target="continueStep">
                         <span wire:loading.remove wire:target="continueStep">{{ $primaryActionLabel }}</span>
                         <span wire:loading wire:target="continueStep">{{ __('storefront.checkout.working') }}</span>
                     </button>

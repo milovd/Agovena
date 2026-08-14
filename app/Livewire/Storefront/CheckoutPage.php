@@ -501,7 +501,6 @@ final class CheckoutPage extends Component
         ])->layout($theme->view('layouts.checkout'), [
             'title' => __('storefront.checkout.title'),
             'theme' => $theme,
-            'reducedChrome' => true,
         ]);
     }
 

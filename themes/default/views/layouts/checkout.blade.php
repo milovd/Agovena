@@ -38,7 +38,7 @@
 </head>
 <body class="store store--checkout store--sticky-header">
     <a class="store-skip" href="#main">{{ __('storefront.skip_to_content') }}</a>
-    @include('theme::partials.header', ['themeConfig' => $config, 'reducedChrome' => true])
+    @include('theme::partials.header', ['themeConfig' => $config])
     <main id="main" class="store-main store-main--checkout" tabindex="-1">
         @if (session('status'))
             <p class="store-flash" role="status">{{ session('status') }}</p>

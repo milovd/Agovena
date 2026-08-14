@@ -7,11 +7,10 @@
     $categoriesOn = $cfg->bool('header.show_discovery_bar', true);
     $discoveryCategories = $discoveryCategories ?? collect();
     $suggestUrl = route('storefront.search.suggest');
-    $reducedChrome = (bool) ($reducedChrome ?? false);
     $brandingLogoUrl = $brandingLogoUrl ?? app(\App\Agovena\Theme\StorefrontBrand::class)->logoUrl();
 @endphp
 
-@if (! $reducedChrome && $uspItems !== [])
+@if ($uspItems !== [])
     @php
         $uspBenefits = [];
         $uspCtas = [];
@@ -63,7 +62,7 @@
 @endif
 
 <header
-    class="store-chrome{{ $reducedChrome ? ' store-chrome--reduced' : '' }}"
+    class="store-chrome"
     x-data="{
         navOpen: false,
         catsOpen: false,
@@ -119,18 +118,16 @@
 >
     <div class="store-header">
         <div class="store-header__inner">
-            @if (! $reducedChrome)
-                <button
-                    type="button"
-                    class="store-header__menu"
-                    @click="navOpen = !navOpen"
-                    :aria-expanded="navOpen.toString()"
-                    aria-controls="store-mobile-nav"
-                >
-                    <span class="store-header__menu-bars" aria-hidden="true"></span>
-                    <span class="visually-hidden">{{ __('storefront.menu') }}</span>
-                </button>
-            @endif
+            <button
+                type="button"
+                class="store-header__menu"
+                @click="navOpen = !navOpen"
+                :aria-expanded="navOpen.toString()"
+                aria-controls="store-mobile-nav"
+            >
+                <span class="store-header__menu-bars" aria-hidden="true"></span>
+                <span class="visually-hidden">{{ __('storefront.menu') }}</span>
+            </button>
 
             <a class="store-brand" href="{{ route('storefront.home') }}">
                 <img
@@ -142,7 +139,6 @@
                 >
             </a>
 
-            @if (! $reducedChrome)
             <nav class="store-nav" aria-label="{{ __('storefront.primary_nav') }}">
                 @if ($categoriesOn && $discoveryCategories->isNotEmpty())
                     <div
@@ -227,9 +223,8 @@
                     @endif
                 @endforeach
             </nav>
-            @endif
 
-            @if (! $reducedChrome && $searchOn)
+            @if ($searchOn)
                 <div class="store-header__search-wrap" @click.outside="closeSuggest()">
                     <form class="store-header__search" action="{{ route('storefront.home') }}" method="get" role="search">
                         <label class="visually-hidden" for="store-header-search">{{ __('storefront.search.label') }}</label>
@@ -281,7 +276,9 @@
                         <template x-for="item in suggestItems" :key="item.slug">
                             <a class="store-suggest__item" :href="item.url" role="option">
                                 <span class="store-suggest__media" aria-hidden="true">
-                                    <img x-show="item.image" :src="item.image" alt="">
+                                    <template x-if="item.image">
+                                        <img :src="item.image" alt="">
+                                    </template>
                                 </span>
                                 <span class="store-suggest__copy">
                                     <span class="store-suggest__name" x-text="item.name"></span>
@@ -301,12 +298,6 @@
             @endif
 
             <div class="store-header__actions">
-                @if ($reducedChrome)
-                    <a class="store-header__back" href="{{ route('storefront.cart') }}">
-                        <span class="store-header__back-full">{{ __('storefront.checkout.back_to_cart') }}</span>
-                        <span class="store-header__back-short">{{ __('storefront.checkout.back_to_cart_short') }}</span>
-                    </a>
-                @endif
                 @if ($showAccount)
                     @auth
                         @php
@@ -360,7 +351,6 @@
                         </div>
                     @endauth
                 @endif
-                @if (! $reducedChrome)
                 <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}" aria-label="{{ __('storefront.nav.cart') }}{{ ($cartCount ?? 0) > 0 ? ', '.trans_choice('storefront.cart.items', $cartCount, ['count' => $cartCount]) : '' }}">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
                     <span class="visually-hidden">{{ __('storefront.nav.cart') }}</span>
@@ -368,11 +358,10 @@
                         <span class="store-header__cart-count" aria-hidden="true">{{ $cartCount }}</span>
                     @endif
                 </a>
-                @endif
             </div>
         </div>
 
-        @if (! $reducedChrome && $searchOn)
+        @if ($searchOn)
             <div class="store-header__search-wrap store-header__search-wrap--mobile" @click.outside="closeSuggest()">
                 <form class="store-header__search store-header__search--mobile" action="{{ route('storefront.home') }}" method="get" role="search">
                     <label class="visually-hidden" for="store-header-search-mobile">{{ __('storefront.search.label') }}</label>
@@ -408,7 +397,6 @@
         @endif
     </div>
 
-    @if (! $reducedChrome)
     <div
         id="store-mobile-nav"
         class="store-drawer"
@@ -464,5 +452,4 @@
             <button type="button" class="store-btn" @click="navOpen = false">{{ __('storefront.close') }}</button>
         </div>
     </div>
-    @endif
 </header>
