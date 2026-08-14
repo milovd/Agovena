@@ -10,6 +10,7 @@ use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Packages\PackageAutoload;
+use App\Agovena\Support\RecoversTestTransaction;
 use App\Models\AgovenaModule;
 use Composer\Semver\Semver;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -281,6 +282,7 @@ final class ModuleManager
             '--path' => $this->relativePath($path),
             '--force' => true,
         ]);
+        RecoversTestTransaction::afterDdl();
     }
 
     private function relativePath(string $absolute): string
