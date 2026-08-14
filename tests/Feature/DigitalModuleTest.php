@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Agovena\Modules\Digital\DigitalDeliveryService;
+use Agovena\Modules\Digital\Http\Livewire\Admin\AssetsIndex;
 use Agovena\Modules\Digital\Http\Livewire\Customer\DownloadsIndex;
 use Agovena\Modules\Digital\Models\DigitalAsset;
 use Agovena\Modules\Digital\Models\DigitalEntitlement;
@@ -19,6 +20,7 @@ use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Models\Customer;
 use App\Models\Product;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -251,4 +253,43 @@ test('shipping disabled does not break digital delivery', function () {
 
     expect(app(DigitalDeliveryService::class))->toBeInstanceOf(DigitalDeliveryService::class)
         ->and(DigitalEntitlement::query()->where('order_id', $order->id)->count())->toBe(1);
+});
+
+test('digital asset upload rejects executable and svg files', function () {
+    enableDigitalModule();
+    Storage::fake('local');
+    $product = makeDigitalProduct();
+    $staff = $this->createStaff();
+
+    foreach (['evil.php', 'payload.exe', 'icon.svg'] as $name) {
+        Livewire::actingAs($staff)
+            ->test(AssetsIndex::class)
+            ->set('product_id', $product->id)
+            ->set('label', 'Bad upload')
+            ->set('file', UploadedFile::fake()->create($name, 32))
+            ->call('save')
+            ->assertHasErrors(['file']);
+    }
+
+    expect(DigitalAsset::query()->count())->toBe(0);
+});
+
+test('digital asset upload accepts an allowlisted pdf', function () {
+    enableDigitalModule();
+    Storage::fake('local');
+    $product = makeDigitalProduct();
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(AssetsIndex::class)
+        ->set('product_id', $product->id)
+        ->set('label', 'Manual')
+        ->set('file', UploadedFile::fake()->create('manual.pdf', 64, 'application/pdf'))
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $asset = DigitalAsset::query()->first();
+    expect($asset)->not->toBeNull()
+        ->and($asset->filename)->toBe('manual.pdf')
+        ->and($asset->path)->toEndWith('.pdf');
 });

@@ -217,3 +217,21 @@ test('malformed package manifests fail without breaking the application boot', f
 
     expect(app(ModuleManager::class)->isInstalled('broken-manifest'))->toBeFalse();
 });
+
+test('composer failure leaves no package registration behind', function () {
+    $fake = new FakeComposerRunner;
+    $this->app->instance(ComposerRunner::class, $fake);
+
+    expect(fn () => app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Composer,
+        locator: 'agovena-fixtures/missing-module',
+        constraint: '^1.0',
+        composerName: 'agovena-fixtures/missing-module',
+    )))->toThrow(ValidationException::class);
+
+    expect(AgovenaPackage::query()->where('agovena_id', 'sample')->exists())->toBeFalse()
+        ->and(AgovenaPackage::query()->where('composer_name', 'agovena-fixtures/missing-module')->exists())->toBeFalse()
+        ->and(app(ModuleManager::class)->isInstalled('sample'))->toBeFalse()
+        ->and(is_dir(storage_path('app/packages/modules/sample')))->toBeFalse();
+});

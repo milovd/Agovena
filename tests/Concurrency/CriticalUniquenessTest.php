@@ -126,6 +126,7 @@ test('refunds cannot exceed the remaining refundable amount', function () {
 test('inventory cannot decrement below available stock', function () {
     app(ModuleManager::class)->enable('inventory');
     $product = Product::factory()->active()->create();
+    app(ProductCapabilityManager::class)->enable($product, 'physical');
     app(ProductCapabilityManager::class)->enable($product, 'inventory');
     $inventory = app(InventoryService::class);
     $inventory->setQuantity($product, 1);

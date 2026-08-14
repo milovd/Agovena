@@ -34,7 +34,7 @@ PHP `upload_max_filesize` / `post_max_size` and Nginx `client_max_body_size` / A
 5. `composer install --no-dev --optimize-autoloader`
 6. If this tree has no `public/build` (source checkout, not a release), run `npm ci && npm run build` once. **Releases should ship prebuilt assets.**
 7. Make `storage` and `bootstrap/cache` writable by the FPM/queue user.
-8. Point Nginx/Apache at `public/` (see `nginx.conf` / `apache.conf`).
+8. Point Nginx/Apache at `public/` (see `nginx.conf` / `apache.conf`). Use `nginx-https.conf` for TLS. Match FPM with `php-fpm-pool.conf`.
 9. Open `/install` or run `php artisan agovena:install`.
 10. Enable `deploy/systemd/agovena-queue.service`.
 11. Install `deploy/cron` for `schedule:run`.

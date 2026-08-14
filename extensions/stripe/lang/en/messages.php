@@ -31,6 +31,8 @@ return [
     ],
     'errors' => [
         'not_configured' => 'Stripe is not configured.',
+        'unauthorized' => 'Stripe rejected the API credentials.',
+        'server_error' => 'Stripe returned a temporary server error.',
         'create_failed' => 'The payment could not be started.',
         'cancel_unsupported' => 'This payment cannot be cancelled at the provider.',
         'refund_failed' => 'The refund could not be processed.',

@@ -41,6 +41,8 @@ final class FakeStripeApi implements StripeApi
 
     public bool $unauthorized = false;
 
+    public bool $serverError = false;
+
     public string $nextIntentStatus = 'requires_payment_method';
 
     public function createCheckoutSession(array $payload, ?string $idempotencyKey = null): array
@@ -252,7 +254,10 @@ final class FakeStripeApi implements StripeApi
             throw StripeProviderException::failed('stripe::messages.health.unreachable');
         }
         if ($this->unauthorized) {
-            throw StripeProviderException::failed('stripe::messages.errors.not_configured');
+            throw StripeProviderException::failed('stripe::messages.errors.unauthorized');
+        }
+        if ($this->serverError) {
+            throw StripeProviderException::failed('stripe::messages.errors.server_error');
         }
     }
 }

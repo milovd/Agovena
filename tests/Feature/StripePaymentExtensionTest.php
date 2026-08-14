@@ -384,6 +384,29 @@ test('malformed stripe checkout response fails the attempt', function () {
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed);
 });
 
+test('stripe unauthorized and server errors fail safely without leaking secrets', function () {
+    $secret = 'sk_test_abcdefghijklmnopqrstuvwxyz123456';
+
+    foreach (['unauthorized', 'serverError'] as $mode) {
+        $api = enableStripe();
+        $api->{$mode} = true;
+        $payment = placeStripeOrder();
+
+        $attempt = app(StartOrderPayment::class)->handle(
+            $payment->order,
+            'stripe:card',
+            'https://example.test/return',
+            'https://example.test/cancel',
+            'stripe-'.$mode.'-1',
+        );
+
+        expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+            ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
+            ->and(json_encode($attempt->response_meta))->not->toContain($secret)
+            ->and(json_encode($attempt->response_meta))->not->toContain(STRIPE_WEBHOOK_SECRET);
+    }
+});
+
 test('stripe health check validates credentials without exposing the key', function () {
     $api = enableStripe();
     $result = app(StripePaymentGateway::class)->health();

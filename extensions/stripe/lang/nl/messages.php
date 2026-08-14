@@ -31,6 +31,8 @@ return [
     ],
     'errors' => [
         'not_configured' => 'Stripe is niet geconfigureerd.',
+        'unauthorized' => 'Stripe heeft de API-gegevens geweigerd.',
+        'server_error' => 'Stripe gaf een tijdelijke serverfout terug.',
         'create_failed' => 'De betaling kon niet worden gestart.',
         'cancel_unsupported' => 'Deze betaling kan bij de provider niet worden geannuleerd.',
         'refund_failed' => 'De terugbetaling kon niet worden verwerkt.',

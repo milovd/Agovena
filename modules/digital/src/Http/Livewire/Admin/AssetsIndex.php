@@ -19,6 +19,13 @@ final class AssetsIndex extends Component
     use AuthorizesRequests;
     use WithFileUploads;
 
+    /** @var list<string> */
+    private const ALLOWED_EXTENSIONS = [
+        'pdf', 'zip', 'txt', 'epub', 'mp3', 'mp4', 'wav', 'ogg', 'csv',
+        'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'png', 'jpg', 'jpeg',
+        'webp', 'gif', 'json', 'xml', 'otf', 'ttf', 'woff', 'woff2', 'rtf', 'md',
+    ];
+
     public ?int $product_id = null;
 
     public string $label = '';
@@ -41,7 +48,13 @@ final class AssetsIndex extends Component
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'label' => ['required', 'string', 'max:120'],
             'download_limit' => ['nullable', 'integer', 'min:1'],
-            'file' => ['required', 'file', 'max:51200'],
+            // Private downloads only — never trust browser extensions alone; block executables/SVG.
+            'file' => [
+                'required',
+                'file',
+                'max:51200',
+                'mimes:'.implode(',', self::ALLOWED_EXTENSIONS),
+            ],
         ]);
 
         $product = Product::query()->with('capabilities')->findOrFail((int) $data['product_id']);
@@ -54,9 +67,21 @@ final class AssetsIndex extends Component
         /** @var TemporaryUploadedFile $upload */
         $upload = $this->file;
         $filename = $upload->getClientOriginalName();
+        $extension = strtolower((string) ($upload->guessExtension() ?: $upload->getClientOriginalExtension()));
+        if (! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            $this->addError('file', __('digital::errors.invalid_file_type'));
+
+            return;
+        }
+
+        $safeBase = Str::slug(pathinfo($filename, PATHINFO_FILENAME));
+        if ($safeBase === '') {
+            $safeBase = 'download';
+        }
+
         $path = $upload->storeAs(
             'digital/'.$product->id,
-            Str::uuid()->toString().'_'.Str::slug(pathinfo($filename, PATHINFO_FILENAME)).'.'.$upload->getClientOriginalExtension(),
+            Str::uuid()->toString().'_'.$safeBase.'.'.$extension,
             'local',
         );
 

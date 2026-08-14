@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Operations\SchedulerHealth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -51,4 +52,13 @@ test('scheduler is required when provisioning is enabled', function () {
 
     expect(app(SchedulerHealth::class)->isRequired())->toBeTrue()
         ->and(app(SchedulerHealth::class)->isStale())->toBeTrue();
+});
+
+test('doctor fails when a required scheduler is stale', function () {
+    app(ModuleManager::class)->enable('provisioning');
+    Cache::forget(SchedulerHealth::HEARTBEAT_KEY);
+
+    $this->artisan('agovena:doctor')
+        ->expectsOutputToContain(__('installer.checks.scheduler'))
+        ->assertFailed();
 });

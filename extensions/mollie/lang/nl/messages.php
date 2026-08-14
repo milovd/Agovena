@@ -38,6 +38,8 @@ return [
     ],
     'errors' => [
         'not_configured' => 'Mollie is niet geconfigureerd.',
+        'unauthorized' => 'Mollie heeft de API-gegevens geweigerd.',
+        'server_error' => 'Mollie gaf een tijdelijke serverfout terug.',
         'create_failed' => 'De betaling kon niet worden gestart.',
         'cancel_unsupported' => 'Deze betaling kan bij de provider niet worden geannuleerd.',
         'refund_failed' => 'De terugbetaling kon niet worden verwerkt.',

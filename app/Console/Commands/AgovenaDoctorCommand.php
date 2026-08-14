@@ -111,7 +111,8 @@ final class AgovenaDoctorCommand extends Command
                 id: 'scheduler',
                 label: 'installer.checks.scheduler',
                 passed: ! $scheduler->isStale(),
-                required: false,
+                // Fail (not only warn) when subscriptions/provisioning/unpaid-cancel need cron.
+                required: $scheduler->isRequired(),
                 detail: $last?->toIso8601String() ?? 'none',
             ),
             new RequirementCheck(

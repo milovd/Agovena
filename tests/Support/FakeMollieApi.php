@@ -33,6 +33,10 @@ final class FakeMollieApi implements MollieApi
 
     public bool $malformed = false;
 
+    public bool $unauthorized = false;
+
+    public bool $serverError = false;
+
     public bool $failGet = false;
 
     public bool $failRefund = false;
@@ -45,6 +49,12 @@ final class FakeMollieApi implements MollieApi
     {
         if ($this->timeout) {
             throw MollieProviderException::failed('mollie::messages.health.unreachable');
+        }
+        if ($this->unauthorized) {
+            throw MollieProviderException::failed('mollie::messages.errors.unauthorized');
+        }
+        if ($this->serverError) {
+            throw MollieProviderException::failed('mollie::messages.errors.server_error');
         }
         if ($this->failCreate) {
             throw MollieProviderException::failed('mollie::messages.errors.create_failed');

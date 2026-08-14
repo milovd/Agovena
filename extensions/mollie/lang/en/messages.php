@@ -38,6 +38,8 @@ return [
     ],
     'errors' => [
         'not_configured' => 'Mollie is not configured.',
+        'unauthorized' => 'Mollie rejected the API credentials.',
+        'server_error' => 'Mollie returned a temporary server error.',
         'create_failed' => 'The payment could not be started.',
         'cancel_unsupported' => 'This payment cannot be cancelled at the provider.',
         'refund_failed' => 'The refund could not be processed.',

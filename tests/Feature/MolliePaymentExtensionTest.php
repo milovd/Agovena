@@ -21,6 +21,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
+use App\Livewire\Admin\Extensions\Index;
 use App\Livewire\Storefront\PaymentStatusPage;
 use App\Models\ExtensionSetting;
 use App\Models\Payment;
@@ -339,6 +340,39 @@ test('malformed mollie checkout response fails the attempt', function () {
     );
 
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed);
+});
+
+test('mollie unauthorized and server errors fail safely without leaking secrets', function () {
+    $secret = 'test_abcdefghijklmnopqrstuvwxyz123456';
+
+    foreach (['unauthorized', 'serverError'] as $mode) {
+        $api = enableMollie();
+        $api->{$mode} = true;
+        $payment = placeMollieOrder();
+
+        $attempt = app(StartOrderPayment::class)->handle(
+            $payment->order,
+            'mollie:ideal',
+            'https://example.test/return',
+            'https://example.test/cancel',
+            'mollie-'.$mode.'-1',
+        );
+
+        expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+            ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
+            ->and(json_encode($attempt->response_meta))->not->toContain($secret);
+    }
+});
+
+test('mollie secret is not rendered in the extensions settings UI', function () {
+    enableMollie();
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'mollie')
+        ->assertDontSee('test_abcdefghijklmnopqrstuvwxyz123456')
+        ->assertSet('settingsForm.api_key', '');
 });
 
 test('mollie health check validates credentials without exposing the key', function () {
