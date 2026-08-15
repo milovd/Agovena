@@ -222,3 +222,113 @@ jobs:
             storage/logs/mariadb-feature.log
             storage/logs/mariadb-upgrade.log
             storage/logs/mariadb-concurrency.log
+
+      - name: Large-data sanity (MariaDB)
+        if: success()
+        run: |
+          set -o pipefail
+          mkdir -p storage/logs
+          php vendor/bin/pest --configuration=phpunit.mariadb.xml tests/Performance/LargeDataSanityTest.php 2>&1 | tee storage/logs/mariadb-large-data.log
+
+  release-artifact:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, bcmath, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Composer dependencies (build host)
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Build release artifact
+        run: |
+          chmod +x scripts/build-release.sh scripts/assert-release-contents.sh scripts/smoke-extracted-release.sh
+          ./scripts/build-release.sh dist
+
+      - name: Smoke extracted release
+        run: |
+          ARCHIVE="$(cat dist/latest-archive.txt)"
+          ./scripts/smoke-extracted-release.sh "$ARCHIVE"
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: agovena-release-tarball
+          path: dist/agovena-*.tar.gz
+          if-no-files-found: error
+
+  native-linux:
+    runs-on: ubuntu-24.04
+    needs: [release-artifact]
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MYSQL_ROOT_PASSWORD: rootsecret
+          MYSQL_DATABASE: agovena
+          MYSQL_USER: agovena
+          MYSQL_PASSWORD: secret
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Nginx + PHP-FPM
+        run: |
+          sudo apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            nginx php8.3-fpm php8.3-cli php8.3-mysql php8.3-xml php8.3-mbstring \
+            php8.3-curl php8.3-zip php8.3-bcmath php8.3-intl php8.3-sqlite3 unzip rsync curl
+
+      - name: Install Composer
+        run: |
+          curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: agovena-release-tarball
+          path: dist
+
+      - name: Extract release and run native smoke
+        run: |
+          set -euo pipefail
+          ARCHIVE="$(ls dist/agovena-*.tar.gz | head -n1)"
+          sudo mkdir -p /var/www
+          sudo tar -xzf "$ARCHIVE" -C /var/www
+          APP_DIR="$(sudo find /var/www -maxdepth 1 -type d -name 'agovena-*' | head -n1)"
+          sudo mv "$APP_DIR" /var/www/agovena
+          sudo chown -R "$USER":www-data /var/www/agovena
+          chmod +x /var/www/agovena/scripts/native-deploy-smoke.sh /var/www/agovena/scripts/ci/native-order-smoke.php || true
+          export APP_DIR=/var/www/agovena
+          export SITE_HOST=127.0.0.1
+          export SITE_PORT=8080
+          export DB_CONNECTION=mysql
+          export DB_HOST=127.0.0.1
+          export DB_PORT=3306
+          export DB_DATABASE=agovena
+          export DB_USERNAME=agovena
+          export DB_PASSWORD=secret
+          export APP_ENV=production
+          export APP_DEBUG=false
+          export APP_URL=http://127.0.0.1:8080
+          export PHP_FPM_SOCK=/run/php/php8.3-fpm.sock
+          bash /var/www/agovena/scripts/native-deploy-smoke.sh
