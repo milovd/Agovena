@@ -117,7 +117,6 @@ NGINX_CONF="/etc/nginx/sites-available/agovena-smoke"
 sudo tee "$NGINX_CONF" >/dev/null <<EOF
 server {
     listen ${SITE_PORT};
-    listen [::]:${SITE_PORT};
     server_name ${SITE_HOST};
     root ${APP_DIR}/public;
 
@@ -161,7 +160,9 @@ EOF
 sudo ln -sfn "$NGINX_CONF" /etc/nginx/sites-enabled/agovena-smoke
 sudo rm -f /etc/nginx/sites-enabled/default || true
 sudo nginx -t || fail "nginx -t failed"
-sudo systemctl reload nginx || fail "nginx reload failed"
+# Fresh apt installs may not have nginx running yet; reload then fails.
+sudo systemctl enable nginx >/dev/null 2>&1 || true
+sudo systemctl restart nginx || fail "nginx restart failed"
 sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || fail "php-fpm restart failed"
 
 BASE="http://${SITE_HOST}:${SITE_PORT}"
@@ -195,7 +196,7 @@ echo "heartbeat=$HB"
 
 echo "==> Restart PHP-FPM + Nginx and re-check"
 sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
-sudo systemctl reload nginx
+sudo systemctl restart nginx || fail "nginx restart after persistence check failed"
 CODE2="$(curl -s -o /dev/null -w '%{http_code}' "$BASE/" || true)"
 [[ "$CODE2" == "200" ]] || fail "post-restart homepage $CODE2"
 
