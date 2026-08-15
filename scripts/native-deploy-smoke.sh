@@ -109,8 +109,16 @@ php artisan config:cache || fail "config:cache failed"
 # Avoid route:cache — Livewire / dynamic admin routes are not a stable cache target for smoke.
 php artisan view:cache || fail "view:cache failed"
 
-# Permissions for FPM user
-sudo chown -R "$WEB_USER:$WEB_USER" storage bootstrap/cache
+# Permissions: deploy/CLI user owns files; www-data group can read/write for FPM.
+RUNNER_USER="$(whoami)"
+sudo chown -R "${RUNNER_USER}:${WEB_USER}" storage bootstrap/cache
+sudo chmod -R ug+rwx storage bootstrap/cache
+sudo find storage bootstrap/cache -type d -exec chmod g+s {} \;
+
+# Ensure log file is writable before FPM/CLI continue
+mkdir -p storage/logs storage/framework/views storage/framework/cache/data storage/framework/sessions
+touch storage/logs/laravel.log
+sudo chown -R "${RUNNER_USER}:${WEB_USER}" storage bootstrap/cache
 sudo chmod -R ug+rwx storage bootstrap/cache
 
 # Nginx site using deploy/nginx.conf patterns
