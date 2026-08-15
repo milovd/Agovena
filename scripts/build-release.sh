@@ -8,9 +8,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${1:-$ROOT/dist}"
 VERSION="0.1.0"
+version_re="'version'[[:space:]]*=>[[:space:]]*'([^']+)'"
 while IFS= read -r line || [[ -n "$line" ]]; do
-  # Match: 'version' => '0.1.0',
-  if [[ "$line" =~ \'version\'[[:space:]]*=>[[:space:]]*\'([^\']+)\' ]]; then
+  if [[ "$line" =~ $version_re ]]; then
     VERSION="${BASH_REMATCH[1]}"
     break
   fi
