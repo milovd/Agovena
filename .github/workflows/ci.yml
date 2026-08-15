@@ -257,21 +257,10 @@ jobs:
 
       - name: Build release artifact
         run: |
-          set -euxo pipefail
           chmod +x scripts/build-release.sh scripts/assert-release-contents.sh scripts/smoke-extracted-release.sh
-          ./scripts/build-release.sh dist 2>&1 | tee release-build.log
+          bash -x scripts/build-release.sh dist
         env:
           COMPOSER_PROCESS_TIMEOUT: "600"
-
-      - name: Publish release build log on failure
-        if: failure()
-        run: |
-          if [[ -f release-build.log ]]; then
-            echo "::group::release-build.log"
-            tail -n 200 release-build.log
-            echo "::endgroup::"
-            echo "::error::Release artifact build failed — see release-build.log group above"
-          fi
 
       - name: Smoke extracted release
         run: |
