@@ -51,13 +51,20 @@ The browser installer is **application setup** (owner, store, modules, theme). I
 ```
 php artisan down
 # replace application files; keep .env, storage/, and the database
-composer install --no-dev --optimize-autoloader
+composer install --no-dev --optimize-autoloader   # source trees / if vendor changed
 php artisan agovena:upgrade
 php artisan up
 systemctl restart agovena-queue.service
 ```
 
 Do not `migrate:fresh`. Do not auto-migrate on HTTP requests.
+
+Backup MariaDB + `storage/app/private` + `storage/app/public` + `.env` before upgrading.
+If `agovena:upgrade` fails mid-way, MariaDB DDL may already be partially applied — restore from backup, fix the cause, then retry. There is no universal web “rollback” button.
+
+Admin → Updates shows the current application version and whether schema migrations are pending. Operators still deploy release files themselves; Agovena does not self-modify application source over HTTP.
+
+See also [INSTALL.md](../INSTALL.md) and [SUPPORT.md](../SUPPORT.md).
 
 ## Queue and Redis
 

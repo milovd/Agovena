@@ -18,6 +18,8 @@ Agovena is in early development. It is a normal self-hosted Laravel application.
 
 **Native Linux is the primary production path.** Docker is optional convenience, not a runtime requirement.
 
+See **[INSTALL.md](INSTALL.md)** for release-artifact and VPS install steps, and **[SUPPORT.md](SUPPORT.md)** for the honest support matrix.
+
 **Requirements**
 
 - PHP 8.3 or 8.4 with PHP-FPM
@@ -35,14 +37,10 @@ Redis is recommended for multi-node cache/queue/locks. A single VPS can use `QUE
 
 `docker-compose.prod.yml` is an optional stack (nginx, php-fpm, worker, scheduler, MariaDB, Redis). It does **not** auto-migrate.
 
-OS status:
-
-- Application/runtime compatible: any OS that can run PHP 8.3+ with the extensions CI uses
-- Officially validated host images: none yet
-- Community/unverified: Ubuntu 22.04/24.04, Debian 12/13, Rocky Linux 9, AlmaLinux 9
-- Unsupported: EOL releases
+OS status: see [SUPPORT.md](SUPPORT.md). Do not treat community similarity as validated.
 
 ```bash
+# Prefer a release tarball (includes vendor + public/build). From source:
 composer install
 cp .env.example .env
 php artisan key:generate
