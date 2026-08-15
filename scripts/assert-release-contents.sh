@@ -37,6 +37,11 @@ do
   [[ ! -e "$bad" ]] || fail "must not include: $bad"
 done
 
+sqlite_hits="$(find "$ROOT/database" -type f \( -name '*.sqlite' -o -name '*.sqlite-*' \) -print 2>/dev/null || true)"
+if [[ -n "${sqlite_hits}" ]]; then
+  fail "must not include local SQLite databases: ${sqlite_hits}"
+fi
+
 secret_hits="$(find "$ROOT" \( -path "$ROOT/vendor" -o -path "$ROOT/node_modules" \) -prune -o -type f \( -name '.env' -o -name '.env.local' -o -name '*.pem' \) -print 2>/dev/null || true)"
 if [[ -n "${secret_hits}" ]]; then
   fail "found forbidden secret-like files outside vendor"

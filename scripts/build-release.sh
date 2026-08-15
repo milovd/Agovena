@@ -58,11 +58,17 @@ tar -C "$ROOT" \
   --exclude='./.env.local' \
   --exclude='./.env.production' \
   --exclude='./.env.testing' \
+  --exclude='./database/*.sqlite' \
+  --exclude='./database/*.sqlite-*' \
+  --exclude='./database/database.sqlite' \
   --exclude='./phpunit.xml' \
   --exclude='./phpunit.mariadb.xml' \
+  --exclude='./.phpunit.result.cache' \
   --exclude='./playwright.config.ts' \
   --exclude='./playwright.config.js' \
   --exclude='./Pest.php' \
+  --exclude='./storage/pail' \
+  --exclude='./*.log' \
   -cf - . | tar -C "$STAGING" -xf -
 
 # Bundled chrome logo must ship even if a broad exclude ever bites public/vendor.
@@ -93,12 +99,25 @@ if ! command -v composer >/dev/null 2>&1; then
   echo "::error::composer not found on PATH"
   exit 1
 fi
+# Avoid default-sqlite side effects during package:discover (no merchant .env yet).
+printf '%s\n' \
+  'APP_KEY=' \
+  'APP_ENV=production' \
+  'APP_DEBUG=false' \
+  'DB_CONNECTION=mysql' \
+  'DB_HOST=127.0.0.1' \
+  'DB_DATABASE=agovena' \
+  > "$STAGING/.env"
 composer install \
   --no-dev \
   --optimize-autoloader \
   --no-interaction \
   --prefer-dist \
   --working-dir="$STAGING"
+rm -f "$STAGING/.env"
+
+# package:discover may still create a default SQLite file; never ship local DBs.
+rm -f "$STAGING"/database/*.sqlite "$STAGING"/database/*.sqlite-* 2>/dev/null || true
 
 echo "==> Asserting release contents..."
 bash "$ROOT/scripts/assert-release-contents.sh" "$STAGING"

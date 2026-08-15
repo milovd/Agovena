@@ -51,7 +51,7 @@ php artisan migrate --force --no-interaction
 php artisan agovena:install --no-interaction \
   --name="Native Smoke Owner" \
   --email="native-smoke@example.test" \
-  --password="password-password" \
+  --password="Agovena-Native-Smoke-9f3a" \
   --site-name="Native Smoke" \
   --locale=en \
   --timezone=UTC \

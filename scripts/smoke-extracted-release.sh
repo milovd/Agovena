@@ -32,7 +32,22 @@ bash "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/assert-release-contents.sh" 
 cd "$APP"
 [[ -f .env.example ]] || { echo "::error::.env.example missing from release"; exit 1; }
 cp .env.example .env
-php artisan key:generate --force --no-interaction
+
+run_artisan() {
+  local label="$1"
+  shift
+  echo "==> $label"
+  if ! php artisan "$@" ; then
+    echo "::error::artisan failed: $label ($*)"
+    if [[ -f storage/logs/laravel.log ]]; then
+      echo "---- laravel.log (tail) ----"
+      tail -n 80 storage/logs/laravel.log || true
+    fi
+    exit 1
+  fi
+}
+
+run_artisan "key:generate" key:generate --force --no-interaction
 
 # SQLite smoke (no MariaDB required for artifact smoke)
 mkdir -p database
@@ -59,8 +74,11 @@ $env = preg_replace("/^#\\s*DB_DATABASE=.*/m", "DB_DATABASE=".$argv[1], $env);
 file_put_contents(".env", $env);
 ' "$DB_ABS"
 
-php artisan migrate --force --no-interaction
-php artisan agovena:install --no-interaction \
+# Ensure writable runtime dirs after extract (tar may preserve non-writable modes).
+chmod -R u+rwX storage bootstrap/cache database 2>/dev/null || true
+
+run_artisan "migrate" migrate --force --no-interaction
+run_artisan "agovena:install" agovena:install --no-interaction \
   --name="Release Smoke Owner" \
   --email="release-smoke@example.test" \
   --password="Agovena-Release-Smoke-9f3a" \
@@ -72,8 +90,9 @@ php artisan agovena:install --no-interaction \
   --presets=physical,digital
 
 php artisan storage:link --force --no-interaction || true
-php artisan config:clear
-php artisan route:list --path=/ --columns=method,uri,name >/dev/null
+run_artisan "config:clear" config:clear
+# Laravel 13 route:list has no --columns option; --json keeps the assertion quiet and stable.
+run_artisan "route:list" route:list --path=/ --json >/dev/null
 
 php artisan serve --host=127.0.0.1 --port=8088 >/tmp/agovena-smoke-serve.log 2>&1 &
 SERVE_PID=$!
@@ -83,6 +102,10 @@ CODE="$(curl -s -o /tmp/agovena-home.html -w '%{http_code}' http://127.0.0.1:808
 [[ "$CODE" == "200" ]] || {
   echo "::error::homepage HTTP $CODE"
   cat /tmp/agovena-smoke-serve.log || true
+  if [[ -f storage/logs/laravel.log ]]; then
+    echo "---- laravel.log (tail) ----"
+    tail -n 80 storage/logs/laravel.log || true
+  fi
   exit 1
 }
 if ! grep -q 'build/' /tmp/agovena-home.html && ! grep -qiE 'stylesheet|script' /tmp/agovena-home.html; then

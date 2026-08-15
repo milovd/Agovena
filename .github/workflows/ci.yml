@@ -239,7 +239,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          extensions: mbstring, intl, pdo_sqlite, sqlite3, bcmath, zip
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, bcmath, zip, openssl, curl, xml, ctype, fileinfo, tokenizer
           coverage: none
           tools: composer:v2
 
@@ -319,10 +319,18 @@ jobs:
       - name: Extract release and run native smoke
         run: |
           set -euo pipefail
-          ARCHIVE="$(ls dist/agovena-*.tar.gz | head -n1)"
+          ARCHIVE="$(ls dist/agovena-*.tar.gz | head -n1 || true)"
+          [[ -n "$ARCHIVE" && -f "$ARCHIVE" ]] || { echo "::error::release archive missing after download"; ls -la dist; exit 1; }
           sudo mkdir -p /var/www
           sudo tar -xzf "$ARCHIVE" -C /var/www
-          APP_DIR="$(sudo find /var/www -maxdepth 1 -type d -name 'agovena-*' | head -n1)"
+          APP_DIR=""
+          for dir in /var/www/agovena-*; do
+            if [[ -d "$dir" ]]; then
+              APP_DIR="$dir"
+              break
+            fi
+          done
+          [[ -n "$APP_DIR" ]] || { echo "::error::extracted app missing"; sudo ls -la /var/www; exit 1; }
           sudo mv "$APP_DIR" /var/www/agovena
           sudo chown -R "$USER":www-data /var/www/agovena
           chmod +x /var/www/agovena/scripts/native-deploy-smoke.sh /var/www/agovena/scripts/ci/native-order-smoke.php || true
