@@ -4,7 +4,7 @@ use App\Agovena\Installation\InstallationState;
 use Tests\TestCase;
 use Tests\UpgradeTestCase;
 
-pest()->extend(TestCase::class)->in('Feature', 'Unit', 'Concurrency');
+pest()->extend(TestCase::class)->in('Feature', 'Unit', 'Concurrency', 'Performance');
 pest()->extend(UpgradeTestCase::class)->in('Upgrade');
 
 pest()->beforeEach(function (): void {
@@ -17,7 +17,7 @@ pest()->beforeEach(function (): void {
     if ($state->notInstalled()) {
         $state->markInstalled();
     }
-})->in('Feature', 'Concurrency');
+})->in('Feature', 'Concurrency', 'Performance');
 
 pest()->beforeEach(function (): void {
     if (config('database.default') !== 'mysql') {
