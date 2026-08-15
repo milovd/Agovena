@@ -17,6 +17,16 @@ trait ManagesPersonalApiTokens
 
     public function createToken(AuditLogger $audit): void
     {
+        $this->createPersonalAccessToken($audit);
+    }
+
+    public function revokeToken(int $tokenId, AuditLogger $audit): void
+    {
+        $this->revokePersonalAccessToken($tokenId, $audit);
+    }
+
+    protected function createPersonalAccessToken(AuditLogger $audit): void
+    {
         $data = $this->validate([
             'token_name' => ['required', 'string', 'max:80'],
         ]);
@@ -32,7 +42,7 @@ trait ManagesPersonalApiTokens
         session()->flash('status', __('admin.api_tokens.created'));
     }
 
-    public function revokeToken(int $tokenId, AuditLogger $audit): void
+    protected function revokePersonalAccessToken(int $tokenId, AuditLogger $audit): void
     {
         $token = $this->tokenOwner()->tokens()->whereKey($tokenId)->first();
         if (! $token instanceof PersonalAccessToken) {

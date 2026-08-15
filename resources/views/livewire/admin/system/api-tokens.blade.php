@@ -53,4 +53,6 @@
             </tbody>
         </table>
     </div>
+
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

@@ -110,6 +110,10 @@ final class Index extends Component
             return;
         }
 
+        if ($this->settingsTouchSecrets($manifest->settings) && ! $this->requireRecentPassword('saveSettings')) {
+            return;
+        }
+
         foreach ($manifest->settings as $definition) {
             $key = $definition['key'];
             $secret = (bool) ($definition['secret'] ?? false);
@@ -122,6 +126,24 @@ final class Index extends Component
 
         session()->flash('status', __('admin.extensions.flash.settings_saved'));
         $this->closeSettings();
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $definitions
+     */
+    private function settingsTouchSecrets(array $definitions): bool
+    {
+        foreach ($definitions as $definition) {
+            if (! (bool) ($definition['secret'] ?? false)) {
+                continue;
+            }
+            $value = $this->settingsForm[$definition['key']] ?? null;
+            if ($value !== null && $value !== '') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function runHealth(string $extensionId, ExtensionManager $extensions): void

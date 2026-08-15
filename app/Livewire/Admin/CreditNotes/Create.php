@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\CreditNotes;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Invoices\IssueCreditNote;
+use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\Invoice;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -15,6 +16,7 @@ use Livewire\Component;
 final class Create extends Component
 {
     use AuthorizesRequests;
+    use RequiresRecentPassword;
 
     public Invoice $invoice;
 
@@ -54,6 +56,10 @@ final class Create extends Component
     {
         $this->authorize('invoices.credit');
         $this->validateReason();
+
+        if (! $this->requireRecentPassword('issue')) {
+            return null;
+        }
 
         /** @var User $staff */
         $staff = Auth::user();
