@@ -257,8 +257,11 @@ jobs:
 
       - name: Build release artifact
         run: |
+          set -euxo pipefail
           chmod +x scripts/build-release.sh scripts/assert-release-contents.sh scripts/smoke-extracted-release.sh
           ./scripts/build-release.sh dist
+        env:
+          COMPOSER_PROCESS_TIMEOUT: "600"
 
       - name: Smoke extracted release
         run: |
