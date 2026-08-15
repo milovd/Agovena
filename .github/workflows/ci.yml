@@ -319,8 +319,11 @@ jobs:
       - name: Extract release and run native smoke
         run: |
           set -euo pipefail
-          ARCHIVE="$(ls dist/agovena-*.tar.gz | head -n1 || true)"
-          [[ -n "$ARCHIVE" && -f "$ARCHIVE" ]] || { echo "::error::release archive missing after download"; ls -la dist; exit 1; }
+          shopt -s nullglob
+          archives=(dist/agovena-*.tar.gz)
+          ARCHIVE="${archives[0]:-}"
+          [[ -n "$ARCHIVE" && -f "$ARCHIVE" ]] || { echo "::error::release archive missing after download"; ls -la dist || true; exit 1; }
+          echo "Using archive: $ARCHIVE"
           sudo mkdir -p /var/www
           sudo tar -xzf "$ARCHIVE" -C /var/www
           APP_DIR=""
@@ -331,9 +334,13 @@ jobs:
             fi
           done
           [[ -n "$APP_DIR" ]] || { echo "::error::extracted app missing"; sudo ls -la /var/www; exit 1; }
+          sudo rm -rf /var/www/agovena
           sudo mv "$APP_DIR" /var/www/agovena
-          sudo chown -R "$USER":www-data /var/www/agovena
-          chmod +x /var/www/agovena/scripts/native-deploy-smoke.sh /var/www/agovena/scripts/ci/native-order-smoke.php || true
+          RUNNER_USER="$(whoami)"
+          sudo chown -R "${RUNNER_USER}:www-data" /var/www/agovena
+          [[ -f /var/www/agovena/scripts/native-deploy-smoke.sh ]] || { echo "::error::native-deploy-smoke.sh missing from release"; find /var/www/agovena/scripts -type f | head; exit 1; }
+          [[ -f /var/www/agovena/scripts/ci/native-order-smoke.php ]] || { echo "::error::native-order-smoke.php missing from release"; exit 1; }
+          chmod +x /var/www/agovena/scripts/native-deploy-smoke.sh
           export APP_DIR=/var/www/agovena
           export SITE_HOST=127.0.0.1
           export SITE_PORT=8080
@@ -347,4 +354,4 @@ jobs:
           export APP_DEBUG=false
           export APP_URL=http://127.0.0.1:8080
           export PHP_FPM_SOCK=/run/php/php8.3-fpm.sock
-          bash /var/www/agovena/scripts/native-deploy-smoke.sh
+          bash -x /var/www/agovena/scripts/native-deploy-smoke.sh

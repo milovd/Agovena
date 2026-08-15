@@ -10,12 +10,54 @@ SITE_HOST="${SITE_HOST:-127.0.0.1}"
 SITE_PORT="${SITE_PORT:-8080}"
 PHP_FPM_SOCK="${PHP_FPM_SOCK:-/run/php/php8.3-fpm.sock}"
 WEB_USER="${WEB_USER:-www-data}"
+DB_HOST="${DB_HOST:-127.0.0.1}"
+DB_PORT="${DB_PORT:-3306}"
+DB_DATABASE="${DB_DATABASE:-agovena}"
+DB_USERNAME="${DB_USERNAME:-agovena}"
+DB_PASSWORD="${DB_PASSWORD:-secret}"
+
+fail() { echo "::error::native-smoke: $*" >&2; exit 1; }
 
 cd "$APP_DIR"
+[[ -f artisan ]] || fail "artisan missing in APP_DIR=$APP_DIR"
+[[ -f vendor/autoload.php ]] || fail "vendor missing — release must ship production Composer deps"
+[[ -f scripts/ci/native-order-smoke.php ]] || fail "native-order-smoke.php missing from release"
+
+echo "==> PHP $(php -v | head -n1)"
+php -m | grep -qi pdo_mysql || fail "pdo_mysql extension missing"
+php -m | grep -qi openssl || fail "openssl extension missing"
+
+echo "==> Waiting for MariaDB at ${DB_HOST}:${DB_PORT}"
+export DB_HOST DB_PORT DB_DATABASE DB_USERNAME DB_PASSWORD
+ready=0
+for _ in $(seq 1 60); do
+  if php -r '
+    try {
+      new PDO(
+        "mysql:host=".getenv("DB_HOST").";port=".(getenv("DB_PORT") ?: "3306").";dbname=".getenv("DB_DATABASE"),
+        getenv("DB_USERNAME"),
+        getenv("DB_PASSWORD")
+      );
+      exit(0);
+    } catch (Throwable $e) {
+      fwrite(STDERR, $e->getMessage()."\n");
+      exit(1);
+    }
+  ' 2>/tmp/agovena-db-wait.err; then
+    ready=1
+    break
+  fi
+  sleep 1
+done
+[[ "$ready" -eq 1 ]] || {
+  cat /tmp/agovena-db-wait.err || true
+  fail "MariaDB not reachable"
+}
+echo "MariaDB OK"
 
 if [[ ! -f .env ]]; then
   cp .env.example .env
-  php artisan key:generate --force --no-interaction
+  php artisan key:generate --force --no-interaction || fail "key:generate failed"
 fi
 
 # Force production-ish settings for the smoke
@@ -47,7 +89,9 @@ foreach ($pairs as $k => $v) {
 file_put_contents($path, $env);
 '
 
-php artisan migrate --force --no-interaction
+echo "==> migrate"
+php artisan migrate --force --no-interaction || fail "migrate failed"
+echo "==> agovena:install"
 php artisan agovena:install --no-interaction \
   --name="Native Smoke Owner" \
   --email="native-smoke@example.test" \
@@ -57,12 +101,12 @@ php artisan agovena:install --no-interaction \
   --timezone=UTC \
   --currency=EUR \
   --theme=default \
-  --presets=physical,digital
+  --presets=physical,digital || fail "agovena:install failed"
 
 php artisan storage:link --force --no-interaction || true
-php artisan config:cache
-php artisan route:cache
-php artisan view:cache
+php artisan config:cache || fail "config:cache failed"
+# Avoid route:cache — Livewire / dynamic admin routes are not a stable cache target for smoke.
+php artisan view:cache || fail "view:cache failed"
 
 # Permissions for FPM user
 sudo chown -R "$WEB_USER:$WEB_USER" storage bootstrap/cache
@@ -112,40 +156,48 @@ server {
 }
 EOF
 
+[[ -S "$PHP_FPM_SOCK" ]] || fail "PHP-FPM socket missing: $PHP_FPM_SOCK (ls /run/php: $(ls -la /run/php 2>/dev/null || true))"
+
 sudo ln -sfn "$NGINX_CONF" /etc/nginx/sites-enabled/agovena-smoke
 sudo rm -f /etc/nginx/sites-enabled/default || true
-sudo nginx -t
-sudo systemctl reload nginx
-sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
+sudo nginx -t || fail "nginx -t failed"
+sudo systemctl reload nginx || fail "nginx reload failed"
+sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || fail "php-fpm restart failed"
 
 BASE="http://${SITE_HOST}:${SITE_PORT}"
 
 echo "==> HTTP homepage"
-CODE="$(curl -s -o /tmp/agovena-native-home.html -w '%{http_code}' "$BASE/")"
-[[ "$CODE" == "200" ]] || { echo "homepage $CODE"; exit 1; }
+CODE="$(curl -s -o /tmp/agovena-native-home.html -w '%{http_code}' "$BASE/" || true)"
+[[ "$CODE" == "200" ]] || {
+  echo "---- homepage body (head) ----"
+  head -n 40 /tmp/agovena-native-home.html || true
+  echo "---- laravel.log ----"
+  tail -n 80 storage/logs/laravel.log || true
+  fail "homepage HTTP $CODE"
+}
 
 echo "==> .env must not be served"
 ENV_CODE="$(curl -s -o /dev/null -w '%{http_code}' "$BASE/.env" || true)"
-[[ "$ENV_CODE" == "403" || "$ENV_CODE" == "404" ]] || { echo ".env leaked HTTP $ENV_CODE"; exit 1; }
+[[ "$ENV_CODE" == "403" || "$ENV_CODE" == "404" ]] || fail ".env leaked HTTP $ENV_CODE"
 
 echo "==> Place Development order via CLI (same app + DB as FPM)"
-php "$APP_DIR/scripts/ci/native-order-smoke.php"
+php "$APP_DIR/scripts/ci/native-order-smoke.php" || fail "native-order-smoke.php failed"
 
 echo "==> Queue worker processes pending jobs"
-php artisan queue:work --once --stop-when-empty --tries=1 || php artisan queue:work --stop-when-empty --tries=1 --max-jobs=20
+php artisan queue:work --once --stop-when-empty --tries=1 || php artisan queue:work --stop-when-empty --tries=1 --max-jobs=20 || fail "queue:work failed"
 
 echo "==> Scheduler heartbeat"
-php artisan tinker --execute="Illuminate\\Support\\Facades\\Cache::forget('agovena:scheduler:heartbeat');"
-php artisan schedule:run --no-interaction
+php artisan tinker --execute="Illuminate\\Support\\Facades\\Cache::forget('agovena:scheduler:heartbeat');" || fail "tinker forget heartbeat failed"
+php artisan schedule:run --no-interaction || fail "schedule:run failed"
 HB="$(php artisan tinker --execute="echo Illuminate\\Support\\Facades\\Cache::get('agovena:scheduler:heartbeat') ?? '';")"
-[[ -n "$HB" ]] || { echo "scheduler heartbeat missing"; exit 1; }
+[[ -n "$HB" ]] || fail "scheduler heartbeat missing"
 echo "heartbeat=$HB"
 
 echo "==> Restart PHP-FPM + Nginx and re-check"
 sudo systemctl restart php8.3-fpm || sudo systemctl restart php-fpm || true
 sudo systemctl reload nginx
-CODE2="$(curl -s -o /dev/null -w '%{http_code}' "$BASE/")"
-[[ "$CODE2" == "200" ]] || { echo "post-restart homepage $CODE2"; exit 1; }
+CODE2="$(curl -s -o /dev/null -w '%{http_code}' "$BASE/" || true)"
+[[ "$CODE2" == "200" ]] || fail "post-restart homepage $CODE2"
 
 php artisan agovena:doctor --no-interaction || true
 
