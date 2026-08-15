@@ -38,9 +38,9 @@ do
   [[ ! -e "$bad" ]] || fail "must not include: $bad"
 done
 
-# No nested env dumps
-if find "$ROOT" -type f \( -name '.env' -o -name '.env.local' -o -name '*.pem' \) 2>/dev/null | grep -q .; then
-  fail "found forbidden secret-like files"
+# No nested env dumps / PEM keys outside Composer vendor (vendor may ship test certs)
+if find "$ROOT" \( -path "$ROOT/vendor" -o -path "$ROOT/node_modules" \) -prune -o -type f \( -name '.env' -o -name '.env.local' -o -name '*.pem' \) -print 2>/dev/null | grep -q .; then
+  fail "found forbidden secret-like files outside vendor"
 fi
 
 # No browser screenshots / private review dumps
