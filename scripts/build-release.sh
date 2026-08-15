@@ -39,31 +39,35 @@ fi
 
 echo "==> Staging application tree into $STAGING ..."
 tar -C "$ROOT" \
-  --exclude='.git' \
-  --exclude='.github' \
-  --exclude='.cursor' \
-  --exclude='docs' \
-  --exclude='node_modules' \
-  --exclude='vendor' \
-  --exclude='tests' \
-  --exclude='e2e' \
-  --exclude='dist' \
-  --exclude='storage/logs' \
-  --exclude='storage/framework/cache/data' \
-  --exclude='storage/framework/sessions' \
-  --exclude='storage/framework/views' \
-  --exclude='storage/app/private' \
-  --exclude='storage/app/public' \
-  --exclude='.env' \
-  --exclude='.env.local' \
-  --exclude='.env.production' \
-  --exclude='.env.testing' \
-  --exclude='phpunit.xml' \
-  --exclude='phpunit.mariadb.xml' \
-  --exclude='playwright.config.ts' \
-  --exclude='playwright.config.js' \
-  --exclude='Pest.php' \
+  --exclude='./.git' \
+  --exclude='./.github' \
+  --exclude='./.cursor' \
+  --exclude='./docs' \
+  --exclude='./node_modules' \
+  --exclude='./vendor' \
+  --exclude='./tests' \
+  --exclude='./e2e' \
+  --exclude='./dist' \
+  --exclude='./storage/logs' \
+  --exclude='./storage/framework/cache/data' \
+  --exclude='./storage/framework/sessions' \
+  --exclude='./storage/framework/views' \
+  --exclude='./storage/app/private' \
+  --exclude='./storage/app/public' \
+  --exclude='./.env' \
+  --exclude='./.env.local' \
+  --exclude='./.env.production' \
+  --exclude='./.env.testing' \
+  --exclude='./phpunit.xml' \
+  --exclude='./phpunit.mariadb.xml' \
+  --exclude='./playwright.config.ts' \
+  --exclude='./playwright.config.js' \
+  --exclude='./Pest.php' \
   -cf - . | tar -C "$STAGING" -xf -
+
+# Bundled chrome logo must ship even if a broad exclude ever bites public/vendor.
+mkdir -p "$STAGING/public/vendor/agovena"
+cp -f "$ROOT/public/vendor/agovena/logo.png" "$STAGING/public/vendor/agovena/logo.png"
 
 mkdir -p "$STAGING/deploy"
 cp -a "$ROOT/deploy/." "$STAGING/deploy/"
