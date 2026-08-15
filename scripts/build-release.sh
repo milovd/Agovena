@@ -10,8 +10,13 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${1:-$ROOT/dist}"
-VERSION="$(grep -E "'version'" "$ROOT/config/agovena.php" | head -n1 | sed -n "s/.*'version'[[:space:]]*=>[[:space:]]*'\([^']*\)'.*/\1/p")"
-VERSION="${VERSION:-0.1.0}"
+VERSION="0.1.0"
+while IFS= read -r line || [[ -n "$line" ]]; do
+  if [[ "$line" =~ \'version\'[[:space:]]*=\>[[:space:]]*\'([^\']+)\' ]]; then
+    VERSION="${BASH_REMATCH[1]}"
+    break
+  fi
+done < "$ROOT/config/agovena.php"
 STAGING="$OUT_DIR/agovena-$VERSION"
 ARCHIVE="$OUT_DIR/agovena-$VERSION.tar.gz"
 
