@@ -264,8 +264,11 @@ jobs:
 
       - name: Smoke extracted release
         run: |
+          set -euxo pipefail
           ARCHIVE="$(cat dist/latest-archive.txt)"
-          ./scripts/smoke-extracted-release.sh "$ARCHIVE"
+          ls -lah "$ARCHIVE"
+          tar -tzf "$ARCHIVE" | sed -n '1,40p' || true
+          bash -x scripts/smoke-extracted-release.sh "$ARCHIVE"
 
       - name: Upload release artifact
         uses: actions/upload-artifact@v4
