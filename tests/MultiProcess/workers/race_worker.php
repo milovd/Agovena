@@ -28,9 +28,9 @@ if (is_string($envPath) && is_file($envPath)) {
     }
 }
 
-require dirname(__DIR__, 2).'/vendor/autoload.php';
+require dirname(__DIR__, 3).'/vendor/autoload.php';
 
-$app = require dirname(__DIR__, 2).'/bootstrap/app.php';
+$app = require dirname(__DIR__, 3).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
 $action = $argv[1] ?? '';

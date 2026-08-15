@@ -16,6 +16,10 @@
         </testsuite>
         <testsuite name="Concurrency">
             <directory>tests/Concurrency</directory>
+            <directory>tests/MultiProcess</directory>
+        </testsuite>
+        <testsuite name="Performance">
+            <directory>tests/Performance</directory>
         </testsuite>
     </testsuites>
     <source>

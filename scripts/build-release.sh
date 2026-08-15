@@ -33,7 +33,8 @@ if [[ ! -f "$ROOT/public/build/manifest.json" && ! -f "$ROOT/public/build/.vite/
 fi
 
 echo "==> Staging application tree (no vendor/node_modules/tests)..."
-rsync -a \
+# Prefer portable tar excludes over rsync (rsync is not always installed in CI).
+tar -C "$ROOT" \
   --exclude='.git' \
   --exclude='.github' \
   --exclude='.cursor' \
@@ -43,23 +44,25 @@ rsync -a \
   --exclude='tests' \
   --exclude='e2e' \
   --exclude='dist' \
-  --exclude='storage/logs/*' \
-  --exclude='storage/framework/cache/data/*' \
-  --exclude='storage/framework/sessions/*' \
-  --exclude='storage/framework/views/*' \
-  --exclude='storage/app/private/*' \
-  --exclude='storage/app/public/*' \
+  --exclude='storage/logs' \
+  --exclude='storage/framework/cache/data' \
+  --exclude='storage/framework/sessions' \
+  --exclude='storage/framework/views' \
+  --exclude='storage/app/private' \
+  --exclude='storage/app/public' \
   --exclude='database/*.sqlite' \
   --exclude='database/*.sqlite-*' \
   --exclude='.env' \
   --exclude='.env.local' \
   --exclude='.env.production' \
   --exclude='.env.testing' \
-  --exclude='phpunit*.xml' \
-  --exclude='playwright.config.*' \
+  --exclude='phpunit.xml' \
+  --exclude='phpunit.mariadb.xml' \
+  --exclude='playwright.config.ts' \
+  --exclude='playwright.config.js' \
   --exclude='Pest.php' \
   --exclude='agovena_banner.png' \
-  "$ROOT/" "$STAGING/"
+  -cf - . | tar -C "$STAGING" -xf -
 
 # Public operator docs that belong in the release
 mkdir -p "$STAGING/deploy"
@@ -83,6 +86,10 @@ mkdir -p \
 touch "$STAGING/storage/logs/.gitignore" "$STAGING/bootstrap/cache/.gitignore"
 
 echo "==> Installing production Composer dependencies into staging..."
+if ! command -v composer >/dev/null 2>&1; then
+  echo "ERROR: composer not found on PATH" >&2
+  exit 1
+fi
 composer install \
   --no-dev \
   --optimize-autoloader \

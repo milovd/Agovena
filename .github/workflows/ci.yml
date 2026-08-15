@@ -252,6 +252,9 @@ jobs:
       - name: Install Composer dependencies (build host)
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Install NPM dependencies
+        run: npm ci
+
       - name: Build release artifact
         run: |
           chmod +x scripts/build-release.sh scripts/assert-release-contents.sh scripts/smoke-extracted-release.sh

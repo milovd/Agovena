@@ -28,10 +28,9 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
-use Tests\MultiProcessTestCase;
 use Tests\Support\CreatesStaff;
 
-uses(MultiProcessTestCase::class, CreatesStaff::class);
+uses(CreatesStaff::class);
 
 function raceEnvPath(): string
 {
@@ -61,7 +60,7 @@ function raceEnvPath(): string
 function runRaceWorkers(string $action, array $payload, int $copies = 2): array
 {
     $envPath = raceEnvPath();
-    $script = base_path('tests/Concurrency/workers/race_worker.php');
+    $script = base_path('tests/MultiProcess/workers/race_worker.php');
     $json = json_encode($payload, JSON_THROW_ON_ERROR);
     $processes = [];
 
