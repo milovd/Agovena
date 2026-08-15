@@ -6,7 +6,7 @@ set -euo pipefail
 
 ROOT="${1:?staging directory required}"
 
-fail() { echo "RELEASE ASSERT FAIL: $*" >&2; exit 1; }
+fail() { echo "RELEASE ASSERT FAIL: $*" >&2; echo "::error::RELEASE ASSERT FAIL: $*" >&2; exit 1; }
 
 [[ -d "$ROOT" ]] || fail "staging missing: $ROOT"
 [[ -f "$ROOT/artisan" ]] || fail "artisan missing"
@@ -24,7 +24,6 @@ fi
 
 [[ -f "$ROOT/public/vendor/agovena/logo.png" ]] || fail "bundled logo missing"
 
-# Forbidden paths / secrets
 for bad in \
   "$ROOT/.env" \
   "$ROOT/.git" \
@@ -38,13 +37,13 @@ do
   [[ ! -e "$bad" ]] || fail "must not include: $bad"
 done
 
-# No nested env dumps / PEM keys outside Composer vendor (vendor may ship test certs)
-if find "$ROOT" \( -path "$ROOT/vendor" -o -path "$ROOT/node_modules" \) -prune -o -type f \( -name '.env' -o -name '.env.local' -o -name '*.pem' \) -print 2>/dev/null | grep -q .; then
+secret_hits="$(find "$ROOT" \( -path "$ROOT/vendor" -o -path "$ROOT/node_modules" \) -prune -o -type f \( -name '.env' -o -name '.env.local' -o -name '*.pem' \) -print 2>/dev/null || true)"
+if [[ -n "${secret_hits}" ]]; then
   fail "found forbidden secret-like files outside vendor"
 fi
 
-# No browser screenshots / private review dumps
-if find "$ROOT" -type d -name 'browser-review' 2>/dev/null | grep -q .; then
+review_hits="$(find "$ROOT" -type d -name 'browser-review' -print 2>/dev/null || true)"
+if [[ -n "${review_hits}" ]]; then
   fail "browser-review must not ship"
 fi
 
