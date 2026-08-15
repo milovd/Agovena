@@ -10,9 +10,9 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${1:-$ROOT/dist}"
-VERSION="$(php -r "\$c = require '$ROOT/config/agovena.php'; echo \$c['version'] ?? '0.1.0';" 2>/dev/null || true)"
+VERSION="$(php -r "\$src = file_get_contents('$ROOT/config/agovena.php'); echo preg_match(\"/'version'\\s*=>\\s*'([^']+)'/\", \$src, \$m) ? \$m[1] : '0.1.0';")"
 if [[ -z "${VERSION}" ]]; then
-  VERSION="$(git -C "$ROOT" describe --tags --always --dirty 2>/dev/null || echo 0.1.0-dev)"
+  VERSION="0.1.0-dev"
 fi
 STAGING="$OUT_DIR/agovena-$VERSION"
 ARCHIVE="$OUT_DIR/agovena-$VERSION.tar.gz"
