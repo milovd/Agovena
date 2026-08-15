@@ -77,6 +77,7 @@ $pairs = [
   "QUEUE_CONNECTION" => "database",
   "CACHE_STORE" => "database",
   "SESSION_DRIVER" => "database",
+  "MAIL_MAILER" => "log",
   "AGOVENA_DEV_INSTANT_PAY" => "true",
 ];
 foreach ($pairs as $k => $v) {
@@ -184,8 +185,9 @@ ENV_CODE="$(curl -s -o /dev/null -w '%{http_code}' "$BASE/.env" || true)"
 echo "==> Place Development order via CLI (same app + DB as FPM)"
 php "$APP_DIR/scripts/ci/native-order-smoke.php" || fail "native-order-smoke.php failed"
 
-echo "==> Queue worker processes pending jobs"
-php artisan queue:work --once --stop-when-empty --tries=1 || php artisan queue:work --stop-when-empty --tries=1 --max-jobs=20 || fail "queue:work failed"
+echo "==> Queue worker processes pending jobs (including explicit proof job)"
+php "$APP_DIR/scripts/ci/native-queue-proof.php" || fail "native-queue-proof.php failed"
+echo "Queue worker OK"
 
 echo "==> Scheduler heartbeat"
 php artisan tinker --execute="Illuminate\\Support\\Facades\\Cache::forget('agovena:scheduler:heartbeat');" || fail "tinker forget heartbeat failed"
