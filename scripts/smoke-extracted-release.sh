@@ -10,7 +10,13 @@ trap 'rm -rf "$WORK"' EXIT
 
 echo "==> Extracting $ARCHIVE into $WORK"
 tar -xzf "$ARCHIVE" -C "$WORK"
-APP="$(find "$WORK" -maxdepth 1 -type d -name 'agovena-*' | head -n1)"
+APP=""
+for dir in "$WORK"/agovena-*; do
+  if [[ -d "$dir" ]]; then
+    APP="$dir"
+    break
+  fi
+done
 [[ -n "$APP" && -d "$APP" ]] || { echo "extracted app dir missing"; exit 1; }
 
 bash "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/assert-release-contents.sh" "$APP"
@@ -55,9 +61,10 @@ sleep 2
 
 CODE="$(curl -s -o /tmp/agovena-home.html -w '%{http_code}' http://127.0.0.1:8088/ || true)"
 [[ "$CODE" == "200" ]] || { echo "homepage HTTP $CODE"; cat /tmp/agovena-smoke-serve.log || true; exit 1; }
-grep -q 'build/' /tmp/agovena-home.html || grep -qi 'stylesheet\|script' /tmp/agovena-home.html || {
-  echo "homepage missing asset references"; exit 1;
-}
+if ! grep -q 'build/' /tmp/agovena-home.html && ! grep -qiE 'stylesheet|script' /tmp/agovena-home.html; then
+  echo "homepage missing asset references"
+  exit 1
+fi
 
 # Ensure .env is not under public/
 [[ ! -f "$APP/public/.env" ]]
