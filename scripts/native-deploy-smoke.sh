@@ -186,7 +186,16 @@ echo "==> Place Development order via CLI (same app + DB as FPM)"
 php "$APP_DIR/scripts/ci/native-order-smoke.php" || fail "native-order-smoke.php failed"
 
 echo "==> Queue worker processes pending jobs (including explicit proof job)"
-php "$APP_DIR/scripts/ci/native-queue-proof.php" || fail "native-queue-proof.php failed"
+set +e
+php "$APP_DIR/scripts/ci/native-queue-proof.php" >/tmp/agovena-queue-proof.out 2>/tmp/agovena-queue-proof.err
+QUEUE_PROOF_RC=$?
+set -e
+cat /tmp/agovena-queue-proof.out || true
+if [[ -s /tmp/agovena-queue-proof.err ]]; then
+  echo "---- native-queue-proof stderr ----"
+  cat /tmp/agovena-queue-proof.err
+fi
+[[ "$QUEUE_PROOF_RC" -eq 0 ]] || fail "native-queue-proof.php failed (exit $QUEUE_PROOF_RC)"
 echo "Queue worker OK"
 
 echo "==> Scheduler heartbeat"
