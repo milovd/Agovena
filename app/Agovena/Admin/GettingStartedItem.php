@@ -11,5 +11,6 @@ final readonly class GettingStartedItem
         public string $labelKey,
         public string $href,
         public bool $done,
+        public ?string $descriptionKey = null,
     ) {}
 }

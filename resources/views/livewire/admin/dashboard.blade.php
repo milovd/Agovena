@@ -1,32 +1,40 @@
 <section class="admin-dashboard" aria-label="{{ __('admin.dashboard.aria') }}">
-    <x-ag.page-header :heading="__('admin.dashboard.heading')" :lede="__('admin.dashboard.lede')">
-        <x-slot:actions>
-            <a class="ag-btn ag-btn--secondary" href="{{ route('storefront.home') }}" target="_blank" rel="noopener noreferrer">
-                <x-ag.icon name="external-link" :size="16" />
-                {{ __('admin.view_storefront') }}
-            </a>
-        </x-slot:actions>
-    </x-ag.page-header>
+    <x-ag.page-header :heading="__('admin.dashboard.heading')" :lede="__('admin.dashboard.lede')" />
 
     @if ($gettingStarted !== [])
-        <section class="admin-panel" aria-labelledby="getting-started-heading">
-            <div class="ag-toolbar" style="justify-content: space-between; align-items: flex-start;">
+        @php
+            $gettingStartedTotal = count($gettingStarted);
+            $gettingStartedDone = collect($gettingStarted)->where('done', true)->count();
+        @endphp
+        <section class="ag-checklist" aria-labelledby="getting-started-heading">
+            <header class="ag-checklist__header">
                 <div>
-                    <h2 id="getting-started-heading" class="admin-panel__title" style="margin-bottom:0.35rem;">{{ __('admin.dashboard.getting_started.title') }}</h2>
-                    <p class="ag-muted">{{ __('admin.dashboard.getting_started.lede') }}</p>
+                    <h2 id="getting-started-heading" class="ag-checklist__title">{{ __('admin.dashboard.getting_started.title') }}</h2>
+                    <p class="ag-checklist__progress">{{ __('admin.dashboard.getting_started.progress', ['done' => $gettingStartedDone, 'total' => $gettingStartedTotal]) }}</p>
                 </div>
-                <button type="button" class="ag-btn ag-btn--ghost" wire:click="dismissGettingStarted">
+                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="dismissGettingStarted">
                     {{ __('admin.dashboard.getting_started.dismiss') }}
                 </button>
-            </div>
-            <ul class="ag-attention" role="list">
+            </header>
+            <ul class="ag-checklist__items" role="list">
                 @foreach ($gettingStarted as $item)
-                    <li class="ag-attention__item @if ($item->done) ag-attention__item--ok @endif" wire:key="getting-started-{{ $item->id }}">
-                        @if ($item->done)
-                            {{ __($item->labelKey) }}
-                            <span class="visually-hidden">{{ __('admin.dashboard.getting_started.done') }}</span>
-                        @else
-                            <a href="{{ $item->href }}">{{ __($item->labelKey) }}</a>
+                    <li class="ag-checklist__item @if ($item->done) ag-checklist__item--done @endif" wire:key="getting-started-{{ $item->id }}">
+                        <span class="ag-checklist__status" aria-hidden="true">
+                            <x-ag.icon :name="$item->done ? 'check' : 'circle'" :size="17" />
+                        </span>
+                        <span class="ag-checklist__content">
+                            <span class="ag-checklist__item-title">{{ __($item->labelKey) }}</span>
+                            @if ($item->descriptionKey)
+                                <span class="ag-checklist__description">{{ __($item->descriptionKey) }}</span>
+                            @endif
+                            @if ($item->done)
+                                <span class="visually-hidden">{{ __('admin.dashboard.getting_started.done') }}</span>
+                            @endif
+                        </span>
+                        @if (! $item->done)
+                            <a class="ag-checklist__action" href="{{ $item->href }}" aria-label="{{ __($item->labelKey) }}">
+                                <x-ag.icon name="chevron-right" :size="17" />
+                            </a>
                         @endif
                     </li>
                 @endforeach
@@ -124,8 +132,11 @@
                 <ul class="ag-attention" role="list">
                     @forelse ($attentionItems as $item)
                         <li class="ag-attention__item" wire:key="attention-{{ $loop->index }}">
-                            {{ $item['label'] }}
-                            <a href="{{ $item['href'] }}">{{ __('admin.dashboard.attention.review') }}</a>
+                            <span>{{ $item['label'] }}</span>
+                            <a class="ag-checklist__action" href="{{ $item['href'] }}">
+                                <span>{{ __('admin.dashboard.attention.review') }}</span>
+                                <x-ag.icon name="chevron-right" :size="16" />
+                            </a>
                         </li>
                     @empty
                         <li class="ag-attention__item ag-attention__item--ok">{{ __('admin.dashboard.attention.all_clear') }}</li>

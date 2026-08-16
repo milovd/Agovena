@@ -201,6 +201,121 @@
   gap: var(--ag-space-section);
 }
 
+.ag-checklist {
+  overflow: hidden;
+  background: var(--ag-color-surface);
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-lg);
+  box-shadow: var(--ag-shadow-sm);
+}
+
+.ag-checklist__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ag-space-4);
+  padding: var(--ag-space-4) var(--ag-space-5);
+  border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-checklist__title,
+.ag-checklist__progress {
+  margin: 0;
+}
+
+.ag-checklist__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.ag-checklist__progress {
+  margin-top: var(--ag-space-1);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+}
+
+.ag-checklist__items {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ag-checklist__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ag-space-3);
+  min-height: 3.75rem;
+  padding: var(--ag-space-3) var(--ag-space-5);
+}
+
+.ag-checklist__item + .ag-checklist__item {
+  border-top: 1px solid var(--ag-color-border);
+}
+
+.ag-checklist__status {
+  display: grid;
+  place-items: center;
+  color: var(--ag-color-text-muted);
+}
+
+.ag-checklist__content {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.ag-checklist__item-title {
+  font-size: var(--ag-font-size-sm);
+  font-weight: 650;
+}
+
+.ag-checklist__description {
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+  line-height: 1.4;
+}
+
+.ag-checklist__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ag-space-1);
+  min-width: 2rem;
+  min-height: 2rem;
+  padding: var(--ag-space-1) var(--ag-space-2);
+  border-radius: var(--ag-radius-sm);
+  color: var(--ag-color-primary);
+  font-size: var(--ag-font-size-sm);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.ag-checklist__action:hover {
+  background: var(--ag-color-primary-soft);
+}
+
+.ag-checklist__action:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-checklist__item--done .ag-checklist__status {
+  color: var(--ag-color-success);
+}
+
+.ag-checklist__item--done .ag-checklist__content {
+  color: var(--ag-color-text-muted);
+}
+
+.admin-dashboard .ag-attention__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-3);
+}
+
 @media (max-width: 1100px) {
   .ag-dashboard-grid {
     grid-template-columns: 1fr;

@@ -51,12 +51,14 @@ final class GettingStartedChecklist
                 labelKey: 'admin.dashboard.getting_started.product',
                 href: route('admin.products.create'),
                 done: Product::query()->exists(),
+                descriptionKey: 'admin.dashboard.getting_started.product_description',
             ),
             new GettingStartedItem(
                 id: 'payment',
                 labelKey: 'admin.dashboard.getting_started.payment',
                 href: route('admin.extensions.index'),
                 done: $this->hostedPaymentConfigured(),
+                descriptionKey: 'admin.dashboard.getting_started.payment_description',
             ),
         ];
 
@@ -68,6 +70,7 @@ final class GettingStartedChecklist
                     ? route('admin.shipping.methods')
                     : route('admin.modules.index'),
                 done: $this->hasConfiguredShippingMethod(),
+                descriptionKey: 'admin.dashboard.getting_started.shipping_description',
             );
         }
 
@@ -77,6 +80,7 @@ final class GettingStartedChecklist
                 labelKey: 'admin.dashboard.getting_started.provisioning',
                 href: route('admin.extensions.index'),
                 done: $this->extensions->isEnabled('pterodactyl'),
+                descriptionKey: 'admin.dashboard.getting_started.provisioning_description',
             );
         }
 
@@ -88,6 +92,7 @@ final class GettingStartedChecklist
                     ? route('admin.digital.assets')
                     : route('admin.modules.index'),
                 done: $this->hasDownloadAssets(),
+                descriptionKey: 'admin.dashboard.getting_started.downloads_description',
             );
         }
 
@@ -99,6 +104,7 @@ final class GettingStartedChecklist
                     ? route('admin.digital-delivery.secrets')
                     : route('admin.modules.index'),
                 done: $this->hasDigitalSecrets(),
+                descriptionKey: 'admin.dashboard.getting_started.digital_delivery_description',
             );
         }
 
@@ -108,6 +114,7 @@ final class GettingStartedChecklist
             href: route('admin.appearance.customize'),
             done: is_string($this->settings->get('branding', 'logo_path'))
                 && $this->settings->get('branding', 'logo_path') !== '',
+            descriptionKey: 'admin.dashboard.getting_started.theme_description',
         );
 
         $from = $this->settings->get('mail', 'from_address');
@@ -116,6 +123,7 @@ final class GettingStartedChecklist
             labelKey: 'admin.dashboard.getting_started.mail',
             href: route('admin.settings.edit', ['group' => 'mail']),
             done: is_string($from) && $from !== '',
+            descriptionKey: 'admin.dashboard.getting_started.mail_description',
         );
 
         foreach ($items as $item) {
