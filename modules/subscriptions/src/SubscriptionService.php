@@ -445,6 +445,8 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
 
         $maxAttempts = $this->retryMax();
         if ((int) $renewal->charge_attempts >= $maxAttempts) {
+            $this->applyRetriesExhausted($subscription, $renewal);
+
             return RecurringChargeResult::skipped('retries_exhausted');
         }
 
@@ -698,16 +700,53 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         $renewal->last_error = $this->safeError($result->message);
         if ((int) $renewal->charge_attempts < $this->retryMax()) {
             $renewal->next_retry_at = $now->addHours($this->retryHours());
+            $renewal->save();
         } else {
             $renewal->next_retry_at = null;
+            $renewal->require_manual_payment = true;
+            $renewal->save();
+            $this->applyRetriesExhaustedPolicy($subscription);
         }
-        $renewal->save();
 
         if ($renewal->failure_notified_at === null) {
             $this->notifyRenewalFailed($subscription, $order);
             $renewal->failure_notified_at = $now;
             $renewal->save();
         }
+    }
+
+    private function applyRetriesExhausted(
+        Subscription $subscription,
+        SubscriptionRenewal $renewal,
+    ): void {
+        $renewal = $renewal->fresh() ?? $renewal;
+        if (! $renewal->require_manual_payment) {
+            $this->markManualPaymentRequired($renewal);
+        }
+
+        $this->applyRetriesExhaustedPolicy($subscription);
+    }
+
+    private function applyRetriesExhaustedPolicy(Subscription $subscription): void
+    {
+        if ($this->retryExhaustedAction() !== 'cancel_at_period_end') {
+            return;
+        }
+
+        $subscription = $subscription->fresh() ?? $subscription;
+        if ($subscription->cancel_at_period_end) {
+            return;
+        }
+
+        if (! in_array($subscription->status, [SubscriptionStatus::Active, SubscriptionStatus::PastDue], true)) {
+            return;
+        }
+
+        $subscription->cancel_at_period_end = true;
+        $subscription->cancelled_at = $subscription->cancelled_at ?? now();
+        $subscription->save();
+        $this->notifyCancellation($subscription, true);
+        event(new SubscriptionCancelled($subscription, true));
     }
 
     private function markManualPaymentRequired(SubscriptionRenewal $renewal, ?string $message = null): void
@@ -807,6 +846,15 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
     private function retryHours(): int
     {
         return max(1, (int) $this->settings->get('store', 'subscription_retry_hours', 24));
+    }
+
+    private function retryExhaustedAction(): string
+    {
+        $action = (string) $this->settings->get('store', 'subscription_retry_exhausted', 'manual');
+
+        return in_array($action, ['manual', 'cancel_at_period_end'], true)
+            ? $action
+            : 'manual';
     }
 
     private function safeError(?string $message): ?string

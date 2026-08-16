@@ -80,6 +80,28 @@ final class GettingStartedChecklist
             );
         }
 
+        if ($this->modules->isEnabled('digital')) {
+            $items[] = new GettingStartedItem(
+                id: 'downloads',
+                labelKey: 'admin.dashboard.getting_started.downloads',
+                href: Route::has('admin.digital.assets')
+                    ? route('admin.digital.assets')
+                    : route('admin.modules.index'),
+                done: $this->hasDownloadAssets(),
+            );
+        }
+
+        if ($this->modules->isEnabled('digital-delivery')) {
+            $items[] = new GettingStartedItem(
+                id: 'digital_delivery',
+                labelKey: 'admin.dashboard.getting_started.digital_delivery',
+                href: Route::has('admin.digital-delivery.secrets')
+                    ? route('admin.digital-delivery.secrets')
+                    : route('admin.modules.index'),
+                done: $this->hasDigitalSecrets(),
+            );
+        }
+
         $items[] = new GettingStartedItem(
             id: 'theme',
             labelKey: 'admin.dashboard.getting_started.theme',
@@ -118,5 +140,23 @@ final class GettingStartedChecklist
         }
 
         return DB::table('shipping_methods')->where('is_active', true)->exists();
+    }
+
+    private function hasDownloadAssets(): bool
+    {
+        if (! Schema::hasTable('digital_assets')) {
+            return false;
+        }
+
+        return DB::table('digital_assets')->exists();
+    }
+
+    private function hasDigitalSecrets(): bool
+    {
+        if (! Schema::hasTable('digital_secret_items')) {
+            return false;
+        }
+
+        return DB::table('digital_secret_items')->exists();
     }
 }

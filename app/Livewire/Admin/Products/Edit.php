@@ -90,6 +90,8 @@ final class Edit extends Component
     /** @var array<string, mixed> */
     public array $providerSettings = [];
 
+    public string $digitalSecretSource = 'pool';
+
     public function mount(Product $product): void
     {
         $this->authorize('products.update');
@@ -131,6 +133,12 @@ final class Edit extends Component
                 $settings = $row->config['provider_settings'] ?? [];
                 $this->providerSettings = is_array($settings) ? $settings : [];
             }
+            if ($row->capability === 'digital_secret') {
+                $source = (string) ($row->config['source'] ?? 'pool');
+                $this->digitalSecretSource = in_array($source, ['pool', 'manual', 'provider'], true)
+                    ? $source
+                    : 'pool';
+            }
         }
 
         if (app()->bound(ProductStock::class)) {
@@ -168,11 +176,13 @@ final class Edit extends Component
 
         $requested = match ($preset) {
             'physical' => ['physical', 'inventory', 'shippable'],
-            'digital' => ['digital'],
+            'digital' => ['digital_secret'],
+            'downloadable' => ['digital'],
             'subscription' => ['subscribable'],
             'hosted_service' => $this->hostedServiceSubscription
                 ? ['provisionable', 'subscribable']
                 : ['provisionable'],
+            'event_ticket' => ['event_ticket'],
             default => [],
         };
 
@@ -186,8 +196,10 @@ final class Edit extends Component
             'simple',
             'physical',
             'digital',
+            'downloadable',
             'subscription',
             'hosted_service',
+            'event_ticket',
         ], true) ? $preset : 'simple';
     }
 
@@ -415,11 +427,18 @@ final class Edit extends Component
                     'provider_settings' => $this->providerSettings,
                 ];
             }
+            if ($key === 'digital_secret') {
+                $config = [
+                    'source' => in_array($this->digitalSecretSource, ['pool', 'manual', 'provider'], true)
+                        ? $this->digitalSecretSource
+                        : 'pool',
+                ];
+            }
             if (! $this->product->hasCapability($key)) {
                 $capabilities->enable($this->product, $key, $config);
                 $this->product->unsetRelation('capabilities');
                 $this->product->load('capabilities');
-            } elseif (in_array($key, ['shippable', 'subscribable', 'provisionable'], true)) {
+            } elseif (in_array($key, ['shippable', 'subscribable', 'provisionable', 'digital_secret'], true)) {
                 $capabilities->syncConfig($this->product, $key, $config);
             }
         }

@@ -263,13 +263,15 @@
                 @endphp
 
                 <div class="ag-preset-grid" role="group" aria-label="{{ __('admin.products.presets.aria') }}">
-                    @foreach (['simple', 'physical', 'digital', 'subscription', 'hosted_service'] as $preset)
+                    @foreach (['simple', 'physical', 'digital', 'downloadable', 'subscription', 'hosted_service', 'event_ticket'] as $preset)
                         @php
                             $requiredCapability = match ($preset) {
                                 'physical' => 'physical',
-                                'digital' => 'digital',
+                                'digital' => 'digital_secret',
+                                'downloadable' => 'digital',
                                 'subscription' => 'subscribable',
                                 'hosted_service' => 'provisionable',
+                                'event_ticket' => 'event_ticket',
                                 default => null,
                             };
                             $isAvailable = $requiredCapability === null || in_array($requiredCapability, $availableCapabilityKeys, true);
@@ -285,6 +287,20 @@
                         </button>
                     @endforeach
                 </div>
+
+                @if (! empty($capabilityEnabled['digital_secret']))
+                    <div class="ag-preset-option ag-grid ag-grid--2" style="margin-top: 1rem;">
+                        <div class="ag-field">
+                            <label class="ag-field__label" for="digital-secret-source">{{ __('admin.products.capabilities.digital_secret_source') }}</label>
+                            <select id="digital-secret-source" class="ag-select" wire:model="digitalSecretSource">
+                                <option value="pool">{{ __('admin.products.capabilities.digital_secret_source_pool') }}</option>
+                                <option value="manual">{{ __('admin.products.capabilities.digital_secret_source_manual') }}</option>
+                                <option value="provider">{{ __('admin.products.capabilities.digital_secret_source_provider') }}</option>
+                            </select>
+                            <p class="ag-field__hint">{{ __('admin.products.capabilities.digital_secret_source_hint') }}</p>
+                        </div>
+                    </div>
+                @endif
 
                 @if (in_array('provisionable', $availableCapabilityKeys, true))
                     <div class="ag-preset-option">

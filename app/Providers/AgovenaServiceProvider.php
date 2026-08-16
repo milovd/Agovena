@@ -806,6 +806,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
+            key: 'subscription_retry_exhausted',
+            label: 'admin.settings.fields.subscription_retry_exhausted',
+            type: 'select',
+            default: 'manual',
+            help: 'admin.settings.field_help.subscription_retry_exhausted',
+            sort: 34,
+            options: ['manual', 'cancel_at_period_end'],
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
             key: 'enable_reviews',
             label: 'admin.settings.fields.enable_reviews',
             type: 'boolean',
@@ -877,14 +887,34 @@ class AgovenaServiceProvider extends ServiceProvider
             return;
         }
 
-        foreach (scandir($root) ?: [] as $directory) {
-            if ($directory === '.' || $directory === '..') {
+        $candidates = [];
+        foreach (scandir($root) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
                 continue;
             }
-            $path = $root.DIRECTORY_SEPARATOR.$directory.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-            if (is_dir($path)) {
-                $this->loadMigrationsFrom($path);
+            $path = $root.DIRECTORY_SEPARATOR.$entry;
+            if (! is_dir($path)) {
+                continue;
             }
+
+            $direct = $path.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
+            if (is_dir($direct)) {
+                $candidates[] = $direct;
+            }
+
+            foreach (scandir($path) ?: [] as $nested) {
+                if ($nested === '.' || $nested === '..') {
+                    continue;
+                }
+                $nestedMigrations = $path.DIRECTORY_SEPARATOR.$nested.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
+                if (is_dir($nestedMigrations)) {
+                    $candidates[] = $nestedMigrations;
+                }
+            }
+        }
+
+        foreach ($candidates as $migrationsPath) {
+            $this->loadMigrationsFrom($migrationsPath);
         }
     }
 }

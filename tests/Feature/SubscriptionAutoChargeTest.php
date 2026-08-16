@@ -19,6 +19,7 @@ use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Settings\SettingsRepository;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
@@ -266,6 +267,31 @@ test('provider timeout leaves the attempt open and retry uses the same payment a
     expect($renewal->fresh()->status)->toBe(RenewalStatus::Paid)
         ->and(PaymentAttempt::query()->where('idempotency_key', 'like', 'recurring-%')->count())->toBe(1)
         ->and($api->createCalls)->toBe($createsAfterFirst + 1);
+});
+
+test('exhausted renewal retries stay payable and may schedule cancel at period end', function () {
+    $api = enableAutoChargeModules();
+    app(SettingsRepository::class)->set('store', 'subscription_retry_max', 1);
+    app(SettingsRepository::class)->set('store', 'subscription_retry_exhausted', 'cancel_at_period_end');
+    $subscription = paidMollieSubscription($api);
+    $api->failCreate = true;
+
+    $due = CarbonImmutable::parse($subscription->next_billing_at);
+    $this->travelTo($due);
+    app(SubscriptionService::class)->processDue($due);
+
+    $renewal = SubscriptionRenewal::query()->firstOrFail();
+    expect($renewal->charge_attempts)->toBe(1)
+        ->and($renewal->require_manual_payment)->toBeTrue()
+        ->and($renewal->next_retry_at)->toBeNull()
+        ->and($renewal->order->isAwaitingPayment())->toBeTrue()
+        ->and($subscription->fresh()->cancel_at_period_end)->toBeTrue()
+        ->and($subscription->fresh()->status)->toBe(SubscriptionStatus::PastDue);
+
+    $createsAfterExhaustion = $api->createCalls;
+    app(SubscriptionService::class)->processDue($due->addHour());
+    expect($renewal->fresh()->charge_attempts)->toBe(1)
+        ->and($api->createCalls)->toBe($createsAfterExhaustion);
 });
 
 test('subscriptions module does not import mollie types', function () {
