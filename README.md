@@ -50,7 +50,8 @@ php artisan migrate
 npm install && npm run build
 php artisan agovena:install   # or open /install
 php artisan agovena:doctor
-php artisan agovena:verify-providers   # connection health only; never live charges
+php artisan agovena:verify-providers              # all enabled Extensions
+php artisan agovena:verify-providers mollie --sandbox   # Mollie only; refuses live_ keys
 ```
 
 `agovena:seed-demo` loads local-only sample products (refuses in production).

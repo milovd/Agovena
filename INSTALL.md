@@ -54,6 +54,18 @@ Never use `migrate:fresh` on a live store. Take a MariaDB dump plus `storage/app
 
 Terminate TLS at Nginx/Apache (`deploy/nginx-https.conf`). Set `APP_URL=https://…`.
 
+## Queue worker and scheduler
+
+Release templates live under `deploy/` (systemd unit + cron). Without both, subscriptions, unpaid-cancel, and queued mail will stall. Confirm with `php artisan agovena:doctor`.
+
+## Third-party Modules and Extensions
+
+Only install code you trust. Composer/Git installs run PHP from that package. Prefer first-party or reviewed sources.
+
 ## Support matrix
 
 See [SUPPORT.md](SUPPORT.md).
+
+## Provider sandbox / live checks
+
+See [deploy/LIVE_PROVIDER_CHECKS.md](deploy/LIVE_PROVIDER_CHECKS.md). CI never creates live charges. Connection-only: `php artisan agovena:verify-providers`.

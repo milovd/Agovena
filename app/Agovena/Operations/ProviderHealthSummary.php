@@ -50,7 +50,8 @@ final class ProviderHealthSummary
     private function sanitize(string $message): string
     {
         $message = preg_replace('/\b(sk|pk|rk|whsec)_[A-Za-z0-9]+/i', '[redacted]', $message) ?? $message;
-        $message = preg_replace('/\btest_[A-Za-z0-9]{10,}\b/', '[redacted]', $message) ?? $message;
+        $message = preg_replace('/\b(test|live)_[A-Za-z0-9]{10,}\b/', '[redacted]', $message) ?? $message;
+        $message = preg_replace('/\bBearer\s+[A-Za-z0-9._\-]+\b/i', 'Bearer [redacted]', $message) ?? $message;
 
         return $message;
     }
