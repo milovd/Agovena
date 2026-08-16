@@ -168,16 +168,39 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, PackageCatalog $catalog)
     {
-        $rows = [];
+        $grouped = [];
         foreach ($catalog->extensions() as $row) {
             if ($this->category !== '' && $row['manifest']->category->value !== $this->category) {
                 continue;
             }
-            $rows[] = $row;
+            $group = $row['manifest']->category->value;
+            $grouped[$group][] = $row;
+        }
+
+        $order = [
+            ExtensionCategory::PaymentGateway->value,
+            ExtensionCategory::Provisioning->value,
+            ExtensionCategory::Shipping->value,
+            ExtensionCategory::Tax->value,
+            ExtensionCategory::Notifications->value,
+            ExtensionCategory::Authentication->value,
+            ExtensionCategory::Storage->value,
+            ExtensionCategory::Analytics->value,
+            ExtensionCategory::Other->value,
+        ];
+        $groups = [];
+        foreach ($order as $group) {
+            if (isset($grouped[$group])) {
+                $groups[$group] = $grouped[$group];
+                unset($grouped[$group]);
+            }
+        }
+        foreach ($grouped as $group => $rows) {
+            $groups[$group] = $rows;
         }
 
         return view('livewire.admin.extensions.index', [
-            'extensions' => $rows,
+            'groups' => $groups,
             'categories' => ExtensionCategory::cases(),
             'settingsExtensionId' => $this->settingsExtensionId,
         ])->layout('layouts.admin', [

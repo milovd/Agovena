@@ -41,8 +41,9 @@ final class ScaffoldingGenerator
     public function extension(string $id, bool $force, string $category = 'other'): string
     {
         $this->assertSafeId($id);
-        $category = $this->assertExtensionCategory($category);
-        $root = base_path('extensions/'.$id);
+        $resolvedCategory = $this->assertExtensionCategoryEnum($category);
+        $categoryDir = $resolvedCategory->directoryName();
+        $root = base_path('extensions/'.$categoryDir.'/'.$id);
         $this->assertWritable($root, $force);
         $class = Str::studly($id);
         $namespace = 'Agovena\\Extensions\\'.$class;
@@ -53,7 +54,7 @@ final class ScaffoldingGenerator
             'version' => '0.1.0',
             'description' => '',
             'author' => '',
-            'category' => $category,
+            'category' => $resolvedCategory->value,
             'agovena' => '^0.1',
             'provider' => $namespace.'\\'.$class.'ServiceProvider',
             'dependencies' => [],
@@ -90,7 +91,7 @@ final class ScaffoldingGenerator
         }
     }
 
-    private function assertExtensionCategory(string $category): string
+    private function assertExtensionCategoryEnum(string $category): ExtensionCategory
     {
         $resolved = ExtensionCategory::tryFrom($category);
         if ($resolved === null) {
@@ -102,7 +103,7 @@ final class ScaffoldingGenerator
             throw new InvalidArgumentException("Unknown extension category [{$category}]. Use one of: {$allowed}.");
         }
 
-        return $resolved->value;
+        return $resolved;
     }
 
     private function assertWritable(string $root, bool $force): void

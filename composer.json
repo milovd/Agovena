@@ -41,14 +41,15 @@
                 "Agovena\\Modules\\Inventory\\": "modules/inventory/src/",
                 "Agovena\\Modules\\Shipping\\": "modules/shipping/src/",
                 "Agovena\\Modules\\Digital\\": "modules/digital/src/",
+                "Agovena\\Modules\\DigitalDelivery\\": "modules/digital-delivery/src/",
                 "Agovena\\Modules\\Subscriptions\\": "modules/subscriptions/src/",
                 "Agovena\\Modules\\Provisioning\\": "modules/provisioning/src/",
                 "Agovena\\Modules\\Events\\": "modules/events/src/",
-                "Agovena\\Extensions\\ManualPayment\\": "extensions/manual-payment/src/",
-                "Agovena\\Extensions\\Mollie\\": "extensions/mollie/src/",
-                "Agovena\\Extensions\\Pterodactyl\\": "extensions/pterodactyl/src/",
-                "Agovena\\Extensions\\Postnl\\": "extensions/postnl/src/",
-                "Agovena\\Extensions\\Stripe\\": "extensions/stripe/src/"
+                "Agovena\\Extensions\\ManualPayment\\": "extensions/payments/manual-payment/src/",
+                "Agovena\\Extensions\\Mollie\\": "extensions/payments/mollie/src/",
+                "Agovena\\Extensions\\Pterodactyl\\": "extensions/provisioning/pterodactyl/src/",
+                "Agovena\\Extensions\\Postnl\\": "extensions/shipping/postnl/src/",
+                "Agovena\\Extensions\\Stripe\\": "extensions/payments/stripe/src/"
             }
     },
     "autoload-dev": {

@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\File;
 
 test('make-extension scaffolds a valid category instead of integration', function () {
     $id = 'contract-kit-example';
-    $root = base_path('extensions/'.$id);
+    $root = base_path('extensions/payments/'.$id);
 
     try {
         $this->artisan('agovena:make-extension', [
@@ -29,5 +29,6 @@ test('make-extension rejects unknown categories', function () {
         '--category' => 'integration',
     ])->assertFailed();
 
-    expect(File::isDirectory(base_path('extensions/bad-category-example')))->toBeFalse();
+    expect(File::isDirectory(base_path('extensions/bad-category-example')))->toBeFalse()
+        ->and(File::isDirectory(base_path('extensions/other/bad-category-example')))->toBeFalse();
 });

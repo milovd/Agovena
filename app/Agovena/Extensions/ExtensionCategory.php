@@ -20,4 +20,17 @@ enum ExtensionCategory: string
     {
         return 'admin.extensions.categories.'.$this->value;
     }
+
+    /**
+     * Preferred first-party filesystem category folder under extensions/.
+     * Not identity — discovery uses extension.json id.
+     */
+    public function directoryName(): string
+    {
+        return match ($this) {
+            self::PaymentGateway => 'payments',
+            self::Notifications => 'notifications',
+            default => $this->value,
+        };
+    }
 }

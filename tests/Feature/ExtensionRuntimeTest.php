@@ -34,7 +34,20 @@ test('extension manager discovers manual payment extension', function () {
         ->and($manifest->category)->toBe(ExtensionCategory::PaymentGateway)
         ->and($manifest->author)->toBe('Agovena')
         ->and($manifest->version)->toBe('1.0.0')
-        ->and($extensions->isEnabled('manual-payment'))->toBeFalse();
+        ->and($extensions->isEnabled('manual-payment'))->toBeFalse()
+        ->and(str_replace('\\', '/', $manifest->path))->toContain('extensions/payments/manual-payment');
+});
+
+test('extension discovery keeps stable ids across category folder layout', function () {
+    $extensions = app(ExtensionManager::class);
+    $ids = collect($extensions->discover())->pluck('id')->sort()->values()->all();
+
+    expect($ids)->toContain('manual-payment', 'mollie', 'stripe', 'pterodactyl', 'postnl');
+
+    foreach (['mollie' => 'payments', 'pterodactyl' => 'provisioning', 'postnl' => 'shipping'] as $id => $categoryDir) {
+        $path = str_replace('\\', '/', (string) $extensions->manifest($id)?->path);
+        expect($path)->toContain('extensions/'.$categoryDir.'/'.$id);
+    }
 });
 
 test('extension manifest validation rejects unknown category', function () {

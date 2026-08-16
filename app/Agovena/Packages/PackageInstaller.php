@@ -190,11 +190,31 @@ final class PackageInstaller
 
     private function assertNotBundledOverride(PackageKind $kind, string $id): void
     {
-        $bundled = $kind === PackageKind::Module
-            ? base_path('modules'.DIRECTORY_SEPARATOR.$id)
-            : base_path('extensions'.DIRECTORY_SEPARATOR.$id);
+        if ($kind === PackageKind::Module) {
+            $bundled = base_path('modules'.DIRECTORY_SEPARATOR.$id);
+            if (is_dir($bundled)) {
+                throw ValidationException::withMessages([
+                    'package' => __('admin.packages.cannot_replace_bundled', ['id' => $id]),
+                ]);
+            }
 
-        if (is_dir($bundled)) {
+            return;
+        }
+
+        $this->extensions->refresh();
+        $manifest = $this->extensions->manifest($id);
+        if ($manifest === null) {
+            return;
+        }
+
+        $bundledRoot = realpath(base_path('extensions'));
+        $packagePath = realpath($manifest->path);
+        if ($bundledRoot === false || $packagePath === false) {
+            return;
+        }
+
+        $prefix = $bundledRoot.DIRECTORY_SEPARATOR;
+        if (str_starts_with($packagePath.DIRECTORY_SEPARATOR, $prefix) || $packagePath === $bundledRoot) {
             throw ValidationException::withMessages([
                 'package' => __('admin.packages.cannot_replace_bundled', ['id' => $id]),
             ]);

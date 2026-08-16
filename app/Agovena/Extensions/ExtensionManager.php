@@ -362,7 +362,7 @@ final class ExtensionManager
                 continue;
             }
 
-            foreach (File::directories($root) as $directory) {
+            foreach ($this->packageDirectories($root) as $directory) {
                 $file = $directory.DIRECTORY_SEPARATOR.'extension.json';
                 if (! is_file($file)) {
                     continue;
@@ -384,12 +384,38 @@ final class ExtensionManager
                     continue;
                 }
 
-                $this->autoload->register($manifest->path, $this->autoloadMap($manifest));
                 $this->discovered[$manifest->id] = $manifest;
+                $this->autoload->register($manifest->path, $this->autoloadMap($manifest));
             }
         }
 
         return $this->discovered;
+    }
+
+    /**
+     * Package roots may be flat (`extensions/{id}`) or category-organized
+     * (`extensions/{category}/{id}`). Identity always comes from extension.json `id`.
+     *
+     * @return list<string>
+     */
+    private function packageDirectories(string $root): array
+    {
+        $packages = [];
+        foreach (File::directories($root) as $directory) {
+            if (is_file($directory.DIRECTORY_SEPARATOR.'extension.json')) {
+                $packages[] = $directory;
+
+                continue;
+            }
+
+            foreach (File::directories($directory) as $nested) {
+                if (is_file($nested.DIRECTORY_SEPARATOR.'extension.json')) {
+                    $packages[] = $nested;
+                }
+            }
+        }
+
+        return $packages;
     }
 
     /**

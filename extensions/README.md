@@ -11,8 +11,24 @@ Composer / GitHub oriented. Do **not** execute arbitrary uploaded PHP ZIPs.
 
 ## Layout
 
+First-party Extensions are organized by category for clarity. Identity always comes from `extension.json` `id`, **not** the filesystem path.
+
 ```
-extensions/{id}/
+extensions/
+  payments/
+    mollie/
+    stripe/
+    manual-payment/
+  provisioning/
+    pterodactyl/
+  shipping/
+    postnl/
+```
+
+Flat `extensions/{id}/` remains supported for third-party and legacy layouts. Category folders may also look like `extensions/{category}/{id}/`.
+
+```
+extensions/{category?}/{id}/
   extension.json
   src/
 ```
@@ -21,20 +37,21 @@ Lifecycle: discover → install → enable / disable → uninstall. Disable pres
 
 ## Categories
 
-`payment_gateway`, `provisioning`, `shipping`, `authentication`, `storage`, `notifications`, `analytics`, `tax`, `other`
+Manifest `category` values: `payment_gateway`, `provisioning`, `shipping`, `authentication`, `storage`, `notifications`, `analytics`, `tax`, `other`
+
+Filesystem folder names for first-party packages use friendlier labels where useful (`payments/` for `payment_gateway`). Folder name is convenience only.
 
 ## Reference
 
-`extensions/manual-payment` is the lifecycle reference adapter (manual + optional development).
-`extensions/mollie` is the first production Payment Extension: hosted checkout, webhooks, refunds, and status sync behind the generic `PaymentGateway` contracts.
-`extensions/stripe` is the second production Payment Extension: Stripe Checkout, signed webhooks, refunds, and off-session charges behind the same contracts.
-`extensions/pterodactyl` is the first production Provisioning Extension: panel lifecycle behind the generic `Provisioner` contracts.
-
-`extensions/postnl` is the first production Shipping Extension: barcodes, labels, and tracking behind the generic `ShippingCarrier` contracts.
+`extensions/payments/manual-payment` is the lifecycle reference adapter (manual + optional development).
+`extensions/payments/mollie` is the first production Payment Extension: hosted checkout, webhooks, refunds, and status sync behind the generic `PaymentGateway` contracts.
+`extensions/payments/stripe` is the second production Payment Extension: Stripe Checkout, signed webhooks, refunds, and off-session charges behind the same contracts.
+`extensions/provisioning/pterodactyl` is the first production Provisioning Extension: panel lifecycle behind the generic `Provisioner` contracts.
+`extensions/shipping/postnl` is the first production Shipping Extension: barcodes, labels, and tracking behind the generic `ShippingCarrier` contracts.
 
 ## Implementing a Payment Extension
 
-1. Add `extensions/{id}/extension.json` with `category: payment_gateway`
+1. Add `extensions/payments/{id}/extension.json` (or flat `extensions/{id}/`) with `category: payment_gateway`
 2. Implement `App\Agovena\Payments\Contracts\PaymentGateway`
 3. Register it from `Extension::register()` via `$context->paymentGateway(...)`
 4. Store secrets with `$context->setting(..., secret: true)` — encrypted, never redisplayed, never logged
