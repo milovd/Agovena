@@ -8,7 +8,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
-test('storefront chrome includes navigation cart and footer placeholders', function () {
+test('storefront chrome includes navigation cart and footer structure', function () {
     $this->get('/')
         ->assertOk()
         ->assertSee('Shop', false)
@@ -16,9 +16,10 @@ test('storefront chrome includes navigation cart and footer placeholders', funct
         ->assertSee('Log in', false)
         ->assertSee('Register', false)
         ->assertSee('Search', false)
-        ->assertSee('Explore', false)
-        ->assertSee('Legal', false)
-        ->assertSee('Terms', false)
+        ->assertSee(__('storefront.footer.shop'), false)
+        ->assertSee(__('storefront.footer.account'), false)
+        ->assertSee('store-footer__brand', false)
+        ->assertSee('store-footer__logo', false)
         ->assertDontSee('Powered by a default Theme', false)
         ->assertDontSee('Agovena Admin', false);
 });
@@ -128,6 +129,8 @@ test('checkout keeps the storefront header and bundled logo', function () {
         ->assertDontSee('store-chrome--reduced', false)
         ->assertSee('store-header__search', false)
         ->assertSee('store-header__cart', false)
+        ->assertSee('store-footer', false)
+        ->assertSee('store-footer__brand', false)
         ->assertSee('vendor/agovena/logo.png', false)
         ->assertDontSee(__('storefront.checkout.back_to_cart'), false)
         ->assertDontSee('store-checkout-chrome', false)

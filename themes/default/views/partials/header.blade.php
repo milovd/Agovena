@@ -307,7 +307,7 @@
                         <div
                             class="store-header__account"
                             x-data="{ open: false }"
-                            @keydown.escape.window="open = false"
+                            @keydown.escape.window="if (open) { open = false; $refs.accountTrigger?.focus() }"
                             @click.outside="open = false"
                         >
                             <button
@@ -315,33 +315,38 @@
                                 x-ref="accountTrigger"
                                 class="store-header__utility store-header__account-trigger"
                                 id="store-account-menu-button"
-                                @click="open = !open"
-                                @keydown.enter.prevent="open = !open"
-                                @keydown.space.prevent="open = !open"
+                                @click="open = !open; if (open) { $nextTick(() => $refs.accountMenu?.querySelector('[role=menuitem]')?.focus()) }"
+                                @keydown.enter.prevent="open = !open; if (open) { $nextTick(() => $refs.accountMenu?.querySelector('[role=menuitem]')?.focus()) }"
+                                @keydown.space.prevent="open = !open; if (open) { $nextTick(() => $refs.accountMenu?.querySelector('[role=menuitem]')?.focus()) }"
                                 :aria-expanded="open.toString()"
+                                :class="{ 'is-open': open }"
                                 aria-haspopup="menu"
                                 aria-controls="store-account-menu"
-                                aria-label="{{ __('storefront.nav.account') }}"
+                                aria-label="{{ __('storefront.nav.account_menu') }}"
                             >
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-                                <span class="visually-hidden">{{ __('storefront.nav.account') }}</span>
+                                @include('theme::partials.icon', ['name' => 'user', 'size' => 20])
+                                <span class="visually-hidden">{{ __('storefront.nav.account_menu') }}</span>
                             </button>
                             <div
                                 id="store-account-menu"
-                                class="store-header__account-menu"
+                                x-ref="accountMenu"
+                                class="store-header__account-menu store-account-menu"
                                 x-show="open"
                                 x-cloak
-                                x-transition
+                                x-transition:enter="store-account-menu-enter"
+                                x-transition:enter-start="store-account-menu-enter-start"
+                                x-transition:enter-end="store-account-menu-enter-end"
+                                x-transition:leave="store-account-menu-leave"
+                                x-transition:leave-start="store-account-menu-leave-start"
+                                x-transition:leave-end="store-account-menu-leave-end"
                                 role="menu"
                                 aria-labelledby="store-account-menu-button"
                                 @keydown.escape.stop="open = false; $refs.accountTrigger?.focus()"
                             >
-                                <a class="store-header__account-item" role="menuitem" href="{{ route('customer.account') }}" @click="open = false">{{ __('storefront.nav.dashboard') }}</a>
-                                <a class="store-header__account-item" role="menuitem" href="{{ route('customer.profile') }}" @click="open = false">{{ __('storefront.nav.account') }}</a>
-                                @if ($canOpenAdmin)
-                                    <a class="store-header__account-item" role="menuitem" href="{{ route('admin.dashboard') }}" @click="open = false">{{ __('storefront.nav.admin') }}</a>
-                                @endif
-                                <a class="store-header__account-item store-header__account-item--danger" role="menuitem" href="{{ route('customer.logout') }}" @click="open = false">{{ __('storefront.nav.logout') }}</a>
+                                @include('theme::partials.account-menu', [
+                                    'accountUser' => $accountUser,
+                                    'canOpenAdmin' => $canOpenAdmin,
+                                ])
                             </div>
                         </div>
                     @else
@@ -435,10 +440,15 @@
                 </a>
                 @if ($showAccount)
                     @auth
+                        @php $drawerCanAdmin = auth()->user() instanceof \App\Models\User && auth()->user()->canAccessAdmin(); @endphp
+                        <p class="store-drawer__label">{{ __('storefront.nav.account') }}</p>
                         <a class="store-drawer__link" href="{{ route('customer.account') }}" @click="navOpen = false">{{ __('storefront.nav.dashboard') }}</a>
                         <a class="store-drawer__link" href="{{ route('customer.profile') }}" @click="navOpen = false">{{ __('storefront.nav.account') }}</a>
-                        @if (auth()->user() instanceof \App\Models\User && auth()->user()->canAccessAdmin())
-                            <a class="store-drawer__link" href="{{ route('admin.dashboard') }}" @click="navOpen = false">{{ __('storefront.nav.admin') }}</a>
+                        @if ($drawerCanAdmin)
+                            <a class="store-drawer__link store-drawer__link--admin" href="{{ route('admin.dashboard') }}" @click="navOpen = false">
+                                <span>{{ __('storefront.nav.admin') }}</span>
+                                <span class="store-drawer__hint">{{ __('storefront.nav.admin_hint') }}</span>
+                            </a>
                         @endif
                         <a class="store-drawer__link store-drawer__link--danger" href="{{ route('customer.logout') }}" @click="navOpen = false">{{ __('storefront.nav.logout') }}</a>
                     @else
