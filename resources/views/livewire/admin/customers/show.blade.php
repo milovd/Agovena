@@ -102,6 +102,27 @@
                     <dd>{{ $customer->created_at?->toDayDateTimeString() }}</dd>
                 </div>
             </dl>
+            @if ($user)
+                @can('customers.manage')
+                    <div class="ag-form__actions">
+                        @if ($user->hasVerifiedEmail())
+                            <button
+                                type="button"
+                                class="ag-btn ag-btn--danger-outline"
+                                wire:click="markEmailUnverified"
+                                wire:confirm="{{ __('admin.customers.mark_email_unverified_confirm') }}"
+                            >{{ __('admin.customers.mark_email_unverified') }}</button>
+                        @else
+                            <button
+                                type="button"
+                                class="ag-btn ag-btn--secondary"
+                                wire:click="markEmailVerified"
+                                wire:confirm="{{ __('admin.customers.mark_email_verified_confirm') }}"
+                            >{{ __('admin.customers.mark_email_verified') }}</button>
+                        @endif
+                    </div>
+                @endcan
+            @endif
         </section>
 
         <section class="admin-panel">
@@ -433,4 +454,6 @@
             </x-ag.danger-zone>
         @endif
     @endcan
+
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

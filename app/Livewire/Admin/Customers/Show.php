@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Customers;
 
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Auth\SetUserEmailVerification;
 use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Agovena\Customer\UpdateCustomerProfile;
 use App\Agovena\Privacy\AnonymizeCustomer;
+use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\Customer;
 use App\Models\CustomerCreditAccount;
 use App\Models\Refund;
@@ -21,6 +23,7 @@ use Livewire\Component;
 final class Show extends Component
 {
     use AuthorizesRequests;
+    use RequiresRecentPassword;
 
     public Customer $customer;
 
@@ -114,6 +117,16 @@ final class Show extends Component
         session()->flash('status', __('admin.customers.anonymized'));
     }
 
+    public function markEmailVerified(SetUserEmailVerification $verification): void
+    {
+        $this->setEmailVerification($verification, true);
+    }
+
+    public function markEmailUnverified(SetUserEmailVerification $verification): void
+    {
+        $this->setEmailVerification($verification, false);
+    }
+
     public function render(AdminRegistrar $admin, CustomerCreditLedger $ledger, CustomerPropertyService $properties)
     {
         $account = CustomerCreditAccount::query()->where('customer_id', $this->customer->id)->first();
@@ -161,5 +174,28 @@ final class Show extends Component
             'title' => __('admin.customers.customer_title', ['name' => $this->customer->name]),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    private function setEmailVerification(SetUserEmailVerification $verification, bool $verified): void
+    {
+        $this->authorize('customers.manage');
+
+        if (! $this->requireRecentPassword($verified ? 'markEmailVerified' : 'markEmailUnverified')) {
+            return;
+        }
+
+        $this->customer->loadMissing('user');
+        if (! $this->customer->user instanceof User) {
+            return;
+        }
+
+        $verification->handle($this->customer->user, $verified);
+        $this->customer->user->refresh();
+
+        session()->flash('status', __(
+            $verified
+                ? 'admin.customers.email_marked_verified'
+                : 'admin.customers.email_marked_unverified',
+        ));
     }
 }
