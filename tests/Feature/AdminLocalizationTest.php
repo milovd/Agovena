@@ -1,6 +1,9 @@
 <?php
 
+use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
+use App\Livewire\Admin\Roles\Index;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
@@ -29,6 +32,38 @@ function adminLocalizedRoutes(): array
         '/admin/appearance/navigation',
     ];
 }
+
+test('shipping admin and role permissions resolve translation keys', function () {
+    $staff = $this->createStaff();
+    app(ModuleManager::class)->enable('shipping');
+    app(SyncRegisteredPermissions::class)(force: true);
+
+    expect(__('shipping::admin.methods_title'))->toBe('Shipping methods')
+        ->and(__('shipping::admin.zones_title'))->toBe('Shipping zones')
+        ->and(__('shipping::admin.fulfillment_title'))->toBe('Shipments')
+        ->and(__('admin.permissions.products.view'))->toBe('View products')
+        ->and(__('admin.permissions.returns.view'))->toBe('View returns')
+        ->and(__('admin.permissions.digital_delivery.manage'))->toBe('Manage digital deliveries')
+        ->and(__('admin.permissions.plan-changes.view'))->toBe('View plan changes')
+        ->and(__('admin.permissions.api.tokens'))->toBe('Manage API tokens');
+
+    $this->actingAs($staff)
+        ->get('/admin/shipping/methods')
+        ->assertOk()
+        ->assertSee('Shipping methods', false)
+        ->assertDontSeeText('shipping::admin.methods_title');
+
+    $this->actingAs($staff)
+        ->get('/admin/roles')
+        ->assertOk()
+        ->assertDontSeeText('admin.permissions.products.view');
+
+    Livewire\Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('create')
+        ->assertSee('View products')
+        ->assertDontSeeText('admin.permissions.products.view');
+});
 
 test('admin screens never render raw translation keys', function () {
     $staff = $this->createStaff();
