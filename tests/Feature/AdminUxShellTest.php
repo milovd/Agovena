@@ -5,24 +5,32 @@ declare(strict_types=1);
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Theme\StorefrontBrand;
 use App\Livewire\Admin\Customers\Index as CustomersIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Models\Customer;
+use App\Models\Product;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-test('admin shell exposes view storefront and regrouped navigation', function () {
+test('admin shell exposes view storefront once with bundled product branding', function () {
     $staff = $this->createStaff();
 
-    $this->actingAs($staff)
+    $html = $this->actingAs($staff)
         ->get(route('admin.dashboard'))
         ->assertOk()
         ->assertSee(__('admin.view_storefront'), false)
+        ->assertSee(__('admin.product_name'), false)
+        ->assertSee('/'.StorefrontBrand::BUNDLED_LOGO, false)
         ->assertSee(route('storefront.home'), false)
         ->assertSee(__('admin.nav_groups.system'), false)
-        ->assertDontSee(__('admin.nav.customer_properties'), false);
+        ->assertSee(__('admin.nav.customer_properties'), false)
+        ->getContent();
+
+    expect(substr_count($html, __('admin.view_storefront')))->toBe(1)
+        ->and(substr_count($html, 'admin-sidebar__footer-link--accent'))->toBe(0);
 });
 
 test('dashboard renders real metrics without fake trends', function () {
@@ -66,4 +74,20 @@ test('enabled subscriptions appear under operations navigation', function () {
 
     expect($item)->not->toBeNull()
         ->and($item->group)->toBe('admin.nav_groups.operations');
+});
+
+test('admin product pagination uses sized icons not unbounded svg chevrons', function () {
+    $staff = $this->createStaff();
+    Product::factory()->count(16)->active()->create();
+
+    $html = $this->actingAs($staff)
+        ->get(route('admin.products.index'))
+        ->assertOk()
+        ->assertSee('ag-pagination', false)
+        ->assertSee('ag-pagination__icon', false)
+        ->assertDontSee('class="w-5 h-5"', false)
+        ->getContent();
+
+    expect(preg_match_all('/<svg[^>]*class="w-5 h-5"/', $html))->toBe(0)
+        ->and(preg_match_all('/ag-pagination__icon"[^>]*width="16"/', $html))->toBeGreaterThan(0);
 });
