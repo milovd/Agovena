@@ -152,7 +152,8 @@ test('installer catalog presets enable modules without locking a store type', fu
     $modules = app(ModuleManager::class);
     expect($modules->isEnabled('inventory'))->toBeTrue()
         ->and($modules->isEnabled('shipping'))->toBeTrue()
-        ->and($modules->isEnabled('digital'))->toBeTrue()
+        ->and($modules->isEnabled('digital-delivery'))->toBeTrue()
+        ->and($modules->isEnabled('digital'))->toBeFalse()
         ->and(app(SettingsRepository::class)->get('store', 'presets'))->toBe(['physical', 'digital']);
 });
 

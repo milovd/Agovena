@@ -31,6 +31,7 @@ test('core admin and account work with zero optional modules enabled', function 
     expect($nav)->not->toContain('inventory-stocks')
         ->and($nav)->not->toContain('shipping-methods')
         ->and($nav)->not->toContain('digital-assets')
+        ->and($nav)->not->toContain('digital-delivery-secrets')
         ->and($nav)->not->toContain('subscriptions')
         ->and($nav)->not->toContain('provisioning')
         ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse();
@@ -54,11 +55,13 @@ test('core admin and account work with zero optional modules enabled', function 
 
     $accountNav = collect(app(CustomerAccountNav::class)->items())->pluck('id');
     expect($accountNav)->not->toContain('digital-downloads')
+        ->and($accountNav)->not->toContain('digital-secrets')
         ->and($accountNav)->not->toContain('subscriptions')
         ->and($accountNav)->not->toContain('services');
 
     $this->actingAs($staff)->get('/admin/inventory')->assertNotFound();
     $this->actingAs($customer->user)->get('/account/downloads')->assertNotFound();
+    $this->actingAs($customer->user)->get('/account/digital-secrets')->assertNotFound();
 });
 
 test('each first-party module admin screen renders when that module is enabled alone', function (string $moduleId, string $adminPath) {
@@ -73,7 +76,9 @@ test('each first-party module admin screen renders when that module is enabled a
 })->with([
     'inventory' => ['inventory', '/admin/inventory'],
     'shipping' => ['shipping', '/admin/shipping/methods'],
+    'shipping-returns' => ['shipping', '/admin/shipping/returns'],
     'digital' => ['digital', '/admin/digital/assets'],
+    'digital-delivery' => ['digital-delivery', '/admin/digital-delivery/secrets'],
     'subscriptions' => ['subscriptions', '/admin/subscriptions'],
     'provisioning' => ['provisioning', '/admin/provisioning'],
     'events' => ['events', '/admin/events'],
@@ -82,11 +87,12 @@ test('each first-party module admin screen renders when that module is enabled a
 test('all first-party modules together expose admin and account surfaces', function () {
     $staff = $this->createStaff();
     $customer = Customer::factory()->create();
-    enableFirstPartyModules(['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', 'events']);
+    enableFirstPartyModules(['inventory', 'shipping', 'digital', 'digital-delivery', 'subscriptions', 'provisioning', 'events']);
 
     $nav = collect(app(AdminRegistrar::class)->navigationItems())->pluck('id');
     expect($nav)->toContain('inventory-stocks')
         ->and($nav)->toContain('digital-assets')
+        ->and($nav)->toContain('digital-delivery-secrets')
         ->and($nav)->toContain('subscriptions')
         ->and($nav)->toContain('provisioning')
         ->and($nav)->toContain('events')
@@ -98,14 +104,17 @@ test('all first-party modules together expose admin and account surfaces', funct
         ->values()
         ->all();
     expect($shippingNames)->toContain('admin.shipping.methods')
-        ->and($shippingNames)->toContain('admin.shipping.zones');
+        ->and($shippingNames)->toContain('admin.shipping.zones')
+        ->and($shippingNames)->toContain('admin.shipping.returns');
 
     $this->actingAs($staff);
     foreach ([
         '/admin/inventory',
         '/admin/shipping/methods',
         '/admin/shipping/zones',
+        '/admin/shipping/returns',
         '/admin/digital/assets',
+        '/admin/digital-delivery/secrets',
         '/admin/subscriptions',
         '/admin/provisioning',
         '/admin/plan-changes',
@@ -118,9 +127,11 @@ test('all first-party modules together expose admin and account surfaces', funct
     $this->actingAs($customer->user);
     foreach ([
         '/account/downloads',
+        '/account/digital-secrets',
         '/account/subscriptions',
         '/account/services',
         '/account/event-tickets',
+        '/account/returns',
     ] as $uri) {
         $this->get($uri)->assertOk()->assertDontSee('SQLSTATE', false);
     }

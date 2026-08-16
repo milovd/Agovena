@@ -24,6 +24,12 @@ final class StorePresetCatalog
                 id: 'digital',
                 labelKey: 'admin.store_presets.digital',
                 ledeKey: 'admin.store_presets.digital_lede',
+                moduleIds: ['digital-delivery'],
+            ),
+            new StorePreset(
+                id: 'downloadable',
+                labelKey: 'admin.store_presets.downloadable',
+                ledeKey: 'admin.store_presets.downloadable_lede',
                 moduleIds: ['digital'],
             ),
             new StorePreset(

@@ -84,6 +84,11 @@ return [
         'line' => 'Downloads for order :number are now available.',
         'action' => 'View downloads',
     ],
+    'digital_secret_delivered' => [
+        'subject' => 'Your digital delivery is ready',
+        'line' => 'Keys or codes for order :number are now available in your account.',
+        'action' => 'View digital delivery',
+    ],
     'event_ticket_issued' => [
         'subject' => 'Your tickets for order :number',
         'line' => 'Event tickets for order :number are now available.',

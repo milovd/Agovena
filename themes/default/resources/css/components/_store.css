@@ -3632,6 +3632,20 @@ a.store-cart-line__name:hover {
   font-size: 1.0625rem;
 }
 
+.store-code {
+  display: inline-block;
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-sm, 0.25rem);
+  background: var(--theme-color-surface-muted, #f4f6fa);
+  color: var(--theme-color-text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  letter-spacing: 0.02em;
+  user-select: all;
+  word-break: break-all;
+}
+
 .store-account-panel__actions {
   display: flex;
   flex-wrap: wrap;

@@ -303,10 +303,21 @@ final class OpenApiDocument
                 '/downloads' => [
                     'get' => [
                         'tags' => ['Commerce'],
-                        'summary' => 'Digital entitlements (when the Digital module is enabled)',
+                        'summary' => 'Download entitlements (when the Downloads module is enabled)',
                         'security' => [['bearerAuth' => []]],
                         'responses' => [
                             '200' => ['description' => 'Paginated downloads'],
+                            '404' => ['description' => 'Capability unavailable'],
+                        ],
+                    ],
+                ],
+                '/digital-secrets' => [
+                    'get' => [
+                        'tags' => ['Commerce'],
+                        'summary' => 'Digital deliveries (when the Digital Delivery module is enabled)',
+                        'security' => [['bearerAuth' => []]],
+                        'responses' => [
+                            '200' => ['description' => 'Paginated owner-scoped secret deliveries (plaintext only for the authenticated customer)'],
                             '404' => ['description' => 'Capability unavailable'],
                         ],
                     ],

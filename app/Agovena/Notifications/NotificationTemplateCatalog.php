@@ -93,6 +93,11 @@ final class NotificationTemplateCatalog
                 placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
             ),
             new NotificationTemplateDefinition(
+                key: 'digital_secret_delivered',
+                label: 'admin.notifications.keys.digital_secret_delivered',
+                placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
                 key: 'event_ticket_issued',
                 label: 'admin.notifications.keys.event_ticket_issued',
                 placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],

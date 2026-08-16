@@ -123,6 +123,7 @@ final class RendersNotificationMail
             'service_activated',
             'service_suspended',
             'digital_entitlement_granted',
+            'digital_secret_delivered',
             'event_ticket_issued',
         ], true);
     }

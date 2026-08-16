@@ -48,6 +48,7 @@ return [
     'inactive' => 'Inactive',
     'draft' => 'Draft',
     'none' => 'None',
+    'all' => 'All',
     'preview' => 'Preview',
     'print' => 'Print',
     'loading' => 'Loading…',

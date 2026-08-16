@@ -84,6 +84,11 @@ return [
         'line' => 'Downloads voor bestelling :number zijn nu beschikbaar.',
         'action' => 'Downloads bekijken',
     ],
+    'digital_secret_delivered' => [
+        'subject' => 'Je digitale levering is klaar',
+        'line' => 'Sleutels of codes voor bestelling :number staan klaar in je account.',
+        'action' => 'Digitale levering bekijken',
+    ],
     'event_ticket_issued' => [
         'subject' => 'Je tickets voor bestelling :number',
         'line' => 'Evenementtickets voor bestelling :number zijn nu beschikbaar.',

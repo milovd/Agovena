@@ -1,8 +1,8 @@
 {
     "id": "digital",
-    "name": "Digital",
+    "name": "Downloads",
     "version": "1.0.0",
-    "description": "Digital product capability with downloadable assets and customer entitlements after payment.",
+    "description": "Downloadable file assets and customer entitlements after payment.",
     "author": "Agovena",
     "agovena": "^0.1",
     "group": "commerce",

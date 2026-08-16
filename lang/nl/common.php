@@ -48,6 +48,7 @@ return [
     'inactive' => 'Inactief',
     'draft' => 'Concept',
     'none' => 'Geen',
+    'all' => 'Alles',
     'preview' => 'Voorbeeld',
     'print' => 'Afdrukken',
     'loading' => 'Laden…',
