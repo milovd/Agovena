@@ -35,6 +35,7 @@ return [
     'empty_products' => 'Nog geen producten met de capability sleutels & codes.',
     'empty_deliveries' => 'Nog geen leveringen.',
     'customer_heading' => 'Sleutels & codes',
+    'customer_empty' => 'Geen digitale leveringen voor deze klant.',
     'sources' => [
         'pool' => 'Voorraad',
         'manual' => 'Handmatig',

@@ -50,6 +50,11 @@ final class UpdateCustomerProfile
 
             $user->save();
 
+            $customer->forceFill([
+                'name' => $data['name'],
+                'email' => $data['email'],
+            ])->save();
+
             if ($emailChanged) {
                 $user->sendEmailVerificationNotification();
             }

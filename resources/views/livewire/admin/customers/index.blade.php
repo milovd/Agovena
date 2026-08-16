@@ -6,37 +6,108 @@
             @endcan
         </x-slot:actions>
     </x-ag.page-header>
-    <div class="admin-panel">
-        <label class="ag-field__label" for="customer-search">{{ __('common.search') }}</label>
-        <input id="customer-search" class="ag-input" type="search" wire:model.live.debounce.300ms="search">
+
+    <div class="ag-toolbar ag-toolbar--filters">
+        <div class="ag-toolbar__filters">
+            <div class="ag-field ag-field--inline">
+                <label class="visually-hidden" for="customer-search">{{ __('common.search') }}</label>
+                <input
+                    id="customer-search"
+                    class="ag-input ag-input--search"
+                    type="search"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="{{ __('admin.customers.search_placeholder') }}"
+                >
+            </div>
+            <div class="ag-field ag-field--inline">
+                <label class="visually-hidden" for="customer-status">{{ __('common.status') }}</label>
+                <select id="customer-status" class="ag-select" wire:model.live="status">
+                    <option value="">{{ __('admin.customers.status_all') }}</option>
+                    <option value="active">{{ __('admin.customers.status_active') }}</option>
+                    <option value="deletion">{{ __('admin.customers.deletion_requested_badge') }}</option>
+                    <option value="anonymized">{{ __('admin.customers.anonymized_badge') }}</option>
+                </select>
+            </div>
+        </div>
     </div>
-    <div class="ag-table-wrap">
-        <table class="ag-table">
-            <thead><tr>
-                <th>{{ __('common.name') }}</th>
-                <th>{{ __('admin.customers.email') }}</th>
-                <th>{{ __('common.status') }}</th>
-                <th><span class="visually-hidden">{{ __('common.actions') }}</span></th>
-            </tr></thead>
-            <tbody>
-                @forelse ($customers as $customer)
+
+    @if ($customers->isEmpty())
+        <div class="ag-empty" role="status">
+            <p class="ag-empty__title">{{ $search || $status ? __('admin.customers.empty_filtered_title') : __('admin.customers.empty_title') }}</p>
+            <p class="ag-empty__text">{{ $search || $status ? __('admin.customers.empty_filtered_text') : __('admin.customers.empty_text') }}</p>
+        </div>
+    @else
+        <div class="ag-table-wrap">
+            <table class="ag-table">
+                <thead>
                     <tr>
-                        <td>{{ $customer->name }}</td>
-                        <td>{{ $customer->email }}</td>
-                        <td>
-                            @if ($customer->anonymized_at)
-                                <span class="ag-badge">{{ __('admin.customers.anonymized_badge') }}</span>
-                            @elseif ($customer->deletion_requested_at)
-                                <span class="ag-badge">{{ __('admin.customers.deletion_requested_badge') }}</span>
-                            @endif
-                        </td>
-                        <td><a class="ag-btn ag-btn--ghost" href="{{ route('admin.customers.show', $customer) }}">{{ __('common.view') }}</a></td>
+                        <th scope="col">{{ __('admin.customers.customer_column') }}</th>
+                        <th scope="col">{{ __('admin.orders.title') }}</th>
+                        <th scope="col">{{ __('admin.customers.spent_column') }}</th>
+                        <th scope="col">{{ __('admin.customers.credit_heading') }}</th>
+                        <th scope="col">{{ __('common.status') }}</th>
+                        <th scope="col">{{ __('common.created') }}</th>
+                        <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
                     </tr>
-                @empty
-                    <tr><td colspan="4">{{ __('admin.customers.empty') }}</td></tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
-    {{ $customers->links() }}
+                </thead>
+                <tbody>
+                    @foreach ($customers as $customer)
+                        @php
+                            $initials = collect(preg_split('/\s+/', trim((string) $customer->name)) ?: [])
+                                ->filter()
+                                ->take(2)
+                                ->map(fn (string $part): string => mb_substr($part, 0, 1))
+                                ->implode('');
+                            if ($initials === '') {
+                                $initials = 'C';
+                            }
+                            $creditCurrency = (string) ($customer->creditAccount?->currency ?? 'EUR');
+                            $creditBalance = (int) ($customer->creditAccount?->balance_minor ?? 0);
+                        @endphp
+                        <tr wire:key="customer-row-{{ $customer->id }}">
+                            <td>
+                                <div class="ag-identity">
+                                    <span class="ag-identity__avatar" aria-hidden="true">{{ $initials }}</span>
+                                    <div class="ag-identity__text">
+                                        <span class="ag-identity__name">
+                                            <a href="{{ route('admin.customers.show', $customer) }}">{{ $customer->name }}</a>
+                                        </span>
+                                        <span class="ag-identity__meta">{{ $customer->email }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ number_format((int) $customer->orders_count) }}</td>
+                            <td>{{ \App\Support\MoneyFormatter::format((int) ($customer->paid_orders_total ?? 0), $creditCurrency) }}</td>
+                            <td>{{ \App\Support\MoneyFormatter::format($creditBalance, $creditCurrency) }}</td>
+                            <td>
+                                @if ($customer->anonymized_at)
+                                    <span class="ag-badge">{{ __('admin.customers.anonymized_badge') }}</span>
+                                @elseif ($customer->deletion_requested_at)
+                                    <span class="ag-badge ag-badge--warning">{{ __('admin.customers.deletion_requested_badge') }}</span>
+                                @else
+                                    <span class="ag-badge ag-badge--success">{{ __('admin.customers.status_active') }}</span>
+                                @endif
+                            </td>
+                            <td>
+                                <span class="ag-muted" title="{{ $customer->created_at?->toDateTimeString() }}">
+                                    {{ $customer->created_at?->toFormattedDateString() }}
+                                </span>
+                            </td>
+                            <td class="ag-table__actions">
+                                <a
+                                    class="ag-icon-btn"
+                                    href="{{ route('admin.customers.show', $customer) }}"
+                                    title="{{ __('common.view') }}"
+                                    aria-label="{{ __('admin.customers.open_aria', ['name' => $customer->name]) }}"
+                                >
+                                    <x-ag.icon name="external-link" :size="16" />
+                                </a>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        {{ $customers->links() }}
+    @endif
 </div>

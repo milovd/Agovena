@@ -35,6 +35,7 @@ return [
     'empty_products' => 'No products use the keys & codes capability yet.',
     'empty_deliveries' => 'No deliveries yet.',
     'customer_heading' => 'Keys & codes',
+    'customer_empty' => 'No digital deliveries for this customer.',
     'sources' => [
         'pool' => 'Pool',
         'manual' => 'Manual',

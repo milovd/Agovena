@@ -1,6 +1,8 @@
-@if ($deliveries->isNotEmpty())
-    <section class="admin-panel">
-        <h2 class="admin-panel__title">{{ __('digital-delivery::admin.customer_heading') }}</h2>
+<section class="admin-panel">
+    <h2 class="admin-panel__title">{{ __('digital-delivery::admin.customer_heading') }}</h2>
+    @if ($deliveries->isEmpty())
+        <p class="ag-muted">{{ __('digital-delivery::admin.customer_empty') }}</p>
+    @else
         <div class="ag-table-wrap">
             <table class="ag-table">
                 <thead>
@@ -44,5 +46,5 @@
             </table>
         </div>
         <p class="ag-muted">{{ __('digital-delivery::admin.reveal_hint') }}</p>
-    </section>
-@endif
+    @endif
+</section>

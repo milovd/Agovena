@@ -7,6 +7,7 @@ namespace App\Livewire\Admin\Customers;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\Properties\CustomerPropertyService;
+use App\Agovena\Customer\UpdateCustomerProfile;
 use App\Agovena\Privacy\AnonymizeCustomer;
 use App\Models\Customer;
 use App\Models\CustomerCreditAccount;
@@ -23,6 +24,12 @@ final class Show extends Component
 
     public Customer $customer;
 
+    public string $panel = 'overview';
+
+    public string $name = '';
+
+    public string $email = '';
+
     public string $entry_type = 'credit';
 
     public int $amount = 0;
@@ -36,7 +43,40 @@ final class Show extends Component
     {
         $this->authorize('customers.view');
         $this->customer = $customer;
+        $this->customer->loadMissing('user');
+        $this->name = (string) $customer->name;
+        $this->email = (string) $customer->email;
         $this->propertyValues = $properties->emptyValues($properties->definitionsFor('staff'), $customer);
+    }
+
+    public function selectPanel(string $panel): void
+    {
+        $allowed = ['overview', 'profile', 'addresses', 'commerce', 'credits', 'capabilities'];
+        if (! in_array($panel, $allowed, true)) {
+            return;
+        }
+
+        $this->panel = $panel;
+    }
+
+    public function saveProfile(UpdateCustomerProfile $update): void
+    {
+        $this->authorize('customers.manage');
+
+        if ($this->customer->anonymized_at !== null) {
+            return;
+        }
+
+        $data = $this->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255'],
+        ]);
+
+        $this->customer = $update->handle($this->customer, $data);
+        $this->customer->loadMissing('user');
+        $this->name = (string) $this->customer->name;
+        $this->email = (string) $this->customer->email;
+        session()->flash('status', __('admin.customers.profile_saved'));
     }
 
     public function saveProperties(CustomerPropertyService $properties): void
@@ -68,6 +108,9 @@ final class Show extends Component
     {
         $this->authorize('customers.manage');
         $this->customer = $anonymize->handle($this->customer);
+        $this->customer->loadMissing('user');
+        $this->name = (string) $this->customer->name;
+        $this->email = (string) $this->customer->email;
         session()->flash('status', __('admin.customers.anonymized'));
     }
 
@@ -75,21 +118,36 @@ final class Show extends Component
     {
         $account = CustomerCreditAccount::query()->where('customer_id', $this->customer->id)->first();
 
-        $this->customer->loadMissing('user');
+        $this->customer->loadMissing(['user.roles', 'addresses']);
+
+        $user = $this->customer->user;
+        $recentOrders = $this->customer->orders()->latest('id')->limit(8)->get();
+        $recentInvoices = $this->customer->invoices()->latest('id')->limit(8)->get();
+        $recentCreditNotes = $this->customer->creditNotes()->latest('id')->limit(8)->get();
+        $recentTickets = $this->customer->tickets()->latest('id')->limit(8)->get();
+        $recentRefunds = Refund::query()
+            ->whereHas('order', fn ($query) => $query->where('customer_id', $this->customer->id))
+            ->latest('id')
+            ->limit(8)
+            ->get();
 
         return view('livewire.admin.customers.show', [
             'balanceAmount' => $ledger->balance($this->customer, $account?->currency),
-            'currency' => $account->currency ?? 'EUR',
+            'currency' => $account === null ? 'EUR' : $account->currency,
             'entries' => $this->customer->creditEntries()->latest('id')->limit(50)->get(),
-            'recentOrders' => $this->customer->orders()->latest('id')->limit(8)->get(),
-            'recentInvoices' => $this->customer->invoices()->latest('id')->limit(8)->get(),
-            'recentCreditNotes' => $this->customer->creditNotes()->latest('id')->limit(8)->get(),
-            'recentTickets' => $this->customer->tickets()->latest('id')->limit(8)->get(),
-            'recentRefunds' => Refund::query()
-                ->whereHas('order', fn ($query) => $query->where('customer_id', $this->customer->id))
-                ->latest('id')
-                ->limit(8)
-                ->get(),
+            'recentOrders' => $recentOrders,
+            'recentInvoices' => $recentInvoices,
+            'recentCreditNotes' => $recentCreditNotes,
+            'recentTickets' => $recentTickets,
+            'recentRefunds' => $recentRefunds,
+            'addresses' => $this->customer->addresses,
+            'stats' => [
+                'orders' => $this->customer->orders()->count(),
+                'invoices' => $this->customer->invoices()->count(),
+                'tickets' => $this->customer->tickets()->count(),
+                'addresses' => $this->customer->addresses->count(),
+            ],
+            'user' => $user,
             'customerDetailSections' => $admin->customerDetailSections(),
             'propertyDefinitions' => $properties->definitionsFor('staff'),
             'actor' => 'staff',

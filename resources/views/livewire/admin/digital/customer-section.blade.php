@@ -1,6 +1,8 @@
-@if ($entitlements->isNotEmpty())
-    <section class="admin-panel">
-        <h2 class="admin-panel__title">{{ __('digital::admin.customer_heading') }}</h2>
+<section class="admin-panel">
+    <h2 class="admin-panel__title">{{ __('digital::admin.customer_heading') }}</h2>
+    @if ($entitlements->isEmpty())
+        <p class="ag-muted">{{ __('digital::admin.customer_empty') }}</p>
+    @else
         <div class="ag-table-wrap">
             <table class="ag-table">
                 <thead>
@@ -11,7 +13,7 @@
                 </thead>
                 <tbody>
                     @foreach ($entitlements as $row)
-                        <tr>
+                        <tr wire:key="customer-download-{{ $row->id }}">
                             <td>{{ $row->asset?->label ?? $row->asset?->filename }}</td>
                             <td>{{ $row->download_count }} / {{ $row->download_limit ?? '∞' }}</td>
                         </tr>
@@ -19,5 +21,5 @@
                 </tbody>
             </table>
         </div>
-    </section>
-@endif
+    @endif
+</section>

@@ -16,4 +16,5 @@ return [
     'deleted' => 'Digitaal bestand verwijderd.',
     'empty' => 'Nog geen digitale bestanden.',
     'customer_heading' => 'Downloads',
+    'customer_empty' => 'Geen downloadrechten voor deze klant.',
 ];

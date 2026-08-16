@@ -1,6 +1,8 @@
-@if ($tickets->isNotEmpty())
-    <section class="admin-panel">
-        <h2 class="admin-panel__title">{{ __('events::admin.customer_heading') }}</h2>
+<section class="admin-panel">
+    <h2 class="admin-panel__title">{{ __('events::admin.customer_heading') }}</h2>
+    @if ($tickets->isEmpty())
+        <p class="ag-muted">{{ __('events::admin.no_customer_tickets') }}</p>
+    @else
         <div class="ag-table-wrap">
             <table class="ag-table">
                 <thead>
@@ -12,7 +14,7 @@
                 </thead>
                 <tbody>
                     @foreach ($tickets as $ticket)
-                        <tr>
+                        <tr wire:key="customer-ticket-{{ $ticket->id }}">
                             <td>{{ $ticket->number }}</td>
                             <td>{{ $ticket->event?->name }}</td>
                             <td>{{ __('events::admin.ticket_status.'.$ticket->status->value) }}</td>
@@ -21,5 +23,5 @@
                 </tbody>
             </table>
         </div>
-    </section>
-@endif
+    @endif
+</section>

@@ -16,4 +16,5 @@ return [
     'deleted' => 'Digital asset deleted.',
     'empty' => 'No digital assets yet.',
     'customer_heading' => 'Downloads',
+    'customer_empty' => 'No download entitlements for this customer.',
 ];
