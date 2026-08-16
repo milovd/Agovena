@@ -16,6 +16,7 @@ final class ShippingServiceProvider extends ServiceProvider
         $this->app->singleton(ShippingModule::class);
         $this->app->singleton(ShippingRateCalculator::class);
         $this->app->singleton(ShipmentService::class);
+        $this->app->singleton(ReturnRequestService::class);
         $this->app->singleton(ModuleShippingQuoteResolver::class);
         $this->app->singleton(ShippingOrderFulfillmentPresenter::class);
 
