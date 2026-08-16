@@ -18,13 +18,21 @@
             <tbody>
                 @foreach ($recentOrders as $order)
                     <tr wire:key="recent-order-{{ $order->id }}">
-                        <td>{{ $order->number }}</td>
+                        <td>
+                            @can('orders.view')
+                                <a class="ag-table__name" href="{{ route('admin.orders.show', $order) }}">{{ $order->number }}</a>
+                            @else
+                                <span class="ag-table__name">{{ $order->number }}</span>
+                            @endcan
+                        </td>
                         <td>{{ $order->customer_name }}</td>
                         <td><span class="ag-badge">{{ __('admin.orders.status.'.$order->status->value) }}</span></td>
                         <td>{{ \App\Support\MoneyFormatter::format($order->total_amount, $order->currency) }}</td>
-                        <td>
+                        <td class="ag-table__actions">
                             @can('orders.view')
-                                <a class="ag-btn ag-btn--ghost" href="{{ route('admin.orders.show', $order) }}">{{ __('common.view') }}</a>
+                                <a class="ag-icon-btn" href="{{ route('admin.orders.show', $order) }}" title="{{ __('admin.dashboard.recent_orders.open') }}" aria-label="{{ __('admin.dashboard.recent_orders.open') }}">
+                                    <x-ag.icon name="eye" :size="16" />
+                                </a>
                             @endcan
                         </td>
                     </tr>

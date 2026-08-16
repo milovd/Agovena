@@ -31,14 +31,14 @@
                 <tbody>
                     @foreach ($instances as $instance)
                         <tr wire:key="svc-{{ $instance->id }}">
-                            <td>{{ $instance->number }}</td>
+                            <td><a class="ag-table__name" href="{{ route('admin.provisioning.show', $instance) }}">{{ $instance->number }}</a></td>
                             <td>{{ $instance->product?->name }}</td>
                             <td>{{ $instance->customer_email }}</td>
                             <td>{{ __('provisioning::status.'.$instance->status->value) }}</td>
                             <td>{{ $instance->external_ref ?? '—' }}</td>
-                            <td>
-                                <a class="ag-btn ag-btn--ghost" href="{{ route('admin.provisioning.show', $instance) }}">
-                                    {{ __('common.view') }}
+                            <td class="ag-table__actions">
+                                <a class="ag-icon-btn" href="{{ route('admin.provisioning.show', $instance) }}" title="{{ __('common.view') }}" aria-label="{{ __('common.view') }}">
+                                    <x-ag.icon name="eye" :size="16" />
                                 </a>
                             </td>
                         </tr>

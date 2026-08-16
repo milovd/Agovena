@@ -30,14 +30,14 @@
                 <tbody>
                     @foreach ($subscriptions as $subscription)
                         <tr wire:key="sub-{{ $subscription->id }}">
-                            <td>{{ $subscription->number }}</td>
+                            <td><a class="ag-table__name" href="{{ route('admin.subscriptions.show', $subscription) }}">{{ $subscription->number }}</a></td>
                             <td>{{ $subscription->product?->name }}</td>
                             <td>{{ $subscription->customer_email }}</td>
                             <td>{{ __('subscriptions::status.'.$subscription->status->value) }}</td>
                             <td>{{ $subscription->next_billing_at?->toDateString() ?? '—' }}</td>
-                            <td>
-                                <a class="ag-btn ag-btn--ghost" href="{{ route('admin.subscriptions.show', $subscription) }}">
-                                    {{ __('common.view') }}
+                            <td class="ag-table__actions">
+                                <a class="ag-icon-btn" href="{{ route('admin.subscriptions.show', $subscription) }}" title="{{ __('common.view') }}" aria-label="{{ __('common.view') }}">
+                                    <x-ag.icon name="eye" :size="16" />
                                 </a>
                             </td>
                         </tr>

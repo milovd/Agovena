@@ -94,7 +94,13 @@ select.ag-input::-ms-expand {
 
 .ag-form--product,
 .ag-form--constrained {
-  max-width: 52rem;
+  width: 100%;
+  max-width: 72rem;
+}
+
+.ag-form__row {
+  display: grid;
+  gap: var(--ag-space-4);
 }
 
 .ag-form--product .ag-input,
@@ -123,4 +129,10 @@ select.ag-input::-ms-expand {
   margin: 0 0 var(--ag-space-4);
   font-size: 1rem;
   font-weight: 700;
+}
+
+@media (min-width: 720px) {
+  .ag-form__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

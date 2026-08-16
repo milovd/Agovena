@@ -40,7 +40,7 @@
                 <tbody>
                     @foreach ($invoices as $invoice)
                         <tr wire:key="invoice-{{ $invoice->id }}">
-                            <td><span class="ag-table__name">{{ $invoice->number }}</span></td>
+                            <td><a class="ag-table__name" href="{{ route('admin.invoices.show', $invoice) }}">{{ $invoice->number }}</a></td>
                             <td>
                                 <div class="ag-table__primary">
                                     <span>{{ $invoice->customer_name }}</span>
@@ -57,8 +57,23 @@
                                 ])>{{ __('admin.invoices.status.'.$invoice->status->value) }}</span>
                             </td>
                             <td>{{ $invoice->issued_at?->format('Y-m-d') }}</td>
-                            <td>
-                                <a class="ag-btn ag-btn--ghost" href="{{ route('admin.invoices.show', $invoice) }}">{{ __('common.view') }}</a>
+                            <td class="ag-table__actions">
+                                <div class="ag-row-actions">
+                                    <a class="ag-icon-btn" href="{{ route('admin.invoices.show', $invoice) }}" title="{{ __('common.view') }}" aria-label="{{ __('common.view') }}">
+                                        <x-ag.icon name="eye" :size="16" />
+                                    </a>
+                                    <a class="ag-icon-btn" href="{{ route('admin.invoices.pdf', $invoice) }}" title="{{ __('admin.invoices.download_pdf') }}" aria-label="{{ __('admin.invoices.download_pdf') }}">
+                                        <x-ag.icon name="download" :size="16" />
+                                    </a>
+                                    <div class="ag-menu" x-data="{ open: false }" @keydown.escape.window="open = false" @click.outside="open = false">
+                                        <button type="button" class="ag-icon-btn" @click="open = !open" :aria-expanded="open.toString()" aria-haspopup="menu" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}">
+                                            <x-ag.icon name="more-horizontal" :size="16" />
+                                        </button>
+                                        <div class="ag-menu__panel" x-show="open" x-cloak role="menu">
+                                            <a class="ag-menu__item" role="menuitem" href="{{ route('admin.invoices.show', $invoice) }}">{{ __('common.view') }}</a>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     @endforeach
