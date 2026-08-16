@@ -195,10 +195,11 @@ class AgovenaServiceProvider extends ServiceProvider
             $view->with('themeFooterNav', $footer !== [] ? $this->flattenMenuLinks($footer) : [
                 ['label' => __('storefront.nav.cart'), 'url' => route('storefront.cart')],
             ]);
-            $view->with('themeLegalNav', $legal !== [] ? $this->flattenMenuLinks($legal) : [
-                ['label' => __('storefront.nav.terms'), 'url' => null],
-                ['label' => __('storefront.nav.privacy'), 'url' => null],
-            ]);
+            $view->with('themeLegalNav', $legal !== [] ? $this->flattenMenuLinks($legal) : []);
+            $view->with(
+                'customerAccountNavItems',
+                $this->app->make(CustomerAccountNav::class)->items(),
+            );
 
             if (! array_key_exists('themeConfig', $view->getData())) {
                 $view->with('themeConfig', $this->app->make(ThemeManager::class)->config());
@@ -308,6 +309,17 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'users',
             sort: 30,
             permission: 'customers.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
+            id: 'customer-properties',
+            label: 'admin.nav.customer_properties',
+            group: 'admin.nav_groups.commerce',
+            href: '/admin/customers/properties',
+            icon: 'settings',
+            sort: 31,
+            permission: 'customers.manage',
+            parent: 'customers',
         ));
 
         $admin->navigation(new NavigationItem(

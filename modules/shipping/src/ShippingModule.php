@@ -72,6 +72,7 @@ final class ShippingModule implements Module
             icon: 'package',
             sort: 20,
             permission: 'returns.view',
+            parent: 'shipping-methods',
         ));
 
         $context->admin()->orderDetailSection(new OrderDetailSection(

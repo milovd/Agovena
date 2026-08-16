@@ -64,6 +64,7 @@ final class EventsModule implements Module
             icon: 'file-text',
             sort: 29,
             permission: 'events.checkin',
+            parent: 'events',
         ));
 
         $context->customerAccountNav(new AccountNavItem(

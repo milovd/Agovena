@@ -7,7 +7,7 @@
   position: absolute;
   right: 0;
   top: calc(100% + var(--ag-space-2));
-  min-width: 12rem;
+  min-width: 14rem;
   margin: 0;
   padding: var(--ag-space-2);
   list-style: none;
@@ -19,7 +19,9 @@
 }
 
 .ag-dropdown__item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
   width: 100%;
   text-align: left;
   border: 0;
@@ -34,6 +36,23 @@
 
 .ag-dropdown__item:hover {
   background: var(--ag-color-surface-muted);
+}
+
+.ag-dropdown__item .ag-icon {
+  flex: 0 0 auto;
+  color: var(--ag-color-text-muted);
+}
+
+.ag-dropdown__item--danger {
+  color: var(--ag-color-danger);
+}
+
+.ag-dropdown__item--danger .ag-icon {
+  color: currentColor;
+}
+
+.ag-dropdown__item--danger:hover {
+  background: color-mix(in srgb, var(--ag-color-danger) 9%, transparent);
 }
 
 .ag-dropdown__item:focus-visible {

@@ -25,8 +25,13 @@
 
         <aside class="admin-sidebar" id="admin-sidebar" aria-label="{{ __('admin.sidebar_aria') }}">
             <div class="admin-sidebar__brand">
-                <img class="admin-sidebar__logo-img" src="{{ $brandingLogoUrl }}" alt="">
-                <span class="admin-sidebar__title">{{ $siteName ?? config('app.name', 'Agovena') }}</span>
+                <img class="admin-sidebar__logo-img" src="/{{ \App\Agovena\Theme\StorefrontBrand::BUNDLED_LOGO }}" alt="{{ __('admin.product_name') }}">
+                <span class="admin-sidebar__brand-text">
+                    <span class="admin-sidebar__title">{{ __('admin.product_name') }}</span>
+                    @if (! empty($siteName) && strcasecmp($siteName, __('admin.product_name')) !== 0)
+                        <span class="admin-sidebar__subtitle">{{ $siteName }}</span>
+                    @endif
+                </span>
             </div>
             <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
                 @php
@@ -48,7 +53,7 @@
                                 @php $active = AdminNavigation::isActive($item->href); @endphp
                                 <li>
                                     <a
-                                        class="admin-nav__link @if($active) admin-nav__link--active @endif"
+                                        class="admin-nav__link @if($item->parent) admin-nav__link--child @endif @if($active) admin-nav__link--active @endif"
                                         href="{{ $item->href }}"
                                         @if($active) aria-current="page" @endif
                                     >
@@ -64,21 +69,7 @@
                 @endforeach
             </nav>
             <div class="admin-sidebar__footer">
-                <a
-                    class="admin-sidebar__footer-link admin-sidebar__footer-link--accent"
-                    href="{{ route('storefront.home') }}"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                >
-                    <x-ag.icon name="external-link" class="admin-nav__icon" :size="18" />
-                    <span>{{ __('admin.view_storefront') }}</span>
-                </a>
-                @can('settings.view')
-                    <a class="admin-sidebar__footer-link" href="{{ route('admin.settings.index') }}">
-                        <x-ag.icon name="settings" class="admin-nav__icon" :size="18" />
-                        <span>{{ __('admin.nav.settings') }}</span>
-                    </a>
-                @endcan
+                <p class="admin-sidebar__footer-meta">{{ __('admin.product_name') }}</p>
             </div>
         </aside>
 
@@ -117,7 +108,7 @@
                         <span>{{ __('admin.view_storefront') }}</span>
                     </a>
                     <div
-                        class="ag-dropdown"
+                        class="ag-dropdown admin-account-dropdown"
                         x-data="{ open: false }"
                         @keydown.escape.window="open = false"
                         @click.outside="open = false"
@@ -146,25 +137,31 @@
                             <x-ag.icon name="chevron-down" :size="16" />
                         </button>
                         <div
-                            class="ag-dropdown__menu"
+                            class="ag-dropdown__menu admin-account-menu"
                             x-show="open"
                             x-cloak
                             role="menu"
                             @keydown.escape.stop="open = false"
                         >
-                            <p class="ag-dropdown__meta">{{ auth()->user()?->email }}</p>
-                            @if ($accountRole)
-                                <p class="ag-dropdown__meta">{{ $accountRole }}</p>
-                            @endif
-                            <a class="ag-dropdown__item" role="menuitem" href="{{ route('storefront.home') }}" target="_blank" rel="noopener noreferrer">
-                                {{ __('admin.view_storefront') }}
-                            </a>
+                            <div class="admin-account-menu__identity">
+                                <span class="admin-account-menu__avatar" aria-hidden="true">{{ $accountInitials }}</span>
+                                <span class="admin-account-menu__details">
+                                    <strong class="admin-account-menu__name">{{ $accountName }}</strong>
+                                    <span class="admin-account-menu__email">{{ auth()->user()?->email }}</span>
+                                    @if ($accountRole)
+                                        <span class="admin-account-menu__role">{{ $accountRole }}</span>
+                                    @endif
+                                </span>
+                            </div>
+                            <div class="ag-dropdown__divider" role="separator"></div>
                             @can('settings.view')
                                 <a class="ag-dropdown__item" role="menuitem" href="{{ route('admin.settings.index') }}">
+                                    <x-ag.icon name="settings" :size="16" />
                                     {{ __('admin.nav.settings') }}
                                 </a>
                             @endcan
                             <a class="ag-dropdown__item" role="menuitem" href="{{ route('admin.security.two-factor') }}">
+                                <x-ag.icon name="shield" :size="16" />
                                 {{ __('admin.nav.security') }}
                             </a>
                             <div class="ag-dropdown__divider" role="separator"></div>

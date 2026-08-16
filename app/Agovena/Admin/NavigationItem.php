@@ -14,5 +14,6 @@ final class NavigationItem
         public readonly ?string $icon = null,
         public readonly ?string $permission = null,
         public readonly int $sort = 0,
+        public readonly ?string $parent = null,
     ) {}
 }

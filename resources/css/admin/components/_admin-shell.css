@@ -80,6 +80,23 @@ body {
   white-space: nowrap;
 }
 
+.admin-sidebar__brand-text {
+  display: grid;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.admin-sidebar__subtitle {
+  margin-top: 0.2rem;
+  overflow: hidden;
+  color: var(--ag-color-sidebar-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .admin-nav {
   flex: 1;
   min-height: 0;
@@ -96,6 +113,16 @@ body {
   border-top: 1px solid var(--ag-color-border);
   display: grid;
   gap: 0.15rem;
+}
+
+.admin-sidebar__footer-meta {
+  margin: 0;
+  padding: 0.35rem var(--ag-space-3);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .admin-sidebar__footer-link {
@@ -175,6 +202,18 @@ body {
 .admin-nav__link--active .admin-nav__icon {
   opacity: 1;
   color: var(--ag-color-primary);
+}
+
+.admin-nav__link--child {
+  margin-left: var(--ag-space-5);
+  padding-block: 0.45rem;
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+}
+
+.admin-nav__link--child .admin-nav__icon {
+  width: 1rem;
+  height: 1rem;
 }
 
 .admin-nav__group {
@@ -270,6 +309,70 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
+}
+
+.admin-account-dropdown {
+  flex-shrink: 0;
+}
+
+.admin-account-menu {
+  right: 0;
+  width: min(20rem, calc(100vw - var(--ag-space-4) * 2));
+  min-width: 18rem;
+  transform-origin: top right;
+}
+
+.admin-account-menu__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  padding: var(--ag-space-3);
+}
+
+.admin-account-menu__avatar {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: var(--ag-color-primary-soft);
+  color: var(--ag-color-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.admin-account-menu__details {
+  display: grid;
+  min-width: 0;
+  gap: 0.1rem;
+}
+
+.admin-account-menu__name,
+.admin-account-menu__email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-account-menu__name {
+  font-size: var(--ag-font-size-sm);
+}
+
+.admin-account-menu__email,
+.admin-account-menu__role {
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+}
+
+.admin-account-menu__role {
+  justify-self: start;
+  margin-top: var(--ag-space-1);
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: var(--ag-color-surface-muted);
   font-weight: 600;
 }
 

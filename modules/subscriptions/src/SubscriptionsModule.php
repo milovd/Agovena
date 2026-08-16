@@ -62,6 +62,7 @@ final class SubscriptionsModule implements Module
             icon: 'repeat',
             sort: 18,
             permission: 'plan-changes.view',
+            parent: 'subscriptions',
         ));
 
         $context->customerAccountNav(new AccountNavItem(
