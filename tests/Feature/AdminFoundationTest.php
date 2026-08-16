@@ -14,7 +14,7 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-test('admin shell shows grouped commerce and configuration navigation', function () {
+test('admin shell shows grouped commerce and system navigation', function () {
     $staff = $this->createStaff();
 
     $this->actingAs($staff)
@@ -23,11 +23,12 @@ test('admin shell shows grouped commerce and configuration navigation', function
         ->assertSee('Overview', false)
         ->assertSee('Commerce', false)
         ->assertSee('Categories', false)
-        ->assertSee('Configuration', false)
+        ->assertSee('System', false)
         ->assertSee('Settings', false)
         ->assertSee('Currencies', false)
+        ->assertSee(__('admin.view_storefront'), false)
         ->assertDontSee('>General</a>', false)
-        ->assertDontSee('System', false);
+        ->assertDontSee('Configuration', false);
 });
 
 test('settings hub lists registered groups from the admin registrar', function () {

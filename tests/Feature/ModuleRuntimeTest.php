@@ -45,15 +45,15 @@ test('module manager discovers inventory and enable boots capabilities', functio
         ->and(AgovenaModule::query()->where('module_id', 'inventory')->where('enabled', true)->exists())->toBeTrue();
 });
 
-test('enabled inventory navigation is grouped under services', function () {
+test('enabled inventory navigation is grouped under fulfillment', function () {
     enableInventoryModule();
 
     $inventory = collect(app(AdminRegistrar::class)->navigationItems())
         ->firstWhere('id', 'inventory-stocks');
 
     expect($inventory)->not->toBeNull()
-        ->and($inventory->group)->toBe('admin.nav_groups.services')
-        ->and(__('admin.nav_groups.services'))->toBe('Services');
+        ->and($inventory->group)->toBe('admin.nav_groups.fulfillment')
+        ->and(__('admin.nav_groups.fulfillment'))->toBe('Fulfillment');
 });
 
 test('module disable preserves inventory stock rows', function () {

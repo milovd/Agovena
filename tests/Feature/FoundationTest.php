@@ -28,9 +28,10 @@ test('authenticated owner sees admin dashboard', function () {
     $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
-        ->assertSee('Commerce overview', false)
+        ->assertSee('Dashboard', false)
         ->assertSee('Products', false)
-        ->assertSee('Configuration', false);
+        ->assertSee('System', false)
+        ->assertSee(__('admin.view_storefront'), false);
 });
 
 test('admin registrar exposes settings and widgets', function () {

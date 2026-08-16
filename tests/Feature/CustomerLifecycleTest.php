@@ -308,11 +308,16 @@ test('admin customer show lists orders invoices subscriptions and services', fun
     $instance = ServiceInstance::query()->firstOrFail();
     $invoice = Invoice::query()->where('order_id', $order->id)->firstOrFail();
 
-    Livewire::actingAs($this->createStaff())
+    $page = Livewire::actingAs($this->createStaff())
         ->test(AdminCustomerShow::class, ['customer' => $customer])
         ->assertOk()
         ->assertSee($order->number)
-        ->assertSee($invoice->number)
+        ->assertSee(__('admin.customers.panels.overview'), false);
+
+    $page->call('selectPanel', 'commerce')
+        ->assertSee($invoice->number);
+
+    $page->call('selectPanel', 'capabilities')
         ->assertSee($subscription->number)
         ->assertSee($instance->number);
 });

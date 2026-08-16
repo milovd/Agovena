@@ -91,8 +91,9 @@ test('admin settings and dashboard follow the site locale', function () {
     $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
-        ->assertSee(__('admin.dashboard.widgets.commerce_stats', [], 'nl'), false)
+        ->assertSee(__('admin.dashboard.heading', [], 'nl'), false)
         ->assertSee(__('admin.dashboard.stats.products', [], 'nl'), false)
+        ->assertSee(__('admin.view_storefront', [], 'nl'), false)
         ->assertSee(__('auth.sign_out', [], 'nl'), false);
 
     $this->actingAs($staff)
