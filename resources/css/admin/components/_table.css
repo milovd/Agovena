@@ -235,6 +235,15 @@
   color: var(--ag-color-text);
 }
 
+a.ag-table__name {
+  text-decoration: none;
+}
+
+a.ag-table__name:hover,
+a.ag-table__name:focus-visible {
+  color: var(--ag-color-primary);
+}
+
 .ag-table__actions {
   width: 1%;
   white-space: nowrap;
@@ -278,7 +287,95 @@
 }
 
 .ag-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-3);
   margin-top: var(--ag-space-4);
+}
+
+.ag-pagination__summary {
+  margin: 0;
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+}
+
+.ag-pagination__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-1);
+}
+
+.ag-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.25rem;
+  min-width: 2.25rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+  color: var(--ag-color-text);
+  font: inherit;
+  font-size: var(--ag-font-size-sm);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--ag-transition), border-color var(--ag-transition), color var(--ag-transition);
+}
+
+.ag-pagination__btn:hover:not(.ag-pagination__btn--disabled):not(.ag-pagination__btn--current),
+.ag-pagination__btn:focus-visible:not(.ag-pagination__btn--disabled) {
+  background: var(--ag-color-primary-soft);
+  border-color: color-mix(in srgb, var(--ag-color-primary) 35%, var(--ag-color-border));
+  color: var(--ag-color-primary);
+  outline: none;
+}
+
+.ag-pagination__btn:focus-visible {
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-pagination__btn--current {
+  background: var(--ag-color-primary);
+  border-color: var(--ag-color-primary);
+  color: #fff;
+  cursor: default;
+}
+
+.ag-pagination__btn--disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ag-pagination__icon {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  display: block;
+}
+
+.ag-pagination__ellipsis {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+}
+
+.ag-pagination svg:not(.ag-pagination__icon) {
+  width: 1rem;
+  height: 1rem;
+  max-width: 1rem;
+  max-height: 1rem;
 }
 
 .ag-loading {
@@ -426,7 +523,8 @@
 }
 
 .ag-form__sticky--page {
-  max-width: 52rem;
+  width: 100%;
+  max-width: 72rem;
 }
 
 .ag-form__actions {
