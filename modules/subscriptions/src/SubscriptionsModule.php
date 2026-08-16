@@ -47,7 +47,7 @@ final class SubscriptionsModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'subscriptions',
             label: 'admin.nav.subscriptions',
-            group: 'admin.nav_groups.services',
+            group: 'admin.nav_groups.operations',
             href: '/admin/subscriptions',
             icon: 'package',
             sort: 16,
@@ -57,7 +57,7 @@ final class SubscriptionsModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'plan-changes',
             label: 'admin.nav.plan_changes',
-            group: 'admin.nav_groups.services',
+            group: 'admin.nav_groups.operations',
             href: '/admin/plan-changes',
             icon: 'repeat',
             sort: 18,

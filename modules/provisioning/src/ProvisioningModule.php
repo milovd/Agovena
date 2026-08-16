@@ -49,7 +49,7 @@ final class ProvisioningModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'provisioning',
             label: 'admin.nav.provisioning',
-            group: 'admin.nav_groups.services',
+            group: 'admin.nav_groups.operations',
             href: '/admin/provisioning',
             icon: 'package',
             sort: 15,

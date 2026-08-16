@@ -45,7 +45,7 @@ final class DigitalDeliveryModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'digital-delivery-secrets',
             label: 'admin.nav.digital_delivery',
-            group: 'admin.nav_groups.services',
+            group: 'admin.nav_groups.fulfillment',
             href: '/admin/digital-delivery/secrets',
             icon: 'key',
             sort: 16,

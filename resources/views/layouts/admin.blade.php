@@ -38,7 +38,7 @@
 
                         return $authorized && is_string($item->href) && $item->href !== '';
                     });
-                    $groups = $nav->groupBy(fn ($item) => $item->group);
+                    $groups = AdminNavigation::groupItems($nav);
                 @endphp
                 @foreach ($groups as $group => $items)
                     <div class="admin-nav__section">
@@ -63,6 +63,23 @@
                     </div>
                 @endforeach
             </nav>
+            <div class="admin-sidebar__footer">
+                <a
+                    class="admin-sidebar__footer-link admin-sidebar__footer-link--accent"
+                    href="{{ route('storefront.home') }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    <x-ag.icon name="external-link" class="admin-nav__icon" :size="18" />
+                    <span>{{ __('admin.view_storefront') }}</span>
+                </a>
+                @can('settings.view')
+                    <a class="admin-sidebar__footer-link" href="{{ route('admin.settings.index') }}">
+                        <x-ag.icon name="settings" class="admin-nav__icon" :size="18" />
+                        <span>{{ __('admin.nav.settings') }}</span>
+                    </a>
+                @endcan
+            </div>
         </aside>
 
         <div class="admin-main">
@@ -90,20 +107,43 @@
                         <x-ag.icon name="loader" class="ag-icon--spin" :size="18" />
                         <span class="visually-hidden">{{ __('common.loading') }}</span>
                     </div>
+                    <a
+                        class="ag-btn ag-btn--secondary ag-btn--sm admin-topbar__storefront"
+                        href="{{ route('storefront.home') }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <x-ag.icon name="store" :size="16" />
+                        <span>{{ __('admin.view_storefront') }}</span>
+                    </a>
                     <div
                         class="ag-dropdown"
                         x-data="{ open: false }"
                         @keydown.escape.window="open = false"
                         @click.outside="open = false"
                     >
+                        @php
+                            $accountName = auth()->user()?->name ?? __('admin.account');
+                            $accountInitials = collect(preg_split('/\s+/', trim($accountName)) ?: [])
+                                ->filter()
+                                ->take(2)
+                                ->map(fn (string $part): string => mb_substr($part, 0, 1))
+                                ->implode('');
+                            if ($accountInitials === '') {
+                                $accountInitials = 'A';
+                            }
+                            $accountRole = auth()->user()?->roles->pluck('name')->first();
+                        @endphp
                         <button
                             type="button"
-                            class="ag-btn ag-btn--ghost ag-dropdown__trigger"
+                            class="ag-btn ag-btn--ghost ag-dropdown__trigger admin-account-trigger"
                             @click="open = !open"
                             :aria-expanded="open.toString()"
                             aria-haspopup="menu"
                         >
-                            {{ auth()->user()?->name ?? __('admin.account') }}
+                            <span class="admin-account-trigger__avatar" aria-hidden="true">{{ $accountInitials }}</span>
+                            <span class="admin-account-trigger__name">{{ $accountName }}</span>
+                            <x-ag.icon name="chevron-down" :size="16" />
                         </button>
                         <div
                             class="ag-dropdown__menu"
@@ -113,6 +153,21 @@
                             @keydown.escape.stop="open = false"
                         >
                             <p class="ag-dropdown__meta">{{ auth()->user()?->email }}</p>
+                            @if ($accountRole)
+                                <p class="ag-dropdown__meta">{{ $accountRole }}</p>
+                            @endif
+                            <a class="ag-dropdown__item" role="menuitem" href="{{ route('storefront.home') }}" target="_blank" rel="noopener noreferrer">
+                                {{ __('admin.view_storefront') }}
+                            </a>
+                            @can('settings.view')
+                                <a class="ag-dropdown__item" role="menuitem" href="{{ route('admin.settings.index') }}">
+                                    {{ __('admin.nav.settings') }}
+                                </a>
+                            @endcan
+                            <a class="ag-dropdown__item" role="menuitem" href="{{ route('admin.security.two-factor') }}">
+                                {{ __('admin.nav.security') }}
+                            </a>
+                            <div class="ag-dropdown__divider" role="separator"></div>
                             <livewire:admin.auth.logout />
                         </div>
                     </div>

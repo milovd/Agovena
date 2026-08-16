@@ -47,7 +47,7 @@ final class InventoryModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'inventory-stocks',
             label: 'admin.nav.inventory',
-            group: 'admin.nav_groups.services',
+            group: 'admin.nav_groups.fulfillment',
             href: '/admin/inventory',
             icon: 'package',
             sort: 18,

@@ -35,36 +35,35 @@ body {
 .admin-sidebar {
   background: var(--ag-color-sidebar);
   color: var(--ag-color-text);
-  padding: var(--ag-space-6) var(--ag-space-4);
+  padding: var(--ag-space-5) var(--ag-space-3) var(--ag-space-4);
   border-right: 1px solid var(--ag-color-border);
   display: flex;
   flex-direction: column;
   gap: var(--ag-space-2);
   min-height: 0;
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
 }
 
 .admin-sidebar__brand {
   display: flex;
   align-items: center;
   gap: var(--ag-space-3);
-  margin-bottom: var(--ag-space-6);
+  margin-bottom: var(--ag-space-4);
   padding: 0 var(--ag-space-2);
   font-weight: 700;
   letter-spacing: -0.02em;
   font-size: 1.05rem;
+  flex-shrink: 0;
 }
 
 .admin-sidebar__logo {
   width: 1.75rem;
   height: 1.75rem;
   border-radius: var(--ag-radius-sm);
-  background: linear-gradient(145deg, var(--ag-color-primary), #3b82f6);
+  background: var(--ag-color-primary);
   flex-shrink: 0;
-  box-shadow: 0 0 0 3px rgb(21 94 239 / 0.25);
+  box-shadow: 0 0 0 3px var(--ag-color-primary-soft);
 }
 
 .admin-sidebar__logo-img {
@@ -79,6 +78,51 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.admin-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: var(--ag-space-3);
+}
+
+.admin-sidebar__footer {
+  flex-shrink: 0;
+  margin-top: auto;
+  padding-top: var(--ag-space-3);
+  border-top: 1px solid var(--ag-color-border);
+  display: grid;
+  gap: 0.15rem;
+}
+
+.admin-sidebar__footer-link {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  padding: 0.55rem var(--ag-space-3);
+  border-radius: var(--ag-radius-sm);
+  color: inherit;
+  text-decoration: none;
+  font-size: var(--ag-font-size-sm);
+  font-weight: 500;
+  transition: background var(--ag-transition), color var(--ag-transition);
+}
+
+.admin-sidebar__footer-link:hover {
+  background: var(--ag-color-sidebar-hover);
+}
+
+.admin-sidebar__footer-link:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.admin-sidebar__footer-link--accent {
+  color: var(--ag-color-primary);
+  font-weight: 600;
 }
 
 .admin-nav__section + .admin-nav__section {
@@ -159,7 +203,8 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--ag-space-4);
-  padding: var(--ag-space-4) var(--ag-space-6);
+  min-height: var(--ag-topbar-height);
+  padding: 0 var(--ag-space-6);
   background: rgb(255 255 255 / 0.92);
   border-bottom: 1px solid var(--ag-color-border);
   position: sticky;
@@ -182,15 +227,50 @@ body {
 
 .admin-topbar__title {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--ag-color-text-muted);
 }
 
 .admin-topbar__actions {
   display: flex;
   align-items: center;
   gap: var(--ag-space-3);
+}
+
+.admin-topbar__storefront {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+}
+
+.admin-account-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+  max-width: 14rem;
+}
+
+.admin-account-trigger__avatar {
+  display: grid;
+  place-items: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  border-radius: 999px;
+  background: var(--ag-color-primary-soft);
+  color: var(--ag-color-primary);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.admin-account-trigger__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 .admin-topbar__loading {
@@ -202,9 +282,13 @@ body {
   padding: var(--ag-space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--ag-space-6);
-  max-width: 72rem;
+  gap: var(--ag-space-section);
+  max-width: var(--ag-content-max);
   width: 100%;
+}
+
+.admin-content--fluid {
+  max-width: none;
 }
 
 .admin-page__header {
@@ -217,7 +301,7 @@ body {
 
 .admin-page__heading {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--ag-font-size-xl);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -260,7 +344,7 @@ body {
   border: 1px solid var(--ag-color-border);
   border-radius: var(--ag-radius-lg);
   box-shadow: var(--ag-shadow-sm);
-  padding: var(--ag-space-6);
+  padding: var(--ag-space-5);
 }
 
 .admin-panel__title {
@@ -473,6 +557,10 @@ body {
 }
 
 @media (max-width: 900px) {
+  .admin-topbar__storefront span {
+    display: none;
+  }
+
   .admin-shell {
     grid-template-columns: 1fr;
     max-height: none;

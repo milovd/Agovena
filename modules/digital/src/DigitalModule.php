@@ -44,7 +44,7 @@ final class DigitalModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'digital-assets',
             label: 'admin.nav.digital',
-            group: 'admin.nav_groups.services',
+            group: 'admin.nav_groups.fulfillment',
             href: '/admin/digital/assets',
             icon: 'package',
             sort: 17,

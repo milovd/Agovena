@@ -29,6 +29,16 @@
   font: inherit;
   cursor: pointer;
   color: var(--ag-color-text);
+  text-decoration: none;
+}
+
+.ag-dropdown__item:hover {
+  background: var(--ag-color-surface-muted);
+}
+
+.ag-dropdown__item:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
 }
 
 .ag-dropdown__meta {
@@ -36,7 +46,17 @@
   padding: var(--ag-space-2) var(--ag-space-3);
   font-size: 0.8125rem;
   color: var(--ag-color-text-muted);
-  border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-dropdown__meta + .ag-dropdown__meta {
+  padding-top: 0;
+}
+
+.ag-dropdown__divider {
+  height: 1px;
+  margin: var(--ag-space-2) 0;
+  background: var(--ag-color-border);
+  border: 0;
 }
 
 [x-cloak] {

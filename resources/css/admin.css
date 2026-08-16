@@ -12,5 +12,6 @@
 @import './admin/components/_table.css';
 @import './admin/components/_admin-shell.css';
 @import './admin/components/_stats.css';
+@import './admin/components/_patterns.css';
 @import './admin/components/_print.css';
 @import './admin/utilities/_a11y.css';

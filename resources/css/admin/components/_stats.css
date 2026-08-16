@@ -8,8 +8,9 @@
 .ag-stats__item {
   padding: var(--ag-space-5);
   border-radius: var(--ag-radius-md);
-  background: linear-gradient(180deg, #fff, var(--ag-color-surface-muted));
+  background: var(--ag-color-surface);
   border: 1px solid var(--ag-color-border);
+  box-shadow: var(--ag-shadow-sm);
 }
 
 .ag-stats__label {
