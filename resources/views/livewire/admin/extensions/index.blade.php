@@ -34,94 +34,76 @@
         @foreach ($groups as $group => $extensions)
             <section class="admin-panel">
                 <h2 class="admin-panel__title">{{ __('admin.extensions.categories.'.$group) }}</h2>
-                <div class="ag-table-wrap">
-                    <table class="ag-table">
-                        <thead>
-                            <tr>
-                                <th scope="col">{{ __('admin.extensions.column_name') }}</th>
-                                <th scope="col">{{ __('admin.extensions.column_version') }}</th>
-                                <th scope="col">{{ __('admin.packages.column_source') }}</th>
-                                <th scope="col">{{ __('admin.extensions.column_author') }}</th>
-                                <th scope="col">{{ __('admin.extensions.column_compatibility') }}</th>
-                                <th scope="col">{{ __('common.status') }}</th>
-                                <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($extensions as $row)
-                                @php
-                                    /** @var \App\Agovena\Extensions\ExtensionManifest $manifest */
-                                    $manifest = $row['manifest'];
-                                @endphp
-                                <tr wire:key="extension-{{ $manifest->id }}">
-                                    <td>
-                                        <div class="ag-table__primary">
-                                            <span class="ag-table__name">{{ $manifest->name }}</span>
-                                            <span class="ag-muted">{{ $manifest->id }}</span>
-                                        </div>
-                                        <p class="ag-muted">{{ $manifest->description }}</p>
-                                    </td>
-                                    <td>{{ $manifest->version }}</td>
-                                    <td>{{ __('admin.packages.source.'.$row['source']->value) }}</td>
-                                    <td>{{ $manifest->author }}</td>
-                                    <td>
-                                        @if ($row['compatible'])
-                                            {{ $manifest->agovena }}
-                                        @else
-                                            <span class="ag-field__error">{{ $row['compatibility_error'] }}</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        {{ __($row['lifecycle']->labelKey()) }}
-                                        @if (! $row['compatible'])
-                                            <span class="ag-field__error">{{ $row['compatibility_error'] }}</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <div class="ag-table__actions">
-                                            @can('extensions.manage')
-                                                @if (! $row['installed'])
-                                                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="install('{{ $manifest->id }}')" @disabled(! $row['compatible'])>
-                                                        {{ __('admin.extensions.actions.install') }}
-                                                    </button>
-                                                @endif
-                                                @if ($row['enabled'])
-                                                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="disable('{{ $manifest->id }}')">
-                                                        {{ __('admin.extensions.actions.disable') }}
-                                                    </button>
-                                                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="openSettings('{{ $manifest->id }}')">
-                                                        {{ __('admin.extensions.actions.settings') }}
-                                                    </button>
-                                                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="runHealth('{{ $manifest->id }}')">
-                                                        {{ __('admin.extensions.actions.health') }}
-                                                    </button>
-                                                @elseif ($row['compatible'])
-                                                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="enable('{{ $manifest->id }}')">
-                                                        {{ __('admin.extensions.actions.enable') }}
-                                                    </button>
-                                                @endif
-                                                @if ($row['lifecycle']->value === 'update_available')
-                                                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="updatePackage('{{ $manifest->id }}')">
-                                                        {{ __('admin.packages.actions.update') }}
-                                                    </button>
-                                                @endif
-                                                @if ($row['installed'] && ! $row['enabled'])
-                                                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="uninstallPackage('{{ $manifest->id }}')">
-                                                        {{ __('admin.packages.actions.uninstall') }}
-                                                    </button>
-                                                @endif
-                                                @if ($row['can_purge'])
-                                                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="purgePackage('{{ $manifest->id }}')" wire:confirm="{{ __('admin.packages.purge_confirm') }}">
-                                                        {{ __('admin.packages.actions.purge') }}
-                                                    </button>
-                                                @endif
-                                            @endcan
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                <div class="ag-package-grid">
+                    @foreach ($extensions as $row)
+                        @php
+                            /** @var \App\Agovena\Extensions\ExtensionManifest $manifest */
+                            $manifest = $row['manifest'];
+                        @endphp
+                        <article class="ag-package-card" wire:key="extension-{{ $manifest->id }}">
+                            <div class="ag-package-card__top">
+                                <div>
+                                    <h3 class="ag-package-card__title">{{ $manifest->name }}</h3>
+                                    <p class="ag-muted">{{ $manifest->id }} · v{{ $manifest->version }}</p>
+                                </div>
+                                <span @class([
+                                    'ag-badge',
+                                    'ag-badge--success' => $row['enabled'],
+                                    'ag-badge--warning' => $row['installed'] && ! $row['enabled'],
+                                    'ag-badge--muted' => ! $row['installed'],
+                                ])>{{ __($row['lifecycle']->labelKey()) }}</span>
+                            </div>
+                            <p class="ag-package-card__text">{{ $manifest->description }}</p>
+                            <div class="ag-package-card__meta">
+                                <span class="ag-muted">{{ __('admin.packages.column_source') }}: {{ __('admin.packages.source.'.$row['source']->value) }}</span>
+                                <span class="ag-muted">{{ __('admin.extensions.column_author') }}: {{ $manifest->author }}</span>
+                                @if ($row['compatible'])
+                                    <span class="ag-muted">{{ __('admin.extensions.column_compatibility') }}: {{ $manifest->agovena }}</span>
+                                @else
+                                    <span class="ag-field__error">{{ $row['compatibility_error'] }}</span>
+                                @endif
+                            </div>
+                            <div class="ag-package-card__actions">
+                                @can('extensions.manage')
+                                    @if (! $row['installed'])
+                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="install('{{ $manifest->id }}')" @disabled(! $row['compatible'])>
+                                            {{ __('admin.extensions.actions.install') }}
+                                        </button>
+                                    @endif
+                                    @if ($row['enabled'])
+                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="disable('{{ $manifest->id }}')">
+                                            {{ __('admin.extensions.actions.disable') }}
+                                        </button>
+                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="openSettings('{{ $manifest->id }}')">
+                                            {{ __('admin.extensions.actions.settings') }}
+                                        </button>
+                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="runHealth('{{ $manifest->id }}')">
+                                            {{ __('admin.extensions.actions.health') }}
+                                        </button>
+                                    @elseif ($row['compatible'])
+                                        <button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="enable('{{ $manifest->id }}')">
+                                            {{ __('admin.extensions.actions.enable') }}
+                                        </button>
+                                    @endif
+                                    @if ($row['lifecycle']->value === 'update_available')
+                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="updatePackage('{{ $manifest->id }}')">
+                                            {{ __('admin.packages.actions.update') }}
+                                        </button>
+                                    @endif
+                                    @if ($row['installed'] && ! $row['enabled'])
+                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="uninstallPackage('{{ $manifest->id }}')">
+                                            {{ __('admin.packages.actions.uninstall') }}
+                                        </button>
+                                    @endif
+                                    @if ($row['can_purge'])
+                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="purgePackage('{{ $manifest->id }}')" wire:confirm="{{ __('admin.packages.purge_confirm') }}">
+                                            {{ __('admin.packages.actions.purge') }}
+                                        </button>
+                                    @endif
+                                @endcan
+                            </div>
+                        </article>
+                    @endforeach
                 </div>
             </section>
         @endforeach
