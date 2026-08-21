@@ -10,6 +10,7 @@ enum CheckoutStep: string
     case Delivery = 'delivery';
     case Configuration = 'configuration';
     case Fulfillment = 'fulfillment';
+    case Review = 'review';
     case Payment = 'payment';
 
     public function labelKey(): string

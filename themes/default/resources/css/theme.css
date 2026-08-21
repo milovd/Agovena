@@ -1,5 +1,5 @@
 /* Default Theme — merchant-neutral ITCSS entry (not Agovena Admin blue) */
-/* Cache-bust: servers/downloads account heroes. */
+/* Cache-bust: cart badge over icon. */
 
 @import './settings/_tokens.css';
 @import './generic/_reset.css';

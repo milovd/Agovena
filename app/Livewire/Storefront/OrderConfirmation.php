@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Storefront;
 
+use App\Agovena\Checkout\CheckoutFinishProgress;
 use App\Agovena\Media\ProductMedia;
 use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Theme\ThemeManager;
@@ -21,7 +22,7 @@ final class OrderConfirmation extends Component
         $this->order = $order->load(['items.product.capabilities', 'items.product.images', 'payment']);
     }
 
-    public function render(ThemeManager $themes)
+    public function render(ThemeManager $themes, CheckoutFinishProgress $finishProgress)
     {
         $theme = $themes->active();
 
@@ -30,6 +31,7 @@ final class OrderConfirmation extends Component
             'theme' => $theme,
             'fulfillmentCards' => $this->fulfillmentCards(),
             'lineImages' => $this->lineImages(),
+            'progressItems' => $finishProgress->forOrder($this->order),
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('storefront.confirmation.page_title'),
             'theme' => $theme,

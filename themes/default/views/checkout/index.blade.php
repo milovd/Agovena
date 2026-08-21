@@ -19,61 +19,15 @@
         @endif
     </header>
 
-    <nav class="store-stepper" aria-label="{{ __('storefront.checkout.progress_aria') }}" data-testid="checkout-stepper">
-        <div class="store-stepper__mobile">
-            <p class="store-stepper__mobile-meta" aria-live="polite">
-                {{ __('storefront.checkout.step_of', [
-                    'current' => $currentPosition,
-                    'total' => $stepTotal,
-                    'label' => __($currentStep->labelKey()),
-                ]) }}
-            </p>
-            <div class="store-stepper__bar" aria-hidden="true">
-                <span class="store-stepper__bar-fill" style="width: {{ $progressPercent }}%"></span>
-            </div>
-        </div>
-        <ol class="store-stepper__list">
-            @foreach ($progressItems as $item)
-                <li class="store-stepper__item store-stepper__item--{{ $item->state }}">
-                    @if ($item->isCompleted())
-                        <button type="button" class="store-stepper__link" wire:click="goToStep('{{ $item->step->value }}')">
-                            <span class="store-stepper__mark store-stepper__mark--done" aria-hidden="true">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 7"/></svg>
-                            </span>
-                            <span class="store-stepper__label">{{ __($item->step->labelKey()) }}</span>
-                            <span class="visually-hidden">{{ __('storefront.checkout.step_completed') }}</span>
-                        </button>
-                    @elseif ($item->isCurrent())
-                        <span class="store-stepper__link" aria-current="step">
-                            <span class="store-stepper__mark" aria-hidden="true">{{ $item->position }}</span>
-                            <span class="store-stepper__label">{{ __($item->step->labelKey()) }}</span>
-                            <span class="visually-hidden">{{ __('storefront.checkout.step_current') }}</span>
-                        </span>
-                    @else
-                        <span class="store-stepper__link store-stepper__link--upcoming">
-                            <span class="store-stepper__mark" aria-hidden="true">{{ $item->position }}</span>
-                            <span class="store-stepper__label">{{ __($item->step->labelKey()) }}</span>
-                            <span class="visually-hidden">{{ __('storefront.checkout.step_upcoming') }}</span>
-                        </span>
-                    @endif
-                </li>
-            @endforeach
-        </ol>
-    </nav>
+    @include('theme::checkout.partials.stepper', [
+        'progressItems' => $progressItems,
+        'currentLabelKey' => $currentStep->labelKey(),
+        'progressPercent' => $progressPercent,
+        'interactive' => true,
+    ])
 
     <div class="store-checkout__layout">
         <div class="store-checkout__main">
-            @if ($errors->any())
-                <div class="store-checkout__errors" role="alert" tabindex="-1">
-                    <p class="store-checkout__errors-title">{{ __('storefront.checkout.fix_errors') }}</p>
-                    <ul>
-                        @foreach ($errors->all() as $message)
-                            <li>{{ $message }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
             @if ($currentStep === CheckoutStep::Details)
                 <section class="store-checkout__section" aria-labelledby="checkout-contact-heading">
                     <h2 id="checkout-contact-heading" class="store-checkout__section-title">{{ __('storefront.checkout.contact') }}</h2>
@@ -127,10 +81,23 @@
                             <input id="billing_company" class="store-input" type="text" wire:model.blur="billing_company" autocomplete="billing organization">
                         </div>
                     </div>
-                    <div class="store-field">
+                    <div class="store-field store-suggest">
                         <label class="store-field__label" for="billing_line1">{{ __('storefront.checkout.line1') }}</label>
-                        <input id="billing_line1" class="store-input" type="text" wire:model.blur="billing_line1" required autocomplete="billing address-line1">
+                        <input
+                            id="billing_line1"
+                            class="store-input"
+                            type="text"
+                            wire:model.live.debounce.300ms="billing_line1"
+                            wire:blur="clearAddressSuggestions"
+                            required
+                            autocomplete="billing address-line1"
+                            aria-autocomplete="list"
+                        >
+                        @include('theme::checkout.partials.address-suggestions', ['scope' => 'billing'])
                         @error('billing_line1') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                        @if ($addressAutocompleteEnabled ?? false)
+                            <p class="store-field__hint">{{ __('storefront.checkout.address_suggest_hint') }}</p>
+                        @endif
                     </div>
                     <div class="store-field">
                         <label class="store-field__label" for="billing_line2">{{ __('storefront.checkout.line2') }}</label>
@@ -195,9 +162,19 @@
                                 <input id="shipping_company" class="store-input" type="text" wire:model.blur="shipping_company" autocomplete="shipping organization">
                             </div>
                         </div>
-                        <div class="store-field">
+                        <div class="store-field store-suggest">
                             <label class="store-field__label" for="shipping_line1">{{ __('storefront.checkout.line1') }}</label>
-                            <input id="shipping_line1" class="store-input" type="text" wire:model.blur="shipping_line1" required autocomplete="shipping address-line1">
+                            <input
+                                id="shipping_line1"
+                                class="store-input"
+                                type="text"
+                                wire:model.live.debounce.300ms="shipping_line1"
+                                wire:blur="clearAddressSuggestions"
+                                required
+                                autocomplete="shipping address-line1"
+                                aria-autocomplete="list"
+                            >
+                            @include('theme::checkout.partials.address-suggestions', ['scope' => 'shipping'])
                             @error('shipping_line1') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
                         </div>
                         <div class="store-checkout__grid store-checkout__grid--postal">
@@ -298,40 +275,6 @@
                             <span>{{ __('storefront.checkout.apply_store_credit', ['amount' => \App\Support\MoneyFormatter::format(\App\Agovena\Money\Money::of($creditBalance, $subtotal->currency))]) }}</span>
                         </label>
                     @endif
-                </section>
-
-                <section class="store-checkout__section store-checkout__confirm" aria-labelledby="checkout-confirm-heading">
-                    <h2 id="checkout-confirm-heading" class="store-checkout__section-title">{{ __('storefront.checkout.confirm_title') }}</h2>
-                    <dl class="store-checkout__recap">
-                        <div>
-                            <dt>{{ __('storefront.checkout.contact') }}</dt>
-                            <dd>{{ $customer_name }} · {{ $customer_email }}</dd>
-                            <button type="button" class="store-checkout__edit" wire:click="goToStep('details')">{{ __('storefront.checkout.edit') }}</button>
-                        </div>
-                        <div>
-                            <dt>{{ __('storefront.checkout.billing') }}</dt>
-                            <dd>{{ $billing_line1 }}, {{ $billing_postal_code }} {{ $billing_city }}</dd>
-                        </div>
-                        @if ($requiresShipping)
-                            <div>
-                                <dt>{{ __('storefront.checkout.shipping') }}</dt>
-                                <dd>
-                                    @if ($shipping_same_as_billing)
-                                        {{ __('storefront.checkout.same_as_billing') }}
-                                    @else
-                                        {{ $shipping_line1 }}, {{ $shipping_postal_code }} {{ $shipping_city }}
-                                    @endif
-                                </dd>
-                                <button type="button" class="store-checkout__edit" wire:click="goToStep('{{ $deliveryProgress->step->value }}')">{{ __('storefront.checkout.edit') }}</button>
-                            </div>
-                        @endif
-                        @if ($selectedPaymentLabel)
-                            <div>
-                                <dt>{{ __('storefront.checkout.payment') }}</dt>
-                                <dd>{{ __($selectedPaymentLabel) }}</dd>
-                            </div>
-                        @endif
-                    </dl>
                     @error('cart') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
                 </section>
             @endif

@@ -31,14 +31,14 @@ function checkoutEnableShipping(): void
     ]);
 }
 
-test('digital checkout omits delivery from the progress indicator', function () {
+test('digital checkout shows details payment and finish in the progress indicator', function () {
     $product = Product::factory()->active()->create(['price_amount' => 1200]);
     app(CartService::class)->add($product->id, 1);
 
     Livewire::test(CheckoutPage::class)
         ->assertSee(__('storefront.checkout.steps.details'))
         ->assertSee(__('storefront.checkout.steps.payment'))
-        ->assertDontSee(__('storefront.checkout.steps.review'), false)
+        ->assertSee(__('storefront.checkout.steps.review'))
         ->assertDontSee(__('storefront.checkout.steps.delivery'), false)
         ->assertSet('step', CheckoutStep::Details->value);
 });
@@ -58,8 +58,7 @@ test('checkout continues from details to payment for a digital cart', function (
         ->call('continueStep')
         ->assertSet('step', CheckoutStep::Payment->value)
         ->assertSee(__('storefront.checkout.hosted_payment_note'))
-        ->assertSee(__('storefront.checkout.place_order'))
-        ->assertDontSee(__('storefront.checkout.steps.review'), false);
+        ->assertSee(__('storefront.checkout.place_order'));
 });
 
 test('physical checkout includes delivery and keeps totals on the server', function () {
@@ -118,7 +117,7 @@ test('mixed carts combine delivery and configuration into fulfillment', function
 
     Livewire::test(CheckoutPage::class)
         ->assertSee(__('storefront.checkout.steps.fulfillment'))
-        ->assertDontSee(__('storefront.checkout.steps.review'), false);
+        ->assertSee(__('storefront.checkout.steps.review'));
 });
 
 test('configurable checkout continues from configure without extra fields', function () {

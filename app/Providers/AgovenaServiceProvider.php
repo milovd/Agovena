@@ -766,6 +766,15 @@ class AgovenaServiceProvider extends ServiceProvider
 
         $admin->settingsField(new SettingsField(
             group: 'store',
+            key: 'google_places_api_key',
+            label: 'admin.settings.fields.google_places_api_key',
+            type: 'password',
+            default: '',
+            help: 'admin.settings.field_help.google_places_api_key',
+            sort: 15,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
             key: 'customer_registration',
             label: 'admin.settings.fields.customer_registration',
             type: 'select',

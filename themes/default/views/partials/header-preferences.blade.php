@@ -7,10 +7,7 @@
     $showCurrency = $currencies->count() > 1;
     $showRegion = $showLocale || $showCurrency;
 
-    $regionLabel = strtoupper($currentLocale);
-    if ($showCurrency) {
-        $regionLabel .= ' · '.$currentCurrency;
-    }
+    $regionLabel = $showCurrency ? (string) $currentCurrency : '';
 @endphp
 
 <div class="store-header__prefs" aria-label="{{ __('storefront.preferences.aria') }}">
@@ -35,7 +32,10 @@
                 <span class="store-header__flag" aria-hidden="true">
                     <x-ag.flag :code="$currentLocale" :width="18" />
                 </span>
-                <span class="store-header__region-label">{{ $regionLabel }}</span>
+                @if ($regionLabel !== '')
+                    <span class="store-header__region-sep" aria-hidden="true">|</span>
+                    <span class="store-header__region-label">{{ $regionLabel }}</span>
+                @endif
                 <x-ag.icon name="chevron-down" class="store-header__region-chevron" :size="14" />
             </button>
 

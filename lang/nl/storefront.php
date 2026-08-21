@@ -93,7 +93,7 @@ return [
             'configuration' => 'Configuratie',
             'fulfillment' => 'Bezorging en configuratie',
             'payment' => 'Betaling',
-            'review' => 'Controle',
+            'review' => 'Voltooid',
         ],
         'back' => 'Terug',
         'back_to_cart' => 'Terug naar winkelwagen',
@@ -120,7 +120,11 @@ return [
         'billing' => 'Factuuradres',
         'shipping' => 'Verzendadres',
         'saved_address' => 'Opgeslagen adres gebruiken',
-        'confirm_title' => 'Bestelling bevestigen',
+        'address_suggestions' => 'Adressuggesties',
+        'saved_suggestion' => 'Opgeslagen',
+        'address_suggest_hint' => 'Begin met typen van je straatadres voor suggesties. Bij kiezen worden stad, postcode, provincie en land ingevuld.',
+        'confirm_title' => 'Bestelling afronden',
+        'finish_lede' => 'Controleer je gegevens en plaats de bestelling.',
         'address_name' => 'Volledige naam',
         'company' => 'Bedrijf',
         'line1' => 'Adresregel 1',
@@ -158,14 +162,7 @@ return [
         'total' => 'Totaal',
     ],
 
-    'countries' => [
-        'NL' => 'Nederland',
-        'BE' => 'België',
-        'DE' => 'Duitsland',
-        'FR' => 'Frankrijk',
-        'GB' => 'Verenigd Koninkrijk',
-        'US' => 'Verenigde Staten',
-    ],
+    'countries' => [],
 
     'confirmation' => [
         'page_title' => 'Bestelling bevestigd',

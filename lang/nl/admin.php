@@ -300,7 +300,7 @@ return [
             'general' => 'Identiteit van de site en regionale standaardwaarden.',
             'branding' => 'Logo en favicon voor Admin en de webshop.',
             'mail' => 'Afzendernaam en -adres voor winkelmails. SMTP-gegevens blijven in de serveromgeving, niet in de database.',
-            'store' => 'Commerce-standaarden die niet in omgevingsvariabelen thuishoren.',
+            'store' => 'Commerce-standaarden. De Google Places-sleutel kan ook via GOOGLE_PLACES_API_KEY in de omgeving.',
         ],
 
         'fields' => [
@@ -312,6 +312,7 @@ return [
             'logo_path' => 'Logo',
             'favicon_path' => 'Favicon',
             'customer_registration' => 'Klantregistratie',
+            'google_places_api_key' => 'Google Places API-sleutel',
             'order_number_prefix' => 'Prefix bestelnummer',
             'invoice_number_prefix' => 'Prefix factuurnummer',
             'credit_note_number_prefix' => 'Prefix creditnotanummer',
@@ -336,6 +337,7 @@ return [
             'logo_path' => 'PNG, JPG, WebP of SVG. Max. 2 MB. Je kunt het ook als favicon gebruiken.',
             'favicon_path' => 'Optioneel. Laat leeg en zet “logo als favicon gebruiken” aan, of upload een apart icoon.',
             'customer_registration' => 'Sta klanten toe accounts te maken. Gastafrekenen blijft mogelijk tenzij registratie verplicht is.',
+            'google_places_api_key' => 'Voor adressuggesties in checkout en accountadressen (Places API New). Gebruik bij voorkeur GOOGLE_PLACES_API_KEY in .env; deze setting is een storefront-fallback.',
             'enable_reviews' => 'Wanneer uit, is de beoordelings-UI verborgen op alle productpagina’s. Beoordelingen per product volgen later.',
             'prices_include_tax' => 'Wanneer ingeschakeld bevatten catalogusprijzen al btw; bij het afrekenen wordt het btw-bedrag uitgesplitst in plaats van toegevoegd.',
             'seller_name' => 'Wordt op facturen vastgelegd op het moment van uitgifte. Latere wijzigingen herschrijven uitgegeven facturen niet.',

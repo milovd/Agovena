@@ -88,12 +88,12 @@ return [
         'step_current' => 'Current step',
         'step_upcoming' => 'Upcoming',
         'steps' => [
-            'details' => 'Details',
+            'details' => 'Information',
             'delivery' => 'Delivery',
             'configuration' => 'Configure',
             'fulfillment' => 'Delivery & configure',
             'payment' => 'Payment',
-            'review' => 'Review',
+            'review' => 'Completed',
         ],
         'back' => 'Back',
         'back_to_cart' => 'Back to cart',
@@ -120,7 +120,11 @@ return [
         'billing' => 'Billing address',
         'shipping' => 'Shipping address',
         'saved_address' => 'Use a saved address',
-        'confirm_title' => 'Confirm order',
+        'address_suggestions' => 'Address suggestions',
+        'saved_suggestion' => 'Saved',
+        'address_suggest_hint' => 'Start typing your street address to see suggestions. Choosing one fills city, postal code, region and country.',
+        'confirm_title' => 'Finish order',
+        'finish_lede' => 'Check your details and place the order.',
         'address_name' => 'Full name',
         'company' => 'Company',
         'line1' => 'Address line 1',
@@ -158,14 +162,7 @@ return [
         'total' => 'Total',
     ],
 
-    'countries' => [
-        'NL' => 'Netherlands',
-        'BE' => 'Belgium',
-        'DE' => 'Germany',
-        'FR' => 'France',
-        'GB' => 'United Kingdom',
-        'US' => 'United States',
-    ],
+    'countries' => [],
 
     'confirmation' => [
         'page_title' => 'Order confirmed',

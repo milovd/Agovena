@@ -103,9 +103,10 @@
                     <input
                         id="setting-{{ $field->key }}"
                         class="ag-input"
-                        type="{{ $field->type === 'email' ? 'email' : ($field->type === 'integer' ? 'number' : 'text') }}"
+                        type="{{ $field->type === 'email' ? 'email' : ($field->type === 'integer' ? 'number' : ($field->type === 'password' ? 'password' : 'text')) }}"
                         wire:model="values.{{ $field->key }}"
                         @disabled(! $canUpdate)
+                        @if ($field->type === 'password') autocomplete="new-password" @endif
                     >
                 @endif
 

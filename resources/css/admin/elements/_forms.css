@@ -16,6 +16,16 @@
   color: var(--ag-color-text);
 }
 
+.ag-field:has(:is(input, select, textarea)[required]) > .ag-field__label::after,
+.ag-field__required {
+  color: var(--ag-color-danger);
+  font-weight: 700;
+}
+
+.ag-field:has(:is(input, select, textarea)[required]) > .ag-field__label::after {
+  content: ' *';
+}
+
 .ag-field__hint,
 .ag-field__help {
   margin: 0;

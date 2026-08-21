@@ -54,10 +54,20 @@
             <label class="store-field__label" for="address-company">{{ __('customer.addresses.company') }}</label>
             <input id="address-company" class="store-input" type="text" wire:model="company">
         </div>
-        <div class="store-field">
+        <div class="store-field store-suggest">
             <label class="store-field__label" for="address-line1">{{ __('customer.addresses.line1') }}</label>
-            <input id="address-line1" class="store-input" type="text" wire:model="line1" required>
+            <input
+                id="address-line1"
+                class="store-input"
+                type="text"
+                wire:model.live.debounce.300ms="line1"
+                wire:blur="clearAddressSuggestions"
+                required
+                aria-autocomplete="list"
+            >
+            @include('theme::checkout.partials.address-suggestions', ['scope' => 'account'])
             @error('line1') <p class="store-field__error">{{ $message }}</p> @enderror
+            <p class="store-field__hint">{{ __('storefront.checkout.address_suggest_hint') }}</p>
         </div>
         <div class="store-field">
             <label class="store-field__label" for="address-line2">{{ __('customer.addresses.line2') }}</label>

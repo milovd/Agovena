@@ -7,7 +7,7 @@ use App\Agovena\Checkout\CartRequirements;
 use App\Agovena\Checkout\CheckoutFlow;
 use App\Agovena\Checkout\CheckoutStep;
 
-test('digital carts compose details then payment', function () {
+test('digital carts compose details, payment, then finish', function () {
     $flow = new CheckoutFlow;
     $steps = $flow->stepsFor(new CartRequirements([
         CartRequirement::Billing,
@@ -18,6 +18,7 @@ test('digital carts compose details then payment', function () {
     expect($steps)->toBe([
         CheckoutStep::Details,
         CheckoutStep::Payment,
+        CheckoutStep::Review,
     ]);
 });
 
@@ -35,6 +36,7 @@ test('physical carts insert delivery between details and payment', function () {
         CheckoutStep::Details,
         CheckoutStep::Delivery,
         CheckoutStep::Payment,
+        CheckoutStep::Review,
     ]);
 });
 
@@ -54,6 +56,7 @@ test('mixed carts combine delivery and configuration into one fulfillment step',
         CheckoutStep::Details,
         CheckoutStep::Fulfillment,
         CheckoutStep::Payment,
+        CheckoutStep::Review,
     ]);
 });
 
@@ -69,7 +72,20 @@ test('configuration-only carts insert configure between details and payment', fu
         CheckoutStep::Details,
         CheckoutStep::Configuration,
         CheckoutStep::Payment,
+        CheckoutStep::Review,
     ]);
+});
+
+test('continue from payment does not advance into finish', function () {
+    $flow = new CheckoutFlow;
+    $requirements = new CartRequirements([
+        CartRequirement::Billing,
+        CartRequirement::Payment,
+        CartRequirement::Review,
+    ]);
+
+    expect($flow->next($requirements, CheckoutStep::Payment))->toBeNull()
+        ->and($flow->canVisit($requirements, CheckoutStep::Review, [CheckoutStep::Details->value, CheckoutStep::Payment->value]))->toBeFalse();
 });
 
 test('customers cannot skip ahead of an incomplete checkout step', function () {

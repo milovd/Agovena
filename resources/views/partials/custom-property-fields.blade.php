@@ -18,13 +18,14 @@
                     id="{{ $fieldId }}"
                     type="checkbox"
                     @disabled(! $canEdit)
+                    @if ($definition->is_required) required @endif
                     wire:model="{{ $modelPrefix }}.{{ $definition->key }}"
                 >
-                <span>{{ $definition->label }}@if ($definition->is_required) * @endif</span>
+                <span>{{ $definition->label }}</span>
             </label>
         @else
             <label class="{{ $labelClass ?? 'store-label' }}" for="{{ $fieldId }}">
-                {{ $definition->label }}@if ($definition->is_required) * @endif
+                {{ $definition->label }}
             </label>
             @if ($type === 'textarea')
                 <textarea
@@ -32,6 +33,7 @@
                     class="{{ $inputClass ?? 'store-input' }}"
                     rows="3"
                     @disabled(! $canEdit)
+                    @if ($definition->is_required) required @endif
                     wire:model="{{ $modelPrefix }}.{{ $definition->key }}"
                 ></textarea>
             @elseif ($type === 'select' || $type === 'country')
@@ -39,6 +41,7 @@
                     id="{{ $fieldId }}"
                     class="{{ $inputClass ?? 'store-input' }}"
                     @disabled(! $canEdit)
+                    @if ($definition->is_required) required @endif
                     wire:model="{{ $modelPrefix }}.{{ $definition->key }}"
                 >
                     <option value="">{{ __('common.none') }}</option>
@@ -58,6 +61,7 @@
                     class="{{ $inputClass ?? 'store-input' }}"
                     type="{{ $type === 'email' ? 'email' : ($type === 'number' ? 'number' : ($type === 'date' ? 'date' : ($type === 'phone' ? 'tel' : 'text'))) }}"
                     @disabled(! $canEdit)
+                    @if ($definition->is_required) required @endif
                     wire:model="{{ $modelPrefix }}.{{ $definition->key }}"
                 >
             @endif

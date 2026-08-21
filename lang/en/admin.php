@@ -300,7 +300,7 @@ return [
             'general' => 'Site identity and regional defaults.',
             'branding' => 'Logo and favicon used across Admin and storefront.',
             'mail' => 'From name and address for store emails. SMTP credentials stay in the server environment, not in the database.',
-            'store' => 'Commerce defaults that do not belong in environment secrets.',
+            'store' => 'Commerce defaults. The Google Places key can also be set via GOOGLE_PLACES_API_KEY in the environment.',
         ],
 
         'fields' => [
@@ -312,6 +312,7 @@ return [
             'logo_path' => 'Logo',
             'favicon_path' => 'Favicon',
             'customer_registration' => 'Customer registration',
+            'google_places_api_key' => 'Google Places API key',
             'order_number_prefix' => 'Order number prefix',
             'invoice_number_prefix' => 'Invoice number prefix',
             'credit_note_number_prefix' => 'Credit note number prefix',
@@ -336,6 +337,7 @@ return [
             'logo_path' => 'PNG, JPG, WebP or SVG. Max 2 MB. You can also use it as the favicon.',
             'favicon_path' => 'Optional. Leave empty and enable “use logo as favicon”, or upload a separate icon.',
             'customer_registration' => 'Allow customers to create accounts. Guest checkout stays available unless registration is required.',
+            'google_places_api_key' => 'Powers address suggestions in checkout and account addresses (Places API New). Prefer GOOGLE_PLACES_API_KEY in .env for production; this setting is a storefront fallback.',
             'enable_reviews' => 'When off, review UI is hidden on all product pages. Per-product review content still deferred.',
             'prices_include_tax' => 'When enabled, catalog prices already include tax; checkout extracts the tax amount instead of adding it.',
             'seller_name' => 'Snapshotted onto invoices when they are issued. Later changes do not rewrite issued invoices.',

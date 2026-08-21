@@ -10,23 +10,38 @@ use App\Agovena\Theme\ThemeManager;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Livewire\Component;
 
 /**
  * Return-URL landing page. Never treats the browser redirect as payment proof.
+ * When paid, continue into checkout Finish (order confirmation chrome).
  */
 final class PaymentStatusPage extends Component
 {
     public Order $order;
 
-    public function mount(Request $request, StorefrontOrderAccess $access, Order $order): void
+    public function mount(Request $request, StorefrontOrderAccess $access, Order $order, ReconcilePaymentStatus $reconcile): void
     {
         $access->authorize($request, $order);
         $this->order = $order->load(['items', 'payment.attempts']);
+
+        $payment = $this->order->payment;
+        if ($payment !== null) {
+            $reconcile->handle($payment);
+            $this->order = $this->order->fresh(['items', 'payment.attempts']) ?? $this->order;
+        }
+
+        if ($this->order->payment?->status === PaymentStatus::Paid) {
+            throw new HttpResponseException(new RedirectResponse(
+                $access->confirmationUrl($this->order),
+            ));
+        }
     }
 
-    public function refresh(ReconcilePaymentStatus $reconcile): void
+    public function refresh(ReconcilePaymentStatus $reconcile, StorefrontOrderAccess $access): void
     {
         $payment = $this->order->payment;
         if ($payment === null) {
@@ -35,6 +50,10 @@ final class PaymentStatusPage extends Component
 
         $reconcile->handle($payment);
         $this->order = $this->order->fresh(['items', 'payment.attempts']) ?? $this->order;
+
+        if ($this->order->payment?->status === PaymentStatus::Paid) {
+            $this->redirect($access->confirmationUrl($this->order), navigate: true);
+        }
     }
 
     public function render(ThemeManager $themes)

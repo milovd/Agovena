@@ -24,6 +24,7 @@ final class CheckoutFlow
         }
 
         $steps[] = CheckoutStep::Payment;
+        $steps[] = CheckoutStep::Review;
 
         return $steps;
     }
@@ -44,7 +45,13 @@ final class CheckoutFlow
         $steps = $this->stepsFor($requirements);
         foreach ($steps as $index => $step) {
             if ($step === $current) {
-                return $steps[$index + 1] ?? null;
+                $candidate = $steps[$index + 1] ?? null;
+                // Finish is reached after successful payment, not via Continue.
+                if ($candidate === CheckoutStep::Review) {
+                    return null;
+                }
+
+                return $candidate;
             }
         }
 
@@ -91,6 +98,11 @@ final class CheckoutFlow
      */
     public function canVisit(CartRequirements $requirements, CheckoutStep $target, array $completed): bool
     {
+        // Finish is post-payment only (order confirmation), not reachable from the live checkout form.
+        if ($target === CheckoutStep::Review) {
+            return false;
+        }
+
         foreach ($this->stepsFor($requirements) as $step) {
             if ($step === $target) {
                 return true;

@@ -4,15 +4,23 @@ declare(strict_types=1);
 
 namespace App\Livewire\Customer\Account;
 
+use App\Agovena\Checkout\AddressAutocomplete\AddressAutocomplete;
+use App\Agovena\Checkout\AddressAutocomplete\AddressSuggestion;
+use App\Agovena\Checkout\AddressAutocomplete\ResolvedAddress;
+use App\Agovena\Checkout\CheckoutCountries;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\DeleteCustomerAddress;
 use App\Agovena\Customer\SaveCustomerAddress;
 use App\Agovena\Theme\ThemeManager;
+use App\Livewire\Concerns\SuggestsAddresses;
 use App\Models\Customer;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 final class Addresses extends Component
 {
+    use SuggestsAddresses;
+
     public ?int $editingId = null;
 
     public string $label = '';
@@ -80,6 +88,41 @@ final class Addresses extends Component
         $this->resetValidation();
     }
 
+    public function updatedLine1(string $value): void
+    {
+        $this->refreshAddressSuggestions(
+            'account',
+            $value,
+            $this->country !== '' ? $this->country : null,
+            app(AddressAutocomplete::class),
+            authenticated_customer(),
+        );
+    }
+
+    public function applyAddressSuggestion(int $index): void
+    {
+        $result = $this->resolveSuggestion($index, app(AddressAutocomplete::class));
+        if ($result instanceof AddressSuggestion && $result->savedAddressId !== null) {
+            $this->edit($result->savedAddressId);
+            $this->clearAddressSuggestions();
+
+            return;
+        }
+
+        if (! $result instanceof ResolvedAddress) {
+            return;
+        }
+
+        $this->line1 = $result->line1;
+        if ($result->line2 !== null && $result->line2 !== '') {
+            $this->line2 = $result->line2;
+        }
+        $this->city = $result->city;
+        $this->region = (string) ($result->region ?? '');
+        $this->postal_code = $result->postalCode;
+        $this->country = $result->country;
+    }
+
     public function save(SaveCustomerAddress $save): void
     {
         $data = $this->validate([
@@ -91,7 +134,7 @@ final class Addresses extends Component
             'city' => ['required', 'string', 'max:255'],
             'region' => ['nullable', 'string', 'max:255'],
             'postal_code' => ['required', 'string', 'max:32'],
-            'country' => ['required', 'string', 'size:2'],
+            'country' => ['required', 'string', 'size:2', Rule::in(CheckoutCountries::codes())],
             'phone' => ['nullable', 'string', 'max:64'],
             'is_default_billing' => ['boolean'],
             'is_default_shipping' => ['boolean'],
@@ -160,13 +203,6 @@ final class Addresses extends Component
      */
     private function countries(): array
     {
-        return [
-            'NL' => 'Netherlands',
-            'BE' => 'Belgium',
-            'DE' => 'Germany',
-            'FR' => 'France',
-            'GB' => 'United Kingdom',
-            'US' => 'United States',
-        ];
+        return CheckoutCountries::options();
     }
 }

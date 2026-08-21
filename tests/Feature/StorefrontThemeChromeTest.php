@@ -134,7 +134,7 @@ test('checkout keeps the storefront header and bundled logo', function () {
         ->assertSee('vendor/agovena/logo.png', false)
         ->assertDontSee(__('storefront.checkout.back_to_cart'), false)
         ->assertDontSee('store-checkout-chrome', false)
-        ->assertDontSee(__('storefront.checkout.steps.review'), false);
+        ->assertSee(__('storefront.checkout.steps.review'));
 });
 
 test('cart quantity stepper updates the line without a separate update action', function () {

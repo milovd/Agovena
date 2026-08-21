@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Livewire\Storefront;
 
 use App\Agovena\Cart\CartService;
+use App\Agovena\Checkout\AddressAutocomplete\AddressAutocomplete;
+use App\Agovena\Checkout\AddressAutocomplete\AddressSuggestion;
+use App\Agovena\Checkout\AddressAutocomplete\ResolvedAddress;
 use App\Agovena\Checkout\AddressValidation;
 use App\Agovena\Checkout\CartRequirement;
 use App\Agovena\Checkout\CartRequirementComposer;
@@ -32,6 +35,7 @@ use App\Agovena\Tax\TaxCalculator;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
+use App\Livewire\Concerns\SuggestsAddresses;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
 use App\Models\TaxRate;
@@ -46,6 +50,8 @@ use Livewire\Component;
 
 final class CheckoutPage extends Component
 {
+    use SuggestsAddresses;
+
     public string $customer_name = '';
 
     public string $customer_email = '';
@@ -165,13 +171,62 @@ final class CheckoutPage extends Component
         $this->fillBillingFromAddress($address);
     }
 
+    public function updatedBillingLine1(string $value): void
+    {
+        $this->refreshAddressSuggestions(
+            'billing',
+            $value,
+            $this->billing_country !== '' ? $this->billing_country : null,
+            app(AddressAutocomplete::class),
+            current_customer(),
+        );
+    }
+
+    public function updatedShippingLine1(string $value): void
+    {
+        $this->refreshAddressSuggestions(
+            'shipping',
+            $value,
+            $this->shipping_country !== '' ? $this->shipping_country : $this->billing_country,
+            app(AddressAutocomplete::class),
+            current_customer(),
+        );
+    }
+
+    public function applyAddressSuggestion(int $index): void
+    {
+        $scope = $this->addressSuggestScope;
+        $autocomplete = app(AddressAutocomplete::class);
+        $result = $this->resolveSuggestion($index, $autocomplete);
+        if ($result instanceof AddressSuggestion && $result->savedAddressId !== null) {
+            if ($scope === 'shipping') {
+                $this->applySavedAddressToShipping($result->savedAddressId);
+            } else {
+                $this->applySavedAddress($result->savedAddressId);
+            }
+            $this->clearAddressSuggestions();
+
+            return;
+        }
+
+        if (! $result instanceof ResolvedAddress) {
+            return;
+        }
+
+        if ($scope === 'shipping') {
+            $this->fillShippingFromResolved($result);
+        } else {
+            $this->fillBillingFromResolved($result);
+        }
+    }
+
     public function continueStep(CartService $cart, CartRequirementComposer $composer, CustomerPropertyService $properties, CheckoutFlow $flow): void
     {
         $requirements = $composer->compose($cart);
         $current = $this->resolvedStep($flow, $requirements);
         $rules = $this->rulesForStep($current, $properties);
         if ($rules !== []) {
-            $this->validate($rules);
+            $this->validate($rules, [], $this->validationAttributes());
         }
         $this->markCompleted($current);
         $next = $flow->next($requirements, $current);
@@ -257,7 +312,7 @@ final class CheckoutPage extends Component
             }
         }
 
-        $data = $this->validate($rules);
+        $data = $this->validate($rules, [], $this->validationAttributes());
 
         $billing = AddressData::fromArray([
             'name' => $data['billing_name'],
@@ -503,6 +558,7 @@ final class CheckoutPage extends Component
             'countryOptions' => CheckoutCountries::options(),
             'primaryActionLabel' => $this->primaryActionLabel($currentStep, $nextStep, $amountDue),
             'savedAddresses' => $customer?->addresses()->orderByDesc('is_default_billing')->orderBy('id')->get() ?? collect(),
+            'addressAutocompleteEnabled' => app(AddressAutocomplete::class)->enabled() || ($customer !== null && $customer->addresses()->exists()),
         ])->layout($theme->view('layouts.checkout'), [
             'title' => __('storefront.checkout.title'),
             'theme' => $theme,
@@ -522,9 +578,90 @@ final class CheckoutPage extends Component
         $this->billing_phone = (string) ($address->phone ?? '');
     }
 
+    private function applySavedAddressToShipping(int $addressId): void
+    {
+        $customer = current_customer();
+        if ($customer === null) {
+            return;
+        }
+
+        $address = $customer->addresses()->whereKey($addressId)->first();
+        if ($address === null) {
+            return;
+        }
+
+        $this->shipping_same_as_billing = false;
+        $this->shipping_name = $address->name;
+        $this->shipping_company = (string) ($address->company ?? '');
+        $this->shipping_line1 = $address->line1;
+        $this->shipping_line2 = (string) ($address->line2 ?? '');
+        $this->shipping_city = $address->city;
+        $this->shipping_region = (string) ($address->region ?? '');
+        $this->shipping_postal_code = $address->postal_code;
+        $this->shipping_country = $address->country;
+        $this->shipping_phone = (string) ($address->phone ?? '');
+    }
+
+    private function fillBillingFromResolved(ResolvedAddress $address): void
+    {
+        $this->billing_line1 = $address->line1;
+        if ($address->line2 !== null && $address->line2 !== '') {
+            $this->billing_line2 = $address->line2;
+        }
+        $this->billing_city = $address->city;
+        $this->billing_region = (string) ($address->region ?? '');
+        $this->billing_postal_code = $address->postalCode;
+        $this->billing_country = $address->country;
+    }
+
+    private function fillShippingFromResolved(ResolvedAddress $address): void
+    {
+        $this->shipping_same_as_billing = false;
+        $this->shipping_line1 = $address->line1;
+        if ($address->line2 !== null && $address->line2 !== '') {
+            $this->shipping_line2 = $address->line2;
+        }
+        $this->shipping_city = $address->city;
+        $this->shipping_region = (string) ($address->region ?? '');
+        $this->shipping_postal_code = $address->postalCode;
+        $this->shipping_country = $address->country;
+    }
+
     private function resolvedStep(CheckoutFlow $flow, CartRequirements $requirements): CheckoutStep
     {
         return $flow->resolve($requirements, $this->step);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function validationAttributes(): array
+    {
+        return [
+            'customer_name' => __('storefront.checkout.name'),
+            'customer_email' => __('storefront.checkout.email'),
+            'billing_name' => __('storefront.checkout.address_name'),
+            'billing_company' => __('storefront.checkout.company'),
+            'billing_line1' => __('storefront.checkout.line1'),
+            'billing_line2' => __('storefront.checkout.line2'),
+            'billing_city' => __('storefront.checkout.city'),
+            'billing_region' => __('storefront.checkout.region'),
+            'billing_postal_code' => __('storefront.checkout.postal_code'),
+            'billing_country' => __('storefront.checkout.country'),
+            'billing_phone' => __('storefront.checkout.phone'),
+            'shipping_name' => __('storefront.checkout.address_name'),
+            'shipping_company' => __('storefront.checkout.company'),
+            'shipping_line1' => __('storefront.checkout.line1'),
+            'shipping_line2' => __('storefront.checkout.line2'),
+            'shipping_city' => __('storefront.checkout.city'),
+            'shipping_region' => __('storefront.checkout.region'),
+            'shipping_postal_code' => __('storefront.checkout.postal_code'),
+            'shipping_country' => __('storefront.checkout.country'),
+            'shipping_phone' => __('storefront.checkout.phone'),
+            'shipping_quote_key' => __('storefront.checkout.shipping_method'),
+            'payment_method' => __('storefront.checkout.payment'),
+            'discount_code' => __('storefront.checkout.discount'),
+        ];
     }
 
     /**
@@ -551,6 +688,7 @@ final class CheckoutPage extends Component
                 'payment_method' => ['required', 'string', Rule::in($allowed)],
                 'apply_credit' => ['boolean'],
             ],
+            CheckoutStep::Review => [],
         };
     }
 
