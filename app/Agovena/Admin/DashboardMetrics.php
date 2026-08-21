@@ -251,9 +251,9 @@ final class DashboardMetrics
 
         $byDay = collect();
         foreach ($rows as $row) {
-            $day = (string) $row->day;
+            $day = (string) $row->getAttribute('day');
             $converted = $this->sumConverted(
-                collect([(string) $row->currency => (int) $row->total]),
+                collect([(string) $row->getAttribute('currency') => (int) $row->getAttribute('total')]),
                 $displayCurrency,
             );
             $byDay[$day] = (int) ($byDay[$day] ?? 0) + $converted;

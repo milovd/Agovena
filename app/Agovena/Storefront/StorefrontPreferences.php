@@ -85,7 +85,7 @@ final class StorefrontPreferences
         }
     }
 
-    public function catalogCurrencyFilter(): ?string
+    public function catalogCurrencyFilter(): null
     {
         // Display conversion handles preferred currency; do not hide products priced in other currencies.
         return null;
