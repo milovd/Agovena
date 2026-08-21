@@ -93,6 +93,8 @@ final class ShippingModule implements Module
             route: 'customer.returns',
             section: 'returns',
             sort: 36,
+            icon: 'rotate-ccw',
+            group: AccountNavItem::GROUP_PURCHASES,
         ));
 
         $context->listen(OrderCreated::class, CreateShipmentWhenOrderCreated::class);

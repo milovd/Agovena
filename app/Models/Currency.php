@@ -17,9 +17,10 @@ use InvalidArgumentException;
  * @property string $prefix
  * @property string $suffix
  * @property int $precision
+ * @property string $exchange_rate
  * @property bool $is_active
  */
-#[Fillable(['code', 'name', 'prefix', 'suffix', 'precision', 'is_active'])]
+#[Fillable(['code', 'name', 'prefix', 'suffix', 'precision', 'exchange_rate', 'is_active'])]
 class Currency extends Model
 {
     /** @use HasFactory<CurrencyFactory> */
@@ -30,6 +31,7 @@ class Currency extends Model
         return [
             'precision' => 'integer',
             'is_active' => 'boolean',
+            'exchange_rate' => 'decimal:8',
         ];
     }
 

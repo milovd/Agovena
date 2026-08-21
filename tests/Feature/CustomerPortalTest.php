@@ -42,7 +42,12 @@ test('customer can register login and open account dashboard', function () {
     Livewire::actingAs($customer->user)
         ->test(Dashboard::class)
         ->assertOk()
-        ->assertSee(__('customer.account.welcome', ['name' => 'Ada Customer']), false);
+        ->assertSee(__('customer.account.welcome', ['name' => 'Ada']), false)
+        ->assertSee(__('customer.account.customer_number', ['number' => $customer->id]), false)
+        ->assertSee('store-account-dashboard__welcome', false)
+        ->assertDontSee('store-account-hero', false)
+        ->assertDontSee('ag-avatar', false)
+        ->assertSee('ag-empty', false);
 });
 
 test('customer account dashboard receives registered overview cards', function () {

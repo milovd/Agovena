@@ -22,6 +22,15 @@ function totpCode(string $secret): string
     return $google2fa->oathTotp($secret, $google2fa->getTimestamp());
 }
 
+test('totp accepts nearby time-step codes despite clock skew', function () {
+    $totp = app(TotpTwoFactor::class);
+    $google2fa = app(Google2FA::class);
+    $secret = $totp->generateSecret();
+    $skewed = $google2fa->oathTotp($secret, $google2fa->getTimestamp() - 4);
+
+    expect($totp->verify($secret, $skewed))->toBeTrue();
+});
+
 test('privileged users without totp are redirected to security setup', function () {
     $staff = $this->createStaff(withTwoFactor: false);
 

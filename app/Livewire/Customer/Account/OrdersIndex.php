@@ -20,7 +20,7 @@ final class OrdersIndex extends Component
 
         $orders = Order::query()
             ->where('customer_id', $customer->id)
-            ->with('payment')
+            ->with(['payment', 'items.product.images'])
             ->latest('id')
             ->paginate(10);
 

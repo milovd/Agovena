@@ -20,14 +20,55 @@ final class AdminNavigation
             'admin.nav_groups.commerce',
             'admin.nav_groups.fulfillment',
             'admin.nav_groups.operations',
+            'admin.nav_groups.appearance',
             'admin.nav_groups.system',
             // Legacy aliases kept so older Module registrations still sort sensibly.
             'admin.nav_groups.services',
             'admin.nav_groups.support',
             'admin.nav_groups.configuration',
             'admin.nav_groups.administration',
-            'admin.nav_groups.appearance',
         ];
+    }
+
+    /**
+     * @param  Collection<int, NavigationItem>  $items
+     * @return Collection<int, AdminNavigationNode>
+     */
+    public static function nest(Collection $items): Collection
+    {
+        $ids = $items->pluck('id')->all();
+        $childrenByParent = $items
+            ->filter(static fn (NavigationItem $item): bool => is_string($item->parent) && in_array($item->parent, $ids, true))
+            ->sortBy(static fn (NavigationItem $item): int => $item->sort)
+            ->groupBy(static fn (NavigationItem $item): string => (string) $item->parent);
+
+        return $items
+            ->filter(static fn (NavigationItem $item): bool => $item->parent === null || ! in_array($item->parent, $ids, true))
+            ->map(static function (NavigationItem $item) use ($childrenByParent): AdminNavigationNode {
+                $children = $childrenByParent->get($item->id, collect())
+                    ->values()
+                    ->all();
+
+                return new AdminNavigationNode($item, $children);
+            })
+            ->values();
+    }
+
+    /**
+     * @param  Collection<int, NavigationItem>  $items
+     * @return Collection<string, Collection<int, AdminNavigationNode>>
+     */
+    public static function groupedTree(Collection $items): Collection
+    {
+        $order = array_flip(self::groupOrder());
+
+        return self::nest($items)->groupBy(
+            static fn (AdminNavigationNode $node): string => $node->item->group,
+        )->sortBy(function (Collection $nodes, string $group) use ($order): int {
+            return $order[$group] ?? (1000 + $nodes->min(
+                static fn (AdminNavigationNode $node): int => $node->item->sort,
+            ));
+        });
     }
 
     /**

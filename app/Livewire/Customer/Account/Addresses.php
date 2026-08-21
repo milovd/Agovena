@@ -39,6 +39,8 @@ final class Addresses extends Component
 
     public bool $is_default_shipping = false;
 
+    public bool $embedded = false;
+
     public function edit(int $addressId): void
     {
         /** @var Customer $customer */
@@ -136,13 +138,19 @@ final class Addresses extends Component
         /** @var Customer $customer */
         $customer = authenticated_customer();
 
-        return view($theme->view('account.addresses'), [
+        $data = [
             'theme' => $theme,
             'addresses' => $customer->addresses()->latest('id')->get(),
-            'accountSection' => 'addresses',
+            'accountSection' => 'profile',
             'countries' => $this->countries(),
-        ])->layout($theme->view('layouts.storefront'), [
-            'title' => __('customer.account.addresses_title'),
+        ];
+
+        if ($this->embedded) {
+            return view($theme->view('account.partials.addresses-panel'), $data);
+        }
+
+        return view($theme->view('account.addresses'), $data)->layout($theme->view('layouts.storefront'), [
+            'title' => __('customer.profile.heading'),
             'theme' => $theme,
         ]);
     }

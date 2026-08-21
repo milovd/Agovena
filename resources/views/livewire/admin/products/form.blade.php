@@ -160,8 +160,36 @@
                         @error('currency') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                 </div>
+                @if ($mode === 'edit' && $currencies->count() > 1)
+                    <div class="ag-field" style="margin-top: 1rem;">
+                        <p class="ag-field__label">{{ __('admin.products.form.currency_overrides') }}</p>
+                        <p class="ag-field__hint">{{ __('admin.products.form.currency_overrides_hint') }}</p>
+                        <div class="ag-grid ag-grid--2" style="margin-top: 0.75rem;">
+                            @foreach ($currencies as $currencyOption)
+                                @continue(strtoupper($currencyOption->code) === strtoupper($currency))
+                                <div class="ag-field" wire:key="currency-price-{{ $currencyOption->code }}">
+                                    <label class="ag-field__label" for="currency-price-{{ $currencyOption->code }}">
+                                        {{ $currencyOption->code }} — {{ $currencyOption->name }}
+                                    </label>
+                                    <input
+                                        id="currency-price-{{ $currencyOption->code }}"
+                                        class="ag-input"
+                                        type="text"
+                                        inputmode="decimal"
+                                        wire:model="currencyPrices.{{ $currencyOption->code }}"
+                                        placeholder="{{ __('admin.products.form.currency_override_placeholder') }}"
+                                    >
+                                    @error('currencyPrices.'.$currencyOption->code)
+                                        <p class="ag-field__error" role="alert">{{ $message }}</p>
+                                    @enderror
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
         </section>
+
     </form>
 
     @if ($mode === 'edit')

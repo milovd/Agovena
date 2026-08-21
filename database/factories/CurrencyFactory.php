@@ -22,6 +22,7 @@ class CurrencyFactory extends Factory
             'prefix' => '',
             'suffix' => '',
             'precision' => 2,
+            'exchange_rate' => '1.00000000',
             'is_active' => true,
         ];
     }

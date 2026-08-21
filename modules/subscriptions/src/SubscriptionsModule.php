@@ -70,7 +70,9 @@ final class SubscriptionsModule implements Module
             label: 'subscriptions::customer.nav',
             route: 'customer.subscriptions',
             section: 'subscriptions',
-            sort: 30,
+            sort: 20,
+            icon: 'repeat',
+            group: AccountNavItem::GROUP_ACCOUNT,
         ));
 
         $context->customerAccountOverview(

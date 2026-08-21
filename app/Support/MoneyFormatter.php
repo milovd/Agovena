@@ -5,9 +5,14 @@ declare(strict_types=1);
 namespace App\Support;
 
 use App\Agovena\Money\CurrencyCatalog;
+use App\Agovena\Money\CurrencyConverter;
 use App\Agovena\Money\Money;
+use App\Agovena\Money\ResolveProductPrice;
+use App\Agovena\Storefront\StorefrontPreferences;
 use App\Models\Currency;
+use App\Models\Product;
 use InvalidArgumentException;
+use Throwable;
 
 final class MoneyFormatter
 {
@@ -26,6 +31,56 @@ final class MoneyFormatter
         }
 
         return self::fallback($amount, $currency);
+    }
+
+    /**
+     * Format for UI display in the visitor/admin preferred currency (session), converting via rates.
+     * Does not change stored amounts — invoices/checkout settlement stay in their native currency.
+     */
+    public static function formatDisplay(Money|int $amount, ?string $currency = null, ?string $displayCurrency = null): string
+    {
+        if ($amount instanceof Money) {
+            $currency = $amount->currency;
+            $amount = $amount->amount;
+        }
+
+        $currency ??= 'EUR';
+        $displayCurrency ??= self::preferredDisplayCurrency();
+
+        if (strtoupper($currency) === strtoupper($displayCurrency)) {
+            return self::format($amount, $currency);
+        }
+
+        try {
+            $converted = app(CurrencyConverter::class)->convert($amount, $currency, $displayCurrency);
+
+            return self::format($converted, $displayCurrency);
+        } catch (Throwable) {
+            return self::format($amount, $currency);
+        }
+    }
+
+    /**
+     * Format a product price for the preferred (or given) currency.
+     * Returns null when the product is not available in that currency.
+     */
+    public static function formatProduct(Product $product, ?string $displayCurrency = null): ?string
+    {
+        $resolved = app(ResolveProductPrice::class)->resolve($product, $displayCurrency);
+        if ($resolved === null) {
+            return null;
+        }
+
+        return self::format($resolved->money);
+    }
+
+    public static function preferredDisplayCurrency(): string
+    {
+        try {
+            return app(StorefrontPreferences::class)->currencyCode();
+        } catch (Throwable) {
+            return 'EUR';
+        }
     }
 
     /**
@@ -101,6 +156,7 @@ final class MoneyFormatter
             'prefix' => $currency.' ',
             'suffix' => '',
             'precision' => 2,
+            'exchange_rate' => '1.00000000',
             'is_active' => true,
         ]);
 

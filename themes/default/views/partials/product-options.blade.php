@@ -12,7 +12,7 @@
                             <option value="{{ $choice->value }}">
                                 {{ $choice->label }}
                                 @if ($choice->price_adjustment_amount > 0)
-                                    (+{{ \App\Support\MoneyFormatter::format($choice->price_adjustment_amount, $product->currency) }})
+                                    (+{{ \App\Support\MoneyFormatter::formatDisplay($choice->price_adjustment_amount, $product->currency) }})
                                 @endif
                             </option>
                         @endforeach
@@ -24,7 +24,7 @@
                             <span>
                                 {{ $choice->label }}
                                 @if ($choice->price_adjustment_amount > 0)
-                                    (+{{ \App\Support\MoneyFormatter::format($choice->price_adjustment_amount, $product->currency) }})
+                                    (+{{ \App\Support\MoneyFormatter::formatDisplay($choice->price_adjustment_amount, $product->currency) }})
                                 @endif
                             </span>
                         </label>
@@ -36,7 +36,7 @@
                             <span>
                                 {{ $choice->label }}
                                 @if ($choice->price_adjustment_amount > 0)
-                                    (+{{ \App\Support\MoneyFormatter::format($choice->price_adjustment_amount, $product->currency) }})
+                                    (+{{ \App\Support\MoneyFormatter::formatDisplay($choice->price_adjustment_amount, $product->currency) }})
                                 @endif
                             </span>
                         </label>
@@ -47,7 +47,7 @@
                         <span>
                             {{ __('storefront.product.enable_option') }}
                             @if ($option->price_adjustment_amount > 0)
-                                (+{{ \App\Support\MoneyFormatter::format($option->price_adjustment_amount, $product->currency) }})
+                                (+{{ \App\Support\MoneyFormatter::formatDisplay($option->price_adjustment_amount, $product->currency) }})
                             @endif
                         </span>
                     </label>

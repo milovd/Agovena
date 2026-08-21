@@ -3,9 +3,13 @@
 
     <section class="store-account__main store-account-panel">
         <header class="store-account-panel__header">
-            <p class="store-account-panel__back">
-                <a href="{{ route('customer.orders.index') }}">{{ __('customer.account.back_to_orders') }}</a>
-            </p>
+            @include('theme::account.partials.breadcrumbs', [
+                'items' => [
+                    ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
+                    ['label' => __('customer.account.nav_orders'), 'url' => route('customer.orders.index')],
+                    ['label' => $order->number],
+                ],
+            ])
             <h1 class="store-account-panel__title">{{ $order->number }}</h1>
             <p class="store-account-panel__lede">
                 {{ __('customer.account.order_statuses.'.$order->status->value) }}

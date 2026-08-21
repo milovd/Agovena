@@ -57,6 +57,8 @@ final class DigitalModule implements Module
             route: 'customer.downloads',
             section: 'downloads',
             sort: 35,
+            icon: 'download',
+            group: AccountNavItem::GROUP_SERVICES,
         ));
 
         $context->customerAccountOverview(

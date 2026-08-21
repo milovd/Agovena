@@ -219,6 +219,19 @@ class AgovenaServiceProvider extends ServiceProvider
                 $discoveryCategories = collect();
             }
             $view->with('discoveryCategories', $discoveryCategories);
+
+            try {
+                $preferences = $this->app->make(\App\Agovena\Storefront\StorefrontPreferences::class);
+                $view->with('storefrontLocales', $preferences->availableLocales());
+                $view->with('storefrontLocale', $preferences->locale());
+                $view->with('storefrontCurrencies', $preferences->availableCurrencies());
+                $view->with('storefrontCurrency', $preferences->currencyCode());
+            } catch (\Throwable) {
+                $view->with('storefrontLocales', config('agovena.locales', ['en' => 'English']));
+                $view->with('storefrontLocale', app()->getLocale());
+                $view->with('storefrontCurrencies', collect());
+                $view->with('storefrontCurrency', 'EUR');
+            }
         });
 
         View::composer('theme::account.partials.nav', function ($view): void {
@@ -276,6 +289,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'folders',
             sort: 15,
             permission: 'categories.view',
+            parent: 'products',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -296,6 +310,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'file-text',
             sort: 25,
             permission: 'invoices.view',
+            parent: 'orders',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -306,6 +321,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'file-text',
             sort: 27,
             permission: 'discounts.view',
+            parent: 'orders',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -347,6 +363,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'coins',
             sort: 115,
             permission: 'taxes.view',
+            parent: 'settings',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -367,6 +384,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'mail',
             sort: 55,
             permission: 'notifications.view',
+            parent: 'audit',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -377,6 +395,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'coins',
             sort: 110,
             permission: 'currencies.view',
+            parent: 'settings',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -387,6 +406,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'package',
             sort: 119,
             permission: 'modules.manage',
+            parent: 'modules',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -407,6 +427,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'package',
             sort: 121,
             permission: 'extensions.view',
+            parent: 'modules',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -417,6 +438,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'key',
             sort: 122,
             permission: 'api.tokens',
+            parent: 'users',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -437,6 +459,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'shield',
             sort: 210,
             permission: 'roles.view',
+            parent: 'users',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -446,6 +469,7 @@ class AgovenaServiceProvider extends ServiceProvider
             href: '/admin/security',
             icon: 'shield',
             sort: 215,
+            parent: 'users',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -466,6 +490,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'mail',
             sort: 62,
             permission: 'notifications.view',
+            parent: 'audit',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -476,6 +501,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'circle-alert',
             sort: 64,
             permission: 'jobs.view',
+            parent: 'audit',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -491,7 +517,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'themes',
             label: 'admin.nav.themes',
-            group: 'admin.nav_groups.system',
+            group: 'admin.nav_groups.appearance',
             href: '/admin/appearance/themes',
             icon: 'layout-template',
             sort: 300,
@@ -500,29 +526,32 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'theme-customize',
             label: 'admin.nav.customize',
-            group: 'admin.nav_groups.system',
+            group: 'admin.nav_groups.appearance',
             href: '/admin/appearance/customize',
             icon: 'palette',
             sort: 310,
             permission: 'theme.view',
+            parent: 'themes',
         ));
         $admin->navigation(new NavigationItem(
             id: 'navigation',
             label: 'admin.nav.navigation',
-            group: 'admin.nav_groups.system',
+            group: 'admin.nav_groups.appearance',
             href: '/admin/appearance/navigation',
             icon: 'menu',
             sort: 320,
             permission: 'navigation.view',
+            parent: 'themes',
         ));
         $admin->navigation(new NavigationItem(
             id: 'pages',
             label: 'admin.nav.pages',
-            group: 'admin.nav_groups.system',
+            group: 'admin.nav_groups.appearance',
             href: '/admin/appearance/pages',
             icon: 'file-text',
             sort: 330,
             permission: 'pages.view',
+            parent: 'themes',
         ));
     }
 
@@ -676,6 +705,15 @@ class AgovenaServiceProvider extends ServiceProvider
             default: 'EUR',
             help: 'admin.settings.field_help.base_currency',
             sort: 40,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'general',
+            key: 'auto_currency_conversion',
+            label: 'admin.settings.fields.auto_currency_conversion',
+            type: 'boolean',
+            default: true,
+            help: 'admin.settings.field_help.auto_currency_conversion',
+            sort: 45,
         ));
 
         $admin->settingsField(new SettingsField(

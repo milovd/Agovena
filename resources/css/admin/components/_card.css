@@ -1,0 +1,211 @@
+/* Shared Agovena card primitive — Admin + storefront account (token fallbacks). */
+
+.ag-card {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+  overflow: clip;
+  border: 1px solid var(--ag-color-border, var(--theme-color-border));
+  border-radius: var(--ag-radius-md, var(--theme-radius-md, 0.75rem));
+  background: var(--ag-color-surface, var(--theme-color-surface, #fff));
+  box-shadow: none;
+}
+
+.ag-card__header {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1.15rem 1.25rem 0.9rem;
+}
+
+.ag-card__title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  color: var(--ag-color-text, var(--theme-color-text));
+}
+
+.ag-card__description {
+  margin: 0;
+  color: var(--ag-color-text-muted, var(--theme-color-text-muted));
+  font-size: 0.875rem;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+.ag-card__content {
+  padding: 0.15rem 1.25rem 1.2rem;
+}
+
+.ag-card__header + .ag-card__content {
+  padding-top: 0;
+}
+
+.ag-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.85rem 1.25rem 1.15rem;
+  border-top: 1px solid var(--ag-color-border, var(--theme-color-border));
+}
+
+.ag-card--flush > .ag-card__content {
+  padding: 0;
+}
+
+.ag-card--metric {
+  padding: 1.15rem 1.2rem;
+  gap: 0.35rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.ag-card--metric:hover,
+a.ag-card--metric:focus-visible {
+  border-color: color-mix(in srgb, var(--ag-color-primary, var(--theme-color-accent)) 38%, var(--ag-color-border, var(--theme-color-border)));
+}
+
+a.ag-card--metric:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring, var(--theme-focus));
+}
+
+.ag-card--alert {
+  border-color: color-mix(in srgb, var(--ag-color-warning, #d97706) 38%, var(--ag-color-border, var(--theme-color-border)));
+  background: color-mix(in srgb, var(--ag-color-warning, #d97706) 6%, var(--ag-color-surface, var(--theme-color-surface, #fff)));
+}
+
+.ag-separator {
+  margin: 0;
+  border: 0;
+  border-top: 1px solid var(--ag-color-border, var(--theme-color-border));
+}
+
+.ag-card > .ag-separator {
+  margin: 0;
+}
+
+.ag-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  background: var(--ag-color-primary, var(--theme-color-accent));
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+.ag-avatar--sm {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.6875rem;
+}
+
+.ag-avatar--md {
+  width: 2.75rem;
+  height: 2.75rem;
+  font-size: 0.875rem;
+}
+
+.ag-avatar--lg {
+  width: 3.25rem;
+  height: 3.25rem;
+  font-size: 1rem;
+}
+
+.ag-empty--soft {
+  display: grid;
+  justify-items: start;
+  gap: 0.4rem;
+  padding: 1.1rem 0 0.25rem;
+  border: 0;
+  background: transparent;
+  text-align: start;
+}
+
+.ag-empty__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.15rem;
+  color: var(--ag-color-text-muted, var(--theme-color-text-muted));
+}
+
+.ag-empty__title {
+  margin: 0;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.ag-empty__text {
+  margin: 0;
+  color: var(--ag-color-text-muted, var(--theme-color-text-muted));
+  line-height: 1.5;
+  max-width: 28rem;
+}
+
+.ag-empty__actions {
+  margin-top: 0.65rem;
+}
+
+.ag-row-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+}
+
+.ag-row-list__item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--ag-color-border, var(--theme-color-border));
+}
+
+.ag-row-list__item:first-child {
+  border-top: 0;
+  padding-top: 0.1rem;
+}
+
+.ag-row-list__item:last-child {
+  padding-bottom: 0.1rem;
+}
+
+.ag-row-list__title {
+  display: inline-flex;
+  color: inherit;
+  font-weight: 650;
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.ag-row-list__title:hover,
+.ag-row-list__title:focus-visible {
+  color: var(--ag-color-primary, var(--theme-color-accent));
+}
+
+.ag-row-list__title:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring, var(--theme-focus));
+  border-radius: 2px;
+}
+
+.ag-row-list__meta {
+  margin: 0.25rem 0 0;
+  color: var(--ag-color-text-muted, var(--theme-color-text-muted));
+  font-size: 0.8125rem;
+}
+
+.ag-row-list__end {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+  text-align: right;
+}

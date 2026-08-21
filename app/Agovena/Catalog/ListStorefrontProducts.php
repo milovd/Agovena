@@ -22,8 +22,9 @@ final class ListStorefrontProducts
         ?string $sort = null,
         ?int $limit = null,
         ?int $excludeId = null,
+        ?string $currency = null,
     ): Collection {
-        $query = $this->query($categoryId, $categoryIds, $search, $sort, $excludeId);
+        $query = $this->query($categoryId, $categoryIds, $search, $sort, $excludeId, $currency);
 
         if ($limit !== null && $limit > 0) {
             $query->limit($limit);
@@ -43,10 +44,11 @@ final class ListStorefrontProducts
         ?string $sort = null,
         int $perPage = 24,
         ?int $excludeId = null,
+        ?string $currency = null,
     ): LengthAwarePaginator {
         $perPage = max(1, min($perPage, 48));
 
-        return $this->query($categoryId, $categoryIds, $search, $sort, $excludeId)
+        return $this->query($categoryId, $categoryIds, $search, $sort, $excludeId, $currency)
             ->paginate($perPage)
             ->withQueryString();
     }
@@ -61,10 +63,11 @@ final class ListStorefrontProducts
         ?string $search,
         ?string $sort,
         ?int $excludeId,
+        ?string $currency = null,
     ): Builder {
         $query = Product::query()
             ->active()
-            ->with(['category', 'images']);
+            ->with(['category', 'images', 'currencyPrices']);
 
         if ($categoryIds !== null) {
             $query->whereIn('category_id', $categoryIds);
@@ -74,6 +77,10 @@ final class ListStorefrontProducts
 
         if ($excludeId !== null) {
             $query->whereKeyNot($excludeId);
+        }
+
+        if (is_string($currency) && $currency !== '') {
+            $query->where('currency', strtoupper($currency));
         }
 
         $term = trim((string) $search);

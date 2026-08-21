@@ -22,7 +22,7 @@ final class SearchSuggestController
                 'name' => $product->name,
                 'slug' => $product->slug,
                 'url' => route('storefront.product', $product->slug),
-                'price' => MoneyFormatter::format($product->price_amount, $product->currency),
+                'price' => MoneyFormatter::formatProduct($product) ?? __('storefront.product.not_available_in_currency'),
                 'image' => ProductMedia::primaryUrl($product),
                 'category' => $product->category?->name,
             ];

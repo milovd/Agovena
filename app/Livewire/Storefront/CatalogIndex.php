@@ -7,6 +7,7 @@ namespace App\Livewire\Storefront;
 use App\Agovena\Catalog\ListStorefrontCategories;
 use App\Agovena\Catalog\ListStorefrontProducts;
 use App\Agovena\Settings\SettingsRepository;
+use App\Agovena\Storefront\StorefrontPreferences;
 use App\Agovena\Theme\ThemeManager;
 use Livewire\Component;
 
@@ -24,6 +25,7 @@ final class CatalogIndex extends Component
         ListStorefrontCategories $categories,
         ThemeManager $themes,
         SettingsRepository $settings,
+        StorefrontPreferences $preferences,
     ) {
         $theme = $themes->active();
         $config = $themes->config($theme);
@@ -31,6 +33,7 @@ final class CatalogIndex extends Component
         $products = $list->handle(
             search: $query !== '' ? $query : null,
             limit: $query !== '' ? 48 : 24,
+            currency: $preferences->catalogCurrencyFilter(),
         );
 
         $siteName = (string) $settings->get('general', 'site_name', config('app.name', 'Shop'));

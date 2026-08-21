@@ -10,8 +10,17 @@ namespace App\Agovena\Customer;
  */
 final class AccountNavItem
 {
+    public const GROUP_PRIMARY = 'primary';
+
+    public const GROUP_PURCHASES = 'purchases';
+
+    public const GROUP_SERVICES = 'services';
+
+    public const GROUP_ACCOUNT = 'account';
+
     /**
      * @param  (callable(): bool)|null  $visible
+     * @param  self::GROUP_*  $group
      */
     public function __construct(
         public readonly string $id,
@@ -20,5 +29,7 @@ final class AccountNavItem
         public readonly string $section,
         public readonly int $sort = 50,
         public readonly mixed $visible = null,
+        public readonly ?string $icon = null,
+        public readonly string $group = self::GROUP_PRIMARY,
     ) {}
 }

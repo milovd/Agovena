@@ -50,3 +50,22 @@
     --theme-ease: 0ms;
   }
 }
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --theme-color-bg: #0b1220;
+  --theme-color-bg-accent: #111827;
+  --theme-color-surface: #111827;
+  --theme-color-surface-muted: #1f2937;
+  --theme-color-ink: #f8fafc;
+  --theme-color-text: #f8fafc;
+  --theme-color-text-muted: #94a3b8;
+  --theme-color-border: #243044;
+  --theme-color-border-strong: #334155;
+  --theme-color-accent-soft: rgb(96 165 250 / 0.16);
+  --theme-color-danger-soft: rgb(248 113 113 / 0.14);
+  --theme-color-announce: #020617;
+  --theme-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --theme-shadow-md: 0 10px 28px rgb(0 0 0 / 0.4);
+  --theme-focus: 0 0 0 3px rgb(96 165 250 / 0.4);
+}

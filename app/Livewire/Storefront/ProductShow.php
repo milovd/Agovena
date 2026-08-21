@@ -75,6 +75,13 @@ final class ProductShow extends Component
             FILTER_VALIDATE_BOOLEAN
         );
 
+        $configuredPrice = null;
+        try {
+            $configuredPrice = $pricer->unitPrice($product, $this->optionSelections);
+        } catch (\InvalidArgumentException) {
+            $configuredPrice = null;
+        }
+
         return view($theme->view('catalog.show'), [
             'product' => $product,
             'related' => $related,
@@ -82,7 +89,8 @@ final class ProductShow extends Component
             'themeConfig' => $config,
             'enableReviews' => $enableReviews,
             'purchaseOptions' => $options->activeOptions($product),
-            'configuredPrice' => $pricer->unitPrice($product, $this->optionSelections),
+            'configuredPrice' => $configuredPrice,
+            'priceAvailable' => $configuredPrice !== null,
         ])->layout($theme->view('layouts.storefront'), [
             'title' => $product->name,
             'theme' => $theme,

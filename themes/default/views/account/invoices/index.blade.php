@@ -2,67 +2,86 @@
     @include('theme::account.partials.nav', ['accountSection' => $accountSection])
 
     <section class="store-account__main store-account-panel">
+        @include('theme::account.partials.breadcrumbs', [
+            'items' => [
+                ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
+                ['label' => __('customer.account.invoices_title')],
+            ],
+        ])
+
         <header class="store-account-panel__header">
             <h1 class="store-account-panel__title">{{ __('customer.account.invoices_title') }}</h1>
         </header>
 
         @if ($invoices->isEmpty())
-            <p class="store-account-panel__empty">{{ __('customer.account.no_invoices') }}</p>
+            <x-ag.empty :title="__('customer.account.no_invoices')">
+                <x-slot:icon>
+                    <x-ag.icon name="file-text" :size="22" />
+                </x-slot:icon>
+                <x-slot:description>{{ __('customer.account.no_invoices_hint') }}</x-slot:description>
+            </x-ag.empty>
         @else
-            <div class="store-table-wrap">
-                <table class="store-table">
-                    <thead>
-                        <tr>
-                            <th>{{ __('customer.account.invoice_number') }}</th>
-                            <th>{{ __('customer.account.order_date') }}</th>
-                            <th>{{ __('customer.account.order_status') }}</th>
-                            <th>{{ __('customer.account.total') }}</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($invoices as $invoice)
-                            <tr>
-                                <td>{{ $invoice->number }}</td>
-                                <td>{{ $invoice->issued_at?->format('Y-m-d') }}</td>
-                                <td>{{ __('customer.account.invoice_statuses.'.$invoice->status->value) }}</td>
-                                <td>{{ \App\Support\MoneyFormatter::format($invoice->total_amount, $invoice->currency) }}</td>
-                                <td><a href="{{ route('customer.invoices.show', $invoice) }}">{{ __('customer.account.view_invoice') }}</a></td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+            <div class="store-account-card-list" role="list">
+                @foreach ($invoices as $invoice)
+                    @php
+                        $statusClass = match ($invoice->status->value) {
+                            'paid' => 'is-success',
+                            'void' => 'is-muted',
+                            default => 'is-warning',
+                        };
+                    @endphp
+                    <article class="store-account-entry" role="listitem">
+                        <div class="store-account-entry__body">
+                            <p class="store-account-entry__title">{{ $invoice->number }}</p>
+                            <p class="store-account-entry__meta">
+                                {{ $invoice->issued_at?->timezone(config('app.timezone'))?->locale(app()->getLocale())->translatedFormat('j F Y') }}
+                            </p>
+                            <p class="store-order-card__status {{ $statusClass }}">
+                                {{ __('customer.account.invoice_statuses.'.$invoice->status->value) }}
+                            </p>
+                        </div>
+                        <div class="store-account-entry__end">
+                            <strong>{{ \App\Support\MoneyFormatter::formatDisplay($invoice->total_amount, $invoice->currency) }}</strong>
+                            <a class="store-account-entry__action" href="{{ route('customer.invoices.show', $invoice) }}">
+                                <x-ag.icon name="chevron-right" :size="16" />
+                                <span class="visually-hidden">{{ __('customer.account.view_invoice') }}</span>
+                            </a>
+                        </div>
+                    </article>
+                @endforeach
             </div>
             <div class="store-account-panel__pagination">{{ $invoices->links() }}</div>
         @endif
 
-        <h2 class="store-account-panel__title">{{ __('customer.account.credit_notes_title') }}</h2>
-        @if ($creditNotes->isEmpty())
-            <p class="store-account-panel__empty">{{ __('customer.account.no_credit_notes') }}</p>
-        @else
-            <div class="store-table-wrap">
-                <table class="store-table">
-                    <thead>
-                        <tr>
-                            <th>{{ __('customer.account.credit_note_number') }}</th>
-                            <th>{{ __('customer.account.order_date') }}</th>
-                            <th>{{ __('customer.account.total') }}</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($creditNotes as $creditNote)
-                            <tr>
-                                <td>{{ $creditNote->number }}</td>
-                                <td>{{ $creditNote->issued_at?->format('Y-m-d') }}</td>
-                                <td>{{ \App\Support\MoneyFormatter::format($creditNote->total_amount, $creditNote->currency) }}</td>
-                                <td><a href="{{ route('customer.credit-notes.show', $creditNote) }}">{{ __('customer.account.view_credit_note') }}</a></td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        <section class="store-account-dashboard__recent" aria-labelledby="credit-notes-heading">
+            <div class="store-account-dashboard__recent-head">
+                <h2 id="credit-notes-heading" class="store-account-dashboard__section-title">{{ __('customer.account.credit_notes_title') }}</h2>
             </div>
-            <div class="store-account-panel__pagination">{{ $creditNotes->links() }}</div>
-        @endif
+
+            @if ($creditNotes->isEmpty())
+                <p class="store-account-panel__empty">{{ __('customer.account.no_credit_notes') }}</p>
+            @else
+                <div class="store-account-card-list" role="list">
+                    @foreach ($creditNotes as $creditNote)
+                        <article class="store-account-entry" role="listitem">
+                            <div class="store-account-entry__body">
+                                <p class="store-account-entry__title">{{ $creditNote->number }}</p>
+                                <p class="store-account-entry__meta">
+                                    {{ $creditNote->issued_at?->timezone(config('app.timezone'))?->locale(app()->getLocale())->translatedFormat('j F Y') }}
+                                </p>
+                            </div>
+                            <div class="store-account-entry__end">
+                                <strong>{{ \App\Support\MoneyFormatter::formatDisplay($creditNote->total_amount, $creditNote->currency) }}</strong>
+                                <a class="store-account-entry__action" href="{{ route('customer.credit-notes.show', $creditNote) }}">
+                                    <x-ag.icon name="chevron-right" :size="16" />
+                                    <span class="visually-hidden">{{ __('customer.account.view_credit_note') }}</span>
+                                </a>
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+                <div class="store-account-panel__pagination">{{ $creditNotes->links() }}</div>
+            @endif
+        </section>
     </section>
 </div>

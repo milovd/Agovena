@@ -34,75 +34,7 @@
                 </span>
             </div>
             <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
-                @php
-                    use App\Agovena\Admin\AdminNavigation;
-                    $staff = auth()->user();
-                    $nav = collect($navigation ?? [])->filter(function ($item) use ($staff) {
-                        $authorized = $item->permission === null
-                            || ($staff !== null && $staff->can($item->permission));
-
-                        return $authorized && is_string($item->href) && $item->href !== '';
-                    });
-                    $groups = AdminNavigation::groupItems($nav);
-                @endphp
-                @foreach ($groups as $group => $items)
-                    @php
-                        $groupSlug = \Illuminate\Support\Str::slug($group);
-                        $groupHasActive = $items->contains(fn ($item) => AdminNavigation::isActive($item->href));
-                    @endphp
-                    <div
-                        class="admin-nav__section"
-                        x-data="{
-                            open: true,
-                            init() {
-                                const key = 'agovena.admin.nav.v3.{{ $groupSlug }}';
-                                const stored = localStorage.getItem(key);
-                                if (stored === '0' && ! {{ $groupHasActive ? 'true' : 'false' }}) {
-                                    this.open = false;
-                                } else {
-                                    this.open = true;
-                                }
-                                this.$watch('open', (value) => localStorage.setItem(key, value ? '1' : '0'));
-                            }
-                        }"
-                        :class="{ 'admin-nav__section--collapsed': !open }"
-                    >
-                        <button
-                            type="button"
-                            class="admin-nav__group"
-                            id="nav-group-{{ $groupSlug }}"
-                            @click="open = !open"
-                            :aria-expanded="open.toString()"
-                            aria-controls="nav-group-panel-{{ $groupSlug }}"
-                        >
-                            <span class="admin-nav__group-label">{{ __($group) }}</span>
-                            <x-ag.icon name="chevron-down" class="admin-nav__group-chevron" :size="14" />
-                        </button>
-                        <ul
-                            id="nav-group-panel-{{ $groupSlug }}"
-                            class="admin-nav__list"
-                            role="list"
-                            aria-labelledby="nav-group-{{ $groupSlug }}"
-                            x-show="open"
-                        >
-                            @foreach ($items as $item)
-                                @php $active = AdminNavigation::isActive($item->href); @endphp
-                                <li>
-                                    <a
-                                        class="admin-nav__link @if($item->parent) admin-nav__link--child @endif @if($active) admin-nav__link--active @endif"
-                                        href="{{ $item->href }}"
-                                        @if($active) aria-current="page" @endif
-                                    >
-                                        @if ($item->icon)
-                                            <x-ag.icon :name="$item->icon" class="admin-nav__icon" :size="18" />
-                                        @endif
-                                        <span class="admin-nav__label">{{ __($item->label) }}</span>
-                                    </a>
-                                </li>
-                            @endforeach
-                        </ul>
-                    </div>
-                @endforeach
+                @include('partials.admin-nav')
             </nav>
             <div class="admin-sidebar__footer">
                 <p class="admin-sidebar__footer-meta">{{ __('admin.product_name') }}</p>

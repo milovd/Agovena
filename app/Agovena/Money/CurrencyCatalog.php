@@ -15,7 +15,7 @@ final class CurrencyCatalog
     {
         $code = strtoupper($code);
 
-        /** @var array{code: string, name: string, prefix: string, suffix: string, precision: int, is_active: bool}|null $data */
+        /** @var array{code: string, name: string, prefix: string, suffix: string, precision: int, exchange_rate: string, is_active: bool}|null $data */
         $data = Cache::remember(self::CACHE_PREFIX.$code, 3600, function () use ($code): ?array {
             $currency = Currency::query()->where('code', $code)->first();
             if ($currency === null) {
@@ -28,6 +28,7 @@ final class CurrencyCatalog
                 'prefix' => $currency->prefix,
                 'suffix' => $currency->suffix,
                 'precision' => $currency->normalizedPrecision(),
+                'exchange_rate' => (string) ($currency->exchange_rate ?? '1.00000000'),
                 'is_active' => $currency->is_active,
             ];
         });

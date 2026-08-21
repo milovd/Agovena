@@ -59,7 +59,7 @@
                                     <span class="ag-muted">{{ $order->customer_email }}</span>
                                 </div>
                             </td>
-                            <td>{{ \App\Support\MoneyFormatter::format($order->total_amount, $order->currency) }}</td>
+                            <td>{{ \App\Support\MoneyFormatter::formatDisplay($order->total_amount, $order->currency) }}</td>
                             <td>
                                 <span @class([
                                     'ag-badge',

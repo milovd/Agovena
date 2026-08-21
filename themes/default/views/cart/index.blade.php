@@ -40,7 +40,7 @@
                                         @endforeach
                                     </ul>
                                 @endif
-                                <p class="store-cart-line__unit">{{ \App\Support\MoneyFormatter::format($line->unitPrice) }} {{ __('storefront.cart.each') }}</p>
+                                <p class="store-cart-line__unit">{{ \App\Support\MoneyFormatter::formatDisplay($line->unitPrice) }} {{ __('storefront.cart.each') }}</p>
                             </div>
                             <div class="store-cart-line__controls">
                                 <div class="store-qty" role="group" aria-label="{{ __('storefront.cart.quantity_for', ['name' => $line->label]) }}">
@@ -57,7 +57,7 @@
                                     >
                                     <button type="button" class="store-qty__btn" wire:click="incrementLine(@js($line->lineKey))" @disabled($line->quantity >= 99) aria-label="{{ __('storefront.product.increase') }}">+</button>
                                 </div>
-                                <p class="store-cart-line__total">{{ \App\Support\MoneyFormatter::format($line->lineTotal) }}</p>
+                                <p class="store-cart-line__total">{{ \App\Support\MoneyFormatter::formatDisplay($line->lineTotal) }}</p>
                                 <button type="button" class="store-cart-line__remove" wire:click="removeLine(@js($line->lineKey))" aria-label="{{ __('storefront.cart.remove_item', ['name' => $line->label]) }}">
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
                                         <path d="M4 7h16"/>
@@ -78,11 +78,11 @@
                 <dl class="store-totals">
                     <div>
                         <dt>{{ __('storefront.cart.subtotal') }}</dt>
-                        <dd>{{ \App\Support\MoneyFormatter::format($subtotal) }}</dd>
+                        <dd>{{ \App\Support\MoneyFormatter::formatDisplay($subtotal) }}</dd>
                     </div>
                     <div class="store-totals__total">
                         <dt>{{ __('storefront.checkout.total') }}</dt>
-                        <dd>{{ \App\Support\MoneyFormatter::format($subtotal) }}</dd>
+                        <dd>{{ \App\Support\MoneyFormatter::formatDisplay($subtotal) }}</dd>
                     </div>
                 </dl>
                 <a class="store-btn store-btn--primary store-btn--block store-btn--checkout" href="{{ route('storefront.checkout') }}">{{ __('storefront.cart.checkout') }}</a>

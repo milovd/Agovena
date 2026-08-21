@@ -1,8 +1,10 @@
 /* Default Theme — merchant-neutral ITCSS entry (not Agovena Admin blue) */
-/* Cache-bust: account menu anchors top-right under the trigger. */
+/* Cache-bust: account breadcrumbs + entry cards. */
 
 @import './settings/_tokens.css';
 @import './generic/_reset.css';
+/* Shared Agovena card primitive (Admin + account); uses --theme-* fallbacks. */
+@import '../../../../resources/css/admin/components/_card.css';
 @import './components/_store.css';
 @import './components/_checkout.css';
 @import './utilities/_a11y.css';

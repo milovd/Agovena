@@ -1,38 +1,58 @@
 <div class="store-account">
     @include('theme::account.partials.nav', ['accountSection' => $accountSection])
     <section class="store-account__main store-account-panel">
+        @include('theme::account.partials.breadcrumbs', [
+            'items' => [
+                ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
+                ['label' => __('customer.tickets.heading'), 'url' => route('customer.tickets.index')],
+                ['label' => __('customer.tickets.create')],
+            ],
+        ])
+
         <header class="store-account-panel__header">
             <h1 class="store-account-panel__title">{{ __('customer.tickets.create_title') }}</h1>
+            <p class="store-account-panel__lede">{{ __('customer.tickets.create_lede') }}</p>
         </header>
-        <form class="store-auth__form" wire:submit="save">
-            <div class="store-field">
-                <label class="store-label" for="ticket-subject">{{ __('customer.tickets.subject') }}</label>
-                <input id="ticket-subject" class="store-input" wire:model="subject" required>
-                @error('subject') <p class="store-field__error">{{ $message }}</p> @enderror
-            </div>
-            <div class="store-field">
-                <label class="store-label" for="ticket-priority">{{ __('customer.tickets.priority_label') }}</label>
-                <select id="ticket-priority" class="store-input" wire:model="priority">
-                    @foreach (\App\Enums\TicketPriority::cases() as $priority)
-                        <option value="{{ $priority->value }}">{{ __('customer.tickets.priority.'.$priority->value) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="store-field">
-                <label class="store-label" for="ticket-order">{{ __('customer.tickets.order') }}</label>
-                <select id="ticket-order" class="store-input" wire:model="order_id">
-                    <option value="">{{ __('customer.tickets.no_order') }}</option>
-                    @foreach ($orders as $order)
-                        <option value="{{ $order->id }}">{{ $order->number }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="store-field">
-                <label class="store-label" for="ticket-body">{{ __('customer.tickets.message') }}</label>
-                <textarea id="ticket-body" class="store-input" rows="8" wire:model="body" required></textarea>
-                @error('body') <p class="store-field__error">{{ $message }}</p> @enderror
-            </div>
-            <button class="store-btn store-btn--primary" type="submit">{{ __('customer.tickets.submit') }}</button>
-        </form>
+
+        <x-ag.card>
+            <x-ag.card.header>
+                <x-ag.card.title>{{ __('customer.tickets.create_form_heading') }}</x-ag.card.title>
+                <x-ag.card.description>{{ __('customer.tickets.create_form_lede') }}</x-ag.card.description>
+            </x-ag.card.header>
+            <x-ag.card.content>
+                <form class="store-auth__form" wire:submit="save">
+                    <div class="store-field">
+                        <label class="store-label" for="ticket-subject">{{ __('customer.tickets.subject') }}</label>
+                        <input id="ticket-subject" class="store-input" wire:model="subject" required>
+                        @error('subject') <p class="store-field__error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="store-field">
+                        <label class="store-label" for="ticket-priority">{{ __('customer.tickets.priority_label') }}</label>
+                        <select id="ticket-priority" class="store-input" wire:model="priority">
+                            @foreach (\App\Enums\TicketPriority::cases() as $priority)
+                                <option value="{{ $priority->value }}">{{ __('customer.tickets.priority.'.$priority->value) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="store-field">
+                        <label class="store-label" for="ticket-order">{{ __('customer.tickets.order') }}</label>
+                        <select id="ticket-order" class="store-input" wire:model="order_id">
+                            <option value="">{{ __('customer.tickets.no_order') }}</option>
+                            @foreach ($orders as $order)
+                                <option value="{{ $order->id }}">{{ $order->number }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="store-field">
+                        <label class="store-label" for="ticket-body">{{ __('customer.tickets.message') }}</label>
+                        <textarea id="ticket-body" class="store-input" rows="8" wire:model="body" required></textarea>
+                        @error('body') <p class="store-field__error">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="store-form-actions">
+                        <button class="store-btn store-btn--primary" type="submit">{{ __('customer.tickets.submit') }}</button>
+                    </div>
+                </form>
+            </x-ag.card.content>
+        </x-ag.card>
     </section>
 </div>

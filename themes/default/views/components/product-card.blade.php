@@ -16,7 +16,12 @@
             <p class="store-product-card__excerpt">{{ \Illuminate\Support\Str::limit(strip_tags($product->description), 72) }}</p>
         @endif
         <div class="store-product-card__footer">
-            <p class="store-product-card__price">{{ \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</p>
+            @php $formattedPrice = \App\Support\MoneyFormatter::formatProduct($product); @endphp
+            @if ($formattedPrice !== null)
+                <p class="store-product-card__price">{{ $formattedPrice }}</p>
+            @else
+                <p class="store-product-card__price store-product-card__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
+            @endif
             <span class="store-product-card__cta" aria-hidden="true" title="{{ __('storefront.product.view_product') }}">
                 <svg class="store-product-card__cta-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14"/>

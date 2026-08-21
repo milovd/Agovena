@@ -3,9 +3,13 @@
 
     <section class="store-account__main store-account-panel">
         <header class="store-account-panel__header">
-            <p class="store-account-panel__back">
-                <a href="{{ route('customer.subscriptions') }}">{{ __('subscriptions::customer.back') }}</a>
-            </p>
+            @include('theme::account.partials.breadcrumbs', [
+                'items' => [
+                    ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
+                    ['label' => __('subscriptions::customer.title'), 'url' => route('customer.subscriptions')],
+                    ['label' => $subscription->number],
+                ],
+            ])
             <h1 class="store-account-panel__title">{{ $subscription->product?->name ?? $subscription->number }}</h1>
             <p class="store-account-panel__lede">{{ $subscription->number }}</p>
         </header>
@@ -29,7 +33,7 @@
             </div>
             <div>
                 <dt>{{ __('subscriptions::customer.price') }}</dt>
-                <dd>{{ \App\Support\MoneyFormatter::format($subscription->price_amount * $subscription->quantity, $subscription->currency) }}</dd>
+                <dd>{{ \App\Support\MoneyFormatter::formatDisplay($subscription->price_amount * $subscription->quantity, $subscription->currency) }}</dd>
             </div>
             <div>
                 <dt>{{ __('subscriptions::customer.next_renewal') }}</dt>

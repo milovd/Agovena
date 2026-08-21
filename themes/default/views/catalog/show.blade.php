@@ -198,8 +198,13 @@
                 <p class="store-product__lede">{{ $lede }}</p>
             @endif
 
-            <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice ?? $product->money()) }}</p>
+            @if ($priceAvailable && $configuredPrice)
+                <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
+            @else
+                <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
+            @endif
 
+            @if ($priceAvailable)
             <form wire:submit="addToCart" class="store-product__form">
                 @include('theme::partials.product-options')
                 <div class="store-product__buy">
@@ -222,7 +227,9 @@
                     </button>
                 </div>
                 @error('quantity') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                @error('product') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
             </form>
+            @endif
 
             <div class="store-product__perks" role="list">
                 <div class="store-product__perk" role="listitem">

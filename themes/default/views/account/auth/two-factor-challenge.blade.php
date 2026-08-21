@@ -25,7 +25,7 @@
                     type="text"
                     inputmode="numeric"
                     pattern="[0-9]*"
-                    wire:model="code"
+                    wire:model.live="code"
                     autocomplete="one-time-code"
                     required
                 >

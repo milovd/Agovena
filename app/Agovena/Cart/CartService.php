@@ -9,8 +9,10 @@ use App\Agovena\Catalog\Options\ProductOptionPricer;
 use App\Agovena\Catalog\Options\ProductOptionValidator;
 use App\Agovena\Media\ProductMedia;
 use App\Agovena\Money\Money;
+use App\Agovena\Money\ResolveProductPrice;
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 
 final class CartService
 {
@@ -19,6 +21,7 @@ final class CartService
         private readonly ProductCapabilityRegistry $capabilities,
         private readonly ProductOptionValidator $optionValidator,
         private readonly ProductOptionPricer $optionPricer,
+        private readonly ResolveProductPrice $resolveProductPrice,
     ) {}
 
     /**
@@ -74,9 +77,9 @@ final class CartService
         $removed = [];
 
         foreach ($this->cart->lines() as $line) {
-            $product = Product::query()->find($line->productId);
+            $product = Product::query()->with('currencyPrices')->find($line->productId);
 
-            if ($product === null || ! $product->isPurchasable()) {
+            if ($product === null || ! $product->isPurchasable() || ! $this->resolveProductPrice->isAvailable($product)) {
                 $this->cart->remove($line->lineKey);
                 $removed[] = $line->productId;
             }
@@ -97,13 +100,17 @@ final class CartService
         $priced = [];
 
         foreach ($this->cart->lines() as $line) {
-            $product = Product::query()->with('images')->find($line->productId);
+            $product = Product::query()->with(['images', 'currencyPrices'])->find($line->productId);
 
-            if ($product === null || ! $product->isPurchasable()) {
+            if ($product === null || ! $product->isPurchasable() || ! $this->resolveProductPrice->isAvailable($product)) {
                 continue;
             }
 
-            $unit = $this->optionPricer->unitPrice($product, $line->selections);
+            try {
+                $unit = $this->optionPricer->unitPrice($product, $line->selections);
+            } catch (InvalidArgumentException) {
+                continue;
+            }
             $snapshot = $this->optionPricer->snapshot($product, $line->selections);
             $optionLabels = [];
             foreach ($snapshot as $row) {
@@ -236,11 +243,17 @@ final class CartService
 
     private function requirePurchasable(int $productId): Product
     {
-        $product = Product::query()->find($productId);
+        $product = Product::query()->with('currencyPrices')->find($productId);
 
         if ($product === null || ! $product->isPurchasable()) {
             throw ValidationException::withMessages([
                 'product' => __('storefront.errors.product_unavailable'),
+            ]);
+        }
+
+        if (! $this->resolveProductPrice->isAvailable($product)) {
+            throw ValidationException::withMessages([
+                'product' => __('storefront.errors.product_currency_unavailable'),
             ]);
         }
 

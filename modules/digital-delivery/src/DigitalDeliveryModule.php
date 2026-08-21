@@ -50,6 +50,7 @@ final class DigitalDeliveryModule implements Module
             icon: 'key',
             sort: 16,
             permission: 'digital_delivery.view',
+            parent: 'digital-assets',
         ));
 
         $context->customerAccountNav(new AccountNavItem(
@@ -58,6 +59,8 @@ final class DigitalDeliveryModule implements Module
             route: 'customer.digital-secrets',
             section: 'secrets',
             sort: 34,
+            icon: 'key',
+            group: AccountNavItem::GROUP_SERVICES,
         ));
 
         $context->customerAccountOverview(

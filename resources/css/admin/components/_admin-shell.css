@@ -257,8 +257,75 @@ body {
   transition: transform var(--ag-transition);
 }
 
-.admin-nav__section--collapsed .admin-nav__group-chevron {
+.admin-nav__group--static {
+  cursor: default;
+}
+
+.admin-nav__group--static:hover {
+  background: transparent;
+}
+
+.admin-nav__item--open .admin-nav__branch {
+  transform: rotate(0deg);
+}
+
+.admin-nav__row {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.admin-nav__row .admin-nav__link {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-nav__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-right: 0.35rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ag-radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.admin-nav__toggle:hover {
+  background: var(--ag-color-sidebar-hover);
+}
+
+.admin-nav__toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.admin-nav__branch {
+  display: block;
+  opacity: 0.7;
   transform: rotate(-90deg);
+  transition: transform var(--ag-transition);
+}
+
+.admin-nav__item--open .admin-nav__branch {
+  transform: rotate(0deg);
+}
+
+.admin-nav__sub {
+  margin: 0.1rem 0 0.35rem;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.admin-nav__link--branch-active {
+  color: var(--ag-color-primary);
 }
 
 .admin-main {
@@ -483,8 +550,8 @@ body {
 .admin-panel {
   background: var(--ag-color-surface);
   border: 1px solid var(--ag-color-border);
-  border-radius: var(--ag-radius-lg);
-  box-shadow: var(--ag-shadow-sm);
+  border-radius: var(--ag-radius-md);
+  box-shadow: none;
   padding: var(--ag-space-5);
 }
 
@@ -492,7 +559,7 @@ body {
   margin: 0 0 var(--ag-space-4);
   font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
 }
 
 .admin-app--guest,

@@ -61,6 +61,9 @@ final class Edit extends Component
 
     public string $currency = 'EUR';
 
+    /** @var array<string, string> Major-unit overrides keyed by currency code (empty = no override). */
+    public array $currencyPrices = [];
+
     public ?int $category_id = null;
 
     /** @var list<TemporaryUploadedFile>|TemporaryUploadedFile|null */
@@ -96,7 +99,7 @@ final class Edit extends Component
     {
         $this->authorize('products.update');
 
-        $this->product = $product->load(['images', 'capabilities']);
+        $this->product = $product->load(['images', 'capabilities', 'currencyPrices']);
         $this->name = $product->name;
         $this->subtitle = (string) $product->subtitle;
         $this->slug = $product->slug;
@@ -108,6 +111,13 @@ final class Edit extends Component
         $this->price = MoneyFormatter::majorInputFromMinor($product->price_amount, $product->currency);
         $this->currency = $product->currency;
         $this->category_id = $product->category_id;
+        $this->currencyPrices = $this->emptyCurrencyPriceInputs($product->currency);
+        foreach ($product->currencyPrices as $row) {
+            $this->currencyPrices[strtoupper($row->currency)] = MoneyFormatter::majorInputFromMinor(
+                $row->price_amount,
+                $row->currency,
+            );
+        }
 
         /** @var list<array{label: string, value: string}> $specs */
         $specs = $product->specifications ?? [];
@@ -144,6 +154,21 @@ final class Edit extends Component
         if (app()->bound(ProductStock::class)) {
             $this->stockQuantity = app(ProductStock::class)
                 ->quantityFor($product);
+        }
+    }
+
+    public function updatedCurrency(string $value): void
+    {
+        $this->currencyPrices = $this->emptyCurrencyPriceInputs($value);
+        foreach ($this->product->currencyPrices as $row) {
+            $code = strtoupper($row->currency);
+            if ($code === strtoupper($value)) {
+                continue;
+            }
+            $this->currencyPrices[$code] = MoneyFormatter::majorInputFromMinor(
+                $row->price_amount,
+                $row->currency,
+            );
         }
     }
 
@@ -311,7 +336,7 @@ final class Edit extends Component
         session()->flash('status', __('admin.products.flash.photo_removed'));
     }
 
-    public function save(UpdateProduct $update): void
+    public function save(UpdateProduct $update, \App\Agovena\Catalog\SyncProductCurrencyPrices $syncPrices): void
     {
         $this->authorize('products.update');
 
@@ -333,6 +358,8 @@ final class Edit extends Component
             'status' => ['required', Rule::enum(ProductStatus::class)],
             'price' => ['required', 'string', 'max:20'],
             'currency' => ['required', $currencyRule],
+            'currencyPrices' => ['array'],
+            'currencyPrices.*' => ['nullable', 'string', 'max:20'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
         ]);
 
@@ -342,6 +369,22 @@ final class Edit extends Component
             throw ValidationException::withMessages([
                 'price' => $e->getMessage(),
             ]);
+        }
+
+        $overrideMinors = [];
+        foreach ($data['currencyPrices'] as $code => $major) {
+            $code = strtoupper((string) $code);
+            $major = trim((string) $major);
+            if ($major === '' || $code === strtoupper($data['currency'])) {
+                continue;
+            }
+            try {
+                $overrideMinors[$code] = MoneyFormatter::minorFromMajorInput($major, $code);
+            } catch (\InvalidArgumentException $e) {
+                throw ValidationException::withMessages([
+                    'currencyPrices.'.$code => $e->getMessage(),
+                ]);
+            }
         }
 
         $update->handle($this->product, [
@@ -359,7 +402,9 @@ final class Edit extends Component
             'category_id' => $data['category_id'],
         ]);
 
-        $this->product->refresh()->load('images');
+        $syncPrices->handle($this->product->fresh(), $overrideMinors);
+
+        $this->product->refresh()->load(['images', 'currencyPrices']);
         session()->flash('status', __('admin.products.flash.updated'));
     }
 
@@ -551,5 +596,23 @@ final class Edit extends Component
             'title' => __('admin.products.form.edit_title'),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function emptyCurrencyPriceInputs(string $nativeCurrency): array
+    {
+        $native = strtoupper($nativeCurrency);
+        $inputs = [];
+        foreach (Currency::query()->where('is_active', true)->orderBy('code')->pluck('code') as $code) {
+            $code = strtoupper((string) $code);
+            if ($code === $native) {
+                continue;
+            }
+            $inputs[$code] = '';
+        }
+
+        return $inputs;
     }
 }

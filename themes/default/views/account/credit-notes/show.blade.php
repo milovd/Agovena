@@ -3,9 +3,13 @@
 
     <section class="store-account__main store-account-panel">
         <header class="store-account-panel__header">
-            <p class="store-account-panel__back">
-                <a href="{{ route('customer.invoices.index') }}">{{ __('customer.account.back_to_invoices') }}</a>
-            </p>
+            @include('theme::account.partials.breadcrumbs', [
+                'items' => [
+                    ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
+                    ['label' => __('customer.account.invoices_title'), 'url' => route('customer.invoices.index')],
+                    ['label' => $creditNote->number],
+                ],
+            ])
             <h1 class="store-account-panel__title">{{ $creditNote->number }}</h1>
             <p class="store-account-panel__lede">
                 {{ __('customer.account.credit_note_issued') }}

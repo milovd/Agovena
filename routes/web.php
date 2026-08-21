@@ -3,6 +3,7 @@
 use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
 use App\Http\Controllers\InvoiceDocumentController;
+use App\Http\Controllers\Storefront\PreferencesController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
 use App\Http\Controllers\Webhooks\PaymentWebhookController;
 use App\Http\Middleware\RedirectIfInstalled;
@@ -47,7 +48,6 @@ use App\Livewire\Admin\Tickets\Show as TicketsShow;
 use App\Livewire\Admin\Users\Index as UsersIndex;
 use App\Livewire\Auth\TwoFactorChallenge;
 use App\Livewire\Customer\Account\Addresses as CustomerAddresses;
-use App\Livewire\Customer\Account\ApiTokens as CustomerApiTokens;
 use App\Livewire\Customer\Account\CreditNoteShow as CustomerCreditNoteShow;
 use App\Livewire\Customer\Account\Credits as CustomerCredits;
 use App\Livewire\Customer\Account\Dashboard as CustomerDashboard;
@@ -82,6 +82,8 @@ Route::middleware(RedirectIfInstalled::class)->group(function (): void {
 });
 
 Route::get('/', CatalogIndex::class)->name('storefront.home');
+Route::post('/preferences/locale', [PreferencesController::class, 'locale'])->name('storefront.preferences.locale');
+Route::post('/preferences/currency', [PreferencesController::class, 'currency'])->name('storefront.preferences.currency');
 Route::get('/search/suggest', SearchSuggestController::class)
     ->name('storefront.search.suggest');
 Route::get('/products/{slug}', ProductShow::class)->name('storefront.product');
@@ -131,7 +133,6 @@ Route::middleware('auth')->prefix('account')->name('customer.')->group(function 
         Route::get('/credit-notes/{creditNote}/pdf', [CreditNoteDocumentController::class, 'pdf'])->name('credit-notes.pdf');
         Route::get('/addresses', CustomerAddresses::class)->name('addresses');
         Route::get('/profile', CustomerProfile::class)->name('profile');
-        Route::get('/api-tokens', CustomerApiTokens::class)->name('api-tokens');
         Route::get('/tickets', CustomerTicketsIndex::class)->name('tickets.index');
         Route::get('/tickets/create', CustomerTicketCreate::class)->name('tickets.create');
         Route::get('/tickets/{ticket}', CustomerTicketShow::class)->name('tickets.show');

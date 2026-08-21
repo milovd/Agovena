@@ -3,9 +3,13 @@
 
     <section class="store-account__main store-account-panel store-ticket">
         <header class="store-account-panel__header">
-            <p class="store-account-panel__back">
-                <a href="{{ route('customer.event-tickets') }}">{{ __('events::customer.back') }}</a>
-            </p>
+            @include('theme::account.partials.breadcrumbs', [
+                'items' => [
+                    ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
+                    ['label' => __('events::customer.title'), 'url' => route('customer.event-tickets')],
+                    ['label' => $ticket->number],
+                ],
+            ])
             <h1 class="store-account-panel__title">{{ $ticket->event?->name }}</h1>
             <p class="store-account-panel__lede">{{ $ticket->number }}</p>
         </header>

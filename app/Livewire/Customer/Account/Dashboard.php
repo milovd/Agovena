@@ -21,7 +21,7 @@ final class Dashboard extends Component
 
         $recentOrders = Order::query()
             ->where('customer_id', $customer->id)
-            ->with('payment')
+            ->with(['payment', 'items.product.images'])
             ->latest('id')
             ->limit(5)
             ->get();

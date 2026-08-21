@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Admin;
 
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Money\CurrencyConverter;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
@@ -19,6 +20,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Throwable;
 
 final class DashboardMetrics
 {
@@ -59,8 +61,8 @@ final class DashboardMetrics
             ->pluck('total', 'currency')
             ->map(fn (mixed $total): int => (int) $total);
 
-        $primaryCurrency = $paidRevenueByCurrency->keys()->first() ?? 'EUR';
-        $paidRevenue = (int) ($paidRevenueByCurrency[$primaryCurrency] ?? 0);
+        $displayCurrency = MoneyFormatter::preferredDisplayCurrency();
+        $paidRevenue = $this->sumConverted($paidRevenueByCurrency, $displayCurrency);
         $paidOrderCount = Order::query()
             ->where('status', OrderStatus::Paid)
             ->count();
@@ -72,7 +74,7 @@ final class DashboardMetrics
                 'label' => (string) __('admin.dashboard.stats.paid_revenue'),
                 'value' => $paidRevenueByCurrency->isEmpty()
                     ? (string) __('common.em_dash')
-                    : MoneyFormatter::format($paidRevenue, (string) $primaryCurrency),
+                    : MoneyFormatter::format($paidRevenue, $displayCurrency),
                 'hint' => $paidRevenueByCurrency->isEmpty()
                     ? (string) __('admin.dashboard.stats.no_paid_payments')
                     : (string) __('admin.dashboard.stats.paid_payments_sum'),
@@ -96,7 +98,7 @@ final class DashboardMetrics
                 'id' => 'aov',
                 'label' => (string) __('admin.dashboard.stats.aov'),
                 'value' => $paidOrderCount > 0
-                    ? MoneyFormatter::format($aov, (string) $primaryCurrency)
+                    ? MoneyFormatter::format($aov, $displayCurrency)
                     : (string) __('common.em_dash'),
                 'hint' => (string) __('admin.dashboard.stats.aov_hint'),
                 'href' => null,
@@ -191,7 +193,7 @@ final class DashboardMetrics
 
         return [
             'metrics' => $metrics,
-            'revenueSeries' => $this->dailyPaidRevenue($from, $days, (string) $primaryCurrency),
+            'revenueSeries' => $this->dailyPaidRevenue($from, $days, $displayCurrency),
             'orderSeries' => $this->dailyOrderCounts($from, $days),
             'recentOrders' => Order::query()->with('payment')->latest('id')->limit(8)->get(),
             'attention' => $attention,
@@ -204,9 +206,35 @@ final class DashboardMetrics
     }
 
     /**
+     * @param  Collection<string, int>  $totalsByCurrency
+     */
+    private function sumConverted(Collection $totalsByCurrency, string $displayCurrency): int
+    {
+        $sum = 0;
+
+        try {
+            $converter = app(CurrencyConverter::class);
+        } catch (Throwable) {
+            return (int) $totalsByCurrency->get($displayCurrency, $totalsByCurrency->first() ?? 0);
+        }
+
+        foreach ($totalsByCurrency as $currency => $amount) {
+            try {
+                $sum += $converter->convert((int) $amount, (string) $currency, $displayCurrency);
+            } catch (Throwable) {
+                if (strtoupper((string) $currency) === strtoupper($displayCurrency)) {
+                    $sum += (int) $amount;
+                }
+            }
+        }
+
+        return $sum;
+    }
+
+    /**
      * @return array{labels: list<string>, values: list<int>, currency: string}
      */
-    private function dailyPaidRevenue(CarbonImmutable $from, int $days, string $currency): array
+    private function dailyPaidRevenue(CarbonImmutable $from, int $days, string $displayCurrency): array
     {
         $driver = DB::connection()->getDriverName();
         $dateExpr = $driver === 'sqlite'
@@ -215,15 +243,23 @@ final class DashboardMetrics
 
         $rows = Payment::query()
             ->where('status', PaymentStatus::Paid)
-            ->where('currency', $currency)
             ->whereNotNull('paid_at')
             ->where('paid_at', '>=', $from)
-            ->selectRaw("{$dateExpr} as day, COALESCE(SUM(amount), 0) as total")
-            ->groupBy('day')
-            ->pluck('total', 'day')
-            ->map(fn (mixed $total): int => (int) $total);
+            ->selectRaw("{$dateExpr} as day, currency, COALESCE(SUM(amount), 0) as total")
+            ->groupBy('day', 'currency')
+            ->get();
 
-        return $this->fillDailySeries($from, $days, $rows, $currency);
+        $byDay = collect();
+        foreach ($rows as $row) {
+            $day = (string) $row->day;
+            $converted = $this->sumConverted(
+                collect([(string) $row->currency => (int) $row->total]),
+                $displayCurrency,
+            );
+            $byDay[$day] = (int) ($byDay[$day] ?? 0) + $converted;
+        }
+
+        return $this->fillDailySeries($from, $days, $byDay, $displayCurrency);
     }
 
     /**

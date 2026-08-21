@@ -73,6 +73,8 @@ final class EventsModule implements Module
             route: 'customer.event-tickets',
             section: 'event-tickets',
             sort: 28,
+            icon: 'ticket',
+            group: AccountNavItem::GROUP_SERVICES,
             visible: static function (): bool {
                 $customer = current_customer();
                 if ($customer === null) {

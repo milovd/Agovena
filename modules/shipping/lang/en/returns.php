@@ -48,6 +48,7 @@ return [
     'customer_overview_label' => 'Returns',
     'customer_overview_hint' => 'Open return requests',
     'customer_empty' => 'You have no return requests.',
+    'customer_requests_title' => 'Your return requests',
     'customer_eligible_title' => 'Start a return',
     'customer_eligible_empty' => 'No paid orders are eligible for a return right now.',
     'customer_start' => 'Request a return',

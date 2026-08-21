@@ -36,5 +36,6 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="AGOVENA_PRIVILEGED_2FA" value="true" force="true"/>
     </php>
 </phpunit>

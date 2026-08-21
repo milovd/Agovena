@@ -24,7 +24,7 @@ final class CategoryShow extends Component
         $this->sort = (string) request()->query('sort', 'name');
     }
 
-    public function render(ListStorefrontProducts $list, ThemeManager $themes)
+    public function render(ListStorefrontProducts $list, ThemeManager $themes, \App\Agovena\Storefront\StorefrontPreferences $preferences)
     {
         $theme = $themes->active();
         $config = $themes->config($theme);
@@ -44,6 +44,7 @@ final class CategoryShow extends Component
             search: trim($this->search) !== '' ? trim($this->search) : null,
             sort: $this->sort,
             perPage: 24,
+            currency: $preferences->catalogCurrencyFilter(),
         );
 
         $query = trim($this->search);

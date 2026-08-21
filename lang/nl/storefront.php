@@ -36,6 +36,18 @@ return [
         'browse_collection' => 'Bekijk deze collectie voor uitgelichte producten.',
     ],
 
+    'preferences' => [
+        'aria' => 'Winkelvoorkeuren',
+        'region' => 'Taal en valuta',
+        'language' => 'Taal',
+        'currency' => 'Valuta',
+        'theme_light' => 'Licht',
+        'theme_dark' => 'Donker',
+        'theme_to_light' => 'Schakel naar lichte modus',
+        'theme_to_dark' => 'Schakel naar donkere modus',
+        'currency_cart_cleared' => 'Je winkelwagen is geleegd omdat die een andere valuta gebruikte. Nu: :currency.',
+    ],
+
     'search' => [
         'label' => 'Producten zoeken',
         'placeholder' => 'Producten zoeken',
@@ -246,6 +258,7 @@ return [
         'spec_availability' => 'Beschikbaarheid',
         'spec_available' => 'Leverbaar',
         'spec_unavailable' => 'Niet leverbaar',
+        'not_available_in_currency' => 'Niet beschikbaar in jouw valuta',
         'related' => 'Vergelijkbare producten',
         'view_product' => 'Product bekijken',
         'view_named' => ':name bekijken',
@@ -300,6 +313,7 @@ return [
 
     'errors' => [
         'product_unavailable' => 'Dit product is niet te koop.',
+        'product_currency_unavailable' => 'Dit product is niet beschikbaar in de gekozen valuta.',
         'cart_empty' => 'Je winkelwagen is leeg.',
         'development_payment_unavailable' => 'Ontwikkelbetaling is niet beschikbaar.',
         'payment_method_unavailable' => 'De gekozen betaalmethode is niet beschikbaar.',

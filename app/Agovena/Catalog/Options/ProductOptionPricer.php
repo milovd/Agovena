@@ -4,31 +4,46 @@ declare(strict_types=1);
 
 namespace App\Agovena\Catalog\Options;
 
+use App\Agovena\Money\CurrencyConverter;
 use App\Agovena\Money\Money;
+use App\Agovena\Money\ResolveProductPrice;
+use App\Agovena\Storefront\StorefrontPreferences;
 use App\Enums\ProductOptionType;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
+use InvalidArgumentException;
 
 final class ProductOptionPricer
 {
     public function __construct(
         private readonly ProductOptionValidator $validator,
+        private readonly ResolveProductPrice $resolveProductPrice,
+        private readonly CurrencyConverter $converter,
+        private readonly StorefrontPreferences $preferences,
     ) {}
 
     /**
      * @param  array<string, mixed>  $selections
      */
-    public function unitPrice(Product $product, array $selections): Money
+    public function unitPrice(Product $product, array $selections, ?string $currency = null): Money
     {
-        $base = $product->money();
-        $adjustment = 0;
-
-        foreach ($this->resolved($product, $selections) as $row) {
-            $adjustment += $row['price_adjustment_amount'];
+        $target = strtoupper($currency ?? $this->preferences->currencyCode());
+        $resolved = $this->resolveProductPrice->resolve($product, $target);
+        if ($resolved === null) {
+            throw new InvalidArgumentException('Product is not available in currency '.$target);
         }
 
-        return Money::of($base->amount + $adjustment, $base->currency);
+        $adjustmentNative = 0;
+        foreach ($this->resolved($product, $selections) as $row) {
+            $adjustmentNative += $row['price_adjustment_amount'];
+        }
+
+        $adjustment = $adjustmentNative === 0
+            ? 0
+            : $this->converter->convert($adjustmentNative, $product->currency, $target);
+
+        return Money::of($resolved->money->amount + $adjustment, $target);
     }
 
     /**

@@ -120,7 +120,7 @@
                                 </div>
                             </td>
                             <td class="ag-table__col--md">{{ $product->category?->name ?? __('common.em_dash') }}</td>
-                            <td>{{ \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</td>
+                            <td>{{ \App\Support\MoneyFormatter::formatProduct($product) ?? \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</td>
                             <td>
                                 <span @class([
                                     'ag-badge',

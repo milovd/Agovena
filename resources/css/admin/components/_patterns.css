@@ -7,15 +7,20 @@
 }
 
 .ag-metric {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--ag-space-2);
   padding: var(--ag-space-5);
   background: var(--ag-color-surface);
   border: 1px solid var(--ag-color-border);
-  border-radius: var(--ag-radius-lg);
-  box-shadow: var(--ag-shadow-sm);
+  border-radius: var(--ag-radius-md);
+  box-shadow: none;
   min-height: 6.5rem;
+}
+
+.ag-metric:has(.ag-metric__link):hover {
+  border-color: color-mix(in srgb, var(--ag-color-primary) 38%, var(--ag-color-border));
 }
 
 .ag-metric__label {
@@ -97,8 +102,8 @@
 .ag-chart-card {
   background: var(--ag-color-surface);
   border: 1px solid var(--ag-color-border);
-  border-radius: var(--ag-radius-lg);
-  box-shadow: var(--ag-shadow-sm);
+  border-radius: var(--ag-radius-md);
+  box-shadow: none;
   padding: var(--ag-space-5);
   display: flex;
   flex-direction: column;

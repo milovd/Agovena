@@ -61,6 +61,7 @@ final class EnsurePublicStorageLink
 
     /**
      * Create the public storage link when missing and safe. Idempotent when already linked.
+     * Replaces a stale symlink/junction that no longer points at the current public disk.
      */
     public function ensure(): bool
     {
@@ -71,7 +72,7 @@ final class EnsurePublicStorageLink
         $link = $this->linkPath();
         $target = $this->targetPath();
 
-        if (file_exists($link) || is_link($link)) {
+        if ($this->pathOccupied($link) && ! $this->removeStaleLink($link)) {
             return false;
         }
 
@@ -84,6 +85,65 @@ final class EnsurePublicStorageLink
         } catch (Throwable) {
             return false;
         }
+    }
+
+    private function removeStaleLink(string $link): bool
+    {
+        if (! $this->isReplaceableLink($link)) {
+            return false;
+        }
+
+        if (@unlink($link)) {
+            return true;
+        }
+
+        // Windows junctions look like directories; rmdir removes the junction, not the target.
+        return @rmdir($link);
+    }
+
+    private function isReplaceableLink(string $link): bool
+    {
+        if (is_link($link)) {
+            return true;
+        }
+
+        $resolved = realpath($link);
+        if ($resolved === false) {
+            return $this->pathOccupied($link);
+        }
+
+        $self = $this->canonicalSelf($link);
+        if ($self === null) {
+            return false;
+        }
+
+        return ! $this->samePath($resolved, $self);
+    }
+
+    private function pathOccupied(string $path): bool
+    {
+        if (is_link($path) || file_exists($path) || is_dir($path)) {
+            return true;
+        }
+
+        return @lstat($path) !== false;
+    }
+
+    private function canonicalSelf(string $path): ?string
+    {
+        $parent = realpath(dirname($path));
+        if ($parent === false) {
+            return null;
+        }
+
+        return $parent.DIRECTORY_SEPARATOR.basename($path);
+    }
+
+    private function samePath(string $left, string $right): bool
+    {
+        $normalize = static fn (string $path): string => strtolower(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path));
+
+        return $normalize($left) === $normalize($right);
     }
 
     private function absolutePath(string $path, string $baseDir): string

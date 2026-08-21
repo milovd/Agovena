@@ -62,6 +62,8 @@ final class ProvisioningModule implements Module
             route: 'customer.services',
             section: 'services',
             sort: 25,
+            icon: 'server',
+            group: AccountNavItem::GROUP_SERVICES,
         ));
 
         $context->customerAccountOverview(

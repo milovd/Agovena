@@ -64,7 +64,6 @@ test('core storefront account and admin surfaces render without server errors', 
     $account = [
         route('customer.account'),
         route('customer.profile'),
-        route('customer.api-tokens'),
         route('customer.addresses'),
         route('customer.orders.index'),
         route('customer.orders.show', $order),

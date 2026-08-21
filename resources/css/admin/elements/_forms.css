@@ -12,6 +12,8 @@
 .ag-field__label {
   font-weight: 600;
   font-size: 0.875rem;
+  letter-spacing: -0.01em;
+  color: var(--ag-color-text);
 }
 
 .ag-field__hint,
@@ -19,6 +21,7 @@
   margin: 0;
   color: var(--ag-color-text-muted);
   font-size: 0.8125rem;
+  line-height: 1.45;
 }
 
 .ag-check {
@@ -39,13 +42,22 @@
 .ag-select {
   width: 100%;
   max-width: 28rem;
-  min-height: 2.375rem;
+  min-height: var(--ag-control-height, 2.375rem);
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--ag-color-border);
   border-radius: var(--ag-radius-md);
   font: inherit;
   background-color: var(--ag-color-surface);
   color: var(--ag-color-text);
+  transition:
+    border-color var(--ag-transition),
+    box-shadow var(--ag-transition),
+    background-color var(--ag-transition);
+}
+
+.ag-input:hover,
+.ag-select:hover {
+  border-color: var(--ag-color-border-strong);
 }
 
 /* Open chevron (not the browser filled triangle). */
@@ -74,6 +86,13 @@ select.ag-input::-ms-expand {
   border-color: var(--ag-color-primary);
 }
 
+.ag-input:disabled,
+.ag-select:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  background-color: var(--ag-color-surface-muted);
+}
+
 .ag-checkbox-row {
   display: flex;
   align-items: center;
@@ -84,12 +103,21 @@ select.ag-input::-ms-expand {
   margin: 0;
   color: var(--ag-color-danger);
   font-size: 0.8125rem;
+  line-height: 1.4;
 }
 
 .ag-input--area {
   max-width: 40rem;
-  min-height: auto;
+  min-height: 7.5rem;
   resize: vertical;
+  line-height: 1.5;
+}
+
+.ag-input.is-invalid,
+.ag-select.is-invalid,
+.ag-input[aria-invalid="true"],
+.ag-select[aria-invalid="true"] {
+  border-color: color-mix(in srgb, var(--ag-color-danger) 55%, var(--ag-color-border));
 }
 
 .ag-form--product,
@@ -110,11 +138,14 @@ select.ag-input::-ms-expand {
 .ag-grid .ag-input,
 .ag-grid .ag-select,
 .ag-section .ag-input,
-.ag-section .ag-select {
+.ag-section .ag-select,
+.ag-card .ag-input,
+.ag-card .ag-select {
   max-width: none;
 }
 
-.ag-form--product .ag-input--area {
+.ag-form--product .ag-input--area,
+.ag-card .ag-input--area {
   max-width: none;
 }
 
@@ -131,8 +162,24 @@ select.ag-input::-ms-expand {
   font-weight: 700;
 }
 
+.ag-form-stack {
+  display: grid;
+  gap: var(--ag-space-5);
+}
+
+.ag-form-stack > .ag-card {
+  margin: 0;
+}
+
 @media (min-width: 720px) {
   .ag-form__row {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-input,
+  .ag-select {
+    transition: none;
   }
 }

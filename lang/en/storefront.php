@@ -36,6 +36,18 @@ return [
         'browse_collection' => 'Browse this collection for featured products.',
     ],
 
+    'preferences' => [
+        'aria' => 'Store preferences',
+        'region' => 'Language and currency',
+        'language' => 'Language',
+        'currency' => 'Currency',
+        'theme_light' => 'Light',
+        'theme_dark' => 'Dark',
+        'theme_to_light' => 'Switch to light mode',
+        'theme_to_dark' => 'Switch to dark mode',
+        'currency_cart_cleared' => 'Your cart was cleared because it used a different currency. Showing :currency.',
+    ],
+
     'search' => [
         'label' => 'Search products',
         'placeholder' => 'Search products',
@@ -246,6 +258,7 @@ return [
         'spec_availability' => 'Availability',
         'spec_available' => 'Available',
         'spec_unavailable' => 'Unavailable',
+        'not_available_in_currency' => 'Not available in your currency',
         'related' => 'Related products',
         'view_product' => 'View product',
         'view_named' => 'View :name',
@@ -300,6 +313,7 @@ return [
 
     'errors' => [
         'product_unavailable' => 'This product is not available for purchase.',
+        'product_currency_unavailable' => 'This product is not available in your selected currency.',
         'cart_empty' => 'Your cart is empty.',
         'development_payment_unavailable' => 'Development payment is not available.',
         'payment_method_unavailable' => 'The selected payment method is not available.',

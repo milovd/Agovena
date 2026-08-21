@@ -48,6 +48,7 @@ return [
     'customer_overview_label' => 'Retouren',
     'customer_overview_hint' => 'Open retouraanvragen',
     'customer_empty' => 'Je hebt geen retouraanvragen.',
+    'customer_requests_title' => 'Jouw retouraanvragen',
     'customer_eligible_title' => 'Retour starten',
     'customer_eligible_empty' => 'Er zijn momenteel geen betaalde bestellingen die je kunt retourneren.',
     'customer_start' => 'Retour aanvragen',

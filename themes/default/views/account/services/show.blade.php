@@ -3,9 +3,13 @@
 
     <section class="store-account__main store-account-panel">
         <header class="store-account-panel__header">
-            <p class="store-account-panel__back">
-                <a href="{{ route('customer.services') }}">{{ __('provisioning::customer.back') }}</a>
-            </p>
+            @include('theme::account.partials.breadcrumbs', [
+                'items' => [
+                    ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
+                    ['label' => __('provisioning::customer.title'), 'url' => route('customer.services')],
+                    ['label' => $instance->number],
+                ],
+            ])
             <h1 class="store-account-panel__title">{{ $instance->product?->name ?? $instance->number }}</h1>
             <p class="store-account-panel__lede">{{ $instance->number }}</p>
         </header>

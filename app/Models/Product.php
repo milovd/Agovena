@@ -34,6 +34,7 @@ use Illuminate\Support\Collection;
  * @property string|null $image_path
  * @property int|null $category_id
  * @property-read Collection<int, ProductCapability> $capabilities
+ * @property-read Collection<int, ProductCurrencyPrice> $currencyPrices
  */
 #[Fillable([
     'name',
@@ -115,6 +116,12 @@ class Product extends Model
     public function purchaseOptions(): HasMany
     {
         return $this->hasMany(ProductOption::class)->orderBy('sort')->orderBy('id');
+    }
+
+    /** @return HasMany<ProductCurrencyPrice, $this> */
+    public function currencyPrices(): HasMany
+    {
+        return $this->hasMany(ProductCurrencyPrice::class);
     }
 
     public function hasCapability(string $capability): bool

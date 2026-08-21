@@ -1,9 +1,22 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? __('storefront.shop') }} | {{ $siteName ?? __('storefront.shop') }}</title>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('agovena.theme');
+                var theme = stored === 'dark' || stored === 'light'
+                    ? stored
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
@@ -25,7 +38,7 @@
         $ratio = $config?->string('catalog.image_ratio', '1/1') ?? '1/1';
     @endphp
     <style>
-        :root {
+        :root, [data-theme="light"] {
             --theme-color-accent: {{ $accent }};
             --theme-color-accent-hover: {{ $accentHover }};
             --theme-color-accent-soft: color-mix(in srgb, {{ $accent }} 12%, transparent);

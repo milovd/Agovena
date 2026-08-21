@@ -44,7 +44,7 @@
                         class="ag-input"
                         type="text"
                         inputmode="numeric"
-                        wire:model="code"
+                        wire:model.live="code"
                         autocomplete="one-time-code"
                         required
                     >

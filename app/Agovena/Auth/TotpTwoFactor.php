@@ -28,6 +28,9 @@ final class TotpTwoFactor
 
     public const SESSION_VERIFIED_USER = 'auth.two_factor.verified_user_id';
 
+    /** Number of 30-second steps accepted on either side of now. */
+    private const VERIFY_WINDOW = 8;
+
     public function __construct(private readonly Google2FA $google2fa) {}
 
     public function generateSecret(): string
@@ -53,7 +56,9 @@ final class TotpTwoFactor
         }
 
         try {
-            return $this->google2fa->verifyKey($secret, $code) === true;
+            $verified = $this->google2fa->verifyKey($secret, $code, self::VERIFY_WINDOW);
+
+            return $verified === true || (is_int($verified) && $verified > 0);
         } catch (Throwable) {
             return false;
         }
