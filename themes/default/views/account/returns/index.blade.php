@@ -9,10 +9,15 @@
             ],
         ])
 
-        <header class="store-account-panel__header">
-            <div>
-                <h1 class="store-account-panel__title">{{ __('shipping::returns.customer_title') }}</h1>
-                <p class="store-account-panel__lede">{{ __('shipping::returns.customer_lede') }}</p>
+        <header class="store-support-hero store-support-hero--compact">
+            <div class="store-support-hero__copy">
+                <span class="store-support-hero__icon" aria-hidden="true">
+                    <x-ag.icon name="rotate-ccw" :size="22" />
+                </span>
+                <div>
+                    <h1 class="store-support-hero__title">{{ __('shipping::returns.customer_title') }}</h1>
+                    <p class="store-support-hero__lede">{{ __('shipping::returns.customer_lede') }}</p>
+                </div>
             </div>
         </header>
 

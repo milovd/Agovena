@@ -1,5 +1,5 @@
 /* Default Theme — merchant-neutral ITCSS entry (not Agovena Admin blue) */
-/* Cache-bust: full-order return request. */
+/* Cache-bust: denser return request layout. */
 
 @import './settings/_tokens.css';
 @import './generic/_reset.css';
