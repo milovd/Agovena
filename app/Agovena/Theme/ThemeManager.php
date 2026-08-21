@@ -85,6 +85,21 @@ final class ThemeManager
         return $this->all()[$id] ?? null;
     }
 
+    public function themeFor(ThemeSurface $surface): Theme
+    {
+        $active = $this->active();
+        if ($active->provides($surface)) {
+            return $active;
+        }
+
+        $default = $this->find('default');
+        if ($default !== null && $default->provides($surface)) {
+            return $default;
+        }
+
+        return $active;
+    }
+
     public function config(?Theme $theme = null): ThemeConfig
     {
         $theme ??= $this->active();
@@ -136,7 +151,7 @@ final class ThemeManager
                 version: '1.0.0',
                 cssEntry: 'themes/default/resources/css/theme.css',
                 description: 'Official Agovena storefront Theme.',
-                capabilities: ['storefront', 'homepage-sections'],
+                capabilities: ['storefront', 'admin', 'homepage-sections'],
             );
         } else {
             /** @var mixed $json */

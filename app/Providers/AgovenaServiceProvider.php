@@ -37,6 +37,7 @@ use App\Agovena\Installation\EnsurePublicStorageLink;
 use App\Agovena\Installation\InstallAgovena;
 use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
+use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Mail\ApplyMailSettings;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
@@ -48,6 +49,7 @@ use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Agovena\Theme\StorefrontBrand;
 use App\Agovena\Theme\ThemeManager;
+use App\Agovena\Theme\ThemeSurface;
 use App\Enums\TicketStatus;
 use App\Events\CreditNoteIssued;
 use App\Events\OrderCreated;
@@ -95,6 +97,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ShippingQuoteResolver::class, NullShippingQuoteResolver::class);
         $this->app->singleton(OrderFulfillmentPresenter::class, NullOrderFulfillmentPresenter::class);
         $this->app->singleton(ThemeManager::class);
+        $this->app->singleton(InvoiceDocumentView::class);
         $this->app->singleton(SettingsRepository::class);
         $this->app->singleton(CurrencyCatalog::class);
         $this->app->singleton(InstallationState::class);
@@ -162,10 +165,14 @@ class AgovenaServiceProvider extends ServiceProvider
             $this->app->make(ExtensionManager::class)->bootEnabled();
         }
 
-        $theme = $this->app->make(ThemeManager::class)->active();
+        $themes = $this->app->make(ThemeManager::class);
+        $theme = $themes->active();
         View::addNamespace('theme', $theme->viewsPath);
 
-        View::composer(['layouts.admin', 'layouts.admin-guest', 'theme::layouts.storefront', 'theme::layouts.checkout'], function ($view): void {
+        $adminTheme = $themes->themeFor(ThemeSurface::Admin);
+        View::prependLocation($adminTheme->viewsPath);
+
+        View::composer(['layouts.admin', 'layouts.admin-guest', 'theme::layouts.admin', 'theme::layouts.admin-guest', 'theme::layouts.storefront', 'theme::layouts.checkout'], function ($view): void {
             $brand = $this->app->make(StorefrontBrand::class);
             $view->with('siteName', $brand->siteName());
             $view->with('brandingLogoUrl', $brand->logoUrl());
@@ -221,7 +228,7 @@ class AgovenaServiceProvider extends ServiceProvider
             );
         });
 
-        View::composer('layouts.admin', function ($view): void {
+        View::composer(['layouts.admin', 'theme::layouts.admin'], function ($view): void {
             if (! array_key_exists('navigation', $view->getData())) {
                 /** @var AdminRegistrar $admin */
                 $admin = $this->app->make(AdminRegistrar::class);

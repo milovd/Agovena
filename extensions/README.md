@@ -1,9 +1,11 @@
 # Extensions
 
-Provider integrations that plug into Agovena capabilities. Distinct from Modules.
+Easy plugins that extend Agovena through public seams. Distinct from Modules.
 
-- **Modules** add platform capabilities/domains (inventory, shipping, digital, …).
-- **Extensions** integrate external providers into those capabilities (payment gateways, carriers, provisioners, …).
+- **Modules** add platform capabilities/domains (events/tickets, inventory, shipping, digital, provisioning, …).
+- **Extensions** plug into existing seams without forking Core: payment/shipping/provisioning gateways, Admin tabs/pages/settings, cart/checkout requirements, invoice presentation.
+
+This is the Paymenter-style extensibility *problem* (register a package, hook in) expressed as Agovena contracts — not Filament, not their UI.
 
 ## Distribution
 
@@ -39,7 +41,19 @@ Lifecycle: discover → install → enable / disable → uninstall. Disable pres
 
 Manifest `category` values: `payment_gateway`, `provisioning`, `shipping`, `authentication`, `storage`, `notifications`, `analytics`, `tax`, `other`
 
-Filesystem folder names for first-party packages use friendlier labels where useful (`payments/` for `payment_gateway`). Folder name is convenience only.
+Use `other` (or a matching provider category) for Admin/cart/invoice plugins that are not a gateway. Filesystem folder names for first-party packages use friendlier labels where useful (`payments/` for `payment_gateway`). Folder name is convenience only.
+
+## Public seams
+
+From `Extension::register(ExtensionContext $context)`:
+
+1. `$context->admin()` — navigation, pages, settings, widgets, permissions (for example an invoice-layout tab)
+2. `$context->cartRequirements(...)` — contribute or extend checkout/cart requirements
+3. `$context->invoiceDocument('theme::invoices.document')` — override invoice HTML/PDF presentation
+4. `$context->paymentGateway(...)` / `provisioner(...)` / `shippingCarrier(...)`
+5. `$context->setting(...)` and `$context->health(...)`
+
+Extensions must not bypass server-authoritative prices, webhook authority, or Admin permissions.
 
 ## Reference
 

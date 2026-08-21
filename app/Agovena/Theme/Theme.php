@@ -29,6 +29,13 @@ final class Theme
         return "theme::{$name}";
     }
 
+    public function provides(ThemeSurface|string $surface): bool
+    {
+        $value = $surface instanceof ThemeSurface ? $surface->value : $surface;
+
+        return in_array($value, $this->capabilities, true);
+    }
+
     public function settingsGroup(): string
     {
         return 'theme.'.$this->id;

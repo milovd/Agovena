@@ -11,7 +11,12 @@ final class CartRequirementComposer
     /**
      * @param  list<CartRequirementContributor>  $contributors
      */
-    public function __construct(private readonly array $contributors) {}
+    public function __construct(private array $contributors = []) {}
+
+    public function add(CartRequirementContributor $contributor): void
+    {
+        $this->contributors[] = $contributor;
+    }
 
     public function compose(CartService $cart): CartRequirements
     {

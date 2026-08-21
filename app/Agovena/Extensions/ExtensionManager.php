@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Agovena\Extensions;
 
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Checkout\CartRequirementComposer;
 use App\Agovena\Extensions\Contracts\Extension;
+use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Packages\PackageAutoload;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -37,6 +39,8 @@ final class ExtensionManager
         private readonly ShippingCarrierRegistry $shippingCarriers,
         private readonly ExtensionSettingsRepository $settings,
         private readonly PackageAutoload $autoload,
+        private readonly CartRequirementComposer $cartRequirements,
+        private readonly InvoiceDocumentView $invoiceDocumentView,
     ) {}
 
     public function refresh(): void
@@ -245,6 +249,8 @@ final class ExtensionManager
             $this->provisioners,
             $this->shippingCarriers,
             $this->settings,
+            $this->cartRequirements,
+            $this->invoiceDocumentView,
         );
         $extension->register($context);
 

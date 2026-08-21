@@ -46,9 +46,45 @@
                     $groups = AdminNavigation::groupItems($nav);
                 @endphp
                 @foreach ($groups as $group => $items)
-                    <div class="admin-nav__section">
-                        <p class="admin-nav__group" id="nav-group-{{ \Illuminate\Support\Str::slug($group) }}">{{ __($group) }}</p>
-                        <ul class="admin-nav__list" role="list" aria-labelledby="nav-group-{{ \Illuminate\Support\Str::slug($group) }}">
+                    @php
+                        $groupSlug = \Illuminate\Support\Str::slug($group);
+                        $groupHasActive = $items->contains(fn ($item) => AdminNavigation::isActive($item->href));
+                    @endphp
+                    <div
+                        class="admin-nav__section"
+                        x-data="{
+                            open: true,
+                            init() {
+                                const key = 'agovena.admin.nav.v3.{{ $groupSlug }}';
+                                const stored = localStorage.getItem(key);
+                                if (stored === '0' && ! {{ $groupHasActive ? 'true' : 'false' }}) {
+                                    this.open = false;
+                                } else {
+                                    this.open = true;
+                                }
+                                this.$watch('open', (value) => localStorage.setItem(key, value ? '1' : '0'));
+                            }
+                        }"
+                        :class="{ 'admin-nav__section--collapsed': !open }"
+                    >
+                        <button
+                            type="button"
+                            class="admin-nav__group"
+                            id="nav-group-{{ $groupSlug }}"
+                            @click="open = !open"
+                            :aria-expanded="open.toString()"
+                            aria-controls="nav-group-panel-{{ $groupSlug }}"
+                        >
+                            <span class="admin-nav__group-label">{{ __($group) }}</span>
+                            <x-ag.icon name="chevron-down" class="admin-nav__group-chevron" :size="14" />
+                        </button>
+                        <ul
+                            id="nav-group-panel-{{ $groupSlug }}"
+                            class="admin-nav__list"
+                            role="list"
+                            aria-labelledby="nav-group-{{ $groupSlug }}"
+                            x-show="open"
+                        >
                             @foreach ($items as $item)
                                 @php $active = AdminNavigation::isActive($item->href); @endphp
                                 <li>

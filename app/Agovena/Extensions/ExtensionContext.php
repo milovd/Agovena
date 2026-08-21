@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace App\Agovena\Extensions;
 
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Checkout\CartRequirementComposer;
+use App\Agovena\Checkout\CartRequirementContributor;
+use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\HealthResult;
 use App\Agovena\Payments\PaymentGatewayRegistry;
@@ -16,7 +19,8 @@ use Closure;
 
 /**
  * Agovena-owned registration surface for Extensions.
- * Intentionally free of Livewire/BEM — Extensions register providers + settings only.
+ * Intentionally free of Livewire/BEM. Extensions plug into public seams:
+ * Admin tabs/pages/settings, cart/checkout requirements, invoice presentation, and gateways.
  */
 final class ExtensionContext
 {
@@ -33,6 +37,8 @@ final class ExtensionContext
         private readonly ProvisionerRegistry $provisioners,
         private readonly ShippingCarrierRegistry $shippingCarriers,
         private readonly ExtensionSettingsRepository $settings,
+        private readonly CartRequirementComposer $cartRequirements,
+        private readonly InvoiceDocumentView $invoiceDocumentView,
     ) {}
 
     public function extensionId(): string
@@ -76,6 +82,16 @@ final class ExtensionContext
     public function shippingCarrier(ShippingCarrier $carrier): void
     {
         $this->shippingCarriers->register($carrier);
+    }
+
+    public function cartRequirements(CartRequirementContributor $contributor): void
+    {
+        $this->cartRequirements->add($contributor);
+    }
+
+    public function invoiceDocument(string $view): void
+    {
+        $this->invoiceDocumentView->use($view);
     }
 
     /**
