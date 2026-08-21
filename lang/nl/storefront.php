@@ -122,7 +122,6 @@ return [
         'saved_address' => 'Opgeslagen adres gebruiken',
         'address_suggestions' => 'Adressuggesties',
         'saved_suggestion' => 'Opgeslagen',
-        'address_suggest_hint' => 'Begin met typen van je straatadres voor suggesties. Bij kiezen worden stad, postcode, provincie en land ingevuld.',
         'confirm_title' => 'Bestelling afronden',
         'finish_lede' => 'Controleer je gegevens en plaats de bestelling.',
         'address_name' => 'Volledige naam',

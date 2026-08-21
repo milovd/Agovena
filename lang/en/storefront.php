@@ -122,7 +122,6 @@ return [
         'saved_address' => 'Use a saved address',
         'address_suggestions' => 'Address suggestions',
         'saved_suggestion' => 'Saved',
-        'address_suggest_hint' => 'Start typing your street address to see suggestions. Choosing one fills city, postal code, region and country.',
         'confirm_title' => 'Finish order',
         'finish_lede' => 'Check your details and place the order.',
         'address_name' => 'Full name',

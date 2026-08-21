@@ -95,9 +95,6 @@
                         >
                         @include('theme::checkout.partials.address-suggestions', ['scope' => 'billing'])
                         @error('billing_line1') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
-                        @if ($addressAutocompleteEnabled ?? false)
-                            <p class="store-field__hint">{{ __('storefront.checkout.address_suggest_hint') }}</p>
-                        @endif
                     </div>
                     <div class="store-field">
                         <label class="store-field__label" for="billing_line2">{{ __('storefront.checkout.line2') }}</label>

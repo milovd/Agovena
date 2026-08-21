@@ -67,7 +67,6 @@
             >
             @include('theme::checkout.partials.address-suggestions', ['scope' => 'account'])
             @error('line1') <p class="store-field__error">{{ $message }}</p> @enderror
-            <p class="store-field__hint">{{ __('storefront.checkout.address_suggest_hint') }}</p>
         </div>
         <div class="store-field">
             <label class="store-field__label" for="address-line2">{{ __('customer.addresses.line2') }}</label>
