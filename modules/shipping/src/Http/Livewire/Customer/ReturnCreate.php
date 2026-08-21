@@ -18,9 +18,6 @@ final class ReturnCreate extends Component
 
     public string $reason = '';
 
-    /** @var array<int, int|string> */
-    public array $quantities = [];
-
     public function mount(Order $order): void
     {
         /** @var Customer $customer */
@@ -36,17 +33,22 @@ final class ReturnCreate extends Component
         /** @var Customer $customer */
         $customer = authenticated_customer();
 
-        $lines = [];
-        foreach ($this->quantities as $itemId => $quantity) {
-            if ((int) $quantity > 0) {
-                $lines[] = ['order_item_id' => (int) $itemId, 'quantity' => (int) $quantity];
-            }
-        }
+        $lines = $returns->eligibleItems($this->order)
+            ->map(function (OrderItem $item) use ($returns): ?array {
+                $qty = $returns->returnableQuantity($item);
+
+                return $qty > 0
+                    ? ['order_item_id' => (int) $item->id, 'quantity' => $qty]
+                    : null;
+            })
+            ->filter()
+            ->values()
+            ->all();
 
         try {
             $returns->requestFromCustomer($this->order, $lines, $this->reason, $customer);
         } catch (ValidationException $e) {
-            $this->addError('quantities', collect($e->errors())->flatten()->first() ?? $e->getMessage());
+            $this->addError('form', collect($e->errors())->flatten()->first() ?? $e->getMessage());
 
             return;
         }

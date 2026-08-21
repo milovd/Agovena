@@ -4587,6 +4587,10 @@ a.store-cart-line__name:hover {
   background: var(--theme-color-surface);
 }
 
+.store-return-select__row--readonly {
+  grid-template-columns: 4rem minmax(0, 1fr);
+}
+
 .store-return-select__row .store-return-card__thumb {
   width: 4rem;
   height: 4rem;

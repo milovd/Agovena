@@ -131,7 +131,6 @@ test('customer creates a return from the account portal', function () {
     $product = returnableProduct();
 
     $order = paidReturnableOrder($customer, $product, 2, $staff);
-    $itemId = (int) $order->items->firstOrFail()->id;
 
     $this->actingAs($customer->user)
         ->get(route('customer.returns.create', $order))
@@ -139,7 +138,6 @@ test('customer creates a return from the account portal', function () {
 
     Livewire::actingAs($customer->user)
         ->test(ReturnCreate::class, ['order' => $order])
-        ->set('quantities', [$itemId => 2])
         ->set('reason', 'Both are faulty')
         ->call('submit')
         ->assertHasNoErrors()

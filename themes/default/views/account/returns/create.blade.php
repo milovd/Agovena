@@ -23,7 +23,7 @@
             </div>
         </header>
 
-        @error('quantities')
+        @error('form')
             <p class="store-alert store-alert--error" role="alert">{{ $message }}</p>
         @enderror
 
@@ -41,7 +41,7 @@
                             $item = $line['item'];
                             $imageUrl = \App\Agovena\Media\ProductMedia::primaryUrl($item->product);
                         @endphp
-                        <article class="store-return-select__row" role="listitem" wire:key="return-line-{{ $item->id }}">
+                        <article class="store-return-select__row store-return-select__row--readonly" role="listitem" wire:key="return-line-{{ $item->id }}">
                             <div class="store-return-card__thumb" aria-hidden="true">
                                 @if ($imageUrl)
                                     <img src="{{ $imageUrl }}" alt="">
@@ -52,25 +52,14 @@
                             <div class="store-return-select__copy">
                                 <p class="store-return-card__item-title">{{ $item->label }}</p>
                                 <p class="store-return-card__meta">
-                                    {{ __('customer.account.quantity', ['count' => $item->quantity]) }}
-                                    ·
-                                    {{ __('shipping::returns.customer_returnable', ['count' => $line['returnable']]) }}
+                                    {{ __('customer.account.quantity', ['count' => $line['returnable']]) }}
                                 </p>
-                            </div>
-                            <div class="store-field store-field--compact">
-                                <label class="store-label" for="return-qty-{{ $item->id }}">{{ __('shipping::returns.customer_quantity') }}</label>
-                                <input
-                                    id="return-qty-{{ $item->id }}"
-                                    class="store-input"
-                                    type="number"
-                                    min="0"
-                                    max="{{ $line['returnable'] }}"
-                                    wire:model="quantities.{{ $item->id }}"
-                                >
                             </div>
                         </article>
                     @endforeach
                 </div>
+
+                <p class="store-account-dashboard__hint">{{ __('shipping::returns.customer_full_order_note') }}</p>
 
                 <div class="store-field">
                     <label class="store-label" for="return-reason">{{ __('shipping::returns.customer_reason') }}</label>
