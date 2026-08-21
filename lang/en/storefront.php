@@ -22,7 +22,7 @@ return [
         'register' => 'Register',
         'dashboard' => 'Dashboard',
         'orders' => 'Orders',
-        'admin' => 'Store administration',
+        'admin' => 'Admin',
         'admin_hint' => 'Open the Admin for this store',
         'logout' => 'Log out',
         'deals' => 'Deals',

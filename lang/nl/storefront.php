@@ -22,7 +22,7 @@ return [
         'register' => 'Registreren',
         'dashboard' => 'Dashboard',
         'orders' => 'Bestellingen',
-        'admin' => 'Winkelbeheer',
+        'admin' => 'Admin',
         'admin_hint' => 'Open de Admin voor deze winkel',
         'logout' => 'Uitloggen',
         'deals' => 'Aanbiedingen',

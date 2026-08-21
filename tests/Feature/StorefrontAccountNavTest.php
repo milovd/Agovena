@@ -36,6 +36,7 @@ test('logged in customer sees structured account menu without admin', function (
         ->assertSee('id="store-account-menu-button"', false)
         ->assertSee('store-header__account-trigger', false)
         ->assertSee('store-account-menu__identity', false)
+        ->assertSee('style="left: unset; right: 0;"', false)
         ->assertSee('Casey Customer', false)
         ->assertSee('casey@agovena.test', false)
         ->assertSee(__('storefront.nav.dashboard'), false)
@@ -53,7 +54,6 @@ test('logged in admin sees account menu with store administration link', functio
         ->assertOk()
         ->assertSee('id="store-account-menu-button"', false)
         ->assertSee(__('storefront.nav.admin'), false)
-        ->assertSee(__('storefront.nav.admin_hint'), false)
         ->assertSee(route('admin.dashboard'), false)
         ->assertSee('store-account-menu__item--admin', false);
 });

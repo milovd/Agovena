@@ -53,7 +53,7 @@ test('enabled inventory navigation is grouped under fulfillment', function () {
 
     expect($inventory)->not->toBeNull()
         ->and($inventory->group)->toBe('admin.nav_groups.fulfillment')
-        ->and(__('admin.nav_groups.fulfillment'))->toBe('Fulfillment');
+        ->and(__('admin.nav_groups.fulfillment'))->toBe('Stock & delivery');
 });
 
 test('module disable preserves inventory stock rows', function () {

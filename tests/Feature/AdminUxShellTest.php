@@ -76,6 +76,31 @@ test('enabled subscriptions appear under operations navigation', function () {
         ->and($item->group)->toBe('admin.nav_groups.operations');
 });
 
+test('admin navigation groups are collapsible and fulfillment icons are distinct', function () {
+    app(ModuleManager::class)->enable('digital');
+    app(ModuleManager::class)->enable('inventory');
+    app(ModuleManager::class)->enable('shipping');
+    app(SyncRegisteredPermissions::class)(force: true);
+
+    $items = collect(app(AdminRegistrar::class)->navigationItems())->keyBy('id');
+
+    expect($items->get('digital-assets')?->icon)->toBe('download')
+        ->and($items->get('inventory-stocks')?->icon)->toBe('warehouse')
+        ->and($items->get('shipping-methods')?->icon)->toBe('truck')
+        ->and($items->get('shipping-returns')?->icon)->toBe('rotate-ccw');
+
+    $html = $this->actingAs($this->createStaff())
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('admin-nav__group', false)
+        ->assertSee('aria-controls="nav-group-panel-', false)
+        ->assertSee(__('admin.nav_groups.overview'), false)
+        ->getContent();
+
+    expect($html)->toContain('open: true')
+        ->and($html)->toContain('agovena.admin.nav.v3.');
+});
+
 test('admin product pagination uses sized icons not unbounded svg chevrons', function () {
     $staff = $this->createStaff();
     Product::factory()->count(16)->active()->create();

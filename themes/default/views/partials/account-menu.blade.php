@@ -42,11 +42,7 @@
     <div class="store-account-menu__section" role="none">
         <a class="store-account-menu__item store-account-menu__item--admin" role="menuitem" href="{{ route('admin.dashboard') }}" @click="open = false">
             @include('theme::partials.icon', ['name' => 'settings', 'size' => 18])
-            <span class="store-account-menu__item-copy">
-                <span class="store-account-menu__item-label">{{ __('storefront.nav.admin') }}</span>
-                <span class="store-account-menu__item-hint">{{ __('storefront.nav.admin_hint') }}</span>
-            </span>
-            @include('theme::partials.icon', ['name' => 'external-link', 'size' => 14, 'class' => 'store-icon store-account-menu__external'])
+            <span>{{ __('storefront.nav.admin') }}</span>
         </a>
     </div>
 @endif

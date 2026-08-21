@@ -44,22 +44,22 @@
     </div>
 
     @if ($panel === 'overview')
-        <div class="ag-grid ag-grid--2" style="margin-bottom: 1rem;">
-            <section class="admin-panel">
-                <p class="ag-muted">{{ __('admin.orders.title') }}</p>
-                <p class="admin-panel__title" style="margin:0;">{{ $stats['orders'] }}</p>
+        <div class="ag-stat-grid">
+            <section class="ag-stat-card">
+                <p class="ag-stat-card__label">{{ __('admin.orders.title') }}</p>
+                <p class="ag-stat-card__value">{{ $stats['orders'] }}</p>
             </section>
-            <section class="admin-panel">
-                <p class="ag-muted">{{ __('admin.invoices.title') }}</p>
-                <p class="admin-panel__title" style="margin:0;">{{ $stats['invoices'] }}</p>
+            <section class="ag-stat-card">
+                <p class="ag-stat-card__label">{{ __('admin.invoices.title') }}</p>
+                <p class="ag-stat-card__value">{{ $stats['invoices'] }}</p>
             </section>
-            <section class="admin-panel">
-                <p class="ag-muted">{{ __('admin.tickets.title') }}</p>
-                <p class="admin-panel__title" style="margin:0;">{{ $stats['tickets'] }}</p>
+            <section class="ag-stat-card">
+                <p class="ag-stat-card__label">{{ __('admin.tickets.title') }}</p>
+                <p class="ag-stat-card__value">{{ $stats['tickets'] }}</p>
             </section>
-            <section class="admin-panel">
-                <p class="ag-muted">{{ __('admin.customers.credit_heading') }}</p>
-                <p class="admin-panel__title" style="margin:0;">{{ \App\Support\MoneyFormatter::format(\App\Agovena\Money\Money::of($balanceAmount, $currency)) }}</p>
+            <section class="ag-stat-card">
+                <p class="ag-stat-card__label">{{ __('admin.customers.credit_heading') }}</p>
+                <p class="ag-stat-card__value">{{ \App\Support\MoneyFormatter::format(\App\Agovena\Money\Money::of($balanceAmount, $currency)) }}</p>
             </section>
         </div>
 

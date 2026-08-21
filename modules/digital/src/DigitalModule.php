@@ -46,7 +46,7 @@ final class DigitalModule implements Module
             label: 'admin.nav.digital',
             group: 'admin.nav_groups.fulfillment',
             href: '/admin/digital/assets',
-            icon: 'package',
+            icon: 'download',
             sort: 17,
             permission: 'digital.view',
         ));

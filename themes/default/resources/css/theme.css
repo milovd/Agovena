@@ -1,4 +1,5 @@
 /* Default Theme — merchant-neutral ITCSS entry (not Agovena Admin blue) */
+/* Cache-bust: account menu anchors top-right under the trigger. */
 
 @import './settings/_tokens.css';
 @import './generic/_reset.css';

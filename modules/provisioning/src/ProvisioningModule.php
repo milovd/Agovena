@@ -51,7 +51,7 @@ final class ProvisioningModule implements Module
             label: 'admin.nav.provisioning',
             group: 'admin.nav_groups.operations',
             href: '/admin/provisioning',
-            icon: 'package',
+            icon: 'server',
             sort: 15,
             permission: 'provisioning.view',
         ));

@@ -61,7 +61,7 @@ final class EventsModule implements Module
             label: 'admin.nav.events_checkin',
             group: 'admin.nav_groups.commerce',
             href: '/admin/events/check-in',
-            icon: 'file-text',
+            icon: 'ticket',
             sort: 29,
             permission: 'events.checkin',
             parent: 'events',

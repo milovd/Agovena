@@ -603,13 +603,18 @@ button.store-header__utility[aria-expanded="true"] {
   position: relative;
 }
 
+.store-header__account > .store-account-menu,
 .store-account-menu {
   position: absolute;
   top: calc(100% + 0.55rem);
+  /* Keep the panel under the top-right account trigger (never left-aligned). */
+  left: unset;
   right: 0;
-  left: auto;
+  inset-inline-start: unset;
+  inset-inline-end: 0;
   z-index: 60;
-  width: min(17.5rem, calc(100vw - 1.5rem));
+  width: min(13.25rem, calc(100vw - 1.5rem));
+  max-width: calc(100vw - 1rem);
   padding: 0.4rem;
   border: 1px solid color-mix(in srgb, var(--theme-color-border) 85%, var(--theme-color-ink));
   border-radius: calc(var(--theme-radius) + 2px);
@@ -620,11 +625,15 @@ button.store-header__utility[aria-expanded="true"] {
   transform-origin: top right;
 }
 
+.store-header__account > .store-account-menu::before,
 .store-account-menu::before {
   content: "";
   position: absolute;
   top: -5px;
+  left: unset;
   right: 0.95rem;
+  inset-inline-start: unset;
+  inset-inline-end: 0.95rem;
   width: 10px;
   height: 10px;
   border-top: 1px solid var(--theme-color-border);

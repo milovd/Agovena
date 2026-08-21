@@ -49,7 +49,7 @@ final class InventoryModule implements Module
             label: 'admin.nav.inventory',
             group: 'admin.nav_groups.fulfillment',
             href: '/admin/inventory',
-            icon: 'package',
+            icon: 'warehouse',
             sort: 18,
             permission: 'inventory.view',
         ));

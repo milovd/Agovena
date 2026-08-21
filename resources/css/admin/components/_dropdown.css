@@ -5,7 +5,10 @@
 
 .ag-dropdown__menu {
   position: absolute;
+  left: unset;
   right: 0;
+  inset-inline-start: unset;
+  inset-inline-end: 0;
   top: calc(100% + var(--ag-space-2));
   min-width: 14rem;
   margin: 0;

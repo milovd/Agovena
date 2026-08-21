@@ -59,7 +59,7 @@ final class ShippingModule implements Module
             label: 'admin.nav.shipping',
             group: 'admin.nav_groups.fulfillment',
             href: '/admin/shipping/methods',
-            icon: 'package',
+            icon: 'truck',
             sort: 19,
             permission: 'shipping.view',
         ));
@@ -69,7 +69,7 @@ final class ShippingModule implements Module
             label: 'admin.nav.returns',
             group: 'admin.nav_groups.fulfillment',
             href: '/admin/shipping/returns',
-            icon: 'package',
+            icon: 'rotate-ccw',
             sort: 20,
             permission: 'returns.view',
             parent: 'shipping-methods',

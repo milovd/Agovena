@@ -16,7 +16,7 @@ return [
     'nav_groups' => [
         'overview' => 'Overzicht',
         'commerce' => 'Commerce',
-        'fulfillment' => 'Fulfillment',
+        'fulfillment' => 'Voorraad & levering',
         'operations' => 'Operaties',
         'system' => 'Systeem',
         'services' => 'Fulfillment',

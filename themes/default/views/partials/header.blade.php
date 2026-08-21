@@ -331,6 +331,7 @@
                                 id="store-account-menu"
                                 x-ref="accountMenu"
                                 class="store-header__account-menu store-account-menu"
+                                style="left: unset; right: 0;"
                                 x-show="open"
                                 x-cloak
                                 x-transition:enter="store-account-menu-enter"
@@ -445,10 +446,7 @@
                         <a class="store-drawer__link" href="{{ route('customer.account') }}" @click="navOpen = false">{{ __('storefront.nav.dashboard') }}</a>
                         <a class="store-drawer__link" href="{{ route('customer.profile') }}" @click="navOpen = false">{{ __('storefront.nav.account') }}</a>
                         @if ($drawerCanAdmin)
-                            <a class="store-drawer__link store-drawer__link--admin" href="{{ route('admin.dashboard') }}" @click="navOpen = false">
-                                <span>{{ __('storefront.nav.admin') }}</span>
-                                <span class="store-drawer__hint">{{ __('storefront.nav.admin_hint') }}</span>
-                            </a>
+                            <a class="store-drawer__link" href="{{ route('admin.dashboard') }}" @click="navOpen = false">{{ __('storefront.nav.admin') }}</a>
                         @endif
                         <a class="store-drawer__link store-drawer__link--danger" href="{{ route('customer.logout') }}" @click="navOpen = false">{{ __('storefront.nav.logout') }}</a>
                     @else
