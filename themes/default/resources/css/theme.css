@@ -1,5 +1,5 @@
 /* Default Theme — merchant-neutral ITCSS entry (not Agovena Admin blue) */
-/* Cache-bust: returns photos + child nav icons. */
+/* Cache-bust: support hub redesign. */
 
 @import './settings/_tokens.css';
 @import './generic/_reset.css';

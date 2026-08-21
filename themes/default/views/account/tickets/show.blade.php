@@ -1,3 +1,12 @@
+@php
+    $statusClass = match ($ticket->status->value) {
+        'answered' => 'is-success',
+        'closed' => 'is-muted',
+        'pending' => 'is-warning',
+        default => 'is-open',
+    };
+@endphp
+
 <div class="store-account">
     @include('theme::account.partials.nav', ['accountSection' => $accountSection])
 
@@ -10,15 +19,23 @@
             ],
         ])
 
-        <header class="store-account-panel__header">
-            <div>
-                <h1 class="store-account-panel__title">{{ $ticket->subject }}</h1>
-                <p class="store-account-panel__lede">
-                    {{ $ticket->number }}
-                    ·
-                    {{ __('customer.tickets.status.'.$ticket->status->value) }}
-                </p>
+        <header class="store-support-hero store-support-hero--compact">
+            <div class="store-support-hero__copy">
+                <span class="store-support-hero__icon" aria-hidden="true">
+                    <x-ag.icon name="mail" :size="22" />
+                </span>
+                <div>
+                    <h1 class="store-support-hero__title">{{ $ticket->subject }}</h1>
+                    <p class="store-support-hero__lede">
+                        {{ $ticket->number }}
+                        ·
+                        {{ __('customer.tickets.priority.'.$ticket->priority->value) }}
+                    </p>
+                </div>
             </div>
+            <span class="store-support-card__status {{ $statusClass }}">
+                {{ __('customer.tickets.status.'.$ticket->status->value) }}
+            </span>
         </header>
 
         <div class="store-ticket-thread" role="list">
