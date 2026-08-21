@@ -4,6 +4,10 @@
     <section class="store-account__main store-account-panel">
         <header class="store-account-panel__header">
             @include('theme::account.partials.breadcrumbs', [
+                'back' => [
+                    'url' => route('customer.subscriptions'),
+                    'label' => __('subscriptions::customer.back'),
+                ],
                 'items' => [
                     ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
                     ['label' => __('subscriptions::customer.title'), 'url' => route('customer.subscriptions')],

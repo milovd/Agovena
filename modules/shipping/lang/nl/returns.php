@@ -52,6 +52,7 @@ return [
     'customer_eligible_title' => 'Retour starten',
     'customer_eligible_empty' => 'Er zijn momenteel geen betaalde bestellingen die je kunt retourneren.',
     'customer_start' => 'Retour aanvragen',
+    'customer_back' => 'Terug naar retouren',
     'customer_item_count' => '{1} :count artikel|[2,*] :count artikelen',
     'customer_returnable' => 'Max. :count retourneerbaar',
     'customer_create_title' => 'Retour aanvragen voor :number',

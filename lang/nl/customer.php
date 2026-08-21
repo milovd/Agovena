@@ -244,6 +244,7 @@ return [
         'created' => 'Supportticket aangemaakt.',
         'empty' => 'Je hebt nog geen supporttickets.',
         'empty_hint' => 'Start een gesprek als er iets misgaat met een bestelling, betaling of je account.',
+        'back' => 'Terug naar support',
         'author' => ['customer' => 'Jij', 'staff' => 'Support'],
         'reply' => 'Antwoord',
         'send_reply' => 'Antwoord versturen',

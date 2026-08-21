@@ -4,6 +4,10 @@
     <section class="store-account__main store-account-panel store-ticket">
         <header class="store-account-panel__header">
             @include('theme::account.partials.breadcrumbs', [
+                'back' => [
+                    'url' => route('customer.event-tickets'),
+                    'label' => __('events::customer.back'),
+                ],
                 'items' => [
                     ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
                     ['label' => __('events::customer.title'), 'url' => route('customer.event-tickets')],

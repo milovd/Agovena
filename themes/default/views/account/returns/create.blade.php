@@ -3,6 +3,10 @@
 
     <section class="store-account__main store-account-panel">
         @include('theme::account.partials.breadcrumbs', [
+            'back' => [
+                'url' => route('customer.returns'),
+                'label' => __('shipping::returns.customer_back'),
+            ],
             'items' => [
                 ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
                 ['label' => __('shipping::returns.customer_title'), 'url' => route('customer.returns')],

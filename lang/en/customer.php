@@ -244,6 +244,7 @@ return [
         'created' => 'Support ticket created.',
         'empty' => 'You have no support tickets.',
         'empty_hint' => 'Start a conversation when something goes wrong with an order, payment, or your account.',
+        'back' => 'Back to support',
         'author' => ['customer' => 'You', 'staff' => 'Support'],
         'reply' => 'Reply',
         'send_reply' => 'Send reply',

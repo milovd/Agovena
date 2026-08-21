@@ -4059,6 +4059,34 @@ a.store-cart-line__name:hover {
   margin: 0 0 var(--theme-space-4);
 }
 
+.store-account-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 var(--theme-space-3);
+  padding: 0.2rem 0.35rem 0.2rem 0.1rem;
+  border-radius: var(--theme-radius-sm);
+  color: var(--theme-color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.store-account-back:hover,
+.store-account-back:focus-visible {
+  color: var(--theme-color-text);
+  text-decoration: none;
+  outline: none;
+}
+
+.store-account-back:focus-visible {
+  box-shadow: var(--theme-focus);
+}
+
+.store-account-back .ag-icon {
+  flex-shrink: 0;
+}
+
 .store-account-card-list {
   display: grid;
   gap: var(--theme-space-3);

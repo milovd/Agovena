@@ -3,6 +3,10 @@
 
     <section class="store-account__main store-account-panel">
         @include('theme::account.partials.breadcrumbs', [
+            'back' => [
+                'url' => route('customer.tickets.index'),
+                'label' => __('customer.tickets.back'),
+            ],
             'items' => [
                 ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
                 ['label' => __('customer.tickets.heading'), 'url' => route('customer.tickets.index')],
