@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Storefront;
 
 use App\Agovena\Catalog\ListStorefrontProducts;
+use App\Agovena\Storefront\StorefrontPreferences;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\Category;
 use Livewire\Component;
@@ -24,7 +25,7 @@ final class CategoryShow extends Component
         $this->sort = (string) request()->query('sort', 'name');
     }
 
-    public function render(ListStorefrontProducts $list, ThemeManager $themes, \App\Agovena\Storefront\StorefrontPreferences $preferences)
+    public function render(ListStorefrontProducts $list, ThemeManager $themes, StorefrontPreferences $preferences)
     {
         $theme = $themes->active();
         $config = $themes->config($theme);

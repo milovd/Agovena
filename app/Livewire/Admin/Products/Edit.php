@@ -10,6 +10,7 @@ use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\Contracts\ProductStock;
 use App\Agovena\Catalog\DeleteProduct;
+use App\Agovena\Catalog\SyncProductCurrencyPrices;
 use App\Agovena\Catalog\UpdateProduct;
 use App\Agovena\Extensions\ExtensionSettingDefinition;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisionedProducts;
@@ -336,7 +337,7 @@ final class Edit extends Component
         session()->flash('status', __('admin.products.flash.photo_removed'));
     }
 
-    public function save(UpdateProduct $update, \App\Agovena\Catalog\SyncProductCurrencyPrices $syncPrices): void
+    public function save(UpdateProduct $update, SyncProductCurrencyPrices $syncPrices): void
     {
         $this->authorize('products.update');
 

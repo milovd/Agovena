@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Agovena\Money;
 
-use App\Agovena\Money\Money;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Storefront\StorefrontPreferences;
 use App\Models\Product;

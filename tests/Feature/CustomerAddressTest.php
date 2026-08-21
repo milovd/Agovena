@@ -2,8 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Customer\AccountNavItem;
 use App\Agovena\Customer\AddressData;
+use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\SaveCustomerAddress;
+use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Livewire\Customer\Account\Addresses;
 use App\Livewire\Customer\Account\Dashboard;
 use App\Livewire\Customer\Account\Profile;
@@ -59,17 +63,17 @@ test('account sidebar nests purchases support and account groups with icons', fu
 });
 
 test('account sidebar nests services downloads under services when modules are enabled', function () {
-    app(\App\Agovena\Modules\ModuleManager::class)->enable('digital');
-    app(\App\Agovena\Modules\ModuleManager::class)->enable('provisioning');
-    app(\App\Agovena\Permissions\SyncRegisteredPermissions::class)(force: true);
+    app(ModuleManager::class)->enable('digital');
+    app(ModuleManager::class)->enable('provisioning');
+    app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();
-    $items = collect(app(\App\Agovena\Customer\CustomerAccountNav::class)->items());
+    $items = collect(app(CustomerAccountNav::class)->items());
 
     expect($items->firstWhere('id', 'digital-downloads')?->group)
-        ->toBe(\App\Agovena\Customer\AccountNavItem::GROUP_SERVICES)
+        ->toBe(AccountNavItem::GROUP_SERVICES)
         ->and($items->firstWhere('id', 'services')?->group)
-        ->toBe(\App\Agovena\Customer\AccountNavItem::GROUP_SERVICES);
+        ->toBe(AccountNavItem::GROUP_SERVICES);
 
     Livewire::actingAs($customer->user)
         ->test(Dashboard::class)
@@ -80,15 +84,15 @@ test('account sidebar nests services downloads under services when modules are e
 });
 
 test('account sidebar nests returns under purchases when shipping module is enabled', function () {
-    app(\App\Agovena\Modules\ModuleManager::class)->enable('shipping');
-    app(\App\Agovena\Permissions\SyncRegisteredPermissions::class)(force: true);
+    app(ModuleManager::class)->enable('shipping');
+    app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();
-    $item = collect(app(\App\Agovena\Customer\CustomerAccountNav::class)->items())
+    $item = collect(app(CustomerAccountNav::class)->items())
         ->firstWhere('id', 'shipping-returns');
 
     expect($item)->not->toBeNull()
-        ->and($item->group)->toBe(\App\Agovena\Customer\AccountNavItem::GROUP_PURCHASES);
+        ->and($item->group)->toBe(AccountNavItem::GROUP_PURCHASES);
 
     Livewire::actingAs($customer->user)
         ->test(Dashboard::class)
@@ -98,15 +102,15 @@ test('account sidebar nests returns under purchases when shipping module is enab
 });
 
 test('account sidebar nests subscriptions under account when module is enabled', function () {
-    app(\App\Agovena\Modules\ModuleManager::class)->enable('subscriptions');
-    app(\App\Agovena\Permissions\SyncRegisteredPermissions::class)(force: true);
+    app(ModuleManager::class)->enable('subscriptions');
+    app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();
-    $item = collect(app(\App\Agovena\Customer\CustomerAccountNav::class)->items())
+    $item = collect(app(CustomerAccountNav::class)->items())
         ->firstWhere('id', 'subscriptions');
 
     expect($item)->not->toBeNull()
-        ->and($item->group)->toBe(\App\Agovena\Customer\AccountNavItem::GROUP_ACCOUNT);
+        ->and($item->group)->toBe(AccountNavItem::GROUP_ACCOUNT);
 
     Livewire::actingAs($customer->user)
         ->test(Dashboard::class)

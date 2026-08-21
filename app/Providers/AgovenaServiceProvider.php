@@ -47,6 +47,7 @@ use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
+use App\Agovena\Storefront\StorefrontPreferences;
 use App\Agovena\Theme\StorefrontBrand;
 use App\Agovena\Theme\ThemeManager;
 use App\Agovena\Theme\ThemeSurface;
@@ -221,7 +222,7 @@ class AgovenaServiceProvider extends ServiceProvider
             $view->with('discoveryCategories', $discoveryCategories);
 
             try {
-                $preferences = $this->app->make(\App\Agovena\Storefront\StorefrontPreferences::class);
+                $preferences = $this->app->make(StorefrontPreferences::class);
                 $view->with('storefrontLocales', $preferences->availableLocales());
                 $view->with('storefrontLocale', $preferences->locale());
                 $view->with('storefrontCurrencies', $preferences->availableCurrencies());
