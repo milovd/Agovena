@@ -31,22 +31,37 @@
             </x-ag.empty>
         @else
             <form wire:submit="submit" class="store-account-form">
-                <div class="store-account-card-list" role="list">
+                <div class="store-return-select" role="list">
                     @foreach ($lines as $line)
-                        <article class="store-account-entry store-account-entry--form" role="listitem" wire:key="return-line-{{ $line['item']->id }}">
-                            <div class="store-account-entry__body">
-                                <p class="store-account-entry__title">{{ $line['item']->label }}</p>
-                                <p class="store-account-entry__meta">{{ __('customer.account.quantity', ['count' => $line['item']->quantity]) }}</p>
+                        @php
+                            $item = $line['item'];
+                            $imageUrl = \App\Agovena\Media\ProductMedia::primaryUrl($item->product);
+                        @endphp
+                        <article class="store-return-select__row" role="listitem" wire:key="return-line-{{ $item->id }}">
+                            <div class="store-return-card__thumb" aria-hidden="true">
+                                @if ($imageUrl)
+                                    <img src="{{ $imageUrl }}" alt="">
+                                @else
+                                    <span class="store-return-card__thumb-placeholder"></span>
+                                @endif
+                            </div>
+                            <div class="store-return-select__copy">
+                                <p class="store-return-card__item-title">{{ $item->label }}</p>
+                                <p class="store-return-card__meta">
+                                    {{ __('customer.account.quantity', ['count' => $item->quantity]) }}
+                                    ·
+                                    {{ __('shipping::returns.customer_returnable', ['count' => $line['returnable']]) }}
+                                </p>
                             </div>
                             <div class="store-field store-field--compact">
-                                <label class="store-label" for="return-qty-{{ $line['item']->id }}">{{ __('shipping::returns.customer_quantity') }}</label>
+                                <label class="store-label" for="return-qty-{{ $item->id }}">{{ __('shipping::returns.customer_quantity') }}</label>
                                 <input
-                                    id="return-qty-{{ $line['item']->id }}"
+                                    id="return-qty-{{ $item->id }}"
                                     class="store-input"
                                     type="number"
                                     min="0"
                                     max="{{ $line['returnable'] }}"
-                                    wire:model="quantities.{{ $line['item']->id }}"
+                                    wire:model="quantities.{{ $item->id }}"
                                 >
                             </div>
                         </article>

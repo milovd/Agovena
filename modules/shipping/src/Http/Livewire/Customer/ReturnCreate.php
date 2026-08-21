@@ -28,7 +28,7 @@ final class ReturnCreate extends Component
 
         abort_unless((int) $order->customer_id === (int) $customer->id, 404);
 
-        $this->order = $order->load('items');
+        $this->order = $order->load(['items.product.images']);
     }
 
     public function submit(ReturnRequestService $returns): void

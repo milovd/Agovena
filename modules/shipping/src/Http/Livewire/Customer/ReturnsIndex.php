@@ -32,13 +32,13 @@ final class ReturnsIndex extends Component
         $customer = authenticated_customer();
 
         $requests = ReturnRequest::query()
-            ->with(['order', 'items.orderItem'])
+            ->with(['order.items.product.images', 'items.orderItem.product.images'])
             ->where('customer_id', $customer->id)
             ->orderByDesc('id')
             ->get();
 
         $eligibleOrders = Order::query()
-            ->with('items')
+            ->with(['items.product.images'])
             ->where('customer_id', $customer->id)
             ->where('status', OrderStatus::Paid)
             ->orderByDesc('id')

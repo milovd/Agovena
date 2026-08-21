@@ -63,19 +63,30 @@
                     class="store-account__link store-account__link--child {{ $section === 'orders' ? 'is-active' : '' }}"
                     href="{{ route('customer.orders.index') }}"
                     @if ($section === 'orders') aria-current="page" @endif
-                >{{ __('customer.account.nav_orders') }}</a>
+                >
+                    <x-ag.icon name="package" class="store-account__link-icon" :size="16" />
+                    <span>{{ __('customer.account.nav_orders') }}</span>
+                </a>
                 <a
                     class="store-account__link store-account__link--child {{ $section === 'invoices' ? 'is-active' : '' }}"
                     href="{{ route('customer.invoices.index') }}"
                     @if ($section === 'invoices') aria-current="page" @endif
-                >{{ __('customer.account.nav_invoices') }}</a>
+                >
+                    <x-ag.icon name="file-text" class="store-account__link-icon" :size="16" />
+                    <span>{{ __('customer.account.nav_invoices') }}</span>
+                </a>
                 @foreach ($purchasesExtraNav as $navItem)
                     <a
                         class="store-account__link store-account__link--child {{ $section === $navItem->section ? 'is-active' : '' }}"
                         href="{{ route($navItem->route) }}"
                         @if ($section === $navItem->section) aria-current="page" @endif
                         wire:key="account-nav-{{ $navItem->id }}"
-                    >{{ __($navItem->label) }}</a>
+                    >
+                        @if ($navItem->icon)
+                            <x-ag.icon :name="$navItem->icon" class="store-account__link-icon" :size="16" />
+                        @endif
+                        <span>{{ __($navItem->label) }}</span>
+                    </a>
                 @endforeach
             </div>
         </div>
@@ -106,7 +117,12 @@
                             href="{{ route($navItem->route) }}"
                             @if ($section === $navItem->section) aria-current="page" @endif
                             wire:key="account-nav-{{ $navItem->id }}"
-                        >{{ __($navItem->label) }}</a>
+                        >
+                            @if ($navItem->icon)
+                                <x-ag.icon :name="$navItem->icon" class="store-account__link-icon" :size="16" />
+                            @endif
+                            <span>{{ __($navItem->label) }}</span>
+                        </a>
                     @endforeach
                 </div>
             </div>
@@ -151,19 +167,30 @@
                     class="store-account__link store-account__link--child {{ in_array($section, ['profile', 'addresses'], true) ? 'is-active' : '' }}"
                     href="{{ route('customer.profile') }}"
                     @if (in_array($section, ['profile', 'addresses'], true)) aria-current="page" @endif
-                >{{ __('customer.account.nav_settings') }}</a>
+                >
+                    <x-ag.icon name="users" class="store-account__link-icon" :size="16" />
+                    <span>{{ __('customer.account.nav_settings') }}</span>
+                </a>
                 <a
                     class="store-account__link store-account__link--child {{ $section === 'credits' ? 'is-active' : '' }}"
                     href="{{ route('customer.credits') }}"
                     @if ($section === 'credits') aria-current="page" @endif
-                >{{ __('customer.account.nav_credits') }}</a>
+                >
+                    <x-ag.icon name="coins" class="store-account__link-icon" :size="16" />
+                    <span>{{ __('customer.account.nav_credits') }}</span>
+                </a>
                 @foreach ($accountExtraNav as $navItem)
                     <a
                         class="store-account__link store-account__link--child {{ $section === $navItem->section ? 'is-active' : '' }}"
                         href="{{ route($navItem->route) }}"
                         @if ($section === $navItem->section) aria-current="page" @endif
                         wire:key="account-nav-{{ $navItem->id }}"
-                    >{{ __($navItem->label) }}</a>
+                    >
+                        @if ($navItem->icon)
+                            <x-ag.icon :name="$navItem->icon" class="store-account__link-icon" :size="16" />
+                        @endif
+                        <span>{{ __($navItem->label) }}</span>
+                    </a>
                 @endforeach
             </div>
         </div>

@@ -52,6 +52,8 @@ return [
     'customer_eligible_title' => 'Start a return',
     'customer_eligible_empty' => 'No paid orders are eligible for a return right now.',
     'customer_start' => 'Request a return',
+    'customer_item_count' => '{1} :count item|[2,*] :count items',
+    'customer_returnable' => 'Up to :count returnable',
     'customer_create_title' => 'Request a return for :number',
     'customer_create_lede' => 'Choose what you want to send back. Staff review every request before you ship anything.',
     'customer_quantity' => 'Quantity to return',

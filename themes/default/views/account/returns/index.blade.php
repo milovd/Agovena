@@ -34,13 +34,36 @@
                     </x-slot:icon>
                 </x-ag.empty>
             @else
-                <div class="store-account-card-list" role="list">
+                <div class="store-return-list" role="list">
                     @foreach ($eligibleOrders as $order)
-                        <article class="store-account-entry" role="listitem" wire:key="eligible-order-{{ $order->id }}">
-                            <div class="store-account-entry__body">
-                                <p class="store-account-entry__title">{{ $order->number }}</p>
-                                <p class="store-account-entry__meta">
+                        @php
+                            $previewItems = $order->items->take(3);
+                            $extraCount = max(0, $order->items->count() - $previewItems->count());
+                        @endphp
+                        <article class="store-return-card" role="listitem" wire:key="eligible-order-{{ $order->id }}">
+                            <div class="store-return-card__thumbs" aria-hidden="true">
+                                @foreach ($previewItems as $item)
+                                    @php
+                                        $imageUrl = \App\Agovena\Media\ProductMedia::primaryUrl($item->product);
+                                    @endphp
+                                    <div class="store-return-card__thumb">
+                                        @if ($imageUrl)
+                                            <img src="{{ $imageUrl }}" alt="">
+                                        @else
+                                            <span class="store-return-card__thumb-placeholder"></span>
+                                        @endif
+                                    </div>
+                                @endforeach
+                                @if ($extraCount > 0)
+                                    <div class="store-return-card__thumb store-return-card__thumb--more">+{{ $extraCount }}</div>
+                                @endif
+                            </div>
+                            <div class="store-return-card__body">
+                                <p class="store-return-card__title">{{ $order->number }}</p>
+                                <p class="store-return-card__meta">
                                     {{ $order->created_at?->timezone(config('app.timezone'))->locale(app()->getLocale())->translatedFormat('j F Y') }}
+                                    ·
+                                    {{ trans_choice('shipping::returns.customer_item_count', $order->items->count(), ['count' => $order->items->count()]) }}
                                 </p>
                             </div>
                             <a class="store-btn store-btn--secondary" href="{{ route('customer.returns.create', $order) }}">
@@ -62,7 +85,7 @@
             @if ($requests->isEmpty())
                 <p class="store-account-panel__empty">{{ __('shipping::returns.customer_empty') }}</p>
             @else
-                <div class="store-account-card-list" role="list">
+                <div class="store-return-list" role="list">
                     @foreach ($requests as $request)
                         @php
                             $statusClass = match ($request->status->value) {
@@ -71,34 +94,55 @@
                                 default => 'is-warning',
                             };
                         @endphp
-                        <article class="store-account-entry" role="listitem" wire:key="return-{{ $request->id }}">
-                            <div class="store-account-entry__body">
-                                <p class="store-account-entry__title">#{{ $request->id }} · {{ $request->order?->number }}</p>
-                                <p class="store-order-card__status {{ $statusClass }}">
-                                    {{ __('shipping::returns.statuses.'.$request->status->value) }}
-                                </p>
-                                @if ($request->reason)
-                                    <p class="store-account-entry__meta">{{ $request->reason }}</p>
-                                @endif
-                                <ul class="store-account-entry__lines">
-                                    @foreach ($request->items as $item)
-                                        <li>{{ $item->quantity }} × {{ $item->orderItem?->name ?? $item->orderItem?->label ?? ('#'.$item->order_item_id) }}</li>
-                                    @endforeach
-                                </ul>
-                                @if ($request->staff_notes)
-                                    <p class="store-account-entry__meta">
-                                        {{ __('shipping::returns.customer_staff_notes') }}: {{ $request->staff_notes }}
+                        <article class="store-return-card store-return-card--stack" role="listitem" wire:key="return-{{ $request->id }}">
+                            <div class="store-return-card__header">
+                                <div>
+                                    <p class="store-return-card__title">#{{ $request->id }} · {{ $request->order?->number }}</p>
+                                    <p class="store-order-card__status {{ $statusClass }}">
+                                        {{ __('shipping::returns.statuses.'.$request->status->value) }}
                                     </p>
+                                </div>
+                                @if ($request->status->value === 'requested')
+                                    <button
+                                        type="button"
+                                        class="store-btn store-btn--secondary"
+                                        wire:click="cancel({{ $request->id }})"
+                                    >
+                                        {{ __('shipping::returns.customer_cancel') }}
+                                    </button>
                                 @endif
                             </div>
-                            @if ($request->status->value === 'requested')
-                                <button
-                                    type="button"
-                                    class="store-btn store-btn--secondary"
-                                    wire:click="cancel({{ $request->id }})"
-                                >
-                                    {{ __('shipping::returns.customer_cancel') }}
-                                </button>
+
+                            <ul class="store-return-card__items" role="list">
+                                @foreach ($request->items as $item)
+                                    @php
+                                        $orderItem = $item->orderItem;
+                                        $imageUrl = \App\Agovena\Media\ProductMedia::primaryUrl($orderItem?->product);
+                                        $label = $orderItem?->label ?? $orderItem?->name ?? ('#'.$item->order_item_id);
+                                    @endphp
+                                    <li class="store-return-card__item">
+                                        <div class="store-return-card__thumb" aria-hidden="true">
+                                            @if ($imageUrl)
+                                                <img src="{{ $imageUrl }}" alt="">
+                                            @else
+                                                <span class="store-return-card__thumb-placeholder"></span>
+                                            @endif
+                                        </div>
+                                        <div class="store-return-card__item-body">
+                                            <p class="store-return-card__item-title">{{ $label }}</p>
+                                            <p class="store-return-card__meta">{{ $item->quantity }} ×</p>
+                                        </div>
+                                    </li>
+                                @endforeach
+                            </ul>
+
+                            @if ($request->reason)
+                                <p class="store-return-card__meta">{{ $request->reason }}</p>
+                            @endif
+                            @if ($request->staff_notes)
+                                <p class="store-return-card__meta">
+                                    {{ __('shipping::returns.customer_staff_notes') }}: {{ $request->staff_notes }}
+                                </p>
                             @endif
                         </article>
                     @endforeach
