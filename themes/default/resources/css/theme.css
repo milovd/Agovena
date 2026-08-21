@@ -1,5 +1,5 @@
 /* Default Theme — merchant-neutral ITCSS entry (not Agovena Admin blue) */
-/* Cache-bust: account detail back controls. */
+/* Cache-bust: breadcrumbs above back control. */
 
 @import './settings/_tokens.css';
 @import './generic/_reset.css';
