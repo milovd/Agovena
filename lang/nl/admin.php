@@ -1516,6 +1516,9 @@ return [
         'send' => 'Versturen',
         'reply_sent' => 'Antwoord opgeslagen.',
         'empty' => 'Geen supporttickets gevonden.',
+        'attachments' => 'Bijlagen',
+        'attachment' => 'Bijlage',
+        'attachments_hint' => 'Alleen afbeeldingen of PDF. Max. :max bestanden, :mb MB per bestand. Privé opgeslagen en als download aangeboden.',
     ],
     'audit' => [
         'title' => 'Auditlogboek',

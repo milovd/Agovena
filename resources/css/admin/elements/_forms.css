@@ -24,6 +24,25 @@
   line-height: 1.45;
 }
 
+.ag-attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ag-attachment-list a {
+  color: var(--ag-color-accent);
+  text-decoration: none;
+  font-size: 0.875rem;
+}
+
+.ag-attachment-list a:hover {
+  text-decoration: underline;
+}
+
 .ag-check {
   display: inline-flex;
   align-items: center;

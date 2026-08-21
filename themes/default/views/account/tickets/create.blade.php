@@ -56,8 +56,34 @@
                 <textarea id="ticket-body" class="store-input" rows="8" wire:model="body" required></textarea>
                 @error('body') <p class="store-field__error">{{ $message }}</p> @enderror
             </div>
+            <div class="store-field">
+                <label class="store-label" for="ticket-attachments">{{ __('customer.tickets.attachments') }}</label>
+                <input
+                    id="ticket-attachments"
+                    class="store-input"
+                    type="file"
+                    multiple
+                    wire:model="attachments"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                >
+                <p class="store-field__hint">{{ __('customer.tickets.attachments_hint', ['max' => $maxAttachments, 'mb' => (int) ($maxKilobytes / 1024)]) }}</p>
+                @error('attachments') <p class="store-field__error">{{ $message }}</p> @enderror
+                @error('attachments.*') <p class="store-field__error">{{ $message }}</p> @enderror
+                @if ($attachments !== [])
+                    <ul class="store-ticket-attachments store-ticket-attachments--pending" role="list">
+                        @foreach ($attachments as $index => $file)
+                            <li class="store-ticket-attachments__item">
+                                <span>{{ is_object($file) && method_exists($file, 'getClientOriginalName') ? $file->getClientOriginalName() : __('customer.tickets.attachment') }}</span>
+                                <button type="button" class="store-btn store-btn--secondary" wire:click="removeAttachment({{ $index }})">
+                                    {{ __('common.remove') }}
+                                </button>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
             <div class="store-form-actions">
-                <button class="store-btn store-btn--primary" type="submit">{{ __('customer.tickets.submit') }}</button>
+                <button class="store-btn store-btn--primary" type="submit" wire:loading.attr="disabled">{{ __('customer.tickets.submit') }}</button>
             </div>
         </form>
     </section>

@@ -11,22 +11,33 @@ use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Models\User;
 use App\Notifications\TicketRepliedNotification;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 final class ReplyToTicket
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly StoreTicketMessageAttachments $storeAttachments,
+    ) {}
 
-    public function byCustomer(Ticket $ticket, Customer $customer, string $body): TicketMessage
+    /**
+     * @param  list<UploadedFile|TemporaryUploadedFile>  $attachments
+     */
+    public function byCustomer(Ticket $ticket, Customer $customer, string $body, array $attachments = []): TicketMessage
     {
         abort_unless((int) $ticket->customer_id === (int) $customer->id, 404);
 
-        return $this->store($ticket, 'customer', $customer->id, $body, false);
+        return $this->store($ticket, 'customer', $customer->id, $body, false, $attachments);
     }
 
-    public function byStaff(Ticket $ticket, User $staff, string $body, bool $isInternal = false): TicketMessage
+    /**
+     * @param  list<UploadedFile|TemporaryUploadedFile>  $attachments
+     */
+    public function byStaff(Ticket $ticket, User $staff, string $body, bool $isInternal = false, array $attachments = []): TicketMessage
     {
-        $message = $this->store($ticket, 'staff', $staff->id, $body, $isInternal);
+        $message = $this->store($ticket, 'staff', $staff->id, $body, $isInternal, $attachments);
         $this->audit->log($isInternal ? 'ticket.internal_note_added' : 'ticket.replied', $ticket);
 
         if (! $isInternal) {
@@ -36,14 +47,18 @@ final class ReplyToTicket
         return $message;
     }
 
+    /**
+     * @param  list<UploadedFile|TemporaryUploadedFile>  $attachments
+     */
     private function store(
         Ticket $ticket,
         string $authorType,
         int $authorId,
         string $body,
         bool $isInternal,
+        array $attachments,
     ): TicketMessage {
-        return DB::transaction(function () use ($ticket, $authorType, $authorId, $body, $isInternal): TicketMessage {
+        return DB::transaction(function () use ($ticket, $authorType, $authorId, $body, $isInternal, $attachments): TicketMessage {
             $message = new TicketMessage([
                 'author_type' => $authorType,
                 'author_id' => $authorId,
@@ -51,6 +66,7 @@ final class ReplyToTicket
                 'is_internal' => $isInternal,
             ]);
             $ticket->messages()->save($message);
+            $this->storeAttachments->handle($ticket, $message, $attachments);
 
             $updates = ['last_reply_at' => now()];
             if (! $isInternal) {
@@ -60,7 +76,7 @@ final class ReplyToTicket
             }
             $ticket->update($updates);
 
-            return $message;
+            return $message->load('attachments');
         });
     }
 }

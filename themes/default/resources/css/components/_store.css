@@ -4227,6 +4227,40 @@ a.store-cart-line__name:hover {
   line-height: 1.5;
 }
 
+.store-ticket-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.store-ticket-attachments__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--theme-color-accent);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.store-ticket-attachments__link:hover {
+  text-decoration: underline;
+}
+
+.store-ticket-attachments--pending .store-ticket-attachments__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-md);
+  font-size: 0.875rem;
+}
+
 .store-ticket-reply {
   padding-top: var(--theme-space-2);
   border-top: 1px solid var(--theme-color-border);
@@ -4247,6 +4281,13 @@ a.store-cart-line__name:hover {
 
 .store-support-hero--compact {
   margin-bottom: var(--theme-space-5);
+}
+
+.store-support-hero__balance {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--theme-color-text);
+  letter-spacing: -0.02em;
 }
 
 .store-support-hero__copy {

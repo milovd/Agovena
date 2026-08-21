@@ -56,6 +56,7 @@ use App\Livewire\Customer\Account\InvoicesIndex as CustomerInvoicesIndex;
 use App\Livewire\Customer\Account\OrderShow as CustomerOrderShow;
 use App\Livewire\Customer\Account\OrdersIndex as CustomerOrdersIndex;
 use App\Livewire\Customer\Account\Profile as CustomerProfile;
+use App\Http\Controllers\Support\TicketAttachmentDownloadController;
 use App\Livewire\Customer\Account\TicketCreate as CustomerTicketCreate;
 use App\Livewire\Customer\Account\TicketShow as CustomerTicketShow;
 use App\Livewire\Customer\Account\TicketsIndex as CustomerTicketsIndex;
@@ -136,6 +137,7 @@ Route::middleware('auth')->prefix('account')->name('customer.')->group(function 
         Route::get('/tickets', CustomerTicketsIndex::class)->name('tickets.index');
         Route::get('/tickets/create', CustomerTicketCreate::class)->name('tickets.create');
         Route::get('/tickets/{ticket}', CustomerTicketShow::class)->name('tickets.show');
+        Route::get('/ticket-attachments/{attachment}', TicketAttachmentDownloadController::class)->name('ticket-attachments.download');
         Route::get('/credits', CustomerCredits::class)->name('credits');
     });
 });
@@ -169,6 +171,7 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access', 'admin.2
     Route::get('/customers/{customer}', CustomersShow::class)->name('customers.show');
     Route::get('/tickets', TicketsIndex::class)->name('tickets.index');
     Route::get('/tickets/{ticket}', TicketsShow::class)->name('tickets.show');
+    Route::get('/ticket-attachments/{attachment}', TicketAttachmentDownloadController::class)->name('ticket-attachments.download');
     Route::get('/audit', AuditIndex::class)->name('audit.index');
     Route::get('/email-log', NotificationsEmailLog::class)->name('email-log');
     Route::get('/failed-jobs', SystemFailedJobs::class)->name('failed-jobs');

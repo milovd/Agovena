@@ -29,6 +29,15 @@
                 <header><strong>{{ __('admin.tickets.author.'.$message->author_type) }}</strong> · {{ $message->created_at->translatedFormat('d M Y H:i') }}</header>
                 @if ($message->is_internal)<span class="ag-badge">{{ __('admin.tickets.internal') }}</span>@endif
                 <p>{{ $message->body }}</p>
+                @if ($message->attachments->isNotEmpty())
+                    <ul class="ag-attachment-list">
+                        @foreach ($message->attachments as $attachment)
+                            <li>
+                                <a href="{{ route('admin.ticket-attachments.download', $attachment) }}">{{ $attachment->original_filename }}</a>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
             </article>
         @endforeach
     </section>
@@ -40,8 +49,32 @@
                 <textarea id="ticket-reply" class="ag-input" rows="7" wire:model="reply" required></textarea>
                 @error('reply') <p class="ag-field__error">{{ $message }}</p> @enderror
             </div>
+            <div class="ag-field">
+                <label class="ag-field__label" for="ticket-attachments">{{ __('admin.tickets.attachments') }}</label>
+                <input
+                    id="ticket-attachments"
+                    class="ag-input"
+                    type="file"
+                    multiple
+                    wire:model="attachments"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                >
+                <p class="ag-field__hint">{{ __('admin.tickets.attachments_hint', ['max' => $maxAttachments, 'mb' => (int) ($maxKilobytes / 1024)]) }}</p>
+                @error('attachments') <p class="ag-field__error">{{ $message }}</p> @enderror
+                @error('attachments.*') <p class="ag-field__error">{{ $message }}</p> @enderror
+                @if ($attachments !== [])
+                    <ul class="ag-attachment-list">
+                        @foreach ($attachments as $index => $file)
+                            <li>
+                                <span>{{ is_object($file) && method_exists($file, 'getClientOriginalName') ? $file->getClientOriginalName() : __('admin.tickets.attachment') }}</span>
+                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="removeAttachment({{ $index }})">{{ __('common.remove') }}</button>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
             <x-ag.checkbox id="ticket-internal" wire:model="is_internal" :label="__('admin.tickets.internal_note')" />
-            <button class="ag-btn ag-btn--primary" type="submit">{{ __('admin.tickets.send') }}</button>
+            <button class="ag-btn ag-btn--primary" type="submit" wire:loading.attr="disabled">{{ __('admin.tickets.send') }}</button>
         </form>
     @endcan
 </div>

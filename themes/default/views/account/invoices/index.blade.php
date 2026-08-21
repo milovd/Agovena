@@ -9,8 +9,16 @@
             ],
         ])
 
-        <header class="store-account-panel__header">
-            <h1 class="store-account-panel__title">{{ __('customer.account.invoices_title') }}</h1>
+        <header class="store-support-hero store-support-hero--compact">
+            <div class="store-support-hero__copy">
+                <span class="store-support-hero__icon" aria-hidden="true">
+                    <x-ag.icon name="file-text" :size="22" />
+                </span>
+                <div>
+                    <h1 class="store-support-hero__title">{{ __('customer.account.invoices_title') }}</h1>
+                    <p class="store-support-hero__lede">{{ __('customer.account.invoices_lede') }}</p>
+                </div>
+            </div>
         </header>
 
         @if ($invoices->isEmpty())

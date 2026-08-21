@@ -55,6 +55,18 @@
                         </time>
                     </header>
                     <div class="store-ticket-message__body">{{ $message->body }}</div>
+                    @if ($message->attachments->isNotEmpty())
+                        <ul class="store-ticket-attachments" role="list">
+                            @foreach ($message->attachments as $attachment)
+                                <li>
+                                    <a class="store-ticket-attachments__link" href="{{ route('customer.ticket-attachments.download', $attachment) }}">
+                                        <x-ag.icon name="download" :size="14" />
+                                        <span>{{ $attachment->original_filename }}</span>
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
                 </article>
             @endforeach
         </div>
@@ -66,8 +78,34 @@
                     <textarea id="ticket-reply" class="store-input" rows="6" wire:model="reply" required></textarea>
                     @error('reply') <p class="store-field__error">{{ $message }}</p> @enderror
                 </div>
+                <div class="store-field">
+                    <label class="store-label" for="ticket-reply-attachments">{{ __('customer.tickets.attachments') }}</label>
+                    <input
+                        id="ticket-reply-attachments"
+                        class="store-input"
+                        type="file"
+                        multiple
+                        wire:model="attachments"
+                        accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                    >
+                    <p class="store-field__hint">{{ __('customer.tickets.attachments_hint', ['max' => $maxAttachments, 'mb' => (int) ($maxKilobytes / 1024)]) }}</p>
+                    @error('attachments') <p class="store-field__error">{{ $message }}</p> @enderror
+                    @error('attachments.*') <p class="store-field__error">{{ $message }}</p> @enderror
+                    @if ($attachments !== [])
+                        <ul class="store-ticket-attachments store-ticket-attachments--pending" role="list">
+                            @foreach ($attachments as $index => $file)
+                                <li class="store-ticket-attachments__item">
+                                    <span>{{ is_object($file) && method_exists($file, 'getClientOriginalName') ? $file->getClientOriginalName() : __('customer.tickets.attachment') }}</span>
+                                    <button type="button" class="store-btn store-btn--secondary" wire:click="removeAttachment({{ $index }})">
+                                        {{ __('common.remove') }}
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </div>
                 <div class="store-form-actions">
-                    <button class="store-btn store-btn--primary" type="submit">{{ __('customer.tickets.send_reply') }}</button>
+                    <button class="store-btn store-btn--primary" type="submit" wire:loading.attr="disabled">{{ __('customer.tickets.send_reply') }}</button>
                 </div>
             </form>
         @endif

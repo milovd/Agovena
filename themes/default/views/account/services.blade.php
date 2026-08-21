@@ -2,9 +2,23 @@
     @include('theme::account.partials.nav', ['accountSection' => $accountSection])
 
     <section class="store-account__main store-account-panel">
-        <header class="store-account-panel__header">
-            <h1 class="store-account-panel__title">{{ __('provisioning::customer.title') }}</h1>
-            <p class="store-account-panel__lede">{{ __('provisioning::customer.lede') }}</p>
+        @include('theme::account.partials.breadcrumbs', [
+            'items' => [
+                ['label' => __('customer.account.nav_overview'), 'url' => route('customer.account')],
+                ['label' => __('provisioning::customer.title')],
+            ],
+        ])
+
+        <header class="store-support-hero store-support-hero--compact">
+            <div class="store-support-hero__copy">
+                <span class="store-support-hero__icon" aria-hidden="true">
+                    <x-ag.icon name="server" :size="22" />
+                </span>
+                <div>
+                    <h1 class="store-support-hero__title">{{ __('provisioning::customer.title') }}</h1>
+                    <p class="store-support-hero__lede">{{ __('provisioning::customer.lede') }}</p>
+                </div>
+            </div>
         </header>
 
         @if (session('status'))

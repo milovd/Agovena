@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Tickets;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Support\ReplyToTicket;
+use App\Agovena\Support\TicketAttachmentPolicy;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\User;
@@ -13,10 +14,12 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 final class Show extends Component
 {
     use AuthorizesRequests;
+    use WithFileUploads;
 
     public Ticket $ticket;
 
@@ -25,6 +28,9 @@ final class Show extends Component
     public bool $is_internal = false;
 
     public string $status = '';
+
+    /** @var array<int, mixed> */
+    public array $attachments = [];
 
     public function mount(Ticket $ticket): void
     {
@@ -36,17 +42,29 @@ final class Show extends Component
     public function sendReply(ReplyToTicket $replyToTicket): void
     {
         $this->authorize('tickets.manage');
-        $data = $this->validate([
+        $this->validate(array_merge([
             'reply' => ['required', 'string', 'max:20000'],
             'is_internal' => ['boolean'],
-        ]);
+        ], TicketAttachmentPolicy::validationRules()));
         /** @var User $staff */
         $staff = Auth::user();
-        $replyToTicket->byStaff($this->ticket, $staff, $data['reply'], $data['is_internal']);
-        $this->reset(['reply', 'is_internal']);
+        $replyToTicket->byStaff(
+            $this->ticket,
+            $staff,
+            $this->reply,
+            $this->is_internal,
+            array_values($this->attachments),
+        );
+        $this->reset(['reply', 'is_internal', 'attachments']);
         $this->ticket->refresh();
         $this->status = $this->ticket->status->value;
         session()->flash('status', __('admin.tickets.reply_sent'));
+    }
+
+    public function removeAttachment(int $index): void
+    {
+        unset($this->attachments[$index]);
+        $this->attachments = array_values($this->attachments);
     }
 
     public function updateStatus(): void
@@ -66,10 +84,12 @@ final class Show extends Component
 
     public function render(AdminRegistrar $admin)
     {
-        $this->ticket->load(['customer', 'assignee', 'messages']);
+        $this->ticket->load(['customer', 'assignee', 'messages.attachments']);
 
         return view('livewire.admin.tickets.show', [
             'ticket' => $this->ticket,
+            'maxAttachments' => TicketAttachmentPolicy::MAX_FILES,
+            'maxKilobytes' => TicketAttachmentPolicy::MAX_KILOBYTES,
         ])->layout('layouts.admin', [
             'title' => __('admin.tickets.ticket_title', ['number' => $this->ticket->number]),
             'navigation' => $admin->navigationItems(),

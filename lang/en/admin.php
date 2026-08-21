@@ -1516,6 +1516,9 @@ return [
         'send' => 'Send',
         'reply_sent' => 'Reply saved.',
         'empty' => 'No support tickets found.',
+        'attachments' => 'Attachments',
+        'attachment' => 'Attachment',
+        'attachments_hint' => 'Images or PDF only. Max :max files, :mb MB each. Stored privately and force-downloaded.',
     ],
     'audit' => [
         'title' => 'Audit log',
