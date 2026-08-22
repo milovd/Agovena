@@ -14,14 +14,16 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-test('admin shell shows grouped commerce and system navigation', function () {
+test('admin shell shows grouped catalog, sales, and system navigation', function () {
     $staff = $this->createStaff();
 
     $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
         ->assertSee('Overview', false)
-        ->assertSee('Commerce', false)
+        ->assertSee(__('admin.nav_groups.catalog'), false)
+        ->assertSee(__('admin.nav_groups.sales'), false)
+        ->assertSee(__('admin.nav_groups.customers'), false)
         ->assertSee('Categories', false)
         ->assertSee('System', false)
         ->assertSee('Settings', false)

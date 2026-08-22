@@ -97,7 +97,7 @@ test('admin navigation groups are collapsible and fulfillment icons are distinct
         ->assertSee(__('admin.nav_groups.overview'), false)
         ->getContent();
 
-    expect($html)->toContain('agovena.admin.nav.v5.')
+    expect($html)->toContain('agovena.admin.nav.v6.')
         ->and($html)->toContain('open: true');
 });
 
