@@ -49,7 +49,7 @@ final class EventsModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'events',
             label: 'admin.nav.events',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.catalog',
             href: '/admin/events',
             icon: 'calendar',
             sort: 28,
@@ -59,12 +59,11 @@ final class EventsModule implements Module
         $context->admin()->navigation(new NavigationItem(
             id: 'events-checkin',
             label: 'admin.nav.events_checkin',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.catalog',
             href: '/admin/events/check-in',
             icon: 'ticket',
             sort: 29,
             permission: 'events.checkin',
-            parent: 'events',
         ));
 
         $context->customerAccountNav(new AccountNavItem(

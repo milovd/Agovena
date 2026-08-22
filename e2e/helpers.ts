@@ -51,10 +51,16 @@ export async function continueCheckout(page: Page): Promise<void> {
 }
 
 export async function placeOrder(page: Page): Promise<void> {
-    const payLater = page.getByRole('radio', { name: 'Pay later' });
-    if (await payLater.count()) {
-        await payLater.check();
+    const payNow = page.getByRole('radio', { name: 'Pay now' });
+    if (await payNow.count()) {
+        await payNow.check();
         await page.waitForTimeout(300);
+    } else {
+        const payLater = page.getByRole('radio', { name: 'Pay later' });
+        if (await payLater.count()) {
+            await payLater.check();
+            await page.waitForTimeout(300);
+        }
     }
 
     const action = page.getByTestId('checkout-submit');

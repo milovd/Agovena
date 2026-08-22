@@ -24,7 +24,7 @@
             x-data="{
                 open: true,
                 init() {
-                    const key = 'agovena.admin.nav.v5.{{ $groupSlug }}';
+                    const key = 'agovena.admin.nav.v6.{{ $groupSlug }}';
                     const stored = localStorage.getItem(key);
                     if ({{ $groupHasActive ? 'true' : 'false' }}) {
                         this.open = true;

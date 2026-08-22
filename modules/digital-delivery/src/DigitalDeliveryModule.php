@@ -50,7 +50,6 @@ final class DigitalDeliveryModule implements Module
             icon: 'key',
             sort: 16,
             permission: 'digital_delivery.view',
-            parent: 'digital-assets',
         ));
 
         $context->customerAccountNav(new AccountNavItem(

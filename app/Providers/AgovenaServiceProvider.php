@@ -275,7 +275,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'products',
             label: 'admin.nav.products',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.catalog',
             href: '/admin/products',
             icon: 'package',
             sort: 10,
@@ -285,18 +285,17 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'categories',
             label: 'admin.nav.categories',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.catalog',
             href: '/admin/categories',
             icon: 'folders',
             sort: 15,
             permission: 'categories.view',
-            parent: 'products',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'orders',
             label: 'admin.nav.orders',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.sales',
             href: '/admin/orders',
             icon: 'shopping-bag',
             sort: 20,
@@ -306,29 +305,27 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'invoices',
             label: 'admin.nav.invoices',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.sales',
             href: '/admin/invoices',
             icon: 'file-text',
             sort: 25,
             permission: 'invoices.view',
-            parent: 'orders',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'discounts',
             label: 'admin.nav.discounts',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.sales',
             href: '/admin/discounts',
             icon: 'file-text',
             sort: 27,
             permission: 'discounts.view',
-            parent: 'orders',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'customers',
             label: 'admin.nav.customers',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.customers',
             href: '/admin/customers',
             icon: 'users',
             sort: 30,
@@ -338,12 +335,11 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'customer-properties',
             label: 'admin.nav.customer_properties',
-            group: 'admin.nav_groups.commerce',
+            group: 'admin.nav_groups.customers',
             href: '/admin/customers/properties',
             icon: 'settings',
             sort: 31,
             permission: 'customers.manage',
-            parent: 'customers',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -364,7 +360,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'coins',
             sort: 115,
             permission: 'taxes.view',
-            parent: 'settings',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -385,7 +380,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'mail',
             sort: 55,
             permission: 'notifications.view',
-            parent: 'audit',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -396,7 +390,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'coins',
             sort: 110,
             permission: 'currencies.view',
-            parent: 'settings',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -407,7 +400,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'package',
             sort: 119,
             permission: 'modules.manage',
-            parent: 'modules',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -428,7 +420,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'package',
             sort: 121,
             permission: 'extensions.view',
-            parent: 'modules',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -439,7 +430,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'key',
             sort: 122,
             permission: 'api.tokens',
-            parent: 'users',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -460,7 +450,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'shield',
             sort: 210,
             permission: 'roles.view',
-            parent: 'users',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -470,7 +459,6 @@ class AgovenaServiceProvider extends ServiceProvider
             href: '/admin/security',
             icon: 'shield',
             sort: 215,
-            parent: 'users',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -491,7 +479,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'mail',
             sort: 62,
             permission: 'notifications.view',
-            parent: 'audit',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -502,7 +489,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'circle-alert',
             sort: 64,
             permission: 'jobs.view',
-            parent: 'audit',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -532,7 +518,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'palette',
             sort: 310,
             permission: 'theme.view',
-            parent: 'themes',
         ));
         $admin->navigation(new NavigationItem(
             id: 'navigation',
@@ -542,7 +527,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'menu',
             sort: 320,
             permission: 'navigation.view',
-            parent: 'themes',
         ));
         $admin->navigation(new NavigationItem(
             id: 'pages',
@@ -552,7 +536,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'file-text',
             sort: 330,
             permission: 'pages.view',
-            parent: 'themes',
         ));
     }
 

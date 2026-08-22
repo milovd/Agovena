@@ -16,6 +16,9 @@ return [
 
     'nav_groups' => [
         'overview' => 'Overview',
+        'catalog' => 'Catalog',
+        'sales' => 'Sales',
+        'customers' => 'Customers',
         'commerce' => 'Commerce',
         'fulfillment' => 'Stock & delivery',
         'operations' => 'Operations',

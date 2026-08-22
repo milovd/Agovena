@@ -17,12 +17,15 @@ final class AdminNavigation
     {
         return [
             'admin.nav_groups.overview',
-            'admin.nav_groups.commerce',
+            'admin.nav_groups.catalog',
+            'admin.nav_groups.sales',
+            'admin.nav_groups.customers',
             'admin.nav_groups.fulfillment',
             'admin.nav_groups.operations',
             'admin.nav_groups.appearance',
             'admin.nav_groups.system',
             // Legacy aliases kept so older Module registrations still sort sensibly.
+            'admin.nav_groups.commerce',
             'admin.nav_groups.services',
             'admin.nav_groups.support',
             'admin.nav_groups.configuration',

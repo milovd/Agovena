@@ -17,7 +17,9 @@ final class CheckoutFinishProgress
     public function forOrder(Order $order): array
     {
         $steps = [CheckoutStep::Details];
-        if (filled($order->shipping_line1) || filled($order->shipping_method_label)) {
+        // Billing is often snapshotted onto shipping columns even for digital carts.
+        // Only show Delivery when a real shipping quote/method was chosen.
+        if ($this->hadDeliveryStep($order)) {
             $steps[] = CheckoutStep::Delivery;
         }
         $steps[] = CheckoutStep::Payment;
@@ -31,5 +33,12 @@ final class CheckoutFinishProgress
         }
 
         return $items;
+    }
+
+    private function hadDeliveryStep(Order $order): bool
+    {
+        return filled($order->shipping_method_label)
+            || filled($order->shipping_carrier_id)
+            || filled($order->shipping_service_code);
     }
 }
