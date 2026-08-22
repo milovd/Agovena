@@ -16,6 +16,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $id
  * @property string $key
  * @property string $label
+ * @property string|null $description
  * @property CustomerPropertyType $type
  * @property bool $is_required
  * @property array<string, mixed>|null $constraints
@@ -33,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'key',
     'label',
+    'description',
     'type',
     'is_required',
     'constraints',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Agovena\Operations\CronStatisticsRecorder;
 use App\Agovena\Orders\CancelUnpaidOrder;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Settings\SettingsRepository;
@@ -52,6 +53,9 @@ final class CancelStaleUnpaidOrdersCommand extends Command
             }
         }
 
+        app(CronStatisticsRecorder::class)->recordRun('cancel-unpaid-orders', [
+            'unpaid_orders_cancelled' => $cancelled,
+        ]);
         $this->info("Cancelled {$cancelled} unpaid order(s).");
 
         return self::SUCCESS;

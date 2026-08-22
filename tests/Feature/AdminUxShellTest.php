@@ -15,22 +15,23 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-test('admin shell exposes view storefront once with bundled product branding', function () {
+test('admin shell uses account icon trigger and leave admin action', function () {
     $staff = $this->createStaff();
 
     $html = $this->actingAs($staff)
         ->get(route('admin.dashboard'))
         ->assertOk()
-        ->assertSee(__('admin.view_storefront'), false)
+        ->assertDontSee(__('admin.view_storefront'), false)
         ->assertSee(__('admin.product_name'), false)
         ->assertSee('/'.StorefrontBrand::BUNDLED_LOGO, false)
+        ->assertSee(__('admin.exit_admin'), false)
         ->assertSee(route('storefront.home'), false)
         ->assertSee(__('admin.nav_groups.system'), false)
         ->assertSee(__('admin.nav.customer_properties'), false)
+        ->assertSee('admin-account-trigger', false)
         ->getContent();
 
-    expect(substr_count($html, __('admin.view_storefront')))->toBe(1)
-        ->and(substr_count($html, 'admin-sidebar__footer-link--accent'))->toBe(0);
+    expect(substr_count($html, 'admin-sidebar__footer-link--accent'))->toBe(0);
 });
 
 test('dashboard renders real metrics without fake trends', function () {

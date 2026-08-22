@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Operations\CronStatisticsRecorder;
 use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Console\Command;
 
@@ -23,6 +24,9 @@ final class ProcessSubscriptionRenewalsCommand extends Command
         }
 
         $processed = app(ProcessesSubscriptionRenewals::class)->processDue();
+        app(CronStatisticsRecorder::class)->recordRun('subscription-renewals', [
+            'subscription_renewals' => $processed,
+        ]);
         $this->info("Processed {$processed} subscription(s).");
 
         return self::SUCCESS;

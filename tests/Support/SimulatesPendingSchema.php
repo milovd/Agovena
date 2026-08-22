@@ -26,6 +26,9 @@ trait SimulatesPendingSchema
             });
         }
 
-        DB::table('migrations')->where('migration', '2026_08_13_090000_create_customer_custom_properties_tables')->delete();
+        DB::table('migrations')->whereIn('migration', [
+            '2026_08_13_090000_create_customer_custom_properties_tables',
+            '2026_08_22_120000_add_description_to_customer_property_definitions',
+        ])->delete();
     }
 }

@@ -28,7 +28,14 @@ document.addEventListener('alpine:init', () => {
                     },
                     plugins: {
                         legend: {
-                            display: false,
+                            display: config.showLegend === true,
+                            position: 'bottom',
+                            labels: {
+                                color: '#64748b',
+                                boxWidth: 12,
+                                boxHeight: 12,
+                                padding: 16,
+                            },
                         },
                         tooltip: {
                             backgroundColor: '#0f172a',

@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Customers;
 
-use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Customer\Properties\CustomerPropertyValidator;
-use App\Agovena\Customer\Properties\ReservedCustomerPropertyKeys;
 use App\Enums\CustomerPropertyType;
 use App\Models\CustomerPropertyDefinition;
+use Illuminate\Contracts\View\View;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Livewire\WithPagination;
 
-final class Properties extends Component
+#[Layout('layouts.admin')]
+class Properties extends Component
 {
     use AuthorizesRequests;
-    use WithPagination;
 
     public bool $showForm = false;
 
@@ -27,23 +27,16 @@ final class Properties extends Component
 
     public string $label = '';
 
+    public string $description = '';
+
     public string $type = 'text';
 
+    public string $validation = 'string|max:255';
+
+    /** @var list<array{value: string, label: string}> */
+    public array $options = [];
+
     public bool $is_required = false;
-
-    public string $optionsText = '';
-
-    public ?int $max_length = 255;
-
-    public ?int $min_length = null;
-
-    public ?int $min = null;
-
-    public ?int $max = null;
-
-    public int $sort = 0;
-
-    public bool $is_active = true;
 
     public bool $show_on_registration = false;
 
@@ -59,29 +52,32 @@ final class Properties extends Component
 
     public bool $internal_only = false;
 
+    public bool $is_active = true;
+
+    public int $sort = 0;
+
     public function mount(): void
     {
-        $this->authorize('customers.manage');
+        Gate::authorize('customers.manage');
     }
 
     public function create(): void
     {
-        $this->authorize('customers.manage');
         $this->resetForm();
         $this->showForm = true;
     }
 
     public function edit(int $id): void
     {
-        $this->authorize('customers.manage');
         $definition = CustomerPropertyDefinition::query()->findOrFail($id);
         $this->editingId = $definition->id;
         $this->key = $definition->key;
         $this->label = $definition->label;
+        $this->description = (string) ($definition->description ?? '');
         $this->type = $definition->type->value;
+        $this->validation = $this->validationDisplay($definition);
+        $this->options = $definition->options ?? [];
         $this->is_required = $definition->is_required;
-        $this->sort = $definition->sort;
-        $this->is_active = $definition->is_active;
         $this->show_on_registration = $definition->show_on_registration;
         $this->show_on_checkout = $definition->show_on_checkout;
         $this->show_on_account = $definition->show_on_account;
@@ -89,98 +85,9 @@ final class Properties extends Component
         $this->customer_editable = $definition->customer_editable;
         $this->staff_editable = $definition->staff_editable;
         $this->internal_only = $definition->internal_only;
-        $constraints = $definition->constraints ?? [];
-        $this->max_length = isset($constraints['max_length']) ? (int) $constraints['max_length'] : 255;
-        $this->min_length = isset($constraints['min_length']) ? (int) $constraints['min_length'] : null;
-        $this->min = isset($constraints['min']) ? (int) $constraints['min'] : null;
-        $this->max = isset($constraints['max']) ? (int) $constraints['max'] : null;
-        $this->optionsText = $this->optionsToText($definition->options ?? []);
+        $this->is_active = $definition->is_active;
+        $this->sort = $definition->sort;
         $this->showForm = true;
-    }
-
-    public function save(CustomerPropertyValidator $validator): void
-    {
-        $this->authorize('customers.manage');
-        $this->key = strtolower(trim($this->key));
-        $validator->assertKey($this->key);
-
-        $data = $this->validate([
-            'key' => [
-                'required',
-                'string',
-                'max:64',
-                Rule::unique('customer_property_definitions', 'key')->ignore($this->editingId),
-                Rule::notIn(ReservedCustomerPropertyKeys::KEYS),
-            ],
-            'label' => ['required', 'string', 'max:255'],
-            'type' => ['required', Rule::in(CustomerPropertyType::values())],
-            'is_required' => ['boolean'],
-            'sort' => ['integer', 'min:0', 'max:10000'],
-            'is_active' => ['boolean'],
-            'show_on_registration' => ['boolean'],
-            'show_on_checkout' => ['boolean'],
-            'show_on_account' => ['boolean'],
-            'show_on_invoice' => ['boolean'],
-            'customer_editable' => ['boolean'],
-            'staff_editable' => ['boolean'],
-            'internal_only' => ['boolean'],
-            'max_length' => ['nullable', 'integer', 'min:1', 'max:5000'],
-            'min_length' => ['nullable', 'integer', 'min:0', 'max:5000'],
-            'min' => ['nullable', 'integer'],
-            'max' => ['nullable', 'integer'],
-            'optionsText' => ['nullable', 'string', 'max:5000'],
-        ]);
-
-        $type = CustomerPropertyType::from($data['type']);
-        $options = $type->hasChoices() ? $validator->sanitizeOptions($this->parseOptionsText($data['optionsText'] ?? '')) : [];
-        if ($type->hasChoices() && $options === []) {
-            $this->addError('optionsText', __('admin.customer_properties.options_required'));
-
-            return;
-        }
-
-        if ($this->internal_only) {
-            $data['show_on_registration'] = false;
-            $data['show_on_checkout'] = false;
-            $data['show_on_account'] = false;
-            $data['customer_editable'] = false;
-        }
-
-        CustomerPropertyDefinition::query()->updateOrCreate(
-            ['id' => $this->editingId],
-            [
-                'key' => $data['key'],
-                'label' => $data['label'],
-                'type' => $type,
-                'is_required' => $data['is_required'],
-                'constraints' => $validator->sanitizeConstraints([
-                    'max_length' => $data['max_length'] ?? null,
-                    'min_length' => $data['min_length'] ?? null,
-                    'min' => $data['min'] ?? null,
-                    'max' => $data['max'] ?? null,
-                ]),
-                'options' => $options,
-                'sort' => $data['sort'],
-                'is_active' => $data['is_active'],
-                'show_on_registration' => $data['show_on_registration'],
-                'show_on_checkout' => $data['show_on_checkout'],
-                'show_on_account' => $data['show_on_account'],
-                'show_on_invoice' => $data['show_on_invoice'],
-                'customer_editable' => $data['customer_editable'],
-                'staff_editable' => $data['staff_editable'],
-                'internal_only' => $data['internal_only'],
-            ],
-        );
-
-        session()->flash('status', __($this->editingId ? 'admin.customer_properties.updated' : 'admin.customer_properties.created'));
-        $this->resetForm();
-    }
-
-    public function delete(int $id): void
-    {
-        $this->authorize('customers.manage');
-        CustomerPropertyDefinition::query()->findOrFail($id)->delete();
-        session()->flash('status', __('admin.customer_properties.deleted'));
     }
 
     public function cancel(): void
@@ -188,76 +95,212 @@ final class Properties extends Component
         $this->resetForm();
     }
 
-    public function render(AdminRegistrar $admin)
+    public function save(CustomerPropertyValidator $validator): void
+    {
+        Gate::authorize('customers.manage');
+
+        $this->validate([
+            'key' => [
+                'required',
+                'string',
+                'max:63',
+                'regex:/^[a-z][a-z0-9_]{0,62}$/',
+                Rule::unique('customer_property_definitions', 'key')->ignore($this->editingId),
+            ],
+            'label' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'type' => ['required', Rule::enum(CustomerPropertyType::class)],
+            'validation' => ['nullable', 'string', 'max:255'],
+            'options' => ['array'],
+            'options.*.value' => ['nullable', 'string', 'max:63'],
+            'options.*.label' => ['nullable', 'string', 'max:255'],
+            'sort' => ['integer', 'min:0', 'max:9999'],
+        ]);
+
+        $validator->assertKey($this->key);
+
+        $type = CustomerPropertyType::from($this->type);
+        $constraints = $this->parseValidationRules($this->validation, $type);
+        $options = $type === CustomerPropertyType::Select
+            ? $validator->sanitizeOptions($this->options)
+            : [];
+
+        if ($type === CustomerPropertyType::Select && $options === []) {
+            $this->addError('options', __('admin.customer_properties.options_required'));
+
+            return;
+        }
+
+        $payload = [
+            'key' => strtolower(trim($this->key)),
+            'label' => trim($this->label),
+            'description' => trim($this->description) !== '' ? trim($this->description) : null,
+            'type' => $type,
+            'options' => $options,
+            'constraints' => $constraints,
+            'is_required' => $this->is_required,
+            'show_on_registration' => $this->show_on_registration,
+            'show_on_checkout' => $this->show_on_checkout,
+            'show_on_account' => $this->show_on_account,
+            'show_on_invoice' => $this->show_on_invoice,
+            'customer_editable' => $this->customer_editable,
+            'staff_editable' => $this->staff_editable,
+            'internal_only' => $this->internal_only,
+            'is_active' => $this->is_active,
+            'sort' => $this->sort,
+        ];
+
+        if ($this->editingId !== null) {
+            CustomerPropertyDefinition::query()->whereKey($this->editingId)->update($payload);
+            session()->flash('status', __('admin.customer_properties.updated'));
+        } else {
+            CustomerPropertyDefinition::query()->create($payload);
+            session()->flash('status', __('admin.customer_properties.created'));
+        }
+
+        $this->resetForm();
+    }
+
+    public function delete(int $id): void
+    {
+        Gate::authorize('customers.manage');
+        CustomerPropertyDefinition::query()->whereKey($id)->delete();
+        if ($this->editingId === $id) {
+            $this->resetForm();
+        }
+        session()->flash('status', __('admin.customer_properties.deleted'));
+    }
+
+    public function toggleField(int $id, string $field): void
+    {
+        Gate::authorize('customers.manage');
+
+        $allowed = ['is_required', 'show_on_invoice', 'customer_editable'];
+        if (! in_array($field, $allowed, true)) {
+            return;
+        }
+
+        $definition = CustomerPropertyDefinition::query()->findOrFail($id);
+        $definition->update([
+            $field => ! $definition->{$field},
+        ]);
+    }
+
+    public function addOption(): void
+    {
+        $this->options[] = ['value' => '', 'label' => ''];
+    }
+
+    public function removeOption(int $index): void
+    {
+        unset($this->options[$index]);
+        $this->options = array_values($this->options);
+    }
+
+    public function render(): View
     {
         return view('livewire.admin.customers.properties', [
-            'definitions' => CustomerPropertyDefinition::query()->ordered()->paginate(25),
+            'definitions' => CustomerPropertyDefinition::query()->ordered()->get(),
             'types' => CustomerPropertyType::cases(),
-        ])->layout('layouts.admin', [
-            'title' => __('admin.customer_properties.title'),
-            'navigation' => $admin->navigationItems(),
         ]);
     }
 
     private function resetForm(): void
     {
         $this->reset([
-            'showForm', 'editingId', 'key', 'label', 'optionsText', 'min_length', 'min', 'max',
+            'showForm',
+            'editingId',
+            'key',
+            'label',
+            'description',
+            'type',
+            'validation',
+            'options',
+            'is_required',
+            'show_on_registration',
+            'show_on_checkout',
+            'show_on_account',
+            'show_on_invoice',
+            'customer_editable',
+            'staff_editable',
+            'internal_only',
+            'is_active',
+            'sort',
         ]);
-        $this->type = CustomerPropertyType::Text->value;
-        $this->is_required = false;
-        $this->max_length = 255;
-        $this->sort = 0;
-        $this->is_active = true;
-        $this->show_on_registration = false;
-        $this->show_on_checkout = false;
+        $this->showForm = false;
+        $this->type = 'text';
+        $this->validation = 'string|max:255';
         $this->show_on_account = true;
-        $this->show_on_invoice = false;
         $this->customer_editable = true;
         $this->staff_editable = true;
-        $this->internal_only = false;
-        $this->resetErrorBag();
-        $this->resetValidation();
+        $this->is_active = true;
+    }
+
+    private function validationDisplay(CustomerPropertyDefinition $definition): string
+    {
+        $constraints = is_array($definition->constraints) ? $definition->constraints : [];
+
+        return match ($definition->type) {
+            CustomerPropertyType::Text, CustomerPropertyType::Textarea => $this->stringValidationDisplay($constraints),
+            CustomerPropertyType::Number => $this->numberValidationDisplay($constraints),
+            CustomerPropertyType::Email => 'email|max:255',
+            CustomerPropertyType::Phone => 'string|max:32',
+            CustomerPropertyType::Date => 'date|date_format:Y-m-d',
+            CustomerPropertyType::Checkbox => 'boolean',
+            CustomerPropertyType::Select, CustomerPropertyType::Country => '',
+        };
     }
 
     /**
-     * @param  list<array{value?: mixed, label?: mixed}>  $options
+     * @param  array<string, mixed>  $constraints
      */
-    private function optionsToText(array $options): string
+    private function stringValidationDisplay(array $constraints): string
     {
-        $lines = [];
-        foreach ($options as $option) {
-            $value = trim((string) ($option['value'] ?? ''));
-            $label = trim((string) ($option['label'] ?? ''));
-            if ($value === '' || $label === '') {
-                continue;
-            }
-            $lines[] = $value.':'.$label;
+        $parts = ['string'];
+        if (isset($constraints['min_length'])) {
+            $parts[] = 'min:'.(int) $constraints['min_length'];
         }
+        $parts[] = 'max:'.(int) ($constraints['max_length'] ?? 255);
 
-        return implode("\n", $lines);
+        return implode('|', $parts);
     }
 
     /**
-     * @return list<array{value: string, label: string}>
+     * @param  array<string, mixed>  $constraints
      */
-    private function parseOptionsText(string $text): array
+    private function numberValidationDisplay(array $constraints): string
     {
-        $options = [];
-        foreach (preg_split('/\r\n|\r|\n/', $text) ?: [] as $line) {
-            $line = trim($line);
-            if ($line === '') {
-                continue;
-            }
-            if (str_contains($line, ':')) {
-                [$value, $label] = array_map('trim', explode(':', $line, 2));
-            } else {
-                $value = strtolower(preg_replace('/[^a-z0-9_]+/i', '_', $line) ?: '');
-                $label = $line;
-            }
-            $options[] = ['value' => $value, 'label' => $label];
+        $parts = ['numeric'];
+        if (isset($constraints['min'])) {
+            $parts[] = 'min:'.(int) $constraints['min'];
+        }
+        if (isset($constraints['max'])) {
+            $parts[] = 'max:'.(int) $constraints['max'];
         }
 
-        return $options;
+        return implode('|', $parts);
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    private function parseValidationRules(string $validation, CustomerPropertyType $type): array
+    {
+        if (! in_array($type, [CustomerPropertyType::Text, CustomerPropertyType::Textarea, CustomerPropertyType::Number], true)) {
+            return [];
+        }
+
+        $constraints = [];
+        foreach (explode('|', $validation) as $rule) {
+            $rule = trim($rule);
+            if (preg_match('/^max:(\d+)$/', $rule, $matches)) {
+                $constraints[$type === CustomerPropertyType::Number ? 'max' : 'max_length'] = (int) $matches[1];
+            }
+            if (preg_match('/^min:(\d+)$/', $rule, $matches)) {
+                $constraints[$type === CustomerPropertyType::Number ? 'min' : 'min_length'] = (int) $matches[1];
+            }
+        }
+
+        return app(CustomerPropertyValidator::class)->sanitizeConstraints($constraints);
     }
 }

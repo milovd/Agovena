@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Agovena\Operations\CronStatisticsRecorder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -37,6 +38,10 @@ final class AgovenaPruneLogsCommand extends Command
                 ->delete();
         }
 
+        $total = $email + $audit + $webhooks;
+        app(CronStatisticsRecorder::class)->recordRun('prune-logs', [
+            'logs_pruned' => $total,
+        ]);
         $this->info("Pruned email_logs={$email} audit_logs={$audit} payment_webhook_events={$webhooks}");
 
         return self::SUCCESS;

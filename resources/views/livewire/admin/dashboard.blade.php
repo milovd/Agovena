@@ -6,17 +6,34 @@
             $gettingStartedTotal = count($gettingStarted);
             $gettingStartedDone = collect($gettingStarted)->where('done', true)->count();
         @endphp
-        <section class="ag-checklist" aria-labelledby="getting-started-heading">
+        <section
+            class="ag-checklist"
+            x-data="{ open: false }"
+            :class="{ 'ag-checklist--open': open }"
+            aria-labelledby="getting-started-heading"
+        >
             <header class="ag-checklist__header">
-                <div>
-                    <h2 id="getting-started-heading" class="ag-checklist__title">{{ __('admin.dashboard.getting_started.title') }}</h2>
-                    <p class="ag-checklist__progress">{{ __('admin.dashboard.getting_started.progress', ['done' => $gettingStartedDone, 'total' => $gettingStartedTotal]) }}</p>
-                </div>
+                <button
+                    type="button"
+                    class="ag-checklist__toggle"
+                    @click="open = !open"
+                    :aria-expanded="open.toString()"
+                    aria-controls="getting-started-items"
+                    :aria-label="open ? @js(__('admin.dashboard.getting_started.collapse')) : @js(__('admin.dashboard.getting_started.expand'))"
+                >
+                    <span class="ag-checklist__toggle-icon" aria-hidden="true">
+                        <x-ag.icon name="chevron-down" :size="20" />
+                    </span>
+                    <span class="ag-checklist__toggle-text">
+                        <span id="getting-started-heading" class="ag-checklist__title">{{ __('admin.dashboard.getting_started.title') }}</span>
+                        <span class="ag-checklist__progress">{{ __('admin.dashboard.getting_started.progress', ['done' => $gettingStartedDone, 'total' => $gettingStartedTotal]) }}</span>
+                    </span>
+                </button>
                 <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="dismissGettingStarted">
                     {{ __('admin.dashboard.getting_started.dismiss') }}
                 </button>
             </header>
-            <ul class="ag-checklist__items" role="list">
+            <ul id="getting-started-items" class="ag-checklist__items" role="list" x-show="open" x-cloak>
                 @foreach ($gettingStarted as $item)
                     <li class="ag-checklist__item @if ($item->done) ag-checklist__item--done @endif" wire:key="getting-started-{{ $item->id }}">
                         <span class="ag-checklist__status" aria-hidden="true">

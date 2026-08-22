@@ -26,6 +26,7 @@ function adminLocalizedRoutes(): array
         '/admin/notifications',
         '/admin/email-log',
         '/admin/failed-jobs',
+        '/admin/cron-statistics',
         '/admin/appearance/themes',
         '/admin/appearance/customize',
         '/admin/appearance/pages',
@@ -93,7 +94,7 @@ test('admin settings and dashboard follow the site locale', function () {
         ->assertOk()
         ->assertSee(__('admin.dashboard.heading', [], 'nl'), false)
         ->assertSee(__('admin.dashboard.stats.products', [], 'nl'), false)
-        ->assertSee(__('admin.view_storefront', [], 'nl'), false)
+        ->assertSee(__('admin.exit_admin', [], 'nl'), false)
         ->assertSee(__('auth.sign_out', [], 'nl'), false);
 
     $this->actingAs($staff)

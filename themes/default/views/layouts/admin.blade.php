@@ -51,7 +51,7 @@
                         :aria-expanded="navOpen.toString()"
                         aria-controls="admin-sidebar"
                     >
-                        <x-ag.icon name="menu" :size="18" />
+                        <x-ag.icon name="menu" :size="20" />
                         <span class="visually-hidden">{{ __('admin.menu') }}</span>
                     </button>
                     <h1 class="admin-topbar__title">{{ $title ?? __('admin.fallback_title') }}</h1>
@@ -63,18 +63,9 @@
                         wire:target="save,create,edit,setAsBase,useCurrentLogoAsFavicon,placeOrder,logout"
                         aria-live="polite"
                     >
-                        <x-ag.icon name="loader" class="ag-icon--spin" :size="18" />
+                        <x-ag.icon name="loader" class="ag-icon--spin" :size="20" />
                         <span class="visually-hidden">{{ __('common.loading') }}</span>
                     </div>
-                    <a
-                        class="ag-btn ag-btn--secondary ag-btn--sm admin-topbar__storefront"
-                        href="{{ route('storefront.home') }}"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        <x-ag.icon name="store" :size="16" />
-                        <span>{{ __('admin.view_storefront') }}</span>
-                    </a>
                     <div
                         class="ag-dropdown admin-account-dropdown"
                         x-data="{ open: false }"
@@ -95,14 +86,14 @@
                         @endphp
                         <button
                             type="button"
-                            class="ag-btn ag-btn--ghost ag-dropdown__trigger admin-account-trigger"
+                            class="admin-account-trigger"
                             @click="open = !open"
                             :aria-expanded="open.toString()"
                             aria-haspopup="menu"
+                            aria-label="{{ __('admin.account_menu') }}"
                         >
-                            <span class="admin-account-trigger__avatar" aria-hidden="true">{{ $accountInitials }}</span>
-                            <span class="admin-account-trigger__name">{{ $accountName }}</span>
-                            <x-ag.icon name="chevron-down" :size="16" />
+                            <x-ag.icon name="user" :size="22" />
+                            <span class="visually-hidden">{{ $accountName }}</span>
                         </button>
                         <div
                             class="ag-dropdown__menu admin-account-menu"
@@ -131,6 +122,11 @@
                             <a class="ag-dropdown__item" role="menuitem" href="{{ route('admin.security.two-factor') }}">
                                 <x-ag.icon name="shield" :size="16" />
                                 {{ __('admin.nav.security') }}
+                            </a>
+                            <div class="ag-dropdown__divider" role="separator"></div>
+                            <a class="ag-dropdown__item" role="menuitem" href="{{ route('storefront.home') }}">
+                                <x-ag.icon name="store" :size="16" />
+                                {{ __('admin.exit_admin') }}
                             </a>
                             <div class="ag-dropdown__divider" role="separator"></div>
                             <livewire:admin.auth.logout />

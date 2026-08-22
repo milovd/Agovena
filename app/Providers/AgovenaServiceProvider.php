@@ -482,6 +482,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'cron-statistics',
+            label: 'admin.nav.cron_statistics',
+            group: 'admin.nav_groups.operations',
+            href: '/admin/cron-statistics',
+            icon: 'calendar',
+            sort: 63,
+            permission: 'settings.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'failed-jobs',
             label: 'admin.nav.failed_jobs',
             group: 'admin.nav_groups.operations',

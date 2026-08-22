@@ -28,7 +28,8 @@ test('admin shell shows grouped catalog, sales, and system navigation', function
         ->assertSee('System', false)
         ->assertSee('Settings', false)
         ->assertSee('Currencies', false)
-        ->assertSee(__('admin.view_storefront'), false)
+        ->assertSee(__('admin.exit_admin'), false)
+        ->assertDontSee(__('admin.view_storefront'), false)
         ->assertDontSee('>General</a>', false)
         ->assertDontSee('Configuration', false);
 });

@@ -41,6 +41,7 @@ use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
 use App\Livewire\Admin\Store\Presets as StorePresets;
 use App\Livewire\Admin\System\ApiTokens as SystemApiTokens;
+use App\Livewire\Admin\System\CronStatistics as SystemCronStatistics;
 use App\Livewire\Admin\System\FailedJobs as SystemFailedJobs;
 use App\Livewire\Admin\System\Updates as SystemUpdates;
 use App\Livewire\Admin\Taxes\Index as TaxesIndex;
@@ -175,6 +176,7 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access', 'admin.2
     Route::get('/audit', AuditIndex::class)->name('audit.index');
     Route::get('/email-log', NotificationsEmailLog::class)->name('email-log');
     Route::get('/failed-jobs', SystemFailedJobs::class)->name('failed-jobs');
+    Route::get('/cron-statistics', SystemCronStatistics::class)->name('cron-statistics');
     Route::get('/updates', SystemUpdates::class)->name('updates');
     Route::get('/api-tokens', SystemApiTokens::class)->name('api-tokens');
     Route::get('/notifications', NotificationTemplates::class)->name('notifications');

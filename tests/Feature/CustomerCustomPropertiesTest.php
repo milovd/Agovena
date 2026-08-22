@@ -68,6 +68,45 @@ test('staff can create a customer property and cannot use reserved keys', functi
     expect(CustomerPropertyDefinition::query()->where('key', 'vat_number')->exists())->toBeTrue();
 });
 
+test('staff can toggle customer property flags from the index table', function () {
+    $staff = $this->createStaff();
+    $property = makeVatProperty([
+        'is_required' => false,
+        'show_on_invoice' => false,
+        'customer_editable' => true,
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(CustomerProperties::class)
+        ->call('toggleField', $property->id, 'is_required')
+        ->call('toggleField', $property->id, 'show_on_invoice')
+        ->call('toggleField', $property->id, 'customer_editable');
+
+    $property->refresh();
+
+    expect($property->is_required)->toBeTrue()
+        ->and($property->show_on_invoice)->toBeTrue()
+        ->and($property->customer_editable)->toBeFalse();
+});
+
+test('staff can save description and validation constraints on edit', function () {
+    $staff = $this->createStaff();
+    $property = makeVatProperty(['show_on_registration' => false]);
+
+    Livewire::actingAs($staff)
+        ->test(CustomerProperties::class)
+        ->call('edit', $property->id)
+        ->set('description', 'Used for EU B2B invoices.')
+        ->set('validation', 'string|max:64')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $property->refresh();
+
+    expect($property->description)->toBe('Used for EU B2B invoices.')
+        ->and($property->constraints)->toBe(['max_length' => 64]);
+});
+
 test('registration collects required custom properties', function () {
     makeVatProperty();
 
