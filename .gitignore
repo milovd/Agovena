@@ -1,6 +1,7 @@
 # Dependencies & tooling
 /vendor/
 /node_modules/
+/optional-packages/
 /bower_components/
 
 # Environment & secrets

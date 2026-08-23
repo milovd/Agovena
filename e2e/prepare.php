@@ -29,6 +29,11 @@ require __DIR__.'/../vendor/autoload.php';
 $app = require __DIR__.'/../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
+passthru('php '.escapeshellarg(__DIR__.'/../scripts/ci/bootstrap-packages.php').' e2e', $bootstrapExitCode);
+if ($bootstrapExitCode !== 0) {
+    exit((int) $bootstrapExitCode);
+}
+
 $modules = $app->make(ModuleManager::class);
 foreach (['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', 'events'] as $id) {
     if (! $modules->isInstalled($id)) {

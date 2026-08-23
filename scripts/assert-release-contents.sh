@@ -14,9 +14,8 @@ fail() { echo "RELEASE ASSERT FAIL: $*" >&2; echo "::error::RELEASE ASSERT FAIL:
 [[ -d "$ROOT/vendor" ]] || fail "vendor missing (production Composer install required)"
 [[ -f "$ROOT/vendor/autoload.php" ]] || fail "vendor/autoload.php missing"
 [[ -d "$ROOT/themes/default" ]] || fail "Default Theme missing"
-[[ -d "$ROOT/modules" ]] || fail "modules missing"
-[[ -d "$ROOT/extensions" ]] || fail "extensions missing"
 [[ -d "$ROOT/deploy" ]] || fail "deploy templates missing"
+[[ -f "$ROOT/scripts/ci/bootstrap-packages.php" ]] || fail "bootstrap-packages.php missing"
 
 if [[ ! -f "$ROOT/public/build/manifest.json" && ! -f "$ROOT/public/build/.vite/manifest.json" ]]; then
   fail "public/build manifest missing — merchants must not need npm"

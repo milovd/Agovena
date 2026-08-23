@@ -47,5 +47,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="AGOVENA_OPTIONAL_PACKAGES_PATH" value="../optional-packages"/>
+        <env name="AGOVENA_PACKAGES_MONOREPO_URL" value="https://github.com/milovd/optional-packages"/>
     </php>
 </phpunit>

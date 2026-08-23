@@ -72,9 +72,9 @@ php artisan agovena:verify-providers mollie --sandbox   # Mollie only; refuses l
 
 Merchants choose **selling intents** (physical, digital keys/codes, downloads, subscriptions, hosting/provisioned services, events, or custom). Developers compose those experiences from **Core** + optional **Modules** (capabilities) + **Extensions** (providers) + **Themes** (presentation).
 
-There is no permanent `store_type`. Downloads (files) and Digital Delivery (secrets/keys) are separate Modules. First-party Extensions live under categorized folders such as `extensions/payments/`, `extensions/provisioning/`, and `extensions/shipping/` — identity comes from each Extension’s manifest `id`, not the filesystem path.
+There is no permanent `store_type`. Downloads (files) and Digital Delivery (secrets/keys) are separate Modules. First-party Modules and Extensions ship from the [optional-packages](https://github.com/milovd/optional-packages) monorepo — Extensions use category folders such as `extensions/payments/`, `extensions/provisioning/`, and `extensions/shipping/` (identity comes from each manifest `id`, not the folder path).
 
-See [modules/README.md](modules/README.md), [extensions/README.md](extensions/README.md), [themes/README.md](themes/README.md), and [core/README.md](core/README.md).
+See [themes/README.md](themes/README.md), [core/README.md](core/README.md), and [optional-packages](https://github.com/milovd/optional-packages).
 
 ## Security
 

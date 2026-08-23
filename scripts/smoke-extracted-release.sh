@@ -78,6 +78,7 @@ file_put_contents(".env", $env);
 chmod -R u+rwX storage bootstrap/cache database 2>/dev/null || true
 
 run_artisan "migrate" migrate --force --no-interaction
+php scripts/ci/bootstrap-packages.php smoke
 run_artisan "agovena:install" agovena:install --no-interaction \
   --name="Release Smoke Owner" \
   --email="release-smoke@example.test" \

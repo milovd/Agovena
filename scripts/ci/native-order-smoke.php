@@ -30,6 +30,11 @@ require dirname(__DIR__, 2).'/vendor/autoload.php';
 $app = require dirname(__DIR__, 2).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
+passthru('php '.escapeshellarg(dirname(__DIR__, 2).'/scripts/ci/bootstrap-packages.php').' smoke', $bootstrapExitCode);
+if ($bootstrapExitCode !== 0) {
+    exit((int) $bootstrapExitCode);
+}
+
 $modules = app(ModuleManager::class);
 if (! $modules->isInstalled('inventory')) {
     $modules->install('inventory');
