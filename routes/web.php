@@ -39,7 +39,6 @@ use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Security\TwoFactor as AdminTwoFactor;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
-use App\Livewire\Admin\Store\Presets as StorePresets;
 use App\Livewire\Admin\System\ApiTokens as SystemApiTokens;
 use App\Livewire\Admin\System\CronStatistics as SystemCronStatistics;
 use App\Livewire\Admin\System\FailedJobs as SystemFailedJobs;
@@ -181,7 +180,6 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access', 'admin.2
     Route::get('/api-tokens', SystemApiTokens::class)->name('api-tokens');
     Route::get('/notifications', NotificationTemplates::class)->name('notifications');
     Route::get('/modules', ModulesIndex::class)->name('modules.index');
-    Route::get('/store-presets', StorePresets::class)->name('store-presets');
     Route::get('/extensions', ExtensionsIndex::class)->name('extensions.index');
     Route::get('/settings', SettingsHub::class)->name('settings.index');
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');

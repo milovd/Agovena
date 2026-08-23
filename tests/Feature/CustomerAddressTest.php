@@ -6,7 +6,6 @@ use App\Agovena\Customer\AccountNavItem;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\SaveCustomerAddress;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Livewire\Customer\Account\Addresses;
 use App\Livewire\Customer\Account\Dashboard;
@@ -63,8 +62,8 @@ test('account sidebar nests purchases support and account groups with icons', fu
 });
 
 test('account sidebar nests services downloads under services when modules are enabled', function () {
-    app(ModuleManager::class)->enable('digital');
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('digital');
+    installAndEnableModule('provisioning');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();
@@ -84,7 +83,7 @@ test('account sidebar nests services downloads under services when modules are e
 });
 
 test('account sidebar nests returns under purchases when shipping module is enabled', function () {
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();
@@ -102,7 +101,7 @@ test('account sidebar nests returns under purchases when shipping module is enab
 });
 
 test('account sidebar nests subscriptions under account when module is enabled', function () {
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();

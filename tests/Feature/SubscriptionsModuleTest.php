@@ -27,7 +27,7 @@ uses(CreatesStaff::class);
 
 function enableSubscriptionsModule(): void
 {
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
 }
 

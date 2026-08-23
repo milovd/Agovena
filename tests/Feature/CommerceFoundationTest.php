@@ -79,7 +79,7 @@ test('a disallowed plan change is rejected', function () {
 });
 
 test('make module creates a safe scaffold and refuses overwrite', function () {
-    $path = base_path('modules/testgenmod');
+    $path = optionalModuleRoot('testgenmod');
     File::deleteDirectory($path);
 
     try {

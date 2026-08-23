@@ -1,7 +1,6 @@
 <?php
 
 use App\Agovena\Catalog\DeleteProduct;
-use App\Agovena\Modules\ModuleManager;
 use App\Enums\ProductStatus;
 use App\Livewire\Admin\Products\Create;
 use App\Livewire\Admin\Products\Edit;
@@ -37,6 +36,16 @@ test('staff with permission can create and publish a product', function () {
         ->and($product->status)->toBe(ProductStatus::Active)
         ->and($product->price_amount)->toBe(2500)
         ->and($product->sku)->toBe('SKU-STARTER-1');
+});
+
+test('product form uses task focused tabs instead of one long page', function () {
+    Livewire::actingAs($this->createStaff())
+        ->test(Create::class)
+        ->assertSee('ag-product-tabs', false)
+        ->assertSee('role="tablist"', false)
+        ->assertSee(__('admin.products.tabs.details'))
+        ->assertSee(__('admin.products.tabs.pricing'))
+        ->assertDontSee(__('admin.products.tabs.automation'));
 });
 
 test('staff without create permission cannot create products', function () {
@@ -90,9 +99,7 @@ test('staff can update product presentation and specifications', function () {
 test('physical selling preset enables available fulfillment capabilities', function () {
     $staff = $this->createStaff();
     $product = Product::factory()->create();
-    $modules = app(ModuleManager::class);
-    $modules->enable('inventory');
-    $modules->enable('shipping');
+    installAndEnableModules(['inventory', 'shipping']);
 
     $this->actingAs($staff);
 

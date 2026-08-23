@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Orders\CancelUnpaidOrder;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
@@ -46,7 +45,7 @@ function placePendingOrderPayment(): Payment
 }
 
 test('manual payment gateway registers via extension and supports refunds', function () {
-    app(ExtensionManager::class)->enable('manual-payment');
+    installAndEnableExtension('manual-payment');
 
     $gateway = app(PaymentGatewayRegistry::class)->get('manual');
     expect($gateway)->toBeInstanceOf(ManualPaymentGateway::class)
@@ -64,7 +63,7 @@ test('manual payment gateway registers via extension and supports refunds', func
 });
 
 test('initiate gateway payment creates a payment attempt without polluting order', function () {
-    app(ExtensionManager::class)->enable('manual-payment');
+    installAndEnableExtension('manual-payment');
     $payment = placePendingOrderPayment();
 
     $attempt = app(InitiateGatewayPayment::class)->handle(

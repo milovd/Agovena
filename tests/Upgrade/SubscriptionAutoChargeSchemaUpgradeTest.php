@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Agovena\Modules\ModuleManager;
 use App\Models\Order;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 
 test('subscription auto-charge columns can be applied onto existing subscription tables', function () {
     Artisan::call('migrate');
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
 
     expect(Schema::hasColumn('subscriptions', 'payment_gateway'))->toBeTrue()
         ->and(Schema::hasColumn('subscription_renewals', 'charge_attempts'))->toBeTrue();
@@ -59,7 +58,7 @@ test('subscription auto-charge columns can be applied onto existing subscription
     expect(Schema::hasColumn('subscriptions', 'payment_gateway'))->toBeFalse();
 
     Artisan::call('migrate');
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
 
     expect(Schema::hasColumn('subscriptions', 'payment_gateway'))->toBeTrue()
         ->and(Schema::hasColumn('subscription_renewals', 'charge_attempts'))->toBeTrue()

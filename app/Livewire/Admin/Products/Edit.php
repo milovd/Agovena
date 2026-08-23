@@ -20,9 +20,11 @@ use App\Models\Category;
 use App\Models\Currency;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\ProvisioningServer;
 use App\Support\MoneyFormatter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -91,6 +93,8 @@ final class Edit extends Component
 
     public string $providerKey = '';
 
+    public ?int $provisioningServerId = null;
+
     /** @var array<string, mixed> */
     public array $providerSettings = [];
 
@@ -141,6 +145,8 @@ final class Edit extends Component
             }
             if ($row->capability === 'provisionable') {
                 $this->providerKey = (string) ($row->config['provider_key'] ?? '');
+                $serverId = $row->config['server_id'] ?? null;
+                $this->provisioningServerId = is_numeric($serverId) ? (int) $serverId : null;
                 $settings = $row->config['provider_settings'] ?? [];
                 $this->providerSettings = is_array($settings) ? $settings : [];
             }
@@ -193,11 +199,13 @@ final class Edit extends Component
             ->pluck('key')
             ->all();
 
-        foreach (array_keys($this->capabilityEnabled) as $key) {
-            $this->capabilityEnabled[$key] = false;
-        }
-        foreach ($available as $key) {
-            $this->capabilityEnabled[$key] = false;
+        if ($preset === 'simple') {
+            foreach (array_keys($this->capabilityEnabled) as $key) {
+                $this->capabilityEnabled[$key] = false;
+            }
+            foreach ($available as $key) {
+                $this->capabilityEnabled[$key] = false;
+            }
         }
 
         $requested = match ($preset) {
@@ -418,6 +426,16 @@ final class Edit extends Component
         $desired = array_keys(array_filter($this->capabilityEnabled));
         $available = collect($registry->available())->keyBy(static fn ($d) => $d->key);
 
+        if (in_array('provisionable', $desired, true) && $this->providerKey !== '') {
+            $rules = $this->providerSettingRules();
+            $rules['provisioningServerId'] = [
+                'required',
+                'integer',
+                Rule::exists('provisioning_servers', 'id')->where('provider_key', $this->providerKey)->where('is_active', true),
+            ];
+            $this->validate($rules);
+        }
+
         $desired = array_values(array_filter(
             $desired,
             static function (string $key) use ($desired, $available): bool {
@@ -469,6 +487,7 @@ final class Edit extends Component
             }
             if ($key === 'provisionable') {
                 $config = [
+                    'server_id' => $this->provisioningServerId,
                     'provider_key' => trim($this->providerKey) !== '' ? trim($this->providerKey) : null,
                     'provider_settings' => $this->providerSettings,
                 ];
@@ -558,6 +577,18 @@ final class Edit extends Component
         $this->providerSettings = $defaults;
     }
 
+    public function updatedProvisioningServerId(?int $serverId): void
+    {
+        if ($serverId === null) {
+            return;
+        }
+        $server = ProvisioningServer::query()->where('is_active', true)->find($serverId);
+        if ($server !== null) {
+            $this->providerKey = $server->provider_key;
+            $this->updatedProviderKey();
+        }
+    }
+
     /**
      * @return list<ExtensionSettingDefinition>
      */
@@ -575,6 +606,22 @@ final class Edit extends Component
         return $provisioner->productSettings();
     }
 
+    /** @return array<string, list<string>> */
+    private function providerSettingRules(): array
+    {
+        $rules = [];
+        foreach ($this->providerSettingDefinitions() as $definition) {
+            $fieldRules = [$definition->required ? 'required' : 'nullable'];
+            $fieldRules[] = $definition->type === 'boolean' ? 'boolean' : 'string';
+            if ($definition->type !== 'boolean') {
+                $fieldRules[] = 'max:10000';
+            }
+            $rules['providerSettings.'.$definition->key] = $fieldRules;
+        }
+
+        return $rules;
+    }
+
     public function render(AdminRegistrar $admin, DeleteProduct $delete, ProductCapabilityRegistry $capabilities)
     {
         $provisioners = collect(app(ProvisionerRegistry::class)->all())
@@ -584,6 +631,11 @@ final class Edit extends Component
             ])
             ->all();
 
+        $productTabs = array_values(array_filter(
+            $admin->productTabs(),
+            static fn ($tab): bool => $tab->permission === null || auth()->user()?->can($tab->permission) === true,
+        ));
+
         return view('livewire.admin.products.form', [
             'categories' => Category::query()->orderBy('name')->get(),
             'currencies' => Currency::query()->where('is_active', true)->orderBy('code')->get(['code', 'name']),
@@ -592,7 +644,12 @@ final class Edit extends Component
             'isReferenced' => $delete->isReferencedByOrders($this->product),
             'availableCapabilities' => $capabilities->available(),
             'provisioners' => $provisioners,
+            'canConfigureProvisioning' => $provisioners !== [],
             'providerSettingDefinitions' => $this->providerSettingDefinitions(),
+            'provisioningServers' => Schema::hasTable('provisioning_servers')
+                ? ProvisioningServer::query()->where('is_active', true)->orderBy('name')->get()
+                : collect(),
+            'productTabs' => $productTabs,
         ])->layout('layouts.admin', [
             'title' => __('admin.products.form.edit_title'),
             'navigation' => $admin->navigationItems(),

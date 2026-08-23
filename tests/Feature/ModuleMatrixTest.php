@@ -6,7 +6,9 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Models\AgovenaModule;
 use App\Models\Customer;
+use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
@@ -16,12 +18,16 @@ uses(CreatesStaff::class);
  */
 function enableFirstPartyModules(array $ids): void
 {
-    $modules = app(ModuleManager::class);
-    foreach ($ids as $id) {
-        $modules->enable($id);
-    }
+    installAndEnableModules($ids);
     app(SyncRegisteredPermissions::class)(force: true);
 }
+
+test('module enable fails when module is not installed', function () {
+    AgovenaModule::query()->where('module_id', 'inventory')->delete();
+
+    expect(fn () => app(ModuleManager::class)->enable('inventory'))
+        ->toThrow(ValidationException::class, 'Install Module inventory before enabling it.');
+});
 
 test('core admin and account work with zero optional modules enabled', function () {
     $staff = $this->createStaff();
@@ -84,6 +90,19 @@ test('each first-party module admin screen renders when that module is enabled a
     'events' => ['events', '/admin/events'],
 ]);
 
+test('events are configured inside products while check in remains an operations workflow', function () {
+    enableFirstPartyModules(['events']);
+
+    $items = collect(app(AdminRegistrar::class)->navigationItems())->keyBy('id');
+    $tabs = collect(app(AdminRegistrar::class)->productTabs())->keyBy('id');
+
+    expect($items)->not->toHaveKey('events')
+        ->and($tabs)->toHaveKey('events')
+        ->and($items->get('events-checkin')?->group)->toBe('admin.nav_groups.operations')
+        ->and($items->get('events-checkin')?->parent)->toBeNull()
+        ->and($items->get('tickets')?->group)->toBe('admin.nav_groups.operations');
+});
+
 test('all first-party modules together expose admin and account surfaces', function () {
     $staff = $this->createStaff();
     $customer = Customer::factory()->create();
@@ -95,8 +114,10 @@ test('all first-party modules together expose admin and account surfaces', funct
         ->and($nav)->toContain('digital-delivery-secrets')
         ->and($nav)->toContain('subscriptions')
         ->and($nav)->toContain('provisioning')
-        ->and($nav)->toContain('events')
+        ->and($nav)->not->toContain('events')
         ->and($nav)->toContain('events-checkin');
+
+    expect(collect(app(AdminRegistrar::class)->productTabs())->pluck('id'))->toContain('events');
 
     $shippingNames = collect(app('router')->getRoutes()->getRoutes())
         ->map(fn ($route) => $route->getName())

@@ -6,7 +6,6 @@ use App\Agovena\Admin\AdminNavigation;
 use App\Agovena\Admin\AdminNavigationNode;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\NavigationItem;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use Tests\Support\CreatesStaff;
 
@@ -46,7 +45,7 @@ test('core admin items are grouped as sibling links instead of nested parents', 
         ->and($byId->get('pages')?->parent)->toBeNull()
         ->and($byId->get('themes')?->group)->toBe('admin.nav_groups.appearance')
         ->and($byId->get('extensions')?->parent)->toBeNull()
-        ->and($byId->get('store-presets')?->parent)->toBeNull()
+        ->and($byId->get('modules')?->parent)->toBeNull()
         ->and($byId->get('roles')?->parent)->toBeNull()
         ->and($byId->get('security')?->parent)->toBeNull()
         ->and($byId->get('api-tokens')?->parent)->toBeNull()
@@ -58,8 +57,8 @@ test('core admin items are grouped as sibling links instead of nested parents', 
 });
 
 test('admin sidebar renders grouped collapsible sections with sibling links', function () {
-    app(ModuleManager::class)->enable('inventory');
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('inventory');
+    installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $html = $this->actingAs($this->createStaff())

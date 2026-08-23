@@ -17,7 +17,9 @@ final class PackageSourceValidator
 
     public function assert(PackageSource $source): void
     {
-        if ($source->sourceType !== PackageSourceType::Bundled) {
+        if ($source->sourceType === PackageSourceType::Monorepo) {
+            $this->assertGitRef($source->constraint);
+        } elseif ($source->sourceType !== PackageSourceType::Bundled) {
             $this->assertConstraint($source->constraint);
         }
 
@@ -26,6 +28,7 @@ final class PackageSourceValidator
             PackageSourceType::Path => $this->assertPath($source->locator),
             PackageSourceType::Composer => $this->assertComposerName($source->composerName ?? $source->locator),
             PackageSourceType::Vcs => $this->assertVcs($source),
+            PackageSourceType::Monorepo => $this->assertMonorepo($source),
         };
     }
 
@@ -108,6 +111,46 @@ final class PackageSourceValidator
         }
         $this->assertComposerName($name);
         $this->assertRepositoryUrl($source->locator);
+    }
+
+    public function assertMonorepo(PackageSource $source): void
+    {
+        $packageKey = $source->composerName ?? '';
+        if ($packageKey === '') {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.monorepo_package_key_required'),
+            ]);
+        }
+
+        if (preg_match(self::AGOVENA_ID, $packageKey) !== 1) {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.invalid_id', ['id' => $packageKey]),
+            ]);
+        }
+
+        $repository = trim($source->locator);
+        if ($repository !== '') {
+            $this->assertRepositoryUrl($repository);
+        }
+
+        if ($source->subdirectory !== null) {
+            app(MonorepoPackageMap::class)->assertSubdirectory($source->subdirectory);
+        }
+
+        app(MonorepoPackageMap::class)->resolve($packageKey, $source->kind);
+    }
+
+    public function assertGitRef(string $ref): void
+    {
+        if ($ref === '' || $ref === '*') {
+            return;
+        }
+
+        if (preg_match('/^[A-Za-z0-9._\\/\\-]+$/', $ref) !== 1 || strlen($ref) > 128) {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.monorepo_invalid_ref', ['ref' => $ref]),
+            ]);
+        }
     }
 
     public function assertRepositoryUrl(string $url): void

@@ -122,7 +122,6 @@ test('core storefront account and admin surfaces render without server errors', 
         route('admin.appearance.customize'),
         route('admin.appearance.pages'),
         route('admin.appearance.navigation'),
-        route('admin.store-presets'),
     ];
     foreach ($admin as $uri) {
         $this->actingAs($staff)

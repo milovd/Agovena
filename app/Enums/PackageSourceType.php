@@ -10,4 +10,5 @@ enum PackageSourceType: string
     case Path = 'path';
     case Composer = 'composer';
     case Vcs = 'vcs';
+    case Monorepo = 'monorepo';
 }

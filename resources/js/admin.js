@@ -1,12 +1,39 @@
 import Chart from 'chart.js/auto';
 
+function cssToken(name, fallback) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
+}
+
+function resolveCssColor(value) {
+    if (typeof value !== 'string') {
+        return value;
+    }
+
+    const match = value.match(/^var\((--[^)]+)\)$/);
+
+    return match ? cssToken(match[1], value) : value;
+}
+
 document.addEventListener('alpine:init', () => {
     Alpine.data('agChart', (config) => ({
         chart: null,
+        themeListener: null,
         init() {
             if (! this.$refs.canvas) {
                 return;
             }
+
+            this.renderChart();
+            this.themeListener = () => this.renderChart();
+            window.addEventListener('agovena-theme-changed', this.themeListener);
+        },
+        renderChart() {
+            this.chart?.destroy();
+
+            const muted = cssToken('--ag-color-text-muted', '#64748b');
+            const border = cssToken('--ag-color-border', '#e2e8f0');
+            const text = cssToken('--ag-color-text', '#0f172a');
+            const surface = cssToken('--ag-color-surface', '#ffffff');
 
             this.chart = new Chart(this.$refs.canvas, {
                 type: config.type || 'line',
@@ -14,6 +41,8 @@ document.addEventListener('alpine:init', () => {
                     labels: config.labels || [],
                     datasets: (config.datasets || []).map((dataset) => ({
                         ...dataset,
+                        borderColor: resolveCssColor(dataset.borderColor),
+                        backgroundColor: resolveCssColor(dataset.backgroundColor),
                         borderWidth: dataset.borderWidth ?? 2,
                         pointRadius: dataset.pointRadius ?? 2,
                         pointHoverRadius: dataset.pointHoverRadius ?? 4,
@@ -31,16 +60,16 @@ document.addEventListener('alpine:init', () => {
                             display: config.showLegend === true,
                             position: 'bottom',
                             labels: {
-                                color: '#64748b',
+                                color: muted,
                                 boxWidth: 12,
                                 boxHeight: 12,
                                 padding: 16,
                             },
                         },
                         tooltip: {
-                            backgroundColor: '#0f172a',
-                            titleColor: '#fff',
-                            bodyColor: '#e2e8f0',
+                            backgroundColor: text,
+                            titleColor: surface,
+                            bodyColor: border,
                             padding: 10,
                             cornerRadius: 8,
                         },
@@ -51,7 +80,7 @@ document.addEventListener('alpine:init', () => {
                                 display: false,
                             },
                             ticks: {
-                                color: '#64748b',
+                                color: muted,
                                 maxRotation: 0,
                                 autoSkipPadding: 12,
                             },
@@ -59,10 +88,10 @@ document.addEventListener('alpine:init', () => {
                         y: {
                             beginAtZero: true,
                             grid: {
-                                color: 'rgba(15, 23, 42, 0.06)',
+                                color: border,
                             },
                             ticks: {
-                                color: '#64748b',
+                                color: muted,
                                 precision: 0,
                             },
                         },
@@ -71,6 +100,9 @@ document.addEventListener('alpine:init', () => {
             });
         },
         destroy() {
+            if (this.themeListener) {
+                window.removeEventListener('agovena-theme-changed', this.themeListener);
+            }
             this.chart?.destroy();
             this.chart = null;
         },

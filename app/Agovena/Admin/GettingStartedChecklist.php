@@ -78,8 +78,11 @@ final class GettingStartedChecklist
             $items[] = new GettingStartedItem(
                 id: 'provisioning',
                 labelKey: 'admin.dashboard.getting_started.provisioning',
-                href: route('admin.extensions.index'),
-                done: $this->extensions->isEnabled('pterodactyl'),
+                href: Route::has('admin.provisioning.servers')
+                    ? route('admin.provisioning.servers')
+                    : route('admin.extensions.index'),
+                done: Schema::hasTable('provisioning_servers')
+                    && DB::table('provisioning_servers')->where('is_active', true)->exists(),
                 descriptionKey: 'admin.dashboard.getting_started.provisioning_description',
             );
         }

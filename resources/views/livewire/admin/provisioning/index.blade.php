@@ -1,5 +1,14 @@
 <div class="admin-page">
-    <x-ag.page-header :heading="__('provisioning::admin.title')" :lede="__('provisioning::admin.lede')" />
+    <x-ag.page-header :heading="__('provisioning::admin.title')" :lede="__('provisioning::admin.lede')">
+        @can('provisioning.manage')
+            <x-slot:actions>
+                <a class="ag-btn ag-btn--secondary" href="{{ route('admin.provisioning.servers') }}">
+                    <x-ag.icon name="server" :size="16" />
+                    {{ __('provisioning::admin.servers_title') }}
+                </a>
+            </x-slot:actions>
+        @endcan
+    </x-ag.page-header>
 
     <div class="ag-toolbar" style="margin-bottom: 1rem;">
         <select class="ag-select" wire:model.live="status" aria-label="{{ __('provisioning::admin.filter_status') }}">

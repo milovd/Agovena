@@ -30,8 +30,17 @@ require dirname(__DIR__, 2).'/vendor/autoload.php';
 $app = require dirname(__DIR__, 2).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
-app(ModuleManager::class)->enable('inventory');
-app(ExtensionManager::class)->enable('manual-payment');
+$modules = app(ModuleManager::class);
+if (! $modules->isInstalled('inventory')) {
+    $modules->install('inventory');
+}
+$modules->enable('inventory');
+
+$extensions = app(ExtensionManager::class);
+if (! $extensions->isInstalled('manual-payment')) {
+    $extensions->install('manual-payment');
+}
+$extensions->enable('manual-payment');
 app(SyncRegisteredPermissions::class)(force: true);
 
 $product = Product::query()->firstOrCreate(

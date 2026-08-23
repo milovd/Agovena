@@ -31,10 +31,16 @@ $app->make(Kernel::class)->bootstrap();
 
 $modules = $app->make(ModuleManager::class);
 foreach (['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', 'events'] as $id) {
+    if (! $modules->isInstalled($id)) {
+        $modules->install($id);
+    }
     $modules->enable($id);
 }
 
 $extensions = $app->make(ExtensionManager::class);
+if (! $extensions->isInstalled('manual-payment')) {
+    $extensions->install('manual-payment');
+}
 $extensions->enable('manual-payment');
 
 $app->make(SyncRegisteredPermissions::class)(force: true);

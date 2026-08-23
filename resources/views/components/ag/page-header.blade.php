@@ -5,6 +5,9 @@
 
 <header {{ $attributes->class(['admin-page__header']) }}>
     <div class="admin-page__header-text">
+        @isset($breadcrumbs)
+            {{ $breadcrumbs }}
+        @endisset
         @isset($back)
             <div class="admin-page__back">
                 {{ $back }}

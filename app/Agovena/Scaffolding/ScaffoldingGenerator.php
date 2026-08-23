@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Scaffolding;
 
 use App\Agovena\Extensions\ExtensionCategory;
+use App\Agovena\Packages\OptionalPackagesPath;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -17,7 +18,7 @@ final class ScaffoldingGenerator
     public function module(string $id, bool $force): string
     {
         $this->assertSafeId($id);
-        $root = base_path('modules/'.$id);
+        $root = ($this->optionalModulesRoot() ?? base_path('modules')).'/'.$id;
         $this->assertWritable($root, $force);
         $class = Str::studly($id);
         $namespace = 'Agovena\\Modules\\'.$class;
@@ -43,7 +44,7 @@ final class ScaffoldingGenerator
         $this->assertSafeId($id);
         $resolvedCategory = $this->assertExtensionCategoryEnum($category);
         $categoryDir = $resolvedCategory->directoryName();
-        $root = base_path('extensions/'.$categoryDir.'/'.$id);
+        $root = ($this->optionalExtensionsRoot() ?? base_path('extensions')).'/'.$categoryDir.'/'.$id;
         $this->assertWritable($root, $force);
         $class = Str::studly($id);
         $namespace = 'Agovena\\Extensions\\'.$class;
@@ -117,6 +118,16 @@ final class ScaffoldingGenerator
     {
         $this->files->ensureDirectoryExists(dirname($path));
         $this->files->put($path, $contents);
+    }
+
+    private function optionalModulesRoot(): ?string
+    {
+        return OptionalPackagesPath::modulesRoot();
+    }
+
+    private function optionalExtensionsRoot(): ?string
+    {
+        return OptionalPackagesPath::extensionsRoot();
     }
 
     private function moduleClass(string $namespace, string $class, string $id): string

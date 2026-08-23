@@ -8,10 +8,6 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
-    @can('extensions.manage')
-        @include('livewire.admin.partials.package-install-form', ['kind' => 'extension'])
-    @endcan
-
     <div class="ag-toolbar" style="margin-bottom: 1rem;">
         <select class="ag-select" wire:model.live="category" aria-label="{{ __('admin.extensions.filter_category') }}">
             <option value="">{{ __('admin.extensions.all_categories') }}</option>
@@ -65,12 +61,15 @@
                             </div>
                             <div class="ag-package-card__actions">
                                 @can('extensions.manage')
-                                    @if (! $row['installed'])
-                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="install('{{ $manifest->id }}')" @disabled(! $row['compatible'])>
+                                    @if (! $row['on_disk'] && $row['compatible'])
+                                        <button type="button" class="ag-btn ag-btn--primary ag-btn--sm" wire:click="installFromMonorepo('{{ $row['monorepo_key'] }}')">
+                                            {{ __('admin.packages.actions.download_install') }}
+                                        </button>
+                                    @elseif (! $row['installed'] && $row['compatible'] && $row['on_disk'])
+                                        <button type="button" class="ag-btn ag-btn--primary ag-btn--sm" wire:click="install('{{ $manifest->id }}')">
                                             {{ __('admin.extensions.actions.install') }}
                                         </button>
-                                    @endif
-                                    @if ($row['enabled'])
+                                    @elseif ($row['enabled'])
                                         <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="disable('{{ $manifest->id }}')">
                                             {{ __('admin.extensions.actions.disable') }}
                                         </button>
@@ -80,7 +79,7 @@
                                         <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="runHealth('{{ $manifest->id }}')">
                                             {{ __('admin.extensions.actions.health') }}
                                         </button>
-                                    @elseif ($row['compatible'])
+                                    @elseif ($row['installed'] && $row['compatible'])
                                         <button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="enable('{{ $manifest->id }}')">
                                             {{ __('admin.extensions.actions.enable') }}
                                         </button>

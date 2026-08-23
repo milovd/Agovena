@@ -7,7 +7,6 @@ use Agovena\Modules\Shipping\Models\ShippingMethod;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\CheckoutStep;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Enums\ProductOptionType;
 use App\Livewire\Storefront\CheckoutPage;
@@ -18,7 +17,7 @@ use Livewire\Livewire;
 
 function checkoutEnableShipping(): void
 {
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
     ShippingMethod::query()->create([
         'name' => 'Standard',

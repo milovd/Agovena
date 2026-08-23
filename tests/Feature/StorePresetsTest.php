@@ -26,7 +26,7 @@ test('store presets enable the union of modules without disabling others', funct
         ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeTrue()
         ->and(app(ApplyStorePresets::class)->selected())->toBe(['physical', 'digital', 'downloadable']);
 
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
     app(ApplyStorePresets::class)->handle(['physical']);
 
     expect(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue()

@@ -8,6 +8,8 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Checkout\CartRequirementComposer;
 use App\Agovena\Extensions\Contracts\Extension;
 use App\Agovena\Invoices\InvoiceDocumentView;
+use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Packages\PackageAutoload;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -41,6 +43,7 @@ final class ExtensionManager
         private readonly PackageAutoload $autoload,
         private readonly CartRequirementComposer $cartRequirements,
         private readonly InvoiceDocumentView $invoiceDocumentView,
+        private readonly ModuleManager $modules,
     ) {}
 
     public function refresh(): void
@@ -95,6 +98,12 @@ final class ExtensionManager
                 continue;
             }
 
+            try {
+                $this->assertModuleDependencies($manifest, requireEnabled: true);
+            } catch (ValidationException) {
+                continue;
+            }
+
             $this->bootManifest($manifest);
         }
     }
@@ -104,6 +113,7 @@ final class ExtensionManager
         $manifest = $this->requireManifest($extensionId);
         $this->assertCompatible($manifest);
         $this->assertDependencies($manifest, requireEnabled: false);
+        $this->assertModuleDependencies($manifest, requireEnabled: false);
 
         $row = AgovenaExtension::query()->firstOrNew(['extension_id' => $extensionId]);
         $row->version = $manifest->version;
@@ -121,10 +131,13 @@ final class ExtensionManager
         $manifest = $this->requireManifest($extensionId);
         $this->assertCompatible($manifest);
         $this->assertDependencies($manifest, requireEnabled: true);
+        $this->assertModuleDependencies($manifest, requireEnabled: true);
 
         $row = AgovenaExtension::query()->where('extension_id', $extensionId)->first();
         if ($row === null) {
-            $row = $this->install($extensionId);
+            throw ValidationException::withMessages([
+                'extension' => __('admin.extensions.install_before_enable', ['extension' => $extensionId]),
+            ]);
         }
 
         $row->enabled = true;
@@ -341,6 +354,34 @@ final class ExtensionManager
         }
     }
 
+    private function assertModuleDependencies(ExtensionManifest $manifest, bool $requireEnabled): void
+    {
+        foreach ($manifest->moduleDependencies as $dependency) {
+            if ($this->modules->manifest($dependency) === null) {
+                throw ValidationException::withMessages([
+                    'extension' => __('admin.extensions.missing_module_dependency', [
+                        'extension' => $manifest->id,
+                        'module' => $dependency,
+                    ]),
+                ]);
+            }
+
+            $satisfied = $requireEnabled
+                ? $this->modules->isEnabled($dependency)
+                : $this->modules->isInstalled($dependency);
+            if (! $satisfied) {
+                throw ValidationException::withMessages([
+                    'extension' => __($requireEnabled
+                        ? 'admin.extensions.module_dependency_disabled'
+                        : 'admin.extensions.module_dependency_not_installed', [
+                            'extension' => $manifest->id,
+                            'module' => $dependency,
+                        ]),
+                ]);
+            }
+        }
+    }
+
     private function requireManifest(string $extensionId): ExtensionManifest
     {
         $manifest = $this->manifest($extensionId);
@@ -429,7 +470,13 @@ final class ExtensionManager
      */
     private function scanRoots(): array
     {
-        $roots = [base_path('extensions'), storage_path('app/packages/extensions')];
+        $roots = [storage_path('app/packages/extensions')];
+
+        $optionalRoot = OptionalPackagesPath::extensionsRoot();
+        if ($optionalRoot !== null) {
+            $roots[] = $optionalRoot;
+        }
+
         foreach (config('agovena.packages.extra_extension_paths', []) as $path) {
             if (is_string($path) && $path !== '') {
                 $roots[] = $path;

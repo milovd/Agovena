@@ -9,13 +9,13 @@ use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Modules\Contracts\Module;
+use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Packages\PackageAutoload;
 use App\Agovena\Support\RecoversTestTransaction;
 use App\Models\AgovenaModule;
 use Composer\Semver\Semver;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -127,7 +127,9 @@ final class ModuleManager
 
         $row = AgovenaModule::query()->where('module_id', $moduleId)->first();
         if ($row === null) {
-            $row = $this->install($moduleId);
+            throw ValidationException::withMessages([
+                'module' => __('admin.modules.install_before_enable', ['module' => $moduleId]),
+            ]);
         }
 
         $this->runModuleMigrations($manifest);
@@ -283,30 +285,16 @@ final class ModuleManager
             return;
         }
 
-        $exitCode = 1;
+        $resolved = realpath($path);
+        if ($resolved === false) {
+            throw new RuntimeException("Module [{$manifest->id}] migrations path could not be resolved.");
+        }
+
         try {
-            $exitCode = Artisan::call('migrate', [
-                '--path' => $this->relativePath($path),
-                '--force' => true,
-            ]);
+            app('migrator')->run([$resolved]);
         } finally {
             RecoversTestTransaction::afterDdl();
         }
-
-        if ($exitCode !== 0) {
-            throw new RuntimeException("Module [{$manifest->id}] migrations failed with exit code {$exitCode}.");
-        }
-    }
-
-    private function relativePath(string $absolute): string
-    {
-        $base = base_path().DIRECTORY_SEPARATOR;
-        $normalized = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $absolute);
-        if (str_starts_with($normalized, $base)) {
-            return str_replace(DIRECTORY_SEPARATOR, '/', substr($normalized, strlen($base)));
-        }
-
-        return $absolute;
     }
 
     private function assertDependencies(ModuleManifest $manifest, bool $requireEnabled): void
@@ -407,7 +395,13 @@ final class ModuleManager
      */
     private function scanRoots(): array
     {
-        $roots = [base_path('modules'), storage_path('app/packages/modules')];
+        $roots = [storage_path('app/packages/modules')];
+
+        $optionalRoot = OptionalPackagesPath::modulesRoot();
+        if ($optionalRoot !== null) {
+            $roots[] = $optionalRoot;
+        }
+
         foreach (config('agovena.packages.extra_module_paths', []) as $path) {
             if (is_string($path) && $path !== '') {
                 $roots[] = $path;

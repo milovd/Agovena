@@ -143,25 +143,18 @@ test('package source validator rejects unsafe names urls and traversal', functio
     expect(fn () => $validator->assertComposerName('not a package'))->toThrow(ValidationException::class);
 });
 
-test('cannot replace or purge bundled first-party modules', function () {
-    expect(fn () => app(PackageInstaller::class)->install(new PackageSource(
-        kind: PackageKind::Module,
-        sourceType: PackageSourceType::Path,
-        locator: sampleModulePath(),
-        composerName: null,
-    )))->not->toThrow(ValidationException::class);
+test('legacy bundled package records cannot be updated or purged', function () {
+    AgovenaPackage::query()->create([
+        'kind' => PackageKind::Module,
+        'agovena_id' => 'inventory',
+        'source_type' => PackageSourceType::Bundled,
+        'source_locator' => 'inventory',
+        'version_constraint' => '*',
+        'is_bundled' => true,
+    ]);
 
-    File::copyDirectory(sampleModulePath(), storage_path('app/packages/staging/inventory'));
-    File::put(
-        storage_path('app/packages/staging/inventory/module.json'),
-        str_replace('"id": "sample"', '"id": "inventory"', (string) file_get_contents(sampleModulePath().DIRECTORY_SEPARATOR.'module.json')),
-    );
-
-    expect(fn () => app(PackageInstaller::class)->install(new PackageSource(
-        kind: PackageKind::Module,
-        sourceType: PackageSourceType::Path,
-        locator: storage_path('app/packages/staging/inventory'),
-    )))->toThrow(ValidationException::class);
+    expect(fn () => app(PackageInstaller::class)->update(PackageKind::Module, 'inventory'))
+        ->toThrow(ValidationException::class);
 
     expect(fn () => app(PackageInstaller::class)->purge(PackageKind::Module, 'inventory'))
         ->toThrow(ValidationException::class);

@@ -16,7 +16,6 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Models\Customer;
@@ -153,7 +152,7 @@ test('two processes cannot over-credit remaining invoice quantity', function () 
 });
 
 test('two renewal processors create one renewal order only', function () {
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();
@@ -189,7 +188,7 @@ test('two renewal processors create one renewal order only', function () {
 });
 
 test('duplicate ticket check-in across processes yields one first success', function () {
-    app(ModuleManager::class)->enable('events');
+    installAndEnableModule('events');
     app(SyncRegisteredPermissions::class)(force: true);
 
     [$order] = placePaidOrderForRace(1000, 1);
@@ -242,7 +241,7 @@ test('duplicate ticket check-in across processes yields one first success', func
 });
 
 test('duplicate provisioning dispatch keeps a single unique job intent', function () {
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('provisioning');
     config(['queue.default' => 'database', 'cache.default' => 'database']);
     DB::table('jobs')->delete();
 

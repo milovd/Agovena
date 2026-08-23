@@ -67,7 +67,7 @@ test('disabled modules do not leave dead fulfillment navigation', function () {
 });
 
 test('enabled subscriptions appear under operations navigation', function () {
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $item = collect(app(AdminRegistrar::class)->navigationItems())
@@ -78,9 +78,9 @@ test('enabled subscriptions appear under operations navigation', function () {
 });
 
 test('admin navigation groups are collapsible and fulfillment icons are distinct', function () {
-    app(ModuleManager::class)->enable('digital');
-    app(ModuleManager::class)->enable('inventory');
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('digital');
+    installAndEnableModule('inventory');
+    installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $items = collect(app(AdminRegistrar::class)->navigationItems())->keyBy('id');

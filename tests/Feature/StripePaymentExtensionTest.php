@@ -15,7 +15,6 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\HandlePaymentWebhook;
@@ -51,7 +50,7 @@ function enableStripe(?FakeStripeApi $api = null): FakeStripeApi
 {
     $api ??= new FakeStripeApi;
     app()->instance(StripeApi::class, $api);
-    app(ExtensionManager::class)->enable('stripe');
+    installAndEnableExtension('stripe');
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('stripe', 'secret_key', 'sk_test_abcdefghijklmnopqrstuvwxyz123456', secret: true);
     $settings->set('stripe', 'webhook_secret', STRIPE_WEBHOOK_SECRET, secret: true);
@@ -420,7 +419,7 @@ test('stripe health check validates credentials without exposing the key', funct
 test('manual and development gateways still work with stripe installed', function () {
     enableStripe();
     config(['agovena.payments.allow_development_instant_pay' => true]);
-    app(ExtensionManager::class)->enable('manual-payment');
+    installAndEnableExtension('manual-payment');
 
     $ids = app(AvailablePaymentMethods::class)->ids();
 
@@ -431,7 +430,7 @@ test('manual and development gateways still work with stripe installed', functio
 
 test('subscription renewal auto-charges through stripe without module knowing stripe types', function () {
     $api = enableStripe();
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create([
@@ -480,7 +479,7 @@ test('subscription renewal auto-charges through stripe without module knowing st
         ->and($api->intentCalls)->toBe(1);
 
     $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator(base_path('modules/subscriptions'), FilesystemIterator::SKIP_DOTS),
+        new RecursiveDirectoryIterator(optionalModuleRoot('subscriptions'), FilesystemIterator::SKIP_DOTS),
     );
     foreach ($iterator as $file) {
         if ($file->getExtension() !== 'php') {

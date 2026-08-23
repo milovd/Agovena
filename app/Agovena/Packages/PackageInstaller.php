@@ -20,6 +20,8 @@ final class PackageInstaller
         private readonly PackageManifestReader $manifests,
         private readonly PackageAutoload $autoload,
         private readonly ComposerRunner $composer,
+        private readonly MonorepoCheckout $monorepoCheckout,
+        private readonly MonorepoPackageMap $monorepoMap,
         private readonly ModuleManager $modules,
         private readonly ExtensionManager $extensions,
     ) {}
@@ -32,7 +34,6 @@ final class PackageInstaller
         $manifest = $this->manifests->read($origin);
         $this->validator->assertKind($source->kind, $manifest['kind']);
         $this->validator->assertAgovenaId($manifest['id']);
-        $this->assertNotBundledOverride($manifest['kind'], $manifest['id']);
 
         $destination = $this->materialize($origin, $manifest['kind'], $manifest['id']);
         $this->autoload->register($destination, $manifest['autoload']);
@@ -42,9 +43,12 @@ final class PackageInstaller
             'kind' => $manifest['kind'],
             'agovena_id' => $manifest['id'],
         ]);
-        $package->composer_name = $source->composerName ?? ($source->sourceType === PackageSourceType::Composer ? $source->locator : $package->composer_name);
+        $package->composer_name = match ($source->sourceType) {
+            PackageSourceType::Monorepo => $source->composerName,
+            default => $source->composerName ?? ($source->sourceType === PackageSourceType::Composer ? $source->locator : $package->composer_name),
+        };
         $package->source_type = $source->sourceType;
-        $package->source_locator = $source->locator;
+        $package->source_locator = $this->resolvedSourceLocator($source);
         $package->version_constraint = $source->constraint;
         $package->installed_version = $manifest['version'];
         $package->available_version = $manifest['version'];
@@ -164,6 +168,7 @@ final class PackageInstaller
                 $source->constraint,
                 $source->locator,
             )->path,
+            PackageSourceType::Monorepo => $this->resolveMonorepoOrigin($source),
             PackageSourceType::Bundled => throw ValidationException::withMessages([
                 'package' => __('admin.packages.bundled_use_lifecycle'),
             ]),
@@ -186,39 +191,6 @@ final class PackageInstaller
         }
 
         return $destination;
-    }
-
-    private function assertNotBundledOverride(PackageKind $kind, string $id): void
-    {
-        if ($kind === PackageKind::Module) {
-            $bundled = base_path('modules'.DIRECTORY_SEPARATOR.$id);
-            if (is_dir($bundled)) {
-                throw ValidationException::withMessages([
-                    'package' => __('admin.packages.cannot_replace_bundled', ['id' => $id]),
-                ]);
-            }
-
-            return;
-        }
-
-        $this->extensions->refresh();
-        $manifest = $this->extensions->manifest($id);
-        if ($manifest === null) {
-            return;
-        }
-
-        $bundledRoot = realpath(base_path('extensions'));
-        $packagePath = realpath($manifest->path);
-        if ($bundledRoot === false || $packagePath === false) {
-            return;
-        }
-
-        $prefix = $bundledRoot.DIRECTORY_SEPARATOR;
-        if (str_starts_with($packagePath.DIRECTORY_SEPARATOR, $prefix) || $packagePath === $bundledRoot) {
-            throw ValidationException::withMessages([
-                'package' => __('admin.packages.cannot_replace_bundled', ['id' => $id]),
-            ]);
-        }
     }
 
     private function rollbackFailedInstall(
@@ -253,7 +225,10 @@ final class PackageInstaller
 
     private function purgeFiles(AgovenaPackage $package): void
     {
-        if (is_string($package->composer_name) && $package->composer_name !== '') {
+        if ($package->source_type !== PackageSourceType::Monorepo
+            && is_string($package->composer_name)
+            && $package->composer_name !== ''
+        ) {
             $this->composer->remove($package->composer_name);
         }
 
@@ -308,5 +283,47 @@ final class PackageInstaller
     private function normalize(string $path): string
     {
         return rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
+    }
+
+    private function resolveMonorepoOrigin(PackageSource $source): string
+    {
+        $packageKey = (string) $source->composerName;
+        $mapping = $this->monorepoMap->resolve($packageKey, $source->kind);
+        $subdirectory = $source->subdirectory ?? $mapping['path'];
+
+        if ($source->subdirectory !== null) {
+            $this->monorepoMap->assertSubdirectory($source->subdirectory);
+            if ($source->subdirectory !== $mapping['path']) {
+                throw ValidationException::withMessages([
+                    'package' => __('admin.packages.monorepo_subdirectory_mismatch', [
+                        'expected' => $mapping['path'],
+                        'actual' => $source->subdirectory,
+                    ]),
+                ]);
+            }
+        }
+
+        $repository = trim($source->locator);
+        if ($repository === '') {
+            $repository = $this->monorepoMap->defaultRepository();
+        }
+
+        $ref = $source->constraint;
+        if ($ref === '' || $ref === '*') {
+            $ref = 'main';
+        }
+
+        return $this->monorepoCheckout->resolve($repository, $ref, $subdirectory);
+    }
+
+    private function resolvedSourceLocator(PackageSource $source): string
+    {
+        if ($source->sourceType !== PackageSourceType::Monorepo) {
+            return $source->locator;
+        }
+
+        $repository = trim($source->locator);
+
+        return $repository !== '' ? $repository : $this->monorepoMap->defaultRepository();
     }
 }

@@ -1,19 +1,56 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="light">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title ?? __('admin.fallback_title') }} | {{ $siteName ?? config('app.name', 'Agovena') }}</title>
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('agovena.theme');
+                var theme = stored === 'dark' || stored === 'light'
+                    ? stored
+                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', theme);
+            } catch (e) {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        })();
+
+        window.agovenaAdminShell = function () {
+            return {
+                navOpen: false,
+                theme: document.documentElement.getAttribute('data-theme') || 'light',
+                applyTheme: function (next) {
+                    this.theme = next === 'dark' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', this.theme);
+                    localStorage.setItem('agovena.theme', this.theme);
+                    window.dispatchEvent(new CustomEvent('agovena-theme-changed', { detail: { theme: this.theme } }));
+                },
+                toggleTheme: function () {
+                    this.applyTheme(this.theme === 'dark' ? 'light' : 'dark');
+                }
+            };
+        };
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet">
     @if (! empty($brandingFaviconUrl))
         <link rel="icon" href="{{ $brandingFaviconUrl }}">
     @endif
-    @vite(['resources/css/admin.css', 'resources/js/admin.js'])
+    @php
+        $adminTheme = app(\App\Agovena\Theme\ThemeManager::class)->themeFor(\App\Agovena\Theme\ThemeSurface::Admin);
+        $adminAssets = array_values(array_filter([
+            'resources/css/admin.css',
+            $adminTheme->adminCssEntry,
+            'resources/js/admin.js',
+        ]));
+    @endphp
+    @vite($adminAssets)
     @livewireStyles
 </head>
-<body class="admin-app" x-data="{ navOpen: false }" @keydown.escape.window="navOpen = false">
+<body class="admin-app" x-data="agovenaAdminShell()" @keydown.escape.window="navOpen = false">
     <a class="admin-skip-link" href="#main">{{ __('admin.skip_to_content') }}</a>
 
     <div
@@ -66,6 +103,20 @@
                         <x-ag.icon name="loader" class="ag-icon--spin" :size="20" />
                         <span class="visually-hidden">{{ __('common.loading') }}</span>
                     </div>
+                    <button
+                        type="button"
+                        class="admin-theme-toggle"
+                        @click="toggleTheme()"
+                        :aria-label="theme === 'dark' ? @js(__('admin.theme_to_light')) : @js(__('admin.theme_to_dark'))"
+                        :title="theme === 'dark' ? @js(__('admin.theme_to_light')) : @js(__('admin.theme_to_dark'))"
+                    >
+                        <span class="admin-theme-toggle__icon" x-show="theme !== 'dark'" x-cloak aria-hidden="true">
+                            <x-ag.icon name="moon" :size="20" />
+                        </span>
+                        <span class="admin-theme-toggle__icon" x-show="theme === 'dark'" x-cloak aria-hidden="true">
+                            <x-ag.icon name="sun" :size="20" />
+                        </span>
+                    </button>
                     <div
                         class="ag-dropdown admin-account-dropdown"
                         x-data="{ open: false }"

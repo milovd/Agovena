@@ -6,7 +6,6 @@ use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Livewire\Admin\CreditNotes\Create as AdminCreditNoteCreate;
@@ -82,8 +81,7 @@ test('issuing a credit note from admin requires a recent password', function () 
 
 test('saving extension secret credentials requires a recent password', function () {
     $staff = $this->createStaff();
-    $extensions = app(ExtensionManager::class);
-    $extensions->enable('mollie');
+    installAndEnableExtension('mollie');
 
     $settings = app(ExtensionSettingsRepository::class);
     $settings->forget('mollie', 'api_key');

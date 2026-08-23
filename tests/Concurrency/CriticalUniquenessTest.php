@@ -9,7 +9,6 @@ use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordRefund;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
@@ -25,7 +24,7 @@ use Tests\Support\CreatesStaff;
 uses(CreatesStaff::class);
 
 test('subscription renewal period is unique per subscription', function () {
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
 
     $subscription = Subscription::query()->create([
         'number' => 'SUB-CONC-1',
@@ -124,7 +123,7 @@ test('refunds cannot exceed the remaining refundable amount', function () {
 });
 
 test('inventory cannot decrement below available stock', function () {
-    app(ModuleManager::class)->enable('inventory');
+    installAndEnableModule('inventory');
     $product = Product::factory()->active()->create();
     app(ProductCapabilityManager::class)->enable($product, 'physical');
     app(ProductCapabilityManager::class)->enable($product, 'inventory');

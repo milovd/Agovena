@@ -29,7 +29,7 @@ uses(CreatesStaff::class);
 
 function enableDigitalModule(): void
 {
-    app(ModuleManager::class)->enable('digital');
+    installAndEnableModule('digital');
     app(SyncRegisteredPermissions::class)(force: true);
 }
 
@@ -169,7 +169,7 @@ test('digital downloads stay on the private disk and reject other customers', fu
 
 test('mixed physical and digital order only grants digital entitlements for digital lines', function () {
     enableDigitalModule();
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();

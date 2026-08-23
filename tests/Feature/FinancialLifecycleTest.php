@@ -17,7 +17,6 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Invoices\IssueCreditNote;
 use App\Agovena\Invoices\VoidInvoice;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -206,10 +205,7 @@ test('unpaid invoice can be voided and cannot be paid afterward', function () {
 });
 
 test('refund does not silently destroy mixed module fulfillment state', function () {
-    $modules = app(ModuleManager::class);
-    foreach (['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning'] as $id) {
-        $modules->enable($id);
-    }
+    installAndEnableModules(['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning']);
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();

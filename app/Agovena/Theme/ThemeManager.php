@@ -152,6 +152,7 @@ final class ThemeManager
                 cssEntry: 'themes/default/resources/css/theme.css',
                 description: 'Official Agovena storefront Theme.',
                 capabilities: ['storefront', 'admin', 'homepage-sections'],
+                adminCssEntry: 'themes/default/resources/css/admin.css',
             );
         } else {
             /** @var mixed $json */
@@ -174,6 +175,7 @@ final class ThemeManager
                 : null,
             capabilities: $manifest->capabilities,
             basePath: $dir,
+            adminCssEntry: $manifest->adminCssEntry,
         );
     }
 }

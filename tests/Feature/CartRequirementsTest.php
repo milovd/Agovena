@@ -6,7 +6,6 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\CartRequirement;
 use App\Agovena\Checkout\CartRequirementComposer;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Enums\CustomerPropertyType;
 use App\Enums\ProductOptionType;
@@ -17,9 +16,7 @@ use App\Models\ProductOptionChoice;
 
 function enableCommerceModules(): void
 {
-    $modules = app(ModuleManager::class);
-    $modules->enable('shipping');
-    $modules->enable('digital');
+    installAndEnableModules(['shipping', 'digital']);
     app(SyncRegisteredPermissions::class)(force: true);
 }
 

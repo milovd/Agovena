@@ -9,6 +9,13 @@ use Agovena\Extensions\Pterodactyl\PterodactylProviderException;
 
 final class FakePterodactylApi implements PterodactylApi
 {
+    public function withConnection(array $settings): PterodactylApi
+    {
+        unset($settings);
+
+        return $this;
+    }
+
     /** @var array<string, array<string, mixed>> */
     public array $serversByExternalId = [];
 

@@ -1,6 +1,5 @@
 <?php
 
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
 use App\Livewire\Admin\Roles\Index;
@@ -36,7 +35,7 @@ function adminLocalizedRoutes(): array
 
 test('shipping admin and role permissions resolve translation keys', function () {
     $staff = $this->createStaff();
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
 
     expect(__('shipping::admin.methods_title'))->toBe('Shipping methods')

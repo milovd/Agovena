@@ -8,6 +8,7 @@ final readonly class ExtensionManifest
 {
     /**
      * @param  list<string>  $dependencies  Other extension ids
+     * @param  list<string>  $moduleDependencies  Required module ids
      * @param  list<array{key: string, label: string, type?: string, secret?: bool, required?: bool, default?: mixed, help?: string}>  $settings
      * @param  array<string, string>  $autoloadPsr4
      */
@@ -21,6 +22,7 @@ final readonly class ExtensionManifest
         public ExtensionCategory $category,
         public string $agovena = '*',
         public array $dependencies = [],
+        public array $moduleDependencies = [],
         public string $author = 'Agovena',
         public array $settings = [],
         public array $autoloadPsr4 = [],
@@ -43,6 +45,11 @@ final readonly class ExtensionManifest
         $deps = $data['dependencies'] ?? [];
         if (! is_array($deps)) {
             $deps = [];
+        }
+
+        $moduleDeps = $data['module_dependencies'] ?? [];
+        if (! is_array($moduleDeps)) {
+            $moduleDeps = [];
         }
 
         $settings = $data['settings'] ?? [];
@@ -87,6 +94,7 @@ final readonly class ExtensionManifest
             category: $category,
             agovena: (string) ($data['agovena'] ?? '*'),
             dependencies: array_values(array_map('strval', $deps)),
+            moduleDependencies: array_values(array_map('strval', $moduleDeps)),
             author: (string) ($data['author'] ?? 'Agovena'),
             settings: $normalizedSettings,
             autoloadPsr4: $psr4,

@@ -2,6 +2,9 @@
 
 namespace Tests;
 
+use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Packages\OptionalPackagesPath;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +19,18 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         $this->withoutVite();
+        $this->refreshOptionalPackageDiscovery();
         $this->isolateEnabledPackages();
+    }
+
+    protected function refreshOptionalPackageDiscovery(): void
+    {
+        if (OptionalPackagesPath::root() === null) {
+            return;
+        }
+
+        app(ModuleManager::class)->refresh();
+        app(ExtensionManager::class)->refresh();
     }
 
     /**

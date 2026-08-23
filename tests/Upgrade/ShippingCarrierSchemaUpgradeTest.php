@@ -2,14 +2,13 @@
 
 declare(strict_types=1);
 
-use App\Agovena\Modules\ModuleManager;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 test('generic carrier shipment columns can be applied onto existing shipment tables', function () {
     Artisan::call('migrate');
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
 
     expect(Schema::hasColumn('shipments', 'carrier_id'))->toBeTrue()
         ->and(Schema::hasColumn('shipments', 'external_ref'))->toBeTrue()
@@ -23,7 +22,7 @@ test('generic carrier shipment columns can be applied onto existing shipment tab
     expect(Schema::hasColumn('shipments', 'carrier_id'))->toBeFalse();
 
     Artisan::call('migrate');
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
 
     expect(Schema::hasColumn('shipments', 'carrier_id'))->toBeTrue()
         ->and(Schema::hasColumn('shipments', 'external_ref'))->toBeTrue()

@@ -1,8 +1,15 @@
-<div class="admin-page admin-page--form">
+<div class="admin-page admin-page--form" x-data="{ activeTab: 'details' }">
     <x-ag.page-header
         :heading="$mode === 'create' ? __('admin.products.form.create_title') : __('admin.products.form.edit_title')"
         :lede="$mode === 'create' ? __('admin.products.form.create_lede') : __('admin.products.form.edit_lede')"
     >
+        <x-slot:breadcrumbs>
+            <x-ag.breadcrumbs :items="[
+                ['label' => __('admin.nav_groups.overview'), 'url' => route('admin.dashboard')],
+                ['label' => __('admin.products.title'), 'url' => route('admin.products.index')],
+                ['label' => $mode === 'create' ? __('admin.products.form.create_title') : $product->name],
+            ]" />
+        </x-slot:breadcrumbs>
         <x-slot:back>
             <x-ag.back :href="route('admin.products.index')" :label="__('admin.products.title')" />
         </x-slot:back>
@@ -36,7 +43,46 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
+    @php
+        $availableCapabilityKeys = collect($availableCapabilities ?? [])->pluck('key')->all();
+    @endphp
+
+    <nav class="ag-product-tabs" role="tablist" aria-label="{{ __('admin.products.tabs.aria') }}">
+        @foreach (['details', 'pricing'] as $tab)
+            <button
+                type="button"
+                class="ag-product-tabs__tab"
+                :class="{ 'is-active': activeTab === '{{ $tab }}' }"
+                role="tab"
+                :aria-selected="(activeTab === '{{ $tab }}').toString()"
+                aria-controls="product-tab-{{ $tab }}"
+                @click="activeTab = '{{ $tab }}'"
+            >{{ __('admin.products.tabs.'.$tab) }}</button>
+        @endforeach
+        @if ($mode === 'edit')
+            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'media' }" role="tab" :aria-selected="(activeTab === 'media').toString()" aria-controls="product-tab-media" @click="activeTab = 'media'">{{ __('admin.products.tabs.media') }}</button>
+        @endif
+        @if ($availableCapabilityKeys !== [])
+            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'automation' }" role="tab" :aria-selected="(activeTab === 'automation').toString()" aria-controls="product-tab-automation" @click="activeTab = 'automation'">{{ __('admin.products.tabs.automation') }}</button>
+        @endif
+        @if ($mode === 'edit')
+            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'options' }" role="tab" :aria-selected="(activeTab === 'options').toString()" aria-controls="product-tab-options" @click="activeTab = 'options'">{{ __('admin.products.tabs.options') }}</button>
+            @foreach ($productTabs ?? [] as $productTab)
+                <button
+                    type="button"
+                    class="ag-product-tabs__tab"
+                    :class="{ 'is-active': activeTab === '{{ $productTab->id }}' }"
+                    role="tab"
+                    :aria-selected="(activeTab === '{{ $productTab->id }}').toString()"
+                    aria-controls="product-tab-{{ $productTab->id }}"
+                    @click="activeTab = '{{ $productTab->id }}'"
+                >{{ __($productTab->label) }}</button>
+            @endforeach
+        @endif
+    </nav>
+
     <form id="product-form" wire:submit="save" class="ag-form ag-form--product" novalidate>
+        <div id="product-tab-details" role="tabpanel" x-cloak x-show="activeTab === 'details'">
         <section class="ag-section" aria-labelledby="section-basic">
             <header class="ag-section__header">
                 <h3 id="section-basic" class="ag-section__title">{{ __('admin.products.form.basic') }}</h3>
@@ -123,7 +169,9 @@
                 </div>
             </div>
         </section>
+        </div>
 
+        <div id="product-tab-pricing" role="tabpanel" x-cloak x-show="activeTab === 'pricing'">
         <section class="ag-section" aria-labelledby="section-pricing">
             <header class="ag-section__header">
                 <h3 id="section-pricing" class="ag-section__title">{{ __('admin.products.form.pricing') }}</h3>
@@ -189,11 +237,69 @@
                 @endif
             </div>
         </section>
+        </div>
+
+        @if ($mode === 'create' && ($canConfigureProvisioning ?? false))
+            <div id="product-tab-automation" role="tabpanel" x-cloak x-show="activeTab === 'automation'">
+                <section class="ag-section" aria-labelledby="section-create-automation">
+                    <header class="ag-section__header">
+                        <h3 id="section-create-automation" class="ag-section__title">{{ __('admin.products.automation.title') }}</h3>
+                        <p class="ag-section__lede">{{ __('admin.products.automation.lede') }}</p>
+                    </header>
+                    <div class="ag-section__body">
+                        <x-ag.checkbox
+                            id="configure-provisioning"
+                            wire:model.live="configureProvisioning"
+                            :label="__('admin.products.automation.enable_provisioning')"
+                        />
+                        @if ($configureProvisioning)
+                            <div class="ag-provider-settings">
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="create-provisioning-server">{{ __('admin.products.automation.server') }}</label>
+                                    <select id="create-provisioning-server" class="ag-select" wire:model.live="provisioningServerId" required>
+                                        <option value="">{{ __('admin.products.automation.select_server') }}</option>
+                                        @foreach ($provisioningServers ?? [] as $server)
+                                            <option value="{{ $server->id }}">{{ $server->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @if (($provisioningServers ?? collect())->isEmpty())
+                                        <p class="ag-field__hint"><a href="{{ route('admin.provisioning.servers') }}">{{ __('admin.products.automation.configure_server_first') }}</a></p>
+                                    @endif
+                                    @error('provisioningServerId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                                </div>
+                                <div class="ag-alert ag-alert--info" role="status">
+                                    <div class="ag-alert__body">
+                                        <p class="ag-alert__title">{{ $providerKey !== '' ? ucfirst($providerKey) : __('admin.products.automation.provider') }}</p>
+                                        <p class="ag-alert__text">{{ __('admin.products.automation.provider_hint') }}</p>
+                                    </div>
+                                </div>
+                                <div class="ag-grid ag-grid--2">
+                                    @foreach ($providerSettingDefinitions ?? [] as $definition)
+                                        <div class="ag-field {{ $definition->type === 'text' ? 'ag-grid__span-2' : '' }}">
+                                            <label class="ag-field__label" for="create-provider-setting-{{ $definition->key }}">{{ __($definition->label) }}</label>
+                                            @if ($definition->type === 'text')
+                                                <textarea id="create-provider-setting-{{ $definition->key }}" class="ag-input" rows="5" wire:model="providerSettings.{{ $definition->key }}"></textarea>
+                                            @else
+                                                <input id="create-provider-setting-{{ $definition->key }}" class="ag-input" type="text" wire:model="providerSettings.{{ $definition->key }}" @required($definition->required)>
+                                            @endif
+                                            @if ($definition->help !== '')
+                                                <p class="ag-field__hint">{{ __($definition->help) }}</p>
+                                            @endif
+                                            @error('providerSettings.'.$definition->key) <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                </section>
+            </div>
+        @endif
 
     </form>
 
     @if ($mode === 'edit')
-        <section class="ag-section ag-form--product" aria-labelledby="section-media">
+        <section id="product-tab-media" class="ag-section ag-form--product" role="tabpanel" x-cloak x-show="activeTab === 'media'" aria-labelledby="section-media">
             <header class="ag-section__header">
                 <h3 id="section-media" class="ag-section__title">{{ __('admin.products.form.media') }}</h3>
                 <p class="ag-section__lede">{{ __('admin.products.form.media_lede') }}</p>
@@ -280,15 +386,13 @@
             </div>
         </section>
 
-        <section class="ag-section" aria-labelledby="section-capabilities">
-            <header class="ag-section__header">
+        @if ($availableCapabilityKeys !== [])
+            <section id="product-tab-automation" class="ag-section" role="tabpanel" x-cloak x-show="activeTab === 'automation'" aria-labelledby="section-capabilities">
+                <header class="ag-section__header">
                 <h3 id="section-capabilities" class="ag-section__title">{{ __('admin.products.presets.title') }}</h3>
                 <p class="ag-section__lede">{{ __('admin.products.presets.lede') }}</p>
             </header>
             <div class="ag-section__body">
-                @php
-                    $availableCapabilityKeys = collect($availableCapabilities ?? [])->pluck('key')->all();
-                @endphp
 
                 <div class="ag-preset-grid" role="group" aria-label="{{ __('admin.products.presets.aria') }}">
                     @foreach (['simple', 'physical', 'digital', 'downloadable', 'subscription', 'hosted_service', 'event_ticket'] as $preset)
@@ -402,14 +506,15 @@
 
                             @if (! empty($capabilityEnabled['provisionable']))
                                 <div class="ag-field">
-                                    <label class="ag-field__label" for="providerKey">{{ __('admin.products.capabilities.provider_key') }}</label>
-                                    <select id="providerKey" class="ag-select" wire:model.live="providerKey">
-                                        <option value="">{{ __('common.none') }}</option>
-                                        @foreach ($provisioners ?? [] as $provisioner)
-                                            <option value="{{ $provisioner['id'] }}">{{ $provisioner['label'] }}</option>
+                                    <label class="ag-field__label" for="provisioningServerId">{{ __('admin.products.automation.server') }}</label>
+                                    <select id="provisioningServerId" class="ag-select" wire:model.live="provisioningServerId">
+                                        <option value="">{{ __('admin.products.automation.select_server') }}</option>
+                                        @foreach ($provisioningServers ?? [] as $server)
+                                            <option value="{{ $server->id }}">{{ $server->name }} — {{ $server->provider_key }}</option>
                                         @endforeach
                                     </select>
-                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.provider_key_hint') }}</p>
+                                    <p class="ag-field__hint"><a href="{{ route('admin.provisioning.servers') }}">{{ __('admin.products.automation.manage_servers') }}</a></p>
+                                    @error('provisioningServerId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                                 </div>
                                 @foreach ($providerSettingDefinitions ?? [] as $definition)
                                     <div class="ag-field">
@@ -436,13 +541,21 @@
                 @error('capability') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
             </div>
         </section>
+        @endif
 
         @if ($mode === 'edit')
-            <livewire:admin.products.options-editor :product-id="$product->id" :key="'product-options-'.$product->id" />
+            <div id="product-tab-options" role="tabpanel" x-cloak x-show="activeTab === 'options'">
+                <livewire:admin.products.options-editor :product-id="$product->id" :key="'product-options-'.$product->id" />
+            </div>
+            @foreach ($productTabs ?? [] as $productTab)
+                <div id="product-tab-{{ $productTab->id }}" role="tabpanel" x-cloak x-show="activeTab === '{{ $productTab->id }}'">
+                    @livewire($productTab->component, ['product' => $product], key('product-tab-'.$productTab->id.'-'.$product->id))
+                </div>
+            @endforeach
         @endif
 
         @can('products.delete')
-            <div class="ag-form--product">
+            <div class="ag-form--product" x-show="activeTab === 'automation'">
                 <x-ag.danger-zone
                     :title="__('admin.products.delete.zone_title')"
                     :description="$isReferenced
@@ -476,10 +589,15 @@
             </div>
         @endif
     @else
-        <p class="ag-field__hint">{{ __('admin.products.form.create_media_hint') }}</p>
+        <p class="ag-field__hint" x-show="activeTab === 'details'">{{ __('admin.products.form.create_media_hint') }}</p>
     @endif
 
-    <div class="ag-form__sticky ag-form__sticky--page" role="group" aria-label="{{ __('admin.products.form.actions_aria') }}">
+    <div
+        class="ag-form__sticky ag-form__sticky--page"
+        role="group"
+        aria-label="{{ __('admin.products.form.actions_aria') }}"
+        @if ($mode === 'edit') x-show="activeTab === 'details' || activeTab === 'pricing'" @endif
+    >
         <a class="ag-btn ag-btn--secondary" href="{{ route('admin.products.index') }}">{{ __('common.cancel') }}</a>
         <button type="submit" form="product-form" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
             <span wire:loading.remove wire:target="save">{{ $mode === 'create' ? __('admin.products.form.create_title') : __('admin.products.form.save_changes') }}</span>

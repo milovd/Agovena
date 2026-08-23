@@ -17,6 +17,7 @@ final class ThemeManifest
         public readonly string $description = '',
         public readonly ?string $preview = null,
         public readonly array $capabilities = [],
+        public readonly ?string $adminCssEntry = null,
     ) {}
 
     /**
@@ -32,6 +33,9 @@ final class ThemeManifest
             : 'themes/'.$id.'/resources/css/theme.css';
         $description = is_string($data['description'] ?? null) ? $data['description'] : '';
         $preview = is_string($data['preview'] ?? null) && $data['preview'] !== '' ? $data['preview'] : null;
+        $adminCss = is_string($data['admin_css'] ?? null) && $data['admin_css'] !== ''
+            ? $data['admin_css']
+            : null;
         $capabilities = [];
         if (isset($data['capabilities']) && is_array($data['capabilities'])) {
             foreach ($data['capabilities'] as $cap) {
@@ -41,6 +45,15 @@ final class ThemeManifest
             }
         }
 
-        return new self($id, $name, $version, $css, $description, $preview, $capabilities);
+        return new self(
+            id: $id,
+            name: $name,
+            version: $version,
+            cssEntry: $css,
+            description: $description,
+            preview: $preview,
+            capabilities: $capabilities,
+            adminCssEntry: $adminCss,
+        );
     }
 }

@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Agovena\Modules\ModuleManager;
 use App\Models\Order;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +19,7 @@ test('event tables can be applied onto existing orders', function () {
         'currency' => 'EUR',
     ]);
 
-    app(ModuleManager::class)->enable('events');
+    installAndEnableModule('events');
 
     expect(Schema::hasTable('events'))->toBeTrue()
         ->and(Schema::hasTable('event_tickets'))->toBeTrue();
@@ -35,7 +34,7 @@ test('event tables can be applied onto existing orders', function () {
         ->and(Order::query()->whereKey($order->id)->value('customer_email'))->toBe('upgrade-events@example.test');
 
     Artisan::call('migrate');
-    app(ModuleManager::class)->enable('events');
+    installAndEnableModule('events');
 
     expect(Schema::hasTable('events'))->toBeTrue()
         ->and(Schema::hasTable('event_tickets'))->toBeTrue()

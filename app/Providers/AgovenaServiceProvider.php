@@ -42,6 +42,9 @@ use App\Agovena\Mail\ApplyMailSettings;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Packages\ComposerRunner;
+use App\Agovena\Packages\GitMonorepoCheckout;
+use App\Agovena\Packages\MonorepoCheckout;
+use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Packages\ProcessComposerRunner;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -90,6 +93,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ProductCapabilityManager::class);
         $this->app->singleton(ModuleManager::class);
         $this->app->singleton(ComposerRunner::class, ProcessComposerRunner::class);
+        $this->app->singleton(MonorepoCheckout::class, GitMonorepoCheckout::class);
         $this->app->singleton(ExtensionSettingsRepository::class);
         $this->app->singleton(PaymentGatewayRegistry::class);
         $this->app->singleton(ProvisionerRegistry::class);
@@ -393,22 +397,12 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
-            id: 'store-presets',
-            label: 'admin.nav.store_presets',
-            group: 'admin.nav_groups.system',
-            href: '/admin/store-presets',
-            icon: 'package',
-            sort: 119,
-            permission: 'modules.manage',
-        ));
-
-        $admin->navigation(new NavigationItem(
             id: 'modules',
             label: 'admin.nav.modules',
             group: 'admin.nav_groups.system',
             href: '/admin/modules',
             icon: 'package',
-            sort: 120,
+            sort: 119,
             permission: 'modules.view',
         ));
 
@@ -932,33 +926,39 @@ class AgovenaServiceProvider extends ServiceProvider
 
     private function loadFirstPartyExtensionMigrations(): void
     {
-        $root = base_path('extensions');
-        if (! is_dir($root)) {
-            return;
-        }
+        $roots = array_filter([
+            OptionalPackagesPath::extensionsRoot(),
+            storage_path('app/packages/extensions'),
+        ]);
 
         $candidates = [];
-        foreach (scandir($root) ?: [] as $entry) {
-            if ($entry === '.' || $entry === '..') {
-                continue;
-            }
-            $path = $root.DIRECTORY_SEPARATOR.$entry;
-            if (! is_dir($path)) {
+        foreach ($roots as $root) {
+            if (! is_dir($root)) {
                 continue;
             }
 
-            $direct = $path.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-            if (is_dir($direct)) {
-                $candidates[] = $direct;
-            }
-
-            foreach (scandir($path) ?: [] as $nested) {
-                if ($nested === '.' || $nested === '..') {
+            foreach (scandir($root) ?: [] as $entry) {
+                if ($entry === '.' || $entry === '..') {
                     continue;
                 }
-                $nestedMigrations = $path.DIRECTORY_SEPARATOR.$nested.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-                if (is_dir($nestedMigrations)) {
-                    $candidates[] = $nestedMigrations;
+                $path = $root.DIRECTORY_SEPARATOR.$entry;
+                if (! is_dir($path)) {
+                    continue;
+                }
+
+                $direct = $path.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
+                if (is_dir($direct)) {
+                    $candidates[] = $direct;
+                }
+
+                foreach (scandir($path) ?: [] as $nested) {
+                    if ($nested === '.' || $nested === '..') {
+                        continue;
+                    }
+                    $nestedMigrations = $path.DIRECTORY_SEPARATOR.$nested.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
+                    if (is_dir($nestedMigrations)) {
+                        $candidates[] = $nestedMigrations;
+                    }
                 }
             }
         }

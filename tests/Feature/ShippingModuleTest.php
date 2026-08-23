@@ -27,7 +27,7 @@ uses(CreatesStaff::class);
 
 function enableShippingModule(): void
 {
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
 }
 

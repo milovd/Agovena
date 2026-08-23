@@ -1,0 +1,15 @@
+{
+    "id": "sample",
+    "name": "Sample",
+    "version": "1.0.0",
+    "description": "Fixture Module used in package installation tests.",
+    "author": "Agovena",
+    "agovena": "^0.1",
+    "provider": "Agovena\\Modules\\Sample\\SampleServiceProvider",
+    "dependencies": [],
+    "autoload": {
+        "psr-4": {
+            "Agovena\\Modules\\Sample\\": "src/"
+        }
+    }
+}

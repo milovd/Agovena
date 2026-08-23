@@ -22,6 +22,8 @@ interface AdminRegistrar
 
     public function customerDetailSection(CustomerDetailSection $section): void;
 
+    public function productTab(ProductTab $tab): void;
+
     /** @return list<NavigationItem> */
     public function navigationItems(): array;
 
@@ -47,4 +49,7 @@ interface AdminRegistrar
 
     /** @return list<CustomerDetailSection> */
     public function customerDetailSections(): array;
+
+    /** @return list<ProductTab> */
+    public function productTabs(): array;
 }

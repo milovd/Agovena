@@ -35,8 +35,8 @@ uses(CreatesStaff::class);
 test('representative store survives upgrade from pre-custom-properties schema', function () {
     Artisan::call('migrate');
 
-    app(ModuleManager::class)->enable('inventory');
-    app(ExtensionManager::class)->enable('manual-payment');
+    installAndEnableModule('inventory');
+    installAndEnableExtension('manual-payment');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $staff = $this->createStaff();

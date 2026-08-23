@@ -1,0 +1,16 @@
+{
+    "id": "sample-gateway",
+    "name": "Sample Gateway",
+    "version": "1.0.0",
+    "description": "Fixture Extension used in package installation tests.",
+    "author": "Agovena",
+    "category": "other",
+    "agovena": "^0.1",
+    "provider": "Agovena\\Extensions\\SampleGateway\\SampleGatewayServiceProvider",
+    "dependencies": [],
+    "autoload": {
+        "psr-4": {
+            "Agovena\\Extensions\\SampleGateway\\": "src/"
+        }
+    }
+}

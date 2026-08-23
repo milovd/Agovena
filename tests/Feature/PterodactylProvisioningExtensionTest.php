@@ -9,6 +9,7 @@ use Agovena\Extensions\Pterodactyl\PterodactylProviderException;
 use Agovena\Extensions\Pterodactyl\PterodactylProvisioner;
 use Agovena\Extensions\Pterodactyl\PterodactylServer;
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
+use Agovena\Modules\Provisioning\Http\Livewire\Admin\Servers as ProvisioningServers;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
@@ -19,18 +20,24 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Provisioning\Contracts\Provisioner;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Provisioning\RunProvisionerAction;
+use App\Enums\ProductOptionType;
+use App\Livewire\Admin\Products\Create as CreateProductForm;
+use App\Livewire\Admin\Products\Edit as EditProductForm;
 use App\Models\Customer;
 use App\Models\ExtensionSetting;
 use App\Models\Product;
+use App\Models\ProductOption;
+use App\Models\ProductOptionChoice;
+use App\Models\ProvisioningServer;
 use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -44,9 +51,9 @@ function enablePterodactyl(?FakePterodactylApi $api = null): FakePterodactylApi
 {
     $api ??= new FakePterodactylApi;
     app()->instance(PterodactylApi::class, $api);
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('provisioning');
     app(SyncRegisteredPermissions::class)(force: true);
-    app(ExtensionManager::class)->enable('pterodactyl');
+    installAndEnableExtension('pterodactyl');
 
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('pterodactyl', 'panel_url', 'https://panel.example.test');
@@ -58,6 +65,86 @@ function enablePterodactyl(?FakePterodactylApi $api = null): FakePterodactylApi
 
     return $api;
 }
+
+test('server connections are extension driven and encrypt their credentials', function () {
+    enablePterodactyl();
+
+    Livewire::actingAs($this->createStaff())
+        ->test(ProvisioningServers::class)
+        ->set('name', 'Primary panel')
+        ->set('providerKey', 'pterodactyl')
+        ->set('settings.panel_url', 'https://panel.example.test')
+        ->set('settings.application_api_key', 'ptla_SERVER_LEVEL_SECRET')
+        ->set('settings.user_id', '1')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $server = ProvisioningServer::query()->where('name', 'Primary panel')->firstOrFail();
+    $raw = (string) DB::table('provisioning_servers')->where('id', $server->id)->value('settings');
+
+    expect($server->settings['application_api_key'])->toBe('ptla_SERVER_LEVEL_SECRET')
+        ->and($raw)->not->toContain('ptla_SERVER_LEVEL_SECRET');
+});
+
+test('product creation exposes and persists pterodactyl automation only when the integration is enabled', function () {
+    enablePterodactyl();
+    $server = ProvisioningServer::query()->create([
+        'name' => 'Primary panel',
+        'provider_key' => 'pterodactyl',
+        'settings' => [
+            'panel_url' => 'https://panel.example.test',
+            'application_api_key' => 'ptla_SERVER_SECRET',
+            'client_api_key' => 'ptlc_SERVER_SECRET',
+            'user_id' => '1',
+            'verify_tls' => true,
+            'timeout' => '15',
+        ],
+        'is_active' => true,
+    ]);
+
+    Livewire::actingAs($this->createStaff())
+        ->test(CreateProductForm::class)
+        ->assertSee(__('admin.products.tabs.automation'))
+        ->set('configureProvisioning', true)
+        ->assertSee('Primary panel')
+        ->set('provisioningServerId', $server->id)
+        ->assertSee(__('pterodactyl::messages.product.location_id'))
+        ->set('name', 'Managed Game Server')
+        ->set('price', '19.99')
+        ->set('currency', 'EUR')
+        ->set('providerSettings.location_id', '1')
+        ->set('providerSettings.nest_id', '1')
+        ->set('providerSettings.egg_id', '15')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $product = Product::query()->where('slug', 'managed-game-server')->firstOrFail();
+    $capability = $product->capability('provisionable');
+
+    expect($capability)->not->toBeNull()
+        ->and($capability->config['server_id'] ?? null)->toBe($server->id)
+        ->and($capability->config['provider_key'] ?? null)->toBe('pterodactyl')
+        ->and($capability->config['provider_settings']['egg_id'] ?? null)->toBe('15');
+});
+
+test('pterodactyl product mappings require location nest and egg', function () {
+    enablePterodactyl();
+    $product = Product::factory()->create();
+
+    Livewire::actingAs($this->createStaff())
+        ->test(EditProductForm::class, ['product' => $product])
+        ->call('applyPreset', 'hosted_service')
+        ->set('providerKey', 'pterodactyl')
+        ->set('providerSettings.location_id', '')
+        ->set('providerSettings.nest_id', '')
+        ->set('providerSettings.egg_id', '')
+        ->call('saveCapabilities')
+        ->assertHasErrors([
+            'providerSettings.location_id',
+            'providerSettings.nest_id',
+            'providerSettings.egg_id',
+        ]);
+});
 
 test('pterodactyl credentials are encrypted and never redisplayed', function () {
     enablePterodactyl();
@@ -105,12 +192,12 @@ function makePterodactylProduct(array $settings = []): Product
     return $product->fresh(['capabilities']);
 }
 
-function payForPterodactylProduct(Product $product, ?Customer $customer = null): ServiceInstance
+function payForPterodactylProduct(Product $product, ?Customer $customer = null, array $selections = []): ServiceInstance
 {
     $customer ??= Customer::factory()->create();
     $staff = User::factory()->create();
     $staff->assignRole('owner');
-    app(CartService::class)->add($product->id, 1);
+    app(CartService::class)->add($product->id, 1, $selections);
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
@@ -123,7 +210,7 @@ function payForPterodactylProduct(Product $product, ?Customer $customer = null):
 }
 
 test('pterodactyl registers only when the extension is enabled', function () {
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('provisioning');
 
     expect(app(ProvisionerRegistry::class)->get('pterodactyl'))->toBeNull()
         ->and(app(ProvisionerRegistry::class)->get('manual'))->not->toBeNull();
@@ -140,7 +227,7 @@ test('pterodactyl registers only when the extension is enabled', function () {
 });
 
 test('provisioning module works without pterodactyl and keeps the manual provider', function () {
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('provisioning');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $product = Product::factory()->active()->create(['price_amount' => 1000]);
@@ -194,6 +281,35 @@ test('paid pterodactyl order provisions a server and stores extension-owned mapp
         ->and(Schema::hasColumn('products', 'nest_id'))->toBeFalse()
         ->and(Schema::hasColumn('products', 'pterodactyl_location'))->toBeFalse()
         ->and($instance->meta['provider_settings']['egg_id'] ?? null)->toBe('15');
+});
+
+test('matching product option keys override provider defaults for that order', function () {
+    $api = enablePterodactyl();
+    $product = makePterodactylProduct(['memory' => '1024']);
+    $option = ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'memory',
+        'label' => 'Memory',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => null,
+    ]);
+    ProductOptionChoice::query()->create([
+        'product_option_id' => $option->id,
+        'value' => '2048',
+        'label' => '2 GiB',
+        'price_adjustment_amount' => 0,
+        'sort' => 0,
+        'is_active' => true,
+    ]);
+
+    payForPterodactylProduct($product, selections: ['memory' => '2048']);
+    $created = array_values($api->serversById)[0];
+
+    expect($created['limits']['memory'] ?? null)->toBe(2048);
 });
 
 test('installing panel status leaves the service provisioning', function () {
@@ -384,7 +500,7 @@ test('customer portal exposes panel link and safe power actions', function () {
 
 test('manual services do not receive pterodactyl customer actions', function () {
     enablePterodactyl();
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('provisioning');
     $customer = Customer::factory()->create();
     $product = Product::factory()->active()->create(['price_amount' => 1000]);
     app(ProductCapabilityManager::class)->enable($product, 'provisionable', ['provider_key' => 'manual']);
@@ -440,8 +556,8 @@ test('panel url validation allows private hosts and rejects credentials', functi
 });
 
 test('http adapter maps panel errors without leaking secrets', function () {
-    app(ModuleManager::class)->enable('provisioning');
-    app(ExtensionManager::class)->enable('pterodactyl');
+    installAndEnableModule('provisioning');
+    installAndEnableExtension('pterodactyl');
     app(ExtensionSettingsRepository::class)->set('pterodactyl', 'panel_url', 'https://panel.example.test');
     app(ExtensionSettingsRepository::class)->set('pterodactyl', 'application_api_key', 'ptla_NEVER_LOG_THIS_SECRET', secret: true);
 
@@ -459,8 +575,8 @@ test('http adapter maps panel errors without leaking secrets', function () {
 });
 
 test('http adapter treats timeouts as a safe failure', function () {
-    app(ModuleManager::class)->enable('provisioning');
-    app(ExtensionManager::class)->enable('pterodactyl');
+    installAndEnableModule('provisioning');
+    installAndEnableExtension('pterodactyl');
     app(ExtensionSettingsRepository::class)->set('pterodactyl', 'panel_url', 'https://panel.example.test');
     app(ExtensionSettingsRepository::class)->set('pterodactyl', 'application_api_key', 'ptla_NEVER_LOG_THIS_SECRET', secret: true);
 
@@ -473,7 +589,7 @@ test('http adapter treats timeouts as a safe failure', function () {
 });
 
 test('core and modules do not import pterodactyl or mollie extension types', function () {
-    foreach ([base_path('app'), base_path('modules')] as $root) {
+    foreach ([base_path('app'), optionalModuleRoot()] as $root) {
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
         );

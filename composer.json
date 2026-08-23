@@ -37,19 +37,7 @@
             "psr-4": {
                 "App\\": "app/",
                 "Database\\Factories\\": "database/factories/",
-                "Database\\Seeders\\": "database/seeders/",
-                "Agovena\\Modules\\Inventory\\": "modules/inventory/src/",
-                "Agovena\\Modules\\Shipping\\": "modules/shipping/src/",
-                "Agovena\\Modules\\Digital\\": "modules/digital/src/",
-                "Agovena\\Modules\\DigitalDelivery\\": "modules/digital-delivery/src/",
-                "Agovena\\Modules\\Subscriptions\\": "modules/subscriptions/src/",
-                "Agovena\\Modules\\Provisioning\\": "modules/provisioning/src/",
-                "Agovena\\Modules\\Events\\": "modules/events/src/",
-                "Agovena\\Extensions\\ManualPayment\\": "extensions/payments/manual-payment/src/",
-                "Agovena\\Extensions\\Mollie\\": "extensions/payments/mollie/src/",
-                "Agovena\\Extensions\\Pterodactyl\\": "extensions/provisioning/pterodactyl/src/",
-                "Agovena\\Extensions\\Postnl\\": "extensions/shipping/postnl/src/",
-                "Agovena\\Extensions\\Stripe\\": "extensions/payments/stripe/src/"
+                "Database\\Seeders\\": "database/seeders/"
             }
     },
     "autoload-dev": {

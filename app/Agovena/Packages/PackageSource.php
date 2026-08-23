@@ -15,5 +15,6 @@ final readonly class PackageSource
         public string $locator,
         public string $constraint = '*',
         public ?string $composerName = null,
+        public ?string $subdirectory = null,
     ) {}
 }

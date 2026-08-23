@@ -20,7 +20,15 @@ final class PackageAutoload
 
         $root = rtrim($packagePath, '/\\').DIRECTORY_SEPARATOR;
         foreach ($psr4 as $prefix => $relative) {
+            if (! str_ends_with($prefix, '\\') || str_contains($relative, '..')) {
+                continue;
+            }
+
             $dir = $root.str_replace(['/', '\\'], DIRECTORY_SEPARATOR, ltrim($relative, '/\\'));
+            if (! is_dir($dir)) {
+                continue;
+            }
+
             $loader->addPsr4($prefix, $dir);
         }
     }

@@ -13,9 +13,7 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -36,9 +34,9 @@ function enableAutoChargeModules(?FakeMollieApi $api = null): FakeMollieApi
 {
     $api ??= new FakeMollieApi;
     app()->instance(MollieApi::class, $api);
-    app(ModuleManager::class)->enable('subscriptions');
+    installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
-    app(ExtensionManager::class)->enable('mollie');
+    installAndEnableExtension('mollie');
     app(ExtensionSettingsRepository::class)->set('mollie', 'api_key', 'test_abcdefghijklmnopqrstuvwxyz123456', secret: true);
 
     return $api;
@@ -295,7 +293,7 @@ test('exhausted renewal retries stay payable and may schedule cancel at period e
 });
 
 test('subscriptions module does not import mollie types', function () {
-    $root = base_path('modules/subscriptions');
+    $root = optionalModuleRoot('subscriptions');
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
     );

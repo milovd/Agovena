@@ -30,6 +30,9 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
     /** @var list<CustomerDetailSection> */
     private array $customerDetailSections = [];
 
+    /** @var list<ProductTab> */
+    private array $productTabs = [];
+
     public function navigation(NavigationItem $item): void
     {
         $this->navigation[] = $item;
@@ -68,6 +71,11 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
     public function customerDetailSection(CustomerDetailSection $section): void
     {
         $this->customerDetailSections[] = $section;
+    }
+
+    public function productTab(ProductTab $tab): void
+    {
+        $this->productTabs[] = $tab;
     }
 
     /** @return list<NavigationItem> */
@@ -142,5 +150,14 @@ final class InMemoryAdminRegistrar implements AdminRegistrar
         usort($sections, static fn (CustomerDetailSection $a, CustomerDetailSection $b): int => $a->sort <=> $b->sort);
 
         return $sections;
+    }
+
+    /** @return list<ProductTab> */
+    public function productTabs(): array
+    {
+        $tabs = $this->productTabs;
+        usort($tabs, static fn (ProductTab $a, ProductTab $b): int => $a->sort <=> $b->sort);
+
+        return $tabs;
     }
 }

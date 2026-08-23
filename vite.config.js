@@ -8,6 +8,7 @@ export default defineConfig({
                 'resources/css/admin.css',
                 'resources/css/installer.css',
                 'themes/default/resources/css/theme.css',
+                'themes/default/resources/css/admin.css',
                 'resources/js/admin.js',
                 'resources/js/installer.js',
             ],

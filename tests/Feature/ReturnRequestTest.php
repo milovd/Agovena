@@ -31,9 +31,9 @@ uses(CreatesStaff::class);
 
 function enableReturns(bool $withInventory = false): void
 {
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
     if ($withInventory) {
-        app(ModuleManager::class)->enable('inventory');
+        installAndEnableModule('inventory');
     }
     app(SyncRegisteredPermissions::class)(force: true);
 }

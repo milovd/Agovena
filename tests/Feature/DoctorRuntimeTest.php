@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Operations\SchedulerHealth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -48,14 +47,14 @@ test('doctor fails in production when the private disk would be publicly served'
 test('scheduler is required when provisioning is enabled', function () {
     expect(app(SchedulerHealth::class)->isRequired())->toBeFalse();
 
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('provisioning');
 
     expect(app(SchedulerHealth::class)->isRequired())->toBeTrue()
         ->and(app(SchedulerHealth::class)->isStale())->toBeTrue();
 });
 
 test('doctor fails when a required scheduler is stale', function () {
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('provisioning');
     Cache::forget(SchedulerHealth::HEARTBEAT_KEY);
 
     $this->artisan('agovena:doctor')

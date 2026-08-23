@@ -1,5 +1,12 @@
 <div class="admin-page">
     <x-ag.page-header :heading="$customer->name" :lede="$customer->email">
+        <x-slot:breadcrumbs>
+            <x-ag.breadcrumbs :items="[
+                ['label' => __('admin.nav_groups.overview'), 'url' => route('admin.dashboard')],
+                ['label' => __('admin.customers.title'), 'url' => route('admin.customers.index')],
+                ['label' => $customer->name],
+            ]" />
+        </x-slot:breadcrumbs>
         <x-slot:back>
             <x-ag.back :href="route('admin.customers.index')" :label="__('admin.customers.back')" />
         </x-slot:back>

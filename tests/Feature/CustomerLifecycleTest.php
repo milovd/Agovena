@@ -20,7 +20,6 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Orders\CancelUnpaidOrder;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\RecordManualPayment;
@@ -44,10 +43,7 @@ uses(CreatesStaff::class);
 
 function enableLifecycleModules(array $ids): void
 {
-    $modules = app(ModuleManager::class);
-    foreach ($ids as $id) {
-        $modules->enable($id);
-    }
+    installAndEnableModules($ids);
     app(SyncRegisteredPermissions::class)(force: true);
 }
 

@@ -8,7 +8,6 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\PlanChanges\CancelPlanChangeRequest;
@@ -25,8 +24,8 @@ uses(CreatesStaff::class);
 
 function enablePlanChangeModules(): void
 {
-    app(ModuleManager::class)->enable('subscriptions');
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('subscriptions');
+    installAndEnableModule('provisioning');
     app(SyncRegisteredPermissions::class)(force: true);
 }
 

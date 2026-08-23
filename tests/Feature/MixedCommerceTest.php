@@ -16,7 +16,6 @@ use App\Agovena\Checkout\CartRequirement;
 use App\Agovena\Checkout\CartRequirementComposer;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Enums\ProductOptionType;
@@ -31,10 +30,7 @@ use Tests\Support\CreatesStaff;
 uses(CreatesStaff::class);
 
 test('mixed physical digital and provisionable subscription cart checks out together', function () {
-    $modules = app(ModuleManager::class);
-    foreach (['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning'] as $id) {
-        $modules->enable($id);
-    }
+    installAndEnableModules(['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning']);
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create([

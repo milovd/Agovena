@@ -1,5 +1,12 @@
 <div class="admin-page admin-page--order">
     <x-ag.page-header :heading="__('admin.orders.show.title', ['number' => $order->number])" :lede="__('admin.orders.show.lede')">
+        <x-slot:breadcrumbs>
+            <x-ag.breadcrumbs :items="[
+                ['label' => __('admin.nav_groups.overview'), 'url' => route('admin.dashboard')],
+                ['label' => __('admin.orders.title'), 'url' => route('admin.orders.index')],
+                ['label' => $order->number],
+            ]" />
+        </x-slot:breadcrumbs>
         <x-slot:back>
             <x-ag.back :href="route('admin.orders.index')" :label="__('admin.orders.title')" />
         </x-slot:back>

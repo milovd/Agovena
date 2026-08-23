@@ -15,6 +15,7 @@
                     <div class="ag-field">
                         <label class="ag-field__label" for="opt-key">{{ __('admin.product_options.key') }}</label>
                         <input id="opt-key" class="ag-input" wire:model="key" required>
+                        <p class="ag-field__hint">{{ __('admin.product_options.provisioning_key_hint') }}</p>
                         @error('key') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">

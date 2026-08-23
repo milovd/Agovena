@@ -24,11 +24,10 @@ uses(CreatesStaff::class);
 
 function enableInventoryModule(): ModuleManager
 {
-    $modules = app(ModuleManager::class);
-    $modules->enable('inventory');
+    installAndEnableModule('inventory');
     app(SyncRegisteredPermissions::class)(force: true);
 
-    return $modules;
+    return app(ModuleManager::class);
 }
 
 test('module manager discovers inventory and enable boots capabilities', function () {

@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Agovena\Customer\CustomerAccountNav;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
 use App\Models\User;
@@ -81,7 +80,7 @@ test('footer uses configured store name and logo', function () {
 });
 
 test('authenticated footer lists module account destinations when enabled', function () {
-    app(ModuleManager::class)->enable('digital');
+    installAndEnableModule('digital');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $user = User::factory()->create();

@@ -6,7 +6,7 @@ use App\Agovena\Payments\PaymentGatewayRegistry;
 use Tests\Support\ProviderContracts\ProviderContractAssertions;
 
 test('core application and modules do not import first-party provider extension namespaces', function () {
-    $roots = [base_path('app'), base_path('modules'), base_path('themes')];
+    $roots = [base_path('app'), base_path('themes'), optionalModuleRoot()];
     $needles = [
         'Agovena\\Extensions\\Mollie\\',
         'Agovena\\Extensions\\Stripe\\',

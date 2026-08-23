@@ -43,8 +43,32 @@ return [
         'extra_path_prefixes' => [],
         'extra_module_paths' => [],
         'extra_extension_paths' => [],
+        'optional_packages_path' => env('AGOVENA_OPTIONAL_PACKAGES_PATH'),
         'composer_timeout' => 180,
         'composer_binary' => env('AGOVENA_COMPOSER_BINARY'),
+        /*
+         * GitHub monorepo distribution (option B). Core installs individual packages
+         * from subdirectories into storage/app/packages/{modules|extensions}/{id}.
+         * Set AGOVENA_PACKAGES_MONOREPO_URL when the real monorepo is published.
+         */
+        'monorepo' => [
+            'repository' => env('AGOVENA_PACKAGES_MONOREPO_URL', 'https://github.com/milovd/optional-packages'),
+            'default_ref' => env('AGOVENA_PACKAGES_MONOREPO_REF', 'main'),
+            'packages' => [
+                'inventory' => ['kind' => 'module', 'path' => 'modules/inventory'],
+                'shipping' => ['kind' => 'module', 'path' => 'modules/shipping'],
+                'digital' => ['kind' => 'module', 'path' => 'modules/digital'],
+                'digital-delivery' => ['kind' => 'module', 'path' => 'modules/digital-delivery'],
+                'subscriptions' => ['kind' => 'module', 'path' => 'modules/subscriptions'],
+                'provisioning' => ['kind' => 'module', 'path' => 'modules/provisioning'],
+                'events' => ['kind' => 'module', 'path' => 'modules/events'],
+                'manual-payment' => ['kind' => 'extension', 'path' => 'extensions/payments/manual-payment'],
+                'mollie' => ['kind' => 'extension', 'path' => 'extensions/payments/mollie'],
+                'stripe' => ['kind' => 'extension', 'path' => 'extensions/payments/stripe'],
+                'pterodactyl' => ['kind' => 'extension', 'path' => 'extensions/provisioning/pterodactyl'],
+                'postnl' => ['kind' => 'extension', 'path' => 'extensions/shipping/postnl'],
+            ],
+        ],
     ],
 
     'security' => [

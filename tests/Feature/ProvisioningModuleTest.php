@@ -26,7 +26,7 @@ uses(CreatesStaff::class);
 
 function enableProvisioningModule(): void
 {
-    app(ModuleManager::class)->enable('provisioning');
+    installAndEnableModule('provisioning');
     app(SyncRegisteredPermissions::class)(force: true);
 }
 

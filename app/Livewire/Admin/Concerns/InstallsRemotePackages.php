@@ -25,6 +25,30 @@ trait InstallsRemotePackages
 
     abstract protected function packageManagePermission(): string;
 
+    public function installFromMonorepo(string $packageKey, PackageInstaller $installer): void
+    {
+        $this->authorize($this->packageManagePermission());
+
+        try {
+            $ref = (string) config('agovena.packages.monorepo.default_ref', 'main');
+            if ($ref === '' || $ref === '*') {
+                $ref = 'main';
+            }
+
+            $installer->install(new PackageSource(
+                kind: $this->packageKind(),
+                sourceType: PackageSourceType::Monorepo,
+                locator: '',
+                constraint: $ref,
+                composerName: $packageKey,
+            ));
+
+            session()->flash('status', __('admin.packages.flash.installed', ['package' => $packageKey]));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->errors()['package'][0] ?? collect($e->errors())->flatten()->first() ?? $e->getMessage());
+        }
+    }
+
     public function installRemote(PackageInstaller $installer): void
     {
         $this->authorize($this->packageManagePermission());

@@ -13,9 +13,7 @@ uses(CreatesStaff::class);
 
 test('admin customer show renders with empty module capability sections', function () {
     $modules = app(ModuleManager::class);
-    foreach (['digital', 'digital-delivery', 'events', 'subscriptions', 'provisioning'] as $id) {
-        $modules->enable($id);
-    }
+    installAndEnableModules(['digital', 'digital-delivery', 'events', 'subscriptions', 'provisioning']);
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create([

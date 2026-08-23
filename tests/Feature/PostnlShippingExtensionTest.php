@@ -18,7 +18,6 @@ use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -39,9 +38,9 @@ function enablePostnl(?FakePostnlApi $api = null): FakePostnlApi
 {
     $api ??= new FakePostnlApi;
     app()->instance(PostnlApi::class, $api);
-    app(ModuleManager::class)->enable('shipping');
+    installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
-    app(ExtensionManager::class)->enable('postnl');
+    installAndEnableExtension('postnl');
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('postnl', 'api_key', 'test-postnl-key-not-real', secret: true);
     $settings->set('postnl', 'customer_code', 'DEVC');
@@ -317,7 +316,7 @@ test('checkout composes merchant rates with live carrier quotes and keeps manual
 });
 
 test('core and modules do not import postnl types', function () {
-    foreach ([base_path('app'), base_path('modules')] as $root) {
+    foreach ([base_path('app'), optionalModuleRoot()] as $root) {
         $iterator = new RecursiveIteratorIterator(
             new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
         );

@@ -41,7 +41,7 @@ function enableMollie(?FakeMollieApi $api = null): FakeMollieApi
 {
     $api ??= new FakeMollieApi;
     app()->instance(MollieApi::class, $api);
-    app(ExtensionManager::class)->enable('mollie');
+    installAndEnableExtension('mollie');
     app(ExtensionSettingsRepository::class)->set('mollie', 'api_key', 'test_abcdefghijklmnopqrstuvwxyz123456', secret: true);
 
     return $api;
@@ -388,7 +388,7 @@ test('mollie health check validates credentials without exposing the key', funct
 test('manual and development gateways still work with mollie installed', function () {
     enableMollie();
     config(['agovena.payments.allow_development_instant_pay' => true]);
-    app(ExtensionManager::class)->enable('manual-payment');
+    installAndEnableExtension('manual-payment');
 
     $ids = app(AvailablePaymentMethods::class)->ids();
 

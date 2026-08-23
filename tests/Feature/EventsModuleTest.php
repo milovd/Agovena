@@ -7,6 +7,7 @@ use Agovena\Modules\Digital\Models\DigitalEntitlement;
 use Agovena\Modules\Events\Enums\EventStatus;
 use Agovena\Modules\Events\Enums\EventTicketStatus;
 use Agovena\Modules\Events\EventService;
+use Agovena\Modules\Events\Http\Livewire\Admin\ProductEventTab;
 use Agovena\Modules\Events\Models\Event;
 use Agovena\Modules\Events\Models\EventPerformance;
 use Agovena\Modules\Events\Models\EventTicket;
@@ -30,13 +31,14 @@ use App\Models\Product;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
 function enableEventsModule(): void
 {
-    app(ModuleManager::class)->enable('events');
+    installAndEnableModule('events');
     app(SyncRegisteredPermissions::class)(force: true);
 }
 
@@ -82,6 +84,27 @@ function makePublishedTicketProduct(int $capacity = 4): array
 
     return compact('event', 'performance', 'type', 'product');
 }
+
+test('event and ticket setup is managed from the product tab', function () {
+    enableEventsModule();
+    $product = Product::factory()->create(['name' => 'Concert Ticket']);
+
+    Livewire::actingAs($this->createStaff())
+        ->test(ProductEventTab::class, ['product' => $product])
+        ->set('eventName', 'Summer Concert')
+        ->set('ticketName', 'Standard admission')
+        ->set('venue', 'Main Hall')
+        ->set('startsAt', now()->addMonth()->format('Y-m-d\TH:i'))
+        ->set('capacity', 250)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $type = EventTicketType::query()->where('product_id', $product->id)->firstOrFail();
+
+    expect($type->event->name)->toBe('Summer Concert')
+        ->and($type->performance->capacity)->toBe(250)
+        ->and($product->fresh()->hasCapability('event_ticket'))->toBeTrue();
+});
 
 test('events module registers capability and hides account nav until tickets exist', function () {
     $customer = Customer::factory()->create();
@@ -144,10 +167,7 @@ test('event capacity is enforced before the order is placed', function () {
 });
 
 test('mixed cart of ticket shirt and digital programme shares one order and invoice', function () {
-    $modules = app(ModuleManager::class);
-    foreach (['inventory', 'shipping', 'digital', 'events'] as $id) {
-        $modules->enable($id);
-    }
+    installAndEnableModules(['inventory', 'shipping', 'digital', 'events']);
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();
@@ -212,7 +232,7 @@ test('mixed cart of ticket shirt and digital programme shares one order and invo
 });
 
 test('events store preset enables the events module without disabling others', function () {
-    app(ModuleManager::class)->enable('digital');
+    installAndEnableModule('digital');
     $enabled = app(ApplyStorePresets::class)->handle(['events']);
 
     expect($enabled)->toContain('events')

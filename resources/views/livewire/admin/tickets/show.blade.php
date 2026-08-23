@@ -1,6 +1,15 @@
 <div class="admin-page">
-    <x-ag.back :href="route('admin.tickets.index')" :label="__('admin.tickets.back')" />
     <x-ag.page-header :heading="$ticket->subject" :lede="$ticket->number">
+        <x-slot:breadcrumbs>
+            <x-ag.breadcrumbs :items="[
+                ['label' => __('admin.nav_groups.overview'), 'url' => route('admin.dashboard')],
+                ['label' => __('admin.tickets.title'), 'url' => route('admin.tickets.index')],
+                ['label' => $ticket->number],
+            ]" />
+        </x-slot:breadcrumbs>
+        <x-slot:back>
+            <x-ag.back :href="route('admin.tickets.index')" :label="__('admin.tickets.back')" />
+        </x-slot:back>
         <x-slot:actions>
             @can('tickets.manage')
                 <button class="ag-btn ag-btn--secondary" type="button" wire:click="assignSelf">{{ __('admin.tickets.assign_self') }}</button>

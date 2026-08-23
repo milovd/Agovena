@@ -10,6 +10,7 @@ use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Livewire\Admin\Extensions\Index as ExtensionsIndex;
 use App\Models\AgovenaExtension;
+use App\Models\AgovenaModule;
 use App\Models\ExtensionSetting;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\ValidationException;
@@ -20,11 +21,23 @@ uses(CreatesStaff::class);
 
 function enableManualPaymentExtension(): ExtensionManager
 {
-    $extensions = app(ExtensionManager::class);
-    $extensions->enable('manual-payment');
-
-    return $extensions;
+    return installAndEnableExtension('manual-payment');
 }
+
+test('extension enable fails when extension is not installed', function () {
+    AgovenaExtension::query()->where('extension_id', 'manual-payment')->delete();
+
+    expect(fn () => app(ExtensionManager::class)->enable('manual-payment'))
+        ->toThrow(ValidationException::class, 'Install Extension manual-payment before enabling it.');
+});
+
+test('module-bound extensions cannot be enabled without their parent module', function () {
+    AgovenaModule::query()->where('module_id', 'provisioning')->delete();
+    $extensions = app(ExtensionManager::class);
+
+    expect(fn () => $extensions->install('pterodactyl'))
+        ->toThrow(ValidationException::class, 'Install Module provisioning before installing Extension pterodactyl.');
+});
 
 test('extension manager discovers manual payment extension', function () {
     $extensions = app(ExtensionManager::class);
@@ -46,7 +59,7 @@ test('extension discovery keeps stable ids across category folder layout', funct
 
     foreach (['mollie' => 'payments', 'pterodactyl' => 'provisioning', 'postnl' => 'shipping'] as $id => $categoryDir) {
         $path = str_replace('\\', '/', (string) $extensions->manifest($id)?->path);
-        expect($path)->toContain('extensions/'.$categoryDir.'/'.$id);
+        expect($path)->toContain($categoryDir.'/'.$id);
     }
 });
 
@@ -56,7 +69,7 @@ test('extension manifest validation rejects unknown category', function () {
         'name' => 'Bad',
         'provider' => 'App\\DoesNotExist',
         'category' => 'not-a-real-category',
-    ], base_path('extensions/bad')))->toThrow(InvalidArgumentException::class);
+    ], storage_path('app/packages/extensions/bad')))->toThrow(InvalidArgumentException::class);
 });
 
 test('extension enable fails when platform version is incompatible', function () {

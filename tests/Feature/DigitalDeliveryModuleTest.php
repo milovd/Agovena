@@ -11,7 +11,6 @@ use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\CustomerAccountNav;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Models\Customer;
@@ -24,7 +23,7 @@ uses(CreatesStaff::class);
 
 function enableDigitalDeliveryModule(): void
 {
-    app(ModuleManager::class)->enable('digital-delivery');
+    installAndEnableModule('digital-delivery');
     app(SyncRegisteredPermissions::class)(force: true);
 }
 

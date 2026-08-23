@@ -3,6 +3,13 @@
         :heading="$invoice->number"
         :lede="__('admin.invoices.show_lede')"
     >
+        <x-slot:breadcrumbs>
+            <x-ag.breadcrumbs :items="[
+                ['label' => __('admin.nav_groups.overview'), 'url' => route('admin.dashboard')],
+                ['label' => __('admin.invoices.title'), 'url' => route('admin.invoices.index')],
+                ['label' => $invoice->number],
+            ]" />
+        </x-slot:breadcrumbs>
         <x-slot:back>
             <x-ag.back :href="route('admin.invoices.index')" :label="__('admin.invoices.title')" />
         </x-slot:back>
