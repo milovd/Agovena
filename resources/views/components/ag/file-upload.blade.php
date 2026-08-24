@@ -11,6 +11,8 @@
     'loadingTarget' => null,
     'disabled' => false,
     'error' => null,
+    'placeholderIcon' => 'image',
+    'emptyLabel' => null,
 ])
 
 @php
@@ -19,6 +21,7 @@
     $triggerLabel = $hasPreview
         ? ($replaceLabel ?? __('common.replace'))
         : ($buttonLabel ?? __('common.upload'));
+    $defaultEmptyLabel = $hasPreview ? __('common.current_image') : ($emptyLabel ?? __('common.no_file_selected'));
 @endphp
 
 <div
@@ -43,12 +46,12 @@
             </div>
         @else
             <div class="ag-file-upload__placeholder" aria-hidden="true">
-                <x-ag.icon name="image" :size="22" />
+                <x-ag.icon :name="$placeholderIcon" :size="22" />
             </div>
         @endif
 
         <div class="ag-file-upload__meta">
-            <p class="ag-file-upload__name" x-text="fileLabel || @js($hasPreview ? __('common.current_image') : __('common.no_file_selected'))"></p>
+            <p class="ag-file-upload__name" x-text="fileLabel || @js($defaultEmptyLabel)"></p>
             @if ($hint)
                 <p class="ag-file-upload__hint">{{ $hint }}</p>
             @endif

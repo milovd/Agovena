@@ -55,9 +55,9 @@ test('extension discovery keeps stable ids across category folder layout', funct
     $extensions = app(ExtensionManager::class);
     $ids = collect($extensions->discover())->pluck('id')->sort()->values()->all();
 
-    expect($ids)->toContain('manual-payment', 'mollie', 'stripe', 'pterodactyl', 'postnl');
+    expect($ids)->toContain('manual-payment', 'mollie', 'stripe', 'paypal', 'pterodactyl', 'proxmox', 'postnl');
 
-    foreach (['mollie' => 'payments', 'pterodactyl' => 'provisioning', 'postnl' => 'shipping'] as $id => $categoryDir) {
+    foreach (['mollie' => 'payments', 'paypal' => 'payments', 'pterodactyl' => 'provisioning', 'proxmox' => 'provisioning', 'postnl' => 'shipping'] as $id => $categoryDir) {
         $path = str_replace('\\', '/', (string) $extensions->manifest($id)?->path);
         expect($path)->toContain($categoryDir.'/'.$id);
     }

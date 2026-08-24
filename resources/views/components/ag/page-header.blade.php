@@ -14,10 +14,14 @@
             </div>
         @endisset
         <h2 class="admin-page__heading">{{ $heading }}</h2>
-        @if ($lede)
-            <p class="admin-page__lede">{{ $lede }}</p>
+        @if ($lede || ! $slot->isEmpty())
+            <div class="admin-page__intro">
+                @if ($lede)
+                    <p class="admin-page__lede">{{ $lede }}</p>
+                @endif
+                {{ $slot }}
+            </div>
         @endif
-        {{ $slot }}
     </div>
     @isset($actions)
         <div class="admin-page__actions">

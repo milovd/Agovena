@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Admin\AdminNavigation;
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -68,6 +70,30 @@ test('core admin and account work with zero optional modules enabled', function 
     $this->actingAs($staff)->get('/admin/inventory')->assertNotFound();
     $this->actingAs($customer->user)->get('/account/downloads')->assertNotFound();
     $this->actingAs($customer->user)->get('/account/digital-secrets')->assertNotFound();
+});
+
+test('module navigation is hidden when the owning module is disabled', function () {
+    installAndEnableModule('provisioning');
+    expect(app(ModuleManager::class)->isEnabled('provisioning'))->toBeTrue();
+
+    app(ModuleManager::class)->disable('provisioning');
+    expect(app(ModuleManager::class)->isEnabled('provisioning'))->toBeFalse();
+
+    /** @var AdminRegistrar $admin */
+    $admin = app(AdminRegistrar::class);
+    $admin->navigation(new NavigationItem(
+        id: 'provisioning',
+        label: 'admin.nav.provisioning',
+        group: 'admin.nav_groups.operations',
+        href: '/admin/provisioning',
+        icon: 'server',
+        sort: 15,
+        permission: 'provisioning.view',
+    ));
+
+    $visible = AdminNavigation::filterVisible(collect($admin->navigationItems()), app(ModuleManager::class));
+
+    expect($visible->pluck('id'))->not->toContain('provisioning');
 });
 
 test('each first-party module admin screen renders when that module is enabled alone', function (string $moduleId, string $adminPath) {

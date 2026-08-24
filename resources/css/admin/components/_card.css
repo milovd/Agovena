@@ -128,7 +128,7 @@ a.ag-card--metric:focus-visible {
   text-align: start;
 }
 
-.ag-empty__icon {
+.ag-empty--soft .ag-empty__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -136,20 +136,20 @@ a.ag-card--metric:focus-visible {
   color: var(--ag-color-text-muted, var(--theme-color-text-muted));
 }
 
-.ag-empty__title {
+.ag-empty--soft .ag-empty__title {
   margin: 0;
   font-weight: 650;
   letter-spacing: -0.01em;
 }
 
-.ag-empty__text {
+.ag-empty--soft .ag-empty__text {
   margin: 0;
   color: var(--ag-color-text-muted, var(--theme-color-text-muted));
   line-height: 1.5;
   max-width: 28rem;
 }
 
-.ag-empty__actions {
+.ag-empty--soft .ag-empty__actions {
   margin-top: 0.65rem;
 }
 

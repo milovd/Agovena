@@ -1,9 +1,11 @@
 @php
     use App\Agovena\Admin\AdminNavigation;
     use App\Agovena\Admin\AdminNavigationNode;
+    use App\Agovena\Modules\ModuleManager;
 
     $staff = auth()->user();
-    $nav = collect($navigation ?? [])->filter(function ($item) use ($staff) {
+    $nav = AdminNavigation::filterVisible(collect($navigation ?? []), app(ModuleManager::class))
+        ->filter(function ($item) use ($staff) {
         $authorized = $item->permission === null
             || ($staff !== null && $staff->can($item->permission));
 

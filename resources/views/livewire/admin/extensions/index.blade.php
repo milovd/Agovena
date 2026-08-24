@@ -47,7 +47,6 @@
     @else
         @can('extensions.manage')
             @include('livewire.admin.partials.package-zip-form', ['kind' => 'extension'])
-            @include('livewire.admin.partials.package-install-form', ['kind' => 'extension'])
         @endcan
     @endif
 

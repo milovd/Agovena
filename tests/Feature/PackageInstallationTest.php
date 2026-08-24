@@ -179,23 +179,16 @@ test('extension packages install enable and purge independently of modules', fun
     expect($extensions->manifest('sample-gateway'))->toBeNull();
 });
 
-test('staff can install a module from composer on the admin page', function () {
-    $fake = new FakeComposerRunner;
-    $fake->map('agovena-fixtures/sample-module', sampleModulePath());
-    $this->app->instance(ComposerRunner::class, $fake);
-
+test('admin modules custom tab shows zip upload install form', function () {
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
         ->test(ModulesIndex::class)
         ->set('tab', 'custom')
-        ->set('packageName', 'agovena-fixtures/sample-module')
-        ->set('versionConstraint', '^1.0')
-        ->call('installRemote')
-        ->assertHasNoErrors()
-        ->assertSee('Sample');
-
-    expect(app(ModuleManager::class)->isInstalled('sample'))->toBeTrue();
+        ->assertOk()
+        ->assertSee(__('admin.packages.zip_title'))
+        ->assertSee(__('admin.packages.actions.choose_zip'))
+        ->assertDontSee(__('admin.packages.install_title'));
 });
 
 test('malformed package manifests fail without breaking the application boot', function () {

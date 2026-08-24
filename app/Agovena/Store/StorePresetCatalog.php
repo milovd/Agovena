@@ -24,13 +24,13 @@ final class StorePresetCatalog
                 id: 'digital',
                 labelKey: 'admin.store_presets.digital',
                 ledeKey: 'admin.store_presets.digital_lede',
-                moduleIds: ['digital-delivery'],
+                moduleIds: ['digital-delivery', 'subscriptions'],
             ),
             new StorePreset(
                 id: 'downloadable',
                 labelKey: 'admin.store_presets.downloadable',
                 ledeKey: 'admin.store_presets.downloadable_lede',
-                moduleIds: ['digital'],
+                moduleIds: ['digital', 'subscriptions'],
             ),
             new StorePreset(
                 id: 'hosting',
@@ -89,5 +89,20 @@ final class StorePresetCatalog
         }
 
         return array_keys($modules);
+    }
+
+    /**
+     * @return list<string>
+     */
+    public function presetIdsForModule(string $moduleId): array
+    {
+        $presetIds = [];
+        foreach ($this->all() as $preset) {
+            if (in_array($moduleId, $preset->moduleIds, true)) {
+                $presetIds[] = $preset->id;
+            }
+        }
+
+        return $presetIds;
     }
 }

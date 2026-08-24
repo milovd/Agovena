@@ -539,6 +539,7 @@ body {
   justify-content: space-between;
   gap: var(--ag-space-4);
   flex-wrap: wrap;
+  margin-bottom: var(--ag-space-6);
 }
 
 .admin-page__heading {
@@ -548,10 +549,29 @@ body {
   letter-spacing: -0.02em;
 }
 
+.admin-page__intro {
+  display: grid;
+  gap: var(--ag-space-3);
+  margin-top: var(--ag-space-2);
+  max-width: 44rem;
+}
+
 .admin-page__lede {
-  margin: var(--ag-space-2) 0 0;
+  margin: 0;
   color: var(--ag-color-text-muted);
-  max-width: 42rem;
+  max-width: none;
+  font-size: var(--ag-font-size-md);
+  line-height: 1.55;
+}
+
+.admin-page__note {
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: color-mix(in srgb, var(--ag-color-surface) 90%, var(--ag-color-primary-soft));
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
   line-height: 1.5;
 }
 
@@ -635,6 +655,11 @@ body {
 }
 
 .ag-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ag-space-2);
   padding: var(--ag-space-8);
   border: 1px dashed var(--ag-color-border-strong);
   border-radius: var(--ag-radius-lg);
@@ -643,13 +668,16 @@ body {
 }
 
 .ag-empty__title {
-  margin: 0 0 var(--ag-space-2);
+  margin: 0;
   font-weight: 700;
+  max-width: 36rem;
 }
 
 .ag-empty__text {
   margin: 0;
   color: var(--ag-color-text-muted);
+  max-width: 36rem;
+  line-height: 1.55;
 }
 
 .ag-dl {

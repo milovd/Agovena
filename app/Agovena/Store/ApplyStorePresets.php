@@ -7,6 +7,7 @@ namespace App\Agovena\Store;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
+use Illuminate\Validation\ValidationException;
 
 final class ApplyStorePresets
 {
@@ -53,6 +54,151 @@ final class ApplyStorePresets
         }
 
         return $enabled;
+    }
+
+    /**
+     * Add one preset to the store setup and install/enable only its missing Modules.
+     * Existing presets and already-enabled Modules are left untouched.
+     *
+     * @param  list<string>  $existingPresetIds
+     * @param  list<string>  $customModuleIds
+     * @return list<string> Newly enabled module ids from this preset
+     */
+    public function installPreset(string $presetId, array $existingPresetIds, array $customModuleIds = []): array
+    {
+        $preset = $this->catalog->find($presetId);
+        if ($preset === null) {
+            throw ValidationException::withMessages([
+                'module' => __('admin.modules.preset_not_found'),
+            ]);
+        }
+
+        $selectedPresets = $this->validPresetIds(array_values(array_unique([...$existingPresetIds, $presetId])));
+        $this->settings->set('store', 'presets', $selectedPresets);
+        $this->settings->set('store', 'custom_modules', array_values(array_filter($customModuleIds, 'is_string')));
+
+        if ($preset->isCustom || $preset->moduleIds === []) {
+            return [];
+        }
+
+        $enabled = [];
+        foreach ($preset->moduleIds as $moduleId) {
+            if ($this->modules->manifest($moduleId) === null) {
+                continue;
+            }
+
+            if ($this->modules->isEnabled($moduleId)) {
+                continue;
+            }
+
+            if (! $this->modules->isInstalled($moduleId)) {
+                $this->modules->install($moduleId);
+            }
+
+            $this->modules->enable($moduleId);
+            $enabled[] = $moduleId;
+        }
+
+        if ($enabled !== []) {
+            ($this->syncPermissions)(force: true);
+        }
+
+        return $enabled;
+    }
+
+    /**
+     * Install and enable a single Module outside preset bundles.
+     * Registers it under the custom setup without touching other Modules.
+     *
+     * @param  list<string>  $existingPresetIds
+     * @param  list<string>  $customModuleIds
+     */
+    public function installCustomModule(string $moduleId, array $existingPresetIds, array $customModuleIds = []): bool
+    {
+        if ($this->modules->manifest($moduleId) === null) {
+            throw ValidationException::withMessages([
+                'module' => __('admin.modules.not_found', ['module' => $moduleId]),
+            ]);
+        }
+
+        $custom = array_values(array_unique([...$customModuleIds, $moduleId]));
+        $presets = $this->validPresetIds(array_values(array_unique([...$existingPresetIds, 'custom'])));
+
+        $this->settings->set('store', 'custom_modules', $custom);
+        $this->settings->set('store', 'presets', $presets);
+
+        if ($this->modules->isEnabled($moduleId)) {
+            return false;
+        }
+
+        if (! $this->modules->isInstalled($moduleId)) {
+            $this->modules->install($moduleId);
+        }
+
+        $this->modules->enable($moduleId);
+        ($this->syncPermissions)(force: true);
+
+        return true;
+    }
+
+    /**
+     * Remove one preset from the store setup and disable Modules no longer required
+     * by remaining presets or custom selections.
+     *
+     * @param  list<string>  $existingPresetIds
+     * @param  list<string>  $customModuleIds
+     * @return list<string> Disabled module ids
+     */
+    public function uninstallPreset(string $presetId, array $existingPresetIds, array $customModuleIds = []): array
+    {
+        $preset = $this->catalog->find($presetId);
+        if ($preset === null) {
+            throw ValidationException::withMessages([
+                'module' => __('admin.modules.preset_not_found'),
+            ]);
+        }
+
+        $remainingPresets = $this->validPresetIds(array_values(array_filter(
+            $existingPresetIds,
+            fn (string $id): bool => $id !== $presetId,
+        )));
+
+        $remainingCustomModules = $preset->isCustom
+            ? []
+            : array_values(array_filter($customModuleIds, 'is_string'));
+
+        $stillNeeded = array_flip(array_values(array_unique(array_merge(
+            $this->catalog->moduleIdsFor(array_values(array_filter(
+                $remainingPresets,
+                fn (string $id): bool => $id !== 'custom',
+            ))),
+            $remainingCustomModules,
+        ))));
+
+        $moduleIdsToProcess = $preset->isCustom ? $customModuleIds : $preset->moduleIds;
+
+        $disabled = [];
+        foreach ($moduleIdsToProcess as $moduleId) {
+            if (isset($stillNeeded[$moduleId])) {
+                continue;
+            }
+
+            if (! $this->modules->isEnabled($moduleId)) {
+                continue;
+            }
+
+            $this->modules->disable($moduleId);
+            $disabled[] = $moduleId;
+        }
+
+        $this->settings->set('store', 'presets', $remainingPresets);
+        $this->settings->set('store', 'custom_modules', $remainingCustomModules);
+
+        if ($disabled !== []) {
+            ($this->syncPermissions)(force: true);
+        }
+
+        return $disabled;
     }
 
     /** @return list<string> */

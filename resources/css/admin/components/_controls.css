@@ -314,6 +314,26 @@
   color: var(--ag-color-text-muted);
 }
 
+.ag-file-upload__selected {
+  display: grid;
+  gap: var(--ag-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ag-file-upload__selected-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ag-space-3);
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+  font-size: 0.875rem;
+}
+
 /* Danger zone */
 .ag-danger-zone {
   margin-top: var(--ag-space-6);

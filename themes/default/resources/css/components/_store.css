@@ -4343,6 +4343,110 @@ a.store-cart-line__name:hover {
   font-size: 0.875rem;
 }
 
+.store-file-upload {
+  display: grid;
+  gap: var(--theme-space-2);
+}
+
+.store-file-upload__surface {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--theme-space-3);
+  padding: var(--theme-space-3);
+  border: 1px dashed var(--theme-color-border);
+  border-radius: var(--theme-radius-md);
+  background: var(--theme-color-surface-muted, rgba(0, 0, 0, 0.02));
+}
+
+.store-file-upload__placeholder {
+  display: grid;
+  place-items: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--theme-radius-md);
+  border: 1px solid var(--theme-color-border);
+  background: var(--theme-color-surface);
+  color: var(--theme-color-text-muted);
+}
+
+.store-file-upload__meta {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+  flex: 1 1 10rem;
+}
+
+.store-file-upload__name {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--theme-color-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.store-file-upload__actions {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--theme-space-2);
+  align-items: center;
+}
+
+.store-file-upload__input {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  clip-path: inset(50%) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  opacity: 0 !important;
+}
+
+.store-file-upload__trigger {
+  cursor: pointer;
+}
+
+.store-file-upload__input:focus-visible + .store-file-upload__trigger {
+  outline: 2px solid var(--theme-color-accent);
+  outline-offset: 2px;
+}
+
+.store-file-upload.is-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.store-file-upload__loading {
+  font-size: 0.8125rem;
+  color: var(--theme-color-text-muted);
+}
+
+.store-file-upload__selected {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.store-file-upload__selected-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-md);
+  font-size: 0.875rem;
+}
+
 .store-ticket-reply {
   padding-top: var(--theme-space-2);
   border-top: 1px solid var(--theme-color-border);

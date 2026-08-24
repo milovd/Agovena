@@ -57,30 +57,30 @@
                 @error('body') <p class="store-field__error">{{ $message }}</p> @enderror
             </div>
             <div class="store-field">
-                <label class="store-label" for="ticket-attachments">{{ __('customer.tickets.attachments') }}</label>
-                <input
+                <x-store.file-upload
                     id="ticket-attachments"
-                    class="store-input"
-                    type="file"
+                    :label="__('customer.tickets.attachments')"
+                    :hint="__('customer.tickets.attachments_hint', ['max' => $maxAttachments, 'mb' => (int) ($maxKilobytes / 1024)])"
+                    accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
                     multiple
                     wire:model="attachments"
-                    accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                    loading-target="attachments"
                 >
-                <p class="store-field__hint">{{ __('customer.tickets.attachments_hint', ['max' => $maxAttachments, 'mb' => (int) ($maxKilobytes / 1024)]) }}</p>
-                @error('attachments') <p class="store-field__error">{{ $message }}</p> @enderror
-                @error('attachments.*') <p class="store-field__error">{{ $message }}</p> @enderror
-                @if ($attachments !== [])
-                    <ul class="store-ticket-attachments store-ticket-attachments--pending" role="list">
-                        @foreach ($attachments as $index => $file)
-                            <li class="store-ticket-attachments__item">
-                                <span>{{ is_object($file) && method_exists($file, 'getClientOriginalName') ? $file->getClientOriginalName() : __('customer.tickets.attachment') }}</span>
-                                <button type="button" class="store-btn store-btn--secondary" wire:click="removeAttachment({{ $index }})">
-                                    {{ __('common.remove') }}
-                                </button>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
+                    @error('attachments') <p class="store-field__error">{{ $message }}</p> @enderror
+                    @error('attachments.*') <p class="store-field__error">{{ $message }}</p> @enderror
+                    @if ($attachments !== [])
+                        <ul class="store-file-upload__selected" role="list">
+                            @foreach ($attachments as $index => $file)
+                                <li class="store-file-upload__selected-item">
+                                    <span>{{ is_object($file) && method_exists($file, 'getClientOriginalName') ? $file->getClientOriginalName() : __('customer.tickets.attachment') }}</span>
+                                    <button type="button" class="store-btn store-btn--secondary" wire:click="removeAttachment({{ $index }})">
+                                        {{ __('common.remove') }}
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </x-store.file-upload>
             </div>
             <div class="store-form-actions">
                 <button class="store-btn store-btn--primary" type="submit" wire:loading.attr="disabled">{{ __('customer.tickets.submit') }}</button>

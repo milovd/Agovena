@@ -4,10 +4,36 @@ declare(strict_types=1);
 
 namespace App\Agovena\Admin;
 
+use App\Agovena\Modules\ModuleManager;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Collection;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final class AdminNavigation
 {
+    /**
+     * Nav item ids owned by optional Modules when the item id differs from the module id.
+     *
+     * @var array<string, string>
+     */
+    private const NAV_MODULE_OWNERS = [
+        'inventory-stocks' => 'inventory',
+        'shipping-methods' => 'shipping',
+        'shipping-returns' => 'shipping',
+        'shipping-fulfillment' => 'shipping',
+        'digital-assets' => 'digital',
+        'digital-downloads' => 'digital',
+        'digital-delivery-secrets' => 'digital-delivery',
+        'digital-secrets' => 'digital-delivery',
+        'subscriptions' => 'subscriptions',
+        'plan-changes' => 'subscriptions',
+        'events-checkin' => 'events',
+        'event-tickets' => 'events',
+        'provisioning' => 'provisioning',
+    ];
+
     /**
      * Canonical sidebar group order (translation keys).
      *
@@ -75,6 +101,31 @@ final class AdminNavigation
     }
 
     /**
+     * Hide Module-owned navigation unless the owning Module is enabled and the href resolves.
+     *
+     * @param  Collection<int, NavigationItem>  $items
+     * @return Collection<int, NavigationItem>
+     */
+    public static function filterVisible(Collection $items, ModuleManager $modules, ?Router $router = null): Collection
+    {
+        $router ??= app('router');
+
+        return $items->filter(function (NavigationItem $item) use ($modules, $router): bool {
+            $moduleId = self::moduleOwner($item, $modules);
+
+            if ($moduleId !== null && ! $modules->isEnabled($moduleId)) {
+                return false;
+            }
+
+            if (! is_string($item->href) || $item->href === '') {
+                return false;
+            }
+
+            return self::hrefIsReachable($item->href, $router);
+        })->values();
+    }
+
+    /**
      * @param  Collection<int, NavigationItem>  $items
      * @return Collection<string, Collection<int, NavigationItem>>
      */
@@ -101,5 +152,33 @@ final class AdminNavigation
         }
 
         return request()->is($path) || request()->is($path.'/*');
+    }
+
+    private static function moduleOwner(NavigationItem $item, ModuleManager $modules): ?string
+    {
+        if ($item->moduleId !== null) {
+            return $item->moduleId;
+        }
+
+        if ($modules->manifest($item->id) !== null) {
+            return $item->id;
+        }
+
+        return self::NAV_MODULE_OWNERS[$item->id] ?? null;
+    }
+
+    private static function hrefIsReachable(string $href, Router $router): bool
+    {
+        if (str_starts_with($href, 'http://') || str_starts_with($href, 'https://')) {
+            return true;
+        }
+
+        try {
+            $router->getRoutes()->match(Request::create($href, 'GET'));
+
+            return true;
+        } catch (RouteNotFoundException|MethodNotAllowedHttpException) {
+            return false;
+        }
     }
 }

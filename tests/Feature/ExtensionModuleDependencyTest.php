@@ -26,6 +26,12 @@ function moduleBoundExtensions(): array
             'registry' => ProvisionerRegistry::class,
             'registryKey' => 'pterodactyl',
         ],
+        'proxmox' => [
+            'extension' => 'proxmox',
+            'module' => 'provisioning',
+            'registry' => ProvisionerRegistry::class,
+            'registryKey' => 'proxmox',
+        ],
         'postnl' => [
             'extension' => 'postnl',
             'module' => 'shipping',
