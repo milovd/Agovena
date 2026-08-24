@@ -9,7 +9,9 @@ declare(strict_types=1);
 use Agovena\Modules\Events\EventService;
 use Agovena\Modules\Provisioning\Jobs\ProvisionServiceInstance;
 use Agovena\Modules\Subscriptions\SubscriptionService;
+use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Invoices\IssueCreditNote;
+use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordRefund;
 use App\Models\Invoice;
 use App\Models\Payment;
@@ -32,6 +34,11 @@ require dirname(__DIR__, 3).'/vendor/autoload.php';
 
 $app = require dirname(__DIR__, 3).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
+
+// Feature tests skip package boot in AgovenaServiceProvider; workers need the
+// same enabled modules/extensions visible in the shared MariaDB database.
+$app->make(ModuleManager::class)->bootEnabled();
+$app->make(ExtensionManager::class)->bootEnabled();
 
 $action = $argv[1] ?? '';
 $payload = json_decode($argv[2] ?? '{}', true, 512, JSON_THROW_ON_ERROR);

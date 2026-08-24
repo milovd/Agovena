@@ -34,7 +34,7 @@ uses(CreatesStaff::class);
 function raceEnvPath(): string
 {
     $path = storage_path('framework/race-env-'.Str::random(8).'.json');
-    file_put_contents($path, json_encode([
+    file_put_contents($path, json_encode(array_filter([
         'APP_ENV' => 'testing',
         'APP_KEY' => config('app.key'),
         'APP_DEBUG' => 'true',
@@ -48,7 +48,8 @@ function raceEnvPath(): string
         'QUEUE_CONNECTION' => 'database',
         'MAIL_MAILER' => 'array',
         'SESSION_DRIVER' => 'array',
-    ], JSON_THROW_ON_ERROR));
+        'AGOVENA_OPTIONAL_PACKAGES_PATH' => config('agovena.packages.optional_packages_path'),
+    ], fn ($value) => $value !== null && $value !== ''), JSON_THROW_ON_ERROR));
 
     return $path;
 }
