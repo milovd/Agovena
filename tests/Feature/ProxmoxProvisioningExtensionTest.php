@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-use Agovena\Extensions\Proxmox\HttpProxmoxApi;
 use Agovena\Extensions\Proxmox\ProxmoxApi;
 use Agovena\Extensions\Proxmox\ProxmoxProvisioner;
 use Agovena\Extensions\Proxmox\ProxmoxVm;
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
+use Agovena\Modules\Provisioning\Http\Livewire\Admin\Servers as ProvisioningServers;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
+use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -16,9 +17,8 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
-use App\Agovena\Provisioning\Contracts\Provisioner;
-use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
 use App\Agovena\Provisioning\ProvisionerRegistry;
+use App\Models\AgovenaModule;
 use App\Models\Customer;
 use App\Models\ExtensionSetting;
 use App\Models\Product;
@@ -27,8 +27,8 @@ use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
-use Agovena\Modules\Provisioning\Http\Livewire\Admin\Servers as ProvisioningServers;
 use Tests\Support\CreatesStaff;
 use Tests\Support\FakeProxmoxApi;
 
@@ -191,10 +191,10 @@ test('proxmox terminate removes mapping and vm', function () {
 });
 
 test('proxmox install fails without provisioning module', function () {
-    App\Models\AgovenaModule::query()->where('module_id', 'provisioning')->delete();
+    AgovenaModule::query()->where('module_id', 'provisioning')->delete();
 
     expect(fn () => app(ExtensionManager::class)->install('proxmox'))
-        ->toThrow(Illuminate\Validation\ValidationException::class);
+        ->toThrow(ValidationException::class);
 });
 
 test('core and modules do not import proxmox extension types', function () {
