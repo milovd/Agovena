@@ -129,6 +129,7 @@ test('admin modules page lists inventory', function () {
 
     Livewire::actingAs($staff)
         ->test(ModulesIndex::class)
+        ->set('tab', 'available')
         ->assertOk()
         ->assertSee('Inventory');
 });

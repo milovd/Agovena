@@ -188,6 +188,7 @@ test('staff can install a module from composer on the admin page', function () {
 
     Livewire::actingAs($staff)
         ->test(ModulesIndex::class)
+        ->set('tab', 'custom')
         ->set('packageName', 'agovena-fixtures/sample-module')
         ->set('versionConstraint', '^1.0')
         ->call('installRemote')
@@ -241,4 +242,37 @@ test('migration failure rolls back package registration and files', function () 
     expect(AgovenaPackage::query()->where('agovena_id', 'broken-migrate')->exists())->toBeFalse()
         ->and(app(ModuleManager::class)->isInstalled('broken-migrate'))->toBeFalse()
         ->and(is_dir(storage_path('app/packages/modules/broken-migrate')))->toBeFalse();
+});
+
+test('zip-installed module extracts nested package root and installs', function () {
+    $zipPath = storage_path('app/packages/uploads/sample-module.zip');
+    File::ensureDirectoryExists(dirname($zipPath));
+
+    $zip = new ZipArchive;
+    expect($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE))->toBeTrue();
+    $source = sampleModulePath();
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($source, FilesystemIterator::SKIP_DOTS)
+    );
+    foreach ($iterator as $file) {
+        /** @var SplFileInfo $file */
+        $relative = 'sample/'.str_replace('\\', '/', substr($file->getPathname(), strlen($source) + 1));
+        if ($file->isDir()) {
+            $zip->addEmptyDir(rtrim($relative, '/'));
+        } else {
+            $zip->addFile($file->getPathname(), $relative);
+        }
+    }
+    $zip->close();
+
+    $package = app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Zip,
+        locator: $zipPath,
+    ));
+
+    expect($package->agovena_id)->toBe('sample')
+        ->and($package->source_type)->toBe(PackageSourceType::Zip)
+        ->and(app(ModuleManager::class)->isInstalled('sample'))->toBeTrue()
+        ->and(is_dir(storage_path('app/packages/modules/sample')))->toBeTrue();
 });

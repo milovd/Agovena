@@ -183,7 +183,7 @@ final class PackageCatalog
             'installed' => $status['installed'],
             'enabled' => $status['enabled'],
             'is_bundled' => false,
-            'can_purge' => $package !== null && $package->source_type === PackageSourceType::Monorepo,
+            'can_purge' => $this->canPurge($package),
             'on_disk' => true,
             'monorepo_key' => $this->monorepoKey($package, $manifest->id),
             'manifest' => $manifest,
@@ -286,7 +286,7 @@ final class PackageCatalog
             'installed' => $status['installed'],
             'enabled' => $status['enabled'],
             'is_bundled' => false,
-            'can_purge' => $package !== null && $package->source_type === PackageSourceType::Monorepo,
+            'can_purge' => $this->canPurge($package),
             'on_disk' => true,
             'monorepo_key' => $this->monorepoKey($package, $manifest->id),
             'manifest' => $manifest,
@@ -403,5 +403,19 @@ final class PackageCatalog
         }
 
         return PackageLifecycle::Available;
+    }
+
+    private function canPurge(?AgovenaPackage $package): bool
+    {
+        if ($package === null || $package->is_bundled) {
+            return false;
+        }
+
+        return in_array($package->source_type, [
+            PackageSourceType::Monorepo,
+            PackageSourceType::Zip,
+            PackageSourceType::Composer,
+            PackageSourceType::Vcs,
+        ], true);
     }
 }

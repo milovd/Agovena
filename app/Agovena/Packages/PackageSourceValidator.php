@@ -26,6 +26,7 @@ final class PackageSourceValidator
         match ($source->sourceType) {
             PackageSourceType::Bundled => $this->assertAgovenaId($source->locator),
             PackageSourceType::Path => $this->assertPath($source->locator),
+            PackageSourceType::Zip => $this->assertZip($source->locator),
             PackageSourceType::Composer => $this->assertComposerName($source->composerName ?? $source->locator),
             PackageSourceType::Vcs => $this->assertVcs($source),
             PackageSourceType::Monorepo => $this->assertMonorepo($source),
@@ -99,6 +100,37 @@ final class PackageSourceValidator
         }
 
         return $resolved;
+    }
+
+    public function assertZip(string $path): string
+    {
+        if ($path === '' || str_contains($path, "\0")) {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.zip_not_found'),
+            ]);
+        }
+
+        $resolved = realpath($path);
+        if ($resolved === false || ! is_file($resolved) || ! str_ends_with(strtolower($resolved), '.zip')) {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.zip_invalid'),
+            ]);
+        }
+
+        $allowedRoots = [
+            $this->normalize(storage_path('app')),
+            $this->normalize(sys_get_temp_dir()),
+        ];
+        $candidate = $this->normalize($resolved);
+        foreach ($allowedRoots as $prefix) {
+            if ($candidate === $prefix || str_starts_with($candidate, $prefix.DIRECTORY_SEPARATOR)) {
+                return $resolved;
+            }
+        }
+
+        throw ValidationException::withMessages([
+            'package' => __('admin.packages.zip_not_allowed'),
+        ]);
     }
 
     public function assertVcs(PackageSource $source): void

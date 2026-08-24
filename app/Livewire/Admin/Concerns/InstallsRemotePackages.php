@@ -10,16 +10,21 @@ use App\Enums\PackageKind;
 use App\Enums\PackageSourceType;
 use App\Livewire\Concerns\RequiresRecentPassword;
 use Illuminate\Validation\ValidationException;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 trait InstallsRemotePackages
 {
     use RequiresRecentPassword;
+    use WithFileUploads;
 
     public string $packageName = '';
 
     public string $versionConstraint = '*';
 
     public string $repositoryUrl = '';
+
+    public mixed $packageZip = null;
 
     abstract protected function packageKind(): PackageKind;
 
@@ -44,6 +49,34 @@ trait InstallsRemotePackages
             ));
 
             session()->flash('status', __('admin.packages.flash.installed', ['package' => $packageKey]));
+        } catch (ValidationException $e) {
+            session()->flash('error', $e->errors()['package'][0] ?? collect($e->errors())->flatten()->first() ?? $e->getMessage());
+        }
+    }
+
+    public function installFromZip(PackageInstaller $installer): void
+    {
+        $this->authorize($this->packageManagePermission());
+
+        $this->validate([
+            'packageZip' => ['required', 'file', 'mimes:zip', 'max:51200'],
+        ]);
+
+        if (! $this->packageZip instanceof TemporaryUploadedFile) {
+            session()->flash('error', __('admin.packages.zip_invalid'));
+
+            return;
+        }
+
+        try {
+            $installer->install(new PackageSource(
+                kind: $this->packageKind(),
+                sourceType: PackageSourceType::Zip,
+                locator: $this->packageZip->getRealPath() ?: $this->packageZip->path(),
+                constraint: '*',
+            ));
+            session()->flash('status', __('admin.packages.flash.zip_installed'));
+            $this->reset('packageZip');
         } catch (ValidationException $e) {
             session()->flash('error', $e->errors()['package'][0] ?? collect($e->errors())->flatten()->first() ?? $e->getMessage());
         }

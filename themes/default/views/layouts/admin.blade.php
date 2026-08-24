@@ -69,6 +69,15 @@
                         <span class="admin-sidebar__subtitle">{{ $siteName }}</span>
                     @endif
                 </span>
+                <button
+                    type="button"
+                    class="admin-sidebar__close"
+                    @click="navOpen = false"
+                    aria-controls="admin-sidebar"
+                >
+                    <x-ag.icon name="x" :size="20" />
+                    <span class="visually-hidden">{{ __('common.close') }}</span>
+                </button>
             </div>
             <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
                 @include('partials.admin-nav')
@@ -81,16 +90,6 @@
         <div class="admin-main">
             <header class="admin-topbar">
                 <div class="admin-topbar__start">
-                    <button
-                        type="button"
-                        class="admin-topbar__menu ag-btn ag-btn--ghost"
-                        @click="navOpen = !navOpen"
-                        :aria-expanded="navOpen.toString()"
-                        aria-controls="admin-sidebar"
-                    >
-                        <x-ag.icon name="menu" :size="20" />
-                        <span class="visually-hidden">{{ __('admin.menu') }}</span>
-                    </button>
                     <h1 class="admin-topbar__title">{{ $title ?? __('admin.fallback_title') }}</h1>
                 </div>
                 <div class="admin-topbar__actions">
@@ -183,6 +182,16 @@
                             <livewire:admin.auth.logout />
                         </div>
                     </div>
+                    <button
+                        type="button"
+                        class="admin-topbar__menu ag-btn ag-btn--ghost"
+                        @click="navOpen = !navOpen"
+                        :aria-expanded="navOpen.toString()"
+                        aria-controls="admin-sidebar"
+                    >
+                        <x-ag.icon name="menu" :size="20" />
+                        <span class="visually-hidden">{{ __('admin.menu') }}</span>
+                    </button>
                 </div>
             </header>
 

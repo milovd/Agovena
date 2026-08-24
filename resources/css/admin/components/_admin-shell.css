@@ -71,7 +71,7 @@ body {
   height: 1.75rem;
   object-fit: contain;
   border-radius: var(--ag-radius-sm);
-  background: #fff;
+  background: transparent;
 }
 
 .admin-sidebar__title {
@@ -346,13 +346,14 @@ body {
   gap: var(--ag-space-4);
   min-height: var(--ag-topbar-height);
   padding: 0 var(--ag-space-6);
-  background: rgb(255 255 255 / 0.92);
+  background: color-mix(in srgb, var(--ag-color-surface) 92%, transparent);
   border-bottom: 1px solid var(--ag-color-border);
   position: sticky;
   top: 0;
   z-index: 10;
   backdrop-filter: blur(10px);
   flex-shrink: 0;
+  color: var(--ag-color-text);
 }
 
 .admin-topbar__start {
@@ -364,9 +365,36 @@ body {
 
 .admin-topbar__menu {
   display: none;
+  align-items: center;
+  justify-content: center;
   width: 2.875rem;
   height: 2.875rem;
   padding: 0;
+  color: var(--ag-color-text);
+}
+
+.admin-sidebar__close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ag-radius-sm);
+  background: transparent;
+  color: var(--ag-color-text);
+  cursor: pointer;
+}
+
+.admin-sidebar__close:hover {
+  background: var(--ag-color-sidebar-hover);
+}
+
+.admin-sidebar__close:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
 }
 
 .admin-topbar__title {
@@ -788,13 +816,19 @@ body {
     display: inline-flex;
   }
 
+  .admin-sidebar__close {
+    display: inline-flex;
+  }
+
   .admin-sidebar {
     position: fixed;
-    inset: 0 auto 0 0;
+    inset: 0 0 0 auto;
     width: min(18.5rem, 88vw);
     height: 100%;
     z-index: 30;
-    transform: translateX(-105%);
+    border-right: 0;
+    border-left: 1px solid var(--ag-color-border);
+    transform: translateX(105%);
     transition: transform var(--ag-transition);
     overflow-y: auto;
   }

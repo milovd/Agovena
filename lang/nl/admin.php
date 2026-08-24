@@ -1091,6 +1091,13 @@ return [
         'choose_individually' => 'Kies Modules afzonderlijk',
         'custom_title' => 'Individuele Modules aanpassen',
         'custom_lede' => 'Combineer compatibele packages of voeg een Module toe die niet door een preset wordt gedekt.',
+        'custom_picker_title' => 'Individuele Modules inschakelen',
+        'custom_picker_lede' => 'Selecteer geïnstalleerde Modules voor je winkelinrichting.',
+        'tabs' => [
+            'installed' => 'Geïnstalleerd',
+            'available' => 'Beschikbaar',
+            'custom' => 'Custom installeren',
+        ],
         'save_setup' => 'Winkelinrichting opslaan',
         'manage_extensions' => 'Extensies beheren',
         'column_name' => 'Module',
@@ -1128,13 +1135,27 @@ return [
         ],
         'empty' => [
             'title' => 'Geen Modules ontdekt',
-            'text' => 'Plaats een Module onder modules/{id}/ met een module.json-manifest, of installeer via Composer/GitHub.',
+            'text' => 'Standaard Modules verschijnen hier zodra optional-packages beschikbaar is, of upload een ZIP / installeer uit de monorepo.',
+            'installed_title' => 'Geen Modules geïnstalleerd',
+            'installed_text' => 'Ga naar Beschikbaar om te installeren via presets of de catalogus.',
+            'available_title' => 'Geen Modules beschikbaar',
+            'available_text' => 'Alle catalogus-Modules zijn al geïnstalleerd.',
         ],
     ],
 
     'packages' => [
+        'tabs_aria' => 'Package-secties',
         'install_title' => 'Installeren via Composer of Git',
-        'install_lede' => 'Voer een Composer-pakketnaam in. Optioneel een HTTPS Git-repository (GitHub, GitLab, Bitbucket of Codeberg). ZIP-uploads worden niet ondersteund.',
+        'install_lede' => 'Voer een Composer-pakketnaam in. Optioneel een HTTPS Git-repository (GitHub, GitLab, Bitbucket of Codeberg).',
+        'zip_title' => 'Pakket-ZIP uploaden',
+        'zip_lede' => 'Upload een ZIP met een Module- of Extensiemap inclusief manifest (module.json of extension.json). Eén nestniveau wordt ondersteund.',
+        'zip_file' => 'ZIP-bestand',
+        'zip_help' => 'Max. 50 MB. De ZIP moet de pakketroot bevatten (of één map met die root).',
+        'zip_not_found' => 'De geüploade ZIP is niet gevonden.',
+        'zip_invalid' => 'Dat bestand is geen geldig ZIP-archief.',
+        'zip_extract_failed' => 'Kon het ZIP-archief niet uitpakken.',
+        'zip_manifest_missing' => 'Geen :manifest gevonden in de ZIP.',
+        'zip_not_allowed' => 'ZIP-uploads moeten uit een tijdelijk uploadpad komen.',
         'trust_warning' => 'Geïnstalleerde Modules en Extensies zijn vertrouwde PHP die met Agovena meedraait. Ze zijn niet gesandboxt. Installeer alleen pakketten die je vertrouwt; er is geen anonieme marktplaats.',
         'composer_name' => 'Composer-pakket',
         'constraint' => 'Versieconstraint',
@@ -1182,6 +1203,7 @@ return [
             'composer' => 'Composer',
             'vcs' => 'Git',
             'monorepo' => 'Monorepo',
+            'zip' => 'ZIP',
         ],
         'status' => [
             'available' => 'Beschikbaar',
@@ -1194,12 +1216,14 @@ return [
         'actions' => [
             'install' => 'Pakket installeren',
             'download_install' => 'Downloaden & installeren',
+            'upload_install' => 'Uploaden & installeren',
             'update' => 'Bijwerken',
             'uninstall' => 'Uninstall',
             'purge' => 'Bestanden purgen',
         ],
         'flash' => [
             'installed' => 'Pakket :package geïnstalleerd.',
+            'zip_installed' => 'ZIP-pakket geïnstalleerd.',
             'updated' => 'Pakket :package bijgewerkt.',
             'uninstalled' => 'Pakket :package uninstalled. Data bewaard.',
             'purged' => 'Bestanden van pakket :package verwijderd.',
@@ -1208,7 +1232,7 @@ return [
 
     'extensions' => [
         'title' => 'Extensies',
-        'lede' => 'Ontdek en beheer provider-Extensies. Uitschakelen bewaart configuratie. Extra Extensies installeer je via Composer of Git; uninstall en purge blijven gescheiden.',
+        'lede' => 'Ontdek en beheer provider-Extensies. Uitschakelen bewaart configuratie. Installeer uit de catalogus, upload een ZIP, of haal ze uit de optional-packages monorepo.',
         'filter_category' => 'Filter op categorie',
         'all_categories' => 'Alle categorieën',
         'column_name' => 'Extensie',
@@ -1227,6 +1251,13 @@ return [
         'incompatible' => 'Extensie :extension vereist Agovena :constraint (platform is :platform).',
         'purge_not_implemented' => 'Data-purge bij uninstall is nog niet geïmplementeerd. Schakel uit om data te bewaren.',
         'settings_title' => 'Instellingen — :extension',
+        'settings_empty' => 'Deze Extensie heeft geen configureerbare instellingen.',
+        'settings_requires_enabled' => 'Schakel de Extensie in voordat je instellingen opent.',
+        'tabs' => [
+            'installed' => 'Geïnstalleerd',
+            'available' => 'Beschikbaar',
+            'install' => 'Custom installeren',
+        ],
         'status' => [
             'available' => 'Beschikbaar',
             'installed' => 'Geïnstalleerd',
@@ -1249,7 +1280,11 @@ return [
         ],
         'empty' => [
             'title' => 'Geen Extensies ontdekt',
-            'text' => 'Plaats een Extensie onder extensions/{category}/{id}/ of extensions/{id}/ met een extension.json-manifest, of installeer via Composer/GitHub. Identiteit komt uit het manifest-id, niet uit het map-pad.',
+            'text' => 'Standaard Extensies verschijnen hier zodra optional-packages beschikbaar is, of upload een ZIP / installeer uit de monorepo. Identiteit komt uit het manifest-id.',
+            'installed_title' => 'Geen Extensies geïnstalleerd',
+            'installed_text' => 'Ga naar Beschikbaar om te installeren uit de catalogus.',
+            'available_title' => 'Geen Extensies beschikbaar',
+            'available_text' => 'Alle catalogus-Extensies zijn al geïnstalleerd.',
         ],
         'categories' => [
             'payment_gateway' => 'Betalingen',

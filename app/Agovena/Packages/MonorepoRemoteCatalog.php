@@ -127,6 +127,11 @@ final class MonorepoRemoteCatalog
     private function packageDirectory(string $packageKey, PackageKind $kind, ?string $ref): string
     {
         $mapping = $this->map->resolve($packageKey, $kind);
+        $local = $this->localPackageDirectory($mapping['path']);
+        if ($local !== null) {
+            return $local;
+        }
+
         $repository = $this->map->defaultRepository();
         $gitRef = $ref ?? (string) config('agovena.packages.monorepo.default_ref', 'main');
         if ($gitRef === '' || $gitRef === '*') {
@@ -134,6 +139,26 @@ final class MonorepoRemoteCatalog
         }
 
         return $this->checkout->resolve($repository, $gitRef, $mapping['path']);
+    }
+
+    private function localPackageDirectory(string $subdirectory): ?string
+    {
+        $root = OptionalPackagesPath::root();
+        if ($root === null) {
+            return null;
+        }
+
+        $candidate = $root.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $subdirectory);
+        $resolved = realpath($candidate);
+        if ($resolved === false || ! is_dir($resolved)) {
+            return null;
+        }
+
+        if (! str_starts_with($resolved, $root.DIRECTORY_SEPARATOR) && $resolved !== $root) {
+            return null;
+        }
+
+        return $resolved;
     }
 
     private function resolvedRef(AgovenaPackage $package): string

@@ -124,6 +124,7 @@ test('admin extensions page lists manual payment', function () {
 
     Livewire::actingAs($staff)
         ->test(ExtensionsIndex::class)
+        ->set('tab', 'available')
         ->assertOk()
         ->assertSee('Manual Payment');
 });

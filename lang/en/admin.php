@@ -1091,6 +1091,13 @@ return [
         'choose_individually' => 'Choose Modules individually',
         'custom_title' => 'Customize individual Modules',
         'custom_lede' => 'Combine compatible packages or add a Module that is not covered by a preset.',
+        'custom_picker_title' => 'Enable individual Modules',
+        'custom_picker_lede' => 'Select installed Modules to include in your store setup.',
+        'tabs' => [
+            'installed' => 'Installed',
+            'available' => 'Available',
+            'custom' => 'Install custom',
+        ],
         'save_setup' => 'Save store setup',
         'manage_extensions' => 'Manage Extensions',
         'column_name' => 'Module',
@@ -1128,13 +1135,27 @@ return [
         ],
         'empty' => [
             'title' => 'No Modules discovered',
-            'text' => 'Place a Module under modules/{id}/ with a module.json manifest, or install from Composer/GitHub.',
+            'text' => 'Default Modules appear here once optional-packages is available, or upload a ZIP / install from the monorepo.',
+            'installed_title' => 'No Modules installed',
+            'installed_text' => 'Switch to Available to install from presets or the catalog.',
+            'available_title' => 'No Modules available',
+            'available_text' => 'All catalog Modules are already installed.',
         ],
     ],
 
     'packages' => [
+        'tabs_aria' => 'Package sections',
         'install_title' => 'Install from Composer or Git',
-        'install_lede' => 'Enter a Composer package name. Optionally add an HTTPS Git repository (GitHub, GitLab, Bitbucket, or Codeberg). ZIP uploads are not supported.',
+        'install_lede' => 'Enter a Composer package name. Optionally add an HTTPS Git repository (GitHub, GitLab, Bitbucket, or Codeberg).',
+        'zip_title' => 'Upload package ZIP',
+        'zip_lede' => 'Upload a ZIP that contains a Module or Extension folder with its manifest (module.json or extension.json). Nested one level is supported.',
+        'zip_file' => 'ZIP file',
+        'zip_help' => 'Max 50 MB. The ZIP must contain the package root (or one folder with the package root).',
+        'zip_not_found' => 'The uploaded ZIP was not found.',
+        'zip_invalid' => 'That file is not a valid ZIP archive.',
+        'zip_extract_failed' => 'Could not extract the ZIP archive.',
+        'zip_manifest_missing' => 'No :manifest was found in the ZIP.',
+        'zip_not_allowed' => 'ZIP uploads must come from a temporary upload path.',
         'trust_warning' => 'Installed Modules and Extensions are trusted PHP that runs with the rest of Agovena. They are not sandboxed. Only install packages you trust; there is no anonymous marketplace.',
         'composer_name' => 'Composer package',
         'constraint' => 'Version constraint',
@@ -1182,6 +1203,7 @@ return [
             'composer' => 'Composer',
             'vcs' => 'Git',
             'monorepo' => 'Monorepo',
+            'zip' => 'ZIP',
         ],
         'status' => [
             'available' => 'Available',
@@ -1194,12 +1216,14 @@ return [
         'actions' => [
             'install' => 'Install package',
             'download_install' => 'Download & install',
+            'upload_install' => 'Upload & install',
             'update' => 'Update',
             'uninstall' => 'Uninstall',
             'purge' => 'Purge files',
         ],
         'flash' => [
             'installed' => 'Package :package installed.',
+            'zip_installed' => 'ZIP package installed.',
             'updated' => 'Package :package updated.',
             'uninstalled' => 'Package :package uninstalled. Data preserved.',
             'purged' => 'Package :package files removed.',
@@ -1208,7 +1232,7 @@ return [
 
     'extensions' => [
         'title' => 'Extensions',
-        'lede' => 'Discover and manage provider Extensions. Disable preserves configuration. Install additional Extensions from Composer or Git; uninstall and purge stay separate.',
+        'lede' => 'Discover and manage provider Extensions. Disable preserves configuration. Install from the catalog, upload a ZIP, or pull from the optional-packages monorepo.',
         'filter_category' => 'Filter by category',
         'all_categories' => 'All categories',
         'column_name' => 'Extension',
@@ -1227,6 +1251,13 @@ return [
         'incompatible' => 'Extension :extension requires Agovena :constraint (platform is :platform).',
         'purge_not_implemented' => 'Data purge on uninstall is not implemented yet. Disable instead to preserve data.',
         'settings_title' => 'Settings — :extension',
+        'settings_empty' => 'This Extension has no configurable settings.',
+        'settings_requires_enabled' => 'Enable the Extension before opening settings.',
+        'tabs' => [
+            'installed' => 'Installed',
+            'available' => 'Available',
+            'install' => 'Install custom',
+        ],
         'status' => [
             'available' => 'Available',
             'installed' => 'Installed',
@@ -1249,7 +1280,11 @@ return [
         ],
         'empty' => [
             'title' => 'No Extensions discovered',
-            'text' => 'Place an Extension under extensions/{category}/{id}/ or extensions/{id}/ with an extension.json manifest, or install from Composer/GitHub. Identity comes from the manifest id, not the folder path.',
+            'text' => 'Default Extensions appear here once optional-packages is available, or upload a ZIP / install from the monorepo. Identity comes from the manifest id.',
+            'installed_title' => 'No Extensions installed',
+            'installed_text' => 'Switch to Available to install from the catalog.',
+            'available_title' => 'No Extensions available',
+            'available_text' => 'All catalog Extensions are already installed.',
         ],
         'categories' => [
             'payment_gateway' => 'Payments',

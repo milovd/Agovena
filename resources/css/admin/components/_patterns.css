@@ -393,6 +393,10 @@
   }
 }
 
+.ag-package-tabs {
+  margin-bottom: var(--ag-space-5);
+}
+
 .ag-package-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));

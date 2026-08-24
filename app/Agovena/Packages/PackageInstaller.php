@@ -22,6 +22,7 @@ final class PackageInstaller
         private readonly ComposerRunner $composer,
         private readonly MonorepoCheckout $monorepoCheckout,
         private readonly MonorepoPackageMap $monorepoMap,
+        private readonly ZipPackageExtractor $zipExtractor,
         private readonly ModuleManager $modules,
         private readonly ExtensionManager $extensions,
     ) {}
@@ -159,6 +160,7 @@ final class PackageInstaller
     {
         return match ($source->sourceType) {
             PackageSourceType::Path => $this->validator->assertPath($source->locator),
+            PackageSourceType::Zip => $this->zipExtractor->extract($source->locator, $source->kind),
             PackageSourceType::Composer => $this->composer->require(
                 $source->composerName ?? $source->locator,
                 $source->constraint,
@@ -226,6 +228,8 @@ final class PackageInstaller
     private function purgeFiles(AgovenaPackage $package): void
     {
         if ($package->source_type !== PackageSourceType::Monorepo
+            && $package->source_type !== PackageSourceType::Zip
+            && $package->source_type !== PackageSourceType::Path
             && is_string($package->composer_name)
             && $package->composer_name !== ''
         ) {
@@ -311,6 +315,15 @@ final class PackageInstaller
         $ref = $source->constraint;
         if ($ref === '' || $ref === '*') {
             $ref = 'main';
+        }
+
+        $localRoot = OptionalPackagesPath::root();
+        if ($localRoot !== null) {
+            $candidate = $localRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $subdirectory);
+            $resolved = realpath($candidate);
+            if ($resolved !== false && is_dir($resolved)) {
+                return $resolved;
+            }
         }
 
         return $this->monorepoCheckout->resolve($repository, $ref, $subdirectory);

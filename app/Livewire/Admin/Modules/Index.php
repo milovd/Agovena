@@ -14,12 +14,16 @@ use App\Enums\PackageKind;
 use App\Livewire\Admin\Concerns\InstallsRemotePackages;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 final class Index extends Component
 {
     use AuthorizesRequests;
     use InstallsRemotePackages;
+
+    #[Url(as: 'tab')]
+    public string $tab = 'installed';
 
     /** @var list<string> */
     public array $selectedPresets = [];
@@ -32,6 +36,10 @@ final class Index extends Component
         $this->authorize('modules.view');
         $this->selectedPresets = $apply->selected();
         $this->customModuleIds = $apply->selectedModules();
+
+        if (! in_array($this->tab, ['installed', 'available', 'custom'], true)) {
+            $this->tab = 'installed';
+        }
     }
 
     public function enable(string $moduleId, ModuleManager $modules, SyncRegisteredPermissions $sync): void
@@ -89,23 +97,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, PackageCatalog $catalog, StorePresetCatalog $presets, ModuleManager $modules)
     {
-        $grouped = [];
-        foreach ($catalog->modules() as $row) {
-            $group = $row['manifest']->group !== '' ? $row['manifest']->group : 'other';
-            $grouped[$group][] = $row;
-        }
-
-        $order = ['commerce', 'recurring', 'experiences', 'other'];
-        $ordered = [];
-        foreach ($order as $group) {
-            if (isset($grouped[$group])) {
-                $ordered[$group] = $grouped[$group];
-                unset($grouped[$group]);
-            }
-        }
-        foreach ($grouped as $group => $rows) {
-            $ordered[$group] = $rows;
-        }
+        $groups = $this->orderGroups($this->groupModules($catalog->modules()));
 
         $presetRows = [];
         foreach ($presets->all() as $preset) {
@@ -123,12 +115,73 @@ final class Index extends Component
         }
 
         return view('livewire.admin.modules.index', [
-            'groups' => $ordered,
+            'groups' => $groups,
+            'installedGroups' => $this->filterGroups($groups, fn (array $row): bool => $row['installed']),
+            'availableGroups' => $this->filterGroups($groups, fn (array $row): bool => ! $row['installed']),
             'presets' => $presetRows,
+            'tabs' => [
+                'installed' => __('admin.modules.tabs.installed'),
+                'available' => __('admin.modules.tabs.available'),
+                'custom' => __('admin.modules.tabs.custom'),
+            ],
         ])->layout('layouts.admin', [
             'title' => __('admin.modules.title'),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return array<string, list<array<string, mixed>>>
+     */
+    private function groupModules(array $rows): array
+    {
+        $grouped = [];
+        foreach ($rows as $row) {
+            $group = $row['manifest']->group !== '' ? $row['manifest']->group : 'other';
+            $grouped[$group][] = $row;
+        }
+
+        return $grouped;
+    }
+
+    /**
+     * @param  array<string, list<array<string, mixed>>>  $grouped
+     * @return array<string, list<array<string, mixed>>>
+     */
+    private function orderGroups(array $grouped): array
+    {
+        $order = ['commerce', 'recurring', 'experiences', 'other'];
+        $ordered = [];
+        foreach ($order as $group) {
+            if (isset($grouped[$group])) {
+                $ordered[$group] = $grouped[$group];
+                unset($grouped[$group]);
+            }
+        }
+        foreach ($grouped as $group => $rows) {
+            $ordered[$group] = $rows;
+        }
+
+        return $ordered;
+    }
+
+    /**
+     * @param  array<string, list<array<string, mixed>>>  $groups
+     * @param  callable(array<string, mixed>): bool  $predicate
+     * @return array<string, list<array<string, mixed>>>
+     */
+    private function filterGroups(array $groups, callable $predicate): array
+    {
+        $filtered = [];
+        foreach ($groups as $group => $rows) {
+            $items = array_values(array_filter($rows, $predicate));
+            if ($items !== []) {
+                $filtered[$group] = $items;
+            }
+        }
+
+        return $filtered;
     }
 
     protected function packageKind(): PackageKind

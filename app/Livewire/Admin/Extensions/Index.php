@@ -15,12 +15,16 @@ use App\Enums\PackageKind;
 use App\Livewire\Admin\Concerns\InstallsRemotePackages;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Url;
 use Livewire\Component;
 
 final class Index extends Component
 {
     use AuthorizesRequests;
     use InstallsRemotePackages;
+
+    #[Url(as: 'tab')]
+    public string $tab = 'installed';
 
     public string $category = '';
 
@@ -35,6 +39,10 @@ final class Index extends Component
     public function mount(): void
     {
         $this->authorize('extensions.view');
+
+        if (! in_array($this->tab, ['installed', 'available', 'install'], true)) {
+            $this->tab = 'installed';
+        }
     }
 
     public function enable(string $extensionId, ExtensionManager $extensions, SyncRegisteredPermissions $sync): void
@@ -78,7 +86,20 @@ final class Index extends Component
     public function openSettings(string $extensionId, ExtensionManager $extensions, ExtensionSettingsRepository $settings): void
     {
         $this->authorize('extensions.manage');
+
         $status = $extensions->status($extensionId);
+        if (! $status['enabled']) {
+            session()->flash('error', __('admin.extensions.settings_requires_enabled'));
+
+            return;
+        }
+
+        if ($status['manifest']->settings === []) {
+            session()->flash('error', __('admin.extensions.settings_empty'));
+
+            return;
+        }
+
         $this->settingsExtensionId = $extensionId;
         $this->settingsForm = [];
         $this->secretConfigured = [];
@@ -168,8 +189,33 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, PackageCatalog $catalog)
     {
+        $groups = $this->orderGroups($this->groupExtensions($catalog->extensions()));
+
+        return view('livewire.admin.extensions.index', [
+            'groups' => $groups,
+            'installedGroups' => $this->filterGroups($groups, fn (array $row): bool => $row['installed']),
+            'availableGroups' => $this->filterGroups($groups, fn (array $row): bool => ! $row['installed']),
+            'categories' => ExtensionCategory::cases(),
+            'settingsExtensionId' => $this->settingsExtensionId,
+            'tabs' => [
+                'installed' => __('admin.extensions.tabs.installed'),
+                'available' => __('admin.extensions.tabs.available'),
+                'install' => __('admin.extensions.tabs.install'),
+            ],
+        ])->layout('layouts.admin', [
+            'title' => __('admin.extensions.title'),
+            'navigation' => $admin->navigationItems(),
+        ]);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return array<string, list<array<string, mixed>>>
+     */
+    private function groupExtensions(array $rows): array
+    {
         $grouped = [];
-        foreach ($catalog->extensions() as $row) {
+        foreach ($rows as $row) {
             if ($this->category !== '' && $row['manifest']->category->value !== $this->category) {
                 continue;
             }
@@ -177,6 +223,15 @@ final class Index extends Component
             $grouped[$group][] = $row;
         }
 
+        return $grouped;
+    }
+
+    /**
+     * @param  array<string, list<array<string, mixed>>>  $grouped
+     * @return array<string, list<array<string, mixed>>>
+     */
+    private function orderGroups(array $grouped): array
+    {
         $order = [
             ExtensionCategory::PaymentGateway->value,
             ExtensionCategory::Provisioning->value,
@@ -199,14 +254,25 @@ final class Index extends Component
             $groups[$group] = $rows;
         }
 
-        return view('livewire.admin.extensions.index', [
-            'groups' => $groups,
-            'categories' => ExtensionCategory::cases(),
-            'settingsExtensionId' => $this->settingsExtensionId,
-        ])->layout('layouts.admin', [
-            'title' => __('admin.extensions.title'),
-            'navigation' => $admin->navigationItems(),
-        ]);
+        return $groups;
+    }
+
+    /**
+     * @param  array<string, list<array<string, mixed>>>  $groups
+     * @param  callable(array<string, mixed>): bool  $predicate
+     * @return array<string, list<array<string, mixed>>>
+     */
+    private function filterGroups(array $groups, callable $predicate): array
+    {
+        $filtered = [];
+        foreach ($groups as $group => $rows) {
+            $items = array_values(array_filter($rows, $predicate));
+            if ($items !== []) {
+                $filtered[$group] = $items;
+            }
+        }
+
+        return $filtered;
     }
 
     protected function packageKind(): PackageKind

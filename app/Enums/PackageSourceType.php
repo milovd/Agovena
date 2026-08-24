@@ -11,4 +11,5 @@ enum PackageSourceType: string
     case Composer = 'composer';
     case Vcs = 'vcs';
     case Monorepo = 'monorepo';
+    case Zip = 'zip';
 }

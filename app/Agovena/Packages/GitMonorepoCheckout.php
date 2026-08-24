@@ -47,6 +47,11 @@ final class GitMonorepoCheckout implements MonorepoCheckout
     {
         File::ensureDirectoryExists(dirname($checkoutRoot));
 
+        $gitDir = $checkoutRoot.DIRECTORY_SEPARATOR.'.git';
+        if (is_dir($gitDir) && ! $this->originMatches($checkoutRoot, $repositoryUrl)) {
+            File::deleteDirectory($checkoutRoot);
+        }
+
         if (! is_dir($checkoutRoot.DIRECTORY_SEPARATOR.'.git')) {
             if (is_dir($checkoutRoot)) {
                 File::deleteDirectory($checkoutRoot);
@@ -54,15 +59,41 @@ final class GitMonorepoCheckout implements MonorepoCheckout
 
             $this->run([
                 'clone',
-                '--no-checkout',
+                '--depth',
+                '1',
+                '--branch',
+                $ref,
                 $repositoryUrl,
                 $checkoutRoot,
             ], dirname($checkoutRoot));
+
+            return;
         }
 
-        $this->run(['fetch', '--tags', 'origin'], $checkoutRoot);
+        $this->run(['fetch', '--tags', '--depth', '1', 'origin', $ref], $checkoutRoot);
         $this->run(['checkout', '--force', $ref], $checkoutRoot);
-        $this->run(['reset', '--hard', 'HEAD'], $checkoutRoot);
+        $this->run(['reset', '--hard', 'FETCH_HEAD'], $checkoutRoot);
+    }
+
+    private function originMatches(string $checkoutRoot, string $repositoryUrl): bool
+    {
+        $process = new Process(['git', 'remote', 'get-url', 'origin'], $checkoutRoot, timeout: 30.0);
+        $process->run();
+        if (! $process->isSuccessful()) {
+            return false;
+        }
+
+        return $this->normalizeRemoteUrl(trim($process->getOutput())) === $this->normalizeRemoteUrl($repositoryUrl);
+    }
+
+    private function normalizeRemoteUrl(string $url): string
+    {
+        $url = strtolower(rtrim($url));
+        if (str_ends_with($url, '.git')) {
+            $url = substr($url, 0, -4);
+        }
+
+        return $url;
     }
 
     /**
