@@ -100,7 +100,8 @@ final class Index extends Component
     {
         $this->authorize('modules.manage');
 
-        if ($catalog->find($presetId) === null) {
+        $preset = $catalog->find($presetId);
+        if ($preset === null) {
             session()->flash('error', __('admin.modules.preset_not_found'));
 
             return;
@@ -111,7 +112,7 @@ final class Index extends Component
             $this->selectedPresets = $apply->selected();
             $this->customModuleIds = $apply->selectedModules();
             session()->flash('status', __('admin.modules.flash.preset_installed', [
-                'preset' => __($catalog->find($presetId)?->labelKey ?? $presetId),
+                'preset' => __($preset->labelKey),
                 'modules' => $enabled !== []
                     ? implode(', ', $enabled)
                     : __('admin.modules.flash.preset_already_active'),
@@ -125,7 +126,8 @@ final class Index extends Component
     {
         $this->authorize('modules.manage');
 
-        if ($catalog->find($presetId) === null) {
+        $preset = $catalog->find($presetId);
+        if ($preset === null) {
             session()->flash('error', __('admin.modules.preset_not_found'));
 
             return;
@@ -147,9 +149,8 @@ final class Index extends Component
             $this->selectedPresets = $apply->selected();
             $this->customModuleIds = $apply->selectedModules();
 
-            $preset = $catalog->find($presetId);
             session()->flash('status', __('admin.modules.flash.preset_uninstalled', [
-                'preset' => __($preset?->labelKey ?? $presetId),
+                'preset' => __($preset->labelKey),
                 'modules' => $disabled !== []
                     ? implode(', ', $disabled)
                     : __('admin.modules.flash.preset_uninstall_no_modules'),
@@ -168,7 +169,8 @@ final class Index extends Component
             $this->selectedPresets = $apply->selected();
             $this->customModuleIds = $apply->selectedModules();
 
-            $name = $modules->manifest($moduleId)?->name ?? $moduleId;
+            $manifest = $modules->manifest($moduleId);
+            $name = $manifest !== null ? $manifest->name : $moduleId;
             session()->flash('status', $added
                 ? __('admin.modules.flash.custom_module_installed', ['module' => $name])
                 : __('admin.modules.flash.module_already_active', ['module' => $name]));
@@ -197,7 +199,8 @@ final class Index extends Component
                 }
 
                 if ($apply->installCustomModule($moduleId, $this->selectedPresets, $this->customModuleIds)) {
-                    $enabled[] = $modules->manifest($moduleId)?->name ?? $moduleId;
+                    $manifest = $modules->manifest($moduleId);
+                    $enabled[] = $manifest !== null ? $manifest->name : $moduleId;
                 }
 
                 $this->selectedPresets = $apply->selected();
@@ -406,46 +409,6 @@ final class Index extends Component
     }
 
     /**
-     * @param  array<string, list<array<string, mixed>>>  $groups
-     * @param  callable(array<string, mixed>): bool  $predicate
-     * @return array<string, list<array<string, mixed>>>
-     */
-    private function filterGroups(array $groups, callable $predicate): array
-    {
-        $filtered = [];
-        foreach ($groups as $group => $rows) {
-            $items = array_values(array_filter($rows, $predicate));
-            if ($items !== []) {
-                $filtered[$group] = $items;
-            }
-        }
-
-        return $filtered;
-    }
-
-    /**
-     * @param  list<string>  $selectedPresetIds
-     */
-    private function presetIsApplied(StorePreset $preset, ModuleManager $modules, array $selectedPresetIds): bool
-    {
-        if (! in_array($preset->id, $selectedPresetIds, true)) {
-            return false;
-        }
-
-        if ($preset->isCustom || $preset->moduleIds === []) {
-            return true;
-        }
-
-        foreach ($preset->moduleIds as $moduleId) {
-            if (! $modules->isEnabled($moduleId)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
      * @return list<string>
      */
     private function installedPresetIds(StorePresetCatalog $catalog, ModuleManager $modules): array
@@ -494,8 +457,8 @@ final class Index extends Component
             $manifest = $modules->manifest($moduleId);
             $displayModules[] = [
                 'id' => $moduleId,
-                'name' => $manifest?->name ?? $moduleId,
-                'description' => $manifest?->description ?? '',
+                'name' => $manifest !== null ? $manifest->name : $moduleId,
+                'description' => $manifest !== null ? $manifest->description : '',
             ];
         }
 
@@ -621,7 +584,8 @@ final class Index extends Component
         $moduleIds = $preset->isCustom ? $customModuleIds : $preset->moduleIds;
 
         foreach ($moduleIds as $moduleId) {
-            $name = $modules->manifest($moduleId)?->name ?? $moduleId;
+            $manifest = $modules->manifest($moduleId);
+            $name = $manifest !== null ? $manifest->name : $moduleId;
 
             if (isset($stillNeeded[$moduleId])) {
                 $keep[] = $name;
