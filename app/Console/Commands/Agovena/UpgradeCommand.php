@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands\Agovena;
 
+use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Agovena\Modules\ModuleManager;
 use Illuminate\Console\Attributes\Description;
@@ -14,7 +15,7 @@ use Illuminate\Console\Command;
 #[Description('Apply pending Agovena database migrations without destroying existing data')]
 final class UpgradeCommand extends Command
 {
-    public function handle(ApplicationSchemaStatus $schema, ModuleManager $modules): int
+    public function handle(ApplicationSchemaStatus $schema, ModuleManager $modules, ExtensionManager $extensions): int
     {
         $pending = $schema->pending();
         if ($pending !== []) {
@@ -29,6 +30,7 @@ final class UpgradeCommand extends Command
 
         $this->call('migrate', ['--force' => true]);
         $modules->migrateInstalled();
+        $extensions->migrateInstalled();
 
         $schema->refresh();
 

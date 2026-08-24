@@ -11,6 +11,7 @@ use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Packages\PackageAutoload;
+use App\Agovena\Packages\PackageMigrationRunner;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
@@ -44,6 +45,7 @@ final class ExtensionManager
         private readonly CartRequirementComposer $cartRequirements,
         private readonly InvoiceDocumentView $invoiceDocumentView,
         private readonly ModuleManager $modules,
+        private readonly PackageMigrationRunner $migrations,
     ) {}
 
     public function refresh(): void
@@ -121,7 +123,13 @@ final class ExtensionManager
         $row->enabled = false;
         $row->save();
 
-        $this->seedDefaultSettings($manifest);
+        try {
+            $this->runExtensionMigrations($manifest);
+            $this->seedDefaultSettings($manifest);
+        } catch (\Throwable $exception) {
+            $row->delete();
+            throw $exception;
+        }
 
         return $row->fresh() ?? $row;
     }
@@ -139,6 +147,8 @@ final class ExtensionManager
                 'extension' => __('admin.extensions.install_before_enable', ['extension' => $extensionId]),
             ]);
         }
+
+        $this->runExtensionMigrations($manifest);
 
         $row->enabled = true;
         $row->version = $manifest->version;
@@ -164,6 +174,25 @@ final class ExtensionManager
         $this->rebuildRuntime();
 
         return $row;
+    }
+
+    /**
+     * Apply pending migrations for every installed extension (enabled or disabled).
+     * Used by `agovena:upgrade` so pulled extension schema changes land without enable/disable.
+     */
+    public function migrateInstalled(): void
+    {
+        if (! $this->extensionsTableReady()) {
+            return;
+        }
+
+        foreach ($this->discover() as $manifest) {
+            if (! $this->isInstalled($manifest->id)) {
+                continue;
+            }
+
+            $this->runExtensionMigrations($manifest);
+        }
     }
 
     /**
@@ -310,6 +339,11 @@ final class ExtensionManager
                 (bool) ($setting['secret'] ?? false),
             );
         }
+    }
+
+    private function runExtensionMigrations(ExtensionManifest $manifest): void
+    {
+        $this->migrations->run($manifest->id, $manifest->path);
     }
 
     private function assertCompatible(ExtensionManifest $manifest): void

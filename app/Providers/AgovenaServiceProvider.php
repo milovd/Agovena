@@ -44,7 +44,7 @@ use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Packages\ComposerRunner;
 use App\Agovena\Packages\GitMonorepoCheckout;
 use App\Agovena\Packages\MonorepoCheckout;
-use App\Agovena\Packages\OptionalPackagesPath;
+use App\Agovena\Packages\PackageMigrationRunner;
 use App\Agovena\Packages\ProcessComposerRunner;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -92,6 +92,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ProductCapabilityRegistry::class);
         $this->app->singleton(ProductCapabilityManager::class);
         $this->app->singleton(ModuleManager::class);
+        $this->app->singleton(PackageMigrationRunner::class);
         $this->app->singleton(ComposerRunner::class, ProcessComposerRunner::class);
         $this->app->singleton(MonorepoCheckout::class, GitMonorepoCheckout::class);
         $this->app->singleton(ExtensionSettingsRepository::class);
@@ -110,6 +111,7 @@ class AgovenaServiceProvider extends ServiceProvider
             return new ApplicationSchemaStatus(
                 $app->make('migrator'),
                 $app->make(ModuleManager::class),
+                $app->make(ExtensionManager::class),
             );
         });
         $this->app->singleton(InstallationRequirements::class);
@@ -133,7 +135,6 @@ class AgovenaServiceProvider extends ServiceProvider
         });
 
         $this->mergeConfigFrom(__DIR__.'/../../config/agovena.php', 'agovena');
-        $this->loadFirstPartyExtensionMigrations();
     }
 
     public function boot(): void
@@ -922,49 +923,5 @@ class AgovenaServiceProvider extends ServiceProvider
             ),
             50,
         );
-    }
-
-    private function loadFirstPartyExtensionMigrations(): void
-    {
-        $roots = array_filter([
-            OptionalPackagesPath::extensionsRoot(),
-            storage_path('app/packages/extensions'),
-        ]);
-
-        $candidates = [];
-        foreach ($roots as $root) {
-            if (! is_dir($root)) {
-                continue;
-            }
-
-            foreach (scandir($root) ?: [] as $entry) {
-                if ($entry === '.' || $entry === '..') {
-                    continue;
-                }
-                $path = $root.DIRECTORY_SEPARATOR.$entry;
-                if (! is_dir($path)) {
-                    continue;
-                }
-
-                $direct = $path.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-                if (is_dir($direct)) {
-                    $candidates[] = $direct;
-                }
-
-                foreach (scandir($path) ?: [] as $nested) {
-                    if ($nested === '.' || $nested === '..') {
-                        continue;
-                    }
-                    $nestedMigrations = $path.DIRECTORY_SEPARATOR.$nested.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-                    if (is_dir($nestedMigrations)) {
-                        $candidates[] = $nestedMigrations;
-                    }
-                }
-            }
-        }
-
-        foreach ($candidates as $migrationsPath) {
-            $this->loadMigrationsFrom($migrationsPath);
-        }
     }
 }

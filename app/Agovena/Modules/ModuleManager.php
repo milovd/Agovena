@@ -11,7 +11,7 @@ use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Packages\PackageAutoload;
-use App\Agovena\Support\RecoversTestTransaction;
+use App\Agovena\Packages\PackageMigrationRunner;
 use App\Models\AgovenaModule;
 use Composer\Semver\Semver;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -37,6 +37,7 @@ final class ModuleManager
         private readonly CustomerAccountOverview $customerAccountOverview,
         private readonly Dispatcher $events,
         private readonly PackageAutoload $autoload,
+        private readonly PackageMigrationRunner $migrations,
     ) {}
 
     public function refresh(): void
@@ -280,21 +281,7 @@ final class ModuleManager
 
     private function runModuleMigrations(ModuleManifest $manifest): void
     {
-        $path = $manifest->path.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
-        if (! is_dir($path)) {
-            return;
-        }
-
-        $resolved = realpath($path);
-        if ($resolved === false) {
-            throw new RuntimeException("Module [{$manifest->id}] migrations path could not be resolved.");
-        }
-
-        try {
-            app('migrator')->run([$resolved]);
-        } finally {
-            RecoversTestTransaction::afterDdl();
-        }
+        $this->migrations->run($manifest->id, $manifest->path);
     }
 
     private function assertDependencies(ModuleManifest $manifest, bool $requireEnabled): void

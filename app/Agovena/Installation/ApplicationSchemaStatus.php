@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Installation;
 
+use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Database\QueryException;
@@ -17,6 +18,7 @@ final class ApplicationSchemaStatus
     public function __construct(
         private readonly Migrator $migrator,
         private readonly ModuleManager $modules,
+        private readonly ExtensionManager $extensions,
     ) {}
 
     public function refresh(): void
@@ -112,8 +114,19 @@ final class ApplicationSchemaStatus
                     $paths[] = $path;
                 }
             }
+
+            foreach ($this->extensions->discover() as $manifest) {
+                if (! $this->extensions->isEnabled($manifest->id)) {
+                    continue;
+                }
+
+                $path = $manifest->path.DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'migrations';
+                if (is_dir($path)) {
+                    $paths[] = $path;
+                }
+            }
         } catch (Throwable) {
-            // Module discovery is optional for Core schema detection.
+            // Package discovery is optional for Core schema detection.
         }
 
         return array_values(array_unique($paths));
