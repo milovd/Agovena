@@ -126,3 +126,15 @@ Status: **MOCK-TESTED ONLY**
 Status: **MOCK-TESTED ONLY**
 
 - [ ] Create / retry idempotent / poll / activate / power / suspend / unsuspend / resize / terminate / timeout / invalid credentials
+
+## PayPal (Payment Extension)
+
+Status: **MOCK-TESTED ONLY**
+
+- [ ] Connection / checkout redirect / capture or webhook confirm / refund / timeout / invalid credentials (no secret leakage)
+
+## Proxmox VE (Provisioning Extension)
+
+Status: **MOCK-TESTED ONLY**
+
+- [ ] Create / poll / power / suspend / unsuspend / terminate / timeout / invalid credentials

@@ -10,6 +10,7 @@ Native Linux (Ubuntu) is the primary production path. Docker is optional.
 - MariaDB 10.11+ / 11.x (MySQL 8 may work; MariaDB is what CI validates)
 - Nginx (recommended) or Apache
 - A queue worker and a cron entry for `schedule:run`
+- Outbound HTTPS if you use Admin currency sync (Frankfurter) or automatic EU VAT rates (vatnode JSON via jsDelivr)
 
 Node/npm is **not** required when installing from a release artifact that includes `public/build`.
 
@@ -37,6 +38,20 @@ npm ci && npm run build # only for source trees without public/build
 php artisan agovena:install
 ```
 
+Optional packages (Modules / Extensions) install from the monorepo. Set for production discovery:
+
+```env
+AGOVENA_PACKAGES_MONOREPO_URL=https://github.com/milovd/optional-packages
+```
+
+For local development beside Core:
+
+```env
+AGOVENA_OPTIONAL_PACKAGES_PATH=../optional-packages
+```
+
+Then install/enable packages from **Admin → Modules** / **Admin → Extensions**.
+
 ## Upgrade
 
 ```bash
@@ -50,6 +65,8 @@ systemctl restart agovena-queue.service
 
 Never use `migrate:fresh` on a live store. Take a MariaDB dump plus `storage/app/{private,public}` and `.env` before upgrading. MariaDB DDL is not fully transactional - a mid-upgrade failure needs an operator restore from backup, not a fake “rollback” button.
 
+`agovena:upgrade` also migrates installed Extensions when applicable.
+
 ## HTTPS
 
 Terminate TLS at Nginx/Apache (`deploy/nginx-https.conf`). Set `APP_URL=https://…`.
@@ -57,6 +74,16 @@ Terminate TLS at Nginx/Apache (`deploy/nginx-https.conf`). Set `APP_URL=https://
 ## Queue worker and scheduler
 
 Release templates live under `deploy/` (systemd unit + cron). Without both, subscriptions, unpaid-cancel, and queued mail will stall. Confirm with `php artisan agovena:doctor`.
+
+## Customer Security (2FA)
+
+Every account manages TOTP and sessions under **Account → Security** (`/account/security`). Staff who can open Admin may be required to enable 2FA before using Admin (see `AGOVENA_PRIVILEGED_2FA`).
+
+## Tax and currencies
+
+- **Admin → Taxes / Store settings:** enable tax, optional automatic EU VAT rates, country overrides.
+- **Admin → Currencies:** sync market rates when outbound HTTPS is available.
+- Legal notes for remote sources: [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## Third-party Modules and Extensions
 

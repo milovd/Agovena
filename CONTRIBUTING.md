@@ -4,19 +4,21 @@ Thanks for taking an interest in Agovena.
 
 ## Current stage
 
-The project is early but has a runnable Laravel foundation, Admin product management, and a default Theme storefront checkout slice. Useful help right now:
+The project is early but has a runnable Laravel Core, Admin, default Theme storefront (catalog through checkout and customer account), and first-party Modules/Extensions via [optional-packages](https://github.com/milovd/optional-packages). Useful help right now:
 
 - Issues that point out gaps or confusing bits
-- Discussion around module / extension / theme boundaries
+- Discussion around Module / Extension / Theme boundaries
 - Focused code improvements with tests
 
 ## Ground rules
 
-- Keep the core small; prefer modules and extensions over bloating everything
-- Respect the split: core / modules / extensions / themes
+- Keep Core small; prefer Modules and Extensions over bloating everything
+- Respect the split: Core / Modules / Extensions / Themes
+- First-party packages live in **optional-packages**, not as permanent trees under Core `modules/` or `extensions/`
 - Prefer simple, explicit code
 - No secrets in the repo
-- Don’t describe unfinished work as shipped
+- Do not describe unfinished work as shipped
+- Do not use em dashes (`—`) in UI copy, docs, comments, or commits (use commas, colons, parentheses, or spaced hyphens)
 
 ## Commits
 
@@ -35,10 +37,20 @@ Group related work into meaningful commits. Avoid noise commits for tiny edits; 
 - Keep PRs focused
 - Explain why the change is needed
 - Use the PR template when present
+- Update [CHANGELOG.md](CHANGELOG.md) / operator docs when behavior merchants rely on changes
+
+## Local packages
+
+For Core + packages side by side:
+
+```env
+AGOVENA_OPTIONAL_PACKAGES_PATH=../optional-packages
+AGOVENA_PACKAGES_MONOREPO_URL=https://github.com/milovd/optional-packages
+```
 
 ## Security
 
-See [SECURITY.md](SECURITY.md). Don’t file public issues for vulnerabilities.
+See [SECURITY.md](SECURITY.md). Do not file public issues for vulnerabilities.
 
 ## Code of conduct
 

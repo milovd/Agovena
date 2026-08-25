@@ -15,6 +15,12 @@ Prefer one of these:
 
 Include as much detail as you can: what you found, how to reproduce it, and the impact. We will try to respond within a reasonable time and coordinate a fix before any public disclosure.
 
+## Account security (product)
+
+- Customers and staff manage **two-factor authentication** and **sessions** under the customer account: `/account/security`.
+- Privileged Admin access may require 2FA (`AGOVENA_PRIVILEGED_2FA`). Setup happens in the customer Security page, not a separate Admin-only Security tab.
+- Never store card numbers in Core. Payment card entry happens on payment-provider hosted pages (Mollie, Stripe, PayPal Extensions).
+
 ## Please don’t
 
 - Share exploit details in public issues, Discord, or social media before a fix is available

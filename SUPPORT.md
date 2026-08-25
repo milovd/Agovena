@@ -32,20 +32,33 @@ Statuses:
 |------|--------|
 | `scripts/build-release.sh` tarball with `vendor/` + `public/build` | VALIDATED |
 | Extracted-artifact install smoke | VALIDATED |
+| optional-packages monorepo install path (CI checkout) | VALIDATED |
 
 ## Payment / shipping / provisioning providers
 
 | Provider | Status |
 |----------|--------|
-| Development / Manual payment | VALIDATED (CI + native smoke) |
-| Mollie Extension | MOCK-TESTED ONLY - needs `test_` key (`AGOVENA_EXT_MOLLIE_API_KEY` or Admin api_key) for SANDBOX-VERIFIED |
+| Account balance (Core ledger) | VALIDATED (CI) |
+| Development instant-pay (non-production config) | VALIDATED for CI/tests only; not auto-offered on storefront |
+| Mollie Extension | MOCK-TESTED ONLY - needs `test_` key for SANDBOX-VERIFIED |
 | Stripe Extension | MOCK-TESTED ONLY |
+| PayPal Extension | MOCK-TESTED ONLY |
 | PostNL Extension | MOCK-TESTED ONLY |
 | Pterodactyl Extension | MOCK-TESTED ONLY |
+| Proxmox VE Extension | MOCK-TESTED ONLY |
 
 Connection-only (no charges): `php artisan agovena:verify-providers mollie --sandbox`
 
 Transactional sandbox checklist: `deploy/LIVE_PROVIDER_CHECKS.md`.
+
+## Remote data (optional Admin features)
+
+| Source | Status |
+|--------|--------|
+| Frankfurter FX sync | EXPECTED COMPATIBLE (live HTTP; needs outbound network) |
+| vatnode EU VAT JSON (automatic tax) | EXPECTED COMPATIBLE (live HTTP via jsDelivr; needs outbound network) |
+
+Attribution and license notes: [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## Known RC limitations
 
@@ -54,3 +67,4 @@ Transactional sandbox checklist: `deploy/LIVE_PROVIDER_CHECKS.md`.
 - No broad OS matrix beyond Ubuntu 24.04 CI
 - Minimal dunning; no reserved seating; no OAuth/Admin API
 - Third-party Modules/Extensions are trusted-code - only install code you trust (see `INSTALL.md` / Security)
+- Automatic tax covers EU standard VAT rates only (not reduced rates, not US sales tax)

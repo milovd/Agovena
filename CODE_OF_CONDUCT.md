@@ -22,7 +22,7 @@ We want Agovena to be a respectful place for anyone interested in the project: u
 
 Maintainers may remove comments, close issues/PRs, or ban contributors who break this code of conduct.
 
-If you see a problem, contact the maintainers privately. Do not escalate publicly in a way that makes things worse.
+If you see a problem, contact the maintainers privately (do not open a public issue that escalates harm). Prefer GitHub private channels when available.
 
 ## Attribution
 

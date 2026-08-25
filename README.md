@@ -28,6 +28,7 @@ See **[INSTALL.md](INSTALL.md)** for release-artifact and VPS install steps, and
 - Nginx (recommended) or Apache, document root = `public/`
 - A queue worker (`php artisan queue:work`) and cron `* * * * * php artisan schedule:run`
 - Node.js 22+ only to **build** frontend assets from a source checkout. Release artifacts should include `public/build`. Merchants should not need npm merely to install a stable release.
+- Outbound HTTPS for optional Admin FX sync and automatic EU VAT rates
 
 PHP 8.3 and 8.4 are exercised in CI. MariaDB 11 is exercised in CI for migrations and the test suite. That is not a claim that every host OS is production-verified.
 
@@ -57,7 +58,8 @@ php artisan agovena:verify-providers mollie --sandbox # Mollie only; refuses liv
 `agovena:seed-demo` loads local-only sample products (refuses in production).
 
 - Storefront: `/`
-- Admin: `/admin` (everyone signs in at `/login`; Admin is permission-based)
+- Login: `/login` (Admin is permission-based at `/admin`)
+- Customer account: `/account` (Security / 2FA at `/account/security`)
 - Installer: `/install` until the store is installed, then it stays closed
 
 ## Stack
@@ -65,7 +67,7 @@ php artisan agovena:verify-providers mollie --sandbox # Mollie only; refuses liv
 - Laravel 13
 - Livewire 4
 - Blade + Alpine (via Livewire)
-- Vite + native CSS (ITCSS/BEM/`--ag-*` tokens)
+- Vite + native CSS (ITCSS/BEM/`--ag-*` and `--theme-*` tokens)
 - No Filament / no project-wide Tailwind
 
 ## Architecture (two levels)
@@ -74,7 +76,20 @@ Merchants choose **selling intents** (physical, digital keys/codes, downloads, s
 
 There is no permanent `store_type`. Downloads (files) and Digital Delivery (secrets/keys) are separate Modules. First-party Modules and Extensions ship from the [optional-packages](https://github.com/milovd/optional-packages) monorepo - Extensions use category folders such as `extensions/payments/`, `extensions/provisioning/`, and `extensions/shipping/` (identity comes from each manifest `id`, not the folder path).
 
-See [themes/README.md](themes/README.md), [core/README.md](core/README.md), and [optional-packages](https://github.com/milovd/optional-packages).
+See [themes/README.md](themes/README.md), [core/README.md](core/README.md), [CHANGELOG.md](CHANGELOG.md), and [optional-packages](https://github.com/milovd/optional-packages).
+
+## Docs map
+
+| Doc | Purpose |
+|-----|---------|
+| [INSTALL.md](INSTALL.md) | Install and upgrade |
+| [SUPPORT.md](SUPPORT.md) | What is validated vs unverified |
+| [CHANGELOG.md](CHANGELOG.md) | Notable product changes toward release |
+| [SECURITY.md](SECURITY.md) | Vulnerability reporting |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
+| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community expectations |
+| [ATTRIBUTION.md](ATTRIBUTION.md) | Third-party FX / VAT data sources |
+| [deploy/README.md](deploy/README.md) | Native hosting templates |
 
 ## Security
 
