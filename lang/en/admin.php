@@ -11,6 +11,12 @@ return [
     'account' => 'Account',
     'fallback_title' => 'Admin',
     'product_name' => 'Agovena',
+    'sidebar_powered_by' => 'Powered by Agovena © :year',
+    'sidebar_links' => [
+        'sponsor' => 'Sponsor',
+        'github' => 'Star us on GitHub',
+        'documentation' => 'Documentation',
+    ],
     'view_storefront' => 'View storefront',
     'exit_admin' => 'Leave admin area',
     'account_menu' => 'Account menu',

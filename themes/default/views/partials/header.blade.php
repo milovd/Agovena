@@ -123,10 +123,14 @@
                 class="store-header__menu"
                 @click="navOpen = !navOpen"
                 :aria-expanded="navOpen.toString()"
+                x-bind:aria-label='navOpen ? {!! e(json_encode(__('storefront.close'))) !!} : {!! e(json_encode(__('storefront.menu'))) !!}'
                 aria-controls="store-mobile-nav"
             >
-                <span class="store-header__menu-bars" aria-hidden="true"></span>
-                <span class="visually-hidden">{{ __('storefront.menu') }}</span>
+                <span class="store-header__menu-bars" x-show="!navOpen" aria-hidden="true"></span>
+                <svg class="store-header__menu-x" x-show="navOpen" x-cloak xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                    <path d="M18 6 6 18"/>
+                    <path d="m6 6 12 12"/>
+                </svg>
             </button>
 
             <a class="store-brand" href="{{ route('storefront.home') }}">
@@ -368,40 +372,6 @@
             </div>
         </div>
 
-        @if ($searchOn)
-            <div class="store-header__search-wrap store-header__search-wrap--mobile" @click.outside="closeSuggest()">
-                <form class="store-header__search store-header__search--mobile" action="{{ route('storefront.home') }}" method="get" role="search">
-                    <label class="visually-hidden" for="store-header-search-mobile">{{ __('storefront.search.label') }}</label>
-                    <input
-                        id="store-header-search-mobile"
-                        class="store-header__search-input"
-                        type="search"
-                        name="q"
-                        x-model="suggestQuery"
-                        @input="onSuggestInput()"
-                        @focus="onSuggestInput()"
-                        placeholder="{{ __('storefront.search.placeholder') }}"
-                        autocomplete="off"
-                    >
-                    <button
-                        type="button"
-                        class="store-header__search-clear"
-                        x-show="(suggestQuery || '').length > 0"
-                        x-cloak
-                        @click="clearSuggest()"
-                        aria-label="{{ __('storefront.search.clear') }}"
-                    >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
-                            <path d="M18 6 6 18"/>
-                            <path d="m6 6 12 12"/>
-                        </svg>
-                    </button>
-                    <button type="submit" class="store-header__search-icon-btn" aria-label="{{ __('storefront.search.label') }}">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
-                    </button>
-                </form>
-            </div>
-        @endif
     </div>
 
     <div
@@ -409,13 +379,101 @@
         class="store-drawer"
         x-show="navOpen"
         x-cloak
+        x-transition:enter="store-drawer--enter"
+        x-transition:enter-start="store-drawer--enter-start"
+        x-transition:enter-end="store-drawer--enter-end"
+        x-transition:leave="store-drawer--leave"
+        x-transition:leave-start="store-drawer--leave-start"
+        x-transition:leave-end="store-drawer--leave-end"
         role="dialog"
         aria-modal="true"
         aria-label="{{ __('storefront.menu') }}"
     >
-        <div class="store-drawer__backdrop" @click="navOpen = false"></div>
-        <div class="store-drawer__panel">
-            <p class="store-drawer__title">{{ __('storefront.menu') }}</p>
+        <div class="store-drawer__backdrop" @click="navOpen = false; closeSuggest()"></div>
+        <div
+            class="store-drawer__panel"
+            x-transition:enter="store-drawer__panel--enter"
+            x-transition:enter-start="store-drawer__panel--enter-start"
+            x-transition:enter-end="store-drawer__panel--enter-end"
+            x-transition:leave="store-drawer__panel--leave"
+            x-transition:leave-start="store-drawer__panel--leave-start"
+            x-transition:leave-end="store-drawer__panel--leave-end"
+        >
+            <div class="store-drawer__head">
+                <p class="store-drawer__title">{{ __('storefront.menu') }}</p>
+            </div>
+            @if ($searchOn)
+                <div class="store-drawer__search-wrap" @click.outside="closeSuggest()">
+                    <form class="store-header__search store-header__search--mobile" action="{{ route('storefront.home') }}" method="get" role="search">
+                        <label class="visually-hidden" for="store-drawer-search">{{ __('storefront.search.label') }}</label>
+                        <input
+                            id="store-drawer-search"
+                            class="store-header__search-input"
+                            type="search"
+                            name="q"
+                            x-model="suggestQuery"
+                            @input="onSuggestInput()"
+                            @focus="onSuggestInput()"
+                            placeholder="{{ __('storefront.search.placeholder') }}"
+                            autocomplete="off"
+                            aria-autocomplete="list"
+                            aria-controls="store-drawer-search-suggest"
+                        >
+                        <button
+                            type="button"
+                            class="store-header__search-clear"
+                            x-show="(suggestQuery || '').length > 0"
+                            x-cloak
+                            @click="clearSuggest()"
+                            aria-label="{{ __('storefront.search.clear') }}"
+                        >
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">
+                                <path d="M18 6 6 18"/>
+                                <path d="m6 6 12 12"/>
+                            </svg>
+                        </button>
+                        <button type="submit" class="store-header__search-icon-btn" aria-label="{{ __('storefront.search.label') }}">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+                        </button>
+                    </form>
+                    <div
+                        id="store-drawer-search-suggest"
+                        class="store-search-suggest store-drawer__search-suggest"
+                        x-show="suggestOpen"
+                        x-cloak
+                        @mousedown.prevent
+                        role="listbox"
+                        aria-label="{{ __('storefront.search.suggestions') }}"
+                    >
+                        <template x-if="suggestLoading">
+                            <p class="store-search-suggest__status" x-text="labels.searching"></p>
+                        </template>
+                        <template x-if="!suggestLoading && suggestItems.length === 0 && (suggestQuery || '').trim().length >= 2">
+                            <p class="store-search-suggest__status" x-text="labels.noMatches"></p>
+                        </template>
+                        <template x-for="item in suggestItems" :key="item.slug">
+                            <a class="store-search-suggest__item" :href="item.url" role="option">
+                                <span class="store-search-suggest__media" aria-hidden="true">
+                                    <template x-if="item.image">
+                                        <img :src="item.image" alt="">
+                                    </template>
+                                </span>
+                                <span class="store-search-suggest__copy">
+                                    <span class="store-search-suggest__name" x-text="item.name"></span>
+                                    <span class="store-search-suggest__meta" x-text="item.category || ''"></span>
+                                </span>
+                                <span class="store-search-suggest__price" x-text="item.price"></span>
+                            </a>
+                        </template>
+                        <a
+                            class="store-search-suggest__all"
+                            :href="'{{ route('storefront.home') }}?q=' + encodeURIComponent((suggestQuery || '').trim())"
+                            x-show="(suggestQuery || '').trim().length >= 2"
+                            x-text="labels.viewAll"
+                        ></a>
+                    </div>
+                </div>
+            @endif
             <nav class="store-drawer__nav" aria-label="{{ __('storefront.mobile_nav') }}">
                 @if ($categoriesOn)
                     <a class="store-drawer__link" href="{{ route('storefront.categories') }}" @click="navOpen = false">{{ __('storefront.nav.categories') }}</a>
@@ -458,7 +516,6 @@
                     @endauth
                 @endif
             </nav>
-            <button type="button" class="store-btn" @click="navOpen = false">{{ __('storefront.close') }}</button>
         </div>
     </div>
 </header>

@@ -8,6 +8,14 @@ return [
      */
     'version' => '0.0.1',
 
+    'admin' => [
+        'support_links' => [
+            'sponsor' => env('AGOVENA_ADMIN_SPONSOR_URL', 'https://github.com/sponsors/milovd'),
+            'github' => env('AGOVENA_ADMIN_GITHUB_URL', 'https://github.com/milovd/Agovena'),
+            'documentation' => env('AGOVENA_ADMIN_DOCUMENTATION_URL', 'https://github.com/milovd/Agovena#readme'),
+        ],
+    ],
+
     /*
      * Available UI locales. Add a matching lang/{code}/ directory, then list
      * the locale here so Settings → General can select it site-wide.

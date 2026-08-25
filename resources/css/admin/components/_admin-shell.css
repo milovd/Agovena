@@ -152,6 +152,22 @@ body {
   font-weight: 600;
 }
 
+.admin-sidebar__footer-icon {
+  flex-shrink: 0;
+}
+
+.admin-sidebar__footer-link--sponsor .admin-sidebar__footer-icon {
+  color: var(--ag-color-support);
+}
+
+.admin-sidebar__footer-link--github .admin-sidebar__footer-icon {
+  color: var(--ag-color-warning);
+}
+
+.admin-sidebar__footer-link--documentation .admin-sidebar__footer-icon {
+  color: var(--ag-color-sidebar-muted);
+}
+
 .admin-nav__section + .admin-nav__section {
   margin-top: var(--ag-space-3);
 }

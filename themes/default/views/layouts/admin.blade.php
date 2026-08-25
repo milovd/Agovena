@@ -83,7 +83,31 @@
                 @include('partials.admin-nav')
             </nav>
             <div class="admin-sidebar__footer">
-                <p class="admin-sidebar__footer-meta">{{ __('admin.product_name') }}</p>
+                @php
+                    $supportLinks = config('agovena.admin.support_links', []);
+                    $footerLinks = [
+                        ['key' => 'sponsor', 'icon' => 'heart', 'class' => 'sponsor'],
+                        ['key' => 'github', 'icon' => 'star', 'class' => 'github'],
+                        ['key' => 'documentation', 'icon' => 'book-open', 'class' => 'documentation'],
+                    ];
+                @endphp
+                <p class="admin-sidebar__footer-meta">
+                    {{ __('admin.sidebar_powered_by', ['year' => now()->year]) }}
+                </p>
+                @foreach ($footerLinks as $footerLink)
+                    @php $footerHref = $supportLinks[$footerLink['key']] ?? null; @endphp
+                    @if (is_string($footerHref) && $footerHref !== '')
+                        <a
+                            class="admin-sidebar__footer-link admin-sidebar__footer-link--{{ $footerLink['class'] }}"
+                            href="{{ $footerHref }}"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            <x-ag.icon name="{{ $footerLink['icon'] }}" class="admin-sidebar__footer-icon" :size="22" />
+                            <span>{{ __('admin.sidebar_links.'.$footerLink['key']) }}</span>
+                        </a>
+                    @endif
+                @endforeach
             </div>
         </aside>
 

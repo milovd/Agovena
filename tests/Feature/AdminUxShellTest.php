@@ -28,10 +28,18 @@ test('admin shell uses account icon trigger and leave admin action', function ()
         ->assertSee(route('storefront.home'), false)
         ->assertSee(__('admin.nav_groups.system'), false)
         ->assertSee(__('admin.nav.customer_properties'), false)
+        ->assertSee(__('admin.sidebar_powered_by', ['year' => now()->year]), false)
+        ->assertSee(__('admin.sidebar_links.sponsor'), false)
+        ->assertSee(__('admin.sidebar_links.github'), false)
+        ->assertSee(__('admin.sidebar_links.documentation'), false)
+        ->assertSee(config('agovena.admin.support_links.sponsor'), false)
+        ->assertSee(config('agovena.admin.support_links.github'), false)
+        ->assertSee(config('agovena.admin.support_links.documentation'), false)
+        ->assertSee('rel="noopener noreferrer"', false)
         ->assertSee('admin-account-trigger', false)
         ->getContent();
 
-    expect(substr_count($html, 'admin-sidebar__footer-link--accent'))->toBe(0);
+    expect(preg_match_all('/class="admin-sidebar__footer-link admin-sidebar__footer-link--/', $html))->toBe(3);
 });
 
 test('dashboard renders real metrics without fake trends', function () {
