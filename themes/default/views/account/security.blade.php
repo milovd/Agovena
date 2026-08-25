@@ -117,11 +117,13 @@
                         <ul class="store-security-sessions">
                             @foreach ($sessions as $session)
                                 <li class="store-security-session" wire:key="session-{{ $session['id'] }}">
-                                    <div>
-                                        <strong>{{ $session['device_label'] }}</strong>
-                                        @if ($session['is_current'])
-                                            <span class="store-badge">{{ __('customer.security.session_current') }}</span>
-                                        @endif
+                                    <div class="store-security-session__info">
+                                        <div class="store-security-session__label">
+                                            <strong>{{ $session['device_label'] }}</strong>
+                                            @if ($session['is_current'])
+                                                <span class="store-badge">{{ __('customer.security.session_current') }}</span>
+                                            @endif
+                                        </div>
                                         <p class="store-field__hint">
                                             {{ $session['ip_address'] ?? __('customer.security.session_unknown_ip') }}
                                             · {{ $session['last_activity']->diffForHumans() }}
@@ -130,7 +132,7 @@
                                     @unless ($session['is_current'])
                                         <button
                                             type="button"
-                                            class="store-btn store-btn--outline"
+                                            class="store-btn store-btn--outline store-security-session__revoke"
                                             wire:click="revokeSession(@js($session['id']))"
                                             wire:confirm="{{ __('customer.security.session_revoke_confirm') }}"
                                         >

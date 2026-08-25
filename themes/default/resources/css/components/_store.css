@@ -5478,6 +5478,45 @@ a.store-order-card__item-title:focus-visible {
   margin-top: var(--theme-space-2);
 }
 
+.store-security-sessions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--theme-space-3);
+}
+
+.store-security-session {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--theme-space-3);
+}
+
+.store-security-session__info {
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.store-security-session__label {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--theme-space-2);
+}
+
+.store-security-session__info .store-field__hint {
+  margin: 0.25rem 0 0;
+}
+
+.store-security-session__revoke {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 100%;
+  align-self: center;
+}
+
 .store-account-panel__section + .store-account-panel__section {
   margin-top: var(--theme-space-8);
 }
