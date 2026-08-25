@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Category;
 
-test('mobile navigation keeps search in the header and cart in the drawer', function () {
+test('mobile navigation keeps search and cart in the header with a collapsed account drawer', function () {
     $rootCategory = Category::factory()->create([
         'name' => 'Mobile categories',
         'slug' => 'mobile-categories',
@@ -20,26 +20,30 @@ test('mobile navigation keeps search in the header and cart in the drawer', func
         ->getContent();
 
     $drawerStart = strpos($html, 'id="store-mobile-nav"');
+    $drawerEnd = strpos($html, '</header>', $drawerStart ?: 0);
+    $headerMarkup = substr($html, 0, $drawerStart ?: 0);
+    $drawerMarkup = substr($html, $drawerStart ?: 0, ($drawerEnd ?: 0) - ($drawerStart ?: 0));
     $menuXPosition = strpos($html, 'class="store-header__menu-x"');
     $searchPosition = strpos($html, 'id="store-mobile-header-search"');
     $navPosition = strpos($html, 'class="store-drawer__nav"');
-    $drawerCartPosition = strpos(substr($html, $drawerStart ?: 0), '/cart');
+    $headerCartPosition = strpos($headerMarkup, 'store-header__cart');
+    $drawerCartPosition = strpos($drawerMarkup, '/cart');
 
     expect($drawerStart)->toBeInt()
         ->and($menuXPosition)->toBeInt()
         ->and($searchPosition)->toBeInt()
         ->and($navPosition)->toBeInt()
+        ->and($headerCartPosition)->toBeInt()
         ->and($menuXPosition)->toBeLessThan($drawerStart)
         ->and($searchPosition)->toBeLessThan($drawerStart)
         ->and($navPosition)->toBeGreaterThan($drawerStart)
-        ->and($drawerCartPosition)->toBeInt()
+        ->and($drawerCartPosition)->toBeFalse()
         ->and(substr_count($html, 'id="store-mobile-header-search"'))->toBe(1)
         ->and(substr_count($html, 'id="store-drawer-search"'))->toBe(0)
         ->and(substr_count($html, 'class="store-header__menu-x"'))->toBe(1)
         ->and(substr_count($html, 'class="store-drawer__close"'))->toBe(0)
         ->and(substr_count($html, 'store-header__search-wrap--mobile'))->toBe(1)
-        ->and(substr_count($html, 'M6 6h15l-1.5 9h-12z'))->toBeGreaterThanOrEqual(2)
-        ->and(substr_count($html, 'store-drawer__link-icon'))->toBeGreaterThan(0)
+        ->and(substr_count($html, 'M6 6h15l-1.5 9h-12z'))->toBe(1)
         ->and(substr_count($html, 'drawerTop: 0'))->toBe(1)
         ->and(substr_count($html, ":style=\"'top: ' + drawerTop + 'px'\""))->toBe(1)
         ->and(substr_count($html, 'x-bind:hidden="!navOpen"'))->toBe(1)
@@ -51,10 +55,12 @@ test('mobile navigation keeps search in the header and cart in the drawer', func
         ->and(substr_count($html, 'store-drawer__category-toggle'))->toBeGreaterThan(0)
         ->and(substr_count($html, 'x-show="mobileCategoryOpen ==='))->toBeGreaterThan(0)
         ->and(substr_count($html, 'x-bind:hidden="mobileCategoryOpen !=='))->toBeGreaterThan(0)
+        ->and(substr_count($html, 'mobileAccountOpen: false'))->toBe(1)
+        ->and(substr_count($html, 'store-drawer__account-toggle'))->toBe(1)
+        ->and(substr_count($html, 'id="store-mobile-account"'))->toBe(1)
+        ->and(substr_count($html, 'x-bind:hidden="!mobileAccountOpen"'))->toBe(1)
         ->and(substr_count($html, 'id="store-mobile-categories"'))->toBe(1)
         ->and(substr_count($html, 'store-drawer__category-root'))->toBeGreaterThan(0)
-        ->and(substr_count($html, 'store-drawer__link-icon'))->toBeGreaterThan(0)
-        ->and(substr_count($html, 'store-drawer__link-arrow'))->toBeGreaterThan(0)
         ->and(substr_count($html, '@scroll.window.passive="scheduleDrawerTopRefresh()"'))->toBe(1)
         ->and(substr_count($html, 'store-drawer-open'))->toBe(1);
 });

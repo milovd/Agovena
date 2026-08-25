@@ -1719,6 +1719,61 @@ button.store-header__utility[aria-expanded="true"] {
   outline: none;
 }
 
+.store-drawer__account {
+  position: relative;
+}
+
+.store-drawer__account.is-open > .store-drawer__primary-link {
+  color: var(--theme-color-accent);
+  background: var(--theme-color-accent-soft);
+}
+
+.store-drawer__account-chevron {
+  color: var(--theme-color-text-muted);
+  transition: transform 160ms ease, color var(--theme-ease);
+}
+
+.store-drawer__account.is-open .store-drawer__account-chevron {
+  color: currentColor;
+  transform: rotate(180deg);
+}
+
+.store-drawer__account-panel {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0.15rem 0 0.45rem;
+  padding: 0.45rem;
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-lg);
+  background: var(--theme-color-surface);
+  box-shadow: var(--theme-shadow-sm);
+}
+
+.store-drawer__account-panel--enter,
+.store-drawer__account-panel--leave {
+  overflow: hidden;
+  transition: opacity 140ms ease, transform 140ms ease;
+  transform-origin: top;
+}
+
+.store-drawer__account-panel--enter-start,
+.store-drawer__account-panel--leave-end {
+  opacity: 0;
+  transform: translateY(-0.25rem) scaleY(0.98);
+}
+
+.store-drawer__account-panel--enter-end,
+.store-drawer__account-panel--leave-start {
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
+}
+
+.store-drawer__account-panel .store-drawer__auth {
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+
 .store-drawer__link {
   display: flex;
   align-items: center;
@@ -3614,7 +3669,7 @@ a.store-cart-line__name:hover {
 
 @media (max-width: 767px) {
   .store-header__inner {
-    grid-template-columns: minmax(0, 1fr) minmax(8rem, 1.15fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(6.75rem, 1.15fr) auto auto;
     gap: var(--theme-space-2);
     padding: var(--theme-space-3) var(--theme-space-4);
   }
@@ -3625,7 +3680,9 @@ a.store-cart-line__name:hover {
   }
 
   .store-header__actions {
-    display: none;
+    display: flex;
+    order: 3;
+    gap: 0;
   }
 
   .store-header__mobile-search {
@@ -3650,7 +3707,7 @@ a.store-cart-line__name:hover {
   }
 
   .store-header__menu {
-    order: 3;
+    order: 4;
   }
 
   .store-nav,
@@ -3663,7 +3720,7 @@ a.store-cart-line__name:hover {
   }
 
   .store-header__cart {
-    display: none;
+    display: inline-flex;
   }
 
   .store-header__account {
