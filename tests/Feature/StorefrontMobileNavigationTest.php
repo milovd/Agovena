@@ -38,6 +38,8 @@ test('mobile navigation keeps search in the header and cart in the drawer', func
         ->and(substr_count($html, 'class="store-header__menu-x"'))->toBe(1)
         ->and(substr_count($html, 'class="store-drawer__close"'))->toBe(0)
         ->and(substr_count($html, 'store-header__search-wrap--mobile'))->toBe(1)
+        ->and(substr_count($html, 'M6 6h15l-1.5 9h-12z'))->toBeGreaterThanOrEqual(2)
+        ->and(substr_count($html, 'store-drawer__link-icon'))->toBeGreaterThan(0)
         ->and(substr_count($html, 'drawerTop: 0'))->toBe(1)
         ->and(substr_count($html, ":style=\"'top: ' + drawerTop + 'px'\""))->toBe(1)
         ->and(substr_count($html, "document.querySelector('.store-usp')"))->toBe(1)

@@ -346,7 +346,7 @@
             <div class="store-header__actions">
                 @include('theme::partials.header-preferences')
                 <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}" aria-label="{{ __('storefront.nav.cart') }}{{ ($cartCount ?? 0) > 0 ? ', '.trans_choice('storefront.cart.items', $cartCount, ['count' => $cartCount]) : '' }}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/></svg>
+                    @include('theme::partials.icon', ['name' => 'shopping-cart', 'size' => 20])
                     <span class="visually-hidden">{{ __('storefront.nav.cart') }}</span>
                     @if (($cartCount ?? 0) > 0)
                         <span class="store-header__cart-count" aria-hidden="true">{{ $cartCount }}</span>
@@ -412,7 +412,6 @@
                     @endauth
                 @endif
             </div>
-        </div>
 
         @if ($searchOn)
             <div class="store-header__mobile-search">
@@ -489,6 +488,7 @@
             </div>
         @endif
 
+        </div>
     </div>
 
     <div
@@ -584,7 +584,7 @@
                     @endif
                 @endforeach
                 <a class="store-drawer__link" href="{{ route('storefront.cart') }}" @click="navOpen = false">
-                    <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'shopping-bag', 'size' => 18])</span>
+                    <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'shopping-cart', 'size' => 18])</span>
                     <span class="store-drawer__link-text">
                         {{ __('storefront.nav.cart') }}
                         @if (($cartCount ?? 0) > 0)
