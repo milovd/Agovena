@@ -155,9 +155,11 @@ test('currency sync updates rates from frankfurter market api', function () {
         ->and(Currency::query()->where('code', 'EUR')->value('exchange_rate'))->toBe('1.00000000');
 
     Http::assertSent(function ($request): bool {
-        return str_contains($request->url(), 'api.frankfurter.dev')
-            && $request['base'] === 'EUR'
-            && $request['symbols'] === 'USD';
+        parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+
+        return str_contains($request->url(), 'api.frankfurter.dev/v1/latest')
+            && ($query['base'] ?? null) === 'EUR'
+            && str_contains((string) ($query['symbols'] ?? ''), 'USD');
     });
 });
 
