@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditExportController;
 use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
 use App\Http\Controllers\InvoiceDocumentController;
@@ -173,6 +174,7 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access', 'admin.2
     Route::get('/tickets/{ticket}', TicketsShow::class)->name('tickets.show');
     Route::get('/ticket-attachments/{attachment}', TicketAttachmentDownloadController::class)->name('ticket-attachments.download');
     Route::get('/audit', AuditIndex::class)->name('audit.index');
+    Route::get('/audit/export', AuditExportController::class)->name('audit.export');
     Route::get('/email-log', NotificationsEmailLog::class)->name('email-log');
     Route::get('/failed-jobs', SystemFailedJobs::class)->name('failed-jobs');
     Route::get('/cron-statistics', SystemCronStatistics::class)->name('cron-statistics');
