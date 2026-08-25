@@ -223,7 +223,7 @@ jobs:
           import os
           import xml.etree.ElementTree as ET
           for path in ("storage/logs/mariadb-junit.xml", "storage/logs/mariadb-upgrade-junit.xml", "storage/logs/mariadb-concurrency-junit.xml"):
-              if not os.path.exists(path):
+              if not os.path.exists(path) or os.path.getsize(path) == 0:
                   continue
               for case in ET.parse(path).iter("testcase"):
                   node = case.find("failure")

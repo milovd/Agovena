@@ -72,7 +72,7 @@ it('delivers signed webhook payloads and records the response', function (): voi
     app(WebhookEventPublisher::class)->publish('order.created', ['order_id' => 10]);
     $delivery = WebhookDelivery::query()->firstOrFail();
 
-    new DeliverWebhook($delivery->id)->handle();
+    (new DeliverWebhook($delivery->id))->handle();
 
     $delivery->refresh();
     expect($delivery->status)->toBe('delivered')
@@ -106,7 +106,7 @@ it('records a retryable delivery failure without exposing the endpoint secret', 
     app(WebhookEventPublisher::class)->publish('order.created', ['order_id' => 10]);
     $delivery = WebhookDelivery::query()->firstOrFail();
 
-    new DeliverWebhook($delivery->id)->handle();
+    (new DeliverWebhook($delivery->id))->handle();
 
     $delivery->refresh();
     expect($delivery->status)->toBe('retrying')

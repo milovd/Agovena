@@ -237,8 +237,7 @@
 
 .store-header__menu:hover,
 .store-header__menu:focus-visible,
-.store-header__menu:active,
-.store-header__menu[aria-expanded="true"] {
+.store-header__menu:active {
   border-color: transparent;
   background: var(--theme-color-accent-soft);
   color: var(--theme-color-accent);
