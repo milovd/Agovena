@@ -3,6 +3,16 @@
 declare(strict_types=1);
 
 test('mobile storefront navigation keeps preferences and styled links inside the drawer', function () {
+    $rootCategory = \App\Models\Category::factory()->create([
+        'name' => 'Mobile categories',
+        'slug' => 'mobile-categories',
+    ]);
+    \App\Models\Category::factory()->create([
+        'name' => 'Mobile child',
+        'slug' => 'mobile-child',
+        'parent_id' => $rootCategory->id,
+    ]);
+
     $html = $this->get(route('login'))
         ->assertOk()
         ->getContent();
@@ -28,6 +38,9 @@ test('mobile storefront navigation keeps preferences and styled links inside the
         ->and(substr_count($html, "document.querySelector('.store-usp')"))->toBe(1)
         ->and(substr_count($html, 'ResizeObserver'))->toBeGreaterThanOrEqual(1)
         ->and(substr_count($html, 'store-drawer__prefs'))->toBe(1)
+        ->and(substr_count($html, 'mobileCatsOpen: false'))->toBe(1)
+        ->and(substr_count($html, 'id="store-mobile-categories"'))->toBe(1)
+        ->and(substr_count($html, 'store-drawer__category-root'))->toBeGreaterThan(0)
         ->and(substr_count($html, 'store-drawer__link-icon'))->toBeGreaterThan(0)
         ->and(substr_count($html, 'store-drawer__link-arrow'))->toBeGreaterThan(0)
         ->and(substr_count($html, '@scroll.window.passive="scheduleDrawerTopRefresh()"'))->toBe(1)

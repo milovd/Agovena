@@ -69,6 +69,7 @@
         drawerObserver: null,
         drawerFrame: null,
         catsOpen: false,
+        mobileCatsOpen: false,
         activeCat: null,
         suggestOpen: false,
         suggestLoading: false,
@@ -152,7 +153,7 @@
             this.suggestLoading = false;
         }
     }"
-    @keydown.escape.window="navOpen = false; catsOpen = false; suggestOpen = false"
+    @keydown.escape.window="navOpen = false; catsOpen = false; mobileCatsOpen = false; suggestOpen = false"
     @resize.window="scheduleDrawerTopRefresh()"
     @scroll.window.passive="scheduleDrawerTopRefresh()"
     x-effect="document.body.classList.toggle('store-drawer-open', navOpen)"
@@ -431,7 +432,7 @@
         aria-modal="true"
         aria-label="{{ __('storefront.menu') }}"
     >
-        <div class="store-drawer__backdrop" @click="navOpen = false; closeSuggest()"></div>
+        <div class="store-drawer__backdrop" @click="navOpen = false; mobileCatsOpen = false; closeSuggest()"></div>
         <div
             class="store-drawer__panel"
             x-transition:enter="store-drawer__panel--enter"
@@ -521,38 +522,64 @@
                 @include('theme::partials.header-preferences', ['isMobile' => true])
             </div>
             <nav class="store-drawer__nav" aria-label="{{ __('storefront.mobile_nav') }}">
-                @if ($categoriesOn)
-                    <a class="store-drawer__link" href="{{ route('storefront.categories') }}" @click="navOpen = false">
-                        <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'folders', 'size' => 18])</span>
-                        <span class="store-drawer__link-text">{{ __('storefront.nav.categories') }}</span>
-                        <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
-                    </a>
+                @if ($categoriesOn && $discoveryCategories->isNotEmpty())
+                    <div class="store-drawer__categories" :class="{ 'is-open': mobileCatsOpen }">
+                        <button
+                            type="button"
+                            class="store-nav__link store-nav__link--btn store-drawer__primary-link"
+                            @click="mobileCatsOpen = !mobileCatsOpen"
+                            :aria-expanded="mobileCatsOpen.toString()"
+                            aria-controls="store-mobile-categories"
+                        >
+                            <span>{{ __('storefront.nav.categories') }}</span>
+                            <svg class="store-drawer__category-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        <div
+                            id="store-mobile-categories"
+                            class="store-drawer__category-panel"
+                            x-show="mobileCatsOpen"
+                            x-cloak
+                            x-transition:enter="store-drawer__category-panel--enter"
+                            x-transition:enter-start="store-drawer__category-panel--enter-start"
+                            x-transition:enter-end="store-drawer__category-panel--enter-end"
+                            x-transition:leave="store-drawer__category-panel--leave"
+                            x-transition:leave-start="store-drawer__category-panel--leave-start"
+                            x-transition:leave-end="store-drawer__category-panel--leave-end"
+                            role="region"
+                            aria-label="{{ __('storefront.nav.categories') }}"
+                        >
+                            <a class="store-drawer__category-all" href="{{ route('storefront.categories') }}" @click="navOpen = false">{{ __('storefront.nav.all_categories') }}</a>
+                            @foreach ($discoveryCategories as $category)
+                                <div class="store-drawer__category-group">
+                                    <a class="store-drawer__category-root" href="{{ route('storefront.category', $category->slug) }}" @click="navOpen = false">
+                                        <span class="store-cats__thumb" aria-hidden="true">
+                                            @php $categoryImageUrl = \App\Agovena\Media\PublicMedia::url($category->image_path); @endphp
+                                            @if ($categoryImageUrl)
+                                                <img src="{{ $categoryImageUrl }}" alt="">
+                                            @endif
+                                        </span>
+                                        <span class="store-cats__label">{{ $category->name }}</span>
+                                        @if ($category->children->isNotEmpty())
+                                            <svg class="store-cats__chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                                        @endif
+                                    </a>
+                                    @if ($category->children->isNotEmpty())
+                                        <div class="store-drawer__category-children">
+                                            @foreach ($category->children as $child)
+                                                <a href="{{ route('storefront.category', $child->slug) }}" @click="navOpen = false">{{ $child->name }}</a>
+                                            @endforeach
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 @endif
                 @foreach ($themeMainNav ?? [] as $item)
                     @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
-                        <a class="store-drawer__link" href="{{ $item['url'] }}" @click="navOpen = false">
-                            <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'store', 'size' => 18])</span>
-                            <span class="store-drawer__link-text">{{ $item['label'] }}</span>
-                            <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
-                        </a>
+                        <a class="store-nav__link store-drawer__primary-link" href="{{ $item['url'] }}" @click="navOpen = false">{{ $item['label'] }}</a>
                     @endif
                 @endforeach
-                @if ($categoriesOn && $discoveryCategories->isNotEmpty())
-                    <p class="store-drawer__label">{{ __('storefront.nav.browse_categories') }}</p>
-                    @foreach ($discoveryCategories as $category)
-                        <a class="store-drawer__link" href="{{ route('storefront.category', $category->slug) }}" @click="navOpen = false">
-                            <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'package', 'size' => 18])</span>
-                            <span class="store-drawer__link-text">{{ $category->name }}</span>
-                            <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
-                        </a>
-                        @foreach ($category->children as $child)
-                            <a class="store-drawer__link store-drawer__link--child" href="{{ route('storefront.category', $child->slug) }}" @click="navOpen = false">
-                                <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
-                                <span class="store-drawer__link-text">{{ $child->name }}</span>
-                            </a>
-                        @endforeach
-                    @endforeach
-                @endif
                 <a class="store-drawer__link" href="{{ route('storefront.cart') }}" @click="navOpen = false">
                     <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'shopping-bag', 'size' => 18])</span>
                     <span class="store-drawer__link-text">
