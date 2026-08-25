@@ -612,34 +612,44 @@
                     @endif
                 @endforeach
                 @if ($showAccount)
-                    <div class="store-drawer__account" :class="{ 'is-open': mobileAccountOpen }">
-                        <button
-                            type="button"
-                            class="store-nav__link store-nav__link--btn store-drawer__primary-link store-drawer__account-toggle"
-                            @click="mobileAccountOpen = !mobileAccountOpen"
-                            :aria-expanded="mobileAccountOpen.toString()"
-                            aria-controls="store-mobile-account"
-                        >
-                            <span>{{ __('storefront.nav.account') }}</span>
-                            <svg class="store-drawer__account-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-                        </button>
-                        <div
-                            id="store-mobile-account"
-                            class="store-drawer__account-panel"
-                            x-show="mobileAccountOpen"
-                            x-bind:hidden="!mobileAccountOpen"
-                            x-cloak
-                            x-transition:enter="store-drawer__account-panel--enter"
-                            x-transition:enter-start="store-drawer__account-panel--enter-start"
-                            x-transition:enter-end="store-drawer__account-panel--enter-end"
-                            x-transition:leave="store-drawer__account-panel--leave"
-                            x-transition:leave-start="store-drawer__account-panel--leave-start"
-                            x-transition:leave-end="store-drawer__account-panel--leave-end"
-                            role="region"
-                            aria-label="{{ __('storefront.nav.account') }}"
-                        >
-                            @auth
-                                @php $drawerCanAdmin = auth()->user() instanceof \App\Models\User && auth()->user()->canAccessAdmin(); @endphp
+                    @auth
+                        @php
+                            $drawerAccountUser = auth()->user();
+                            $drawerCanAdmin = $drawerAccountUser instanceof \App\Models\User && $drawerAccountUser->canAccessAdmin();
+                            $drawerAccountName = $drawerAccountUser instanceof \App\Models\User && filled($drawerAccountUser->name)
+                                ? $drawerAccountUser->name
+                                : __('storefront.nav.account');
+                        @endphp
+                        <div class="store-drawer__account" :class="{ 'is-open': mobileAccountOpen }">
+                            <button
+                                type="button"
+                                class="store-nav__link store-nav__link--btn store-drawer__primary-link store-drawer__account-toggle"
+                                @click="mobileAccountOpen = !mobileAccountOpen"
+                                :aria-expanded="mobileAccountOpen.toString()"
+                                aria-controls="store-mobile-account"
+                                aria-haspopup="true"
+                            >
+                                <span class="store-drawer__account-identity">
+                                    <span class="store-drawer__account-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'user', 'size' => 18])</span>
+                                    <span class="store-drawer__account-name">{{ $drawerAccountName }}</span>
+                                </span>
+                                <svg class="store-drawer__account-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                            </button>
+                            <div
+                                id="store-mobile-account"
+                                class="store-drawer__account-panel"
+                                x-show="mobileAccountOpen"
+                                x-bind:hidden="!mobileAccountOpen"
+                                x-cloak
+                                x-transition:enter="store-drawer__account-panel--enter"
+                                x-transition:enter-start="store-drawer__account-panel--enter-start"
+                                x-transition:enter-end="store-drawer__account-panel--enter-end"
+                                x-transition:leave="store-drawer__account-panel--leave"
+                                x-transition:leave-start="store-drawer__account-panel--leave-start"
+                                x-transition:leave-end="store-drawer__account-panel--leave-end"
+                                role="region"
+                                aria-label="{{ __('storefront.nav.account') }}"
+                            >
                                 <a class="store-drawer__link" href="{{ route('customer.account') }}" @click="navOpen = false">
                                     <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'layout-dashboard', 'size' => 18])</span>
                                     <span class="store-drawer__link-text">{{ __('storefront.nav.dashboard') }}</span>
@@ -661,14 +671,14 @@
                                     <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'log-out', 'size' => 18])</span>
                                     <span class="store-drawer__link-text">{{ __('storefront.nav.logout') }}</span>
                                 </a>
-                            @else
-                                <div class="store-drawer__auth">
-                                    <a class="store-btn store-btn--ghost store-drawer__auth-login" href="{{ route('login') }}" @click="navOpen = false">{{ __('storefront.nav.login') }}</a>
-                                    <a class="store-btn store-btn--primary store-drawer__auth-register" href="{{ route('register') }}" @click="navOpen = false">{{ __('storefront.nav.register') }}</a>
-                                </div>
-                            @endauth
+                            </div>
                         </div>
-                    </div>
+                    @else
+                        <div class="store-drawer__auth">
+                            <a class="store-btn store-btn--ghost store-drawer__auth-login" href="{{ route('login') }}" @click="navOpen = false">{{ __('storefront.nav.login') }}</a>
+                            <a class="store-btn store-btn--primary store-drawer__auth-register" href="{{ route('register') }}" @click="navOpen = false">{{ __('storefront.nav.register') }}</a>
+                        </div>
+                    @endauth
                 @endif
             </nav>
         </div>

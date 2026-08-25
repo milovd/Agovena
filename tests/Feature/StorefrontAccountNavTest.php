@@ -20,6 +20,8 @@ test('logged out storefront header shows styled login and register actions', fun
         ->assertSee('store-header__auth-link', false)
         ->assertSee('store-header__auth-register', false)
         ->assertSee('store-drawer__auth', false)
+        ->assertDontSee('store-drawer__account-toggle', false)
+        ->assertDontSee('id="store-mobile-account"', false)
         ->assertDontSee('id="store-account-menu-button"', false);
 });
 
@@ -35,6 +37,9 @@ test('logged in customer sees structured account menu without admin', function (
         ->assertSee('id="store-account-menu-button"', false)
         ->assertSee('store-header__account-trigger', false)
         ->assertSee('store-account-menu__identity', false)
+        ->assertSee('store-drawer__account-toggle', false)
+        ->assertSee('store-drawer__account-icon', false)
+        ->assertSee('store-drawer__account-name', false)
         ->assertSee('style="left: unset; right: 0;"', false)
         ->assertSee('Casey Customer', false)
         ->assertSee('casey@agovena.test', false)

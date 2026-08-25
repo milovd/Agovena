@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Category;
+use App\Models\User;
 
 test('mobile navigation keeps search and cart in the header with a collapsed account drawer', function () {
     $rootCategory = Category::factory()->create([
@@ -57,11 +58,32 @@ test('mobile navigation keeps search and cart in the header with a collapsed acc
         ->and(substr_count($html, 'x-show="mobileCategoryOpen ==='))->toBeGreaterThan(0)
         ->and(substr_count($html, 'x-bind:hidden="mobileCategoryOpen !=='))->toBeGreaterThan(0)
         ->and(substr_count($html, 'mobileAccountOpen: false'))->toBe(1)
-        ->and(substr_count($html, 'store-drawer__account-toggle'))->toBe(1)
-        ->and(substr_count($html, 'id="store-mobile-account"'))->toBe(1)
-        ->and(substr_count($html, 'x-bind:hidden="!mobileAccountOpen"'))->toBe(1)
         ->and(substr_count($html, 'id="store-mobile-categories"'))->toBe(1)
         ->and(substr_count($html, 'store-drawer__category-root'))->toBeGreaterThan(0)
         ->and(substr_count($html, '@scroll.window.passive="scheduleDrawerTopRefresh()"'))->toBe(1)
+        ->and(substr_count($html, 'class="store-drawer__auth"'))->toBe(1)
+        ->and(substr_count($html, 'store-drawer__account-toggle'))->toBe(0)
         ->and(substr_count($html, 'store-drawer-open'))->toBe(1);
+});
+
+test('authenticated mobile navigation keeps the account dropdown at the bottom', function () {
+    $user = User::factory()->create([
+        'name' => 'Casey Customer',
+    ]);
+
+    $html = $this->actingAs($user)
+        ->get('/')
+        ->assertOk()
+        ->getContent();
+
+    $drawerStart = strpos($html, 'id="store-mobile-nav"');
+    $drawerEnd = strpos($html, '</header>', $drawerStart ?: 0);
+    $drawerMarkup = substr($html, $drawerStart ?: 0, ($drawerEnd ?: 0) - ($drawerStart ?: 0));
+
+    expect(substr_count($drawerMarkup, 'store-drawer__account-toggle'))->toBe(1)
+        ->and(substr_count($drawerMarkup, 'store-drawer__account-icon'))->toBe(1)
+        ->and(substr_count($drawerMarkup, 'store-drawer__account-name'))->toBe(1)
+        ->and(substr_count($drawerMarkup, 'Casey Customer'))->toBe(1)
+        ->and(substr_count($drawerMarkup, 'id="store-mobile-account"'))->toBe(1)
+        ->and(substr_count($drawerMarkup, 'class="store-drawer__auth"'))->toBe(0);
 });
