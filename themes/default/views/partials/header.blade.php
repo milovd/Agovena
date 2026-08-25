@@ -557,7 +557,7 @@
                             <a class="store-drawer__category-all" href="{{ route('storefront.categories') }}" @click="navOpen = false">{{ __('storefront.nav.all_categories') }}</a>
                             @foreach ($discoveryCategories as $category)
                                 <div class="store-drawer__category-group">
-                                    <div class="store-drawer__category-row">
+                                    <div class="store-drawer__category-row" :class="{ 'is-open': mobileCategoryOpen === {{ $category->id }} }">
                                         <a class="store-drawer__category-root" href="{{ route('storefront.category', $category->slug) }}" @click="navOpen = false">
                                             <span class="store-cats__thumb" aria-hidden="true">
                                                 @php $categoryImageUrl = \App\Agovena\Media\PublicMedia::url($category->image_path); @endphp
