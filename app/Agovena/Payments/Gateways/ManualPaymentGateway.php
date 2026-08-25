@@ -16,8 +16,8 @@ use App\Enums\PaymentStatus;
 use Illuminate\Http\Request;
 
 /**
- * Core reference adapter for offline/manual payment recording.
- * Registered by the manual-payment Extension when enabled.
+ * Offline payment adapter kept for refunds of historical payments and tests.
+ * Not offered at storefront checkout (no manual-payment extension).
  */
 final class ManualPaymentGateway implements PaymentGateway
 {

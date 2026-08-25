@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Credits\CustomerCreditLedger;
+use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Privacy\AnonymizeCustomer;
 use App\Agovena\Support\CreateTicket;
 use App\Agovena\Support\ReplyToTicket;
@@ -97,8 +98,18 @@ test('checkout applies credit after pricing and reduces payment amount', functio
         'apply_credit' => true,
     ]);
 
+    $ledger = app(CustomerCreditLedger::class);
+
     expect($order->total_amount)->toBe(1000)
         ->and($order->credit_amount)->toBe(700)
         ->and($order->payment?->amount)->toBe(300)
-        ->and(app(CustomerCreditLedger::class)->balance($customer))->toBe(0);
+        ->and($ledger->available($customer))->toBe(0)
+        ->and($ledger->reserved($customer))->toBe(700)
+        ->and($ledger->balance($customer))->toBe(700);
+
+    app(RecordManualPayment::class)->handle($order, test()->createStaff());
+
+    expect($ledger->available($customer))->toBe(0)
+        ->and($ledger->reserved($customer))->toBe(0)
+        ->and($ledger->balance($customer))->toBe(0);
 });

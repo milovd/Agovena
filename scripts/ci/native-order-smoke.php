@@ -11,9 +11,7 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
-use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
@@ -41,11 +39,10 @@ if (! $modules->isInstalled('inventory')) {
 }
 $modules->enable('inventory');
 
-$extensions = app(ExtensionManager::class);
-if (! $extensions->isInstalled('manual-payment')) {
-    $extensions->install('manual-payment');
-}
-$extensions->enable('manual-payment');
+putenv('AGOVENA_DEV_INSTANT_PAY=true');
+$_ENV['AGOVENA_DEV_INSTANT_PAY'] = 'true';
+$_SERVER['AGOVENA_DEV_INSTANT_PAY'] = 'true';
+config(['agovena.payments.allow_development_instant_pay' => true]);
 app(SyncRegisteredPermissions::class)(force: true);
 
 $product = Product::query()->firstOrCreate(
@@ -84,6 +81,7 @@ $order = app(PlaceOrder::class)->handle([
     'customer_name' => $customer->name,
     'customer_email' => $customer->email,
     'customer_id' => $customer->id,
+    'payment_method' => 'development',
     'billing' => AddressData::fromArray([
         'name' => $customer->name,
         'line1' => '1 Smoke Street',
@@ -92,11 +90,6 @@ $order = app(PlaceOrder::class)->handle([
         'country' => 'NL',
     ]),
 ]);
-
-$staff = User::query()->where('email', 'native-smoke@example.test')->first()
-    ?? User::query()->orderBy('id')->firstOrFail();
-
-app(RecordManualPayment::class)->handle($order, $staff, 'Native smoke paid');
 
 $order = $order->fresh(['payment', 'invoice']);
 abort_unless($order instanceof Order, 1);

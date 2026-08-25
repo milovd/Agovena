@@ -70,7 +70,7 @@ return [
         'nav_orders' => 'Bestellingen',
         'nav_invoices' => 'Facturen',
         'nav_tickets' => 'Support',
-        'nav_credits' => 'Winkeltegoed',
+        'nav_credits' => 'Accountsaldo',
         'nav_settings' => 'Instellingen',
         'cards' => [
             'open_tickets' => 'Open supporttickets',

@@ -64,7 +64,7 @@ final class CheckoutPage extends Component
     /** @var list<string> */
     public array $completedSteps = [];
 
-    public string $payment_method = 'manual';
+    public string $payment_method = '';
 
     public ?int $shipping_method_id = null;
 
@@ -132,7 +132,7 @@ final class CheckoutPage extends Component
 
         $this->idempotency_key = (string) Str::uuid();
         $ids = app(AvailablePaymentMethods::class)->ids();
-        $this->payment_method = $ids[0] ?? 'manual';
+        $this->payment_method = $ids[0] ?? '';
 
         /** @var Customer|null $customer */
         $customer = current_customer();
@@ -276,8 +276,16 @@ final class CheckoutPage extends Component
         $this->shipping_method_id = null;
     }
 
-    public function placeOrder(PlaceOrder $placeOrder, CustomerRegistration $registration, CartService $cart, SaveCustomerAddress $saveAddress, CustomerPropertyService $properties, CartRequirementComposer $composer, StartOrderPayment $startPayment): void
-    {
+    public function placeOrder(
+        PlaceOrder $placeOrder,
+        CustomerRegistration $registration,
+        CartService $cart,
+        SaveCustomerAddress $saveAddress,
+        CustomerPropertyService $properties,
+        CartRequirementComposer $composer,
+        StartOrderPayment $startPayment,
+        CustomerCreditLedger $creditLedger,
+    ): void {
         if ($registration->requiresAccountForCheckout() && ! Auth::check()) {
             session()->put('url.intended', route('storefront.checkout'));
             $this->redirect(route('login'), navigate: true);
@@ -294,11 +302,22 @@ final class CheckoutPage extends Component
         $requirements = $composer->compose($cart);
         $requiresShipping = $requirements->requiresShipping();
         $checkoutProperties = $properties->definitionsFor('checkout');
+        $amountDue = $this->estimatedAmountDue($cart, $composer, $creditLedger);
+        $paymentRules = $amountDue > 0
+            ? ['required', 'string', Rule::in($allowed)]
+            : ['nullable', 'string'];
+
+        if ($amountDue > 0 && $allowed === []) {
+            $this->addError('payment_method', __('storefront.errors.payment_gateway_required'));
+
+            return;
+        }
+
         $rules = [
             'customer_name' => ['required', 'string', 'max:255'],
             'customer_email' => ['required', 'email', 'max:255'],
             'idempotency_key' => ['required', 'string', 'max:64'],
-            'payment_method' => ['required', 'string', Rule::in($allowed)],
+            'payment_method' => $paymentRules,
             ...AddressValidation::rules('billing'),
             'save_billing_address' => ['boolean'],
             'apply_credit' => ['boolean'],
@@ -358,7 +377,7 @@ final class CheckoutPage extends Component
             'customer_name' => $data['customer_name'],
             'customer_email' => $data['customer_email'],
             'idempotency_key' => $data['idempotency_key'],
-            'payment_method' => $data['payment_method'],
+            'payment_method' => $amountDue > 0 ? ($data['payment_method'] ?? $this->payment_method) : null,
             'customer_id' => current_customer()?->id,
             'billing' => $billing,
             'shipping' => $shipping,
@@ -443,7 +462,7 @@ final class CheckoutPage extends Component
         $customer = current_customer();
         $creditBalance = $customer === null || $subtotal === null
             ? 0
-            : $creditLedger->balance($customer, $subtotal->currency);
+            : $creditLedger->available($customer, $subtotal->currency);
 
         $quotes = [];
         $shippingTotal = null;
@@ -685,7 +704,7 @@ final class CheckoutPage extends Component
             ],
             CheckoutStep::Configuration => [],
             CheckoutStep::Payment => [
-                'payment_method' => ['required', 'string', Rule::in($allowed)],
+                'payment_method' => ['nullable', 'string'],
                 'apply_credit' => ['boolean'],
             ],
             CheckoutStep::Review => [],
@@ -749,6 +768,10 @@ final class CheckoutPage extends Component
     private function primaryActionLabel(CheckoutStep $current, ?CheckoutStep $next, ?Money $amountDue): string
     {
         if ($current === CheckoutStep::Payment || $next === null) {
+            if ($amountDue !== null && $amountDue->amount < 1) {
+                return __('storefront.checkout.place_order');
+            }
+
             $gatewayId = CheckoutPaymentSelection::parse($this->payment_method)->gatewayId;
             if ($gatewayId === 'development' && $amountDue !== null) {
                 return __('storefront.checkout.pay_amount', [
@@ -756,7 +779,9 @@ final class CheckoutPage extends Component
                 ]);
             }
 
-            $gateway = app(PaymentGatewayRegistry::class)->get($gatewayId);
+            $gateway = $gatewayId !== ''
+                ? app(PaymentGatewayRegistry::class)->get($gatewayId)
+                : null;
             if ($gateway !== null && $gateway->capabilities()->redirect) {
                 return __('storefront.checkout.continue_to_provider', [
                     'provider' => __($gateway->label()),
@@ -769,6 +794,36 @@ final class CheckoutPage extends Component
         return __('storefront.checkout.continue_to', [
             'step' => __($next->labelKey()),
         ]);
+    }
+
+    private function estimatedAmountDue(
+        CartService $cart,
+        CartRequirementComposer $composer,
+        CustomerCreditLedger $creditLedger,
+    ): int {
+        $subtotal = $cart->subtotal();
+        if ($subtotal === null) {
+            return 0;
+        }
+
+        $requirements = $composer->compose($cart);
+        $shippingAmount = 0;
+        if ($requirements->requiresShipping()) {
+            // Match place-order totals loosely; exact shipping is validated later.
+            $shippingAmount = 0;
+        }
+
+        $orderTotal = $subtotal->amount + $shippingAmount;
+        $customer = current_customer();
+        if ($this->apply_credit && $customer !== null) {
+            $credit = min(
+                $creditLedger->available($customer, $subtotal->currency),
+                $orderTotal,
+            );
+            $orderTotal -= $credit;
+        }
+
+        return max(0, $orderTotal);
     }
 
     private function developmentPayEnabled(): bool

@@ -11,7 +11,6 @@ use Agovena\Modules\Shipping\Enums\ShippingMethodType;
 use Agovena\Modules\Shipping\Models\ShippingMethod;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Customer\CustomerRegistrationMode;
-use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
@@ -42,11 +41,11 @@ foreach (['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', '
     $modules->enable($id);
 }
 
-$extensions = $app->make(ExtensionManager::class);
-if (! $extensions->isInstalled('manual-payment')) {
-    $extensions->install('manual-payment');
-}
-$extensions->enable('manual-payment');
+// Checkout uses development instant pay in e2e (no manual-payment extension).
+putenv('AGOVENA_DEV_INSTANT_PAY=true');
+$_ENV['AGOVENA_DEV_INSTANT_PAY'] = 'true';
+$_SERVER['AGOVENA_DEV_INSTANT_PAY'] = 'true';
+config(['agovena.payments.allow_development_instant_pay' => true]);
 
 $app->make(SyncRegisteredPermissions::class)(force: true);
 

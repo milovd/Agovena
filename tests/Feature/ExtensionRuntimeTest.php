@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Agovena\Extensions\Mollie\MollieApi;
 use App\Agovena\Extensions\ExtensionCategory;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionManifest;
@@ -16,19 +17,23 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
+use Tests\Support\FakeMollieApi;
 
 uses(CreatesStaff::class);
 
-function enableManualPaymentExtension(): ExtensionManager
+function enableMollieForRuntimeTests(): ExtensionManager
 {
-    return installAndEnableExtension('manual-payment');
+    app(ExtensionManager::class)->discover();
+    app()->instance(MollieApi::class, new FakeMollieApi);
+
+    return installAndEnableExtension('mollie');
 }
 
 test('extension enable fails when extension is not installed', function () {
-    AgovenaExtension::query()->where('extension_id', 'manual-payment')->delete();
+    AgovenaExtension::query()->where('extension_id', 'mollie')->delete();
 
-    expect(fn () => app(ExtensionManager::class)->enable('manual-payment'))
-        ->toThrow(ValidationException::class, 'Install Extension manual-payment before enabling it.');
+    expect(fn () => app(ExtensionManager::class)->enable('mollie'))
+        ->toThrow(ValidationException::class, 'Install Extension mollie before enabling it.');
 });
 
 test('module-bound extensions cannot be enabled without their parent module', function () {
@@ -39,23 +44,23 @@ test('module-bound extensions cannot be enabled without their parent module', fu
         ->toThrow(ValidationException::class, 'Install Module provisioning before installing Extension pterodactyl.');
 });
 
-test('extension manager discovers manual payment extension', function () {
+test('extension manager discovers mollie payment extension', function () {
     $extensions = app(ExtensionManager::class);
-    $manifest = $extensions->manifest('manual-payment');
+    $manifest = $extensions->manifest('mollie');
 
     expect($manifest)->not->toBeNull()
         ->and($manifest->category)->toBe(ExtensionCategory::PaymentGateway)
         ->and($manifest->author)->toBe('Agovena')
-        ->and($manifest->version)->toBe('1.0.0')
-        ->and($extensions->isEnabled('manual-payment'))->toBeFalse()
-        ->and(str_replace('\\', '/', $manifest->path))->toContain('extensions/payments/manual-payment');
+        ->and($extensions->isEnabled('mollie'))->toBeFalse()
+        ->and(str_replace('\\', '/', $manifest->path))->toContain('extensions/payments/mollie');
 });
 
 test('extension discovery keeps stable ids across category folder layout', function () {
     $extensions = app(ExtensionManager::class);
     $ids = collect($extensions->discover())->pluck('id')->sort()->values()->all();
 
-    expect($ids)->toContain('manual-payment', 'mollie', 'stripe', 'paypal', 'pterodactyl', 'proxmox', 'postnl');
+    expect($ids)->toContain('mollie', 'stripe', 'paypal', 'pterodactyl', 'proxmox', 'postnl')
+        ->and($ids)->not->toContain('manual-payment');
 
     foreach (['mollie' => 'payments', 'paypal' => 'payments', 'pterodactyl' => 'provisioning', 'proxmox' => 'provisioning', 'postnl' => 'shipping'] as $id => $categoryDir) {
         $path = str_replace('\\', '/', (string) $extensions->manifest($id)?->path);
@@ -73,60 +78,58 @@ test('extension manifest validation rejects unknown category', function () {
 });
 
 test('extension enable fails when platform version is incompatible', function () {
+    app(ExtensionManager::class)->install('mollie');
     config(['agovena.version' => '0.0.1']);
 
-    expect(fn () => app(ExtensionManager::class)->enable('manual-payment'))
+    expect(fn () => app(ExtensionManager::class)->enable('mollie'))
         ->toThrow(ValidationException::class);
 });
 
 test('enable registers payment gateway and disable removes it while preserving settings', function () {
-    $extensions = enableManualPaymentExtension();
+    $extensions = enableMollieForRuntimeTests();
     $settings = app(ExtensionSettingsRepository::class);
 
-    expect($extensions->isEnabled('manual-payment'))->toBeTrue()
-        ->and(app(PaymentGatewayRegistry::class)->has('manual'))->toBeTrue()
-        ->and(app(AvailablePaymentMethods::class)->ids())->toContain('manual');
+    expect($extensions->isEnabled('mollie'))->toBeTrue()
+        ->and(app(PaymentGatewayRegistry::class)->has('mollie'))->toBeTrue();
 
-    $settings->set('manual-payment', 'instructions', 'Pay via IBAN', secret: false);
-    $settings->set('manual-payment', 'webhook_secret', 'super-secret-value', secret: true);
+    $settings->set('mollie', 'api_key', 'test_key_not_real', secret: true);
 
     $row = ExtensionSetting::query()
-        ->where('extension_id', 'manual-payment')
-        ->where('key', 'webhook_secret')
+        ->where('extension_id', 'mollie')
+        ->where('key', 'api_key')
         ->first();
 
     expect($row)->not->toBeNull()
         ->and($row->is_secret)->toBeTrue()
-        ->and($row->value)->not->toBe('super-secret-value')
-        ->and(Crypt::decryptString((string) $row->value))->toBe('super-secret-value')
-        ->and($settings->get('manual-payment', 'webhook_secret'))->toBe('super-secret-value');
+        ->and($row->value)->not->toBe('test_key_not_real')
+        ->and(Crypt::decryptString((string) $row->value))->toBe('test_key_not_real')
+        ->and($settings->get('mollie', 'api_key'))->toBe('test_key_not_real');
 
-    $extensions->disable('manual-payment');
+    $extensions->disable('mollie');
 
-    expect($extensions->isEnabled('manual-payment'))->toBeFalse()
-        ->and(app(PaymentGatewayRegistry::class)->has('manual'))->toBeFalse()
-        ->and(AgovenaExtension::query()->where('extension_id', 'manual-payment')->exists())->toBeTrue()
-        ->and($settings->get('manual-payment', 'instructions'))->toBe('Pay via IBAN')
-        ->and($settings->get('manual-payment', 'webhook_secret'))->toBe('super-secret-value');
+    expect($extensions->isEnabled('mollie'))->toBeFalse()
+        ->and(app(PaymentGatewayRegistry::class)->has('mollie'))->toBeFalse()
+        ->and(AgovenaExtension::query()->where('extension_id', 'mollie')->exists())->toBeTrue()
+        ->and($settings->get('mollie', 'api_key'))->toBe('test_key_not_real');
 });
 
 test('checkout discovers enabled extension payment methods', function () {
-    enableManualPaymentExtension();
+    enableMollieForRuntimeTests();
 
     $options = app(AvailablePaymentMethods::class)->options();
 
     expect($options)->not->toBeEmpty()
-        ->and(collect($options)->pluck('id')->all())->toContain('manual');
+        ->and(collect($options)->pluck('id')->all())->toContain('mollie:ideal');
 });
 
-test('admin extensions page lists manual payment', function () {
+test('admin extensions page lists mollie', function () {
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
         ->test(ExtensionsIndex::class)
         ->set('tab', 'available')
         ->assertOk()
-        ->assertSee('Manual Payment');
+        ->assertSee('Mollie');
 });
 
 test('core payment contracts do not import vendor SDKs', function () {
@@ -143,4 +146,20 @@ test('core payment contracts do not import vendor SDKs', function () {
             ->not->toContain('mollie/')
             ->not->toContain('stripe/');
     }
+});
+
+test('without payment extensions only development pay is offered when enabled', function () {
+    app(PaymentGatewayRegistry::class)->clear();
+    config(['agovena.payments.allow_development_instant_pay' => true]);
+
+    $ids = app(AvailablePaymentMethods::class)->ids();
+
+    expect($ids)->toBe(['development']);
+});
+
+test('without payment extensions checkout offers no methods when development pay is disabled', function () {
+    app(PaymentGatewayRegistry::class)->clear();
+    config(['agovena.payments.allow_development_instant_pay' => false]);
+
+    expect(app(AvailablePaymentMethods::class)->ids())->toBe([]);
 });

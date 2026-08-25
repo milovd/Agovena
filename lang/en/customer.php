@@ -70,7 +70,7 @@ return [
         'nav_orders' => 'Orders',
         'nav_invoices' => 'Invoices',
         'nav_tickets' => 'Support',
-        'nav_credits' => 'Store credit',
+        'nav_credits' => 'Account balance',
         'nav_settings' => 'Settings',
         'cards' => [
             'open_tickets' => 'Open support tickets',

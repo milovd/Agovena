@@ -6,10 +6,10 @@ namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\OffersCheckoutMethods;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
-use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 
 /**
  * Checkout-facing discovery of enabled PaymentGateway methods.
+ * Account balance is not a gateway option — it reduces the amount due at place-order.
  */
 final class AvailablePaymentMethods
 {
@@ -61,22 +61,19 @@ final class AvailablePaymentMethods
      */
     private function coreFallbackOptions(): array
     {
-        $options = [[
-            'id' => 'manual',
-            'gateway_id' => 'manual',
-            'label' => (new ManualPaymentGateway)->label(),
-            'icon' => null,
-        ]];
-
-        if ((bool) config('agovena.payments.allow_development_instant_pay')) {
-            $options[] = [
-                'id' => 'development',
-                'gateway_id' => 'development',
-                'label' => app(DevelopmentPaymentGateway::class)->label(),
-                'icon' => null,
-            ];
+        if (! (bool) config('agovena.payments.allow_development_instant_pay')) {
+            return [];
         }
 
-        return $options;
+        if (app()->environment('production')) {
+            return [];
+        }
+
+        return [[
+            'id' => 'development',
+            'gateway_id' => 'development',
+            'label' => app(DevelopmentPaymentGateway::class)->label(),
+            'icon' => null,
+        ]];
     }
 }

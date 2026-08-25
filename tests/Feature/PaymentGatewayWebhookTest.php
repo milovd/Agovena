@@ -26,12 +26,18 @@ use Tests\Support\FakeWebhookGateway;
 
 function placePendingOrderPayment(): Payment
 {
+    config(['agovena.payments.allow_development_instant_pay' => false]);
+    if (! app(PaymentGatewayRegistry::class)->has('manual')) {
+        app(PaymentGatewayRegistry::class)->register(app(ManualPaymentGateway::class));
+    }
+
     $product = Product::factory()->active()->create(['price_amount' => 2500]);
     app(CartService::class)->add($product->id, 1);
 
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => 'Pay Buyer',
         'customer_email' => 'pay@example.test',
+        'payment_method' => 'manual',
         'billing' => AddressData::fromArray([
             'name' => 'Pay Buyer',
             'line1' => 'Street 1',
@@ -44,10 +50,8 @@ function placePendingOrderPayment(): Payment
     return $order->payment()->firstOrFail();
 }
 
-test('manual payment gateway registers via extension and supports refunds', function () {
-    installAndEnableExtension('manual-payment');
-
-    $gateway = app(PaymentGatewayRegistry::class)->get('manual');
+test('manual payment gateway can still refund when registered in core tests', function () {
+    $gateway = app(ManualPaymentGateway::class);
     expect($gateway)->toBeInstanceOf(ManualPaymentGateway::class)
         ->and($gateway->capabilities()->refunds)->toBeTrue()
         ->and($gateway->capabilities()->partialRefunds)->toBeTrue();
@@ -63,7 +67,6 @@ test('manual payment gateway registers via extension and supports refunds', func
 });
 
 test('initiate gateway payment creates a payment attempt without polluting order', function () {
-    installAndEnableExtension('manual-payment');
     $payment = placePendingOrderPayment();
 
     $attempt = app(InitiateGatewayPayment::class)->handle(

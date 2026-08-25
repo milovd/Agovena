@@ -61,7 +61,7 @@ final class CheckoutController
             'customer_name' => $customer->name,
             'customer_email' => $customer->email,
             'customer_id' => $customer->id,
-            'payment_method' => $data['payment_method'] ?? 'manual',
+            'payment_method' => $data['payment_method'] ?? null,
             'idempotency_key' => $data['idempotency_key'] ?? null,
             'billing' => AddressData::fromArray($data['billing']),
             'shipping' => isset($data['shipping']) && is_array($data['shipping'])

@@ -13,6 +13,7 @@ use App\Agovena\Discounts\DiscountApplicator;
 use App\Agovena\Money\Money;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\CheckoutPaymentSelection;
+use App\Agovena\Payments\CompleteAccountBalancePayment;
 use App\Agovena\Payments\CompleteDevelopmentPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
@@ -37,6 +38,7 @@ final class PlaceOrder
         private readonly CartService $cart,
         private readonly SettingsRepository $settings,
         private readonly CompleteDevelopmentPayment $developmentPayment,
+        private readonly CompleteAccountBalancePayment $accountBalancePayment,
         private readonly ShippingQuoteResolver $shippingQuotes,
         private readonly DiscountApplicator $discounts,
         private readonly TaxCalculator $taxes,
@@ -92,7 +94,7 @@ final class PlaceOrder
             ]);
         }
 
-        $method = $this->resolvePaymentMethod($guest['payment_method'] ?? 'manual');
+        $method = $guest['payment_method'] ?? null;
         $customerId = isset($guest['customer_id']) ? (int) $guest['customer_id'] : null;
         if ($customerId !== null && $customerId < 1) {
             $customerId = null;
@@ -262,6 +264,12 @@ final class PlaceOrder
                 }
             }
 
+            $amountDue = $total->amount - $creditAmount;
+            $resolvedMethod = $this->resolvePaymentMethod(
+                is_string($method) ? $method : null,
+                $amountDue,
+            );
+
             foreach ($lines as $line) {
                 $product = Product::query()->find($line->productId);
                 OrderItem::query()->create([
@@ -280,9 +288,9 @@ final class PlaceOrder
 
             Payment::query()->create([
                 'order_id' => $order->id,
-                'amount' => $total->amount - $creditAmount,
+                'amount' => $amountDue,
                 'currency' => $subtotal->currency,
-                'method' => $method,
+                'method' => $resolvedMethod,
                 'status' => PaymentStatus::Pending,
                 'paid_at' => null,
                 'reference' => null,
@@ -308,7 +316,15 @@ final class PlaceOrder
 
         $this->cart->clear();
 
-        if ($method === 'development') {
+        $paymentMethod = (string) ($order->payment?->method ?? '');
+
+        if ($paymentMethod === 'account_balance' || (int) ($order->payment?->amount ?? 0) === 0) {
+            $this->accountBalancePayment->handle($order);
+
+            return $order->fresh(['items', 'payment']) ?? $order;
+        }
+
+        if ($paymentMethod === 'development') {
             $this->developmentPayment->handle($order);
 
             return $order->fresh(['items', 'payment']) ?? $order;
@@ -317,14 +333,29 @@ final class PlaceOrder
         return $order;
     }
 
-    private function resolvePaymentMethod(string $value): string
+    private function resolvePaymentMethod(?string $value, int $amountDue): string
     {
+        if ($amountDue < 1) {
+            return 'account_balance';
+        }
+
+        $allowed = app(AvailablePaymentMethods::class)->ids();
+        if ($allowed === []) {
+            throw ValidationException::withMessages([
+                'payment_method' => __('storefront.errors.payment_gateway_required'),
+            ]);
+        }
+
+        if ($value === null || trim($value) === '') {
+            $value = $allowed[0];
+        }
+
         $selection = CheckoutPaymentSelection::parse($value);
         $gatewayId = $selection->gatewayId;
 
         if ($gatewayId === 'development') {
-            $allowed = (bool) config('agovena.payments.allow_development_instant_pay');
-            if (! $allowed || app()->environment('production')) {
+            $devAllowed = (bool) config('agovena.payments.allow_development_instant_pay');
+            if (! $devAllowed || app()->environment('production')) {
                 throw ValidationException::withMessages([
                     'payment_method' => __('storefront.errors.development_payment_unavailable'),
                 ]);
@@ -333,19 +364,20 @@ final class PlaceOrder
             return 'development';
         }
 
-        $allowed = app(AvailablePaymentMethods::class)->ids();
+        if ($gatewayId === 'account_balance') {
+            throw ValidationException::withMessages([
+                'payment_method' => __('storefront.errors.payment_method_unavailable'),
+            ]);
+        }
+
         $optionIds = $allowed;
         $gatewayIds = array_values(array_unique(array_map(
             static fn (string $id): string => CheckoutPaymentSelection::parse($id)->gatewayId,
             $optionIds,
         )));
 
-        if (in_array($value, $optionIds, true) || in_array($gatewayId, $gatewayIds, true) || $gatewayId === 'manual') {
-            return $gatewayId === '' ? 'manual' : $gatewayId;
-        }
-
-        if ($allowed === [] && $gatewayId === 'manual') {
-            return 'manual';
+        if (in_array($value, $optionIds, true) || in_array($gatewayId, $gatewayIds, true)) {
+            return $gatewayId;
         }
 
         throw ValidationException::withMessages([

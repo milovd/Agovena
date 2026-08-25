@@ -14,7 +14,6 @@ declare(strict_types=1);
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -36,7 +35,6 @@ test('representative store survives upgrade from pre-custom-properties schema', 
     Artisan::call('migrate');
 
     installAndEnableModule('inventory');
-    installAndEnableExtension('manual-payment');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $staff = $this->createStaff();
@@ -95,7 +93,6 @@ test('representative store survives upgrade from pre-custom-properties schema', 
         'invoice_number' => $invoice->number,
         'invoice_total' => $invoice->total_amount,
         'module_inventory' => app(ModuleManager::class)->isEnabled('inventory'),
-        'extension_manual' => app(ExtensionManager::class)->isEnabled('manual-payment'),
     ];
 
     Schema::dropIfExists('customer_property_values');
@@ -138,6 +135,5 @@ test('representative store survives upgrade from pre-custom-properties schema', 
         ->and(Payment::query()->whereKey($fingerprint['payment_id'])->value('amount'))->toBe($fingerprint['payment_amount'])
         ->and(Invoice::query()->whereKey($fingerprint['invoice_id'])->value('number'))->toBe($fingerprint['invoice_number'])
         ->and(Invoice::query()->whereKey($fingerprint['invoice_id'])->value('total_amount'))->toBe($fingerprint['invoice_total'])
-        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue()
-        ->and(app(ExtensionManager::class)->isEnabled('manual-payment'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue();
 });

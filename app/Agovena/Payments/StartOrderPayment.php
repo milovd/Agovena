@@ -7,7 +7,6 @@ namespace App\Agovena\Payments;
 use App\Agovena\Invoices\AssertInvoiceCanBePaid;
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
-use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
@@ -112,7 +111,6 @@ final class StartOrderPayment
     private function coreFallback(string $gatewayId): ?PaymentGateway
     {
         return match ($gatewayId) {
-            'manual' => app(ManualPaymentGateway::class),
             'development' => (bool) config('agovena.payments.allow_development_instant_pay')
                 ? app(DevelopmentPaymentGateway::class)
                 : null,

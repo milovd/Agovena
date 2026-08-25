@@ -12,6 +12,7 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
+use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\ReconcilePaymentStatus;
@@ -39,6 +40,7 @@ uses(CreatesStaff::class);
 
 function enableMollie(?FakeMollieApi $api = null): FakeMollieApi
 {
+    app(ExtensionManager::class)->discover();
     $api ??= new FakeMollieApi;
     app()->instance(MollieApi::class, $api);
     installAndEnableExtension('mollie');
@@ -385,15 +387,14 @@ test('mollie health check validates credentials without exposing the key', funct
         ->and($api->methods)->not->toBeEmpty();
 });
 
-test('manual and development gateways still work with mollie installed', function () {
+test('development gateway still works alongside mollie when enabled', function () {
     enableMollie();
     config(['agovena.payments.allow_development_instant_pay' => true]);
-    installAndEnableExtension('manual-payment');
+    app(PaymentGatewayRegistry::class)->register(app(DevelopmentPaymentGateway::class));
 
     $ids = app(AvailablePaymentMethods::class)->ids();
 
-    expect($ids)->toContain('manual')
-        ->and($ids)->toContain('development')
+    expect($ids)->toContain('development')
         ->and($ids)->toContain('mollie:ideal');
 });
 

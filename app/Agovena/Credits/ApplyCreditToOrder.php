@@ -20,14 +20,14 @@ final class ApplyCreditToOrder
         $amount = min(
             $maximumAmount,
             $order->total_amount,
-            $this->ledger->balance($customer, $order->currency),
+            $this->ledger->available($customer, $order->currency),
         );
 
         if ($amount < 1) {
             return 0;
         }
 
-        $this->ledger->debit($customer, $amount, 'order_credit', $order);
+        $this->ledger->reserve($customer, $amount, $order);
 
         return $amount;
     }

@@ -13,13 +13,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $customer_id
  * @property string $currency
  * @property int $balance_amount
+ * @property int $reserved_amount
  */
-#[Fillable(['customer_id', 'currency', 'balance_amount'])]
+#[Fillable(['customer_id', 'currency', 'balance_amount', 'reserved_amount'])]
 class CustomerCreditAccount extends Model
 {
     protected function casts(): array
     {
-        return ['balance_amount' => 'integer'];
+        return [
+            'balance_amount' => 'integer',
+            'reserved_amount' => 'integer',
+        ];
     }
 
     public function customer(): BelongsTo

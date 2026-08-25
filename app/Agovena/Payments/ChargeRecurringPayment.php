@@ -10,7 +10,6 @@ use App\Agovena\Payments\Contracts\ChargesRecurringPayments;
 use App\Agovena\Payments\Contracts\OffersReusablePaymentAuthorization;
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
-use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
@@ -270,7 +269,6 @@ final class ChargeRecurringPayment
         }
 
         return match ($gatewayId) {
-            'manual' => app(ManualPaymentGateway::class),
             'development' => (bool) config('agovena.payments.allow_development_instant_pay')
                 ? app(DevelopmentPaymentGateway::class)
                 : null,

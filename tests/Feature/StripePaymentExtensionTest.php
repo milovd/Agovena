@@ -17,6 +17,7 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
+use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\ReconcilePaymentStatus;
@@ -48,6 +49,7 @@ const STRIPE_WEBHOOK_SECRET = 'whsec_test_secret_not_real';
 
 function enableStripe(?FakeStripeApi $api = null): FakeStripeApi
 {
+    app(ExtensionManager::class)->discover();
     $api ??= new FakeStripeApi;
     app()->instance(StripeApi::class, $api);
     installAndEnableExtension('stripe');
@@ -416,15 +418,14 @@ test('stripe health check validates credentials without exposing the key', funct
         ->and($api->balanceCalls)->toBe(1);
 });
 
-test('manual and development gateways still work with stripe installed', function () {
+test('development gateway still works alongside stripe when enabled', function () {
     enableStripe();
     config(['agovena.payments.allow_development_instant_pay' => true]);
-    installAndEnableExtension('manual-payment');
+    app(PaymentGatewayRegistry::class)->register(app(DevelopmentPaymentGateway::class));
 
     $ids = app(AvailablePaymentMethods::class)->ids();
 
-    expect($ids)->toContain('manual')
-        ->and($ids)->toContain('development')
+    expect($ids)->toContain('development')
         ->and($ids)->toContain('stripe:card');
 });
 

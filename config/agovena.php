@@ -62,7 +62,6 @@ return [
                 'subscriptions' => ['kind' => 'module', 'path' => 'modules/subscriptions'],
                 'provisioning' => ['kind' => 'module', 'path' => 'modules/provisioning'],
                 'events' => ['kind' => 'module', 'path' => 'modules/events'],
-                'manual-payment' => ['kind' => 'extension', 'path' => 'extensions/payments/manual-payment'],
                 'mollie' => ['kind' => 'extension', 'path' => 'extensions/payments/mollie'],
                 'stripe' => ['kind' => 'extension', 'path' => 'extensions/payments/stripe'],
                 'paypal' => ['kind' => 'extension', 'path' => 'extensions/payments/paypal'],

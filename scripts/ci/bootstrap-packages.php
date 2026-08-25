@@ -26,7 +26,7 @@ $profile = $argv[1] ?? 'smoke';
 $moduleKeys = $profile === 'e2e'
     ? ['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', 'events']
     : ['inventory'];
-$extensionKeys = ['manual-payment'];
+$extensionKeys = [];
 
 $installer = app(PackageInstaller::class);
 $modules = app(ModuleManager::class);

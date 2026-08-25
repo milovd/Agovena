@@ -3,6 +3,8 @@
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Payments\Gateways\ManualPaymentGateway;
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use Tests\MultiProcessTestCase;
 use Tests\TestCase;
 use Tests\UpgradeTestCase;
@@ -39,6 +41,21 @@ function installAndEnableExtension(string $id): ExtensionManager
     return $extensions;
 }
 
+/**
+ * Feature tests historically place unpaid orders then call RecordManualPayment.
+ * Register the core ManualPaymentGateway in the test registry only — it is not a
+ * storefront product and is not offered when real payment extensions are enabled.
+ */
+function registerTestPendingPaymentGateway(): void
+{
+    $registry = app(PaymentGatewayRegistry::class);
+    if ($registry->all() !== []) {
+        return;
+    }
+
+    $registry->register(app(ManualPaymentGateway::class));
+}
+
 pest()->extend(TestCase::class)->in('Feature', 'Unit', 'Concurrency', 'Performance');
 pest()->extend(MultiProcessTestCase::class)->in('MultiProcess');
 pest()->extend(UpgradeTestCase::class)->in('Upgrade');
@@ -54,6 +71,10 @@ pest()->beforeEach(function (): void {
         $state->markInstalled();
     }
 })->in('Feature', 'Concurrency', 'Performance', 'MultiProcess');
+
+pest()->beforeEach(function (): void {
+    registerTestPendingPaymentGateway();
+})->in('Feature', 'Concurrency', 'MultiProcess', 'Upgrade', 'Performance');
 
 pest()->beforeEach(function (): void {
     if (config('database.default') !== 'mysql') {

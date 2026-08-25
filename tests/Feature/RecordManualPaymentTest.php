@@ -3,6 +3,8 @@
 use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Payments\Gateways\ManualPaymentGateway;
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -15,6 +17,27 @@ use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
+
+function createPendingOrder(): Order
+{
+    config(['agovena.payments.allow_development_instant_pay' => false]);
+    if (! app(PaymentGatewayRegistry::class)->has('manual')) {
+        app(PaymentGatewayRegistry::class)
+            ->register(app(ManualPaymentGateway::class));
+    }
+
+    $product = Product::factory()->active()->create(['price_amount' => 2500]);
+    $cart = app(CartService::class);
+    $cart->clear();
+    $cart->add($product->id, 1);
+
+    return app(PlaceOrder::class)->handle([
+        'customer_name' => 'Buyer',
+        'customer_email' => 'buyer-'.Str::lower(Str::random(6)).'@example.test',
+        'payment_method' => 'manual',
+        'idempotency_key' => (string) Str::uuid(),
+    ]);
+}
 
 test('staff with permission can record manual payment', function () {
     $staff = $this->createStaff();
@@ -90,17 +113,3 @@ test('admin order detail shows record payment action for pending payments', func
         ->assertOk()
         ->assertSee('Record payment', false);
 });
-
-function createPendingOrder(): Order
-{
-    $product = Product::factory()->active()->create(['price_amount' => 1200]);
-    $cart = app(CartService::class);
-    $cart->clear();
-    $cart->add($product->id, 1);
-
-    return app(PlaceOrder::class)->handle([
-        'customer_name' => 'Pay Me',
-        'customer_email' => 'pay@example.com',
-        'idempotency_key' => (string) Str::uuid(),
-    ]);
-}
