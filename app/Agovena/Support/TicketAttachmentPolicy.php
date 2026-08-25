@@ -9,7 +9,7 @@ use Illuminate\Validation\ValidationException;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
- * Hardening against Paymenter-style ticket upload RCE (CVE-2025-58048):
+ * Harden ticket uploads against remote code execution (CVE-2025-58048):
  * whitelist only, private disk, never trust client MIME/filename alone.
  */
 final class TicketAttachmentPolicy
