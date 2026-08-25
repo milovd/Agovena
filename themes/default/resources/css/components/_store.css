@@ -1380,10 +1380,6 @@ button.store-header__utility[aria-expanded="true"] {
   z-index: 50;
 }
 
-.store-drawer--with-usp {
-  top: calc(var(--theme-header-h) + 3rem);
-}
-
 .store-drawer--enter,
 .store-drawer--leave {
   transition: opacity 180ms ease;
@@ -1411,7 +1407,7 @@ button.store-header__utility[aria-expanded="true"] {
   right: 0;
   bottom: 0;
   left: auto;
-  width: clamp(17rem, 40vw, 26rem);
+  width: clamp(18rem, 46vw, 30rem);
   background: var(--theme-color-surface);
   padding: var(--theme-space-5);
   display: flex;

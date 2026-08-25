@@ -22,5 +22,7 @@ test('mobile storefront navigation keeps close and search above the drawer nav',
         ->and(substr_count($html, 'id="store-drawer-search"'))->toBe(1)
         ->and(substr_count($html, 'class="store-header__menu-x"'))->toBe(1)
         ->and(substr_count($html, 'class="store-drawer__close"'))->toBe(0)
-        ->and(substr_count($html, 'store-header__search-wrap--mobile'))->toBe(0);
+        ->and(substr_count($html, 'store-header__search-wrap--mobile'))->toBe(0)
+        ->and(substr_count($html, 'drawerTop: 0'))->toBe(1)
+        ->and(substr_count($html, ":style=\"'top: ' + drawerTop + 'px'\""))->toBe(1);
 });

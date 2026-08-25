@@ -65,6 +65,7 @@
     class="store-chrome"
     x-data="{
         navOpen: false,
+        drawerTop: 0,
         catsOpen: false,
         activeCat: null,
         suggestOpen: false,
@@ -77,6 +78,13 @@
             searching: @js(__('storefront.search.searching')),
             noMatches: @js(__('storefront.search.no_matches')),
             viewAll: @js(__('storefront.search.view_all')),
+        },
+        updateDrawerTop() {
+            const header = this.$root.querySelector('.store-header');
+            this.drawerTop = header ? Math.round(header.getBoundingClientRect().bottom) : 0;
+        },
+        init() {
+            this.$nextTick(() => this.updateDrawerTop());
         },
         async runSuggest() {
             const q = (this.suggestQuery || '').trim();
@@ -115,13 +123,14 @@
         }
     }"
     @keydown.escape.window="navOpen = false; catsOpen = false; suggestOpen = false"
+    @resize.window="updateDrawerTop()"
 >
     <div class="store-header">
         <div class="store-header__inner">
             <button
                 type="button"
                 class="store-header__menu"
-                @click="navOpen = !navOpen"
+                @click="updateDrawerTop(); navOpen = !navOpen"
                 :aria-expanded="navOpen.toString()"
                 x-bind:aria-label='navOpen ? {!! e(json_encode(__('storefront.close'))) !!} : {!! e(json_encode(__('storefront.menu'))) !!}'
                 aria-controls="store-mobile-nav"
@@ -376,7 +385,8 @@
 
     <div
         id="store-mobile-nav"
-        class="store-drawer{{ $uspItems !== [] ? ' store-drawer--with-usp' : '' }}"
+        class="store-drawer"
+        :style="'top: ' + drawerTop + 'px'"
         x-show="navOpen"
         x-cloak
         x-transition:enter="store-drawer--enter"
