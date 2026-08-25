@@ -1,4 +1,4 @@
-# Support matrix (v0.1)
+# Support matrix (v0.0.1)
 
 Statuses:
 
@@ -32,6 +32,7 @@ Statuses:
 |------|--------|
 | `scripts/build-release.sh` tarball with `vendor/` + `public/build` | VALIDATED |
 | Extracted-artifact install smoke | VALIDATED |
+| Artifact SQLite backup/restore smoke | VALIDATED for release smoke only |
 | optional-packages monorepo install path (CI checkout) | VALIDATED |
 
 ## Payment / shipping / provisioning providers
@@ -43,6 +44,8 @@ Statuses:
 | Mollie Extension | MOCK-TESTED ONLY - needs `test_` key for SANDBOX-VERIFIED |
 | Stripe Extension | MOCK-TESTED ONLY |
 | PayPal Extension | MOCK-TESTED ONLY |
+| Paddle Extension | MOCK-TESTED ONLY - first-party adapter implemented; sandbox credentials not run |
+| Tebex Extension | MOCK-TESTED ONLY - first-party adapter implemented; sandbox credentials not run |
 | PostNL Extension | MOCK-TESTED ONLY |
 | Pterodactyl Extension | MOCK-TESTED ONLY |
 | Proxmox VE Extension | MOCK-TESTED ONLY |
@@ -62,7 +65,7 @@ Attribution and license notes: [ATTRIBUTION.md](ATTRIBUTION.md).
 
 ## Known RC limitations
 
-- One real sandbox payment proof (Mollie) is the target for first RC; other providers stay mock-tested
+- One real sandbox payment proof is the target for the first release; other providers stay mock-tested
 - Docker optional/unverified
 - No broad OS matrix beyond Ubuntu 24.04 CI
 - Minimal dunning; no reserved seating; no OAuth/Admin API

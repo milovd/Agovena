@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fail if a staged Agovena release tree contains secrets, tests, or missing assets.
-# Usage: ./scripts/assert-release-contents.sh /path/to/agovena-0.1.0
+# Usage: ./scripts/assert-release-contents.sh /path/to/agovena-0.0.1
 
 set -euo pipefail
 
@@ -25,6 +25,7 @@ fi
 [[ -f "$ROOT/scripts/native-deploy-smoke.sh" ]] || fail "native-deploy-smoke.sh missing"
 [[ -f "$ROOT/scripts/ci/native-order-smoke.php" ]] || fail "native-order-smoke.php missing"
 [[ -f "$ROOT/scripts/ci/native-queue-proof.php" ]] || fail "native-queue-proof.php missing"
+[[ -f "$ROOT/scripts/smoke-backup-restore.sh" ]] || fail "smoke-backup-restore.sh missing"
 [[ -f "$ROOT/INSTALL.md" ]] || fail "INSTALL.md missing"
 [[ -f "$ROOT/SUPPORT.md" ]] || fail "SUPPORT.md missing"
 
@@ -36,6 +37,7 @@ for bad in \
   "$ROOT/e2e" \
   "$ROOT/docs" \
   "$ROOT/.cursor" \
+  "$ROOT/public/storage" \
   "$ROOT/database/database.sqlite"
 do
   [[ ! -e "$bad" ]] || fail "must not include: $bad"

@@ -5,10 +5,10 @@ All notable public releases will be documented here.
 Format: product capability, fixes, migrations, security notes, upgrade steps, known limitations.
 Internal planning labels and agent workflow are not recorded.
 
-Planned first public candidate tag (not created until explicitly approved): **v0.1.0-rc.1**.
-Application version source: `config('agovena.version')` → currently `0.1.0`.
+Planned first public tag (not created until explicitly approved): **v0.0.1**.
+Application version source: `config('agovena.version')` → currently `0.0.1`.
 
-## Unreleased (toward 0.1.0 / v0.1.0-rc.1)
+## Unreleased (toward 0.0.1)
 
 ### Added
 

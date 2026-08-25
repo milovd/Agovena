@@ -77,7 +77,7 @@ final class GitMonorepoCheckout implements MonorepoCheckout
 
     private function originMatches(string $checkoutRoot, string $repositoryUrl): bool
     {
-        $process = new Process(['git', 'remote', 'get-url', 'origin'], $checkoutRoot, timeout: 30.0);
+        $process = new Process(['git', '-c', 'core.longpaths=true', 'remote', 'get-url', 'origin'], $checkoutRoot, timeout: 30.0);
         $process->run();
         if (! $process->isSuccessful()) {
             return false;
@@ -101,7 +101,7 @@ final class GitMonorepoCheckout implements MonorepoCheckout
      */
     private function run(array $arguments, string $workingDir): void
     {
-        $command = array_merge(['git'], $arguments);
+        $command = array_merge(['git', '-c', 'core.longpaths=true'], $arguments);
         $process = new Process($command, $workingDir, timeout: (float) config('agovena.packages.composer_timeout', 180));
         $process->run();
 

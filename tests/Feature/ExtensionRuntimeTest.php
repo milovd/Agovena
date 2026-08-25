@@ -79,7 +79,7 @@ test('extension manifest validation rejects unknown category', function () {
 
 test('extension enable fails when platform version is incompatible', function () {
     app(ExtensionManager::class)->install('mollie');
-    config(['agovena.version' => '0.0.1']);
+    config(['agovena.version' => '0.1.0']);
 
     expect(fn () => app(ExtensionManager::class)->enable('mollie'))
         ->toThrow(ValidationException::class);

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
+use App\Agovena\Payments\Contracts\ValidatesWebhookPayload;
 use App\Models\PaymentAttempt;
 use App\Models\PaymentWebhookEvent;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -44,7 +45,7 @@ final class HandlePaymentWebhook
 
         $event = $this->findOrCreateEvent($gatewayId, $externalEventId, $payload->externalPaymentId, $payload->status->value, $payload->raw);
 
-        $processed = DB::transaction(function () use ($event, $payload, $gatewayId): array {
+        $processed = DB::transaction(function () use ($event, $payload, $gatewayId, $gateway): array {
             /** @var PaymentWebhookEvent $locked */
             $locked = PaymentWebhookEvent::query()->whereKey($event->id)->lockForUpdate()->firstOrFail();
             if (in_array($locked->processing_status, ['processed', 'ignored'], true)) {
@@ -58,6 +59,27 @@ final class HandlePaymentWebhook
                     ->where('external_id', $payload->externalPaymentId)
                     ->lockForUpdate()
                     ->first();
+
+                if ($attempt !== null && $gateway instanceof ValidatesWebhookPayload && ! $gateway->validateWebhookPayload($attempt, $payload)) {
+                    $locked->processing_status = 'ignored';
+                    $locked->processed_at = now();
+                    $locked->save();
+                    Log::warning('payment.webhook.payload_mismatch', [
+                        'gateway_id' => $gatewayId,
+                        'external_payment_id' => $payload->externalPaymentId,
+                        'webhook_event_id' => $locked->id,
+                    ]);
+
+                    return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
+                }
+
+                if ($attempt === null && $gateway instanceof ValidatesWebhookPayload) {
+                    $locked->processing_status = 'ignored';
+                    $locked->processed_at = now();
+                    $locked->save();
+
+                    return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
+                }
 
                 if ($attempt !== null) {
                     $result = $this->applyStatus->handle($attempt, $payload->status);

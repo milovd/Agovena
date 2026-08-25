@@ -6,7 +6,7 @@ return [
     /*
      * Platform version for Extension/Module compatibility constraints.
      */
-    'version' => '0.1.0',
+    'version' => '0.0.1',
 
     /*
      * Available UI locales. Add a matching lang/{code}/ directory, then list

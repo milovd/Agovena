@@ -105,6 +105,60 @@ Report string when missing: **READY FOR MOLLIE TEST API KEY**
 
 ---
 
+## Paddle Billing (first-party Extension)
+
+Status: **MOCK-TESTED ONLY**. The adapter supports hosted transactions, idempotent transaction creation, signed webhooks, status sync and full refund adjustments. Recurring subscription lifecycle is not yet exposed through Agovena's recurring capability, and partial refunds are deliberately rejected.
+
+### Required input
+
+| What | Where |
+|------|--------|
+| Paddle Billing sandbox API key | Admin -> Extensions -> Paddle, or env `AGOVENA_EXT_PADDLE_API_KEY` |
+| Paddle notification destination secret | Admin -> Extensions -> Paddle, or env `AGOVENA_EXT_PADDLE_WEBHOOK_SECRET` |
+| Product-to-price JSON map | Admin -> Extensions -> Paddle, or env `AGOVENA_EXT_PADDLE_PRICE_MAP` |
+| Reachable HTTPS webhook | `https://<your-host>/webhooks/payments/paddle` |
+
+### Checklist
+
+- [ ] Sandbox API health check succeeds without secret leakage
+- [ ] Product mapping creates a hosted Paddle transaction
+- [ ] `transaction.paid` webhook confirms the Agovena payment
+- [ ] Duplicate webhook remains idempotent
+- [ ] Invalid or stale `Paddle-Signature` is rejected
+- [ ] Full refund adjustment works in sandbox
+- [ ] Partial refund is rejected explicitly
+- [ ] Missing price mapping fails before creating a transaction
+
+---
+
+## Tebex Checkout (first-party Extension)
+
+Status: **MOCK-TESTED ONLY**. The adapter supports Checkout baskets, configured package mapping, signed webhooks, status sync and full refunds. Partial refunds and recurring payment lifecycle are not exposed through the first release capability surface.
+
+### Required input
+
+| What | Where |
+|------|--------|
+| Tebex project ID | Admin -> Extensions -> Tebex, or env `AGOVENA_EXT_TEBEX_PROJECT_ID` |
+| Tebex Checkout secret | Admin -> Extensions -> Tebex, or env `AGOVENA_EXT_TEBEX_SECRET_KEY` |
+| Tebex webhook secret | Admin -> Extensions -> Tebex, or env `AGOVENA_EXT_TEBEX_WEBHOOK_SECRET` |
+| Product-to-package JSON map | Admin -> Extensions -> Tebex, or env `AGOVENA_EXT_TEBEX_PACKAGE_MAP` |
+| Reachable HTTPS webhook | `https://<your-host>/webhooks/payments/tebex` |
+
+### Checklist
+
+- [ ] Configuration health check succeeds without secret leakage
+- [ ] Product mapping creates a basket and hosted checkout URL
+- [ ] `payment.completed` webhook confirms the Agovena payment
+- [ ] `payment.refunded` webhook maps to refunded status
+- [ ] Duplicate webhook remains idempotent
+- [ ] Invalid `X-Signature` is rejected
+- [ ] Full refund works in sandbox
+- [ ] Partial refund is rejected explicitly
+- [ ] Missing package mapping fails before adding a package
+
+---
+
 ## Stripe (Payment Extension)
 
 Status: **MOCK-TESTED ONLY** (not required for first RC if Mollie is SANDBOX-VERIFIED).

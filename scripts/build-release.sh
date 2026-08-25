@@ -7,7 +7,19 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 OUT_DIR="${1:-$ROOT/dist}"
-VERSION="0.1.0"
+VERSION="0.0.1"
+
+# Git Bash exposes POSIX paths, but native Windows npm/composer expect drive-letter paths.
+# Keep POSIX paths for Bash/tar and convert only arguments sent to native tools.
+native_path() {
+  if command -v cygpath >/dev/null 2>&1; then
+    cygpath -w "$1"
+  else
+    printf '%s\n' "$1"
+  fi
+}
+
+NATIVE_ROOT="$(native_path "$ROOT")"
 version_re="'version'[[:space:]]*=>[[:space:]]*'([^']+)'"
 while IFS= read -r line || [[ -n "$line" ]]; do
   if [[ "$line" =~ $version_re ]]; then
@@ -28,9 +40,9 @@ trap 'rm -rf "$(dirname "$STAGING")"' EXIT
 
 echo "==> Building frontend assets in source tree (version=$VERSION)..."
 if [[ ! -d "$ROOT/node_modules" ]]; then
-  npm --prefix "$ROOT" ci
+  npm --prefix "$NATIVE_ROOT" ci
 fi
-npm --prefix "$ROOT" run build
+npm --prefix "$NATIVE_ROOT" run build
 
 if [[ ! -f "$ROOT/public/build/manifest.json" && ! -f "$ROOT/public/build/.vite/manifest.json" ]]; then
   echo "ERROR: public/build manifest missing after npm run build" >&2
@@ -54,6 +66,7 @@ tar -C "$ROOT" \
   --exclude='./storage/framework/views' \
   --exclude='./storage/app/private' \
   --exclude='./storage/app/public' \
+  --exclude='./public/storage' \
   --exclude='./.env' \
   --exclude='./.env.local' \
   --exclude='./.env.production' \
@@ -95,10 +108,18 @@ mkdir -p \
 : > "$STAGING/bootstrap/cache/.gitignore"
 
 echo "==> Installing production Composer dependencies into staging..."
-if ! command -v composer >/dev/null 2>&1; then
-  echo "::error::composer not found on PATH"
-  exit 1
+if command -v composer >/dev/null 2>&1; then
+  COMPOSER=(composer)
+else
+  COMPOSER_PHAR_PATH="${COMPOSER_PHAR:-${LOCALAPPDATA:-}/Programs/Composer/composer.phar}"
+  if [[ -f "$COMPOSER_PHAR_PATH" ]]; then
+    COMPOSER=(php "$(native_path "$COMPOSER_PHAR_PATH")")
+  else
+    echo "::error::composer not found on PATH and Composer PHAR is missing: $COMPOSER_PHAR_PATH" >&2
+    exit 1
+  fi
 fi
+NATIVE_STAGING="$(native_path "$STAGING")"
 # Avoid default-sqlite side effects during package:discover (no merchant .env yet).
 printf '%s\n' \
   'APP_KEY=' \
@@ -108,12 +129,12 @@ printf '%s\n' \
   'DB_HOST=127.0.0.1' \
   'DB_DATABASE=agovena' \
   > "$STAGING/.env"
-composer install \
+"${COMPOSER[@]}" install \
   --no-dev \
   --optimize-autoloader \
   --no-interaction \
   --prefer-dist \
-  --working-dir="$STAGING"
+  --working-dir="$NATIVE_STAGING"
 rm -f "$STAGING/.env"
 
 # package:discover may still create a default SQLite file; never ship local DBs.

@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "description": "Fixture Module whose migrations intentionally fail.",
     "author": "Agovena",
-    "agovena": "^0.1",
+    "agovena": "^0.0.1",
     "provider": "Agovena\\Modules\\BrokenMigrate\\BrokenMigrateServiceProvider",
     "dependencies": [],
     "autoload": {

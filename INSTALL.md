@@ -1,4 +1,4 @@
-# Install Agovena (v0.1)
+# Install Agovena (v0.0.1)
 
 Native Linux (Ubuntu) is the primary production path. Docker is optional.
 
@@ -66,6 +66,10 @@ systemctl restart agovena-queue.service
 Never use `migrate:fresh` on a live store. Take a MariaDB dump plus `storage/app/{private,public}` and `.env` before upgrading. MariaDB DDL is not fully transactional - a mid-upgrade failure needs an operator restore from backup, not a fake “rollback” button.
 
 `agovena:upgrade` also migrates installed Extensions when applicable.
+
+## Backup and restore verification
+
+The release smoke includes `scripts/smoke-backup-restore.sh`. It performs a temporary SQLite artifact roundtrip for `.env`, the database, `storage/app/private`, and `storage/app/public`, then runs `agovena:doctor`. This proves the extracted artifact path only; production operators must still back up the MariaDB dump and storage directories using their own protected backup system.
 
 ## HTTPS
 
