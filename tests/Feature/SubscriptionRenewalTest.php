@@ -18,6 +18,7 @@ use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductPlanChange;
 use Carbon\CarbonImmutable;
@@ -84,6 +85,54 @@ test('scheduler creates one renewal order per due period and is idempotent', fun
         ->and($subscription->fresh()->status)->toBe(SubscriptionStatus::PastDue);
 });
 
+test('scheduler consolidates active services into one prorated renewal invoice', function () {
+    enableSubscriptionsForRenewal();
+    $this->travelTo(CarbonImmutable::parse('2026-09-01 10:00:00'));
+
+    $first = paidSubscription();
+    $customer = $first->customer()->firstOrFail();
+    $secondProduct = Product::factory()->active()->create(['price_amount' => 1999]);
+    app(ProductCapabilityManager::class)->enable($secondProduct, 'subscribable', [
+        'interval' => 'month',
+        'interval_count' => 1,
+        'trial_days' => 0,
+    ]);
+
+    app(CartService::class)->add($secondProduct->id, 1);
+    $secondOrder = app(PlaceOrder::class)->handle([
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+        'customer_id' => $customer->id,
+        'billing' => renewalBilling(),
+    ]);
+    app(RecordManualPayment::class)->handle($secondOrder, test()->createStaff());
+    $second = Subscription::query()->where('order_id', $secondOrder->id)->firstOrFail();
+    $second->forceFill([
+        'current_period_start' => '2026-09-04 10:00:00',
+        'current_period_end' => '2026-10-04 10:00:00',
+        'next_billing_at' => '2026-10-04 10:00:00',
+    ])->save();
+
+    $due = CarbonImmutable::parse('2026-10-01 10:00:00');
+    $this->travelTo($due);
+    app(SubscriptionService::class)->processDue($due);
+
+    $renewals = SubscriptionRenewal::query()->with('order')->orderBy('id')->get();
+    $renewalOrder = Order::query()->whereKey($renewals->firstOrFail()->order_id)->with('items')->firstOrFail();
+
+    expect($renewals)->toHaveCount(2)
+        ->and(Order::query()->where('idempotency_key', 'like', 'consolidated-renewal:%')->count())->toBe(1)
+        ->and(Invoice::query()->where('order_id', $renewalOrder->id)->count())->toBe(1)
+        ->and($renewalOrder->items)->toHaveCount(2)
+        ->and($renewalOrder->due_at?->toDateString())->toBe($due->toDateString())
+        ->and($renewalOrder->total_amount)->toBe(3798);
+
+    app(RecordManualPayment::class)->handle($renewalOrder, $this->createStaff());
+
+    expect(SubscriptionRenewal::query()->where('status', RenewalStatus::Paid)->count())->toBe(2)
+        ->and($first->fresh()->current_period_start?->toDateString())->toBe($due->toDateString())
+        ->and($second->fresh()->current_period_start?->toDateString())->toBe($due->toDateString());
+});
 test('scheduler ends a subscription that is cancelled at period end instead of renewing', function () {
     enableSubscriptionsForRenewal();
     $subscription = paidSubscription();

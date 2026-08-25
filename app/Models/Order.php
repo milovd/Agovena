@@ -7,6 +7,7 @@ namespace App\Models;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\OrderFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -27,6 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int $subtotal_amount
  * @property int $total_amount
  * @property string $currency
+ * @property CarbonInterface|null $due_at
  * @property string|null $idempotency_key
  * @property string|null $storefront_token
  * @property-read Collection<int, OrderItem> $items
@@ -70,6 +72,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'tax_rate_bps',
     'total_amount',
     'currency',
+    'due_at',
     'idempotency_key',
     'custom_properties_snapshot',
 ])]
@@ -110,6 +113,7 @@ class Order extends Model
             'custom_properties_snapshot' => 'array',
             'total_amount' => 'integer',
             'shipping_same_as_billing' => 'boolean',
+            'due_at' => 'datetime',
         ];
     }
 

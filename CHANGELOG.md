@@ -27,6 +27,7 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 - Release artifact build (`scripts/build-release.sh`) with production Composer deps and prebuilt `public/build`
 - Native Ubuntu Nginx/PHP-FPM deploy smoke scripts and CI jobs (queue worker, scheduler heartbeat, restart)
 - Multi-process MariaDB race coverage for refunds, credit notes, renewals, ticket check-in, and provisioning dispatch
+- Core consolidated recurring billing for active subscriptions: one customer/currency/gateway renewal order and invoice with integer-day proration
 - Representative MariaDB upgrade rehearsal and large-data list sanity
 - Operator docs: `INSTALL.md`, `SUPPORT.md`, `deploy/LIVE_PROVIDER_CHECKS.md`, expanded `deploy/README.md`
 - `php artisan agovena:verify-providers [extension] [--sandbox]` connection checks (never creates charges)

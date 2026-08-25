@@ -64,7 +64,7 @@ final class IssueInvoiceFromOrder
                 'merchant_address' => $this->nullableString($this->settings->get('store', 'seller_address')),
                 'issued_at' => now()->toDateString(),
                 'paid_at' => $status === InvoiceStatus::Paid ? ($locked->payment->paid_at ?? now()) : null,
-                'due_at' => null,
+                'due_at' => $locked->due_at?->toDateString(),
                 'subtotal_amount' => $locked->subtotal_amount,
                 'discount_amount' => $locked->discount_amount,
                 'credit_amount' => (int) $locked->credit_amount,
