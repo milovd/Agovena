@@ -283,7 +283,7 @@ test('customer security can revoke other database sessions', function () {
 
     $sessions = app(ManageUserSessions::class);
     expect($sessions->listFor($user, $currentId))->toHaveCount(1)
-        ->and($sessions->listFor($user, $currentId)->first()['id'])->toBe('other-session-id');
+        ->and($sessions->listFor($user, $currentId)[0]['id'])->toBe('other-session-id');
 
     Livewire::actingAs($user)
         ->test(Security::class)

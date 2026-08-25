@@ -6,7 +6,6 @@ namespace App\Agovena\Auth;
 
 use App\Models\User;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -18,41 +17,36 @@ final class ManageUserSessions
     }
 
     /**
-     * @return Collection<int, array{
-     *     id: string,
-     *     ip_address: string|null,
-     *     user_agent: string|null,
-     *     last_activity: Carbon,
-     *     is_current: bool,
-     *     device_label: string
-     * }>
+     * @return list<array{id: string, ip_address: string|null, user_agent: string|null, last_activity: Carbon, is_current: bool, device_label: string}>
      */
-    public function listFor(User $user, ?string $currentSessionId = null): Collection
+    public function listFor(User $user, ?string $currentSessionId = null): array
     {
         if (! $this->usesDatabaseDriver()) {
-            return collect();
+            return [];
         }
 
         $currentSessionId ??= session()->getId();
 
-        return DB::connection(config('session.connection'))
-            ->table(config('session.table', 'sessions'))
-            ->where('user_id', $user->id)
-            ->orderByDesc('last_activity')
-            ->get(['id', 'ip_address', 'user_agent', 'last_activity'])
-            ->map(function (object $row) use ($currentSessionId): array {
-                $agent = is_string($row->user_agent) ? $row->user_agent : null;
+        $sessions = [];
+        foreach (
+            DB::connection(config('session.connection'))
+                ->table(config('session.table', 'sessions'))
+                ->where('user_id', $user->id)
+                ->orderByDesc('last_activity')
+                ->get(['id', 'ip_address', 'user_agent', 'last_activity']) as $row
+        ) {
+            $agent = is_string($row->user_agent) ? $row->user_agent : null;
+            $sessions[] = [
+                'id' => (string) $row->id,
+                'ip_address' => is_string($row->ip_address) ? $row->ip_address : null,
+                'user_agent' => $agent,
+                'last_activity' => Carbon::createFromTimestamp((int) $row->last_activity),
+                'is_current' => (string) $row->id === (string) $currentSessionId,
+                'device_label' => $this->deviceLabel($agent),
+            ];
+        }
 
-                return [
-                    'id' => (string) $row->id,
-                    'ip_address' => is_string($row->ip_address) ? $row->ip_address : null,
-                    'user_agent' => $agent,
-                    'last_activity' => Carbon::createFromTimestamp((int) $row->last_activity),
-                    'is_current' => (string) $row->id === (string) $currentSessionId,
-                    'device_label' => $this->deviceLabel($agent),
-                ];
-            })
-            ->values();
+        return $sessions;
     }
 
     public function revoke(User $user, string $sessionId, ?string $currentSessionId = null): bool
@@ -96,9 +90,9 @@ final class ManageUserSessions
 
         $browser = match (true) {
             Str::contains($userAgent, 'Edg/') => 'Edge',
-            Str::contains($userAgent, 'Chrome/') && ! Str::contains($userAgent, 'Edg/') => 'Chrome',
+            Str::contains($userAgent, 'Chrome/') => 'Chrome',
             Str::contains($userAgent, 'Firefox/') => 'Firefox',
-            Str::contains($userAgent, 'Safari/') && ! Str::contains($userAgent, 'Chrome/') => 'Safari',
+            Str::contains($userAgent, 'Safari/') => 'Safari',
             default => __('customer.security.session_unknown_device'),
         };
 
@@ -111,6 +105,6 @@ final class ManageUserSessions
             default => null,
         };
 
-        return $platform !== null ? "{$browser} · {$platform}" : $browser;
+        return $platform !== null ? "{$browser} / {$platform}" : $browser;
     }
 }

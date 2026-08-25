@@ -149,7 +149,7 @@ test('currency sync updates rates from frankfurter market api', function () {
         ->test(Index::class)
         ->call('syncRates')
         ->assertHasNoErrors()
-        ->assertSee('Updated 2 rate(s) from Frankfurter', false);
+        ->assertSee(__('admin.currencies.flash.rates_synced', ['count' => 2, 'base' => 'EUR']), false);
 
     expect(Currency::query()->where('code', 'USD')->value('exchange_rate'))->toBe('1.12345678')
         ->and(Currency::query()->where('code', 'EUR')->value('exchange_rate'))->toBe('1.00000000');
@@ -182,8 +182,10 @@ test('currency sync surfaces frankfurter http failures', function () {
     Livewire::actingAs($staff)
         ->test(Index::class)
         ->call('syncRates')
-        ->assertSee('Could not sync exchange rates', false)
-        ->assertSee('HTTP 503', false);
+        ->assertHasNoErrors()
+        ->assertSee(__('admin.currencies.flash.rates_sync_failed_detail', [
+            'reason' => 'Could not fetch exchange rates (HTTP 503).',
+        ]), false);
 
     expect(Currency::query()->where('code', 'USD')->value('exchange_rate'))->toBe('1.00000000');
 });

@@ -154,7 +154,7 @@ final class Security extends Component
             'forced' => $forced,
             'setupSecret' => $setupSecret,
             'qrSvg' => $setupSecret !== '' ? $totp->qrSvg($user->email, $setupSecret) : null,
-            'sessions' => $sessions->listFor($user),
+            'sessions' => collect($sessions->listFor($user)),
             'sessionsSupported' => $sessions->usesDatabaseDriver(),
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.security.title'),

@@ -316,9 +316,9 @@ final class PlaceOrder
 
         $this->cart->clear();
 
-        $paymentMethod = (string) ($order->payment?->method ?? '');
+        $paymentMethod = (string) ($order->payment->method ?? '');
 
-        if ($paymentMethod === 'account_balance' || (int) ($order->payment?->amount ?? 0) === 0) {
+        if ($paymentMethod === 'account_balance' || (int) ($order->payment->amount ?? 0) === 0) {
             $this->accountBalancePayment->handle($order);
 
             return $order->fresh(['items', 'payment']) ?? $order;
