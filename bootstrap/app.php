@@ -33,6 +33,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->call(static function (): void {
             Cache::put('agovena:scheduler:heartbeat', now()->toIso8601String(), now()->addHours(2));
         })->everyMinute()->name('agovena-scheduler-heartbeat');
+        $schedule->command('agovena:deliver-webhooks')
+            ->everyMinute()
+            ->withoutOverlapping(10);
         $schedule->command('agovena:process-subscription-renewals')
             ->everyMinute()
             ->withoutOverlapping(10);

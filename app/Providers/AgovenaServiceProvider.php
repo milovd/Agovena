@@ -41,6 +41,8 @@ use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Mail\ApplyMailSettings;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
+use App\Agovena\Notifications\MinishlinkPushTransport;
+use App\Agovena\Notifications\PushTransport;
 use App\Agovena\Packages\ComposerRunner;
 use App\Agovena\Packages\GitMonorepoCheckout;
 use App\Agovena\Packages\MonorepoCheckout;
@@ -57,6 +59,7 @@ use App\Agovena\Tax\VatnodeRemoteTaxRateProvider;
 use App\Agovena\Theme\StorefrontBrand;
 use App\Agovena\Theme\ThemeManager;
 use App\Agovena\Theme\ThemeSurface;
+use App\Agovena\Webhooks\WebhookEventSubscriber;
 use App\Enums\TicketStatus;
 use App\Events\CreditNoteIssued;
 use App\Events\OrderCancelled;
@@ -111,6 +114,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ThemeManager::class);
         $this->app->singleton(InvoiceDocumentView::class);
         $this->app->singleton(SettingsRepository::class);
+        $this->app->singleton(PushTransport::class, MinishlinkPushTransport::class);
         $this->app->singleton(CurrencyCatalog::class);
         $this->app->singleton(AutomaticTaxRateProvider::class, function ($app): AutomaticTaxRateProvider {
             $driver = (string) config('agovena.tax.automatic_provider', 'vatnode');
@@ -153,6 +157,7 @@ class AgovenaServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Event::subscribe(WebhookEventSubscriber::class);
         Event::listen(Registered::class, SendEmailVerificationNotification::class);
         Event::listen(Verified::class, AttachGuestOrdersWhenCustomerVerified::class);
         Event::listen(OrderCreated::class, SendOrderPlacedNotification::class);
