@@ -6,11 +6,14 @@
     $showLocale = count($locales) > 1;
     $showCurrency = $currencies->count() > 1;
     $showRegion = $showLocale || $showCurrency;
+    $isMobile = $isMobile ?? false;
+    $preferencesClass = $isMobile ? 'store-drawer__prefs' : 'store-header__prefs';
+    $regionMenuId = $isMobile ? 'store-region-menu-mobile' : 'store-region-menu';
 
     $regionLabel = $showCurrency ? (string) $currentCurrency : '';
 @endphp
 
-<div class="store-header__prefs" aria-label="{{ __('storefront.preferences.aria') }}">
+<div class="{{ $preferencesClass }}" aria-label="{{ __('storefront.preferences.aria') }}">
     @if ($showRegion)
         <div
             class="store-header__region"
@@ -26,7 +29,7 @@
                 :aria-expanded="open.toString()"
                 :class="{ 'is-open': open }"
                 aria-haspopup="dialog"
-                aria-controls="store-region-menu"
+                aria-controls="{{ $regionMenuId }}"
                 aria-label="{{ __('storefront.preferences.region') }}"
             >
                 <span class="store-header__flag" aria-hidden="true">
@@ -40,7 +43,7 @@
             </button>
 
             <div
-                id="store-region-menu"
+                id="{{ $regionMenuId }}"
                 class="store-header__region-menu"
                 x-show="open"
                 x-cloak

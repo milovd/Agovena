@@ -67,6 +67,7 @@
         navOpen: false,
         drawerTop: 0,
         drawerObserver: null,
+        drawerFrame: null,
         catsOpen: false,
         activeCat: null,
         suggestOpen: false,
@@ -91,6 +92,15 @@
                 0,
             );
             this.drawerTop = Math.max(0, Math.round(bottom));
+        },
+        scheduleDrawerTopRefresh() {
+            if (this.drawerFrame !== null) {
+                return;
+            }
+            this.drawerFrame = requestAnimationFrame(() => {
+                this.drawerFrame = null;
+                this.updateDrawerTop();
+            });
         },
         init() {
             this.$nextTick(() => {
@@ -143,7 +153,9 @@
         }
     }"
     @keydown.escape.window="navOpen = false; catsOpen = false; suggestOpen = false"
-    @resize.window="updateDrawerTop()"
+    @resize.window="scheduleDrawerTopRefresh()"
+    @scroll.window.passive="scheduleDrawerTopRefresh()"
+    x-effect="document.body.classList.toggle('store-drawer-open', navOpen)"
 >
     <div class="store-header">
         <div class="store-header__inner">
@@ -504,40 +516,78 @@
                     </div>
                 </div>
             @endif
+            <div class="store-drawer__preferences">
+                <p class="store-drawer__section-label">{{ __('storefront.preferences.aria') }}</p>
+                @include('theme::partials.header-preferences', ['isMobile' => true])
+            </div>
             <nav class="store-drawer__nav" aria-label="{{ __('storefront.mobile_nav') }}">
                 @if ($categoriesOn)
-                    <a class="store-drawer__link" href="{{ route('storefront.categories') }}" @click="navOpen = false">{{ __('storefront.nav.categories') }}</a>
+                    <a class="store-drawer__link" href="{{ route('storefront.categories') }}" @click="navOpen = false">
+                        <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'folders', 'size' => 18])</span>
+                        <span class="store-drawer__link-text">{{ __('storefront.nav.categories') }}</span>
+                        <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
+                    </a>
                 @endif
                 @foreach ($themeMainNav ?? [] as $item)
                     @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
-                        <a class="store-drawer__link" href="{{ $item['url'] }}" @click="navOpen = false">{{ $item['label'] }}</a>
+                        <a class="store-drawer__link" href="{{ $item['url'] }}" @click="navOpen = false">
+                            <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'store', 'size' => 18])</span>
+                            <span class="store-drawer__link-text">{{ $item['label'] }}</span>
+                            <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
+                        </a>
                     @endif
                 @endforeach
                 @if ($categoriesOn && $discoveryCategories->isNotEmpty())
                     <p class="store-drawer__label">{{ __('storefront.nav.browse_categories') }}</p>
                     @foreach ($discoveryCategories as $category)
-                        <a class="store-drawer__link" href="{{ route('storefront.category', $category->slug) }}" @click="navOpen = false">{{ $category->name }}</a>
+                        <a class="store-drawer__link" href="{{ route('storefront.category', $category->slug) }}" @click="navOpen = false">
+                            <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'package', 'size' => 18])</span>
+                            <span class="store-drawer__link-text">{{ $category->name }}</span>
+                            <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
+                        </a>
                         @foreach ($category->children as $child)
-                            <a class="store-drawer__link store-drawer__link--child" href="{{ route('storefront.category', $child->slug) }}" @click="navOpen = false">{{ $child->name }}</a>
+                            <a class="store-drawer__link store-drawer__link--child" href="{{ route('storefront.category', $child->slug) }}" @click="navOpen = false">
+                                <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
+                                <span class="store-drawer__link-text">{{ $child->name }}</span>
+                            </a>
                         @endforeach
                     @endforeach
                 @endif
                 <a class="store-drawer__link" href="{{ route('storefront.cart') }}" @click="navOpen = false">
-                    {{ __('storefront.nav.cart') }}
-                    @if (($cartCount ?? 0) > 0)
-                        ({{ $cartCount }})
-                    @endif
+                    <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'shopping-bag', 'size' => 18])</span>
+                    <span class="store-drawer__link-text">
+                        {{ __('storefront.nav.cart') }}
+                        @if (($cartCount ?? 0) > 0)
+                            <span class="store-drawer__count">{{ $cartCount }}</span>
+                        @endif
+                    </span>
+                    <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
                 </a>
                 @if ($showAccount)
                     @auth
                         @php $drawerCanAdmin = auth()->user() instanceof \App\Models\User && auth()->user()->canAccessAdmin(); @endphp
                         <p class="store-drawer__label">{{ __('storefront.nav.account') }}</p>
-                        <a class="store-drawer__link" href="{{ route('customer.account') }}" @click="navOpen = false">{{ __('storefront.nav.dashboard') }}</a>
-                        <a class="store-drawer__link" href="{{ route('customer.profile') }}" @click="navOpen = false">{{ __('storefront.nav.account') }}</a>
+                        <a class="store-drawer__link" href="{{ route('customer.account') }}" @click="navOpen = false">
+                            <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'layout-dashboard', 'size' => 18])</span>
+                            <span class="store-drawer__link-text">{{ __('storefront.nav.dashboard') }}</span>
+                            <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
+                        </a>
+                        <a class="store-drawer__link" href="{{ route('customer.profile') }}" @click="navOpen = false">
+                            <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'user', 'size' => 18])</span>
+                            <span class="store-drawer__link-text">{{ __('storefront.nav.account') }}</span>
+                            <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
+                        </a>
                         @if ($drawerCanAdmin)
-                            <a class="store-drawer__link" href="{{ route('admin.dashboard') }}" @click="navOpen = false">{{ __('storefront.nav.admin') }}</a>
+                            <a class="store-drawer__link" href="{{ route('admin.dashboard') }}" @click="navOpen = false">
+                                <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'settings', 'size' => 18])</span>
+                                <span class="store-drawer__link-text">{{ __('storefront.nav.admin') }}</span>
+                                <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
+                            </a>
                         @endif
-                        <a class="store-drawer__link store-drawer__link--danger" href="{{ route('customer.logout') }}" @click="navOpen = false">{{ __('storefront.nav.logout') }}</a>
+                        <a class="store-drawer__link store-drawer__link--danger" href="{{ route('customer.logout') }}" @click="navOpen = false">
+                            <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'log-out', 'size' => 18])</span>
+                            <span class="store-drawer__link-text">{{ __('storefront.nav.logout') }}</span>
+                        </a>
                     @else
                         <div class="store-drawer__auth">
                             <a class="store-btn store-btn--ghost store-drawer__auth-login" href="{{ route('login') }}" @click="navOpen = false">{{ __('storefront.nav.login') }}</a>
