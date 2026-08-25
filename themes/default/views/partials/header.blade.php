@@ -66,6 +66,7 @@
     x-data="{
         navOpen: false,
         drawerTop: 0,
+        drawerObserver: null,
         catsOpen: false,
         activeCat: null,
         suggestOpen: false,
@@ -80,11 +81,30 @@
             viewAll: @js(__('storefront.search.view_all')),
         },
         updateDrawerTop() {
-            const header = this.$root.querySelector('.store-header');
-            this.drawerTop = header ? Math.round(header.getBoundingClientRect().bottom) : 0;
+            const chromeParts = [
+                document.querySelector('.store-usp'),
+                document.querySelector('.store-header'),
+                document.querySelector('.store-discover'),
+            ].filter(Boolean);
+            const bottom = chromeParts.reduce(
+                (currentBottom, element) => Math.max(currentBottom, element.getBoundingClientRect().bottom),
+                0,
+            );
+            this.drawerTop = Math.max(0, Math.round(bottom));
         },
         init() {
-            this.$nextTick(() => this.updateDrawerTop());
+            this.$nextTick(() => {
+                const refresh = () => this.updateDrawerTop();
+                refresh();
+                requestAnimationFrame(refresh);
+                window.setTimeout(refresh, 200);
+                if ('ResizeObserver' in window) {
+                    this.drawerObserver = new ResizeObserver(refresh);
+                    document.querySelectorAll('.store-usp, .store-header, .store-discover').forEach((element) => {
+                        this.drawerObserver.observe(element);
+                    });
+                }
+            });
         },
         async runSuggest() {
             const q = (this.suggestQuery || '').trim();
