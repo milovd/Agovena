@@ -1613,10 +1613,18 @@ button.store-header__utility[aria-expanded="true"] {
   border-top: 1px solid var(--theme-color-border);
 }
 
+.store-drawer__category-row {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
 .store-drawer__category-root {
   display: grid;
-  grid-template-columns: 2.25rem minmax(0, 1fr) auto;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
   align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
   gap: var(--theme-space-3);
   padding: 0.55rem 0.2rem;
   border-radius: var(--theme-radius);
@@ -1624,6 +1632,37 @@ button.store-header__utility[aria-expanded="true"] {
   font-size: 0.9375rem;
   font-weight: 600;
   text-decoration: none;
+}
+
+.store-drawer__category-toggle {
+  display: inline-flex;
+  flex: 0 0 2.25rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--theme-radius);
+  background: transparent;
+  color: var(--theme-color-text-muted);
+  cursor: pointer;
+  transition: color var(--theme-ease), background var(--theme-ease), transform 160ms ease;
+}
+
+.store-drawer__category-toggle:hover,
+.store-drawer__category-toggle:focus-visible {
+  color: var(--theme-color-accent);
+  background: var(--theme-color-accent-soft);
+  outline: none;
+}
+
+.store-drawer__category-toggle:focus-visible {
+  box-shadow: var(--theme-focus);
+}
+
+.store-drawer__category-toggle[aria-expanded="true"] svg {
+  transform: rotate(180deg);
 }
 
 .store-drawer__category-root:hover,
@@ -1644,6 +1683,25 @@ button.store-header__utility[aria-expanded="true"] {
   margin: 0 0 0.55rem 3rem;
   padding-left: 0.75rem;
   border-left: 1px solid var(--theme-color-border);
+}
+
+.store-drawer__category-children--enter,
+.store-drawer__category-children--leave {
+  overflow: hidden;
+  transition: opacity 140ms ease, transform 140ms ease;
+  transform-origin: top;
+}
+
+.store-drawer__category-children--enter-start,
+.store-drawer__category-children--leave-end {
+  opacity: 0;
+  transform: translateY(-0.25rem) scaleY(0.98);
+}
+
+.store-drawer__category-children--enter-end,
+.store-drawer__category-children--leave-start {
+  opacity: 1;
+  transform: translateY(0) scaleY(1);
 }
 
 .store-drawer__category-children a {
