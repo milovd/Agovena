@@ -1391,6 +1391,7 @@ return [
             'base_set' => ':code is nu de basisvaluta.',
             'rates_synced' => ':count koers(en) bijgewerkt via Frankfurter mid-market data (ECB-bron; basis :base). Controleer ze voor gebruik.',
             'rates_sync_failed' => 'Koersen synchroniseren mislukt. Probeer opnieuw of stel koersen handmatig in.',
+            'rates_sync_failed_detail' => 'Koersen synchroniseren mislukt (:reason). Probeer opnieuw of stel koersen handmatig in.',
         ],
     ],
     'taxes' => [

@@ -13,6 +13,11 @@ use App\Models\Product;
 use App\Models\TaxRate;
 use Illuminate\Validation\ValidationException;
 
+beforeEach(function (): void {
+    // Suite defaults automatic tax off; re-enable for tax behavior coverage.
+    app(SettingsRepository::class)->set('store', 'automatic_tax_rates', true);
+});
+
 function addTaxDiscountProduct(int $amount): void
 {
     $product = Product::factory()->active()->create([

@@ -35,7 +35,7 @@ final class SettingsRepository
     }
 
     /**
-     * @param array<string, mixed> $values
+     * @param  array<string, mixed>  $values
      */
     public function setMany(string $group, array $values): void
     {

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\OffersCheckoutMethods;
+use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 
 /**
  * Checkout-facing discovery of enabled PaymentGateway methods.
  * Account balance is offered separately in checkout UI (not a gateway).
- * Development instant-pay is never auto-injected - register it explicitly when needed.
+ * Development instant-pay is only offered when explicitly enabled and no real
+ * payment extensions are registered (local/e2e). Never alongside live gateways.
  */
 final class AvailablePaymentMethods
 {
@@ -32,7 +34,7 @@ final class AvailablePaymentMethods
     {
         $options = [];
         foreach ($this->gateways->all() as $gateway) {
-            // Development pay is test-only; never surface it as a storefront choice.
+            // Development pay is never listed next to real gateways.
             if ($gateway->id() === 'development') {
                 continue;
             }
@@ -53,6 +55,22 @@ final class AvailablePaymentMethods
             ];
         }
 
+        if ($options === [] && $this->developmentPayAllowed()) {
+            $development = app(DevelopmentPaymentGateway::class);
+            $options[] = [
+                'id' => $development->id(),
+                'gateway_id' => $development->id(),
+                'label' => $development->label(),
+                'icon' => null,
+            ];
+        }
+
         return $options;
+    }
+
+    private function developmentPayAllowed(): bool
+    {
+        return (bool) config('agovena.payments.allow_development_instant_pay')
+            && ! app()->environment('production');
     }
 }

@@ -41,7 +41,18 @@ foreach (['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', '
     $modules->enable($id);
 }
 
-// Checkout uses development instant pay in e2e (no manual-payment extension).
+// Checkout uses development instant pay in e2e (no payment extensions).
+// Persist to .env so `php artisan serve` (separate process) picks it up.
+$envPath = base_path('.env');
+if (is_file($envPath)) {
+    $env = (string) file_get_contents($envPath);
+    if (preg_match('/^AGOVENA_DEV_INSTANT_PAY=.*/m', $env) === 1) {
+        $env = preg_replace('/^AGOVENA_DEV_INSTANT_PAY=.*/m', 'AGOVENA_DEV_INSTANT_PAY=true', $env) ?? $env;
+    } else {
+        $env = rtrim($env)."\nAGOVENA_DEV_INSTANT_PAY=true\n";
+    }
+    file_put_contents($envPath, $env);
+}
 putenv('AGOVENA_DEV_INSTANT_PAY=true');
 $_ENV['AGOVENA_DEV_INSTANT_PAY'] = 'true';
 $_SERVER['AGOVENA_DEV_INSTANT_PAY'] = 'true';

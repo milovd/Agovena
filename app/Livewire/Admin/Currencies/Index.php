@@ -10,6 +10,8 @@ use App\Agovena\Money\SyncCurrencyExchangeRates;
 use App\Agovena\Settings\SettingsRepository;
 use App\Models\Currency;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -126,8 +128,15 @@ final class Index extends Component
                 'count' => $result['updated'],
                 'base' => $result['base'],
             ]));
-        } catch (Throwable) {
-            session()->flash('error', __('admin.currencies.flash.rates_sync_failed'));
+        } catch (Throwable $e) {
+            Log::warning('Currency exchange rate sync failed.', [
+                'message' => $e->getMessage(),
+                'exception' => $e::class,
+            ]);
+
+            session()->flash('error', __('admin.currencies.flash.rates_sync_failed_detail', [
+                'reason' => Str::limit($e->getMessage(), 160),
+            ]));
         }
     }
 

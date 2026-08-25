@@ -148,11 +148,11 @@ test('core payment contracts do not import vendor SDKs', function () {
     }
 });
 
-test('without payment extensions checkout offers no gateway methods', function () {
+test('without payment extensions checkout offers development when enabled', function () {
     app(PaymentGatewayRegistry::class)->clear();
     config(['agovena.payments.allow_development_instant_pay' => true]);
 
-    expect(app(AvailablePaymentMethods::class)->ids())->toBe([]);
+    expect(app(AvailablePaymentMethods::class)->ids())->toBe(['development']);
 });
 
 test('without payment extensions checkout offers no methods when development pay is disabled', function () {

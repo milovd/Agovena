@@ -52,7 +52,7 @@ final class ModuleContext
     }
 
     /**
-     * @param callable(Customer): (AccountOverviewCard|null) $factory
+     * @param  callable(Customer): (AccountOverviewCard|null)  $factory
      */
     public function customerAccountOverview(string $id, callable $factory, int $sort = 0): void
     {
@@ -63,8 +63,8 @@ final class ModuleContext
      * Subscribe to a Core (or Module) event. Use for explicit policy such as refund consequences.
      * Core emits RefundRecorded / CreditNoteIssued / InvoiceVoided; Modules decide what to revoke or keep.
      *
-     * @param class-string $event
-     * @param class-string|callable $listener
+     * @param  class-string  $event
+     * @param  class-string|callable  $listener
      */
     public function listen(string $event, string|callable $listener): void
     {
@@ -74,7 +74,7 @@ final class ModuleContext
     /**
      * Register Admin (staff) routes under /admin. Pass a Livewire page class or controller action.
      *
-     * @param callable(): void $routes
+     * @param  callable(): void  $routes
      */
     public function adminRoutes(callable $routes): void
     {
@@ -91,7 +91,7 @@ final class ModuleContext
     /**
      * Register verified customer account routes under /account.
      *
-     * @param callable(): void $routes
+     * @param  callable(): void  $routes
      */
     public function customerRoutes(callable $routes): void
     {
@@ -108,7 +108,7 @@ final class ModuleContext
     /**
      * Register authenticated customer API routes under /api/v1.
      *
-     * @param callable(): void $routes
+     * @param  callable(): void  $routes
      */
     public function apiRoutes(callable $routes): void
     {

@@ -20,8 +20,12 @@
         </div>
     </div>
 
+    @if (session('status'))
+        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
+    @endif
+
     @if (session('error'))
-        <p class="ag-field__error" role="alert">{{ session('error') }}</p>
+        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
     @if ($showForm)

@@ -99,6 +99,17 @@ return [
         'cache_ttl' => (int) env('AGOVENA_TAX_CACHE_TTL', 86400),
     ],
 
+    /*
+     * Mid-market FX sync (Admin → Currencies → Sync rates). Frankfurter v1 is
+     * ECB-sourced; api.frankfurter.app permanently redirects here.
+     */
+    'currency' => [
+        'frankfurter_url' => env(
+            'AGOVENA_FRANKFURTER_URL',
+            'https://api.frankfurter.dev/v1/latest',
+        ),
+    ],
+
     'retention' => [
         'email_logs_days' => (int) env('AGOVENA_EMAIL_LOG_RETENTION', 90),
         'audit_logs_days' => (int) env('AGOVENA_AUDIT_LOG_RETENTION', 365),

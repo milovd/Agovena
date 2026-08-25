@@ -7,6 +7,7 @@ namespace App\Agovena\Money;
 use App\Agovena\Settings\SettingsRepository;
 use App\Models\Currency;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -46,15 +47,30 @@ final class SyncCurrencyExchangeRates
             return ['updated' => 1, 'base' => $base];
         }
 
+        $url = (string) config(
+            'agovena.currency.frankfurter_url',
+            'https://api.frankfurter.dev/v1/latest',
+        );
+
         $response = Http::timeout(10)
             ->acceptJson()
-            ->get('https://api.frankfurter.app/latest', [
-                'from' => $base,
-                'to' => implode(',', $codes),
+            ->get($url, [
+                'base' => $base,
+                'symbols' => implode(',', $codes),
             ]);
 
         if (! $response->successful()) {
-            throw new RuntimeException('Could not fetch exchange rates.');
+            Log::warning('Frankfurter exchange rate request failed.', [
+                'status' => $response->status(),
+                'url' => $url,
+                'base' => $base,
+                'symbols' => $codes,
+                'body' => mb_substr($response->body(), 0, 300),
+            ]);
+
+            throw new RuntimeException(
+                'Could not fetch exchange rates (HTTP '.$response->status().').',
+            );
         }
 
         /** @var array<string, float|int|string> $rates */

@@ -15,7 +15,6 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
-use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Models\AgovenaModule;
@@ -23,7 +22,6 @@ use App\Models\Customer;
 use App\Models\ExtensionSetting;
 use App\Models\Product;
 use App\Models\ProvisioningServer;
-use App\Models\User;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -89,17 +87,16 @@ function makeProxmoxProduct(array $settings = []): Product
 
 function payForProxmoxProduct(Product $product, ?Customer $customer = null): ServiceInstance
 {
+    config(['agovena.payments.allow_development_instant_pay' => true]);
     $customer ??= Customer::factory()->create();
-    $staff = User::factory()->create();
-    $staff->assignRole('owner');
     app(CartService::class)->add($product->id, 1);
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => proxmoxBilling(),
+        'payment_method' => 'development',
     ]);
-    app(RecordManualPayment::class)->handle($order, $staff);
 
     return ServiceInstance::query()->where('order_id', $order->id)->firstOrFail();
 }

@@ -11,7 +11,7 @@ namespace App\Agovena\Catalog\Capabilities;
 final class ProductCapabilityDefinition
 {
     /**
-     * @param list<string> $requires Other capability keys that should also be present
+     * @param  list<string>  $requires  Other capability keys that should also be present
      */
     public function __construct(
         public readonly string $key,

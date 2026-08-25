@@ -137,7 +137,7 @@ test('currency sync updates rates from frankfurter market api', function () {
     app(SettingsRepository::class)->set('general', 'base_currency', 'EUR');
 
     Http::fake([
-        'api.frankfurter.app/*' => Http::response([
+        'api.frankfurter.dev/*' => Http::response([
             'amount' => 1,
             'base' => 'EUR',
             'date' => '2026-08-25',
@@ -148,10 +148,40 @@ test('currency sync updates rates from frankfurter market api', function () {
     Livewire::actingAs($staff)
         ->test(Index::class)
         ->call('syncRates')
-        ->assertHasNoErrors();
+        ->assertHasNoErrors()
+        ->assertSee('Updated 2 rate(s) from Frankfurter', false);
 
     expect(Currency::query()->where('code', 'USD')->value('exchange_rate'))->toBe('1.12345678')
         ->and(Currency::query()->where('code', 'EUR')->value('exchange_rate'))->toBe('1.00000000');
 
-    Http::assertSent(fn ($request): bool => str_contains($request->url(), 'api.frankfurter.app'));
+    Http::assertSent(function ($request): bool {
+        return str_contains($request->url(), 'api.frankfurter.dev')
+            && $request['base'] === 'EUR'
+            && $request['symbols'] === 'USD';
+    });
+});
+
+test('currency sync surfaces frankfurter http failures', function () {
+    $staff = $this->createStaff();
+    Currency::query()->updateOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'Euro', 'prefix' => '€', 'suffix' => '', 'precision' => 2, 'exchange_rate' => '1.00000000', 'is_active' => true],
+    );
+    Currency::query()->updateOrCreate(
+        ['code' => 'USD'],
+        ['name' => 'US Dollar', 'prefix' => '$', 'suffix' => '', 'precision' => 2, 'exchange_rate' => '1.00000000', 'is_active' => true],
+    );
+    app(SettingsRepository::class)->set('general', 'base_currency', 'EUR');
+
+    Http::fake([
+        'api.frankfurter.dev/*' => Http::response('upstream unavailable', 503),
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('syncRates')
+        ->assertSee('Could not sync exchange rates', false)
+        ->assertSee('HTTP 503', false);
+
+    expect(Currency::query()->where('code', 'USD')->value('exchange_rate'))->toBe('1.00000000');
 });

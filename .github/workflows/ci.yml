@@ -125,6 +125,7 @@ jobs:
           sed -i 's/^DB_DATABASE=.*/DB_DATABASE=database\/database.sqlite/' .env
           sed -i 's/^APP_URL=.*/APP_URL=http:\/\/127.0.0.1:8000/' .env
           echo "AGOVENA_OPTIONAL_PACKAGES_PATH=optional-packages" >> .env
+          echo "AGOVENA_DEV_INSTANT_PAY=true" >> .env
           php artisan migrate --force
           php artisan agovena:install --no-interaction --name="E2E Owner" --email="e2e-owner@example.test" --password="password" --site-name="Agovena" --locale=en --timezone=UTC --currency=EUR --theme=default --presets=physical,digital,hosting,subscriptions,events
           php e2e/prepare.php

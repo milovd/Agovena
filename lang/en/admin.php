@@ -1391,6 +1391,7 @@ return [
             'base_set' => ':code is now the base currency.',
             'rates_synced' => 'Updated :count rate(s) from Frankfurter mid-market data (ECB-sourced; base :base). Review before relying on them.',
             'rates_sync_failed' => 'Could not sync exchange rates. Try again or set rates manually.',
+            'rates_sync_failed_detail' => 'Could not sync exchange rates (:reason). Try again or set rates manually.',
         ],
     ],
     'taxes' => [

@@ -20,7 +20,6 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
-use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Provisioning\Contracts\Provisioner;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -34,7 +33,6 @@ use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
 use App\Models\ProvisioningServer;
-use App\Models\User;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -194,17 +192,16 @@ function makePterodactylProduct(array $settings = []): Product
 
 function payForPterodactylProduct(Product $product, ?Customer $customer = null, array $selections = []): ServiceInstance
 {
+    config(['agovena.payments.allow_development_instant_pay' => true]);
     $customer ??= Customer::factory()->create();
-    $staff = User::factory()->create();
-    $staff->assignRole('owner');
     app(CartService::class)->add($product->id, 1, $selections);
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => pterodactylBilling(),
+        'payment_method' => 'development',
     ]);
-    app(RecordManualPayment::class)->handle($order, $staff);
 
     return ServiceInstance::query()->where('order_id', $order->id)->firstOrFail();
 }
@@ -229,6 +226,7 @@ test('pterodactyl registers only when the extension is enabled', function () {
 test('provisioning module works without pterodactyl and keeps the manual provider', function () {
     installAndEnableModule('provisioning');
     app(SyncRegisteredPermissions::class)(force: true);
+    config(['agovena.payments.allow_development_instant_pay' => true]);
 
     $product = Product::factory()->active()->create(['price_amount' => 1000]);
     app(ProductCapabilityManager::class)->enable($product, 'provisionable', ['provider_key' => 'manual']);
@@ -239,14 +237,15 @@ test('provisioning module works without pterodactyl and keeps the manual provide
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => pterodactylBilling(),
+        'payment_method' => 'development',
     ]);
-    app(RecordManualPayment::class)->handle($order, $this->createStaff());
 
     $instance = ServiceInstance::query()->firstOrFail();
 
     expect($instance->status)->toBe(ServiceInstanceStatus::Pending)
         ->and($instance->provider_key)->toBe('manual')
-        ->and(app(ProvisionerRegistry::class)->get('pterodactyl'))->toBeNull();
+        ->and(app(ProvisionerRegistry::class)->get('pterodactyl'))->toBeNull()
+        ->and($order->payment?->status->value)->toBe('paid');
 });
 
 test('multiple provisioners can coexist', function () {
@@ -501,6 +500,7 @@ test('customer portal exposes panel link and safe power actions', function () {
 test('manual services do not receive pterodactyl customer actions', function () {
     enablePterodactyl();
     installAndEnableModule('provisioning');
+    config(['agovena.payments.allow_development_instant_pay' => true]);
     $customer = Customer::factory()->create();
     $product = Product::factory()->active()->create(['price_amount' => 1000]);
     app(ProductCapabilityManager::class)->enable($product, 'provisionable', ['provider_key' => 'manual']);
@@ -510,8 +510,8 @@ test('manual services do not receive pterodactyl customer actions', function () 
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => pterodactylBilling(),
+        'payment_method' => 'development',
     ]);
-    app(RecordManualPayment::class)->handle($order, $this->createStaff());
     $instance = app(ProvisioningService::class)->activate(ServiceInstance::query()->firstOrFail(), 'manual-ref');
 
     Livewire::actingAs($customer->user)

@@ -5,6 +5,7 @@ use App\Agovena\Installation\InstallationState;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Agovena\Payments\PaymentGatewayRegistry;
+use App\Agovena\Settings\SettingsRepository;
 use Tests\MultiProcessTestCase;
 use Tests\TestCase;
 use Tests\UpgradeTestCase;
@@ -12,7 +13,7 @@ use Tests\UpgradeTestCase;
 require_once __DIR__.'/Support/OptionalPackages.php';
 
 /**
- * @param list<string> $ids
+ * @param  list<string>  $ids
  */
 function installAndEnableModules(array $ids): void
 {
@@ -70,6 +71,10 @@ pest()->beforeEach(function (): void {
     if ($state->notInstalled()) {
         $state->markInstalled();
     }
+
+    // Production defaults automatic VAT on; most suite fixtures expect untaxed amounts
+    // unless a tax-focused test enables the setting explicitly.
+    app(SettingsRepository::class)->set('store', 'automatic_tax_rates', false);
 })->in('Feature', 'Concurrency', 'Performance', 'MultiProcess');
 
 pest()->beforeEach(function (): void {

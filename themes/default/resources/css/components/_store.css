@@ -3383,7 +3383,7 @@ a.store-cart-line__name:hover {
 .store-product__media {
   border-radius: 1.25rem;
   border: 0;
-  background: #eef2f7;
+  background: var(--theme-color-surface-muted, #eef2f7);
   min-height: 22rem;
   display: grid;
   place-items: center;
@@ -3399,7 +3399,7 @@ a.store-cart-line__name:hover {
 
 .store-product__thumb {
   border-radius: 0.85rem;
-  background: #eef2f7;
+  background: var(--theme-color-surface-muted, #eef2f7);
 }
 
 .store-product__info {
@@ -3800,7 +3800,7 @@ a.store-cart-line__name:hover {
 }
 
 .store-product-specs__row:nth-child(even) {
-  background: #f5f7fb;
+  background: var(--theme-color-surface-muted, #f5f7fb);
 }
 
 .store-product-specs__row dt {
@@ -3829,7 +3829,7 @@ a.store-cart-line__name:hover {
   margin: 0;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
-  background: #eef2f7;
+  background: var(--theme-color-surface-muted, #eef2f7);
   color: var(--theme-color-text-muted);
   font-size: 0.8125rem;
   font-weight: 600;
@@ -3908,7 +3908,7 @@ a.store-cart-line__name:hover {
   display: block;
   height: 0.45rem;
   border-radius: 999px;
-  background: #e8edf5;
+  background: var(--theme-color-surface-muted, #e8edf5);
   overflow: hidden;
 }
 
