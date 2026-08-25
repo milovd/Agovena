@@ -87,3 +87,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.
 ## License
 
 Licensed under the [MIT License](LICENSE).
+
+Third-party data sources used for optional FX sync and automatic VAT rates are documented in [ATTRIBUTION.md](ATTRIBUTION.md).
