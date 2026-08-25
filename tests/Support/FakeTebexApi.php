@@ -40,8 +40,11 @@ final class FakeTebexApi implements TebexApi
         return ['transaction_id' => $transactionId, 'status' => ['id' => 1]];
     }
 
+    /** @var array<string, mixed>|null */
+    public ?array $refund = null;
+
     public function refundPayment(string $transactionId, ?string $reason = null): array
     {
-        return ['id' => 'refund-test', 'transaction_id' => $transactionId];
+        return $this->refund ?? ['id' => 'refund-test', 'transaction_id' => $transactionId];
     }
 }

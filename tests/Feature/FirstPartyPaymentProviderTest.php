@@ -96,7 +96,8 @@ test('paddle checkout redirects and signed paid webhook completes payment', func
             'custom_data' => ['order_id' => (string) $payment->order_id, 'payment_id' => (string) $payment->id],
         ],
     ], JSON_THROW_ON_ERROR);
-    $signature = hash_hmac('sha256', time().':'.$body, '[REDACTED]');
+    $timestamp = time();
+    $signature = hash_hmac('sha256', $timestamp.':'.$body, '[REDACTED]');
 
     app(HandlePaymentWebhook::class)->handle('paddle', Request::create(
         '/webhooks/payments/paddle',
@@ -104,7 +105,7 @@ test('paddle checkout redirects and signed paid webhook completes payment', func
         [],
         [],
         [],
-        ['CONTENT_TYPE' => 'application/json', 'HTTP_PADDLE-SIGNATURE' => 'ts='.time().';h1='.$signature],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_PADDLE-SIGNATURE' => 'ts='.$timestamp.';h1='.$signature],
         $body,
     ));
 

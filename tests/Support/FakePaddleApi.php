@@ -29,8 +29,11 @@ final class FakePaddleApi implements PaddleApi
         return array_merge($this->transaction, ['id' => $transactionId]);
     }
 
+    /** @var array<string, mixed>|null */
+    public ?array $adjustment = null;
+
     public function createAdjustment(string $transactionId, string $reason, string $type = 'full', ?string $idempotencyKey = null): array
     {
-        return ['id' => 'adj_test', 'transaction_id' => $transactionId, 'type' => $type, 'reason' => $reason];
+        return $this->adjustment ?? ['id' => 'adj_test', 'transaction_id' => $transactionId, 'type' => $type, 'reason' => $reason];
     }
 }
