@@ -315,6 +315,10 @@
   display: block;
 }
 
+.store-header__mobile-search {
+  display: none;
+}
+
 .store-header__search {
   display: none;
   align-items: center;
@@ -3572,8 +3576,21 @@ a.store-cart-line__name:hover {
   }
 
   .store-nav,
-  .store-header__search-wrap,
-  .store-header__search-wrap--mobile {
+  .store-header__search-wrap {
+    display: none;
+  }
+
+  .store-header__mobile-search {
+    display: block;
+    padding: var(--theme-space-2) var(--theme-space-4) var(--theme-space-3);
+    border-top: 1px solid var(--theme-color-border);
+  }
+
+  .store-header__mobile-search .store-header__search-wrap--mobile {
+    display: block;
+  }
+
+  .store-header__cart {
     display: none;
   }
 

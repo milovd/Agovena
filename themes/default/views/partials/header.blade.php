@@ -414,43 +414,13 @@
             </div>
         </div>
 
-    </div>
-
-    <div
-        id="store-mobile-nav"
-        class="store-drawer"
-        :style="'top: ' + drawerTop + 'px'"
-        x-show="navOpen"
-        x-cloak
-        x-transition:enter="store-drawer--enter"
-        x-transition:enter-start="store-drawer--enter-start"
-        x-transition:enter-end="store-drawer--enter-end"
-        x-transition:leave="store-drawer--leave"
-        x-transition:leave-start="store-drawer--leave-start"
-        x-transition:leave-end="store-drawer--leave-end"
-        role="dialog"
-        aria-modal="true"
-        aria-label="{{ __('storefront.menu') }}"
-    >
-        <div class="store-drawer__backdrop" @click="navOpen = false; mobileCatsOpen = false; closeSuggest()"></div>
-        <div
-            class="store-drawer__panel"
-            x-transition:enter="store-drawer__panel--enter"
-            x-transition:enter-start="store-drawer__panel--enter-start"
-            x-transition:enter-end="store-drawer__panel--enter-end"
-            x-transition:leave="store-drawer__panel--leave"
-            x-transition:leave-start="store-drawer__panel--leave-start"
-            x-transition:leave-end="store-drawer__panel--leave-end"
-        >
-            <div class="store-drawer__head">
-                <p class="store-drawer__title">{{ __('storefront.menu') }}</p>
-            </div>
-            @if ($searchOn)
-                <div class="store-drawer__search-wrap" @click.outside="closeSuggest()">
+        @if ($searchOn)
+            <div class="store-header__mobile-search">
+                <div class="store-header__search-wrap store-header__search-wrap--mobile" @click.outside="closeSuggest()">
                     <form class="store-header__search store-header__search--mobile" action="{{ route('storefront.home') }}" method="get" role="search">
-                        <label class="visually-hidden" for="store-drawer-search">{{ __('storefront.search.label') }}</label>
+                        <label class="visually-hidden" for="store-mobile-header-search">{{ __('storefront.search.label') }}</label>
                         <input
-                            id="store-drawer-search"
+                            id="store-mobile-header-search"
                             class="store-header__search-input"
                             type="search"
                             name="q"
@@ -460,7 +430,7 @@
                             placeholder="{{ __('storefront.search.placeholder') }}"
                             autocomplete="off"
                             aria-autocomplete="list"
-                            aria-controls="store-drawer-search-suggest"
+                            aria-controls="store-mobile-header-search-suggest"
                         >
                         <button
                             type="button"
@@ -480,8 +450,8 @@
                         </button>
                     </form>
                     <div
-                        id="store-drawer-search-suggest"
-                        class="store-search-suggest store-drawer__search-suggest"
+                        id="store-mobile-header-search-suggest"
+                        class="store-search-suggest store-header__mobile-search-suggest"
                         x-show="suggestOpen"
                         x-cloak
                         @mousedown.prevent
@@ -516,7 +486,40 @@
                         ></a>
                     </div>
                 </div>
-            @endif
+            </div>
+        @endif
+
+    </div>
+
+    <div
+        id="store-mobile-nav"
+        class="store-drawer"
+        :style="'top: ' + drawerTop + 'px'"
+        x-show="navOpen"
+        x-cloak
+        x-transition:enter="store-drawer--enter"
+        x-transition:enter-start="store-drawer--enter-start"
+        x-transition:enter-end="store-drawer--enter-end"
+        x-transition:leave="store-drawer--leave"
+        x-transition:leave-start="store-drawer--leave-start"
+        x-transition:leave-end="store-drawer--leave-end"
+        role="dialog"
+        aria-modal="true"
+        aria-label="{{ __('storefront.menu') }}"
+    >
+        <div class="store-drawer__backdrop" @click="navOpen = false; mobileCatsOpen = false; closeSuggest()"></div>
+        <div
+            class="store-drawer__panel"
+            x-transition:enter="store-drawer__panel--enter"
+            x-transition:enter-start="store-drawer__panel--enter-start"
+            x-transition:enter-end="store-drawer__panel--enter-end"
+            x-transition:leave="store-drawer__panel--leave"
+            x-transition:leave-start="store-drawer__panel--leave-start"
+            x-transition:leave-end="store-drawer__panel--leave-end"
+        >
+            <div class="store-drawer__head">
+                <p class="store-drawer__title">{{ __('storefront.menu') }}</p>
+            </div>
             <div class="store-drawer__preferences">
                 <p class="store-drawer__section-label">{{ __('storefront.preferences.aria') }}</p>
                 @include('theme::partials.header-preferences', ['isMobile' => true])
