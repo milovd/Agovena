@@ -27,11 +27,17 @@ test('notification template and email log tables can be applied onto an existing
         'updated_at' => now(),
     ]);
 
-    Schema::dropIfExists('email_logs');
-    Schema::dropIfExists('notification_templates');
+    Schema::disableForeignKeyConstraints();
+    try {
+        Schema::dropIfExists('email_logs');
+        Schema::dropIfExists('notification_templates');
+    } finally {
+        Schema::enableForeignKeyConstraints();
+    }
     DB::table('migrations')->where('migration', '2026_08_13_120000_create_notification_templates_and_email_logs')->delete();
 
     expect(Schema::hasTable('notification_templates'))->toBeFalse()
+        ->and(Schema::hasTable('notification_preferences'))->toBeTrue()
         ->and(Order::query()->whereKey($orderId)->exists())->toBeTrue();
 
     Artisan::call('migrate');
