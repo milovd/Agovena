@@ -80,7 +80,7 @@ return [
     'checkout' => [
         'title' => 'Checkout',
         'kicker' => 'Complete your order',
-        'lede' => 'Guest checkout — no customer account required.',
+        'lede' => 'Guest checkout - no customer account required.',
         'lede_account' => 'You are signed in. This order will appear in your account.',
         'progress_aria' => 'Checkout progress',
         'step_of' => 'Step :current of :total · :label',
@@ -110,6 +110,8 @@ return [
         'updating_shipping' => 'Updating delivery options…',
         'shipping_fallback' => 'If a carrier is unavailable, configured store rates still apply when they exist.',
         'hosted_payment_note' => 'Card details are entered with the payment provider. Agovena does not collect card numbers.',
+        'pay_with_account_balance' => 'Pay with account balance',
+        'account_balance_available' => 'Available: :amount',
         'no_payment_methods' => 'No payment methods are available right now.',
         'configuration_note' => 'These choices were set when the items were added. Return to the cart to change them.',
         'contact' => 'Contact information',

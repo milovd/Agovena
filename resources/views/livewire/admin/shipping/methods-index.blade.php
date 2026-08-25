@@ -99,7 +99,7 @@
                                 <span class="ag-muted">{{ $method->code }}</span>
                             </td>
                             <td>{{ __('shipping::admin.types.'.$method->type->value) }}</td>
-                            <td>{{ $method->zone?->name ?? '—' }}</td>
+                            <td>{{ $method->zone?->name ?? '-' }}</td>
                             <td>{{ $method->is_active ? __('common.active') : __('common.inactive') }}</td>
                             <td>
                                 @can('shipping.manage')

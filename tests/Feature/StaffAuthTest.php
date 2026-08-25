@@ -35,7 +35,7 @@ test('user can sign in and reach admin dashboard when authorized', function () {
 
     $this->assertAuthenticatedAs($staff);
 
-    $this->get('/admin')->assertRedirect(route('admin.security.two-factor'));
+    $this->get('/admin')->assertRedirect(route('customer.security'));
 });
 
 test('staff without dashboard permission is forbidden', function () {

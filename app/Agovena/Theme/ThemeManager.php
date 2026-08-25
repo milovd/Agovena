@@ -140,7 +140,7 @@ final class ThemeManager
         $id = basename($dir);
 
         if (! is_file($manifestPath)) {
-            // Legacy folder without manifest — only allow "default".
+            // Legacy folder without manifest - only allow "default".
             if ($id !== 'default') {
                 return null;
             }

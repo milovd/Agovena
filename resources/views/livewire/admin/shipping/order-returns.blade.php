@@ -12,7 +12,7 @@
                     <li wire:key="order-return-{{ $request->id }}">
                         <p>
                             <strong>#{{ $request->id }}</strong>
-                            — {{ __('shipping::returns.statuses.'.$request->status->value) }}
+                            - {{ __('shipping::returns.statuses.'.$request->status->value) }}
                             ·
                             <a href="{{ route('admin.shipping.returns.show', $request) }}">{{ __('shipping::returns.view') }}</a>
                         </p>

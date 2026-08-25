@@ -19,7 +19,7 @@ use Tests\Support\CreatesStaff;
 uses(CreatesStaff::class);
 
 /**
- * Practical large-data sanity — manageable counts, not millions.
+ * Practical large-data sanity - manageable counts, not millions.
  * Run on MariaDB CI to catch unbounded lists / catastrophic query shapes.
  */
 test('admin list pages stay bounded under larger catalogs', function () {

@@ -9,8 +9,8 @@
                         <td>{{ $log->created_at->translatedFormat('d M Y H:i') }}</td>
                         <td>{{ __('admin.audit.actor_types.'.$log->actor_type) }}{{ $log->actor_id ? ' #'.$log->actor_id : '' }}</td>
                         <td>{{ $log->action }}</td>
-                        <td>{{ $log->subject_type ? class_basename($log->subject_type).' #'.$log->subject_id : '—' }}</td>
-                        <td>{{ $log->ip ?? '—' }}</td>
+                        <td>{{ $log->subject_type ? class_basename($log->subject_type).' #'.$log->subject_id : '-' }}</td>
+                        <td>{{ $log->ip ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr><td colspan="5">{{ __('admin.audit.empty') }}</td></tr>

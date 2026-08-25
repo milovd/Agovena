@@ -18,7 +18,7 @@ fail() { echo "RELEASE ASSERT FAIL: $*" >&2; echo "::error::RELEASE ASSERT FAIL:
 [[ -f "$ROOT/scripts/ci/bootstrap-packages.php" ]] || fail "bootstrap-packages.php missing"
 
 if [[ ! -f "$ROOT/public/build/manifest.json" && ! -f "$ROOT/public/build/.vite/manifest.json" ]]; then
-  fail "public/build manifest missing — merchants must not need npm"
+  fail "public/build manifest missing - merchants must not need npm"
 fi
 
 [[ -f "$ROOT/public/vendor/agovena/logo.png" ]] || fail "bundled logo missing"

@@ -199,7 +199,7 @@
                         @if ($currencies->isNotEmpty())
                             <select id="currency" class="ag-select" wire:model="currency">
                                 @foreach ($currencies as $currencyOption)
-                                    <option value="{{ $currencyOption->code }}">{{ $currencyOption->code }} — {{ $currencyOption->name }}</option>
+                                    <option value="{{ $currencyOption->code }}">{{ $currencyOption->code }} - {{ $currencyOption->name }}</option>
                                 @endforeach
                             </select>
                         @else
@@ -217,7 +217,7 @@
                                 @continue(strtoupper($currencyOption->code) === strtoupper($currency))
                                 <div class="ag-field" wire:key="currency-price-{{ $currencyOption->code }}">
                                     <label class="ag-field__label" for="currency-price-{{ $currencyOption->code }}">
-                                        {{ $currencyOption->code }} — {{ $currencyOption->name }}
+                                        {{ $currencyOption->code }} - {{ $currencyOption->name }}
                                     </label>
                                     <input
                                         id="currency-price-{{ $currencyOption->code }}"
@@ -510,7 +510,7 @@
                                     <select id="provisioningServerId" class="ag-select" wire:model.live="provisioningServerId">
                                         <option value="">{{ __('admin.products.automation.select_server') }}</option>
                                         @foreach ($provisioningServers ?? [] as $server)
-                                            <option value="{{ $server->id }}">{{ $server->name }} — {{ $server->provider_key }}</option>
+                                            <option value="{{ $server->id }}">{{ $server->name }} - {{ $server->provider_key }}</option>
                                         @endforeach
                                     </select>
                                     <p class="ag-field__hint"><a href="{{ route('admin.provisioning.servers') }}">{{ __('admin.products.automation.manage_servers') }}</a></p>

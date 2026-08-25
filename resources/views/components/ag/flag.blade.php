@@ -38,7 +38,7 @@
     $flag = $aliases[$raw] ?? $raw;
     $height = (int) max(1, round(((int) $width) * 12 / 18));
 
-    /** Simplified SVG flags — no shared IDs (safe when many flags render). */
+    /** Simplified SVG flags - no shared IDs (safe when many flags render). */
     $flags = [
         'gb' => <<<'SVG'
             <path fill="#012169" d="M0 0h640v480H0z"/>

@@ -34,7 +34,7 @@
                             <td>{{ $subscription->product?->name }}</td>
                             <td>{{ $subscription->customer_email }}</td>
                             <td>{{ __('subscriptions::status.'.$subscription->status->value) }}</td>
-                            <td>{{ $subscription->next_billing_at?->toDateString() ?? '—' }}</td>
+                            <td>{{ $subscription->next_billing_at?->toDateString() ?? '-' }}</td>
                             <td class="ag-table__actions">
                                 <a class="ag-icon-btn" href="{{ route('admin.subscriptions.show', $subscription) }}" title="{{ __('common.view') }}" aria-label="{{ __('common.view') }}">
                                     <x-ag.icon name="eye" :size="16" />

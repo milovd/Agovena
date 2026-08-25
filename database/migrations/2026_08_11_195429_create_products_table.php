@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Variants deferred — Phase 2 is simple Product only.
+        // Variants deferred - Phase 2 is simple Product only.
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('name');

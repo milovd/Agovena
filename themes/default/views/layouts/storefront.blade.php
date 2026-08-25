@@ -38,16 +38,21 @@
         $ratio = $config?->string('catalog.image_ratio', '1/1') ?? '1/1';
     @endphp
     <style>
-        :root, [data-theme="light"] {
+        :root {
             --theme-color-accent: {{ $accent }};
             --theme-color-accent-hover: {{ $accentHover }};
             --theme-color-accent-soft: color-mix(in srgb, {{ $accent }} 12%, transparent);
-            --theme-color-surface: {{ $surface }};
-            --theme-color-bg: {{ $bg }};
-            --theme-color-text: {{ $text }};
             --theme-products-per-row: {{ $perRow }};
             --theme-card-ratio: {{ $ratio }};
             --theme-focus: 0 0 0 3px color-mix(in srgb, {{ $accent }} 35%, transparent);
+        }
+
+        /* Brand surface/bg/text are light-mode only: :root must not override dark tokens */
+        :root:not([data-theme="dark"]),
+        [data-theme="light"] {
+            --theme-color-surface: {{ $surface }};
+            --theme-color-bg: {{ $bg }};
+            --theme-color-text: {{ $text }};
         }
     </style>
     @vite([$cssEntry])

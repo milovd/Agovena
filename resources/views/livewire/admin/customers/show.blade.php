@@ -89,9 +89,7 @@
                             @can('users.view')
                                 <a class="ag-btn ag-btn--ghost ag-btn--sm" href="{{ route('admin.users.index') }}">{{ __('admin.customers.open_users') }}</a>
                             @endcan
-                        @else
-                            —
-                        @endif
+                        @else - @endif
                     </dd>
                 </div>
                 <div>
@@ -228,7 +226,7 @@
                     <tbody>
                         @forelse ($addresses as $address)
                             <tr wire:key="customer-address-{{ $address->id }}">
-                                <td>{{ $address->label ?: '—' }}</td>
+                                <td>{{ $address->label ?: '-' }}</td>
                                 <td>{{ $address->name }}</td>
                                 <td>
                                     {{ $address->line1 }}

@@ -15,10 +15,10 @@ use Throwable;
  *
  * Persistence strategy:
  * - Primary (authoritative): settings row system.installed_at (+ system.install_id)
- *   survives storage volume replacement / wipe as long as the database remains.
+ * survives storage volume replacement / wipe as long as the database remains.
  * - Secondary (defense in depth): storage/app/agovena/installed.json with the same
- *   install_id. Never treated as installed on its own — avoids re-opening /install
- *   after a storage-only restore of an old lock file against a fresh database.
+ * install_id. Never treated as installed on its own - avoids re-opening /install
+ * after a storage-only restore of an old lock file against a fresh database.
  *
  * markInstalled() is only called after owner + store setup succeed.
  */

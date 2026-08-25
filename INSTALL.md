@@ -33,7 +33,7 @@ composer install --no-dev --optimize-autoloader
 cp .env.example .env && php artisan key:generate
 # configure DB…
 php artisan migrate --force
-npm ci && npm run build   # only for source trees without public/build
+npm ci && npm run build # only for source trees without public/build
 php artisan agovena:install
 ```
 
@@ -48,7 +48,7 @@ php artisan up
 systemctl restart agovena-queue.service
 ```
 
-Never use `migrate:fresh` on a live store. Take a MariaDB dump plus `storage/app/{private,public}` and `.env` before upgrading. MariaDB DDL is not fully transactional — a mid-upgrade failure needs an operator restore from backup, not a fake “rollback” button.
+Never use `migrate:fresh` on a live store. Take a MariaDB dump plus `storage/app/{private,public}` and `.env` before upgrading. MariaDB DDL is not fully transactional - a mid-upgrade failure needs an operator restore from backup, not a fake “rollback” button.
 
 ## HTTPS
 

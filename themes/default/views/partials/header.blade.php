@@ -260,7 +260,7 @@
                     </form>
                     <div
                         id="store-search-suggest"
-                        class="store-suggest"
+                        class="store-search-suggest"
                         x-show="suggestOpen"
                         x-cloak
                         @mousedown.prevent
@@ -268,27 +268,27 @@
                         aria-label="{{ __('storefront.search.suggestions') }}"
                     >
                         <template x-if="suggestLoading">
-                            <p class="store-suggest__status" x-text="labels.searching"></p>
+                            <p class="store-search-suggest__status" x-text="labels.searching"></p>
                         </template>
                         <template x-if="!suggestLoading && suggestItems.length === 0 && (suggestQuery || '').trim().length >= 2">
-                            <p class="store-suggest__status" x-text="labels.noMatches"></p>
+                            <p class="store-search-suggest__status" x-text="labels.noMatches"></p>
                         </template>
                         <template x-for="item in suggestItems" :key="item.slug">
-                            <a class="store-suggest__item" :href="item.url" role="option">
-                                <span class="store-suggest__media" aria-hidden="true">
+                            <a class="store-search-suggest__item" :href="item.url" role="option">
+                                <span class="store-search-suggest__media" aria-hidden="true">
                                     <template x-if="item.image">
                                         <img :src="item.image" alt="">
                                     </template>
                                 </span>
-                                <span class="store-suggest__copy">
-                                    <span class="store-suggest__name" x-text="item.name"></span>
-                                    <span class="store-suggest__meta" x-text="item.category || ''"></span>
+                                <span class="store-search-suggest__copy">
+                                    <span class="store-search-suggest__name" x-text="item.name"></span>
+                                    <span class="store-search-suggest__meta" x-text="item.category || ''"></span>
                                 </span>
-                                <span class="store-suggest__price" x-text="item.price"></span>
+                                <span class="store-search-suggest__price" x-text="item.price"></span>
                             </a>
                         </template>
                         <a
-                            class="store-suggest__all"
+                            class="store-search-suggest__all"
                             :href="'{{ route('storefront.home') }}?q=' + encodeURIComponent((suggestQuery || '').trim())"
                             x-show="(suggestQuery || '').trim().length >= 2"
                             x-text="labels.viewAll"

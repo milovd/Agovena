@@ -80,7 +80,7 @@ function placeStripeOrder(?Customer $customer = null): Payment
         'customer_name' => $customer->name ?? 'Stripe Buyer',
         'customer_email' => $customer->email ?? 'stripe-buyer@example.test',
         'customer_id' => $customer?->id,
-        'payment_method' => 'stripe:card',
+        'payment_method' => 'stripe',
         'billing' => stripeBilling(),
     ]);
 
@@ -119,12 +119,12 @@ test('stripe registers only when the extension is enabled', function () {
     enableStripe();
 
     expect(app(PaymentGatewayRegistry::class)->get('stripe'))->toBeInstanceOf(StripePaymentGateway::class)
-        ->and(app(AvailablePaymentMethods::class)->ids())->toContain('stripe:card');
+        ->and(app(AvailablePaymentMethods::class)->ids())->toContain('stripe');
 
     app(ExtensionManager::class)->disable('stripe');
 
     expect(app(PaymentGatewayRegistry::class)->has('stripe'))->toBeFalse()
-        ->and(app(AvailablePaymentMethods::class)->ids())->not->toContain('stripe:card');
+        ->and(app(AvailablePaymentMethods::class)->ids())->not->toContain('stripe');
 });
 
 test('stripe credentials are encrypted and never redisplayed', function () {
@@ -146,7 +146,7 @@ test('stripe checkout redirects without marking the order paid', function () {
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         route('storefront.payment.status', $payment->order),
         route('storefront.payment.status', $payment->order),
         'stripe-start-1',
@@ -166,14 +166,14 @@ test('stripe initiate is idempotent for retries', function () {
 
     $first = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
         'stripe-idem-1',
     );
     $second = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
         'stripe-idem-1',
@@ -189,7 +189,7 @@ test('stripe return url does not mark the order paid', function () {
     $payment = placeStripeOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         route('storefront.payment.status', $payment->order),
         route('storefront.payment.status', $payment->order),
     );
@@ -209,7 +209,7 @@ test('signed stripe webhook paid confirms order and stores reusable authorizatio
     $payment = placeStripeOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -251,7 +251,7 @@ test('duplicate stripe webhook events are harmless', function () {
     $payment = placeStripeOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -273,7 +273,7 @@ test('stripe payment_intent.payment_failed maps to a failed attempt', function (
     $payment = placeStripeOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -295,7 +295,7 @@ test('status sync can confirm a paid stripe payment after webhook delay', functi
     $payment = placeStripeOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -313,7 +313,7 @@ test('stripe full and partial refunds are idempotent', function () {
     $payment = placeStripeOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -341,7 +341,7 @@ test('stripe provider failures stay as safe agovena failures', function () {
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
         'stripe-fail-1',
@@ -358,7 +358,7 @@ test('stripe network timeout does not leak secrets into logs', function () {
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
         'stripe-timeout-1',
@@ -376,7 +376,7 @@ test('malformed stripe checkout response fails the attempt', function () {
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
         'stripe-malformed-1',
@@ -395,7 +395,7 @@ test('stripe unauthorized and server errors fail safely without leaking secrets'
 
         $attempt = app(StartOrderPayment::class)->handle(
             $payment->order,
-            'stripe:card',
+            'stripe',
             'https://example.test/return',
             'https://example.test/cancel',
             'stripe-'.$mode.'-1',
@@ -418,15 +418,15 @@ test('stripe health check validates credentials without exposing the key', funct
         ->and($api->balanceCalls)->toBe(1);
 });
 
-test('development gateway still works alongside stripe when enabled', function () {
+test('development gateway is not offered at checkout alongside stripe', function () {
     enableStripe();
     config(['agovena.payments.allow_development_instant_pay' => true]);
     app(PaymentGatewayRegistry::class)->register(app(DevelopmentPaymentGateway::class));
 
     $ids = app(AvailablePaymentMethods::class)->ids();
 
-    expect($ids)->toContain('development')
-        ->and($ids)->toContain('stripe:card');
+    expect($ids)->toContain('stripe')
+        ->and($ids)->not->toContain('development');
 });
 
 test('subscription renewal auto-charges through stripe without module knowing stripe types', function () {
@@ -449,12 +449,12 @@ test('subscription renewal auto-charges through stripe without module knowing st
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
-        'payment_method' => 'stripe:card',
+        'payment_method' => 'stripe',
         'billing' => stripeBilling(),
     ]);
     $attempt = app(StartOrderPayment::class)->handle(
         $order,
-        'stripe:card',
+        'stripe',
         'https://example.test/return',
         'https://example.test/cancel',
     );

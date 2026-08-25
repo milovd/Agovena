@@ -98,7 +98,7 @@
                                 <td>{{ $delivery->order?->number }}</td>
                                 <td>{{ __('digital-delivery::admin.sources.'.$delivery->source) }}</td>
                                 <td>{{ __('digital-delivery::admin.statuses.'.$delivery->status) }}</td>
-                                <td><code class="ag-code">{{ $delivery->value_hint ?? '—' }}</code></td>
+                                <td><code class="ag-code">{{ $delivery->value_hint ?? '-' }}</code></td>
                                 <td>
                                     @can('digital_delivery.manage')
                                         @if ($delivery->isPendingManual())

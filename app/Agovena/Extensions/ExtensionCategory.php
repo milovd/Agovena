@@ -23,7 +23,7 @@ enum ExtensionCategory: string
 
     /**
      * Preferred first-party filesystem category folder under extensions/.
-     * Not identity — discovery uses extension.json id.
+     * Not identity - discovery uses extension.json id.
      */
     public function directoryName(): string
     {

@@ -9,7 +9,7 @@ uses(CreatesStaff::class);
 
 /**
  * Admin chrome, settings, dashboard, appearance and content must render
- * translations — never the raw translation keys they are registered with.
+ * translations - never the raw translation keys they are registered with.
  *
  * @return list<string>
  */
@@ -18,10 +18,10 @@ function adminLocalizedRoutes(): array
     return [
         '/admin',
         '/admin/settings',
-        '/admin/settings/general',
-        '/admin/settings/branding',
-        '/admin/settings/store',
-        '/admin/settings/mail',
+        '/admin/settings?tab=general',
+        '/admin/settings?tab=branding',
+        '/admin/settings?tab=store',
+        '/admin/settings?tab=mail',
         '/admin/notifications',
         '/admin/email-log',
         '/admin/failed-jobs',
@@ -101,13 +101,15 @@ test('admin settings and dashboard follow the site locale', function () {
         ->assertOk()
         ->assertSee(__('admin.settings.title', [], 'nl'), false)
         ->assertSee(__('admin.settings.groups.general', [], 'nl'), false)
-        ->assertSee(__('admin.settings.group_help.branding', [], 'nl'), false);
-
-    $this->actingAs($staff)
-        ->get('/admin/settings/general')
-        ->assertOk()
+        ->assertSee(__('admin.settings.group_help.general', [], 'nl'), false)
         ->assertSee(__('admin.settings.fields.site_name', [], 'nl'), false)
         ->assertSee(__('admin.settings.save', [], 'nl'), false);
+
+    $this->actingAs($staff)
+        ->get('/admin/settings?tab=branding')
+        ->assertOk()
+        ->assertSee(__('admin.settings.groups.branding', [], 'nl'), false)
+        ->assertSee(__('admin.settings.group_help.branding', [], 'nl'), false);
 });
 
 test('theme customize labels come from the theme schema keys', function () {

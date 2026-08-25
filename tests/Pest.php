@@ -12,7 +12,7 @@ use Tests\UpgradeTestCase;
 require_once __DIR__.'/Support/OptionalPackages.php';
 
 /**
- * @param  list<string>  $ids
+ * @param list<string> $ids
  */
 function installAndEnableModules(array $ids): void
 {
@@ -43,7 +43,7 @@ function installAndEnableExtension(string $id): ExtensionManager
 
 /**
  * Feature tests historically place unpaid orders then call RecordManualPayment.
- * Register the core ManualPaymentGateway in the test registry only — it is not a
+ * Register the core ManualPaymentGateway in the test registry only - it is not a
  * storefront product and is not offered when real payment extensions are enabled.
  */
 function registerTestPendingPaymentGateway(): void

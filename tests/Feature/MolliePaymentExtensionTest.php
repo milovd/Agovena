@@ -57,7 +57,7 @@ function placeMollieOrder(): Payment
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => 'Mollie Buyer',
         'customer_email' => 'mollie-buyer@example.test',
-        'payment_method' => 'mollie:ideal',
+        'payment_method' => 'mollie',
         'billing' => AddressData::fromArray([
             'name' => 'Mollie Buyer',
             'line1' => 'Street 1',
@@ -76,12 +76,12 @@ test('mollie registers only when the extension is enabled', function () {
     enableMollie();
 
     expect(app(PaymentGatewayRegistry::class)->get('mollie'))->toBeInstanceOf(MolliePaymentGateway::class)
-        ->and(app(AvailablePaymentMethods::class)->ids())->toContain('mollie:ideal');
+        ->and(app(AvailablePaymentMethods::class)->ids())->toContain('mollie');
 
     app(ExtensionManager::class)->disable('mollie');
 
     expect(app(PaymentGatewayRegistry::class)->has('mollie'))->toBeFalse()
-        ->and(app(AvailablePaymentMethods::class)->ids())->not->toContain('mollie:ideal');
+        ->and(app(AvailablePaymentMethods::class)->ids())->not->toContain('mollie');
 });
 
 test('mollie credentials are encrypted and never redisplayed', function () {
@@ -126,7 +126,7 @@ test('mollie create payment redirects without marking the order paid', function 
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         route('storefront.payment.status', $payment->order),
         route('storefront.payment.status', $payment->order),
         'mollie-start-1',
@@ -146,14 +146,14 @@ test('mollie initiate is idempotent for retries and double clicks', function () 
 
     $first = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
         'mollie-idem-1',
     );
     $second = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
         'mollie-idem-1',
@@ -169,7 +169,7 @@ test('return url does not mark the order paid', function () {
     $payment = placeMollieOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         route('storefront.payment.status', $payment->order),
         route('storefront.payment.status', $payment->order),
     );
@@ -189,7 +189,7 @@ test('mollie webhook paid confirms order and invoice', function () {
     $payment = placeMollieOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -209,7 +209,7 @@ test('duplicate mollie webhook is harmless', function () {
     $payment = placeMollieOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -230,7 +230,7 @@ test('mollie webhook failed cancelled and expired map to normalized states', fun
     $payment = placeMollieOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -255,7 +255,7 @@ test('status sync can confirm a paid mollie payment after webhook delay', functi
     $payment = placeMollieOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -273,7 +273,7 @@ test('mollie full and partial refunds are idempotent', function () {
     $payment = placeMollieOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
     );
@@ -300,7 +300,7 @@ test('mollie provider failures stay as safe agovena failures', function () {
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
         'mollie-fail-1',
@@ -318,7 +318,7 @@ test('mollie network timeout does not leak secrets into logs', function () {
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
         'mollie-timeout-1',
@@ -335,7 +335,7 @@ test('malformed mollie checkout response fails the attempt', function () {
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
         'mollie-malformed-1',
@@ -354,7 +354,7 @@ test('mollie unauthorized and server errors fail safely without leaking secrets'
 
         $attempt = app(StartOrderPayment::class)->handle(
             $payment->order,
-            'mollie:ideal',
+            'mollie',
             'https://example.test/return',
             'https://example.test/cancel',
             'mollie-'.$mode.'-1',
@@ -387,15 +387,15 @@ test('mollie health check validates credentials without exposing the key', funct
         ->and($api->methods)->not->toBeEmpty();
 });
 
-test('development gateway still works alongside mollie when enabled', function () {
+test('development gateway is not offered at checkout alongside mollie', function () {
     enableMollie();
     config(['agovena.payments.allow_development_instant_pay' => true]);
     app(PaymentGatewayRegistry::class)->register(app(DevelopmentPaymentGateway::class));
 
     $ids = app(AvailablePaymentMethods::class)->ids();
 
-    expect($ids)->toContain('development')
-        ->and($ids)->toContain('mollie:ideal');
+    expect($ids)->toContain('mollie')
+        ->and($ids)->not->toContain('development');
 });
 
 test('mollie can store a mandate mapping without core customer columns', function () {
@@ -403,7 +403,7 @@ test('mollie can store a mandate mapping without core customer columns', functio
     $payment = placeMollieOrder();
     app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
     );

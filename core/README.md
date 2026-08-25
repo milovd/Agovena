@@ -2,7 +2,7 @@
 
 Agovena **Core** is the generic platform and commerce orchestration layer.
 
-Implementation lives in the Laravel application (`app/`, `routes/`, Core migrations, shared Admin/customer contracts). This directory is the conceptual boundary documentation — not a separate Composer package tree.
+Implementation lives in the Laravel application (`app/`, `routes/`, Core migrations, shared Admin/customer contracts). This directory is the conceptual boundary documentation - not a separate Composer package tree.
 
 ## Owns
 
@@ -23,9 +23,9 @@ Implementation lives in the Laravel application (`app/`, `routes/`, Core migrati
 
 A hosting subscription product is typically:
 
-- **Core** — Order / Payment / Invoice
-- **Modules** — Subscriptions + Provisioning
-- **Extension** — e.g. Pterodactyl (provisioner adapter)
-- **Theme** — storefront presentation
+- **Core** - Order / Payment / Invoice
+- **Modules** - Subscriptions + Provisioning
+- **Extension** - e.g. Pterodactyl (provisioner adapter)
+- **Theme** - storefront presentation
 
 Merchant-facing “Hosting & Provisioned Services” is a selling intent / preset over those capabilities, not a Core `store_type`.

@@ -44,7 +44,7 @@
                             <td>{{ $instance->product?->name }}</td>
                             <td>{{ $instance->customer_email }}</td>
                             <td>{{ __('provisioning::status.'.$instance->status->value) }}</td>
-                            <td>{{ $instance->external_ref ?? '—' }}</td>
+                            <td>{{ $instance->external_ref ?? '-' }}</td>
                             <td class="ag-table__actions">
                                 <a class="ag-icon-btn" href="{{ route('admin.provisioning.show', $instance) }}" title="{{ __('common.view') }}" aria-label="{{ __('common.view') }}">
                                     <x-ag.icon name="eye" :size="16" />

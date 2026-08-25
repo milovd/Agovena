@@ -31,4 +31,4 @@ Application version source: `config('agovena.version')` → currently `0.1.0`.
 - **Docker** Compose production stack: optional / **UNVERIFIED**
 - Host OS beyond Ubuntu 24.04 CI: not broadly validated
 - Minimal subscription dunning; no reserved seating; no OAuth / Admin JSON:API
-- MariaDB DDL upgrades are not fully transactional — restore from backup on mid-upgrade failure
+- MariaDB DDL upgrades are not fully transactional - restore from backup on mid-upgrade failure

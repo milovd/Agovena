@@ -14,7 +14,7 @@ use InvalidArgumentException;
  * Rate semantics: units of this currency per 1 unit of the shop base currency.
  * Example with base EUR: USD exchange_rate 1.08 means 1 EUR = 1.08 USD.
  *
- * Uses BCMath only — no floats.
+ * Uses BCMath only - no floats.
  */
 final class CurrencyConverter
 {

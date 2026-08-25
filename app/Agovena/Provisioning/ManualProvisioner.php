@@ -41,7 +41,7 @@ final class ManualProvisioner implements Provisioner, ProvisionerActions, Provis
     {
         return new ProvisionerPanelData(__('notifications.provisioning.details'), [
             ['label' => __('notifications.provisioning.status'), 'value' => $instance->status],
-            ['label' => __('notifications.provisioning.reference'), 'value' => $instance->externalRef ?? '—'],
+            ['label' => __('notifications.provisioning.reference'), 'value' => $instance->externalRef ?? '-'],
         ]);
     }
 }

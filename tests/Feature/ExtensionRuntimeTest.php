@@ -119,7 +119,7 @@ test('checkout discovers enabled extension payment methods', function () {
     $options = app(AvailablePaymentMethods::class)->options();
 
     expect($options)->not->toBeEmpty()
-        ->and(collect($options)->pluck('id')->all())->toContain('mollie:ideal');
+        ->and(collect($options)->pluck('id')->all())->toContain('mollie');
 });
 
 test('admin extensions page lists mollie', function () {
@@ -148,13 +148,11 @@ test('core payment contracts do not import vendor SDKs', function () {
     }
 });
 
-test('without payment extensions only development pay is offered when enabled', function () {
+test('without payment extensions checkout offers no gateway methods', function () {
     app(PaymentGatewayRegistry::class)->clear();
     config(['agovena.payments.allow_development_instant_pay' => true]);
 
-    $ids = app(AvailablePaymentMethods::class)->ids();
-
-    expect($ids)->toBe(['development']);
+    expect(app(AvailablePaymentMethods::class)->ids())->toBe([]);
 });
 
 test('without payment extensions checkout offers no methods when development pay is disabled', function () {

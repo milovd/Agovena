@@ -21,7 +21,7 @@
             <p><strong>{{ __('subscriptions::admin.period') }}:</strong>
                 {{ $subscription->current_period_start?->toDateString() }} → {{ $subscription->current_period_end?->toDateString() }}
             </p>
-            <p><strong>{{ __('subscriptions::admin.next_billing') }}:</strong> {{ $subscription->next_billing_at?->toDateString() ?? '—' }}</p>
+            <p><strong>{{ __('subscriptions::admin.next_billing') }}:</strong> {{ $subscription->next_billing_at?->toDateString() ?? '-' }}</p>
             <p><strong>{{ __('subscriptions::admin.renewal_mode') }}:</strong>
                 {{ $billing->isAutomatic() ? __('subscriptions::admin.renewal_mode_automatic') : __('subscriptions::admin.renewal_mode_manual') }}
             </p>
@@ -110,9 +110,7 @@
                                     <td>
                                         @if ($renewal->order)
                                             <a href="{{ route('admin.orders.show', $renewal->order) }}">{{ $renewal->order->number }}</a>
-                                        @else
-                                            —
-                                        @endif
+                                        @else - @endif
                                     </td>
                                 </tr>
                             @endforeach

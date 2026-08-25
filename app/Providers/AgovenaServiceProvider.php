@@ -51,6 +51,9 @@ use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Agovena\Storefront\StorefrontPreferences;
+use App\Agovena\Tax\AutomaticTaxRateProvider;
+use App\Agovena\Tax\StaticCatalogTaxRateProvider;
+use App\Agovena\Tax\VatnodeRemoteTaxRateProvider;
 use App\Agovena\Theme\StorefrontBrand;
 use App\Agovena\Theme\ThemeManager;
 use App\Agovena\Theme\ThemeSurface;
@@ -109,6 +112,14 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(InvoiceDocumentView::class);
         $this->app->singleton(SettingsRepository::class);
         $this->app->singleton(CurrencyCatalog::class);
+        $this->app->singleton(AutomaticTaxRateProvider::class, function ($app): AutomaticTaxRateProvider {
+            $driver = (string) config('agovena.tax.automatic_provider', 'vatnode');
+
+            return match ($driver) {
+                'catalog' => $app->make(StaticCatalogTaxRateProvider::class),
+                default => $app->make(VatnodeRemoteTaxRateProvider::class),
+            };
+        });
         $this->app->singleton(InstallationState::class);
         $this->app->singleton(ApplicationSchemaStatus::class, function ($app): ApplicationSchemaStatus {
             return new ApplicationSchemaStatus(
@@ -450,15 +461,6 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'shield',
             sort: 210,
             permission: 'roles.view',
-        ));
-
-        $admin->navigation(new NavigationItem(
-            id: 'security',
-            label: 'admin.nav.security',
-            group: 'admin.nav_groups.system',
-            href: '/admin/security',
-            icon: 'shield',
-            sort: 215,
         ));
 
         $admin->navigation(new NavigationItem(
@@ -872,6 +874,24 @@ class AgovenaServiceProvider extends ServiceProvider
             default: true,
             help: 'admin.settings.field_help.enable_reviews',
             sort: 30,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'tax_enabled',
+            label: 'admin.settings.fields.tax_enabled',
+            type: 'boolean',
+            default: true,
+            help: 'admin.settings.field_help.tax_enabled',
+            sort: 38,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'automatic_tax_rates',
+            label: 'admin.settings.fields.automatic_tax_rates',
+            type: 'boolean',
+            default: true,
+            help: 'admin.settings.field_help.automatic_tax_rates',
+            sort: 39,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',

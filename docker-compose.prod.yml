@@ -1,5 +1,5 @@
 # Optional production Compose stack. Native Linux (Nginx/PHP-FPM/MariaDB) is the
-# primary self-host path — see deploy/README.md. This file is convenience only.
+# primary self-host path - see deploy/README.md. This file is convenience only.
 # Not an OS image and not live-verified on a specific host OS.
 # Does not run migrations on start.
 #

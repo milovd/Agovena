@@ -35,7 +35,7 @@ final class MoneyFormatter
 
     /**
      * Format for UI display in the visitor/admin preferred currency (session), converting via rates.
-     * Does not change stored amounts — invoices/checkout settlement stay in their native currency.
+     * Does not change stored amounts - invoices/checkout settlement stay in their native currency.
      */
     public static function formatDisplay(Money|int $amount, ?string $currency = null, ?string $displayCurrency = null): string
     {

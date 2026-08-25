@@ -8,7 +8,7 @@ interface ComposerRunner
 {
     /**
      * Require a Composer package into the isolated packages Composer project.
-     * Arguments must already be validated — implementations must not interpolate a shell string.
+     * Arguments must already be validated - implementations must not interpolate a shell string.
      */
     public function require(string $packageName, string $constraint, ?string $repositoryUrl = null): ComposerInstallResult;
 

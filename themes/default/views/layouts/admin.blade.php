@@ -169,7 +169,7 @@
                                     {{ __('admin.nav.settings') }}
                                 </a>
                             @endcan
-                            <a class="ag-dropdown__item" role="menuitem" href="{{ route('admin.security.two-factor') }}">
+                            <a class="ag-dropdown__item" role="menuitem" href="{{ route('customer.security') }}">
                                 <x-ag.icon name="shield" :size="16" />
                                 {{ __('admin.nav.security') }}
                             </a>

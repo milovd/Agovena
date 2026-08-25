@@ -85,6 +85,20 @@ return [
         ],
     ],
 
+    /*
+     * Automatic tax rates (when store.automatic_tax_rates is on).
+     * Production default: vatnode HTTP JSON (EC TEDB-sourced). catalog is for
+     * automated tests / offline only and must not be treated as a live API.
+     */
+    'tax' => [
+        'automatic_provider' => env('AGOVENA_TAX_AUTOMATIC_PROVIDER', 'vatnode'),
+        'vatnode_url' => env(
+            'AGOVENA_TAX_VATNODE_URL',
+            'https://cdn.jsdelivr.net/gh/vatnode/eu-vat-rates-data@main/data/eu-vat-rates-data.json',
+        ),
+        'cache_ttl' => (int) env('AGOVENA_TAX_CACHE_TTL', 86400),
+    ],
+
     'retention' => [
         'email_logs_days' => (int) env('AGOVENA_EMAIL_LOG_RETENTION', 90),
         'audit_logs_days' => (int) env('AGOVENA_AUDIT_LOG_RETENTION', 365),

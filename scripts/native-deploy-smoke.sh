@@ -20,7 +20,7 @@ fail() { echo "::error::native-smoke: $*" >&2; exit 1; }
 
 cd "$APP_DIR"
 [[ -f artisan ]] || fail "artisan missing in APP_DIR=$APP_DIR"
-[[ -f vendor/autoload.php ]] || fail "vendor missing — release must ship production Composer deps"
+[[ -f vendor/autoload.php ]] || fail "vendor missing - release must ship production Composer deps"
 [[ -f scripts/ci/native-order-smoke.php ]] || fail "native-order-smoke.php missing from release"
 
 echo "==> PHP $(php -v | head -n1)"
@@ -106,7 +106,7 @@ php artisan agovena:install --no-interaction \
 
 php artisan storage:link --force --no-interaction || true
 php artisan config:cache || fail "config:cache failed"
-# Avoid route:cache — Livewire / dynamic admin routes are not a stable cache target for smoke.
+# Avoid route:cache - Livewire / dynamic admin routes are not a stable cache target for smoke.
 php artisan view:cache || fail "view:cache failed"
 
 # Permissions: deploy/CLI user owns files; www-data group can read/write for FPM.

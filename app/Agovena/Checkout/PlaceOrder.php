@@ -17,6 +17,7 @@ use App\Agovena\Payments\CompleteAccountBalancePayment;
 use App\Agovena\Payments\CompleteDevelopmentPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
+use App\Agovena\Tax\TaxRateResolver;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\OrderCreated;
@@ -27,7 +28,6 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
-use App\Models\TaxRate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -42,6 +42,7 @@ final class PlaceOrder
         private readonly ShippingQuoteResolver $shippingQuotes,
         private readonly DiscountApplicator $discounts,
         private readonly TaxCalculator $taxes,
+        private readonly TaxRateResolver $taxRates,
         private readonly ApplyCreditToOrder $applyCredit,
         private readonly ProductOptionPricer $optionPricer,
         private readonly CustomerPropertyService $properties,
@@ -173,12 +174,11 @@ final class PlaceOrder
             $discount === null ? Money::of(0, $subtotal->currency) : $discount->amount,
         );
         $taxCountry = $shipping?->country ?: ($billing?->country ?: 'NL');
-        $taxRate = $this->activeTaxRate($taxCountry);
+        $taxRate = $this->taxRates->resolve($taxCountry);
         $pricesIncludeTax = (bool) $this->settings->get('store', 'prices_include_tax', false);
         $tax = $this->taxes->calculate(
             $subtotalAfterDiscount,
             $shippingAmount,
-            $taxCountry,
             $pricesIncludeTax,
             $taxRate,
         );
@@ -395,18 +395,5 @@ final class PlaceOrder
         } while (Order::query()->where('number', $number)->exists());
 
         return $number;
-    }
-
-    private function activeTaxRate(string $country): ?TaxRate
-    {
-        return TaxRate::query()
-            ->where('is_active', true)
-            ->where(function ($query) use ($country): void {
-                $query->where('country', strtoupper($country))
-                    ->orWhereNull('country');
-            })
-            ->orderByRaw('CASE WHEN country IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('id')
-            ->first();
     }
 }

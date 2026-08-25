@@ -43,7 +43,9 @@ test('guest can add product to cart and checkout', function () {
         ->and($order->billing_city)->toBe('Amsterdam')
         ->and($order->billing_country)->toBe('NL')
         ->and($order->status)->toBe(OrderStatus::Pending)
-        ->and($order->total_amount)->toBe(3000)
+        ->and($order->subtotal_amount)->toBe(3000)
+        ->and($order->tax_amount)->toBe(630)
+        ->and($order->total_amount)->toBe(3630)
         ->and($order->items)->toHaveCount(1)
         ->and($order->items->first()->unit_amount)->toBe(1500)
         ->and($order->items->first()->line_total_amount)->toBe(3000)
@@ -78,7 +80,8 @@ test('order item snapshots survive product price changes', function () {
     $product->update(['price_amount' => 99999]);
 
     expect($order->fresh()->items->first()->unit_amount)->toBe(1000)
-        ->and($order->fresh()->total_amount)->toBe(1000);
+        ->and($order->fresh()->tax_amount)->toBe(210)
+        ->and($order->fresh()->total_amount)->toBe(1210);
 });
 
 test('empty cart cannot checkout', function () {
@@ -106,7 +109,7 @@ test('place order is idempotent for the same key', function () {
         'idempotency_key' => 'same-key',
     ]);
 
-    // Cart cleared — second call with same key returns existing order without creating another.
+    // Cart cleared - second call with same key returns existing order without creating another.
     $second = app(PlaceOrder::class)->handle([
         'customer_name' => 'Idem',
         'customer_email' => 'idem@example.com',

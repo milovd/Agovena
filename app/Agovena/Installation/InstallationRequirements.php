@@ -81,7 +81,7 @@ class InstallationRequirements
             $current = $pending === [];
             $detail = $current
                 ? null
-                : count($pending).' pending ('.implode(', ', $pending).') — php artisan agovena:upgrade';
+                : count($pending).' pending ('.implode(', ', $pending).') - php artisan agovena:upgrade';
 
             return $this->check(
                 'migrations',

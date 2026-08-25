@@ -52,7 +52,7 @@
                                 {{ __('admin.updates.providers_fail') }}
                             @endif
                             @if ($provider['message'] !== '')
-                                — {{ $provider['message'] }}
+                                - {{ $provider['message'] }}
                             @endif
                         </dd>
                     </div>

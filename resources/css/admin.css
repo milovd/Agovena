@@ -1,4 +1,4 @@
-/* Agovena Admin — ITCSS entry (no Tailwind) */
+/* Agovena Admin - ITCSS entry (no Tailwind) */
 
 @import './admin/settings/_tokens.css';
 @import './admin/generic/_reset.css';

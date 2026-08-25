@@ -32,13 +32,13 @@ use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
+use App\Agovena\Tax\TaxRateResolver;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Livewire\Concerns\SuggestsAddresses;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
-use App\Models\TaxRate;
 use App\Support\MoneyFormatter;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\RedirectResponse;
@@ -132,7 +132,6 @@ final class CheckoutPage extends Component
 
         $this->idempotency_key = (string) Str::uuid();
         $ids = app(AvailablePaymentMethods::class)->ids();
-        $this->payment_method = $ids[0] ?? '';
 
         /** @var Customer|null $customer */
         $customer = current_customer();
@@ -151,9 +150,25 @@ final class CheckoutPage extends Component
             } else {
                 $this->billing_name = $customer->name;
             }
+
+            if (app(CustomerCreditLedger::class)->available($customer) > 0) {
+                $this->payment_method = 'account_balance';
+                $this->apply_credit = true;
+            } else {
+                $this->payment_method = $ids[0] ?? 'account_balance';
+            }
+        } else {
+            $this->payment_method = $ids[0] ?? 'account_balance';
         }
 
         $this->propertyValues = $properties->emptyValues($properties->definitionsFor('checkout'), $customer);
+    }
+
+    public function updatedPaymentMethod(string $value): void
+    {
+        if ($value === 'account_balance') {
+            $this->apply_credit = true;
+        }
     }
 
     public function applySavedAddress(int $addressId): void
@@ -298,16 +313,30 @@ final class CheckoutPage extends Component
         }
 
         $allowed = app(AvailablePaymentMethods::class)->ids();
+        $usingBalance = $this->payment_method === 'account_balance';
+        if ($usingBalance) {
+            $this->apply_credit = true;
+        }
 
         $requirements = $composer->compose($cart);
         $requiresShipping = $requirements->requiresShipping();
         $checkoutProperties = $properties->definitionsFor('checkout');
         $amountDue = $this->estimatedAmountDue($cart, $composer, $creditLedger);
-        $paymentRules = $amountDue > 0
-            ? ['required', 'string', Rule::in($allowed)]
-            : ['nullable', 'string'];
+        if ($usingBalance) {
+            $paymentRules = ['required', 'string', Rule::in(['account_balance'])];
+        } elseif ($amountDue > 0) {
+            $paymentRules = ['required', 'string', Rule::in($allowed)];
+        } else {
+            $paymentRules = ['nullable', 'string'];
+        }
 
-        if ($amountDue > 0 && $allowed === []) {
+        if ($amountDue > 0 && ! $usingBalance && $allowed === []) {
+            $this->addError('payment_method', __('storefront.errors.payment_gateway_required'));
+
+            return;
+        }
+
+        if ($usingBalance && $amountDue > 0) {
             $this->addError('payment_method', __('storefront.errors.payment_gateway_required'));
 
             return;
@@ -377,7 +406,7 @@ final class CheckoutPage extends Component
             'customer_name' => $data['customer_name'],
             'customer_email' => $data['customer_email'],
             'idempotency_key' => $data['idempotency_key'],
-            'payment_method' => $amountDue > 0 ? ($data['payment_method'] ?? $this->payment_method) : null,
+            'payment_method' => $amountDue > 0 ? ($data['payment_method'] ?? $this->payment_method) : ($usingBalance ? 'account_balance' : null),
             'customer_id' => current_customer()?->id,
             'billing' => $billing,
             'shipping' => $shipping,
@@ -385,7 +414,7 @@ final class CheckoutPage extends Component
             'shipping_method_id' => $requiresShipping ? $this->shipping_method_id : null,
             'shipping_quote_key' => $requiresShipping ? ($data['shipping_quote_key'] ?? $this->shipping_quote_key) : null,
             'discount_code' => $this->applied_coupon_code !== '' ? $this->applied_coupon_code : null,
-            'apply_credit' => (bool) ($data['apply_credit'] ?? false),
+            'apply_credit' => $usingBalance || (bool) ($data['apply_credit'] ?? false),
             'custom_properties' => $data['propertyValues'] ?? $this->propertyValues,
         ]);
 
@@ -396,7 +425,7 @@ final class CheckoutPage extends Component
         if ($order->payment?->status !== PaymentStatus::Paid) {
             $attempt = $startPayment->handle(
                 $order,
-                $data['payment_method'],
+                (string) ($data['payment_method'] ?? $this->payment_method),
                 $returnUrl,
                 $returnUrl,
                 'checkout-'.$order->id,
@@ -447,6 +476,7 @@ final class CheckoutPage extends Component
         ShippingQuoteResolver $shippingQuotes,
         DiscountApplicator $discounts,
         TaxCalculator $taxes,
+        TaxRateResolver $taxRates,
         SettingsRepository $settings,
         CustomerCreditLedger $creditLedger,
         CartRequirementComposer $composer,
@@ -518,19 +548,19 @@ final class CheckoutPage extends Component
             $country = $requiresShipping && ! $this->shipping_same_as_billing
                 ? $this->shipping_country
                 : $this->billing_country;
+            $taxCountry = $country !== '' ? $country : 'NL';
             $tax = $taxes->calculate(
                 $subtotalAfterDiscount,
                 $shipping,
-                $country !== '' ? $country : 'NL',
                 $pricesIncludeTax,
-                $this->activeTaxRate($country !== '' ? $country : 'NL'),
+                $taxRates->resolve($taxCountry),
             );
             $taxTotal = $tax->tax;
             $orderTotal = $subtotalAfterDiscount->add($shipping);
             if (! $pricesIncludeTax) {
                 $orderTotal = $orderTotal->add($taxTotal);
             }
-            if ($this->apply_credit && $creditBalance > 0) {
+            if (($this->apply_credit || $this->payment_method === 'account_balance') && $creditBalance > 0) {
                 $creditTotal = Money::of(min($creditBalance, $orderTotal->amount), $orderTotal->currency);
             }
         }
@@ -772,6 +802,10 @@ final class CheckoutPage extends Component
                 return __('storefront.checkout.place_order');
             }
 
+            if ($this->payment_method === 'account_balance') {
+                return __('storefront.checkout.pay_with_account_balance');
+            }
+
             $gatewayId = CheckoutPaymentSelection::parse($this->payment_method)->gatewayId;
             if ($gatewayId === 'development' && $amountDue !== null) {
                 return __('storefront.checkout.pay_amount', [
@@ -815,7 +849,8 @@ final class CheckoutPage extends Component
 
         $orderTotal = $subtotal->amount + $shippingAmount;
         $customer = current_customer();
-        if ($this->apply_credit && $customer !== null) {
+        $applyCredit = $this->apply_credit || $this->payment_method === 'account_balance';
+        if ($applyCredit && $customer !== null) {
             $credit = min(
                 $creditLedger->available($customer, $subtotal->currency),
                 $orderTotal,
@@ -830,18 +865,5 @@ final class CheckoutPage extends Component
     {
         return (bool) config('agovena.payments.allow_development_instant_pay')
             && ! app()->environment('production');
-    }
-
-    private function activeTaxRate(string $country): ?TaxRate
-    {
-        return TaxRate::query()
-            ->where('is_active', true)
-            ->where(function ($query) use ($country): void {
-                $query->where('country', strtoupper($country))
-                    ->orWhereNull('country');
-            })
-            ->orderByRaw('CASE WHEN country IS NULL THEN 1 ELSE 0 END')
-            ->orderBy('id')
-            ->first();
     }
 }

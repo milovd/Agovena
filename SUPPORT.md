@@ -2,12 +2,12 @@
 
 Statuses:
 
-- **VALIDATED** — exercised in this project’s CI or an explicit rehearsal
-- **EXPECTED COMPATIBLE** — should work from dependency/runtime similarity; not separately proven
-- **UNVERIFIED** — not proven; do not assume production readiness
-- **MOCK-TESTED ONLY** — automated mocks/fakes; no live sandbox credentials run yet
-- **SANDBOX-VERIFIED** — real provider test/sandbox API exercised (see `deploy/LIVE_PROVIDER_CHECKS.md`)
-- **PRODUCTION-VERIFIED** — real live/production API exercised (not claimed for v0.1 RC)
+- **VALIDATED** - exercised in this project’s CI or an explicit rehearsal
+- **EXPECTED COMPATIBLE** - should work from dependency/runtime similarity; not separately proven
+- **UNVERIFIED** - not proven; do not assume production readiness
+- **MOCK-TESTED ONLY** - automated mocks/fakes; no live sandbox credentials run yet
+- **SANDBOX-VERIFIED** - real provider test/sandbox API exercised (see `deploy/LIVE_PROVIDER_CHECKS.md`)
+- **PRODUCTION-VERIFIED** - real live/production API exercised (not claimed for v0.1 RC)
 
 ## Application runtime
 
@@ -38,7 +38,7 @@ Statuses:
 | Provider | Status |
 |----------|--------|
 | Development / Manual payment | VALIDATED (CI + native smoke) |
-| Mollie Extension | MOCK-TESTED ONLY — needs `test_` key (`AGOVENA_EXT_MOLLIE_API_KEY` or Admin api_key) for SANDBOX-VERIFIED |
+| Mollie Extension | MOCK-TESTED ONLY - needs `test_` key (`AGOVENA_EXT_MOLLIE_API_KEY` or Admin api_key) for SANDBOX-VERIFIED |
 | Stripe Extension | MOCK-TESTED ONLY |
 | PostNL Extension | MOCK-TESTED ONLY |
 | Pterodactyl Extension | MOCK-TESTED ONLY |
@@ -53,4 +53,4 @@ Transactional sandbox checklist: `deploy/LIVE_PROVIDER_CHECKS.md`.
 - Docker optional/unverified
 - No broad OS matrix beyond Ubuntu 24.04 CI
 - Minimal dunning; no reserved seating; no OAuth/Admin API
-- Third-party Modules/Extensions are trusted-code — only install code you trust (see `INSTALL.md` / Security)
+- Third-party Modules/Extensions are trusted-code - only install code you trust (see `INSTALL.md` / Security)

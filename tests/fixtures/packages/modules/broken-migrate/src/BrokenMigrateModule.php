@@ -11,6 +11,6 @@ final class BrokenMigrateModule implements Module
 {
     public function register(ModuleContext $context): void
     {
-        // Intentionally empty — used only for migration failure coverage.
+        // Intentionally empty - used only for migration failure coverage.
     }
 }

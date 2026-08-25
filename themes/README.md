@@ -6,8 +6,8 @@ Presentation for **storefront and Admin**. Themes must not contain backend busin
 
 `themes/default` is the reference Theme. It ships two surfaces:
 
-- **storefront** — catalog, cart, checkout, account, invoice document
-- **admin** — Admin chrome (`layouts/admin`, `layouts/admin-guest`)
+- **storefront** - catalog, cart, checkout, account, invoice document
+- **admin** - Admin chrome (`layouts/admin`, `layouts/admin-guest`)
 
 Module-contributed account surfaces (downloads, digital secrets, subscriptions, services, tickets, returns) render through Theme views when those Modules are enabled. A storefront-only Theme may omit the `admin` capability; Admin then falls back to the Default Theme so the control center never breaks.
 

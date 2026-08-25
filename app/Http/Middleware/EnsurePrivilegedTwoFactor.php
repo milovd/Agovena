@@ -29,12 +29,8 @@ final class EnsurePrivilegedTwoFactor
             return $next($request);
         }
 
-        if ($request->routeIs('admin.security.two-factor')) {
-            return $next($request);
-        }
-
         if (! $user->hasTwoFactorEnabled()) {
-            return redirect()->route('admin.security.two-factor');
+            return redirect()->route('customer.security');
         }
 
         if ($this->totp->requiresPrivilegedChallenge($user, Auth::viaRemember())) {

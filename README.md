@@ -46,12 +46,12 @@ cp .env.example .env
 php artisan key:generate
 # configure DB in .env, then:
 php artisan migrate
-# source checkouts only — skip when public/build is already present:
+# source checkouts only - skip when public/build is already present:
 npm install && npm run build
-php artisan agovena:install   # or open /install
+php artisan agovena:install # or open /install
 php artisan agovena:doctor
-php artisan agovena:verify-providers              # all enabled Extensions
-php artisan agovena:verify-providers mollie --sandbox   # Mollie only; refuses live_ keys
+php artisan agovena:verify-providers # all enabled Extensions
+php artisan agovena:verify-providers mollie --sandbox # Mollie only; refuses live_ keys
 ```
 
 `agovena:seed-demo` loads local-only sample products (refuses in production).
@@ -72,7 +72,7 @@ php artisan agovena:verify-providers mollie --sandbox   # Mollie only; refuses l
 
 Merchants choose **selling intents** (physical, digital keys/codes, downloads, subscriptions, hosting/provisioned services, events, or custom). Developers compose those experiences from **Core** + optional **Modules** (capabilities) + **Extensions** (providers) + **Themes** (presentation).
 
-There is no permanent `store_type`. Downloads (files) and Digital Delivery (secrets/keys) are separate Modules. First-party Modules and Extensions ship from the [optional-packages](https://github.com/milovd/optional-packages) monorepo — Extensions use category folders such as `extensions/payments/`, `extensions/provisioning/`, and `extensions/shipping/` (identity comes from each manifest `id`, not the folder path).
+There is no permanent `store_type`. Downloads (files) and Digital Delivery (secrets/keys) are separate Modules. First-party Modules and Extensions ship from the [optional-packages](https://github.com/milovd/optional-packages) monorepo - Extensions use category folders such as `extensions/payments/`, `extensions/provisioning/`, and `extensions/shipping/` (identity comes from each manifest `id`, not the folder path).
 
 See [themes/README.md](themes/README.md), [core/README.md](core/README.md), and [optional-packages](https://github.com/milovd/optional-packages).
 

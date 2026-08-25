@@ -41,7 +41,7 @@
             </div>
             <div>
                 <dt>{{ __('subscriptions::customer.next_renewal') }}</dt>
-                <dd>{{ $subscription->next_billing_at?->toDateString() ?? '—' }}</dd>
+                <dd>{{ $subscription->next_billing_at?->toDateString() ?? '-' }}</dd>
             </div>
             <div>
                 <dt>{{ __('subscriptions::customer.renewal_mode') }}</dt>

@@ -187,8 +187,8 @@ final class InstallCommand extends Command
     {
         $status = $check->passed ? '<info>PASS</info>' : ($check->required ? '<error>FAIL</error>' : '<comment>WARN</comment>');
         $detail = $check->technicalDetail ?? $check->detail;
-        $suffix = $detail !== null ? " — {$detail}" : '';
+        $suffix = $detail !== null ? " - {$detail}" : '';
 
-        return "{$status}  {$check->id}{$suffix}";
+        return "{$status} {$check->id}{$suffix}";
     }
 }

@@ -1,13 +1,15 @@
 <?php
 
 use App\Agovena\Auth\ConfirmsRecentPassword;
+use App\Agovena\Auth\ManageUserSessions;
 use App\Agovena\Auth\TotpTwoFactor;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
-use App\Livewire\Admin\Security\TwoFactor;
 use App\Livewire\Auth\TwoFactorChallenge;
+use App\Livewire\Customer\Account\Security;
 use App\Livewire\Customer\Auth\Login;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use PragmaRX\Google2FA\Google2FA;
 use Spatie\Permission\PermissionRegistrar;
@@ -31,17 +33,17 @@ test('totp accepts nearby time-step codes despite clock skew', function () {
     expect($totp->verify($secret, $skewed))->toBeTrue();
 });
 
-test('privileged users without totp are redirected to security setup', function () {
+test('privileged users without totp are redirected to customer security setup', function () {
     $staff = $this->createStaff(withTwoFactor: false);
 
     $this->actingAs($staff)
         ->get(route('admin.dashboard'))
-        ->assertRedirect(route('admin.security.two-factor'));
+        ->assertRedirect(route('customer.security'));
 
     $this->actingAs($staff)
-        ->get(route('admin.security.two-factor'))
+        ->get(route('customer.security'))
         ->assertOk()
-        ->assertSee(__('admin.security.required_title'), false);
+        ->assertSee(__('customer.security.required_title'), false);
 });
 
 test('customers are not forced into admin totp', function () {
@@ -131,10 +133,29 @@ test('recovery code completes login and is consumed', function () {
     expect($staff->fresh()?->two_factor_recovery_codes)->toBe([]);
 });
 
-test('privileged user can enable totp from admin security', function () {
+test('any account can enable totp from customer security', function () {
+    $user = User::factory()->create(['password' => 'password']);
+
+    $component = Livewire::actingAs($user)->test(Security::class);
+    $component->call('startSetup');
+
+    $secret = (string) session(TotpTwoFactor::SESSION_SETUP_SECRET);
+    expect($secret)->not->toBe('');
+
+    $component
+        ->set('code', totpCode($secret))
+        ->call('confirmSetup')
+        ->assertHasNoErrors()
+        ->assertSet('showingRecoveryCodes', true);
+
+    expect($user->fresh()?->hasTwoFactorEnabled())->toBeTrue()
+        ->and($component->get('recoveryCodes'))->toHaveCount(8);
+});
+
+test('privileged user can enable totp from customer security', function () {
     $staff = $this->createStaff(withTwoFactor: false);
 
-    $component = Livewire::actingAs($staff)->test(TwoFactor::class);
+    $component = Livewire::actingAs($staff)->test(Security::class);
     $component->call('startSetup');
 
     $secret = (string) session(TotpTwoFactor::SESSION_SETUP_SECRET);
@@ -156,7 +177,7 @@ test('disabling totp requires a recent password', function () {
     ]);
 
     Livewire::actingAs($staff)
-        ->test(TwoFactor::class)
+        ->test(Security::class)
         ->call('disable')
         ->assertSet('showingPasswordConfirmation', true)
         ->set('recentPassword', 'password')
@@ -170,7 +191,7 @@ test('wrong password does not confirm a sensitive action', function () {
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
-        ->test(TwoFactor::class)
+        ->test(Security::class)
         ->call('disable')
         ->set('recentPassword', 'not-the-password')
         ->call('confirmRecentPassword')
@@ -232,7 +253,7 @@ test('privileged user can regenerate recovery codes after password confirmation'
     $staff = $this->createStaff(['password' => 'password']);
 
     $component = Livewire::actingAs($staff)
-        ->test(TwoFactor::class)
+        ->test(Security::class)
         ->call('regenerateRecoveryCodes')
         ->assertSet('showingPasswordConfirmation', true)
         ->set('recentPassword', 'password')
@@ -242,4 +263,32 @@ test('privileged user can regenerate recovery codes after password confirmation'
 
     expect($component->get('recoveryCodes'))->toHaveCount(8)
         ->and($staff->fresh()?->two_factor_recovery_codes)->toHaveCount(8);
+});
+
+test('customer security can revoke other database sessions', function () {
+    config(['session.driver' => 'database']);
+
+    $user = User::factory()->create(['password' => 'password']);
+    $this->actingAs($user);
+    $currentId = session()->getId();
+
+    DB::table(config('session.table', 'sessions'))->insert([
+        'id' => 'other-session-id',
+        'user_id' => $user->id,
+        'ip_address' => '203.0.113.10',
+        'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/120.0',
+        'payload' => base64_encode('payload'),
+        'last_activity' => now()->subHour()->getTimestamp(),
+    ]);
+
+    $sessions = app(ManageUserSessions::class);
+    expect($sessions->listFor($user, $currentId))->toHaveCount(1)
+        ->and($sessions->listFor($user, $currentId)->first()['id'])->toBe('other-session-id');
+
+    Livewire::actingAs($user)
+        ->test(Security::class)
+        ->call('revokeSession', 'other-session-id')
+        ->assertHasNoErrors();
+
+    expect(DB::table(config('session.table', 'sessions'))->where('id', 'other-session-id')->exists())->toBeFalse();
 });

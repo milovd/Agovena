@@ -254,6 +254,27 @@
                     <h2 id="checkout-payment-heading" class="store-checkout__section-title">{{ __('storefront.checkout.payment') }}</h2>
                     <p class="store-note">{{ __('storefront.checkout.hosted_payment_note') }}</p>
                     <div class="store-checkout__methods" data-testid="checkout-payment-methods">
+                        @php
+                            $balanceMoney = $subtotal !== null
+                                ? \App\Agovena\Money\Money::of((int) ($creditBalance ?? 0), $subtotal->currency)
+                                : null;
+                            $balanceLabel = $balanceMoney !== null
+                                ? \App\Support\MoneyFormatter::format($balanceMoney)
+                                : '-';
+                            $canUseBalance = $customerLoggedIn && (int) ($creditBalance ?? 0) > 0;
+                        @endphp
+                        <label class="store-choice store-choice--row {{ $canUseBalance ? '' : 'is-disabled' }}" wire:key="pay-account-balance">
+                            <input
+                                type="radio"
+                                wire:model.live="payment_method"
+                                value="account_balance"
+                                @disabled(! $canUseBalance)
+                            >
+                            <span class="store-choice__copy">
+                                <strong>{{ __('storefront.checkout.pay_with_account_balance') }}</strong>
+                                <span class="store-choice__meta">{{ __('storefront.checkout.account_balance_available', ['amount' => $balanceLabel]) }}</span>
+                            </span>
+                        </label>
                         @forelse ($paymentOptions as $option)
                             <label class="store-choice store-choice--row" wire:key="pay-{{ $option['id'] }}">
                                 <input type="radio" wire:model.live="payment_method" value="{{ $option['id'] }}">
@@ -262,14 +283,16 @@
                                 </span>
                             </label>
                         @empty
-                            <p class="store-field__error" role="alert">{{ __('storefront.checkout.no_payment_methods') }}</p>
+                            @if (! $canUseBalance)
+                                <p class="store-field__error" role="alert">{{ __('storefront.checkout.no_payment_methods') }}</p>
+                            @endif
                         @endforelse
                     </div>
                     @error('payment_method') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
-                    @if (($creditBalance ?? 0) > 0)
+                    @if ($customerLoggedIn && $payment_method !== 'account_balance' && (int) ($creditBalance ?? 0) > 0)
                         <label class="store-check store-check--panel">
                             <input type="checkbox" wire:model.live="apply_credit">
-                            <span>{{ __('storefront.checkout.apply_store_credit', ['amount' => \App\Support\MoneyFormatter::format(\App\Agovena\Money\Money::of($creditBalance, $subtotal->currency))]) }}</span>
+                            <span>{{ __('storefront.checkout.apply_store_credit', ['amount' => $balanceLabel]) }}</span>
                         </label>
                     @endif
                     @error('cart') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
@@ -374,9 +397,7 @@
                                 <dd>
                                     @if ($shippingTotal)
                                         {{ \App\Support\MoneyFormatter::format($shippingTotal) }}
-                                    @else
-                                        —
-                                    @endif
+                                    @else - @endif
                                 </dd>
                             </div>
                         @endif

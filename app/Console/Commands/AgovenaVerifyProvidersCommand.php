@@ -61,7 +61,7 @@ final class AgovenaVerifyProvidersCommand extends Command
         $failed = 0;
         foreach ($rows as $row) {
             $status = $row['ok'] ? '<info>OK</info>' : '<error>FAIL</error>';
-            $this->line("{$status}  {$row['id']} ({$row['category']}) — {$row['message']}");
+            $this->line("{$status} {$row['id']} ({$row['category']}) - {$row['message']}");
             if (! $row['ok']) {
                 $failed++;
             }

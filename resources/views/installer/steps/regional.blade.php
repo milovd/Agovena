@@ -36,7 +36,7 @@
         <label class="ag-field__label" for="currency">{{ __('installer.fields.currency') }}</label>
         <select id="currency" class="ag-select" wire:model="currency" required>
             @foreach ($currencies as $row)
-                <option value="{{ $row->code }}">{{ $row->code }} — {{ $row->name }}</option>
+                <option value="{{ $row->code }}">{{ $row->code }} - {{ $row->name }}</option>
             @endforeach
         </select>
         @error('currency') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror

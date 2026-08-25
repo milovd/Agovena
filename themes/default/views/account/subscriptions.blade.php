@@ -24,7 +24,7 @@
                                 </a>
                             </strong>
                             <p>{{ __('subscriptions::customer.status') }}: {{ __('subscriptions::status.'.$subscription->status->value) }}</p>
-                            <p>{{ __('subscriptions::customer.next_renewal') }}: {{ $subscription->next_billing_at?->toDateString() ?? '—' }}</p>
+                            <p>{{ __('subscriptions::customer.next_renewal') }}: {{ $subscription->next_billing_at?->toDateString() ?? '-' }}</p>
                             <p>{{ __('subscriptions::customer.price') }}:
                                 {{ \App\Support\MoneyFormatter::formatDisplay($subscription->price_amount * $subscription->quantity, $subscription->currency) }}
                             </p>

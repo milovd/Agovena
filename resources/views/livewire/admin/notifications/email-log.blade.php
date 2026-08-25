@@ -26,7 +26,7 @@
                         <tr wire:key="email-log-{{ $log->id }}">
                             <td>{{ $log->created_at?->translatedFormat('d M Y H:i') }}</td>
                             <td>{{ $log->to }}</td>
-                            <td>{{ $log->subject ?: '—' }}</td>
+                            <td>{{ $log->subject ?: '-' }}</td>
                             <td>
                                 <span class="ag-badge">{{ __('admin.email_log.statuses.'.$log->status) }}</span>
                                 @if ($log->error)

@@ -3,11 +3,12 @@
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Settings\SettingsRepository;
 use App\Livewire\Admin\Currencies\Index;
-use App\Livewire\Admin\Settings\EditGroup;
+use App\Livewire\Admin\Settings\Hub;
 use App\Models\Currency;
 use App\Support\MoneyFormatter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -29,6 +30,10 @@ test('branding logo setting survives cache round-trip as a scalar path', functio
 
     $this->actingAs($staff)
         ->get(route('admin.settings.edit', ['group' => 'branding']))
+        ->assertRedirect(route('admin.settings.index', ['tab' => 'branding']));
+
+    $this->actingAs($staff)
+        ->get(route('admin.settings.index', ['tab' => 'branding']))
         ->assertOk()
         ->assertSee('Branding', false);
 });
@@ -99,7 +104,8 @@ test('branding page can set favicon from logo path without merging settings keys
     $settings->set('branding', 'favicon_path', 'branding/old-favicon.png');
 
     Livewire::actingAs($staff)
-        ->test(EditGroup::class, ['group' => 'branding'])
+        ->test(Hub::class)
+        ->set('tab', 'branding')
         ->call('useCurrentLogoAsFavicon')
         ->assertHasNoErrors();
 
@@ -111,8 +117,41 @@ test('branding uploads reject svg files', function () {
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
-        ->test(EditGroup::class, ['group' => 'branding'])
+        ->test(Hub::class)
+        ->set('tab', 'branding')
         ->set('uploads.logo_path', UploadedFile::fake()->create('logo.svg', 20, 'image/svg+xml'))
         ->call('save')
         ->assertHasErrors(['uploads.logo_path']);
+});
+
+test('currency sync updates rates from frankfurter market api', function () {
+    $staff = $this->createStaff();
+    Currency::query()->updateOrCreate(
+        ['code' => 'EUR'],
+        ['name' => 'Euro', 'prefix' => '€', 'suffix' => '', 'precision' => 2, 'exchange_rate' => '1.00000000', 'is_active' => true],
+    );
+    Currency::query()->updateOrCreate(
+        ['code' => 'USD'],
+        ['name' => 'US Dollar', 'prefix' => '$', 'suffix' => '', 'precision' => 2, 'exchange_rate' => '1.00000000', 'is_active' => true],
+    );
+    app(SettingsRepository::class)->set('general', 'base_currency', 'EUR');
+
+    Http::fake([
+        'api.frankfurter.app/*' => Http::response([
+            'amount' => 1,
+            'base' => 'EUR',
+            'date' => '2026-08-25',
+            'rates' => ['USD' => 1.12345678],
+        ], 200),
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('syncRates')
+        ->assertHasNoErrors();
+
+    expect(Currency::query()->where('code', 'USD')->value('exchange_rate'))->toBe('1.12345678')
+        ->and(Currency::query()->where('code', 'EUR')->value('exchange_rate'))->toBe('1.00000000');
+
+    Http::assertSent(fn ($request): bool => str_contains($request->url(), 'api.frankfurter.app'));
 });

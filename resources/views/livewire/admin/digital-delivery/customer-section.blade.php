@@ -22,7 +22,7 @@
                                 @if ($revealedId === $delivery->id && $revealedValue !== null)
                                     <code class="ag-code">{{ $revealedValue }}</code>
                                 @else
-                                    <code class="ag-code">{{ $delivery->value_hint ?? '—' }}</code>
+                                    <code class="ag-code">{{ $delivery->value_hint ?? '-' }}</code>
                                 @endif
                             </td>
                             <td>

@@ -60,7 +60,7 @@ function paidMollieSubscription(FakeMollieApi $api, array $config = []): Subscri
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
-        'payment_method' => 'mollie:ideal',
+        'payment_method' => 'mollie',
         'billing' => AddressData::fromArray([
             'name' => $customer->name,
             'line1' => 'Street 1',
@@ -72,7 +72,7 @@ function paidMollieSubscription(FakeMollieApi $api, array $config = []): Subscri
 
     $attempt = app(StartOrderPayment::class)->handle(
         $order,
-        'mollie:ideal',
+        'mollie',
         'https://example.test/return',
         'https://example.test/cancel',
     );

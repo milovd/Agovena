@@ -37,7 +37,7 @@ final class CurrencyCatalog
             return null;
         }
 
-        // Rebuild from scalar cache payload — never cache Eloquent instances.
+        // Rebuild from scalar cache payload - never cache Eloquent instances.
         $currency = new Currency;
         $currency->forceFill($data);
         $currency->syncOriginal();

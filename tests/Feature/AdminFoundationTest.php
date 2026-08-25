@@ -5,7 +5,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Livewire\Admin\Categories\Index;
-use App\Livewire\Admin\Settings\EditGroup;
+use App\Livewire\Admin\Settings\Hub;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
@@ -43,7 +43,8 @@ test('settings hub lists registered groups from the admin registrar', function (
         ->assertSee('General', false)
         ->assertSee('Branding', false)
         ->assertSee('Store', false)
-        ->assertSee('/admin/settings/general', false);
+        ->assertSee('ag-product-tabs', false)
+        ->assertSee(__('admin.settings.fields.site_name'), false);
 });
 
 test('guest is redirected from admin', function () {
@@ -84,7 +85,8 @@ test('settings persist via repository and admin screen', function () {
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
-        ->test(EditGroup::class, ['group' => 'general'])
+        ->test(Hub::class)
+        ->set('tab', 'general')
         ->set('values.site_name', 'Acme Commerce')
         ->set('values.locale', 'en')
         ->set('values.timezone', 'UTC')
@@ -104,7 +106,8 @@ test('staff without settings update cannot save', function () {
     $staff = $this->createStaff([], ['settings.view', 'dashboard.view']);
 
     Livewire::actingAs($staff)
-        ->test(EditGroup::class, ['group' => 'general'])
+        ->test(Hub::class)
+        ->set('tab', 'general')
         ->set('values.site_name', 'Nope')
         ->call('save')
         ->assertForbidden();

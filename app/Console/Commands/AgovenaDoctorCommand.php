@@ -65,9 +65,9 @@ final class AgovenaDoctorCommand extends Command
         $status = $check->passed ? '<info>PASS</info>' : ($check->required ? '<error>FAIL</error>' : '<comment>WARN</comment>');
         $label = __($check->label);
         $detail = $check->technicalDetail ?? $check->detail;
-        $suffix = $detail !== null ? " — {$detail}" : '';
+        $suffix = $detail !== null ? " - {$detail}" : '';
 
-        return "{$status}  {$label}{$suffix}";
+        return "{$status} {$label}{$suffix}";
     }
 
     /** @return list<RequirementCheck> */

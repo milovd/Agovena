@@ -18,7 +18,7 @@ final class TicketAttachmentPolicy
 
     public const MAX_FILES = 5;
 
-    /** Kilobytes — Laravel file max rule unit. */
+    /** Kilobytes - Laravel file max rule unit. */
     public const MAX_KILOBYTES = 5120;
 
     /** @var list<string> */

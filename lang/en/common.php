@@ -21,7 +21,7 @@ return [
     'back' => 'Back',
     'yes' => 'Yes',
     'no' => 'No',
-    'em_dash' => '—',
+    'em_dash' => '-',
     'confirm' => 'Confirm',
     'status' => 'Status',
     'image' => 'Image',

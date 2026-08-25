@@ -11,7 +11,7 @@ use RuntimeException;
 
 /**
  * Pulls mid-market rates relative to the shop base currency (Frankfurter / ECB).
- * Rates are written to currencies.exchange_rate for merchant review — never silent checkout FX.
+ * Rates are written to currencies.exchange_rate for merchant review - never silent checkout FX.
  */
 final class SyncCurrencyExchangeRates
 {

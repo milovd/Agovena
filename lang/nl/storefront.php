@@ -80,7 +80,7 @@ return [
     'checkout' => [
         'title' => 'Afrekenen',
         'kicker' => 'Rond je bestelling af',
-        'lede' => 'Gastafrekening — geen klantaccount nodig.',
+        'lede' => 'Gastafrekening - geen klantaccount nodig.',
         'lede_account' => 'Je bent ingelogd. Deze bestelling verschijnt in je account.',
         'progress_aria' => 'Voortgang van het afrekenen',
         'step_of' => 'Stap :current van :total · :label',
@@ -110,6 +110,8 @@ return [
         'updating_shipping' => 'Bezorgopties bijwerken…',
         'shipping_fallback' => 'Als een vervoerder niet beschikbaar is, blijven ingestelde winkel-tarieven geldig.',
         'hosted_payment_note' => 'Kaartgegevens vul je in bij de betaalprovider. Agovena vraagt geen kaartnummers.',
+        'pay_with_account_balance' => 'Betalen met accountsaldo',
+        'account_balance_available' => 'Beschikbaar: :amount',
         'no_payment_methods' => 'Er zijn nu geen betaalmethoden beschikbaar.',
         'configuration_note' => 'Deze keuzes zijn ingesteld toen de producten in de winkelwagen gingen. Ga terug naar de winkelwagen om ze te wijzigen.',
         'contact' => 'Contactgegevens',

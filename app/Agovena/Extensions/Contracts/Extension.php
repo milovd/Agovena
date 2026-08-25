@@ -7,8 +7,7 @@ namespace App\Agovena\Extensions\Contracts;
 use App\Agovena\Extensions\ExtensionContext;
 
 /**
- * Public Extension entrypoint. Extensions must not require Livewire/BEM knowledge —
- * Admin UI is an optional implementation detail registered via Agovena contracts.
+ * Public Extension entrypoint. Extensions must not require Livewire/BEM knowledge - * Admin UI is an optional implementation detail registered via Agovena contracts.
  */
 interface Extension
 {

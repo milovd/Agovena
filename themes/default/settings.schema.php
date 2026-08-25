@@ -182,7 +182,7 @@ return new ThemeSettingsSchema([
             [
                 'type' => 'promo_split',
                 'title' => 'Built for every kind of shop',
-                'body' => 'Physical goods, digital downloads, and services — presented with the same clear commerce experience.',
+                'body' => 'Physical goods, digital downloads, and services - presented with the same clear commerce experience.',
                 'cta_label' => 'Browse catalog',
                 'cta_href' => '#catalog',
                 'image' => 'demo/promo-split.jpg',

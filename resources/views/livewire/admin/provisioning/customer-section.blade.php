@@ -19,7 +19,7 @@
                             @endif
                         </td>
                         <td>{{ __('provisioning::status.'.$instance->status->value) }}</td>
-                        <td>{{ $instance->external_ref ?? '—' }}</td>
+                        <td>{{ $instance->external_ref ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr><td colspan="3">{{ __('provisioning::admin.empty') }}</td></tr>

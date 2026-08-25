@@ -19,7 +19,7 @@
                             @endif
                         </td>
                         <td>{{ __('subscriptions::status.'.$subscription->status->value) }}</td>
-                        <td>{{ $subscription->next_billing_at?->toDateString() ?? '—' }}</td>
+                        <td>{{ $subscription->next_billing_at?->toDateString() ?? '-' }}</td>
                     </tr>
                 @empty
                     <tr><td colspan="3">{{ __('subscriptions::admin.empty') }}</td></tr>

@@ -14,8 +14,8 @@ final readonly class SettingsGroup
         public ?string $description = null,
         public ?string $icon = null,
         /**
-         * Optional custom Admin href for the hub card.
-         * Defaults to /admin/settings/{id} when null.
+         * Optional custom Admin href (external from the tabbed settings hub).
+         * When null, the group is edited as a Settings Hub tab.
          */
         public ?string $href = null,
     ) {}

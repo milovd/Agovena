@@ -167,7 +167,7 @@
                                         @foreach ($order->payment->attempts as $attempt)
                                             <tr>
                                                 <td>{{ $attempt->gateway_id }}</td>
-                                                <td>{{ $attempt->external_id ?: '—' }}</td>
+                                                <td>{{ $attempt->external_id ?: '-' }}</td>
                                                 <td>{{ __('admin.orders.attempt_status.'.$attempt->status->value) }}</td>
                                                 <td>{{ $attempt->created_at?->toDayDateTimeString() }}</td>
                                             </tr>
@@ -183,7 +183,7 @@
                                 @foreach ($order->refunds as $refund)
                                     <li>
                                         {{ \App\Support\MoneyFormatter::format($refund->amount, $refund->currency) }}
-                                        — {{ __('admin.refunds.status.'.$refund->status->value) }}
+                                        - {{ __('admin.refunds.status.'.$refund->status->value) }}
                                         @if ($refund->provider_reference)
                                             ({{ $refund->provider_reference }})
                                         @endif

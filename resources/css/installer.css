@@ -1,4 +1,4 @@
-/* Agovena installer — ITCSS entry (no Tailwind) */
+/* Agovena installer - ITCSS entry (no Tailwind) */
 
 @import './admin/settings/_tokens.css';
 @import './admin/generic/_reset.css';

@@ -8,6 +8,14 @@
 .store-checkout .store-input,
 .store-cart .store-input {
   max-width: none;
+  background-color: var(--theme-color-bg);
+}
+
+.store-checkout .store-input:focus,
+.store-checkout .store-input:focus-visible,
+.store-cart .store-input:focus,
+.store-cart .store-input:focus-visible {
+  background-color: var(--theme-color-surface);
 }
 
 .store-checkout__intro {
@@ -260,6 +268,23 @@
   border-color: var(--theme-color-accent);
   background: var(--theme-color-surface);
   box-shadow: var(--theme-focus);
+}
+
+.store-choice.is-disabled,
+.store-check.is-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.store-choice.is-disabled input,
+.store-check.is-disabled input {
+  cursor: not-allowed;
+}
+
+.store-choice__meta {
+  color: var(--theme-color-text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
 }
 
 .store-choice__copy,

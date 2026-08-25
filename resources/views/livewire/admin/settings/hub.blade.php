@@ -1,10 +1,12 @@
 <div class="admin-page">
-    <header class="admin-page__header">
-        <div>
-            <h2 class="admin-page__heading">{{ __('admin.settings.title') }}</h2>
-            <p class="admin-page__lede">{{ __('admin.settings.lede') }}</p>
-        </div>
-    </header>
+    <x-ag.page-header
+        :heading="__('admin.settings.title')"
+        :lede="$groupDefinition?->description ? __($groupDefinition->description) : __('admin.settings.lede')"
+    />
+
+    @if (session('status'))
+        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
+    @endif
 
     @if ($groups->isEmpty())
         <div class="ag-empty" role="status">
@@ -12,28 +14,24 @@
             <p class="ag-empty__text">{{ __('admin.settings.empty_text') }}</p>
         </div>
     @else
-        <div class="ag-settings-hub" role="list">
-            @foreach ($groups as $group)
-                <a
-                    class="ag-settings-card"
-                    role="listitem"
-                    href="{{ $group->resolveHref() }}"
-                    wire:key="settings-group-{{ $group->id }}"
-                >
-                    <span class="ag-settings-card__icon" aria-hidden="true">
-                        <x-ag.icon :name="$group->icon ?? 'settings'" :size="22" />
-                    </span>
-                    <span class="ag-settings-card__body">
-                        <span class="ag-settings-card__title">{{ __($group->label) }}</span>
-                        @if ($group->description)
-                            <span class="ag-settings-card__text">{{ __($group->description) }}</span>
-                        @endif
-                    </span>
-                    <span class="ag-settings-card__chevron" aria-hidden="true">
-                        <x-ag.icon name="chevron-right" :size="18" />
-                    </span>
-                </a>
-            @endforeach
-        </div>
+        @include('livewire.admin.partials.package-tabs', [
+            'active' => $tab,
+            'tabs' => $tabs,
+            'ariaLabel' => __('admin.settings.tabs_aria'),
+        ])
+
+        @if ($externalGroups->isNotEmpty())
+            <div class="ag-toolbar" style="margin-bottom: 1rem;">
+                @foreach ($externalGroups as $external)
+                    <a class="ag-btn ag-btn--secondary ag-btn--sm" href="{{ $external->resolveHref() }}" wire:key="settings-external-{{ $external->id }}">
+                        {{ __($external->label) }}
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
+        @if ($groupDefinition !== null && $groupDefinition->href === null)
+            @include('livewire.admin.settings.partials.group-form')
+        @endif
     @endif
 </div>

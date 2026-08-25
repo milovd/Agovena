@@ -18,7 +18,7 @@
                 <div class="ag-stack" wire:key="shipment-{{ $shipment->id }}" style="margin-bottom: 1rem;">
                     <p>
                         <strong>#{{ $shipment->id }}</strong>
-                        — {{ __('shipping::status.'.$shipment->status->value) }}
+                        - {{ __('shipping::status.'.$shipment->status->value) }}
                         @if ($shipment->shipping_method_label)
                             · {{ $shipment->shipping_method_label }}
                         @endif

@@ -21,7 +21,7 @@ return [
     'back' => 'Terug',
     'yes' => 'Ja',
     'no' => 'Nee',
-    'em_dash' => '—',
+    'em_dash' => '-',
     'confirm' => 'Bevestigen',
     'status' => 'Status',
     'image' => 'Afbeelding',

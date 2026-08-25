@@ -1,4 +1,4 @@
-/* Switch — on/off configuration */
+/* Switch - on/off configuration */
 .ag-switch {
   display: inline-flex;
   align-items: center;
@@ -132,7 +132,7 @@
   margin-top: var(--ag-space-4);
 }
 
-/* Checkbox — selection within a form/set */
+/* Checkbox - selection within a form/set */
 .ag-checkbox {
   display: inline-flex;
   align-items: flex-start;

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Places one paid manual order against the booted application.
- * Used by native deploy smoke — not a storefront browser test.
+ * Used by native deploy smoke - not a storefront browser test.
  */
 
 use App\Agovena\Cart\CartService;

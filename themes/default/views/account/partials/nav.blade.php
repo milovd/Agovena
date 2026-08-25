@@ -16,7 +16,7 @@
     $purchasesActive = in_array($section, ['orders', 'invoices', 'returns'], true)
         || $purchasesExtraNav->contains(static fn ($item): bool => $item->section === $section);
     $servicesActive = $servicesNav->contains(static fn ($item): bool => $item->section === $section);
-    $accountActive = in_array($section, ['profile', 'addresses', 'credits', 'subscriptions'], true)
+    $accountActive = in_array($section, ['profile', 'addresses', 'credits', 'subscriptions', 'security'], true)
         || $accountExtraNav->contains(static fn ($item): bool => $item->section === $section);
 @endphp
 
@@ -170,6 +170,14 @@
                 >
                     <x-ag.icon name="users" class="store-account__link-icon" :size="16" />
                     <span>{{ __('customer.account.nav_settings') }}</span>
+                </a>
+                <a
+                    class="store-account__link store-account__link--child {{ $section === 'security' ? 'is-active' : '' }}"
+                    href="{{ route('customer.security') }}"
+                    @if ($section === 'security') aria-current="page" @endif
+                >
+                    <x-ag.icon name="shield" class="store-account__link-icon" :size="16" />
+                    <span>{{ __('customer.account.nav_security') }}</span>
                 </a>
                 <a
                     class="store-account__link store-account__link--child {{ $section === 'credits' ? 'is-active' : '' }}"

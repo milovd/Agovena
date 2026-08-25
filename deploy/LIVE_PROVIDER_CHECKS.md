@@ -21,7 +21,7 @@ Do **not** put credentials in this repository. Never log API keys, Authorization
 
 ---
 
-## READY FOR CREDENTIALS — Mollie (first sandbox target for v0.1 RC)
+## READY FOR CREDENTIALS - Mollie (first sandbox target for v0.1 RC)
 
 **Current status: MOCK-TESTED ONLY**
 
@@ -40,7 +40,7 @@ Report string when missing: **READY FOR MOLLIE TEST API KEY**
 ### Operator workflow (after `test_` key is available)
 
 1. Enable Mollie Extension; save `test_` key (leave blank after save to keep stored secret).
-2. `php artisan agovena:verify-providers mollie --sandbox` — expect OK, mode **test**, methods discovered, no secret leakage.
+2. `php artisan agovena:verify-providers mollie --sandbox` - expect OK, mode **test**, methods discovered, no secret leakage.
 3. Storefront checkout with Mollie methods; complete one **test** hosted payment.
 4. Walk the checklist below. Mark each item only when observed against the real Mollie test API.
 5. On full success for A–J (and K–L if safely testable): set Mollie status to **SANDBOX-VERIFIED** (never PRODUCTION-VERIFIED from test mode).

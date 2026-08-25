@@ -453,7 +453,7 @@
   padding-top: var(--ag-space-2);
 }
 
-/* Store setup — preset board (Modules > Available) */
+/* Store setup - preset board (Modules > Available) */
 .ag-setup-board {
   overflow: hidden;
   margin: var(--ag-space-5) 0;
@@ -746,7 +746,7 @@
   line-height: 1.4;
 }
 
-/* Store setup — installed summary */
+/* Store setup - installed summary */
 .ag-setup-summary {
   margin-bottom: var(--ag-space-5);
 }

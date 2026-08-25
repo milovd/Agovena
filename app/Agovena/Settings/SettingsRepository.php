@@ -35,7 +35,7 @@ final class SettingsRepository
     }
 
     /**
-     * @param  array<string, mixed>  $values
+     * @param array<string, mixed> $values
      */
     public function setMany(string $group, array $values): void
     {
@@ -69,7 +69,7 @@ final class SettingsRepository
     }
 
     /**
-     * Cache only scalar encoded values — never Eloquent models (DB cache unserialize breaks them).
+     * Cache only scalar encoded values - never Eloquent models (DB cache unserialize breaks them).
      */
     private function rememberEncoded(string $group, string $key): ?string
     {

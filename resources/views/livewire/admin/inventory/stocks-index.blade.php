@@ -42,7 +42,7 @@
                     @foreach ($products as $product)
                         <tr wire:key="stock-{{ $product->id }}">
                             <td><span class="ag-table__name">{{ $product->name }}</span></td>
-                            <td>{{ $product->sku ?: '—' }}</td>
+                            <td>{{ $product->sku ?: '-' }}</td>
                             <td>
                                 <input
                                     class="ag-input"

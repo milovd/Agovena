@@ -36,14 +36,19 @@
         $text = $config?->string('colors.text', '#0f172a') ?? '#0f172a';
     @endphp
     <style>
-        :root, [data-theme="light"] {
+        :root {
             --theme-color-accent: {{ $accent }};
             --theme-color-accent-hover: {{ $accentHover }};
             --theme-color-accent-soft: color-mix(in srgb, {{ $accent }} 12%, transparent);
+            --theme-focus: 0 0 0 3px color-mix(in srgb, {{ $accent }} 35%, transparent);
+        }
+
+        /* Brand surface/bg/text are light-mode only: :root must not override dark tokens */
+        :root:not([data-theme="dark"]),
+        [data-theme="light"] {
             --theme-color-surface: {{ $surface }};
             --theme-color-bg: {{ $bg }};
             --theme-color-text: {{ $text }};
-            --theme-focus: 0 0 0 3px color-mix(in srgb, {{ $accent }} 35%, transparent);
         }
     </style>
     @vite([$cssEntry])

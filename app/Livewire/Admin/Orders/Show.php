@@ -124,7 +124,7 @@ final class Show extends Component
     {
         $method = $this->order->payment?->method;
         if (! is_string($method) || $method === '') {
-            return '—';
+            return '-';
         }
 
         $gateway = app(PaymentGatewayRegistry::class)->get($method);

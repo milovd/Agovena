@@ -2,7 +2,7 @@
   "id": "default",
   "name": "Default",
   "version": "1.3.0",
-  "description": "Official Agovena Theme — storefront and Admin presentation.",
+  "description": "Official Agovena Theme - storefront and Admin presentation.",
   "css": "themes/default/resources/css/theme.css",
   "admin_css": "themes/default/resources/css/admin.css",
   "preview": "preview.png",
