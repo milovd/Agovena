@@ -227,17 +227,18 @@
   justify-content: center;
   width: 2.5rem;
   height: 2.5rem;
-  border: 1px solid var(--theme-color-border);
-  border-radius: var(--theme-radius);
-  background: var(--theme-color-surface);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--theme-color-ink);
   cursor: pointer;
-  transition: border-color var(--theme-ease), background var(--theme-ease);
+  transition: color var(--theme-ease), background var(--theme-ease);
 }
 
 .store-header__menu:hover {
-  border-color: var(--theme-color-border-strong);
-  background: var(--theme-color-bg);
+  border-color: transparent;
+  background: transparent;
+  color: var(--theme-color-accent);
 }
 
 .store-header__menu:focus-visible {
@@ -1379,6 +1380,10 @@ button.store-header__utility[aria-expanded="true"] {
   z-index: 50;
 }
 
+.store-drawer--with-usp {
+  top: calc(var(--theme-header-h) + 3rem);
+}
+
 .store-drawer--enter,
 .store-drawer--leave {
   transition: opacity 180ms ease;
@@ -1404,20 +1409,17 @@ button.store-header__utility[aria-expanded="true"] {
   position: absolute;
   top: 0;
   right: 0;
-  bottom: auto;
+  bottom: 0;
   left: auto;
-  width: min(22rem, 92vw);
-  height: min(36rem, calc(100dvh - var(--theme-header-h) - 1rem));
-  max-height: calc(100dvh - var(--theme-header-h) - 1rem);
+  width: clamp(17rem, 40vw, 26rem);
   background: var(--theme-color-surface);
   padding: var(--theme-space-5);
   display: flex;
   flex-direction: column;
   gap: var(--theme-space-4);
-  border-left: 1px solid var(--theme-color-border);
-  border-bottom: 1px solid var(--theme-color-border);
-  border-bottom-left-radius: var(--theme-radius-lg, 0.75rem);
-  box-shadow: var(--theme-shadow-md);
+  border: 0;
+  border-radius: 0;
+  box-shadow: -18px 0 34px rgb(15 23 42 / 0.16);
   overflow: hidden;
 }
 
@@ -1456,7 +1458,23 @@ button.store-header__utility[aria-expanded="true"] {
   flex-direction: column;
   gap: var(--theme-space-1);
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--theme-color-border-strong) transparent;
+}
+
+.store-drawer__nav::-webkit-scrollbar {
+  width: 0.45rem;
+}
+
+.store-drawer__nav::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.store-drawer__nav::-webkit-scrollbar-thumb {
+  background: var(--theme-color-border-strong);
+  border-radius: 999px;
 }
 
 .store-drawer__link {

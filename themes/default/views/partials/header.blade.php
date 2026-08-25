@@ -376,7 +376,7 @@
 
     <div
         id="store-mobile-nav"
-        class="store-drawer"
+        class="store-drawer{{ $uspItems !== [] ? ' store-drawer--with-usp' : '' }}"
         x-show="navOpen"
         x-cloak
         x-transition:enter="store-drawer--enter"
