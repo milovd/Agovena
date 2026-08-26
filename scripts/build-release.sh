@@ -67,7 +67,10 @@ tar -C "$ROOT" \
   --exclude='./storage/framework/views' \
   --exclude='./storage/app/private' \
   --exclude='./storage/app/public' \
+  --exclude='./storage/app/installer-screenshots' \
   --exclude='./public/storage' \
+  --exclude='./.phpstan.cache' \
+  --exclude='./coverage' \
   --exclude='./.env' \
   --exclude='./.env.local' \
   --exclude='./.env.production' \
