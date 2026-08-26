@@ -16,7 +16,7 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Last pushed Core commit: `4b9d7ec`.
+- Last pushed Core commit: `fccc56a`.
 - Last pushed optional-package commit: `b3951b9`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
 - The full application suite has passed: 861 tests and 12,530 assertions. Passing automated tests do not prove external provider or authenticated browser behavior.
@@ -138,8 +138,9 @@ Validated gates:
 
 - full SQLite application suite: 861 tests, 12,530 assertions;
 - upgrade suite: 14 tests, 132 assertions;
-- release archive build and extracted-release smoke: passed;
+- Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
+- CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
 - Pint, PHPStan, Blade cache, Vite build, Composer audit, npm production audit, PHP syntax and diff-check: passed.
 
 Still required before a release tag:
@@ -149,7 +150,7 @@ Still required before a release tag:
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated browser review and human responsive/keyboard review;
 - live external webhook receiver acceptance;
-- final legal/privacy sign-off and third-party attribution/SBOM review.
+- final legal/privacy sign-off and third-party attribution review; npm package license inventory is not independently verified.
 
 ## Explicitly deferred after v0.0.1
 

@@ -37,8 +37,13 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 - Admin outbound webhook management with HTTPS and SSRF validation, encrypted signing secrets, event allowlists, generic and Discord-compatible destinations, delivery history, audit events, and controlled retries
 - Provider-neutral payment fee policy with integer minor-unit arithmetic, order/invoice snapshots, and invoice fee lines
 - Inventory reservations with idempotent cancellation release, provisioning retry propagation, and manual-review transitions
-- Migration dry-run foundation with CSV validation, duplicate detection, and first-party source profile adapters
-- Referral code policy and idempotent checkout attribution without automatic credit or reward side effects
+- First-party domain capability with separate registrar and DNS provider contracts, Cloudflare Registrar, Namecheap Registrar, and Cloudflare DNS zone/record management
+- Product-level domain configuration for registrar, DNS provider, default domain, term and auto-renew
+- Admin domain operations for registration, renewal and DNS-zone initialization with capability and permission checks
+- Migration dry-run foundation with CSV validation, duplicate detection, source profiles, auditable rows, rollback and module-gated subscription writes
+- Referral policy, customer code management, admin activation controls, reward/credit ledger, expiry/limits and fraud review
+- Fail-closed scheduled backup failure alerts and deterministic CycloneDX 1.5 dependency SBOM generation
+- Safe section editor normalization for allowed section types, escaped text, safe links, local media paths and bounded lists
 - OAuth state/nonce storage and provider metadata for Google and Discord with internal redirect validation
 - Fail-closed Turnstile and reCAPTCHA challenge verification adapters
 - Public robots.txt and sitemap.xml routes with private-path exclusions
@@ -60,15 +65,16 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 ### Known limitations (honest for first RC)
 
 - **Cloudflare Registrar:** MOCK-TESTED ONLY for the beta availability-check and new-registration scope. Renewals, transfers, contact updates, TLD coverage and live billing-profile registration are not verified here because the current API beta does not expose all lifecycle operations.
+- **Cloudflare DNS / Namecheap Registrar:** zone, record, availability, registration and renewal contracts are mock-tested only. Real account credentials, TLD availability, live registration, renewals, nameservers, transfers and contact updates are not verified here.
 - **Mollie / Stripe / PayPal / PostNL / Pterodactyl / Proxmox:** MOCK-TESTED ONLY until real sandbox credentials complete `deploy/LIVE_PROVIDER_CHECKS.md` (then SANDBOX-VERIFIED; never PRODUCTION-VERIFIED from test mode alone)
 - **Paddle / Tebex:** MOCK-TESTED ONLY. Core API contracts and signed/idempotent webhook paths have automated tests, but no real sandbox API, hosted checkout, refund, or provider webhook has been verified in this environment. Recurring lifecycle and partial refunds remain outside the first capability surface.
 - **Browser push:** the customer UI, service worker, permission handling, fallback state, and subscription API are implemented and feature-tested. End-to-end delivery still requires configured VAPID material and a real browser/provider run; it is not yet SANDBOX-VERIFIED.
 - **Outbound webhooks:** endpoint management, signing, generic and Discord-compatible payload formatting, delivery persistence, retries, SSRF validation, and admin controls are implemented and feature-tested. Delivery to a real customer-controlled HTTPS receiver is not verified in CI.
 - **Payment fees:** fee calculation and historical order/invoice snapshots are feature-tested. Merchant tax treatment and live provider reconciliation remain deployment and accounting responsibilities.
-- **Migration framework:** CSV/custom dry-run and source profile mapping are feature-tested. Durable audit runs, domain writes, rollback and source acceptance fixtures remain open.
-- **Referrals:** policy, code creation, self-referral blocking and checkout attribution are feature-tested. Rewards, credit ledger, expiry/limits, admin/customer management and fraud review remain open.
-- **OAuth and anti-abuse:** state/nonce, provider metadata and challenge verification seams are feature-tested. Live OAuth callbacks, account linking, Admin settings, rate policy and IP reputation are not verified.
-- **SEO:** robots.txt and sitemap.xml are feature-tested. Canonical metadata, structured data, exports, consent history, privacy retention and section editor remain open.
+- **Migration framework:** CSV/custom dry-run, source profiles, durable audit rows, customer/product/order writes, rollback and module-gated subscription writes are feature-tested. Service instances, invoices, transactions, discounts, media mappings and source acceptance fixtures remain open.
+- **Referrals:** policy, code creation, customer/admin management, rewards, credit ledger, expiry/limits and fraud review are feature-tested. External payment settlement and human fraud policy remain operational responsibilities.
+- **OAuth and anti-abuse:** state/nonce, provider metadata, callback exchange, account linking, challenge verification, rate policy, suspensions, IP reputation and recovery are feature-tested. Live OAuth callbacks, reputation services and authenticated browser review are not verified.
+- **SEO/editor:** canonical metadata, structured data, exports, consent history, privacy retention and the safe section editor are feature-tested. Human responsive/keyboard review remains open.
 - **Advanced audit logs:** core capture, redaction, integrity metadata, filters, export, permissions, and retention command paths are feature-tested. Production retention scheduling, backup policy, and operational review remain deployment responsibilities.
 - Automatic VAT uses a remote EU standard-rate dataset (not reduced rates, not US sales tax). See [ATTRIBUTION.md](ATTRIBUTION.md)
 - FX sync is informational (ECB via Frankfurter); confirm terms for your use case in ATTRIBUTION.md
