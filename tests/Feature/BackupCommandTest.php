@@ -2,7 +2,9 @@
 
 declare(strict_types=1);
 
+use App\Notifications\BackupFailedNotification;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 it('runs a configured database backup through the artisan command', function (): void {
@@ -22,4 +24,17 @@ it('runs a configured database backup through the artisan command', function ():
         ->and(Artisan::output())->toContain('Backup created:');
 
     unlink($source);
+});
+
+it('alerts the configured operator when a backup fails without exposing diagnostics', function (): void {
+    config()->set('database.default', 'sqlite');
+    config()->set('database.connections.sqlite.database', storage_path('framework/missing-alert-backup.sqlite'));
+    config()->set('agovena.backups.alert_email', 'ops@example.test');
+    Notification::fake();
+
+    expect(Artisan::call('agovena:backup'))->toBe(1);
+    Notification::assertSentOnDemand(BackupFailedNotification::class, function (object $notification, array $channels, object $notifiable): bool {
+        return $notifiable->routes['mail'] === 'ops@example.test'
+            && $notification->errorCode === 'source_missing';
+    });
 });

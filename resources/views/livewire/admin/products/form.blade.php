@@ -504,6 +504,48 @@
                                 </div>
                             @endif
 
+                            @if (! empty($capabilityEnabled['domain_registration']))
+                                <div class="ag-grid ag-grid--2">
+                                    <div class="ag-field">
+                                        <label class="ag-field__label" for="domainRegistrarKey">{{ __('admin.products.capabilities.domain_registrar') }}</label>
+                                        <select id="domainRegistrarKey" class="ag-select" wire:model="domainRegistrarKey">
+                                            <option value="">{{ __('admin.products.automation.select_provider') }}</option>
+                                            @foreach ($domainRegistrars ?? [] as $provider)
+                                                <option value="{{ $provider['key'] }}">{{ $provider['key'] }} ({{ implode(', ', $provider['capabilities']) }})</option>
+                                            @endforeach
+                                        </select>
+                                        <p class="ag-field__hint">{{ __('admin.products.capabilities.domain_registrar_hint') }}</p>
+                                    </div>
+                                    <div class="ag-field">
+                                        <label class="ag-field__label" for="domainDnsProviderKey">{{ __('admin.products.capabilities.domain_dns_provider') }}</label>
+                                        <select id="domainDnsProviderKey" class="ag-select" wire:model="domainDnsProviderKey">
+                                            <option value="">{{ __('admin.products.automation.select_provider') }}</option>
+                                            @foreach ($domainDnsProviders ?? [] as $provider)
+                                                <option value="{{ $provider['key'] }}">{{ $provider['key'] }} ({{ implode(', ', $provider['capabilities']) }})</option>
+                                            @endforeach
+                                        </select>
+                                        <p class="ag-field__hint">{{ __('admin.products.capabilities.domain_dns_provider_hint') }}</p>
+                                    </div>
+                                    <div class="ag-field">
+                                        <label class="ag-field__label" for="domainName">{{ __('admin.products.capabilities.domain_name') }}</label>
+                                        <input id="domainName" class="ag-input" type="text" maxlength="253" wire:model="domainName">
+                                        <p class="ag-field__hint">{{ __('admin.products.capabilities.domain_name_hint') }}</p>
+                                    </div>
+                                    <div class="ag-field">
+                                        <label class="ag-field__label" for="domainYears">{{ __('admin.products.capabilities.domain_years') }}</label>
+                                        <input id="domainYears" class="ag-input" type="number" min="1" max="10" wire:model="domainYears">
+                                        <p class="ag-field__hint">{{ __('admin.products.capabilities.domain_years_hint') }}</p>
+                                    </div>
+                                    <div class="ag-field">
+                                        <x-ag.checkbox
+                                            id="domainAutoRenew"
+                                            wire:model="domainAutoRenew"
+                                            :label="__('admin.products.capabilities.domain_auto_renew')"
+                                        />
+                                    </div>
+                                </div>
+                            @endif
+
                             @if (! empty($capabilityEnabled['provisionable']))
                                 <div class="ag-field">
                                     <label class="ag-field__label" for="provisioningServerId">{{ __('admin.products.automation.server') }}</label>

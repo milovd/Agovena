@@ -30,3 +30,22 @@ it('keeps referral review actions behind staff permissions', function (): void {
         ->test(AdminReferrals::class)
         ->assertStatus(200);
 });
+
+it('lets referral managers disable and re-enable a referral code', function (): void {
+    $staff = $this->createStaff([], ['referrals.view', 'referrals.manage']);
+    $customer = Customer::factory()->create();
+    $code = ReferralCode::query()->create([
+        'customer_id' => $customer->id,
+        'code' => 'ADMIN-REF',
+        'uses_count' => 0,
+        'is_active' => true,
+    ]);
+
+    $component = Livewire::actingAs($staff)->test(AdminReferrals::class)
+        ->call('deactivateCode', $code->id)
+        ->assertHasNoErrors();
+    expect($code->fresh()->is_active)->toBeFalse();
+
+    $component->call('activateCode', $code->id)->assertHasNoErrors();
+    expect($code->fresh()->is_active)->toBeTrue();
+});

@@ -42,9 +42,7 @@ final class ThemeConfig
         return $default;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
+    /** @return array<string, mixed> */
     public function all(): array
     {
         $values = $this->schema->defaults();
@@ -62,9 +60,7 @@ final class ThemeConfig
         $this->settings->set($this->theme->settingsGroup(), $key, $value);
     }
 
-    /**
-     * @param  array<string, mixed>  $values
-     */
+    /** @param array<string, mixed> $values */
     public function setMany(array $values): void
     {
         $this->settings->setMany($this->theme->settingsGroup(), $values);
@@ -84,29 +80,97 @@ final class ThemeConfig
         return is_string($value) ? $value : $default;
     }
 
-    /**
-     * @return list<array<string, mixed>>
-     */
+    /** @return list<array<string, mixed>> */
     public function sections(): array
     {
         $sections = $this->get('homepage.sections', []);
-        if (! is_array($sections)) {
-            return [];
-        }
 
+        return is_array($sections) ? $this->normalizeSections($sections) : [];
+    }
+
+    /** @param list<mixed> $sections @return list<array<string, mixed>> */
+    public function normalizeSections(array $sections): array
+    {
+        $allowed = ['hero', 'featured_products', 'featured_categories', 'trust_strip', 'promo_split', 'rich_text'];
         $out = [];
+
         foreach ($sections as $section) {
-            if (is_array($section) && isset($section['type']) && is_string($section['type'])) {
-                $out[] = $section;
+            if (! is_array($section)) {
+                continue;
             }
+            $type = (string) ($section['type'] ?? '');
+            if (! in_array($type, $allowed, true)) {
+                continue;
+            }
+
+            $base = ['type' => $type];
+            if ($type === 'hero') {
+                $out[] = $base + [
+                    'eyebrow' => $this->cleanText($section['eyebrow'] ?? '', 160),
+                    'title' => $this->cleanText($section['title'] ?? '', 240),
+                    'lede' => $this->cleanText($section['lede'] ?? '', 500),
+                    'cta_label' => $this->cleanText($section['cta_label'] ?? '', 120),
+                    'cta_href' => $this->safeHref($section['cta_href'] ?? ''),
+                    'image' => $this->safeMediaPath($section['image'] ?? ''),
+                ];
+
+                continue;
+            }
+            if ($type === 'featured_products') {
+                $out[] = $base + [
+                    'title' => $this->cleanText($section['title'] ?? '', 240),
+                    'lede' => $this->cleanText($section['lede'] ?? '', 500),
+                    'limit' => max(1, min(24, (int) ($section['limit'] ?? 8))),
+                ];
+
+                continue;
+            }
+            if ($type === 'featured_categories') {
+                $out[] = $base + [
+                    'title' => $this->cleanText($section['title'] ?? '', 240),
+                    'lede' => $this->cleanText($section['lede'] ?? '', 500),
+                ];
+
+                continue;
+            }
+            if ($type === 'trust_strip') {
+                $items = [];
+                foreach (is_array($section['items'] ?? null) ? $section['items'] : [] as $item) {
+                    if (! is_array($item)) {
+                        continue;
+                    }
+                    $title = $this->cleanText($item['title'] ?? '', 160);
+                    $text = $this->cleanText($item['text'] ?? '', 300);
+                    if ($title !== '' || $text !== '') {
+                        $items[] = ['title' => $title, 'text' => $text];
+                    }
+                }
+                $out[] = $base + ['items' => array_slice($items, 0, 6)];
+
+                continue;
+            }
+            if ($type === 'promo_split') {
+                $out[] = $base + [
+                    'title' => $this->cleanText($section['title'] ?? '', 240),
+                    'body' => $this->cleanText($section['body'] ?? '', 5000),
+                    'cta_label' => $this->cleanText($section['cta_label'] ?? '', 120),
+                    'cta_href' => $this->safeHref($section['cta_href'] ?? ''),
+                    'image' => $this->safeMediaPath($section['image'] ?? ''),
+                ];
+
+                continue;
+            }
+
+            $out[] = $base + [
+                'title' => $this->cleanText($section['title'] ?? '', 240),
+                'body' => $this->cleanText($section['body'] ?? '', 10000),
+            ];
         }
 
         return $out;
     }
 
-    /**
-     * @return list<array{text: string, short: string, emphasis: string, href: string, highlight: bool}>
-     */
+    /** @return list<array{text: string, short: string, emphasis: string, href: string, highlight: bool}> */
     public function uspItems(): array
     {
         $items = $this->get('header.usp_items', []);
@@ -117,32 +181,75 @@ final class ThemeConfig
             }
 
             return [[
-                'text' => $legacy,
+                'text' => $this->cleanText($legacy, 240),
                 'short' => '',
                 'emphasis' => '',
-                'href' => $this->string('header.announcement_link', ''),
+                'href' => $this->safeHref($this->string('header.announcement_link', '')),
                 'highlight' => false,
             ]];
         }
 
+        return $this->normalizeUspItems($items);
+    }
+
+    /** @param list<mixed> $items @return list<array{text: string, short: string, emphasis: string, href: string, highlight: bool}> */
+    public function normalizeUspItems(array $items): array
+    {
         $out = [];
         foreach ($items as $item) {
             if (! is_array($item)) {
                 continue;
             }
-            $text = isset($item['text']) ? trim((string) $item['text']) : '';
+            $text = $this->cleanText($item['text'] ?? '', 240);
             if ($text === '') {
                 continue;
             }
             $out[] = [
                 'text' => $text,
-                'short' => isset($item['short']) ? trim((string) $item['short']) : '',
-                'emphasis' => isset($item['emphasis']) ? trim((string) $item['emphasis']) : '',
-                'href' => isset($item['href']) ? trim((string) $item['href']) : '',
+                'short' => $this->cleanText($item['short'] ?? '', 120),
+                'emphasis' => $this->cleanText($item['emphasis'] ?? '', 120),
+                'href' => $this->safeHref($item['href'] ?? ''),
                 'highlight' => filter_var($item['highlight'] ?? false, FILTER_VALIDATE_BOOLEAN),
             ];
         }
 
-        return $out;
+        return array_slice($out, 0, 8);
+    }
+
+    private function cleanText(mixed $value, int $limit): string
+    {
+        $text = trim(strip_tags((string) $value));
+
+        return mb_substr($text, 0, $limit);
+    }
+
+    private function safeHref(mixed $value): string
+    {
+        $href = trim((string) $value);
+        if ($href === '') {
+            return '';
+        }
+        if (preg_match('/\A#[a-zA-Z0-9_-]{1,80}\z/', $href)) {
+            return $href;
+        }
+        if (str_starts_with($href, '/') && ! str_starts_with($href, '//') && ! str_contains($href, "\r") && ! str_contains($href, "\n")) {
+            return $href;
+        }
+        $parts = parse_url($href);
+        if (($parts['scheme'] ?? '') === 'https' && is_string($parts['host'] ?? null) && $parts['host'] !== '') {
+            return $href;
+        }
+
+        return '';
+    }
+
+    private function safeMediaPath(mixed $value): string
+    {
+        $path = trim((string) $value);
+        if ($path === '' || str_contains($path, '..') || str_contains($path, '\\') || ! preg_match('/\A[a-zA-Z0-9][a-zA-Z0-9._\/-]{0,255}\z/', $path)) {
+            return '';
+        }
+
+        return $path;
     }
 }

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Agovena\Modules\Subscriptions\Models\Subscription;
 use App\Agovena\Imports\ImportAdapterRegistry;
 use App\Agovena\Imports\ImportExecutor;
 use App\Agovena\Imports\ImportRollback;
@@ -68,6 +69,27 @@ it('fails closed when an import row is malformed', function (): void {
         ->and(User::query()->where('email', 'not-an-email')->exists())->toBeFalse();
 
     unlink($path);
+});
+
+it('imports subscriptions only when its optional module is enabled', function (): void {
+    installAndEnableModules(['subscriptions']);
+    $executor = app(ImportExecutor::class);
+
+    $customerPath = writeImportFixture("external_id,email,name\nC-4,subscription@example.test,Subscription Customer\n");
+    $executor->run($customerPath, app(ImportAdapterRegistry::class)->for('csv', 'customer'), 'csv');
+    $productPath = writeImportFixture("external_id,name,price_amount\nP-4,Managed plan,2500\n");
+    $executor->run($productPath, app(ImportAdapterRegistry::class)->for('csv', 'product'), 'csv');
+    $subscriptionPath = writeImportFixture("external_id,customer_external_id,product_external_id,status\nS-4,C-4,P-4,active\n");
+
+    $run = $executor->run($subscriptionPath, app(ImportAdapterRegistry::class)->for('csv', 'subscription'), 'csv');
+
+    expect($run->errors)->toBe(0)
+        ->and(Subscription::query()->count())->toBe(1)
+        ->and(Subscription::query()->first()->status->value)->toBe('active');
+
+    unlink($customerPath);
+    unlink($productPath);
+    unlink($subscriptionPath);
 });
 
 it('executes a validated product import into draft products', function (): void {

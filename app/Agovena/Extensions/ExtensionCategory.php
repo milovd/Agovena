@@ -10,6 +10,7 @@ enum ExtensionCategory: string
     case Provisioning = 'provisioning';
     case Shipping = 'shipping';
     case DomainRegistrar = 'domain_registrar';
+    case DomainDnsProvider = 'domain_dns_provider';
     case Authentication = 'authentication';
     case Storage = 'storage';
     case Notifications = 'notifications';
@@ -31,7 +32,7 @@ enum ExtensionCategory: string
         return match ($this) {
             self::PaymentGateway => 'payments',
             self::Notifications => 'notifications',
-            self::DomainRegistrar => 'domains',
+            self::DomainRegistrar, self::DomainDnsProvider => 'domains',
             default => $this->value,
         };
     }

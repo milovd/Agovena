@@ -167,6 +167,21 @@ test('theme customize exposes shared tabs and both color mode palettes', functio
         ->and($config->string('colors.dark_accent'))->toBe('#93C5FD');
 });
 
+test('theme customize normalizes section content and link destinations', function () {
+    $config = app(ThemeManager::class)->config();
+    $config->set('homepage.sections', [
+        ['type' => 'unknown', 'title' => 'Ignored'],
+        ['type' => 'hero', 'title' => '<script>alert(1)</script>Safe', 'cta_href' => 'javascript:alert(1)', 'image' => '../secret.svg'],
+        ['type' => 'featured_products', 'limit' => 999],
+    ]);
+
+    expect($config->sections())->toHaveCount(2)
+        ->and($config->sections()[0]['title'])->toBe('alert(1)Safe')
+        ->and($config->sections()[0]['cta_href'])->toBe('')
+        ->and($config->sections()[0]['image'])->toBe('')
+        ->and($config->sections()[1]['limit'])->toBe(24);
+});
+
 test('themes admin can list active theme', function () {
     $staff = $this->createStaff();
 

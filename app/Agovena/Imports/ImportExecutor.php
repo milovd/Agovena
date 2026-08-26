@@ -13,6 +13,8 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\User;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -115,8 +117,98 @@ final class ImportExecutor
             'customer' => $this->createCustomer($candidate),
             'product' => $this->createProduct($candidate),
             'order' => $this->createOrder($candidate),
+            'subscription' => $this->createSubscription($candidate),
             default => throw new InvalidArgumentException('This entity requires a dedicated dependency mapping.'),
         };
+    }
+
+    /** @return array{0: class-string, 1: int} */
+    private function createSubscription(ImportCandidate $candidate): array
+    {
+        $modelClass = 'Agovena\\Modules\\Subscriptions\\Models\\Subscription';
+        if (! class_exists($modelClass)) {
+            throw new InvalidArgumentException('The subscriptions module must be enabled before importing subscriptions.');
+        }
+
+        $source = Str::before($candidate->externalId, ':');
+        $customerKey = $this->sourceKey((string) ($candidate->payload['customer_external_id'] ?? ''), $source);
+        $customerRow = $this->findImportedRow($customerKey, User::class);
+        $customer = User::query()->find((int) $customerRow->imported_model_id)?->customer;
+        if ($customer === null) {
+            throw new InvalidArgumentException('Imported customer mapping is unavailable.');
+        }
+
+        $productKey = $this->sourceKey((string) ($candidate->payload['product_external_id'] ?? ''), $source);
+        $productRow = $this->findImportedRow($productKey, Product::class);
+        $product = Product::query()->find((int) $productRow->imported_model_id);
+        if ($product === null) {
+            throw new InvalidArgumentException('Imported product mapping is unavailable.');
+        }
+
+        $status = strtolower(trim((string) ($candidate->payload['status'] ?? 'pending')));
+        if (! in_array($status, ['pending', 'active', 'past_due', 'cancelled', 'ended'], true)) {
+            throw new InvalidArgumentException('Subscription status is invalid.');
+        }
+        $interval = strtolower(trim((string) ($candidate->payload['interval'] ?? 'month')));
+        if (! in_array($interval, ['day', 'week', 'month', 'year'], true)) {
+            throw new InvalidArgumentException('Subscription interval is invalid.');
+        }
+        $intervalCount = filter_var($candidate->payload['interval_count'] ?? 1, FILTER_VALIDATE_INT);
+        $quantity = filter_var($candidate->payload['quantity'] ?? 1, FILTER_VALIDATE_INT);
+        $priceAmount = filter_var($candidate->payload['price_amount'] ?? $product->price_amount, FILTER_VALIDATE_INT);
+        if ($intervalCount === false || $intervalCount < 1 || $quantity === false || $quantity < 1 || $priceAmount === false || $priceAmount < 0) {
+            throw new InvalidArgumentException('Subscription interval, quantity or price is invalid.');
+        }
+
+        $currency = strtoupper((string) ($candidate->payload['currency'] ?? $product->currency ?? 'EUR'));
+        if (! preg_match('/^[A-Z]{3}$/', $currency)) {
+            throw new InvalidArgumentException('Subscription currency is invalid.');
+        }
+        $number = trim((string) ($candidate->payload['number'] ?? ''));
+        if ($number === '') {
+            $number = 'IMP-SUB-'.strtoupper(substr(hash('sha256', $candidate->externalId), 0, 16));
+        }
+        $baseNumber = $number;
+        $suffix = 2;
+        while (DB::table('subscriptions')->where('number', $number)->exists()) {
+            $number = $baseNumber.'-'.$suffix;
+            $suffix++;
+        }
+
+        $start = Carbon::now();
+        $end = match ($interval) {
+            'day' => $start->copy()->addDays((int) $intervalCount),
+            'week' => $start->copy()->addWeeks((int) $intervalCount),
+            'year' => $start->copy()->addYears((int) $intervalCount),
+            default => $start->copy()->addMonths((int) $intervalCount),
+        };
+        $subscription = app($modelClass);
+        if (! $subscription instanceof Model) {
+            throw new InvalidArgumentException('The subscriptions provider is invalid.');
+        }
+        $subscription->fill([
+            'number' => $number,
+            'customer_id' => $customer->id,
+            'customer_email' => $customer->email,
+            'customer_name' => $customer->name,
+            'product_id' => $product->id,
+            'order_id' => null,
+            'order_item_id' => null,
+            'status' => $status,
+            'interval' => $interval,
+            'interval_count' => $intervalCount,
+            'price_amount' => $priceAmount,
+            'currency' => $currency,
+            'quantity' => $quantity,
+            'payment_gateway' => null,
+            'current_period_start' => $start,
+            'current_period_end' => $end,
+            'next_billing_at' => $end,
+            'cancel_at_period_end' => false,
+        ]);
+        $subscription->save();
+
+        return [get_class($subscription), (int) $subscription->getKey()];
     }
 
     /** @return array{0: class-string, 1: int} */

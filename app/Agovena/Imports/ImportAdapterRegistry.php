@@ -64,6 +64,12 @@ final class ImportAdapterRegistry
                 'customer_external_id' => ['customer_id', 'userid', 'customer_external_id'],
                 'product_external_id' => ['product_id', 'product_external_id'],
                 'status' => ['status', 'state'],
+                'interval' => ['interval', 'billing_interval'],
+                'interval_count' => ['interval_count', 'billing_interval_count'],
+                'price_amount' => ['price_amount', 'price', 'amount'],
+                'currency' => ['currency', 'currency_code'],
+                'quantity' => ['quantity', 'qty'],
+                'number' => ['subscription_number', 'number'],
             ],
             default => throw new InvalidArgumentException('Unsupported import entity.'),
         };

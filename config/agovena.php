@@ -73,6 +73,7 @@ return [
                 'domains' => ['kind' => 'module', 'path' => 'modules/domains'],
                 'cloudflare-registrar' => ['kind' => 'extension', 'path' => 'extensions/domains/cloudflare-registrar'],
                 'namecheap-registrar' => ['kind' => 'extension', 'path' => 'extensions/domains/namecheap-registrar'],
+                'cloudflare-dns' => ['kind' => 'extension', 'path' => 'extensions/domains/cloudflare-dns'],
                 'mollie' => ['kind' => 'extension', 'path' => 'extensions/payments/mollie'],
                 'stripe' => ['kind' => 'extension', 'path' => 'extensions/payments/stripe'],
                 'paypal' => ['kind' => 'extension', 'path' => 'extensions/payments/paypal'],
@@ -129,6 +130,7 @@ return [
         'retention_days' => (int) env('AGOVENA_BACKUP_RETENTION_DAYS', 30),
         'retention_count' => (int) env('AGOVENA_BACKUP_RETENTION_COUNT', 10),
         'mysql_dump_binary' => env('AGOVENA_MYSQLDUMP_BINARY', 'mysqldump'),
+        'alert_email' => env('AGOVENA_BACKUP_ALERT_EMAIL'),
     ],
 
     'retention' => [

@@ -31,7 +31,7 @@ final class Customize extends Component
         $usp = $flat['header.usp_items'] ?? null;
         unset($flat['header.usp_items'], $flat['header.announcement_text'], $flat['header.announcement_link']);
         $this->sections = is_array($sections) ? array_values($sections) : [];
-        $this->uspItems = $this->normalizeUspItems(
+        $this->uspItems = $config->normalizeUspItems(
             (is_array($usp) && $usp !== []) ? $usp : $config->uspItems()
         );
         $this->values = Arr::undot($flat);
@@ -57,8 +57,8 @@ final class Customize extends Component
             }
         }
 
-        $flat['homepage.sections'] = $this->sections;
-        $flat['header.usp_items'] = $this->normalizeUspItems($this->uspItems);
+        $flat['homepage.sections'] = $themes->config()->normalizeSections($this->sections);
+        $flat['header.usp_items'] = $themes->config()->normalizeUspItems($this->uspItems);
         $themes->config()->setMany($flat);
 
         session()->flash('status', __('admin.appearance.customize.saved'));
@@ -169,32 +169,5 @@ final class Customize extends Component
         ])->layout('layouts.admin', [
             'title' => __('admin.appearance.customize.title'),
         ]);
-    }
-
-    /**
-     * @param  list<mixed>  $items
-     * @return list<array{text: string, short: string, emphasis: string, href: string, highlight: bool}>
-     */
-    private function normalizeUspItems(array $items): array
-    {
-        $out = [];
-        foreach ($items as $item) {
-            if (! is_array($item)) {
-                continue;
-            }
-            $text = isset($item['text']) ? trim((string) $item['text']) : '';
-            if ($text === '') {
-                continue;
-            }
-            $out[] = [
-                'text' => $text,
-                'short' => isset($item['short']) ? trim((string) $item['short']) : '',
-                'emphasis' => isset($item['emphasis']) ? trim((string) $item['emphasis']) : '',
-                'href' => isset($item['href']) ? trim((string) $item['href']) : '',
-                'highlight' => filter_var($item['highlight'] ?? false, FILTER_VALIDATE_BOOLEAN),
-            ];
-        }
-
-        return $out;
     }
 }

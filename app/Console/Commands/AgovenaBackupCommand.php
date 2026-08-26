@@ -6,8 +6,10 @@ namespace App\Console\Commands;
 
 use App\Agovena\Backups\BackupManager;
 use App\Agovena\Operations\CronStatisticsRecorder;
+use App\Notifications\BackupFailedNotification;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Notification;
 
 final class AgovenaBackupCommand extends Command
 {
@@ -23,6 +25,7 @@ final class AgovenaBackupCommand extends Command
             Log::error('Agovena database backup failed.', [
                 'error_code' => $result->errorCode ?? 'unknown',
             ]);
+            $this->sendFailureAlert($result->errorCode ?? 'unknown');
             $this->error('Database backup failed. Check the operational logs for the error code.');
 
             return self::FAILURE;
@@ -38,5 +41,22 @@ final class AgovenaBackupCommand extends Command
         }
 
         return self::SUCCESS;
+    }
+
+    private function sendFailureAlert(string $errorCode): void
+    {
+        $email = filter_var(config('agovena.backups.alert_email'), FILTER_VALIDATE_EMAIL);
+        if (! is_string($email)) {
+            return;
+        }
+
+        try {
+            Notification::route('mail', $email)->notify(new BackupFailedNotification($errorCode));
+        } catch (\Throwable $exception) {
+            Log::warning('Agovena backup failure alert could not be sent.', [
+                'error_code' => $errorCode,
+                'alert_error' => $exception::class,
+            ]);
+        }
     }
 }

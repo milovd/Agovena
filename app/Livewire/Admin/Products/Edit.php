@@ -98,6 +98,16 @@ final class Edit extends Component
     /** @var array<string, mixed> */
     public array $providerSettings = [];
 
+    public string $domainRegistrarKey = '';
+
+    public string $domainDnsProviderKey = '';
+
+    public string $domainName = '';
+
+    public bool $domainAutoRenew = false;
+
+    public int $domainYears = 1;
+
     public string $digitalSecretSource = 'pool';
 
     public function mount(Product $product): void
@@ -149,6 +159,13 @@ final class Edit extends Component
                 $this->provisioningServerId = is_numeric($serverId) ? (int) $serverId : null;
                 $settings = $row->config['provider_settings'] ?? [];
                 $this->providerSettings = is_array($settings) ? $settings : [];
+            }
+            if ($row->capability === 'domain_registration') {
+                $this->domainRegistrarKey = (string) ($row->config['registrar_key'] ?? '');
+                $this->domainDnsProviderKey = (string) ($row->config['dns_provider_key'] ?? '');
+                $this->domainName = (string) ($row->config['domain_name'] ?? '');
+                $this->domainAutoRenew = (bool) ($row->config['auto_renew'] ?? false);
+                $this->domainYears = max(1, (int) ($row->config['years'] ?? 1));
             }
             if ($row->capability === 'digital_secret') {
                 $source = (string) ($row->config['source'] ?? 'pool');
@@ -492,6 +509,16 @@ final class Edit extends Component
                     'provider_settings' => $this->providerSettings,
                 ];
             }
+            if ($key === 'domain_registration') {
+                $domainName = strtolower(rtrim(trim($this->domainName), '.'));
+                $config = [
+                    'registrar_key' => trim($this->domainRegistrarKey) !== '' ? trim($this->domainRegistrarKey) : null,
+                    'dns_provider_key' => trim($this->domainDnsProviderKey) !== '' ? trim($this->domainDnsProviderKey) : null,
+                    'domain_name' => $domainName !== '' ? $domainName : null,
+                    'auto_renew' => $this->domainAutoRenew,
+                    'years' => max(1, min(10, $this->domainYears)),
+                ];
+            }
             if ($key === 'digital_secret') {
                 $config = [
                     'source' => in_array($this->digitalSecretSource, ['pool', 'manual', 'provider'], true)
@@ -503,7 +530,7 @@ final class Edit extends Component
                 $capabilities->enable($this->product, $key, $config);
                 $this->product->unsetRelation('capabilities');
                 $this->product->load('capabilities');
-            } elseif (in_array($key, ['shippable', 'subscribable', 'provisionable', 'digital_secret'], true)) {
+            } elseif (in_array($key, ['shippable', 'subscribable', 'provisionable', 'domain_registration', 'digital_secret'], true)) {
                 $capabilities->syncConfig($this->product, $key, $config);
             }
         }
@@ -646,6 +673,8 @@ final class Edit extends Component
             'provisioners' => $provisioners,
             'canConfigureProvisioning' => $provisioners !== [],
             'providerSettingDefinitions' => $this->providerSettingDefinitions(),
+            'domainRegistrars' => $this->domainProviderOptions('Agovena\\Modules\\Domains\\DomainRegistrarRegistry'),
+            'domainDnsProviders' => $this->domainProviderOptions('Agovena\\Modules\\Domains\\DomainDnsProviderRegistry'),
             'provisioningServers' => Schema::hasTable('provisioning_servers')
                 ? ProvisioningServer::query()->where('is_active', true)->orderBy('name')->get()
                 : collect(),
@@ -654,6 +683,22 @@ final class Edit extends Component
             'title' => __('admin.products.form.edit_title'),
             'navigation' => $admin->navigationItems(),
         ]);
+    }
+
+    /** @return list<array{key: string, capabilities: list<string>}> */
+    private function domainProviderOptions(string $registryClass): array
+    {
+        if (! class_exists($registryClass) || ! app()->bound($registryClass)) {
+            return [];
+        }
+
+        return collect(app($registryClass)->all())
+            ->map(static fn (object $provider): array => [
+                'key' => (string) $provider->key(),
+                'capabilities' => array_values(array_map('strval', $provider->capabilities())),
+            ])
+            ->values()
+            ->all();
     }
 
     /**

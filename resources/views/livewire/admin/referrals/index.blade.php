@@ -7,9 +7,37 @@
         </div>
     </header>
 
-    <div class="admin-table-wrap">
+    <section class="admin-table-wrap" aria-labelledby="referral-codes-heading">
+        <h2 id="referral-codes-heading" class="admin-section-title">{{ __('admin.referrals.codes_title') }}</h2>
         <table class="admin-table">
-            <caption class="sr-only">{{ __('admin.referrals.title') }}</caption>
+            <caption class="sr-only">{{ __('admin.referrals.codes_title') }}</caption>
+            <thead><tr><th>{{ __('admin.referrals.code') }}</th><th>{{ __('admin.referrals.customer') }}</th><th>{{ __('admin.referrals.uses') }}</th><th>{{ __('admin.referrals.active') }}</th><th>{{ __('admin.referrals.actions') }}</th></tr></thead>
+            <tbody>
+                @forelse ($codes as $code)
+                    <tr>
+                        <td>{{ $code->code }}</td>
+                        <td>{{ $code->customer?->name ?? 'n/a' }}</td>
+                        <td>{{ $code->uses_count }}{{ $code->max_uses ? ' / '.$code->max_uses : '' }}</td>
+                        <td>{{ $code->is_active ? __('admin.referrals.active') : __('admin.referrals.inactive') }}</td>
+                        <td>
+                            @if ($code->is_active)
+                                <button type="button" wire:click="deactivateCode({{ $code->id }})">{{ __('admin.referrals.deactivate') }}</button>
+                            @else
+                                <button type="button" wire:click="activateCode({{ $code->id }})">{{ __('admin.referrals.activate') }}</button>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5">{{ __('admin.referrals.codes_empty') }}</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </section>
+
+    <section class="admin-table-wrap" aria-labelledby="referral-attributions-heading">
+        <h2 id="referral-attributions-heading" class="admin-section-title">{{ __('admin.referrals.attributions_title') }}</h2>
+        <table class="admin-table">
+            <caption class="sr-only">{{ __('admin.referrals.attributions_title') }}</caption>
             <thead><tr><th>{{ __('admin.referrals.code') }}</th><th>{{ __('admin.referrals.order') }}</th><th>{{ __('admin.referrals.status') }}</th><th>{{ __('admin.referrals.actions') }}</th></tr></thead>
             <tbody>
                 @forelse ($attributions as $attribution)
@@ -31,5 +59,5 @@
                 @endforelse
             </tbody>
         </table>
-    </div>
+    </section>
 </div>
