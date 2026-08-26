@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Agovena\Modules\Domains\DomainDnsProviderRegistry;
 use Agovena\Modules\Domains\DomainRegistrarRegistry;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
@@ -21,6 +22,12 @@ use Illuminate\Validation\ValidationException;
 function moduleBoundExtensions(): array
 {
     return [
+        'cloudflare-dns' => [
+            'extension' => 'cloudflare-dns',
+            'module' => 'domains',
+            'registry' => DomainDnsProviderRegistry::class,
+            'registryKey' => 'cloudflare-dns',
+        ],
         'cloudflare-registrar' => [
             'extension' => 'cloudflare-registrar',
             'module' => 'domains',
