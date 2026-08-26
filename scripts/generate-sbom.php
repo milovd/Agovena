@@ -12,17 +12,17 @@ $output = $argv[1];
 
 $readJson = static function (string $path): array {
     if (! is_file($path)) {
-        throw new RuntimeException("Required lockfile is missing: ".basename($path));
+        throw new RuntimeException('Required lockfile is missing: '.basename($path));
     }
 
     $contents = file_get_contents($path);
     if ($contents === false) {
-        throw new RuntimeException("Required lockfile cannot be read: ".basename($path));
+        throw new RuntimeException('Required lockfile cannot be read: '.basename($path));
     }
 
     $decoded = json_decode($contents, true, 512, JSON_THROW_ON_ERROR);
     if (! is_array($decoded)) {
-        throw new RuntimeException("Required lockfile is invalid: ".basename($path));
+        throw new RuntimeException('Required lockfile is invalid: '.basename($path));
     }
 
     return $decoded;
@@ -110,12 +110,12 @@ $document = [
 
 $directory = dirname($output);
 if (! is_dir($directory) && ! mkdir($directory, 0777, true) && ! is_dir($directory)) {
-    throw new RuntimeException("Cannot create SBOM directory.");
+    throw new RuntimeException('Cannot create SBOM directory.');
 }
 
 $json = json_encode($document, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n";
 if (file_put_contents($output, $json, LOCK_EX) === false) {
-    throw new RuntimeException("Cannot write SBOM output.");
+    throw new RuntimeException('Cannot write SBOM output.');
 }
 
 printf("Wrote %s with %d components.\n", $output, count($components));
