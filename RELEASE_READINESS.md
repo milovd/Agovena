@@ -16,8 +16,10 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core and optional package worktrees contain local changes. They must not be reset without an explicit decision.
-- The full application suite has passed in the current worktree. Passing automated tests do not prove external provider or authenticated browser behavior.
+- Last pushed Core commit: `4b9d7ec`.
+- Last pushed optional-package commit: `b3951b9`.
+- Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
+- The full application suite has passed: 861 tests and 12,530 assertions. Passing automated tests do not prove external provider or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -26,12 +28,12 @@ This file is the working release matrix for the first public Agovena release. It
 | Core catalog, cart, checkout, orders, invoices | implemented | Feature coverage exists in the application suite. |
 | Refunds, credit notes, payment attempts, fee snapshots and webhook contracts | implemented | Automated idempotency, signature, fee pass-through and invoice snapshot tests exist. |
 | Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation and manual-review transitions are covered; MariaDB multi-process proof and live provider failure review remain release gates. |
-| Subscriptions and recurring renewal seams | partial | Automated lifecycle coverage exists; provider-specific recurring behavior remains capability-bound. |
+| Subscriptions and recurring renewal seams | partial | Automated lifecycle coverage and subscription import coverage exist; provider-specific recurring behavior remains capability-bound. |
 | Account security, TOTP, recovery and sessions | implemented | Customer security flows and automated coverage exist. |
 | Audit logging | implemented | Capture, redaction, integrity metadata, filters, export and retention command paths are covered. |
 | Customer notifications and preferences | implemented | In-app center, unread counts, email/in-app policy and browser push foundation are feature-tested. |
-| Outbound webhooks and destinations | partial | Generic signed HTTPS and Discord-compatible payload destinations, management, persistence, retries and SSRF checks exist; a real receiver and production queue verification are not verified here. |
-| Default Theme and theme customizer | partial | Default storefront and Admin chrome exist; the simple section-based page editor still needs release acceptance. |
+| Outbound webhooks and destinations | partial | Generic signed HTTPS and Discord-compatible payload destinations, management, persistence, retries, dead-letter handling and SSRF checks are feature-tested; a real external receiver and production queue verification are still open. |
+| Default Theme and theme customizer | partial | Default storefront, Admin chrome and safe section editor are implemented and feature-tested; responsive, keyboard and authenticated browser acceptance remain release gates. |
 | Module and Extension lifecycle | implemented | Discovery, dependencies, install, enable, disable and package tests exist. |
 | Paddle and Tebex package catalog registration | implemented | Both packages exist in optional-packages and are registered in Core catalog configuration. |
 
@@ -39,13 +41,13 @@ This file is the working release matrix for the first public Agovena release. It
 
 ### Domain sales
 
-`partial`: the generic `domains` Module provides the product capability, order-paid idempotent records, lifecycle statuses, registrar registry, Admin list and customer-owned list. The `hosting` preset enables `domains` together with `provisioning` and `subscriptions`; it does not install a registrar provider or activate provider credentials.
+`implemented` for the provider-neutral domain layer and tested provider seams. The `domains` module provides the product capability, order-paid idempotent records, lifecycle statuses, independent registrar/DNS roles, registrar and DNS registries, provider capability checks, admin operations and customer-owned list. The `hosting` preset enables `domains` together with `provisioning` and `subscriptions`; it does not install a registrar provider or activate provider credentials.
 
-The Cloudflare Registrar extension is registered outside the `domains` Module and depends on it. It supplies provider-specific account/token settings, availability and registration API calls, and explicit capability metadata. Disabling the extension preserves generic domain records but removes Cloudflare actions; disabling the module removes the domain surface while preserving its data.
+The Cloudflare Registrar extension is registered outside the `domains` module and depends on it. It supplies provider-specific account/token settings, availability and registration API calls, and explicit capability metadata. The separate `cloudflare-dns` extension supplies zone discovery/creation and record list/create/update/delete operations through its own encrypted settings. Disabling an extension preserves generic domain records but removes provider actions; disabling the module removes the domain surface while preserving its data.
 
 The optional package catalog also contains a separate `namecheap-registrar` extension. It uses the same registrar contract and currently exposes only availability checks, registrations and renewals. Its XML transport and response mapping are automated-test covered, but no live Namecheap sandbox flow has been run here. It does not claim DNS, nameserver, transfer or contact-update support.
 
-Domain records snapshot `registrar_key` and `dns_provider_key` independently. This allows a supported combination such as Namecheap for registration and Cloudflare for DNS without coupling registrar billing, renewals or transfers to DNS hosting. The `domains` module now exposes a separate DNS-provider contract and registry; a DNS provider extension is still required before DNS actions can be called.
+Domain records snapshot `registrar_key` and `dns_provider_key` independently. This supports Namecheap for registration plus Cloudflare for DNS without coupling registrar billing, renewals or transfers to DNS hosting. Product configuration and admin actions are feature-tested; live provider registration, DNS and renewal verification remain external gates.
 
 - availability and price checks via `domain-check`;
 - new registrations via `registrations`;
@@ -57,13 +59,15 @@ Transfers, contact updates, renewals, supported-TLD policy, billing-profile setu
 
 ### Import and migration tooling
 
-`missing` as a complete release capability. The roadmap requires:
+`partial`: the generic migration framework is implemented and audited, but the complete entity matrix is not yet present. It currently provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, duplicate detection, rollback and auditable import rows. Customer, product, order and module-gated subscription writes are covered.
 
-- Paymenter import for customers, services, invoices, products and provider mappings;
-- WHMCS import for clients, services, invoices, transactions and subscriptions;
-- WooCommerce import for products, customers, orders, coupons and media mappings;
-- Shopify import for products, customers, orders, discounts and content handoff;
-- CSV/custom import with field mapping, validation, dry-run, duplicate detection, rollback and audit history.
+Still required for the complete roadmap matrix:
+
+- service-instance/provider mapping;
+- invoices and transactions;
+- coupons/discounts and media mappings;
+- source-specific fixtures for the remaining entities;
+- provider acceptance verification.
 
 ### Payment foundation
 
@@ -82,68 +86,70 @@ Transfers, contact updates, renewals, supported-TLD policy, billing-profile setu
 
 ### Referrals
 
-`partial`.
+`implemented` for the current v0.0.1 scope.
 
-- Configureerbare policy, normalized codecreatie, self-referral blocking en idempotente checkoutattributie bestaan.
-- Customer/admin beheer, reward/credit ledger, expiry/limits en fraud review blijven vereist.
+- Configurable policy, normalized code creation, customer code listing, admin activate/deactivate, self-referral blocking and idempotent checkout attribution are covered.
+- Reward/credit ledger entries, expiry, usage limits, fraud-review hold/approve/reject and admin permission checks are feature-tested.
+- External payment settlement and human fraud policy remain operational decisions, not unverified release claims.
 
 ### Merchant trust and identity
 
-`partial` or `missing` until each item has code and tests:
+`implemented` for code and automated test scope; live OAuth provider verification and authenticated browser review remain external gates:
 
-- OAuth/OIDC state/nonce storage and first-party Google/Discord provider metadata are feature-tested; callback token exchange, account linking, Auth/OAuth Admin settings and end-to-end login remain open;
-- Google and Discord login;
-- Turnstile/reCAPTCHA endpoint adapters now fail closed on missing configuration, invalid responses and provider timeouts; request policy wiring, rate limits, IP reputation, bans, whitelists and recovery remain open;
-- name and IP validation;
-- repeated or disposable IP detection;
-- temporary and permanent suspensions;
-- account and IP blocking, whitelists and historical IP logs;
-- CLI recovery when Admin is unavailable;
-- optional VPN, proxy and Tor reputation checks without a default hard block;
-- complete maintenance mode and recovery route;
-- complete 403, 404, 405, 419, 429, 500, 503 and 505 error pages.
+- OAuth/OIDC state/nonce storage, provider metadata, callback token exchange, verified user creation, account linking and replay rejection are feature-tested;
+- Google and Discord login metadata is limited to explicitly enabled providers;
+- Turnstile/reCAPTCHA adapters fail closed on missing configuration, invalid responses and provider timeouts;
+- request policy wiring, rate limits, hashed IP reputation, bans, whitelists, historical IP logs and CLI recovery are feature-tested;
+- optional VPN, proxy and Tor reputation checks do not default to a hard block;
+- maintenance recovery and the complete error-page matrix are feature-tested.
+
+Live provider credentials, reputation services and production browser/identity review are not run in this workspace.
 
 ### Backups, privacy and operational recovery
 
-`partial`.
+`partial` pending a production database/storage run.
 
 - The extracted release has a backup and restore smoke path, plus a first-party artifact verifier for `.env`, SQLite and private/public storage paths.
-- Automatic database backups, retention, failure alerts and a documented production restore procedure still require implementation and verification.
-- Cookie banner, cookie settings, consent history, privacy retention and legal page review remain release work.
-- Backup verification must cover the real MariaDB and storage deployment responsibilities, not only a temporary SQLite artifact.
+- Automatic database backups, retention, failure alerts and the documented production restore command path are implemented and feature-tested.
+- Cookie banner, cookie settings, consent history, privacy retention and legal page review are feature-tested; legal sign-off remains an operational gate.
+- Backup verification still needs the real MariaDB and storage deployment responsibilities, not only a temporary SQLite artifact.
 
 ### Storefront, SEO and data export
 
-`partial` or `missing` until verified:
+`partial` pending browser and legal acceptance:
 
-- simple section-based page editor with safe exportable definitions;
-- robots.txt and sitemap.xml now expose only public storefront URLs and are feature-tested.
-- canonical metadata, Open Graph, structured data, redirects, permission-scoped exports, section editor and privacy/consent flows remain release work;
-- responsive, keyboard and authenticated browser review for the Default Theme.
+- simple section-based page editor with safe exportable definitions is implemented and normalization-tested;
+- robots.txt and sitemap.xml expose only public storefront URLs and are feature-tested;
+- canonical metadata, Open Graph, structured data, redirects and permission-scoped exports are implemented and feature-tested;
+- privacy/consent flows are feature-tested;
+- responsive, keyboard and authenticated browser review for the Default Theme remain release gates.
 
 ### Notifications and destinations
 
-`partial`.
+`partial` pending a real receiver and production queue run.
 
 - Generic signed HTTP webhook management exists.
-- Discord-compatible destination formatting and Admin destination allowlisting are feature-tested; live receiver acceptance, production queue verification and broader destination policies remain release work.
-- Browser push requires configured VAPID material and a real browser/provider run before it can be called sandbox-verified.
+- Discord-compatible destination formatting, Admin destination allowlisting, persistence, retries and dead-letter handling are feature-tested.
+- Live external receiver acceptance, production queue verification and browser-push provider verification remain open.
 
 ### Release packaging and gates
 
-Still required before a tag:
+Validated gates:
 
-- fresh install and upgrade from representative schema states;
-- release archive build on the supported release environment;
-- extracted artifact smoke and backup/restore smoke;
-- Composer tests, analysis, lint and frontend build;
-- optional-packages contract and lifecycle tests;
-- Playwright flows for login, product, cart, checkout, payment, webhook, invoice, refund, stock race and mobile navigation;
-- dependency, CVE, license, SBOM, third-party attribution and tracked-file scans;
-- secret and generated-file review;
-- tenant and authorization checks for detail, list, export, update and delete paths;
-- sandbox provider status matrix;
-- human review on desktop, tablet, mobile and keyboard-only navigation.
+- full SQLite application suite: 861 tests, 12,530 assertions;
+- upgrade suite: 14 tests, 132 assertions;
+- release archive build and extracted-release smoke: passed;
+- backup/restore smoke: passed;
+- Pint, PHPStan, Blade cache, Vite build, Composer audit, npm production audit, PHP syntax and diff-check: passed.
+
+Still required before a release tag:
+
+- GitHub Actions CI completion for PHP/browser/MariaDB matrices;
+- MariaDB and multiprocess concurrency jobs (not locally runnable: Docker is unavailable and local credentials are not configured);
+- real Namecheap/Cloudflare sandbox status matrix;
+- authenticated browser review and human responsive/keyboard review;
+- live external webhook receiver acceptance;
+- final legal/privacy sign-off and third-party attribution/SBOM review.
 
 ## Explicitly deferred after v0.0.1
 
