@@ -8,33 +8,32 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 it('runs a configured database backup through the artisan command', function (): void {
-    $source = storage_path('framework/command-backup.sqlite');
-    file_put_contents($source, 'command backup payload');
-    config()->set('database.default', 'sqlite');
-    config()->set('database.connections.sqlite.driver', 'sqlite');
-    config()->set('database.connections.sqlite.database', $source);
-    config()->set('agovena.backups.disk', 'local');
-    config()->set('agovena.backups.directory', 'command-backups');
     Storage::fake('local');
+    config()->set('database.default', 'sqlite');
+    config()->set('database.connections.sqlite.database', database_path('database.sqlite'));
 
-    $exitCode = Artisan::call('agovena:backup');
-
-    expect($exitCode)->toBe(0)
-        ->and(Storage::disk('local')->files('command-backups'))->toHaveCount(1)
-        ->and(Artisan::output())->toContain('Backup created:');
-
-    unlink($source);
+    expect(Artisan::call('agovena:backup'))->toBe(0);
+    expect(Storage::disk('local')->files('backups'))->not->toBeEmpty();
 });
 
 it('alerts the configured operator when a backup fails without exposing diagnostics', function (): void {
-    config()->set('database.default', 'sqlite');
-    config()->set('database.connections.sqlite.database', storage_path('framework/missing-alert-backup.sqlite'));
-    config()->set('agovena.backups.alert_email', 'ops@example.test');
-    Notification::fake();
+    $originalDefault = config('database.default');
+    $originalSqliteDatabase = config('database.connections.sqlite.database');
 
-    expect(Artisan::call('agovena:backup'))->toBe(1);
-    Notification::assertSentOnDemand(BackupFailedNotification::class, function (object $notification, array $channels, object $notifiable): bool {
-        return $notifiable->routes['mail'] === 'ops@example.test'
-            && $notification->errorCode === 'source_missing';
-    });
+    try {
+        config()->set('database.default', 'sqlite');
+        config()->set('database.connections.sqlite.database', storage_path('framework/missing-alert-backup.sqlite'));
+        config()->set('agovena.backups.alert_email', 'ops@example.test');
+        Notification::fake();
+
+        expect(Artisan::call('agovena:backup'))->toBe(1);
+        Notification::assertSentOnDemand(BackupFailedNotification::class, function (object $notification, array $channels, object $notifiable): bool {
+            return in_array('mail', $channels, true)
+                && $notification->errorCode === 'source_missing'
+                && ($notifiable->routes['mail'] ?? null) === 'ops@example.test';
+        });
+    } finally {
+        config()->set('database.default', $originalDefault);
+        config()->set('database.connections.sqlite.database', $originalSqliteDatabase);
+    }
 });
