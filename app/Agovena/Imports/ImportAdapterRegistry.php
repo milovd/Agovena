@@ -55,6 +55,9 @@ final class ImportAdapterRegistry
                 'external_id' => ['order_id', 'id', 'external_id'],
                 'customer_external_id' => ['customer_id', 'userid', 'customer_external_id'],
                 'total_amount' => ['total_amount', 'total', 'amount'],
+                'currency' => ['currency', 'currency_code'],
+                'number' => ['order_number', 'number', 'order_no'],
+                'items_json' => ['items_json', 'items', 'line_items'],
             ],
             'subscription' => [
                 'external_id' => ['subscription_id', 'id', 'external_id'],

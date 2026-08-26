@@ -13,6 +13,7 @@ use App\Agovena\Privacy\ExportCustomerData;
 use App\Enums\CustomerPropertyType;
 use App\Livewire\Admin\Customers\Properties as CustomerProperties;
 use App\Livewire\Customer\Auth\Register;
+use App\Models\ConsentEvent;
 use App\Models\Customer;
 use App\Models\CustomerPropertyDefinition;
 use App\Models\Product;
@@ -191,9 +192,23 @@ test('gdpr export includes custom properties and anonymize wipes them', function
         ['vat_number' => 'NL555'],
         'customer',
     );
+    $consent = ConsentEvent::query()->create([
+        'user_id' => $customer->user_id,
+        'consent_version' => '1',
+        'choice' => 'necessary',
+        'source' => 'banner',
+        'ip_hash' => str_repeat('a', 64),
+        'user_agent_hash' => str_repeat('b', 64),
+    ]);
+    $consent->categories()->createMany([
+        ['category' => 'necessary', 'decision' => true],
+        ['category' => 'analytics', 'decision' => false],
+        ['category' => 'marketing', 'decision' => false],
+    ]);
 
     $export = app(ExportCustomerData::class)->handle($customer);
-    expect($export['custom_properties'][0]['value'] ?? null)->toBe('NL555');
+    expect($export['custom_properties'][0]['value'] ?? null)->toBe('NL555')
+        ->and($export['consent_history'][0]['choice'] ?? null)->toBe('necessary');
 
     app(AnonymizeCustomer::class)->handle($customer);
 

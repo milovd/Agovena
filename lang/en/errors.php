@@ -34,6 +34,16 @@ return [
         'heading' => 'The store is temporarily unavailable',
         'lede' => 'Agovena is being updated or is in maintenance. Please try again shortly.',
     ],
+    '405' => [
+        'title' => 'Method not allowed',
+        'heading' => 'This method is not allowed here',
+        'lede' => 'The requested action is not supported for this address.',
+    ],
+    '505' => [
+        'title' => 'HTTP version not supported',
+        'heading' => 'This HTTP version is not supported',
+        'lede' => 'Use a current browser or client and try again.',
+    ],
     '429' => [
         'title' => 'Too many requests',
         'heading' => 'Too many requests',

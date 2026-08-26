@@ -21,6 +21,8 @@ return [
         'name' => 'Name',
         'remember' => 'Remember me',
         'sign_in' => 'Sign in',
+        'oauth_heading' => 'Or continue with',
+        'continue_with' => 'Continue with :provider',
         'create_account' => 'Create account',
         'send_reset_link' => 'Send reset link',
         'reset_password' => 'Reset password',
@@ -169,6 +171,17 @@ return [
         ],
     ],
 
+    'referrals' => [
+        'title' => 'Referrals',
+        'lede' => 'Create a referral code and review rewards attributed to your code.',
+        'create_heading' => 'Create a code',
+        'codes_heading' => 'Your codes',
+        'code' => 'Referral code',
+        'create' => 'Create code',
+        'created' => 'Referral code created.',
+        'uses' => 'uses',
+        'empty' => 'You have not created a referral code yet.',
+    ],
     'profile' => [
         'heading' => 'Profile',
         'lede' => 'Update your name, email, password, and saved addresses.',

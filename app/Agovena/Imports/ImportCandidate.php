@@ -13,5 +13,6 @@ final readonly class ImportCandidate
         public string $entity,
         public string $externalId,
         public array $payload,
+        public int $line = 0,
     ) {}
 }

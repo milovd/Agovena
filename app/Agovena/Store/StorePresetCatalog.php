@@ -36,7 +36,7 @@ final class StorePresetCatalog
                 id: 'hosting',
                 labelKey: 'admin.store_presets.hosting',
                 ledeKey: 'admin.store_presets.hosting_lede',
-                moduleIds: ['provisioning', 'subscriptions'],
+                moduleIds: ['provisioning', 'subscriptions', 'domains'],
             ),
             new StorePreset(
                 id: 'subscriptions',

@@ -138,5 +138,6 @@ test('staff can apply store presets from admin', function () {
         ->assertHasNoErrors();
 
     expect(app(ModuleManager::class)->isEnabled('provisioning'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('domains'))->toBeTrue();
 });

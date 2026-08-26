@@ -51,7 +51,7 @@ final class DeliverWebhook implements ShouldQueue
         $delivery->refresh();
 
         if (! WebhookUrlValidator::isAllowed($endpoint->url)) {
-            $this->recordFailure($delivery, 'Endpoint URL rejected by SSRF policy.', false);
+            $this->recordFailure($delivery, 'Endpoint URL rejected by SSRF policy.', false, 'ssrf_rejected');
 
             return;
         }
@@ -74,7 +74,7 @@ final class DeliverWebhook implements ShouldQueue
                 ->withBody($body, 'application/json')
                 ->post($endpoint->url);
         } catch (Throwable) {
-            $this->recordFailure($delivery, 'Webhook request failed before a response was received.', true);
+            $this->recordFailure($delivery, 'Webhook request failed before a response was received.', true, 'transport_error');
 
             return;
         }
@@ -98,6 +98,7 @@ final class DeliverWebhook implements ShouldQueue
             $delivery,
             'Webhook endpoint returned HTTP '.$response->status().'.',
             $retryable,
+            'http_'.$response->status(),
             $response,
         );
 
@@ -110,7 +111,10 @@ final class DeliverWebhook implements ShouldQueue
     public function failed(Throwable $exception): void
     {
         WebhookDelivery::query()->whereKey($this->deliveryId)->update([
-            'status' => 'failed',
+            'status' => 'dead_letter',
+            'failure_code' => 'retry_exhausted',
+            'failed_at' => now(),
+            'dead_lettered_at' => now(),
             'last_error' => 'Webhook delivery exhausted retries.',
         ]);
     }
@@ -119,6 +123,7 @@ final class DeliverWebhook implements ShouldQueue
         WebhookDelivery $delivery,
         string $error,
         bool $retryable,
+        string $failureCode,
         ?Response $response = null,
     ): void {
         $endpoint = $delivery->endpoint;
@@ -126,10 +131,13 @@ final class DeliverWebhook implements ShouldQueue
         $exhausted = ! $retryable || $attempt >= $this->tries;
 
         $delivery->update([
-            'status' => $exhausted ? 'failed' : 'retrying',
+            'status' => $exhausted ? 'dead_letter' : 'retrying',
             'response_status' => $response?->status(),
             'response_body' => $response === null ? null : $this->truncate($response),
+            'failure_code' => $failureCode,
             'last_error' => $error,
+            'failed_at' => $exhausted ? now() : null,
+            'dead_lettered_at' => $exhausted ? now() : null,
             'next_attempt_at' => $exhausted ? null : now()->addSeconds($this->backoff[min($attempt - 1, count($this->backoff) - 1)]),
         ]);
 

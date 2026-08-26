@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Privacy;
 
+use App\Models\ConsentEvent;
 use App\Models\Customer;
 
 final class ExportCustomerData
@@ -43,6 +44,21 @@ final class ExportCustomerData
                     'key' => $row->definition?->key,
                     'label' => $row->definition?->label,
                     'value' => $row->value,
+                ])
+                ->all(),
+            'consent_history' => ConsentEvent::query()
+                ->where('user_id', $customer->user_id)
+                ->with('categories')
+                ->latest('id')
+                ->get()
+                ->map(static fn (ConsentEvent $event): array => [
+                    'consent_version' => $event->consent_version,
+                    'choice' => $event->choice,
+                    'source' => $event->source,
+                    'categories' => $event->categories
+                        ->mapWithKeys(static fn ($category): array => [$category->category => (bool) $category->decision])
+                        ->all(),
+                    'created_at' => $event->created_at?->toIso8601String(),
                 ])
                 ->all(),
         ];

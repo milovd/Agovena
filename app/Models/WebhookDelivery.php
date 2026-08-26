@@ -19,7 +19,10 @@ class WebhookDelivery extends Model
         'response_status',
         'response_body',
         'last_error',
+        'failure_code',
         'next_attempt_at',
+        'failed_at',
+        'dead_lettered_at',
         'delivered_at',
     ];
 
@@ -28,6 +31,8 @@ class WebhookDelivery extends Model
         return [
             'payload' => 'array',
             'next_attempt_at' => 'datetime',
+            'failed_at' => 'datetime',
+            'dead_lettered_at' => 'datetime',
             'delivered_at' => 'datetime',
         ];
     }

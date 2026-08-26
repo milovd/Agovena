@@ -34,6 +34,16 @@ return [
         'heading' => 'De winkel is tijdelijk niet beschikbaar',
         'lede' => 'Agovena wordt bijgewerkt of is in onderhoud. Probeer het zo opnieuw.',
     ],
+    '405' => [
+        'title' => 'Methode niet toegestaan',
+        'heading' => 'Deze methode is hier niet toegestaan',
+        'lede' => 'De gevraagde actie wordt niet ondersteund voor dit adres.',
+    ],
+    '505' => [
+        'title' => 'HTTP-versie niet ondersteund',
+        'heading' => 'Deze HTTP-versie wordt niet ondersteund',
+        'lede' => 'Gebruik een recente browser of client en probeer het opnieuw.',
+    ],
     '429' => [
         'title' => 'Te veel verzoeken',
         'heading' => 'Te veel verzoeken',

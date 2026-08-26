@@ -7,4 +7,5 @@
 @import '../../../../resources/css/admin/components/_card.css';
 @import './components/_store.css';
 @import './components/_checkout.css';
+@import './components/_consent.css';
 @import './utilities/_a11y.css';

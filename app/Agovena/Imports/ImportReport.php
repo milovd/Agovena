@@ -9,6 +9,7 @@ final readonly class ImportReport
     /**
      * @param  list<ImportCandidate>  $candidates
      * @param  array<int, string>  $rowErrors
+     * @param  array<int, string>  $duplicateLines
      */
     public function __construct(
         public bool $dryRun,
@@ -18,5 +19,6 @@ final readonly class ImportReport
         public int $errors,
         public array $candidates,
         public array $rowErrors,
+        public array $duplicateLines = [],
     ) {}
 }

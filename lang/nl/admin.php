@@ -74,6 +74,7 @@ return [
         'updates' => 'Updates',
         'notifications' => 'Notificatiesjablonen',
         'webhooks' => 'Webhooks',
+        'referrals' => 'Verwijzingen',
         'email_log' => 'E-maillogboek',
         'failed_jobs' => 'Mislukte jobs',
         'cron_statistics' => 'Cron-statistieken',
@@ -166,6 +167,10 @@ return [
         'webhooks' => [
             'view' => 'Webhooks bekijken',
             'manage' => 'Webhooks beheren',
+        ],
+        'referrals' => [
+            'view' => 'Verwijzingen bekijken',
+            'manage' => 'Referralbeloningen beoordelen',
         ],
         'settings' => [
             'view' => 'Instellingen bekijken',
@@ -318,13 +323,15 @@ return [
             'branding' => 'Huisstijl',
             'mail' => 'E-mail',
             'store' => 'Winkel',
+            'auth' => 'Authenticatie',
         ],
 
         'group_help' => [
             'general' => 'Identiteit van de site en regionale standaardwaarden.',
             'branding' => 'Logo en favicon voor Admin en de webshop.',
             'mail' => 'Afzendernaam en -adres voor winkelmails. SMTP-gegevens blijven in de serveromgeving, niet in de database.',
-            'store' => 'Commerce-standaarden. De Google Places-sleutel kan ook via GOOGLE_PLACES_API_KEY in de omgeving.',
+            'store' => 'Commerciële standaardwaarden. De Google Places-sleutel kan ook via GOOGLE_PLACES_API_KEY in de omgeving worden ingesteld.',
+            'auth' => 'OAuth-providerkeuzes. Client-ID’s en secrets blijven in de omgeving; secrets worden hier nooit opgeslagen.',
         ],
 
         'fields' => [
@@ -351,6 +358,8 @@ return [
             'tax_enabled' => 'Belasting inschakelen',
             'automatic_tax_rates' => 'Automatische belastingtarieven',
             'prices_include_tax' => 'Prijzen zijn inclusief btw',
+            'oauth_google_enabled' => 'Google OAuth inschakelen',
+            'oauth_discord_enabled' => 'Discord OAuth inschakelen',
             'from_name' => 'Afzendernaam',
             'from_address' => 'Afzenderadres',
             'reply_to' => 'Antwoordadres',
@@ -1769,6 +1778,19 @@ return [
         'attachment' => 'Bijlage',
         'attachments_hint' => 'Alleen afbeeldingen of PDF. Max. :max bestanden, :mb MB per bestand. Privé opgeslagen en als download aangeboden.',
     ],
+    'referrals' => [
+        'eyebrow' => 'Verkoop',
+        'title' => 'Verwijzingen',
+        'lede' => 'Beoordeel referralattributie en beloningen voordat klanttegoed wordt geboekt.',
+        'code' => 'Code',
+        'order' => 'Order',
+        'status' => 'Status',
+        'actions' => 'Acties',
+        'approve' => 'Beloning goedkeuren',
+        'reject' => 'Beloning afwijzen',
+        'no_action' => 'Geen actie',
+        'empty' => 'Geen referralattributies gevonden.',
+    ],
     'webhooks' => [
         'title' => 'Outbound webhooks',
         'lede' => 'Beheer ondertekende eventleveringen naar HTTPS endpoints en volg retries zonder secrets te tonen.',
@@ -2055,18 +2077,23 @@ return [
             'provisioning_synced' => 'Provisioning-syncs',
             'unpaid_orders_cancelled' => 'Onbetaalde orders geannuleerd',
             'logs_pruned' => 'Logregels opgeschoond',
+            'backups_created' => 'Back-ups aangemaakt',
+            'backups_pruned' => 'Back-ups opgeschoond',
         ],
         'metric_descriptions' => [
             'subscription_renewals' => 'Verlengingsorders aangemaakt op :date.',
             'provisioning_synced' => 'Provisioning-instances gesynchroniseerd op :date.',
             'unpaid_orders_cancelled' => 'Verlopen onbetaalde orders geannuleerd op :date.',
             'logs_pruned' => 'Operationele logregels verwijderd op :date.',
+            'backups_created' => 'Versleutelde databaseback-ups aangemaakt op :date.',
+            'backups_pruned' => 'Verlopen back-upartifacts verwijderd op :date.',
         ],
         'tasks' => [
             'subscription-renewals' => 'Abonnementsverlengingen verwerken',
             'sync-provisioning' => 'Provisioning-instances synchroniseren',
             'cancel-unpaid-orders' => 'Verlopen onbetaalde orders annuleren',
             'prune-logs' => 'Operationele logs opschonen',
+            'backup' => 'Versleutelde databaseback-up maken',
         ],
     ],
     'plan_changes' => [

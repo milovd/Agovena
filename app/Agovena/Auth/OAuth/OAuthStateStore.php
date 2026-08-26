@@ -18,7 +18,7 @@ final class OAuthStateStore
         private readonly Repository $cache,
     ) {}
 
-    public function issue(string $provider, string $redirect): string
+    public function issueWithNonce(string $provider, string $redirect): array
     {
         $provider = strtolower(trim($provider));
         if (! in_array($provider, self::PROVIDERS, true)) {
@@ -30,15 +30,22 @@ final class OAuthStateStore
         }
 
         $state = bin2hex(random_bytes(32));
+        $nonce = bin2hex(random_bytes(32));
         $this->cache->put($this->key($provider, $state), [
             'redirect' => $redirect,
-            'nonce' => bin2hex(random_bytes(32)),
+            'nonce' => $nonce,
         ], self::TTL_SECONDS);
 
-        return $state;
+        return ['state' => $state, 'nonce' => $nonce];
     }
 
-    public function consume(string $provider, string $state): ?string
+    public function issue(string $provider, string $redirect): string
+    {
+        return $this->issueWithNonce($provider, $redirect)['state'];
+    }
+
+    /** @return array{redirect: string, nonce: string}|null */
+    public function consumePayload(string $provider, string $state): ?array
     {
         $provider = strtolower(trim($provider));
         if (! in_array($provider, self::PROVIDERS, true) || ! preg_match('/^[a-f0-9]{64}$/', $state)) {
@@ -47,9 +54,16 @@ final class OAuthStateStore
 
         $payload = $this->cache->pull($this->key($provider, $state));
 
-        return is_array($payload) && is_string($payload['redirect'] ?? null)
-            ? $payload['redirect']
+        return is_array($payload)
+            && is_string($payload['redirect'] ?? null)
+            && is_string($payload['nonce'] ?? null)
+            ? ['redirect' => $payload['redirect'], 'nonce' => $payload['nonce']]
             : null;
+    }
+
+    public function consume(string $provider, string $state): ?string
+    {
+        return $this->consumePayload($provider, $state)['redirect'] ?? null;
     }
 
     private function key(string $provider, string $state): string

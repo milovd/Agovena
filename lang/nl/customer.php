@@ -21,6 +21,8 @@ return [
         'name' => 'Naam',
         'remember' => 'Onthoud mij',
         'sign_in' => 'Inloggen',
+        'oauth_heading' => 'Of ga verder met',
+        'continue_with' => 'Doorgaan met :provider',
         'create_account' => 'Account aanmaken',
         'send_reset_link' => 'Stuur resetlink',
         'reset_password' => 'Wachtwoord resetten',
@@ -169,6 +171,17 @@ return [
         ],
     ],
 
+    'referrals' => [
+        'title' => 'Verwijzingen',
+        'lede' => 'Maak een referralcode aan en bekijk beloningen die aan jouw code zijn gekoppeld.',
+        'create_heading' => 'Code aanmaken',
+        'codes_heading' => 'Jouw codes',
+        'code' => 'Referralcode',
+        'create' => 'Code aanmaken',
+        'created' => 'Referralcode aangemaakt.',
+        'uses' => 'gebruik',
+        'empty' => 'Je hebt nog geen referralcode aangemaakt.',
+    ],
     'profile' => [
         'heading' => 'Profiel',
         'lede' => 'Werk je naam, e-mail, wachtwoord en adressen bij.',

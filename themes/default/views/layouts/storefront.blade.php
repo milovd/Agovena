@@ -5,6 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? __('storefront.shop') }} | {{ $siteName ?? __('storefront.shop') }}</title>
+    @php
+        $seoTitle = trim((string) ($title ?? __('storefront.shop')));
+        $seoSiteName = trim((string) ($siteName ?? config('app.name', 'Agovena')));
+        $seoDescription = trim((string) ($metaDescription ?? __('storefront.meta_description')));
+        $seoPrivateSurface = request()->is(
+            'admin', 'admin/*', 'account', 'account/*', 'cart', 'checkout', 'checkout/*',
+            'login', 'register', 'password/*', 'two-factor/*',
+        );
+        $seoRobots = $seoPrivateSurface ? 'noindex, nofollow' : 'index, follow';
+        $seoPath = request()->getPathInfo();
+        $seoBaseUrl = rtrim((string) config('app.url', request()->getSchemeAndHttpHost()), '/');
+        $seoCanonical = $seoPath === '/' || $seoPath === ''
+            ? $seoBaseUrl
+            : $seoBaseUrl.'/'.ltrim($seoPath, '/');
+        $seoStructuredData = [
+            '@context' => 'https://schema.org',
+            '@type' => 'WebSite',
+            'name' => $seoSiteName,
+            'url' => $seoCanonical,
+        ];
+    @endphp
+    <meta name="description" content="{{ $seoDescription }}">
+    <meta name="robots" content="{{ $seoRobots }}">
+    @if (! $seoPrivateSurface)
+        <link rel="canonical" href="{{ $seoCanonical }}">
+    @endif
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ $seoTitle }} | {{ $seoSiteName }}">
+    <meta property="og:description" content="{{ $seoDescription }}">
+    <meta property="og:url" content="{{ $seoCanonical }}">
+    <meta property="og:site_name" content="{{ $seoSiteName }}">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="{{ $seoTitle }} | {{ $seoSiteName }}">
+    <meta name="twitter:description" content="{{ $seoDescription }}">
+    <script type="application/ld+json">@json($seoStructuredData)</script>
     <script>
         (function () {
             try {
@@ -124,6 +159,10 @@
     </main>
 
     @include('theme::partials.footer', ['themeConfig' => $config])
+
+    @if (! request()->cookie(\App\Agovena\Privacy\RecordCookieConsent::COOKIE_NAME))
+        @include('theme::partials.cookie-consent')
+    @endif
 
     @livewireScripts
     @stack('scripts')

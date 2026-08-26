@@ -156,6 +156,9 @@ final class Index extends Component
         $delivery->update([
             'status' => 'queued',
             'last_error' => null,
+            'failure_code' => null,
+            'failed_at' => null,
+            'dead_lettered_at' => null,
             'next_attempt_at' => null,
         ]);
         DeliverWebhook::dispatch($delivery->id);

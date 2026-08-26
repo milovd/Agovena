@@ -82,6 +82,7 @@ use App\Listeners\SendOrderPlacedNotification;
 use App\Listeners\SendPaymentRecordedNotification;
 use App\Listeners\SendPlanChangeAppliedNotification;
 use App\Listeners\SendRefundProcessedNotification;
+use App\Listeners\SettleReferralRewardWhenOrderPaid;
 use App\Models\Customer;
 use App\Models\UserNotification;
 use Illuminate\Auth\Events\Registered;
@@ -167,6 +168,7 @@ class AgovenaServiceProvider extends ServiceProvider
         Event::listen(OrderCreated::class, IssueInvoiceWhenOrderCreated::class);
         Event::listen(OrderPaid::class, IssueInvoiceWhenOrderPaid::class);
         Event::listen(OrderPaid::class, ApplyPlanChangeWhenOrderPaid::class);
+        Event::listen(OrderPaid::class, SettleReferralRewardWhenOrderPaid::class);
         Event::listen(OrderPaid::class, CaptureAccountBalanceWhenOrderPaid::class);
         Event::listen(OrderCancelled::class, ReleaseAccountBalanceWhenOrderCancelled::class);
         Event::listen(PaymentRecorded::class, SendPaymentRecordedNotification::class);
@@ -506,6 +508,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'referrals',
+            label: 'admin.nav.referrals',
+            group: 'admin.nav_groups.sales',
+            href: '/admin/referrals',
+            icon: 'gift',
+            sort: 58,
+            permission: 'referrals.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'webhooks',
             label: 'admin.nav.webhooks',
             group: 'admin.nav_groups.operations',
@@ -633,6 +645,8 @@ class AgovenaServiceProvider extends ServiceProvider
             'audit.view',
             'webhooks.view',
             'webhooks.manage',
+            'referrals.view',
+            'referrals.manage',
             'settings.view',
             'settings.update',
             'currencies.view',
@@ -700,6 +714,33 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'store',
         ));
 
+        $admin->settingsGroup(new SettingsGroup(
+            id: 'auth',
+            label: 'admin.settings.groups.auth',
+            permission: 'settings.view',
+            sort: 28,
+            description: 'admin.settings.group_help.auth',
+            icon: 'lock',
+        ));
+
+        $admin->settingsField(new SettingsField(
+            group: 'auth',
+            key: 'oauth_google_enabled',
+            label: 'admin.settings.fields.oauth_google_enabled',
+            type: 'boolean',
+            default: (bool) config('services.oauth.google.enabled', false),
+            help: 'admin.settings.field_help.oauth_google_enabled',
+            sort: 10,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'auth',
+            key: 'oauth_discord_enabled',
+            label: 'admin.settings.fields.oauth_discord_enabled',
+            type: 'boolean',
+            default: (bool) config('services.oauth.discord.enabled', false),
+            help: 'admin.settings.field_help.oauth_discord_enabled',
+            sort: 20,
+        ));
         $admin->settingsField(new SettingsField(
             group: 'general',
             key: 'site_name',

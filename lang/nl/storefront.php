@@ -5,6 +5,13 @@ declare(strict_types=1);
 return [
     'skip_to_content' => 'Ga naar inhoud',
     'shop' => 'Shop',
+    'meta_description' => 'Self-hosted commerce voor producten, diensten, domeinen en abonnementen.',
+    'cookie_consent' => [
+        'title' => 'Cookievoorkeuren',
+        'description' => 'Noodzakelijke cookies houden deze winkel werkend. Je kunt optionele cookies toestaan of alleen noodzakelijke cookies gebruiken.',
+        'necessary_only' => 'Alleen noodzakelijk',
+        'accept_all' => 'Alles accepteren',
+    ],
     'benefits_aria' => 'Winkelvoordelen',
     'primary_nav' => 'Hoofdnavigatie',
     'mobile_nav' => 'Mobiel',

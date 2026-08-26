@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Customer\Auth;
 
+use App\Agovena\Auth\OAuth\OAuthProviderAvailability;
+use App\Agovena\Auth\OAuth\OAuthProviderRegistry;
 use App\Agovena\Auth\TotpTwoFactor;
 use App\Agovena\Customer\CustomerRegistration;
 use App\Agovena\Theme\ThemeManager;
@@ -87,13 +89,28 @@ final class Login extends Component
         $this->redirect($this->destination($user), navigate: true);
     }
 
-    public function render(ThemeManager $themes, CustomerRegistration $registration)
-    {
+    public function render(
+        ThemeManager $themes,
+        CustomerRegistration $registration,
+        OAuthProviderRegistry $providers,
+        OAuthProviderAvailability $availability,
+    ) {
         $theme = $themes->active();
+        $oauthProviders = array_values(array_filter(
+            $providers->all(),
+            static function ($provider) use ($availability): bool {
+                $config = config('services.oauth.'.$provider->id, []);
+
+                return $availability->enabled($provider)
+                    && is_array($config)
+                    && (string) ($config['client_id'] ?? '') !== '';
+            },
+        ));
 
         return view($theme->view('account.auth.login'), [
             'theme' => $theme,
             'registrationEnabled' => $registration->allowsRegistration(),
+            'oauthProviders' => $oauthProviders,
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.auth.login_title'),
             'theme' => $theme,

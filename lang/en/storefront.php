@@ -5,6 +5,13 @@ declare(strict_types=1);
 return [
     'skip_to_content' => 'Skip to content',
     'shop' => 'Shop',
+    'meta_description' => 'Self-hosted commerce for products, services, domains, and subscriptions.',
+    'cookie_consent' => [
+        'title' => 'Cookie preferences',
+        'description' => 'Necessary cookies keep this shop working. You can allow optional cookies or continue with necessary cookies only.',
+        'necessary_only' => 'Necessary only',
+        'accept_all' => 'Accept all',
+    ],
     'benefits_aria' => 'Store benefits',
     'primary_nav' => 'Primary',
     'mobile_nav' => 'Mobile',

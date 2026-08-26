@@ -64,6 +64,20 @@ test('rate limits and maintenance use branded pages', function () {
         ->assertDontSee('SQLSTATE', false);
 });
 
+test('unsupported methods and HTTP version errors use branded pages', function () {
+    config(['app.debug' => false]);
+
+    Route::middleware('web')->get('/__forced-405', fn () => abort(405));
+    Route::middleware('web')->get('/__forced-505', fn () => abort(505));
+
+    $this->get('/__forced-405')
+        ->assertStatus(405)
+        ->assertSee(__('errors.405.heading'), false);
+
+    $this->get('/__forced-505')
+        ->assertStatus(505)
+        ->assertSee(__('errors.505.heading'), false);
+});
 test('doctor fails when debug is enabled in production', function () {
     config([
         'app.env' => 'production',

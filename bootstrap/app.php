@@ -2,6 +2,7 @@
 
 use App\Agovena\Api\ApiError;
 use App\Agovena\Installation\ApplicationSchemaStatus;
+use App\Http\Middleware\EnforceAbusePolicy;
 use App\Http\Middleware\EnsureAgovenaInstalled;
 use App\Http\Middleware\EnsureCanAccessAdmin;
 use App\Http\Middleware\EnsureCustomerEmailIsVerified;
@@ -48,6 +49,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('agovena:prune-logs')
             ->daily()
             ->withoutOverlapping(120);
+        $schedule->command('agovena:backup')
+            ->dailyAt('02:30')
+            ->withoutOverlapping(120);
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
@@ -75,6 +79,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'customer.verified' => EnsureCustomerEmailIsVerified::class,
             'admin.access' => EnsureCanAccessAdmin::class,
             'admin.2fa' => EnsurePrivilegedTwoFactor::class,
+            'abuse' => EnforceAbusePolicy::class,
         ]);
         $middleware->validateCsrfTokens(except: [
             'webhooks/*',

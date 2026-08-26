@@ -1,10 +1,12 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditExportController;
+use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
 use App\Http\Controllers\Customer\PushSubscriptionController;
 use App\Http\Controllers\InvoiceDocumentController;
+use App\Http\Controllers\Privacy\CookieConsentController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Storefront\PreferencesController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
@@ -40,6 +42,7 @@ use App\Livewire\Admin\PlanChanges\Index as PlanChangesIndex;
 use App\Livewire\Admin\Products\Create as ProductsCreate;
 use App\Livewire\Admin\Products\Edit as ProductsEdit;
 use App\Livewire\Admin\Products\Index as ProductsIndex;
+use App\Livewire\Admin\Referrals\Index as AdminReferralsIndex;
 use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Livewire\Admin\Settings\EditGroup as SettingsEditGroup;
 use App\Livewire\Admin\Settings\Hub as SettingsHub;
@@ -74,6 +77,7 @@ use App\Livewire\Customer\Auth\Logout as CustomerLogout;
 use App\Livewire\Customer\Auth\Register as CustomerRegister;
 use App\Livewire\Customer\Auth\ResetPassword as CustomerResetPassword;
 use App\Livewire\Customer\Auth\VerifyEmail as CustomerVerifyEmail;
+use App\Livewire\Customer\Referrals\Index as CustomerReferralsIndex;
 use App\Livewire\Installer\Wizard as InstallerWizard;
 use App\Livewire\Storefront\CartPage;
 use App\Livewire\Storefront\CatalogIndex;
@@ -89,6 +93,8 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(RedirectIfInstalled::class)->group(function (): void {
     Route::get('/install', InstallerWizard::class)->name('install');
 });
+
+Route::post('/preferences/consent', CookieConsentController::class)->name('privacy.consent');
 
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
@@ -109,14 +115,25 @@ Route::get('/products/{slug}', ProductShow::class)->name('storefront.product');
 Route::get('/categories', StorefrontCategoriesIndex::class)->name('storefront.categories');
 Route::get('/categories/{slug}', CategoryShow::class)->name('storefront.category');
 Route::get('/cart', CartPage::class)->name('storefront.cart');
-Route::get('/checkout', CheckoutPage::class)->name('storefront.checkout');
+Route::get('/checkout', CheckoutPage::class)
+    ->middleware(['abuse', 'throttle:checkout'])
+    ->name('storefront.checkout');
 Route::get('/orders/{order}/confirmation', OrderConfirmation::class)->name('storefront.order.confirmation');
 Route::get('/orders/{order}/payment', PaymentStatusPage::class)->name('storefront.payment.status');
 
 Route::post('/webhooks/payments/{gateway}', PaymentWebhookController::class)
     ->name('webhooks.payments');
 
-Route::middleware('guest')->group(function (): void {
+Route::get('/oauth/{provider}/redirect', [OAuthController::class, 'redirect'])
+    ->middleware(['abuse', 'throttle:oauth'])
+    ->whereIn('provider', ['google', 'discord'])
+    ->name('oauth.redirect');
+Route::get('/oauth/{provider}/callback', [OAuthController::class, 'callback'])
+    ->middleware(['abuse', 'throttle:oauth'])
+    ->whereIn('provider', ['google', 'discord'])
+    ->name('oauth.callback');
+
+Route::middleware(['guest', 'abuse'])->group(function (): void {
     Route::get('/login', CustomerLogin::class)->name('login');
     Route::get('/login/two-factor', TwoFactorChallenge::class)->name('two-factor.challenge');
     Route::get('/register', CustomerRegister::class)->name('register');
@@ -132,7 +149,7 @@ Route::middleware('guest')->group(function (): void {
     Route::redirect('/admin/login', '/login')->name('admin.login');
 });
 
-Route::middleware('auth')->prefix('account')->name('customer.')->group(function (): void {
+Route::middleware(['auth', 'abuse'])->prefix('account')->name('customer.')->group(function (): void {
     Route::get('/logout', CustomerLogout::class)->name('logout');
     Route::get('/verify-email', CustomerVerifyEmail::class)->name('verification.notice');
     Route::get('/verify-email/{id}/{hash}', EmailVerificationController::class)
@@ -158,6 +175,7 @@ Route::middleware('auth')->prefix('account')->name('customer.')->group(function 
         Route::get('/tickets/{ticket}', CustomerTicketShow::class)->name('tickets.show');
         Route::get('/ticket-attachments/{attachment}', TicketAttachmentDownloadController::class)->name('ticket-attachments.download');
         Route::get('/credits', CustomerCredits::class)->name('credits');
+        Route::get('/referrals', CustomerReferralsIndex::class)->name('referrals');
         Route::get('/notifications', CustomerNotifications::class)->name('notifications');
         Route::get('/settings/notifications', CustomerNotificationSettings::class)->name('notification-settings');
         Route::get('/notifications/push-config', [PushSubscriptionController::class, 'config'])->name('notifications.push-config');
@@ -166,7 +184,7 @@ Route::middleware('auth')->prefix('account')->name('customer.')->group(function 
     });
 });
 
-Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access', 'admin.2fa'])->prefix('admin')->name('admin.')->group(function (): void {
+Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access', 'admin.2fa'])->prefix('admin')->name('admin.')->group(function (): void {
     Route::get('/', Dashboard::class)->name('dashboard');
     Route::get('/products', ProductsIndex::class)->name('products.index');
     Route::get('/products/create', ProductsCreate::class)->name('products.create');
@@ -201,6 +219,7 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access', 'admin.2
     Route::get('/email-log', NotificationsEmailLog::class)->name('email-log');
     Route::get('/failed-jobs', SystemFailedJobs::class)->name('failed-jobs');
     Route::get('/webhooks', WebhooksIndex::class)->name('webhooks.index');
+    Route::get('/referrals', AdminReferralsIndex::class)->name('referrals.index');
     Route::get('/cron-statistics', SystemCronStatistics::class)->name('cron-statistics');
     Route::get('/updates', SystemUpdates::class)->name('updates');
     Route::get('/api-tokens', SystemApiTokens::class)->name('api-tokens');

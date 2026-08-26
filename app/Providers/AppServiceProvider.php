@@ -48,5 +48,13 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('api-sensitive', function (Request $request) {
             return Limit::perMinute(10)->by($request->user()?->id ?: $request->ip());
         });
+
+        RateLimiter::for('checkout', function (Request $request) {
+            return Limit::perMinute(10)->by((string) ($request->user()?->id ?: $request->ip()));
+        });
+
+        RateLimiter::for('oauth', function (Request $request) {
+            return Limit::perMinute(10)->by((string) $request->ip());
+        });
     }
 }

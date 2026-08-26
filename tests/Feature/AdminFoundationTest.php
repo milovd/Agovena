@@ -43,6 +43,7 @@ test('settings hub lists registered groups from the admin registrar', function (
         ->assertSee('General', false)
         ->assertSee('Branding', false)
         ->assertSee('Store', false)
+        ->assertSee('Auth', false)
         ->assertSee('ag-product-tabs', false)
         ->assertSee(__('admin.settings.fields.site_name'), false);
 });

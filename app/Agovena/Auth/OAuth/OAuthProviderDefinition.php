@@ -10,6 +10,11 @@ final readonly class OAuthProviderDefinition
     public function __construct(
         public string $id,
         public string $authorizationEndpoint,
+        public string $tokenEndpoint,
+        public string $userInfoEndpoint,
         public array $scopes,
+        public bool $oidc = false,
+        public string $issuer = '',
+        public string $jwksEndpoint = '',
     ) {}
 }

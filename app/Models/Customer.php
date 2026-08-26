@@ -71,6 +71,16 @@ class Customer extends Model
         return $this->hasMany(CustomerAddress::class);
     }
 
+    public function referralCodes(): HasMany
+    {
+        return $this->hasMany(ReferralCode::class);
+    }
+
+    public function referralAttributions(): HasMany
+    {
+        return $this->hasMany(ReferralAttribution::class, 'referrer_customer_id');
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

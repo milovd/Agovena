@@ -74,6 +74,7 @@ return [
         'updates' => 'Updates',
         'notifications' => 'Notification templates',
         'webhooks' => 'Webhooks',
+        'referrals' => 'Referrals',
         'email_log' => 'Email log',
         'failed_jobs' => 'Failed jobs',
         'cron_statistics' => 'Cron statistics',
@@ -166,6 +167,10 @@ return [
         'webhooks' => [
             'view' => 'View webhooks',
             'manage' => 'Manage webhooks',
+        ],
+        'referrals' => [
+            'view' => 'View referrals',
+            'manage' => 'Review referral rewards',
         ],
         'settings' => [
             'view' => 'View settings',
@@ -318,6 +323,7 @@ return [
             'branding' => 'Branding',
             'mail' => 'Mail',
             'store' => 'Store',
+            'auth' => 'Auth',
         ],
 
         'group_help' => [
@@ -325,6 +331,7 @@ return [
             'branding' => 'Logo and favicon used across Admin and storefront.',
             'mail' => 'From name and address for store emails. SMTP credentials stay in the server environment, not in the database.',
             'store' => 'Commerce defaults. The Google Places key can also be set via GOOGLE_PLACES_API_KEY in the environment.',
+            'auth' => 'OAuth provider switches. Client IDs and secrets stay in the environment; secrets are never stored here.',
         ],
 
         'fields' => [
@@ -351,6 +358,8 @@ return [
             'tax_enabled' => 'Enable tax',
             'automatic_tax_rates' => 'Automatic tax rates',
             'prices_include_tax' => 'Prices include tax',
+            'oauth_google_enabled' => 'Enable Google OAuth',
+            'oauth_discord_enabled' => 'Enable Discord OAuth',
             'from_name' => 'From name',
             'from_address' => 'From address',
             'reply_to' => 'Reply-to address',
@@ -1769,6 +1778,19 @@ return [
         'attachment' => 'Attachment',
         'attachments_hint' => 'Images or PDF only. Max :max files, :mb MB each. Stored privately and force-downloaded.',
     ],
+    'referrals' => [
+        'eyebrow' => 'Sales',
+        'title' => 'Referrals',
+        'lede' => 'Review referral attribution and rewards before crediting customer balances.',
+        'code' => 'Code',
+        'order' => 'Order',
+        'status' => 'Status',
+        'actions' => 'Actions',
+        'approve' => 'Approve reward',
+        'reject' => 'Reject reward',
+        'no_action' => 'No action',
+        'empty' => 'No referral attributions found.',
+    ],
     'webhooks' => [
         'title' => 'Outbound webhooks',
         'lede' => 'Manage signed event deliveries to HTTPS endpoints and track retries without exposing secrets.',
@@ -2055,18 +2077,23 @@ return [
             'provisioning_synced' => 'Provisioning syncs',
             'unpaid_orders_cancelled' => 'Unpaid orders cancelled',
             'logs_pruned' => 'Log rows pruned',
+            'backups_created' => 'Backups created',
+            'backups_pruned' => 'Backups pruned',
         ],
         'metric_descriptions' => [
             'subscription_renewals' => 'Renewal orders created on :date.',
             'provisioning_synced' => 'Provisioning instances polled on :date.',
             'unpaid_orders_cancelled' => 'Stale unpaid orders cancelled on :date.',
             'logs_pruned' => 'Operational log rows removed on :date.',
+            'backups_created' => 'Encrypted database backups created on :date.',
+            'backups_pruned' => 'Expired backup artifacts removed on :date.',
         ],
         'tasks' => [
             'subscription-renewals' => 'Process subscription renewals',
             'sync-provisioning' => 'Sync provisioning instances',
             'cancel-unpaid-orders' => 'Cancel stale unpaid orders',
             'prune-logs' => 'Prune operational logs',
+            'backup' => 'Create encrypted database backup',
         ],
     ],
     'plan_changes' => [

@@ -72,6 +72,7 @@ return [
                 'events' => ['kind' => 'module', 'path' => 'modules/events'],
                 'domains' => ['kind' => 'module', 'path' => 'modules/domains'],
                 'cloudflare-registrar' => ['kind' => 'extension', 'path' => 'extensions/domains/cloudflare-registrar'],
+                'namecheap-registrar' => ['kind' => 'extension', 'path' => 'extensions/domains/namecheap-registrar'],
                 'mollie' => ['kind' => 'extension', 'path' => 'extensions/payments/mollie'],
                 'stripe' => ['kind' => 'extension', 'path' => 'extensions/payments/stripe'],
                 'paypal' => ['kind' => 'extension', 'path' => 'extensions/payments/paypal'],
@@ -122,9 +123,18 @@ return [
         ),
     ],
 
+    'backups' => [
+        'disk' => env('AGOVENA_BACKUP_DISK', 'local'),
+        'directory' => env('AGOVENA_BACKUP_DIRECTORY', 'backups'),
+        'retention_days' => (int) env('AGOVENA_BACKUP_RETENTION_DAYS', 30),
+        'retention_count' => (int) env('AGOVENA_BACKUP_RETENTION_COUNT', 10),
+        'mysql_dump_binary' => env('AGOVENA_MYSQLDUMP_BINARY', 'mysqldump'),
+    ],
+
     'retention' => [
         'email_logs_days' => (int) env('AGOVENA_EMAIL_LOG_RETENTION', 90),
         'audit_logs_days' => (int) env('AGOVENA_AUDIT_LOG_RETENTION', 365),
         'webhook_events_days' => (int) env('AGOVENA_WEBHOOK_EVENT_RETENTION', 90),
+        'consent_events_days' => (int) env('AGOVENA_CONSENT_EVENT_RETENTION', 365),
     ],
 ];

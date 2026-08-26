@@ -15,6 +15,19 @@ final class ReferralAttribution extends Model
         'referrer_customer_id',
         'referred_customer_id',
         'code_snapshot',
+        'status',
+        'reward_amount',
+        'reward_currency',
+        'fraud_review_required',
+        'reviewed_at',
+        'credited_at',
+    ];
+
+    protected $casts = [
+        'reward_amount' => 'integer',
+        'fraud_review_required' => 'boolean',
+        'reviewed_at' => 'datetime',
+        'credited_at' => 'datetime',
     ];
 
     public function order(): BelongsTo
@@ -30,5 +43,10 @@ final class ReferralAttribution extends Model
     public function referrer(): BelongsTo
     {
         return $this->belongsTo(Customer::class, 'referrer_customer_id');
+    }
+
+    public function referred(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class, 'referred_customer_id');
     }
 }

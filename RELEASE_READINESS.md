@@ -39,9 +39,13 @@ This file is the working release matrix for the first public Agovena release. It
 
 ### Domain sales
 
-`partial`: the generic domains module now provides the product capability, order-paid idempotent records, lifecycle statuses, provider registry, admin list and customer-owned list.
+`partial`: the generic `domains` Module provides the product capability, order-paid idempotent records, lifecycle statuses, registrar registry, Admin list and customer-owned list. The `hosting` preset enables `domains` together with `provisioning` and `subscriptions`; it does not install a registrar provider or activate provider credentials.
 
-The Cloudflare Registrar extension is registered outside provisioning and is `mock-tested-only` for the official beta scope:
+The Cloudflare Registrar extension is registered outside the `domains` Module and depends on it. It supplies provider-specific account/token settings, availability and registration API calls, and explicit capability metadata. Disabling the extension preserves generic domain records but removes Cloudflare actions; disabling the module removes the domain surface while preserving its data.
+
+The optional package catalog also contains a separate `namecheap-registrar` extension. It uses the same registrar contract and currently exposes only availability checks, registrations and renewals. Its XML transport and response mapping are automated-test covered, but no live Namecheap sandbox flow has been run here. It does not claim DNS, nameserver, transfer or contact-update support.
+
+Domain records snapshot `registrar_key` and `dns_provider_key` independently. This allows a supported combination such as Namecheap for registration and Cloudflare for DNS without coupling registrar billing, renewals or transfers to DNS hosting. The `domains` module now exposes a separate DNS-provider contract and registry; a DNS provider extension is still required before DNS actions can be called.
 
 - availability and price checks via `domain-check`;
 - new registrations via `registrations`;

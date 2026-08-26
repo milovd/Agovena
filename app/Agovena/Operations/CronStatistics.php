@@ -97,6 +97,8 @@ final class CronStatistics
             'provisioning_synced' => 'var(--ag-color-chart-2)',
             'unpaid_orders_cancelled' => 'var(--ag-color-chart-4)',
             'logs_pruned' => 'var(--ag-color-chart-3)',
+            'backups_created' => 'var(--ag-color-chart-1)',
+            'backups_pruned' => 'var(--ag-color-chart-2)',
         ];
 
         $datasets = [];

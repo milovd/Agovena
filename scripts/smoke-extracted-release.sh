@@ -104,6 +104,7 @@ run_artisan "agovena:install" agovena:install --no-interaction \
   --currency=EUR \
   --theme=default \
   --presets=physical,digital
+run_artisan "agovena:backup" agovena:backup --no-interaction
 
 bash "$APP/scripts/smoke-backup-restore.sh" "$APP"
 

@@ -1,6 +1,18 @@
 <?php
 
 return [
+    'oauth' => [
+        'google' => [
+            'enabled' => (bool) env('AGOVENA_OAUTH_GOOGLE_ENABLED', false),
+            'client_id' => env('AGOVENA_OAUTH_GOOGLE_CLIENT_ID'),
+            'client_secret' => env('AGOVENA_OAUTH_GOOGLE_CLIENT_SECRET'),
+        ],
+        'discord' => [
+            'enabled' => (bool) env('AGOVENA_OAUTH_DISCORD_ENABLED', false),
+            'client_id' => env('AGOVENA_OAUTH_DISCORD_CLIENT_ID'),
+            'client_secret' => env('AGOVENA_OAUTH_DISCORD_CLIENT_SECRET'),
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------

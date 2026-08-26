@@ -22,6 +22,17 @@
         <button class="store-btn store-btn--primary store-btn--block" type="submit">{{ __('customer.auth.sign_in') }}</button>
     </form>
 
+    @if ($oauthProviders !== [])
+        <div class="store-auth__oauth" aria-label="{{ __('customer.auth.oauth_heading') }}">
+            <p class="store-auth__oauth-heading">{{ __('customer.auth.oauth_heading') }}</p>
+            @foreach ($oauthProviders as $oauthProvider)
+                <a class="store-btn store-btn--outline store-btn--block" href="{{ route('oauth.redirect', ['provider' => $oauthProvider->id]) }}">
+                    {{ __('customer.auth.continue_with', ['provider' => ucfirst($oauthProvider->id)]) }}
+                </a>
+            @endforeach
+        </div>
+    @endif
+
     <p class="store-auth__meta">
         <a class="store-auth__link" href="{{ route('password.request') }}">{{ __('customer.auth.forgot_link') }}</a>
     </p>

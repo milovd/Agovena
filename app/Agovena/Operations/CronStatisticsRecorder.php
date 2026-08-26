@@ -17,6 +17,7 @@ final class CronStatisticsRecorder
         'sync-provisioning',
         'cancel-unpaid-orders',
         'prune-logs',
+        'backup',
     ];
 
     /** @var list<string> */
@@ -25,6 +26,8 @@ final class CronStatisticsRecorder
         'provisioning_synced',
         'unpaid_orders_cancelled',
         'logs_pruned',
+        'backups_created',
+        'backups_pruned',
     ];
 
     /**

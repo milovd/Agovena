@@ -42,6 +42,7 @@ final class CsvImportRunner
         $errors = 0;
         $candidates = [];
         $rowErrors = [];
+        $duplicateLines = [];
         $seenExternalIds = [];
         $line = 1;
 
@@ -68,11 +69,18 @@ final class CsvImportRunner
 
             try {
                 $candidate = $adapter->map($row, $line);
+                $candidate = new ImportCandidate(
+                    entity: $candidate->entity,
+                    externalId: $candidate->externalId,
+                    payload: $candidate->payload,
+                    line: $line,
+                );
                 if ($candidate->externalId === '') {
                     throw new InvalidArgumentException('An external ID is required.');
                 }
                 if (isset($seenExternalIds[$candidate->externalId])) {
                     $duplicates++;
+                    $duplicateLines[$line] = 'Duplicate external identifier.';
 
                     continue;
                 }
@@ -94,6 +102,7 @@ final class CsvImportRunner
             errors: $errors,
             candidates: $candidates,
             rowErrors: $rowErrors,
+            duplicateLines: $duplicateLines,
         );
     }
 }

@@ -27,6 +27,12 @@ function moduleBoundExtensions(): array
             'registry' => DomainRegistrarRegistry::class,
             'registryKey' => 'cloudflare-registrar',
         ],
+        'namecheap-registrar' => [
+            'extension' => 'namecheap-registrar',
+            'module' => 'domains',
+            'registry' => DomainRegistrarRegistry::class,
+            'registryKey' => 'namecheap-registrar',
+        ],
         'cpanel' => [
             'extension' => 'cpanel',
             'module' => 'provisioning',
