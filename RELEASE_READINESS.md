@@ -16,7 +16,7 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Last pushed Core commit: `fccc56a`.
+- Last pushed Core commit: `0ce56e1`.
 - Last pushed optional-package commit: `b3951b9`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
 - The full application suite has passed: 861 tests and 12,530 assertions. Passing automated tests do not prove external provider or authenticated browser behavior.
@@ -141,12 +141,11 @@ Validated gates:
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
 - CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
+- GitHub Actions full matrix for commit `0ce56e1`: PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed;
 - Pint, PHPStan, Blade cache, Vite build, Composer audit, npm production audit, PHP syntax and diff-check: passed.
 
 Still required before a release tag:
 
-- GitHub Actions CI completion for PHP/browser/MariaDB matrices;
-- MariaDB and multiprocess concurrency jobs (not locally runnable: Docker is unavailable and local credentials are not configured);
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated browser review and human responsive/keyboard review;
 - live external webhook receiver acceptance;
