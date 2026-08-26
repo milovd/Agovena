@@ -3,7 +3,9 @@
 use App\Http\Controllers\Admin\AuditExportController;
 use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
+use App\Http\Controllers\Customer\PushSubscriptionController;
 use App\Http\Controllers\InvoiceDocumentController;
+use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Storefront\PreferencesController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
 use App\Http\Controllers\Support\TicketAttachmentDownloadController;
@@ -13,6 +15,7 @@ use App\Http\Middleware\SyncStaffPermissions;
 use App\Livewire\Admin\Appearance\Customize as AppearanceCustomize;
 use App\Livewire\Admin\Appearance\ThemesIndex as AppearanceThemes;
 use App\Livewire\Admin\Audit\Index as AuditIndex;
+use App\Livewire\Admin\Audit\Show as AuditShow;
 use App\Livewire\Admin\Categories\Index as CategoriesIndex;
 use App\Livewire\Admin\Content\NavigationIndex as ContentNavigation;
 use App\Livewire\Admin\Content\PagesIndex as ContentPages;
@@ -29,7 +32,8 @@ use App\Livewire\Admin\Invoices\Index as InvoicesIndex;
 use App\Livewire\Admin\Invoices\Show as InvoicesShow;
 use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Livewire\Admin\Notifications\EmailLogIndex as NotificationsEmailLog;
-use App\Livewire\Admin\Notifications\Templates as NotificationTemplates;
+use App\Livewire\Admin\Notifications\Index as NotificationTemplatesIndex;
+use App\Livewire\Admin\Notifications\Templates as NotificationTemplatesForm;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\Orders\Show as OrdersShow;
 use App\Livewire\Admin\PlanChanges\Index as PlanChangesIndex;
@@ -47,6 +51,7 @@ use App\Livewire\Admin\Taxes\Index as TaxesIndex;
 use App\Livewire\Admin\Tickets\Index as TicketsIndex;
 use App\Livewire\Admin\Tickets\Show as TicketsShow;
 use App\Livewire\Admin\Users\Index as UsersIndex;
+use App\Livewire\Admin\Webhooks\Index as WebhooksIndex;
 use App\Livewire\Auth\TwoFactorChallenge;
 use App\Livewire\Customer\Account\Addresses as CustomerAddresses;
 use App\Livewire\Customer\Account\CreditNoteShow as CustomerCreditNoteShow;
@@ -54,6 +59,8 @@ use App\Livewire\Customer\Account\Credits as CustomerCredits;
 use App\Livewire\Customer\Account\Dashboard as CustomerDashboard;
 use App\Livewire\Customer\Account\InvoiceShow as CustomerInvoiceShow;
 use App\Livewire\Customer\Account\InvoicesIndex as CustomerInvoicesIndex;
+use App\Livewire\Customer\Account\Notifications as CustomerNotifications;
+use App\Livewire\Customer\Account\NotificationSettings as CustomerNotificationSettings;
 use App\Livewire\Customer\Account\OrderShow as CustomerOrderShow;
 use App\Livewire\Customer\Account\OrdersIndex as CustomerOrdersIndex;
 use App\Livewire\Customer\Account\Profile as CustomerProfile;
@@ -82,6 +89,16 @@ use Illuminate\Support\Facades\Route;
 Route::middleware(RedirectIfInstalled::class)->group(function (): void {
     Route::get('/install', InstallerWizard::class)->name('install');
 });
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
+
+Route::get('/sw.js', static function () {
+    return response((string) file_get_contents(public_path('sw.js')), 200, [
+        'Content-Type' => 'application/javascript',
+        'Cache-Control' => 'no-cache',
+    ]);
+})->name('notifications.service-worker');
 
 Route::get('/', CatalogIndex::class)->name('storefront.home');
 Route::post('/preferences/locale', [PreferencesController::class, 'locale'])->name('storefront.preferences.locale');
@@ -141,6 +158,11 @@ Route::middleware('auth')->prefix('account')->name('customer.')->group(function 
         Route::get('/tickets/{ticket}', CustomerTicketShow::class)->name('tickets.show');
         Route::get('/ticket-attachments/{attachment}', TicketAttachmentDownloadController::class)->name('ticket-attachments.download');
         Route::get('/credits', CustomerCredits::class)->name('credits');
+        Route::get('/notifications', CustomerNotifications::class)->name('notifications');
+        Route::get('/settings/notifications', CustomerNotificationSettings::class)->name('notification-settings');
+        Route::get('/notifications/push-config', [PushSubscriptionController::class, 'config'])->name('notifications.push-config');
+        Route::post('/notifications/push-subscription', [PushSubscriptionController::class, 'store'])->name('notifications.push-subscription');
+        Route::delete('/notifications/push-subscription', [PushSubscriptionController::class, 'destroy']);
     });
 });
 
@@ -175,12 +197,16 @@ Route::middleware(['auth', SyncStaffPermissions::class, 'admin.access', 'admin.2
     Route::get('/ticket-attachments/{attachment}', TicketAttachmentDownloadController::class)->name('ticket-attachments.download');
     Route::get('/audit', AuditIndex::class)->name('audit.index');
     Route::get('/audit/export', AuditExportController::class)->name('audit.export');
+    Route::get('/audit/{auditLog}', AuditShow::class)->name('audit.show');
     Route::get('/email-log', NotificationsEmailLog::class)->name('email-log');
     Route::get('/failed-jobs', SystemFailedJobs::class)->name('failed-jobs');
+    Route::get('/webhooks', WebhooksIndex::class)->name('webhooks.index');
     Route::get('/cron-statistics', SystemCronStatistics::class)->name('cron-statistics');
     Route::get('/updates', SystemUpdates::class)->name('updates');
     Route::get('/api-tokens', SystemApiTokens::class)->name('api-tokens');
-    Route::get('/notifications', NotificationTemplates::class)->name('notifications');
+    Route::get('/notifications', NotificationTemplatesIndex::class)->name('notifications');
+    Route::get('/notifications/create', NotificationTemplatesForm::class)->name('notifications.create');
+    Route::get('/notifications/{key}/edit', NotificationTemplatesForm::class)->name('notifications.edit');
     Route::get('/modules', ModulesIndex::class)->name('modules.index');
     Route::get('/extensions', ExtensionsIndex::class)->name('extensions.index');
     Route::get('/settings', SettingsHub::class)->name('settings.index');

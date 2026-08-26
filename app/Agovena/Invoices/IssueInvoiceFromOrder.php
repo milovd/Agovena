@@ -69,6 +69,8 @@ final class IssueInvoiceFromOrder
                 'discount_amount' => $locked->discount_amount,
                 'credit_amount' => (int) $locked->credit_amount,
                 'tax_amount' => $locked->tax_amount,
+                'payment_fee_amount' => (int) $locked->payment_fee_amount,
+                'payment_fee_snapshot' => $locked->payment_fee_snapshot,
                 'tax_rate_name' => $locked->tax_rate_name,
                 'tax_rate_bps' => $locked->tax_rate_bps,
                 'total_amount' => $locked->total_amount,
@@ -97,6 +99,18 @@ final class IssueInvoiceFromOrder
                     'quantity' => 1,
                     'unit_amount' => (int) $locked->shipping_amount,
                     'line_total_amount' => (int) $locked->shipping_amount,
+                    'currency' => $locked->currency,
+                ]);
+            }
+
+            if ((int) $locked->payment_fee_amount > 0) {
+                InvoiceItem::query()->create([
+                    'invoice_id' => $invoice->id,
+                    'kind' => InvoiceItemKind::PaymentFee,
+                    'label' => __('common.payment_fee'),
+                    'quantity' => 1,
+                    'unit_amount' => (int) $locked->payment_fee_amount,
+                    'line_total_amount' => (int) $locked->payment_fee_amount,
                     'currency' => $locked->currency,
                 ]);
             }

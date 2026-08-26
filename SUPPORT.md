@@ -7,7 +7,7 @@ Statuses:
 - **UNVERIFIED** - not proven; do not assume production readiness
 - **MOCK-TESTED ONLY** - automated mocks/fakes; no live sandbox credentials run yet
 - **SANDBOX-VERIFIED** - real provider test/sandbox API exercised (see `deploy/LIVE_PROVIDER_CHECKS.md`)
-- **PRODUCTION-VERIFIED** - real live/production API exercised (not claimed for v0.1 RC)
+- **PRODUCTION-VERIFIED** - real live/production API exercised (not claimed for v0.0.1)
 
 ## Application runtime
 
@@ -46,6 +46,7 @@ Statuses:
 | PayPal Extension | MOCK-TESTED ONLY |
 | Paddle Extension | MOCK-TESTED ONLY - first-party adapter implemented; sandbox credentials not run |
 | Tebex Extension | MOCK-TESTED ONLY - first-party adapter implemented; sandbox credentials not run |
+| Cloudflare Registrar Extension | MOCK-TESTED ONLY - beta availability and registration contract; no live account/token run |
 | PostNL Extension | MOCK-TESTED ONLY |
 | Pterodactyl Extension | MOCK-TESTED ONLY |
 | Proxmox VE Extension | MOCK-TESTED ONLY |

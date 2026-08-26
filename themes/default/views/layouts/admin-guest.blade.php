@@ -8,9 +8,12 @@
         (function () {
             try {
                 var stored = localStorage.getItem('agovena.theme');
+                var defaultMode = @js(app(\App\Agovena\Theme\ThemeManager::class)->config()->string('appearance.default_color_mode', 'system'));
                 var theme = stored === 'dark' || stored === 'light'
                     ? stored
-                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                    : (defaultMode === 'dark' || defaultMode === 'light'
+                        ? defaultMode
+                        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
                 document.documentElement.setAttribute('data-theme', theme);
             } catch (e) {
                 document.documentElement.setAttribute('data-theme', 'light');

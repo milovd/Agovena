@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
+use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstanceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServicesIndex;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
@@ -200,4 +201,22 @@ test('subscriptions disabled does not break provisioning', function () {
     app(RecordManualPayment::class)->handle($order, $this->createStaff());
 
     expect(ServiceInstance::query()->where('order_id', $order->id)->count())->toBe(1);
+});
+
+test('staff can send a failed service to manual review', function () {
+    enableProvisioningModule();
+    $staff = $this->createStaff(permissions: ['provisioning.view', 'provisioning.manage']);
+    $instance = ServiceInstance::query()->create([
+        'number' => 'SVC-ADMIN-REVIEW',
+        'status' => ServiceInstanceStatus::Failed,
+        'customer_email' => 'admin-review@example.test',
+        'failure_message' => 'Provider response requires review.',
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(InstanceShow::class, ['instance' => $instance])
+        ->call('markManualReview')
+        ->assertSee(__('provisioning::admin.manual_reviewed'));
+
+    expect($instance->fresh()->status)->toBe(ServiceInstanceStatus::ManualReview);
 });

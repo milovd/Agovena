@@ -16,7 +16,7 @@
     $purchasesActive = in_array($section, ['orders', 'invoices', 'returns'], true)
         || $purchasesExtraNav->contains(static fn ($item): bool => $item->section === $section);
     $servicesActive = $servicesNav->contains(static fn ($item): bool => $item->section === $section);
-    $accountActive = in_array($section, ['profile', 'addresses', 'credits', 'subscriptions', 'security'], true)
+    $accountActive = in_array($section, ['profile', 'addresses', 'credits', 'notification-settings', 'subscriptions', 'security'], true)
         || $accountExtraNav->contains(static fn ($item): bool => $item->section === $section);
 @endphp
 
@@ -187,6 +187,15 @@
                     <x-ag.icon name="coins" class="store-account__link-icon" :size="16" />
                     <span>{{ __('customer.account.nav_credits') }}</span>
                 </a>
+                <a
+                    class="store-account__link store-account__link--child {{ $section === 'notification-settings' ? 'is-active' : '' }}"
+                    href="{{ route('customer.notification-settings') }}"
+                    @if ($section === 'notification-settings') aria-current="page" @endif
+                >
+                    <x-ag.icon name="bell" class="store-account__link-icon" :size="16" />
+                    <span>{{ __('customer.notifications.settings_short') }}</span>
+                </a>
+
                 @foreach ($accountExtraNav as $navItem)
                     <a
                         class="store-account__link store-account__link--child {{ $section === $navItem->section ? 'is-active' : '' }}"

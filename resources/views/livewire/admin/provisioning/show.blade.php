@@ -77,6 +77,11 @@
             </header>
             <div class="ag-section__body" style="display:flex; gap:.75rem; flex-wrap:wrap;">
                 @if ($usesLifecycle)
+                    @if ($instance->status->value === 'failed')
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="markManualReview">
+                            {{ __('provisioning::admin.mark_manual_review') }}
+                        </button>
+                    @endif
                     @if (in_array($instance->status->value, ['pending', 'failed'], true))
                         <button type="button" class="ag-btn ag-btn--primary" wire:click="retryProvisioning">
                             {{ __('provisioning::admin.retry_provisioning') }}
@@ -88,7 +93,12 @@
                         </button>
                     @endif
                 @else
-                    @if (in_array($instance->status->value, ['pending', 'failed'], true))
+                    @if ($instance->status->value === 'failed')
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="markManualReview">
+                            {{ __('provisioning::admin.mark_manual_review') }}
+                        </button>
+                    @endif
+                    @if (in_array($instance->status->value, ['pending', 'failed', 'manual_review'], true))
                         <button type="button" class="ag-btn ag-btn--secondary" wire:click="markProvisioning">
                             {{ __('provisioning::admin.mark_provisioning') }}
                         </button>

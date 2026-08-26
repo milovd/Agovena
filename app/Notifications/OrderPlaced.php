@@ -27,7 +27,7 @@ final class OrderPlaced extends Notification implements ShouldQueue
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return app(RendersNotificationMail::class)->isEnabled(self::KEY) ? ['mail'] : [];
+        return app(RendersNotificationMail::class)->isEnabled(self::KEY, $notifiable) ? ['mail'] : [];
     }
 
     public function toMail(object $notifiable): MailMessage

@@ -40,6 +40,8 @@ test('admin shell uses account icon trigger and leave admin action', function ()
         ->getContent();
 
     expect(preg_match_all('/class="admin-sidebar__footer-link admin-sidebar__footer-link--/', $html))->toBe(3);
+    expect($html)->toContain('<div class="admin-sidebar__scroll">');
+    expect(strpos($html, 'admin-sidebar__scroll'))->toBeLessThan(strpos($html, 'admin-sidebar__footer'));
 });
 
 test('dashboard renders real metrics without fake trends', function () {

@@ -517,7 +517,9 @@ a.ag-table__name:focus-visible {
   margin-top: var(--ag-space-4);
   border: 1px solid var(--ag-color-border);
   border-radius: var(--ag-radius-md);
-  background: rgb(255 255 255 / 0.94);
+  color: var(--ag-color-text);
+  background: var(--ag-color-surface);
+  background: color-mix(in srgb, var(--ag-color-surface) 94%, transparent);
   backdrop-filter: blur(8px);
   box-shadow: var(--ag-shadow-sm);
 }

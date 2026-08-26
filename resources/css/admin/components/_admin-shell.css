@@ -97,12 +97,20 @@ body {
   white-space: nowrap;
 }
 
-.admin-nav {
-  flex: 1;
+.admin-sidebar__scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
   min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+.admin-nav {
+  flex: 1 0 auto;
+  min-height: 0;
+  overflow: visible;
   padding-bottom: var(--ag-space-3);
 }
 

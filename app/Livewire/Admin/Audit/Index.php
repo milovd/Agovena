@@ -46,8 +46,6 @@ final class Index extends Component
 
     public string $to = '';
 
-    public ?int $selectedId = null;
-
     public function mount(): void
     {
         $this->authorize('audit.view');
@@ -55,9 +53,8 @@ final class Index extends Component
 
     public function updated(string $property): void
     {
-        if ($property !== 'selectedId') {
-            $this->resetPage();
-        }
+        unset($property);
+        $this->resetPage();
     }
 
     public function resetFilters(): void
@@ -67,17 +64,6 @@ final class Index extends Component
             'subjectType', 'subjectId', 'ip', 'requestId', 'correlationId', 'method', 'from', 'to',
         ]);
         $this->resetPage();
-    }
-
-    public function showDetails(int $id): void
-    {
-        $this->authorize('audit.view');
-        $this->selectedId = AuditLog::query()->whereKey($id)->exists() ? $id : null;
-    }
-
-    public function closeDetails(): void
-    {
-        $this->selectedId = null;
     }
 
     /** @return array<string, string> */
@@ -105,11 +91,9 @@ final class Index extends Component
     public function render(AdminRegistrar $admin, AuditLogQuery $auditQuery)
     {
         $logs = $auditQuery->build($this->exportFilters())->paginate(25);
-        $selected = $this->selectedId === null ? null : AuditLog::query()->find($this->selectedId);
 
         return view('livewire.admin.audit.index', [
             'logs' => $logs,
-            'selected' => $selected,
             'exportUrl' => route('admin.audit.export', $this->exportFilters()),
             'categories' => AuditLog::CATEGORIES,
             'severities' => AuditLog::SEVERITIES,

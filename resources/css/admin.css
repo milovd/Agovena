@@ -14,5 +14,8 @@
 @import './admin/components/_card.css';
 @import './admin/components/_stats.css';
 @import './admin/components/_patterns.css';
+@import './admin/components/_audit-log.css';
+@import './admin/components/_theme-customizer.css';
+@import './admin/components/_notification-templates.css';
 @import './admin/components/_print.css';
 @import './admin/utilities/_a11y.css';

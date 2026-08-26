@@ -359,6 +359,7 @@
                         @php
                             $accountUser = auth()->user();
                             $canOpenAdmin = $accountUser instanceof \App\Models\User && $accountUser->canAccessAdmin();
+                            $notificationUnreadCount = (int) ($notificationUnreadCount ?? 0);
                         @endphp
                         <div
                             class="store-header__account"
@@ -378,10 +379,13 @@
                                 :class="{ 'is-open': open }"
                                 aria-haspopup="menu"
                                 aria-controls="store-account-menu"
-                                aria-label="{{ __('storefront.nav.account_menu') }}"
+                                aria-label="{{ __('storefront.nav.account_menu') }}{{ $notificationUnreadCount > 0 ? ', '.trans_choice('customer.notifications.unread_count', $notificationUnreadCount, ['count' => $notificationUnreadCount]) : '' }}"
                             >
-                                @include('theme::partials.icon', ['name' => 'user', 'size' => 20])
+                                @include('theme::partials.icon', ['name' => 'user', 'size' => 22, 'class' => 'store-icon store-header__account-icon'])
                                 <span class="visually-hidden">{{ __('storefront.nav.account_menu') }}</span>
+                                @if ($notificationUnreadCount > 0)
+                                    <span class="store-header__account-count" aria-hidden="true">{{ $notificationUnreadCount > 99 ? '99+' : $notificationUnreadCount }}</span>
+                                @endif
                             </button>
                             <div
                                 id="store-account-menu"
@@ -403,6 +407,7 @@
                                 @include('theme::partials.account-menu', [
                                     'accountUser' => $accountUser,
                                     'canOpenAdmin' => $canOpenAdmin,
+                                    'notificationUnreadCount' => $notificationUnreadCount,
                                 ])
                             </div>
                         </div>
@@ -658,6 +663,19 @@
                                 <a class="store-drawer__link" href="{{ route('customer.profile') }}" @click="navOpen = false">
                                     <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'user', 'size' => 18])</span>
                                     <span class="store-drawer__link-text">{{ __('storefront.nav.account') }}</span>
+                                    <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
+                                </a>
+                                <a
+                                    class="store-drawer__link store-drawer__link--notifications"
+                                    href="{{ route('customer.notifications') }}"
+                                    @click="navOpen = false"
+                                    aria-label="{{ __('customer.notifications.title') }}{{ ($notificationUnreadCount ?? 0) > 0 ? ', '.trans_choice('customer.notifications.unread_count', $notificationUnreadCount, ['count' => $notificationUnreadCount]) : '' }}"
+                                >
+                                    <span class="store-drawer__link-icon store-drawer__notification-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'bell', 'size' => 18])</span>
+                                    <span class="store-drawer__link-text">{{ __('customer.notifications.title') }}</span>
+                                    @if (($notificationUnreadCount ?? 0) > 0)
+                                        <span class="store-drawer__count" aria-hidden="true">{{ $notificationUnreadCount > 99 ? '99+' : $notificationUnreadCount }}</span>
+                                    @endif
                                     <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
                                 </a>
                                 @if ($drawerCanAdmin)

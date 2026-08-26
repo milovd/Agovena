@@ -56,7 +56,7 @@ final class DeliverWebhook implements ShouldQueue
             return;
         }
 
-        $body = json_encode($delivery->payload, JSON_THROW_ON_ERROR);
+        $body = json_encode(WebhookPayloadFormatter::format($endpoint->destination ?? 'http', $delivery->payload), JSON_THROW_ON_ERROR);
         $timestamp = now()->timestamp;
         $response = null;
 

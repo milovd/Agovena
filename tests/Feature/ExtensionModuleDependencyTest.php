@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Agovena\Modules\Domains\DomainRegistrarRegistry;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -20,11 +21,59 @@ use Illuminate\Validation\ValidationException;
 function moduleBoundExtensions(): array
 {
     return [
+        'cloudflare-registrar' => [
+            'extension' => 'cloudflare-registrar',
+            'module' => 'domains',
+            'registry' => DomainRegistrarRegistry::class,
+            'registryKey' => 'cloudflare-registrar',
+        ],
+        'cpanel' => [
+            'extension' => 'cpanel',
+            'module' => 'provisioning',
+            'registry' => ProvisionerRegistry::class,
+            'registryKey' => 'cpanel',
+        ],
+        'convoy' => [
+            'extension' => 'convoy',
+            'module' => 'provisioning',
+            'registry' => ProvisionerRegistry::class,
+            'registryKey' => 'convoy',
+        ],
+        'directadmin' => [
+            'extension' => 'directadmin',
+            'module' => 'provisioning',
+            'registry' => ProvisionerRegistry::class,
+            'registryKey' => 'directadmin',
+        ],
+        'enhance' => [
+            'extension' => 'enhance',
+            'module' => 'provisioning',
+            'registry' => ProvisionerRegistry::class,
+            'registryKey' => 'enhance',
+        ],
+        'plesk' => [
+            'extension' => 'plesk',
+            'module' => 'provisioning',
+            'registry' => ProvisionerRegistry::class,
+            'registryKey' => 'plesk',
+        ],
         'pterodactyl' => [
             'extension' => 'pterodactyl',
             'module' => 'provisioning',
             'registry' => ProvisionerRegistry::class,
             'registryKey' => 'pterodactyl',
+        ],
+        'virtfusion' => [
+            'extension' => 'virtfusion',
+            'module' => 'provisioning',
+            'registry' => ProvisionerRegistry::class,
+            'registryKey' => 'virtfusion',
+        ],
+        'virtualizor' => [
+            'extension' => 'virtualizor',
+            'module' => 'provisioning',
+            'registry' => ProvisionerRegistry::class,
+            'registryKey' => 'virtualizor',
         ],
         'proxmox' => [
             'extension' => 'proxmox',
@@ -94,10 +143,9 @@ foreach (moduleBoundExtensions() as $label => $case) {
     test("{$label} is not booted after parent module is disabled and runtime rebuilds", function () use ($case): void {
         $modules = app(ModuleManager::class);
         $extensions = app(ExtensionManager::class);
-        $registry = app($case['registry']);
-
         installAndEnableModule($case['module']);
         installAndEnableExtension($case['extension']);
+        $registry = app($case['registry']);
 
         expect($registry->get($case['registryKey']))->not->toBeNull();
 
@@ -112,11 +160,10 @@ foreach (moduleBoundExtensions() as $label => $case) {
     test("{$label} bootEnabled skips manifest when parent module is disabled", function () use ($case): void {
         $modules = app(ModuleManager::class);
         $extensions = app(ExtensionManager::class);
-        $registry = app($case['registry']);
-
         installAndEnableModule($case['module']);
         installAndEnableExtension($case['extension']);
         $modules->disable($case['module']);
+        $registry = app($case['registry']);
 
         $registry->clear();
         $extensions->refresh();

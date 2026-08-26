@@ -30,6 +30,7 @@ use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Extensions\RuntimeRegistry;
 use App\Agovena\Fulfillment\NullOrderFulfillmentPresenter;
 use App\Agovena\Fulfillment\OrderFulfillmentPresenter;
 use App\Agovena\Installation\ApplicationSchemaStatus;
@@ -82,6 +83,7 @@ use App\Listeners\SendPaymentRecordedNotification;
 use App\Listeners\SendPlanChangeAppliedNotification;
 use App\Listeners\SendRefundProcessedNotification;
 use App\Models\Customer;
+use App\Models\UserNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
@@ -105,6 +107,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ComposerRunner::class, ProcessComposerRunner::class);
         $this->app->singleton(MonorepoCheckout::class, GitMonorepoCheckout::class);
         $this->app->singleton(ExtensionSettingsRepository::class);
+        $this->app->singleton(RuntimeRegistry::class);
         $this->app->singleton(PaymentGatewayRegistry::class);
         $this->app->singleton(ProvisionerRegistry::class);
         $this->app->singleton(ShippingCarrierRegistry::class);
@@ -215,6 +218,20 @@ class AgovenaServiceProvider extends ServiceProvider
             }
 
             $view->with('cartCount', $cartCount);
+
+            $notificationUnreadCount = 0;
+            try {
+                if (auth()->check()) {
+                    $notificationUnreadCount = UserNotification::query()
+                        ->where('user_id', auth()->id())
+                        ->whereNull('read_at')
+                        ->count();
+                }
+            } catch (\Throwable) {
+                $notificationUnreadCount = 0;
+            }
+
+            $view->with('notificationUnreadCount', $notificationUnreadCount);
 
             /** @var MenuResolver $menus */
             $menus = $this->app->make(MenuResolver::class);
@@ -489,6 +506,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'webhooks',
+            label: 'admin.nav.webhooks',
+            group: 'admin.nav_groups.operations',
+            href: '/admin/webhooks',
+            icon: 'repeat',
+            sort: 61,
+            permission: 'webhooks.view',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'cron-statistics',
             label: 'admin.nav.cron_statistics',
             group: 'admin.nav_groups.operations',
@@ -604,6 +631,8 @@ class AgovenaServiceProvider extends ServiceProvider
             'tickets.view',
             'tickets.manage',
             'audit.view',
+            'webhooks.view',
+            'webhooks.manage',
             'settings.view',
             'settings.update',
             'currencies.view',

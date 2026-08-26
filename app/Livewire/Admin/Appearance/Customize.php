@@ -10,6 +10,8 @@ use Livewire\Component;
 
 final class Customize extends Component
 {
+    public string $tab = 'design';
+
     /** @var array<string, mixed> */
     public array $values = [];
 
@@ -40,6 +42,11 @@ final class Customize extends Component
         $this->authorize('theme.manage');
         $schema = $themes->schemaFor($themes->active());
         $flat = Arr::dot($this->values);
+
+        $this->validate([
+            'values.appearance.default_color_mode' => ['required', 'in:system,light,dark'],
+            'values.colors.*' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
+        ]);
 
         foreach ($schema->fields as $field) {
             if (in_array($field->key, ['homepage.sections', 'header.usp_items'], true)) {
@@ -149,11 +156,16 @@ final class Customize extends Component
         $theme = $themes->active();
         $schema = $themes->schemaFor($theme);
         $groups = $schema->grouped();
-        unset($groups['homepage']);
 
         return view('livewire.admin.appearance.customize', [
             'theme' => $theme,
             'groups' => $groups,
+            'tabs' => [
+                'design' => __('admin.appearance.customize.tabs.design'),
+                'header' => __('admin.appearance.customize.tabs.header'),
+                'storefront' => __('admin.appearance.customize.tabs.storefront'),
+                'homepage' => __('admin.appearance.customize.tabs.homepage'),
+            ],
         ])->layout('layouts.admin', [
             'title' => __('admin.appearance.customize.title'),
         ]);

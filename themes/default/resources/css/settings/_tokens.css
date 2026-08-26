@@ -1,17 +1,17 @@
 :root {
   /* Agovena Default Theme - cool commerce neutrals + product blue */
-  --theme-color-bg: #f4f6fa;
+  --theme-color-surface: var(--theme-custom-light-surface, #ffffff);
+  --theme-color-bg: var(--theme-custom-light-background, #f4f6fa);
   --theme-color-bg-accent: #eef2f7;
-  --theme-color-surface: #ffffff;
   --theme-color-surface-muted: #eef2f7;
-  --theme-color-ink: #0f172a;
-  --theme-color-text: #0f172a;
+  --theme-color-ink: var(--theme-custom-light-text, #0f172a);
+  --theme-color-text: var(--theme-custom-light-text, #0f172a);
   --theme-color-text-muted: #64748b;
   --theme-color-border: #e2e8f0;
   --theme-color-border-strong: #cbd5e1;
-  --theme-color-accent: #155eef;
-  --theme-color-accent-hover: #1249c7;
-  --theme-color-accent-soft: rgb(21 94 239 / 0.1);
+  --theme-color-accent: var(--theme-custom-light-accent, #155eef);
+  --theme-color-accent-hover: var(--theme-custom-light-accent-hover, #1249c7);
+  --theme-color-accent-soft: color-mix(in srgb, var(--theme-color-accent) 10%, transparent);
   --theme-color-success: #059669;
   --theme-color-danger: #dc2626;
   --theme-color-danger-soft: rgb(220 38 38 / 0.1);
@@ -53,16 +53,18 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --theme-color-bg: #0b1220;
-  --theme-color-bg-accent: #111827;
-  --theme-color-surface: #111827;
-  --theme-color-surface-muted: #1f2937;
-  --theme-color-ink: #f8fafc;
-  --theme-color-text: #f8fafc;
-  --theme-color-text-muted: #94a3b8;
-  --theme-color-border: #243044;
-  --theme-color-border-strong: #334155;
-  --theme-color-accent-soft: rgb(96 165 250 / 0.16);
+  --theme-color-bg: var(--theme-custom-dark-background, #0b1220);
+  --theme-color-bg-accent: var(--theme-custom-dark-surface, #111827);
+  --theme-color-surface: var(--theme-custom-dark-surface, #111827);
+  --theme-color-surface-muted: var(--theme-custom-dark-surface-muted, #1f2937);
+  --theme-color-ink: var(--theme-custom-dark-text, #f8fafc);
+  --theme-color-text: var(--theme-custom-dark-text, #f8fafc);
+  --theme-color-text-muted: var(--theme-custom-dark-text-muted, #94a3b8);
+  --theme-color-border: var(--theme-custom-dark-border, #243044);
+  --theme-color-border-strong: var(--theme-custom-dark-border-strong, #334155);
+  --theme-color-accent: var(--theme-custom-dark-accent, #60a5fa);
+  --theme-color-accent-hover: var(--theme-custom-dark-accent-hover, #93c5fd);
+  --theme-color-accent-soft: color-mix(in srgb, var(--theme-color-accent) 16%, transparent);
   --theme-color-danger-soft: rgb(248 113 113 / 0.14);
   --theme-color-announce: #020617;
   --theme-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);

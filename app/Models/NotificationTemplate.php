@@ -19,13 +19,24 @@ final class NotificationTemplate extends Model
         'key',
         'subject',
         'body',
+        'mail_format',
+        'notification_title',
+        'notification_body',
         'enabled',
+        'mail_enabled',
+        'in_app_enabled',
+        'push_enabled',
+        'user_choice',
     ];
 
     protected function casts(): array
     {
         return [
             'enabled' => 'boolean',
+            'mail_enabled' => 'boolean',
+            'in_app_enabled' => 'boolean',
+            'push_enabled' => 'boolean',
+            'user_choice' => 'boolean',
         ];
     }
 }

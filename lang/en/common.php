@@ -37,6 +37,7 @@ return [
     'subtotal' => 'Subtotal',
     'shipping' => 'Shipping',
     'discount' => 'Discount',
+    'payment_fee' => 'Payment processing fee',
     'credit' => 'Credit',
     'tax' => 'Tax',
     'customer' => 'Customer',

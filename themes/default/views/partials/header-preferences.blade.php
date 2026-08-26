@@ -114,8 +114,13 @@
     <div
         class="store-header__theme"
         x-data="{
-            theme: (localStorage.getItem('agovena.theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')),
-            init() { this.apply(this.theme); },
+            theme: (localStorage.getItem('agovena.theme') || @js(app(\App\Agovena\Theme\ThemeManager::class)->config()->string('appearance.default_color_mode', 'system'))),
+            init() {
+                if (this.theme !== 'dark' && this.theme !== 'light') {
+                    this.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                }
+                this.apply(this.theme);
+            },
             apply(next) {
                 this.theme = next === 'dark' ? 'dark' : 'light';
                 document.documentElement.setAttribute('data-theme', this.theme);

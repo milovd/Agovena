@@ -46,6 +46,7 @@ final class ExtensionManager
         private readonly InvoiceDocumentView $invoiceDocumentView,
         private readonly ModuleManager $modules,
         private readonly PackageMigrationRunner $migrations,
+        private readonly RuntimeRegistry $runtimeRegistries,
     ) {}
 
     public function refresh(): void
@@ -203,6 +204,7 @@ final class ExtensionManager
         $this->paymentGateways->clear();
         $this->provisioners->clear();
         $this->shippingCarriers->clear();
+        $this->runtimeRegistries->clear();
         $this->booted = [];
         $this->contexts = [];
         $this->bootEnabled();

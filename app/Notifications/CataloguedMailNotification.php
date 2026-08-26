@@ -27,7 +27,7 @@ final class CataloguedMailNotification extends Notification implements ShouldQue
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return app(RendersNotificationMail::class)->isEnabled($this->key) ? ['mail'] : [];
+        return app(RendersNotificationMail::class)->isEnabled($this->key, $notifiable) ? ['mail'] : [];
     }
 
     public function toMail(object $notifiable): MailMessage

@@ -12,6 +12,7 @@
     if ($initials === '') {
         $initials = 'A';
     }
+    $notificationUnreadCount = (int) ($notificationUnreadCount ?? 0);
 @endphp
 
 <div class="store-account-menu__identity" role="presentation">
@@ -34,6 +35,21 @@
     <a class="store-account-menu__item" role="menuitem" href="{{ route('customer.profile') }}" @click="open = false">
         @include('theme::partials.icon', ['name' => 'user', 'size' => 18])
         <span>{{ __('storefront.nav.account') }}</span>
+    </a>
+    <a
+        class="store-account-menu__item store-account-menu__item--notifications"
+        role="menuitem"
+        href="{{ route('customer.notifications') }}"
+        @click="open = false"
+        aria-label="{{ __('customer.notifications.title') }}{{ $notificationUnreadCount > 0 ? ', '.trans_choice('customer.notifications.unread_count', $notificationUnreadCount, ['count' => $notificationUnreadCount]) : '' }}"
+    >
+        @include('theme::partials.icon', ['name' => 'bell', 'size' => 18, 'class' => 'store-icon store-account-menu__notification-icon'])
+        <span class="store-account-menu__item-copy">
+            <span class="store-account-menu__item-label">{{ __('customer.notifications.title') }}</span>
+        </span>
+        @if ($notificationUnreadCount > 0)
+            <span class="store-account-menu__notification-count" aria-hidden="true">{{ $notificationUnreadCount > 99 ? '99+' : $notificationUnreadCount }}</span>
+        @endif
     </a>
 </div>
 

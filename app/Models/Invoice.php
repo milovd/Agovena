@@ -21,6 +21,8 @@ use RuntimeException;
  * @property string $number
  * @property InvoiceStatus $status
  * @property int|null $order_id
+ * @property int $payment_fee_amount
+ * @property array<string, int|string|bool>|null $payment_fee_snapshot
  * @property int|null $customer_id
  * @property Carbon|null $paid_at
  * @property Carbon|null $issued_at
@@ -51,6 +53,8 @@ use RuntimeException;
     'discount_amount',
     'credit_amount',
     'tax_amount',
+    'payment_fee_amount',
+    'payment_fee_snapshot',
     'tax_rate_name',
     'tax_rate_bps',
     'total_amount',
@@ -77,6 +81,8 @@ class Invoice extends Model
             'discount_amount' => 'integer',
             'credit_amount' => 'integer',
             'tax_amount' => 'integer',
+            'payment_fee_amount' => 'integer',
+            'payment_fee_snapshot' => 'array',
             'tax_rate_bps' => 'integer',
             'total_amount' => 'integer',
             'custom_properties_snapshot' => 'array',

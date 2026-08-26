@@ -7,6 +7,8 @@ use App\Agovena\Audit\AuditLogger;
 use App\Livewire\Admin\Audit\Index;
 use App\Models\Order;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -70,7 +72,7 @@ test('failed and pending action names receive useful default outcomes', function
         ->and($denied->severity)->toBe('critical');
 });
 
-test('audit UI filters, opens details, and exports redacted data', function (): void {
+test('audit UI uses simple filters and opens a dedicated detail page', function (): void {
     $staff = $this->createStaff();
     $this->actingAs($staff);
 
@@ -83,10 +85,18 @@ test('audit UI filters, opens details, and exports redacted data', function (): 
     Livewire::test(Index::class)
         ->set('category', 'payment')
         ->assertSee('payment.captured')
+        ->assertSee('audit-log__stack', false)
         ->assertDontSee('order.viewed')
-        ->call('showDetails', $payment->id)
+        ->assertDontSee(__('admin.audit.advanced_filters'))
+        ->assertSee(route('admin.audit.show', $payment));
+
+    $detail = $this->get(route('admin.audit.show', $payment));
+
+    $detail->assertOk()
+        ->assertSee('payment.captured')
         ->assertSee('txn_export')
-        ->assertSee('REDACTED');
+        ->assertSee('REDACTED')
+        ->assertDontSee('must-not-export');
 
     $response = app(AuditLogExporter::class)->download(['category' => 'payment']);
     ob_start();
@@ -117,4 +127,18 @@ test('audit query supports correlation and subject lookup', function (): void {
         ->assertSee('order.investigated')
         ->set('subjectId', (string) $order->id)
         ->assertSee('order.investigated');
+});
+
+test('retention command prunes expired audit entries without removing recent entries', function (): void {
+    $old = app(AuditLogger::class)->log('order.expired');
+    $recent = app(AuditLogger::class)->log('order.recent');
+
+    DB::table('audit_logs')->where('id', $old->id)->update([
+        'created_at' => now()->subDays(366),
+    ]);
+
+    Artisan::call('agovena:prune-logs');
+
+    expect(DB::table('audit_logs')->where('id', $old->id)->exists())->toBeFalse()
+        ->and(DB::table('audit_logs')->where('id', $recent->id)->exists())->toBeTrue();
 });

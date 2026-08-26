@@ -120,7 +120,13 @@ test('theme customize saves accent and hero title', function () {
 
     $this->actingAs($staff)
         ->get('/admin/appearance/customize')
-        ->assertOk();
+        ->assertOk()
+        ->assertSee('theme-customizer__workspace', false)
+        ->assertSee('theme-customizer__tabs', false)
+        ->assertSee('ag-product-tabs', false)
+        ->assertSee('theme-customizer__save-bar', false)
+        ->assertDontSee('theme-customizer__identity', false)
+        ->assertDontSee('style="margin-top: 1rem;"', false);
 
     Livewire\Livewire::actingAs($staff)
         ->test(Customize::class)
@@ -132,6 +138,33 @@ test('theme customize saves accent and hero title', function () {
     $config = app(ThemeManager::class)->config();
     expect($config->string('colors.accent'))->toBe('#112233')
         ->and($config->sections()[0]['title'] ?? null)->toBe('Custom hero title');
+});
+
+test('theme customize exposes shared tabs and both color mode palettes', function () {
+    $staff = $this->createStaff();
+
+    $this->actingAs($staff)
+        ->get('/admin/appearance/customize')
+        ->assertOk()
+        ->assertSee('ag-product-tabs', false)
+        ->assertSee(__('admin.appearance.customize.tabs.design'), false)
+        ->assertSee(__('admin.appearance.customize.tabs.homepage'), false)
+        ->assertSee(__('admin.appearance.theme_fields.colors.dark_surface'), false)
+        ->assertSee(__('admin.appearance.theme_fields.appearance.default_color_mode'), false)
+        ->assertDontSee('theme-customizer__navigation', false);
+
+    Livewire\Livewire::actingAs($staff)
+        ->test(Customize::class)
+        ->set('values.appearance.default_color_mode', 'dark')
+        ->set('values.colors.dark_surface', '#101827')
+        ->set('values.colors.dark_accent', '#93C5FD')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $config = app(ThemeManager::class)->config();
+    expect($config->string('appearance.default_color_mode'))->toBe('dark')
+        ->and($config->string('colors.dark_surface'))->toBe('#101827')
+        ->and($config->string('colors.dark_accent'))->toBe('#93C5FD');
 });
 
 test('themes admin can list active theme', function () {

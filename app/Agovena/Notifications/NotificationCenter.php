@@ -10,18 +10,30 @@ use App\Notifications\SendPushNotification;
 
 final class NotificationCenter
 {
+    public function __construct(
+        private readonly NotificationChannelPolicy $policy,
+        private readonly NotificationTemplateContent $content,
+    ) {}
+
     public function notify(
         User $user,
         string $key,
         string $title,
         string $body,
         ?string $actionUrl = null,
+        /** @var array<string, scalar|null> $vars */
+        array $vars = [],
     ): void {
-        $preference = $user->notificationPreferences()->where('key', $key)->first();
-        $inAppEnabled = $preference === null || $preference->in_app_enabled;
-        $pushEnabled = $preference === null || $preference->push_enabled;
+        $template = $this->policy->template($key);
+        $templateVars = array_merge($vars, [
+            'title' => $title,
+            'body' => $body,
+            'action_url' => $actionUrl,
+        ]);
+        $title = $this->content->render($template?->notification_title, $title, $templateVars);
+        $body = $this->content->render($template?->notification_body, $body, $templateVars);
 
-        if ($inAppEnabled) {
+        if ($this->policy->allows($key, 'in_app', $user)) {
             UserNotification::query()->create([
                 'user_id' => $user->id,
                 'key' => $key,
@@ -31,7 +43,7 @@ final class NotificationCenter
             ]);
         }
 
-        if (! $pushEnabled) {
+        if (! $this->policy->allows($key, 'push', $user)) {
             return;
         }
 

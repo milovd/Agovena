@@ -120,8 +120,8 @@ test('theme customize labels come from the theme schema keys', function () {
         ->get('/admin/appearance/customize')
         ->assertOk()
         ->assertSee(__('admin.appearance.theme_fields.colors.accent', [], 'nl'), false)
-        ->assertSee(__('admin.appearance.theme_fields.catalog.products_per_row', [], 'nl'), false)
-        ->assertSee(__('admin.appearance.customize.sections.add_hero', [], 'nl'), false);
+        ->assertSee(__('admin.appearance.customize.tabs.storefront', [], 'nl'), false)
+        ->assertSee(__('admin.appearance.customize.tabs.homepage', [], 'nl'), false);
 });
 
 test('content admin follows the site locale', function () {

@@ -27,6 +27,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property int|null $customer_id
  * @property int $subtotal_amount
  * @property int $total_amount
+ * @property int $tax_amount
+ * @property int $payment_fee_amount
+ * @property array<string, int|string|bool>|null $payment_fee_snapshot
+ * @property int $credit_amount
  * @property string $currency
  * @property CarbonInterface|null $due_at
  * @property string|null $idempotency_key
@@ -66,8 +70,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'shipping_service_code',
     'discount_amount',
     'tax_amount',
+    'payment_fee_amount',
+    'payment_fee_snapshot',
     'credit_amount',
     'discount_code',
+    'referral_code',
     'tax_rate_name',
     'tax_rate_bps',
     'total_amount',
@@ -108,6 +115,8 @@ class Order extends Model
             'shipping_amount' => 'integer',
             'discount_amount' => 'integer',
             'tax_amount' => 'integer',
+            'payment_fee_amount' => 'integer',
+            'payment_fee_snapshot' => 'array',
             'credit_amount' => 'integer',
             'tax_rate_bps' => 'integer',
             'custom_properties_snapshot' => 'array',

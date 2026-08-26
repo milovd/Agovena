@@ -15,6 +15,8 @@ use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\CheckoutPaymentSelection;
 use App\Agovena\Payments\CompleteAccountBalancePayment;
 use App\Agovena\Payments\CompleteDevelopmentPayment;
+use App\Agovena\Payments\PaymentFeePolicy;
+use App\Agovena\Referrals\ReferralService;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
 use App\Agovena\Tax\TaxRateResolver;
@@ -39,11 +41,13 @@ final class PlaceOrder
         private readonly SettingsRepository $settings,
         private readonly CompleteDevelopmentPayment $developmentPayment,
         private readonly CompleteAccountBalancePayment $accountBalancePayment,
+        private readonly PaymentFeePolicy $paymentFees,
         private readonly ShippingQuoteResolver $shippingQuotes,
         private readonly DiscountApplicator $discounts,
         private readonly TaxCalculator $taxes,
         private readonly TaxRateResolver $taxRates,
         private readonly ApplyCreditToOrder $applyCredit,
+        private readonly ReferralService $referrals,
         private readonly ProductOptionPricer $optionPricer,
         private readonly CustomerPropertyService $properties,
         private readonly CartRequirementComposer $requirements,
@@ -62,6 +66,7 @@ final class PlaceOrder
      *     shipping_method_id?: int|null,
      *     shipping_quote_key?: string|null,
      *     discount_code?: string|null,
+     *     referral_code?: string|null,
      *     apply_credit?: bool,
      *     credit_amount?: int|null,
      *     custom_properties?: array<string, mixed>
@@ -96,6 +101,7 @@ final class PlaceOrder
         }
 
         $method = $guest['payment_method'] ?? null;
+        $referralCode = is_string($guest['referral_code'] ?? null) ? trim($guest['referral_code']) : '';
         $customerId = isset($guest['customer_id']) ? (int) $guest['customer_id'] : null;
         if ($customerId !== null && $customerId < 1) {
             $customerId = null;
@@ -201,6 +207,7 @@ final class PlaceOrder
             $tax,
             $idempotencyKey,
             $method,
+            $referralCode,
             $customerId,
             $billing,
             $shipping,
@@ -250,6 +257,9 @@ final class PlaceOrder
             $payload['custom_properties_snapshot'] = $this->properties->snapshot($customer, $propertyOverlay, invoiceOnly: true);
 
             $order = Order::query()->create($payload);
+            if ($referralCode !== '') {
+                $this->referrals->attribute($order, $referralCode);
+            }
 
             $creditAmount = 0;
             if (($guest['apply_credit'] ?? false) && $customerId !== null) {
@@ -269,6 +279,16 @@ final class PlaceOrder
                 is_string($method) ? $method : null,
                 $amountDue,
             );
+            $paymentFee = $this->paymentFees->calculate(
+                $resolvedMethod,
+                Money::of($amountDue, $subtotal->currency),
+            );
+            $amountDue += $paymentFee->amount;
+            $order->update([
+                'total_amount' => $total->amount + $paymentFee->amount,
+                'payment_fee_amount' => $paymentFee->amount,
+                'payment_fee_snapshot' => $paymentFee->snapshot,
+            ]);
 
             foreach ($lines as $line) {
                 $product = Product::query()->find($line->productId);

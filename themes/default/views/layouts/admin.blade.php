@@ -8,9 +8,12 @@
         (function () {
             try {
                 var stored = localStorage.getItem('agovena.theme');
+                var defaultMode = @js(app(\App\Agovena\Theme\ThemeManager::class)->config()->string('appearance.default_color_mode', 'system'));
                 var theme = stored === 'dark' || stored === 'light'
                     ? stored
-                    : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                    : (defaultMode === 'dark' || defaultMode === 'light'
+                        ? defaultMode
+                        : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
                 document.documentElement.setAttribute('data-theme', theme);
             } catch (e) {
                 document.documentElement.setAttribute('data-theme', 'light');
@@ -79,10 +82,11 @@
                     <span class="visually-hidden">{{ __('common.close') }}</span>
                 </button>
             </div>
-            <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
-                @include('partials.admin-nav')
-            </nav>
-            <div class="admin-sidebar__footer">
+            <div class="admin-sidebar__scroll">
+                <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
+                    @include('partials.admin-nav')
+                </nav>
+                <div class="admin-sidebar__footer">
                 @php
                     $supportLinks = config('agovena.admin.support_links', []);
                     $footerLinks = [
@@ -108,6 +112,7 @@
                         </a>
                     @endif
                 @endforeach
+                </div>
             </div>
         </aside>
 

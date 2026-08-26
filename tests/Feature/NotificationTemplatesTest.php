@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Agovena\Mail\ApplyMailSettings;
 use App\Agovena\Notifications\RendersNotificationMail;
 use App\Agovena\Settings\SettingsRepository;
+use App\Livewire\Admin\Notifications\Index;
 use App\Livewire\Admin\Notifications\Templates;
 use App\Livewire\Admin\System\FailedJobs;
 use App\Models\EmailLog;
@@ -23,6 +24,57 @@ use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
+
+test('notification templates use a list and separate form routes', function () {
+    $staff = $this->createStaff();
+
+    $this->actingAs($staff)
+        ->get('/admin/notifications')
+        ->assertOk()
+        ->assertSee(__('admin.notifications.title'))
+        ->assertSee('/admin/notifications/create', false)
+        ->assertDontSee('tpl-body', false);
+
+    $this->actingAs($staff)
+        ->get('/admin/notifications/create')
+        ->assertOk()
+        ->assertSee(__('admin.notifications.create_title'))
+        ->assertSee('tpl-body', false);
+
+    $this->actingAs($staff)
+        ->get('/admin/notifications/order_placed/edit')
+        ->assertOk()
+        ->assertSee(__('admin.notifications.edit_title'))
+        ->assertSee('tpl-body', false);
+});
+
+test('notification templates can remove a custom override and restore defaults', function () {
+    $staff = $this->createStaff();
+    NotificationTemplate::query()->create([
+        'key' => 'order_placed',
+        'subject' => 'Custom subject',
+        'body' => 'Custom body',
+        'enabled' => true,
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('confirmRemove', 'order_placed')
+        ->call('remove')
+        ->assertHasNoErrors();
+
+    expect(NotificationTemplate::query()->where('key', 'order_placed')->exists())->toBeFalse();
+});
+
+test('notification template editor keeps guidance compact', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Templates::class)
+        ->assertDontSee(__('admin.notifications.mail_help'), false)
+        ->assertDontSee(__('admin.notifications.notification_help'), false)
+        ->assertDontSee(__('admin.notifications.placeholders_help'), false);
+});
 
 test('custom notification templates interpolate allowlisted placeholders only', function () {
     NotificationTemplate::query()->create([
@@ -102,6 +154,61 @@ test('owner can save a notification template', function () {
         'subject' => 'Invoice {{number}}',
         'enabled' => 1,
     ]);
+});
+
+test('owner can configure mail format channel states and customer choice', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Templates::class)
+        ->call('select', 'invoice_issued')
+        ->set('mailFormat', 'html')
+        ->set('body', '<p>Hello {{name}}</p><img src="https://example.test/logo.png" alt="Logo">')
+        ->set('mailEnabled', false)
+        ->set('notificationEnabled', true)
+        ->set('notificationTitle', 'Invoice {{number}} ready')
+        ->set('notificationBody', 'Open {{number}} from {{name}}.')
+        ->set('pushEnabled', false)
+        ->set('userChoice', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $this->assertDatabaseHas('notification_templates', [
+        'key' => 'invoice_issued',
+        'mail_format' => 'html',
+        'notification_title' => 'Invoice {{number}} ready',
+        'notification_body' => 'Open {{number}} from {{name}}.',
+        'mail_enabled' => 0,
+        'in_app_enabled' => 1,
+        'push_enabled' => 0,
+        'user_choice' => 1,
+    ]);
+});
+
+test('html notification templates render a sanitized mail view', function () {
+    NotificationTemplate::query()->create([
+        'key' => 'order_placed',
+        'subject' => 'Order {{number}}',
+        'body' => '<p>Hello {{name}}</p><img src="https://example.test/logo.png"><script>alert(1)</script>',
+        'enabled' => true,
+        'mail_format' => 'html',
+        'mail_enabled' => true,
+        'in_app_enabled' => true,
+        'push_enabled' => true,
+        'user_choice' => false,
+    ]);
+
+    $mail = app(RendersNotificationMail::class)->mail('order_placed', [
+        'name' => 'Jane',
+        'number' => 'AGO-1',
+        'total' => '€10.00',
+        'action_url' => 'https://example.test/orders/1',
+        'action_label' => 'View',
+    ]);
+
+    expect($mail->view)->toBe('mail.notification')
+        ->and($mail->viewData['bodyHtml'])->toContain('<img')
+        ->and($mail->viewData['bodyHtml'])->not->toContain('<script');
 });
 
 test('failed jobs admin page renders empty state', function () {

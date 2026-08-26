@@ -25,7 +25,7 @@ final class TicketRepliedNotification extends Notification implements ShouldQueu
     /** @return list<string> */
     public function via(object $notifiable): array
     {
-        return app(RendersNotificationMail::class)->isEnabled(self::KEY) ? ['mail'] : [];
+        return app(RendersNotificationMail::class)->isEnabled(self::KEY, $notifiable) ? ['mail'] : [];
     }
 
     public function toMail(object $notifiable): MailMessage

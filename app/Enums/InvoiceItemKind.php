@@ -11,6 +11,7 @@ enum InvoiceItemKind: string
     case Discount = 'discount';
     case Tax = 'tax';
     case Credit = 'credit';
+    case PaymentFee = 'payment_fee';
 
     public function isAdjustment(): bool
     {
