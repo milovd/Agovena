@@ -145,6 +145,8 @@ echo "==> Asserting release contents..."
 bash "$ROOT/scripts/assert-release-contents.sh" "$STAGING"
 
 tar -czf "$ARCHIVE" -C "$(dirname "$STAGING")" "$STAGING_NAME"
+SBOM="$OUT_DIR/$STAGING_NAME.sbom.cdx.json"
+php "$(native_path "$ROOT/scripts/generate-sbom.php")" "$(native_path "$SBOM")"
 echo "$ARCHIVE" > "$OUT_DIR/latest-archive.txt"
 echo "Wrote $ARCHIVE"
 echo "Merchants: extract → configure .env → php artisan key:generate → migrate/install → queue + cron."
