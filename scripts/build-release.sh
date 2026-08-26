@@ -62,6 +62,7 @@ tar -C "$ROOT" \
   --exclude='./dist' \
   --exclude='./storage/logs' \
   --exclude='./storage/framework/cache/data' \
+  --exclude='./storage/framework/testing-backup-artifact-*' \
   --exclude='./storage/framework/sessions' \
   --exclude='./storage/framework/views' \
   --exclude='./storage/app/private' \
