@@ -18,9 +18,9 @@ test('settings locale applies site-wide to storefront and admin', function () {
     $staff = $this->createStaff();
 
     $this->actingAs($staff)
-        ->get(route('admin.users.index'))
+        ->get(route('admin.customers.index'))
         ->assertOk()
-        ->assertSee(__('admin.users.title', [], 'nl'), false)
+        ->assertSee(__('admin.customers.title', [], 'nl'), false)
         ->assertSee(__('admin.nav.roles', [], 'nl'), false);
 });
 

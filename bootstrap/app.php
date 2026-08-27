@@ -3,6 +3,7 @@
 use App\Agovena\Api\ApiError;
 use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Http\Middleware\EnforceAbusePolicy;
+use App\Http\Middleware\EnforceApiIpAllowlist;
 use App\Http\Middleware\EnsureAgovenaInstalled;
 use App\Http\Middleware\EnsureCanAccessAdmin;
 use App\Http\Middleware\EnsureCustomerEmailIsVerified;
@@ -57,9 +58,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->statefulApi();
         $proxies = env('TRUSTED_PROXIES');
         if (is_string($proxies) && $proxies !== '') {
-            $middleware->trustProxies(
-                at: $proxies === '*' ? '*' : array_map('trim', explode(',', $proxies)),
-            );
+            $proxyAddresses = array_values(array_filter(array_map('trim', explode(',', $proxies))));
+            // Wildcard proxy trust would let clients spoof the IP allowlist.
+            if ($proxyAddresses !== [] && ! in_array('*', $proxyAddresses, true)) {
+                $middleware->trustProxies(at: $proxyAddresses);
+            }
         }
         $middleware->web(prepend: [
             EnsureAgovenaInstalled::class,
@@ -70,9 +73,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->api(prepend: [
             EnsureAgovenaInstalled::class,
+            SetLocale::class,
+            EnforceApiIpAllowlist::class,
         ]);
         $middleware->api(append: [
-            SetLocale::class,
             SecurityHeaders::class,
         ]);
         $middleware->alias([

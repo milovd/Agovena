@@ -125,7 +125,7 @@
                     <div
                         class="admin-topbar__loading"
                         wire:loading
-                        wire:target="save,create,edit,setAsBase,useCurrentLogoAsFavicon,placeOrder,logout"
+                        wire:target="save,create,edit,setAsBase,useCurrentLogoAsFavicon,placeOrder,logout,createUser,saveUser,cancelUser,saveRoles"
                         aria-live="polite"
                     >
                         <x-ag.icon name="loader" class="ag-icon--spin" :size="20" />

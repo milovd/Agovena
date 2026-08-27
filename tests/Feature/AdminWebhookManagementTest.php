@@ -24,7 +24,11 @@ it('allows authorized staff to create and manage outbound webhook endpoints', fu
         ->set('events', ['order.created', 'order.paid'])
         ->call('save')
         ->assertHasNoErrors()
-        ->assertSee('Order listener');
+        ->assertSee('Order listener')
+        ->assertSee('ag-form-stack', false)
+        ->assertSee('ag-card__header', false)
+        ->assertSee('ag-btn--sm', false)
+        ->assertDontSee('ag-btn--small', false);
 
     $endpoint = WebhookEndpoint::query()->sole();
     expect($endpoint->destination)->toBe('discord')

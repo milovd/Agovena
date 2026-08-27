@@ -86,9 +86,6 @@
                     <dd>
                         @if ($user)
                             #{{ $user->id }}
-                            @can('users.view')
-                                <a class="ag-btn ag-btn--ghost ag-btn--sm" href="{{ route('admin.users.index') }}">{{ __('admin.customers.open_users') }}</a>
-                            @endcan
                         @else - @endif
                     </dd>
                 </div>
@@ -107,6 +104,26 @@
                     <dd>{{ $customer->created_at?->toDayDateTimeString() }}</dd>
                 </div>
             </dl>
+            @if ($user && auth()->user()?->can('users.update'))
+                <form class="ag-form" wire:submit="saveRoles">
+                    <fieldset class="ag-fieldset">
+                        <legend class="ag-fieldset__legend">{{ __('admin.customers.roles') }}</legend>
+                        <div class="ag-grid ag-grid--2">
+                            @forelse ($availableRoles as $roleOption)
+                                <label class="ag-check" wire:key="customer-role-{{ $roleOption->id }}">
+                                    <input type="checkbox" value="{{ $roleOption->name }}" wire:model="selectedRoles">
+                                    <span>{{ $roleOption->name }}</span>
+                                </label>
+                            @empty
+                                <p class="ag-field__help">{{ __('admin.customers.no_roles_available') }}</p>
+                            @endforelse
+                        </div>
+                        @error('selectedRoles') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        @error('selectedRoles.*') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </fieldset>
+                    <button class="ag-btn ag-btn--primary" type="submit">{{ __('admin.customers.save_roles') }}</button>
+                </form>
+            @endif
             @if ($user)
                 @can('customers.manage')
                     <div class="ag-form__actions">

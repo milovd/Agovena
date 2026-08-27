@@ -26,6 +26,7 @@ function adminLocalizedRoutes(): array
         '/admin/email-log',
         '/admin/failed-jobs',
         '/admin/cron-statistics',
+        '/admin/backups',
         '/admin/appearance/themes',
         '/admin/appearance/customize',
         '/admin/appearance/pages',
@@ -63,6 +64,15 @@ test('shipping admin and role permissions resolve translation keys', function ()
         ->call('create')
         ->assertSee('View products')
         ->assertDontSeeText('admin.permissions.products.view');
+});
+
+test('setup copy describes payment gateways and module choices', function () {
+    expect(__('admin.dashboard.getting_started.payment'))
+        ->toBe('Set up a payment gateway')
+        ->and(__('admin.dashboard.getting_started.payment_description'))
+        ->toBe('Configure secure hosted checkout through a payment gateway.')
+        ->and(__('admin.modules.setup_title'))->toBe('Choose capabilities for this store')
+        ->and(__('admin.modules.custom_modules_toggle'))->toBe('Choose modules');
 });
 
 test('admin screens never render raw translation keys', function () {

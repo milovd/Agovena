@@ -8,6 +8,7 @@ use Agovena\Modules\Domains\DomainDnsProviderRegistry;
 use Agovena\Modules\Domains\DomainRegistrarRegistry;
 use Agovena\Modules\Domains\Http\Livewire\Admin\RegistrationsIndex;
 use Agovena\Modules\Domains\Models\DomainRegistration;
+use App\Agovena\Admin\AdminRegistrar;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
@@ -34,6 +35,16 @@ it('exposes an admin domain registration index to authorized staff', function ()
     $this->actingAs($staff)->get('/admin/domains')
         ->assertOk()
         ->assertSee('admin.example.test');
+});
+
+it('keeps registrar and DNS management under one visible Domains tab', function (): void {
+    installAndEnableModules(['domains']);
+
+    $domainItems = collect(app(AdminRegistrar::class)->navigationItems())
+        ->filter(fn ($item): bool => str_contains($item->id, 'domain'));
+
+    expect($domainItems->pluck('id')->values()->all())->toBe(['domains'])
+        ->and($domainItems->first()->href)->toBe('/admin/domains');
 });
 
 it('shows only the authenticated customer domains', function (): void {

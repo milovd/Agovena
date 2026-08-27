@@ -121,6 +121,10 @@ html.is-cookie-locked {
     margin: 0;
 }
 
+.store-cookie-consent__actions .store-btn {
+    white-space: nowrap;
+}
+
 .store-cookie-consent__actions form button {
     width: 100%;
 }

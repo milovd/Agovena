@@ -28,7 +28,7 @@ return [
         'about_paragraphs' => [
             'Cookies zijn kleine tekstbestanden die websites kunnen gebruiken om de ervaring van een gebruiker efficiënter te maken.',
             'De wet laat toe cookies op je apparaat te bewaren als ze strikt noodzakelijk zijn voor de werking van deze site. Voor alle andere cookies heeft Agovena je toestemming nodig. Noodzakelijke cookies op deze site worden verwerkt op basis van GDPR art. 6 (1) (f). Analytics-cookies worden verwerkt op basis van GDPR art. 6 (1) (a) (toestemming).',
-            'Agovena gebruikt noodzakelijke cookies, Google reCAPTCHA-cookies op het contactformulier en, alleen als je toestemt, analytics-cookies van de geconfigureerde analyticssoftware. Er zijn geen marketingcookiecategorieën bij Agovena.',
+            'Agovena gebruikt noodzakelijke cookies en kan op het contactformulier een geconfigureerde botbeschermingsoplossing gebruiken. Alleen als je toestemt, gebruikt Agovena analytics-cookies van de geconfigureerde analyticssoftware. Er zijn geen marketingcookiecategorieën bij Agovena.',
             'Je kunt je analytics-toestemming altijd wijzigen of intrekken via Keuze aanpassen in de footer of op de cookiebeleidpagina.',
             'Lees meer over Agovena, hoe je contact kunt opnemen en hoe persoonsgegevens worden verwerkt in de privacyverklaring.',
             'Als je contact opneemt met Agovena over je toestemming, vermeld dan je consent-ID en datum hieronder.',

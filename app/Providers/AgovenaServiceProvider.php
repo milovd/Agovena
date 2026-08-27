@@ -84,6 +84,7 @@ use App\Listeners\SendPlanChangeAppliedNotification;
 use App\Listeners\SendRefundProcessedNotification;
 use App\Listeners\SettleReferralRewardWhenOrderPaid;
 use App\Models\Customer;
+use App\Models\User;
 use App\Models\UserNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
@@ -91,6 +92,7 @@ use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -161,6 +163,15 @@ class AgovenaServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Gate::before(static function (User $user, string $ability): ?bool {
+            if ($ability !== 'customers.view') {
+                return null;
+            }
+
+            return $user->hasPermissionTo('customers.view', User::GUARD)
+                || $user->hasPermissionTo('users.view', User::GUARD);
+        });
+
         Event::subscribe(WebhookEventSubscriber::class);
         Event::listen(Registered::class, SendEmailVerificationNotification::class);
         Event::listen(Verified::class, AttachGuestOrdersWhenCustomerVerified::class);
@@ -468,13 +479,13 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
-            id: 'users',
-            label: 'admin.nav.users',
+            id: 'backups',
+            label: 'admin.nav.backups',
             group: 'admin.nav_groups.system',
-            href: '/admin/users',
-            icon: 'users',
-            sort: 200,
-            permission: 'users.view',
+            href: '/admin/backups',
+            icon: 'database',
+            sort: 123,
+            permission: 'backups.view',
         ));
 
         $admin->navigation(new NavigationItem(
@@ -674,6 +685,8 @@ class AgovenaServiceProvider extends ServiceProvider
             'jobs.view',
             'jobs.manage',
             'api.tokens',
+            'backups.view',
+            'backups.manage',
         ] as $ability) {
             $admin->permission($ability, 'admin.permissions.'.$ability);
         }

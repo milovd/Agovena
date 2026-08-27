@@ -21,8 +21,9 @@ test('admin visit syncs newly registered permissions onto the owner role', funct
     $this->actingAs($staff)
         ->get(route('admin.dashboard'))
         ->assertOk()
-        ->assertSee(__('admin.nav.users'), false)
-        ->assertSee(__('admin.nav.roles'), false);
+        ->assertSee(__('admin.nav.customers'), false)
+        ->assertSee(__('admin.nav.roles'), false)
+        ->assertDontSee(__('admin.nav.users'), false);
 
     expect($staff->fresh()->can('users.view'))->toBeTrue()
         ->and($staff->fresh()->can('roles.view'))->toBeTrue()

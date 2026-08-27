@@ -84,6 +84,8 @@ it('shows the consent banner until the visitor makes a choice', function (): voi
         ->assertSee('data-cookie-tab="consent"', false)
         ->assertSee('data-cookie-tab="about"', false)
         ->assertSee(__('storefront.cookie_consent.accept'))
+        ->assertSee(__('storefront.cookie_consent.customize'))
+        ->assertDontSee('Google reCAPTCHA')
         ->assertDontSee('data-cookie-choice="all"', false);
 });
 

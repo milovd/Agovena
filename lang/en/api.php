@@ -7,6 +7,7 @@ return [
     'unauthorized' => 'You are not allowed to perform this action.',
     'not_found' => 'The requested resource was not found.',
     'rate_limited' => 'Too many requests. Try again shortly.',
+    'ip_not_allowed' => 'This IP address is not allowed to access the API.',
     'not_installed' => 'This store is not installed yet.',
     'payment_failed' => 'Payment could not be started.',
     'checkout_failed' => 'Checkout could not be completed.',

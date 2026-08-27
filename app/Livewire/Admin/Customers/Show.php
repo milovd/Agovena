@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Customers;
 
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Admin\AdminRoleAssignmentPolicy;
 use App\Agovena\Auth\SetUserEmailVerification;
 use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Agovena\Customer\UpdateCustomerProfile;
+use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Privacy\AnonymizeCustomer;
 use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\Customer;
@@ -42,13 +44,17 @@ final class Show extends Component
     /** @var array<string, mixed> */
     public array $propertyValues = [];
 
+    /** @var list<string> */
+    public array $selectedRoles = [];
+
     public function mount(Customer $customer, CustomerPropertyService $properties): void
     {
         $this->authorize('customers.view');
         $this->customer = $customer;
-        $this->customer->loadMissing('user');
+        $this->customer->loadMissing('user.roles');
         $this->name = (string) $customer->name;
         $this->email = (string) $customer->email;
+        $this->selectedRoles = $this->customer->user?->roles->pluck('name')->values()->all() ?? [];
         $this->propertyValues = $properties->emptyValues($properties->definitionsFor('staff'), $customer);
     }
 
@@ -80,6 +86,34 @@ final class Show extends Component
         $this->name = (string) $this->customer->name;
         $this->email = (string) $this->customer->email;
         session()->flash('status', __('admin.customers.profile_saved'));
+    }
+
+    public function saveRoles(AdminRoleAssignmentPolicy $rolePolicy, SyncRegisteredPermissions $sync): void
+    {
+        $this->authorize('users.update');
+
+        if (! $this->requireRecentPassword('saveRoles')) {
+            return;
+        }
+
+        $sync();
+        $actor = $this->actor();
+        $this->customer->loadMissing('user');
+        if (! $this->customer->user instanceof User) {
+            return;
+        }
+        $target = $this->customer->user;
+        $roleNames = $rolePolicy->grantableRoles($actor, $target)->pluck('name')->all();
+
+        $data = $this->validate([
+            'selectedRoles' => ['array'],
+            'selectedRoles.*' => ['string', 'distinct', Rule::in($roleNames)],
+        ]);
+
+        $target = $rolePolicy->syncRoles($actor, $target, $data['selectedRoles'] ?? [], 'selectedRoles');
+        $target->load('roles');
+        $this->selectedRoles = $target->roles->pluck('name')->values()->all();
+        session()->flash('status', __('admin.customers.roles_saved'));
     }
 
     public function saveProperties(CustomerPropertyService $properties): void
@@ -127,8 +161,12 @@ final class Show extends Component
         $this->setEmailVerification($verification, false);
     }
 
-    public function render(AdminRegistrar $admin, CustomerCreditLedger $ledger, CustomerPropertyService $properties)
-    {
+    public function render(
+        AdminRegistrar $admin,
+        AdminRoleAssignmentPolicy $rolePolicy,
+        CustomerCreditLedger $ledger,
+        CustomerPropertyService $properties,
+    ) {
         $account = CustomerCreditAccount::query()->where('customer_id', $this->customer->id)->first();
 
         $this->customer->loadMissing(['user.roles', 'addresses']);
@@ -161,6 +199,9 @@ final class Show extends Component
                 'addresses' => $this->customer->addresses->count(),
             ],
             'user' => $user,
+            'availableRoles' => $user instanceof User
+                ? $rolePolicy->grantableRoles($this->actor(), $user)
+                : collect(),
             'customerDetailSections' => $admin->customerDetailSections(),
             'propertyDefinitions' => $properties->definitionsFor('staff'),
             'actor' => 'staff',
@@ -197,5 +238,15 @@ final class Show extends Component
                 ? 'admin.customers.email_marked_verified'
                 : 'admin.customers.email_marked_unverified',
         ));
+    }
+
+    private function actor(): User
+    {
+        $actor = Auth::user();
+        if (! $actor instanceof User) {
+            abort(403);
+        }
+
+        return $actor;
     }
 }

@@ -28,7 +28,7 @@ return [
         'about_paragraphs' => [
             'Cookies are small text files that websites can use to make a user’s experience more efficient.',
             'The law allows storing cookies on your device if they are strictly necessary for this site to operate. For all other cookies, Agovena needs your permission. Necessary cookies on this site are processed on the basis of GDPR Art. 6 (1) (f). Analytics cookies are processed on the basis of GDPR Art. 6 (1) (a) (consent).',
-            'Agovena uses necessary cookies, Google reCAPTCHA cookies on the contact form, and, only if you consent, analytics cookies from the configured analytics software. There are no marketing cookie categories for Agovena.',
+            'Agovena uses necessary cookies and may use a configured bot-protection solution on the contact form. Only if you consent, it uses analytics cookies from the configured analytics software. There are no marketing cookie categories for Agovena.',
             'You can change or withdraw your analytics consent at any time via Customize choice in the footer or on the cookie policy page.',
             'Learn more about Agovena, how to contact us, and how personal data is processed in the privacy policy.',
             'When you contact Agovena about your consent, please include your consent ID and date shown below.',

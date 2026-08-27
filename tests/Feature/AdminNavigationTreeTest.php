@@ -56,6 +56,14 @@ test('core admin items are grouped as sibling links instead of nested parents', 
         ->and($byId->get('notification-templates')?->parent)->toBeNull();
 });
 
+test('database backups has one system navigation item', function () {
+    $byId = collect(app(AdminRegistrar::class)->navigationItems())->keyBy('id');
+
+    expect($byId->get('backups')?->label)->toBe('admin.nav.backups')
+        ->and($byId->get('backups')?->href)->toBe('/admin/backups')
+        ->and($byId->get('backups')?->permission)->toBe('backups.view');
+});
+
 test('admin sidebar renders grouped collapsible sections with sibling links', function () {
     installAndEnableModule('inventory');
     installAndEnableModule('shipping');
