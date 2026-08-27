@@ -13,22 +13,22 @@ final class ImportAdapterRegistry
     private function aliases(string $source, string $entity): array
     {
         $sourceAliases = match ($source) {
-            'paymenter' => [
+            'hosting_billing' => [
                 'external_id' => ['customer_id', 'id', 'external_id'],
                 'email' => ['email', 'email_address'],
                 'name' => ['name', 'full_name', 'customer_name'],
             ],
-            'whmcs' => [
+            'billing_platform' => [
                 'external_id' => ['userid', 'id', 'external_id'],
                 'email' => ['email', 'email_address'],
                 'name' => ['fullname', 'name', 'full_name'],
             ],
-            'woocommerce' => [
+            'shop_platform' => [
                 'external_id' => ['customer_id', 'id', 'external_id'],
                 'email' => ['billing_email', 'email'],
                 'name' => ['billing_name', 'name', 'full_name'],
             ],
-            'shopify' => [
+            'commerce_platform' => [
                 'external_id' => ['customer_id', 'id', 'external_id'],
                 'email' => ['email', 'contact_email'],
                 'name' => ['name', 'display_name', 'full_name'],
