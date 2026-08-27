@@ -59,3 +59,20 @@ it('does not prune unrelated encrypted files', function (): void {
     expect(Storage::disk('local')->exists('testing-backups/unrelated.enc'))->toBeTrue();
     unlink($source);
 });
+
+it('does not prune recovery points belonging to another database driver', function (): void {
+    $source = storage_path('framework/testing-backup-driver.sqlite');
+    file_put_contents($source, 'private database payload');
+    config()->set('agovena.backups.disk', 'local');
+    config()->set('agovena.backups.directory', 'testing-backups');
+    config()->set('agovena.backups.retention_days', 30);
+    config()->set('agovena.backups.retention_count', 1);
+    Storage::fake('local');
+    Storage::disk('local')->put('testing-backups/database-mysql-20260826000000-old.enc', 'keep mysql');
+
+    app(BackupManager::class)->backupSqlite($source);
+    app(BackupManager::class)->backupSqlite($source);
+
+    expect(Storage::disk('local')->exists('testing-backups/database-mysql-20260826000000-old.enc'))->toBeTrue();
+    unlink($source);
+});

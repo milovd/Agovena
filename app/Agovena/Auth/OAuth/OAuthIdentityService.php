@@ -22,8 +22,11 @@ final class OAuthIdentityService
 
     public function handleCallback(string $providerId, string $state, string $code, string $sessionId): OAuthCallbackResult
     {
+        if (trim($code) === '') {
+            throw ValidationException::withMessages(['provider' => 'The OAuth callback is invalid or expired.']);
+        }
         $statePayload = $this->states->consumePayload($providerId, $state, $sessionId);
-        if ($statePayload === null || trim($code) === '') {
+        if ($statePayload === null) {
             throw ValidationException::withMessages(['provider' => 'The OAuth callback is invalid or expired.']);
         }
 
@@ -52,6 +55,9 @@ final class OAuthIdentityService
         $identity = OAuthIdentity::query()->where('provider', $provider->id)->where('subject', $subject)->first();
         $linked = false;
         if ($identity instanceof OAuthIdentity) {
+            if (Auth::check() && (int) Auth::id() !== (int) $identity->user_id) {
+                throw ValidationException::withMessages(['provider' => 'This identity is already linked to another account.']);
+            }
             $user = User::query()->findOrFail($identity->user_id);
         } elseif (Auth::check()) {
             $user = Auth::user();

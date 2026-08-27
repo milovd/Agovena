@@ -25,7 +25,7 @@ final class OAuthStateStore
             throw ValidationException::withMessages(['provider' => 'The OAuth provider is not supported.']);
         }
 
-        if (! str_starts_with($redirect, '/') || str_starts_with($redirect, '//') || preg_match('/[\x00-\x1F\x7F]/', $redirect) === 1) {
+        if (! $this->isSafeRedirect($redirect)) {
             throw ValidationException::withMessages(['redirect' => 'The OAuth redirect is not allowed.']);
         }
 
@@ -57,15 +57,23 @@ final class OAuthStateStore
             return null;
         }
 
-        $payload = $this->cache->pull($this->key($provider, $state));
+        $payload = $this->cache->get($this->key($provider, $state));
 
-        return is_array($payload)
-            && is_string($payload['redirect'] ?? null)
-            && is_string($payload['nonce'] ?? null)
-            && is_string($payload['session_hash'] ?? null)
-            && hash_equals($payload['session_hash'], hash('sha256', $sessionId))
-            ? ['redirect' => $payload['redirect'], 'nonce' => $payload['nonce']]
-            : null;
+        if (! is_array($payload)
+            || ! is_string($payload['redirect'] ?? null)
+            || ! is_string($payload['nonce'] ?? null)
+            || ! is_string($payload['session_hash'] ?? null)
+        ) {
+            return null;
+        }
+
+        if (! $this->isSafeRedirect($payload['redirect']) || ! hash_equals($payload['session_hash'], hash('sha256', $sessionId))) {
+            return null;
+        }
+
+        $this->cache->forget($this->key($provider, $state));
+
+        return ['redirect' => $payload['redirect'], 'nonce' => $payload['nonce']];
     }
 
     public function consume(string $provider, string $state, string $sessionId): ?string
@@ -76,5 +84,14 @@ final class OAuthStateStore
     private function key(string $provider, string $state): string
     {
         return 'agovena.oauth.state.'.hash('sha256', $provider.':'.$state);
+    }
+
+    private function isSafeRedirect(string $redirect): bool
+    {
+        return str_starts_with($redirect, '/')
+            && ! str_starts_with($redirect, '//')
+            && ! str_contains($redirect, '\\')
+            && ! str_contains($redirect, '%')
+            && preg_match('/[\x00-\x1F\x7F]/', $redirect) !== 1;
     }
 }

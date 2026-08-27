@@ -90,3 +90,32 @@ it('rejects a callback delivered into a different browser session', function ():
         ->toThrow(ValidationException::class);
     expect(OAuthIdentity::query()->where('subject', 'discord-session-bound-user')->exists())->toBeFalse();
 });
+
+it('does not switch an authenticated session to another identity owner', function (): void {
+    configureDiscordOAuth();
+    $currentUser = User::factory()->create(['email' => 'current@example.test']);
+    $identityOwner = User::factory()->create(['email' => 'owner@example.test']);
+    OAuthIdentity::query()->create([
+        'user_id' => $identityOwner->id,
+        'provider' => 'discord',
+        'subject' => 'owned-by-another-user',
+        'email' => 'owner@example.test',
+        'name' => 'Owner',
+    ]);
+    Auth::login($currentUser);
+    Http::fake([
+        'https://discord.com/api/oauth2/token' => Http::response(['access_token' => 'discord-access-token'], 200),
+        'https://discord.com/api/users/@me' => Http::response([
+            'id' => 'owned-by-another-user',
+            'email' => 'owner@example.test',
+            'username' => 'Owner',
+            'verified' => true,
+        ], 200),
+    ]);
+
+    $state = app(OAuthStateStore::class)->issue('discord', '/account/security', 'browser-session-a');
+
+    expect(fn () => app(OAuthIdentityService::class)->handleCallback('discord', $state, 'authorization-code', 'browser-session-a'))
+        ->toThrow(ValidationException::class);
+    expect(Auth::id())->toBe($currentUser->id);
+});

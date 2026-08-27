@@ -63,6 +63,7 @@ final class DeliverWebhook implements ShouldQueue
         try {
             $response = Http::connectTimeout(5)
                 ->timeout(10)
+                ->withOptions(['allow_redirects' => false])
                 ->acceptJson()
                 ->withHeaders([
                     'Content-Type' => 'application/json',

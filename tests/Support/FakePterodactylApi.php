@@ -27,6 +27,9 @@ final class FakePterodactylApi implements PterodactylApi
 
     public int $createCalls = 0;
 
+    /** @var array<string, mixed> */
+    public array $lastCreatePayload = [];
+
     public int $buildCalls = 0;
 
     public int $nextServerId = 10;
@@ -114,6 +117,7 @@ final class FakePterodactylApi implements PterodactylApi
     {
         $this->guardTransport();
         $this->createCalls++;
+        $this->lastCreatePayload = $payload;
         if ($this->failCreate) {
             throw PterodactylProviderException::failed('pterodactyl::messages.errors.create_failed');
         }

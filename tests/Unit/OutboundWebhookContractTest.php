@@ -27,5 +27,8 @@ it('allows public HTTPS webhook endpoints and rejects SSRF-shaped URLs', functio
         ->and(WebhookUrlValidator::isAllowed('https://localhost/hook'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://127.0.0.1/hook'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://10.0.0.10/hook'))->toBeFalse()
+        ->and(WebhookUrlValidator::isAllowed('https://2130706433/hook'))->toBeFalse()
+        ->and(WebhookUrlValidator::isAllowed('https://0x7f000001/hook'))->toBeFalse()
+        ->and(WebhookUrlValidator::isAllowed('https://127.1/hook'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://user:pass@example.test/hook'))->toBeFalse();
 });

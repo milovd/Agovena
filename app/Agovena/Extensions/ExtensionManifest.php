@@ -26,7 +26,7 @@ final readonly class ExtensionManifest
         public string $author = 'Agovena',
         public array $settings = [],
         public array $autoloadPsr4 = [],
-        public bool $productionReady = true,
+        public bool $productionReady = false,
     ) {}
 
     /**
@@ -99,7 +99,7 @@ final readonly class ExtensionManifest
             author: (string) ($data['author'] ?? 'Agovena'),
             settings: $normalizedSettings,
             autoloadPsr4: $psr4,
-            productionReady: (bool) ($data['production_ready'] ?? true),
+            productionReady: (bool) ($data['production_ready'] ?? false),
         );
     }
 }

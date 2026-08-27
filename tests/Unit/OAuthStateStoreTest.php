@@ -22,6 +22,7 @@ it('rejects oauth state from another browser session', function (): void {
     $state = $store->issue('google', '/account/security', 'browser-session-a');
 
     expect($store->consume('google', $state, 'browser-session-b'))->toBeNull();
+    expect($store->consume('google', $state, 'browser-session-a'))->toBe('/account/security');
 });
 
 it('rejects external oauth redirect targets and unsupported providers', function (): void {
@@ -29,4 +30,11 @@ it('rejects external oauth redirect targets and unsupported providers', function
 
     expect(fn () => $store->issue('unknown', '/account', 'browser-session'))->toThrow(ValidationException::class)
         ->and(fn () => $store->issue('discord', 'https://evil.example.test/callback', 'browser-session'))->toThrow(ValidationException::class);
+});
+
+it('rejects browser-normalized oauth redirect targets', function (): void {
+    $store = app(OAuthStateStore::class);
+
+    expect(fn () => $store->issue('discord', '/\\evil.example.test', 'browser-session'))->toThrow(ValidationException::class)
+        ->and(fn () => $store->issue('discord', '/account/%2f%2fevil.example.test', 'browser-session'))->toThrow(ValidationException::class);
 });

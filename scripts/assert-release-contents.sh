@@ -31,6 +31,7 @@ fi
 
 for bad in \
   "$ROOT/.env" \
+  "$ROOT/.hermes" \
   "$ROOT/.git" \
   "$ROOT/node_modules" \
   "$ROOT/tests" \
@@ -48,7 +49,7 @@ if [[ -n "${sqlite_hits}" ]]; then
   fail "must not include local SQLite databases: ${sqlite_hits}"
 fi
 
-secret_hits="$(find "$ROOT" \( -path "$ROOT/vendor" -o -path "$ROOT/node_modules" \) -prune -o -type f \( -name '.env' -o -name '.env.local' -o -name '*.pem' \) -print 2>/dev/null || true)"
+secret_hits="$(find "$ROOT" \( -path "$ROOT/vendor" -o -path "$ROOT/node_modules" \) -prune -o -type f \( -name '.env' -o -name '.env.*' -o -name '*.pem' \) ! -name '.env.example' -print 2>/dev/null || true)"
 if [[ -n "${secret_hits}" ]]; then
   fail "found forbidden secret-like files outside vendor"
 fi

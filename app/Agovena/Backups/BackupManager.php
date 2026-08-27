@@ -120,14 +120,14 @@ final class BackupManager
             return new BackupRunResult(false, null, errorCode: 'storage_failed');
         }
 
-        return new BackupRunResult(true, $path, $this->prune($disk, $directory));
+        return new BackupRunResult(true, $path, $this->prune($disk, $directory, $driver));
     }
 
-    private function prune(Filesystem $disk, string $directory): int
+    private function prune(Filesystem $disk, string $directory, string $driver): int
     {
         $files = array_values(array_filter(
             $disk->files($directory),
-            static fn (string $path): bool => Str::startsWith($path, ($directory === '' ? '' : $directory.'/').'database-')
+            static fn (string $path): bool => Str::startsWith($path, ($directory === '' ? '' : $directory.'/').'database-'.$driver.'-')
                 && Str::endsWith($path, '.enc'),
         ));
         $retentionDays = max(1, (int) config('agovena.backups.retention_days', 30));

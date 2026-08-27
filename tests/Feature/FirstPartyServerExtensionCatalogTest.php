@@ -62,6 +62,20 @@ it('publishes all first-party server extension paths in the package catalog', fu
     }
 });
 
+it('requires explicit production readiness metadata for every extension manifest', function (): void {
+    $root = config('agovena.packages.optional_packages_path');
+    $manifests = glob($root.'/extensions/*/*/extension.json') ?: [];
+
+    expect($manifests)->not->toBeEmpty();
+
+    foreach ($manifests as $path) {
+        $manifest = json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
+
+        expect(array_key_exists('production_ready', $manifest))->toBeTrue($path)
+            ->and($manifest['production_ready'] ?? null)->toBeBool();
+    }
+});
+
 it('loads each new server API through its first-party discovery namespace', function (): void {
     app(ModuleManager::class)->discover();
     app(ExtensionManager::class)->discover();

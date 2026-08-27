@@ -8,6 +8,7 @@ use Agovena\Extensions\Pterodactyl\PterodactylPanelUrl;
 use Agovena\Extensions\Pterodactyl\PterodactylProviderException;
 use Agovena\Extensions\Pterodactyl\PterodactylProvisioner;
 use Agovena\Extensions\Pterodactyl\PterodactylServer;
+use Agovena\Modules\Provisioning\EloquentProvisionedServiceResolver;
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\Servers as ProvisioningServers;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
@@ -20,6 +21,7 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Provisioning\Contracts\Provisioner;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -47,6 +49,8 @@ uses(CreatesStaff::class);
 
 function enablePterodactyl(?FakePterodactylApi $api = null): FakePterodactylApi
 {
+    app(ModuleManager::class)->discover();
+    app(ExtensionManager::class)->discover();
     $api ??= new FakePterodactylApi;
     app()->instance(PterodactylApi::class, $api);
     installAndEnableModule('provisioning');
@@ -280,6 +284,55 @@ test('paid pterodactyl order provisions a server and stores extension-owned mapp
         ->and(Schema::hasColumn('products', 'nest_id'))->toBeFalse()
         ->and(Schema::hasColumn('products', 'pterodactyl_location'))->toBeFalse()
         ->and($instance->meta['provider_settings']['egg_id'] ?? null)->toBe('15');
+});
+
+test('pterodactyl uses the selected server user id when creating a server', function () {
+    $api = enablePterodactyl();
+    $server = ProvisioningServer::query()->create([
+        'name' => 'Secondary panel',
+        'provider_key' => 'pterodactyl',
+        'settings' => [
+            'panel_url' => 'https://secondary-panel.example.test',
+            'application_api_key' => 'ptla_SECONDARY_SERVER_SECRET',
+            'user_id' => '42',
+        ],
+        'is_active' => true,
+    ]);
+    $product = makePterodactylProduct();
+    $capability = $product->capability('provisionable');
+    $capability->config = array_merge($capability->config, ['server_id' => $server->id]);
+    $capability->save();
+
+    payForPterodactylProduct($product);
+
+    expect($api->lastCreatePayload['user'] ?? null)->toBe(42);
+});
+
+test('pterodactyl does not fall back to global credentials for an unavailable selected server', function () {
+    $api = enablePterodactyl();
+    $instance = ServiceInstance::query()->create([
+        'number' => 'SVC-PANEL-UNAVAILABLE',
+        'status' => ServiceInstanceStatus::Provisioning,
+        'provider_key' => 'pterodactyl',
+        'customer_email' => 'panel@example.test',
+        'meta' => [
+            'provider_settings' => [
+                'location_id' => '1',
+                'nest_id' => '1',
+                'egg_id' => '15',
+            ],
+            'server_settings_required' => true,
+            'server_settings' => [],
+            'server_settings_unavailable' => true,
+        ],
+    ]);
+
+    $provisioner = app(ProvisionerRegistry::class)->get('pterodactyl');
+    expect($provisioner)->toBeInstanceOf(PterodactylProvisioner::class);
+
+    expect(fn () => $provisioner->provision(EloquentProvisionedServiceResolver::info($instance)))
+        ->toThrow(ValidationException::class)
+        ->and($api->createCalls)->toBe(0);
 });
 
 test('matching product option keys override provider defaults for that order', function () {

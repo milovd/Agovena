@@ -54,6 +54,7 @@ tar -C "$ROOT" \
   --exclude='./.git' \
   --exclude='./.github' \
   --exclude='./.cursor' \
+  --exclude='./.hermes' \
   --exclude='./docs' \
   --exclude='./node_modules' \
   --exclude='./vendor' \
@@ -72,6 +73,7 @@ tar -C "$ROOT" \
   --exclude='./.phpstan.cache' \
   --exclude='./coverage' \
   --exclude='./.env' \
+  --exclude='./.env.*' \
   --exclude='./.env.local' \
   --exclude='./.env.production' \
   --exclude='./.env.testing' \
@@ -95,6 +97,7 @@ cp -f "$ROOT/public/vendor/agovena/logo.png" "$STAGING/public/vendor/agovena/log
 mkdir -p "$STAGING/deploy"
 cp -a "$ROOT/deploy/." "$STAGING/deploy/"
 cp -f "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/SECURITY.md" "$STAGING/" 2>/dev/null || true
+[[ -f "$ROOT/.env.example" ]] && cp -f "$ROOT/.env.example" "$STAGING/"
 [[ -f "$ROOT/INSTALL.md" ]] && cp -f "$ROOT/INSTALL.md" "$STAGING/"
 [[ -f "$ROOT/SUPPORT.md" ]] && cp -f "$ROOT/SUPPORT.md" "$STAGING/"
 [[ -f "$ROOT/CHANGELOG.md" ]] && cp -f "$ROOT/CHANGELOG.md" "$STAGING/"

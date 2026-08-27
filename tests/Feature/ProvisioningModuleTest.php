@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Agovena\Modules\Provisioning\EloquentProvisionedServiceResolver;
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstanceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
@@ -117,6 +118,20 @@ test('an unavailable configured provisioning server fails closed into manual rev
         ->and($instance->provider_key)->toBeNull()
         ->and($instance->provisioning_server_id)->toBeNull()
         ->and($instance->failure_message)->not->toBeNull();
+});
+
+test('a service instance without customer ownership is not authorized by matching email', function () {
+    enableProvisioningModule();
+    $customer = Customer::factory()->create(['email' => 'shared@example.test']);
+    $instance = ServiceInstance::query()->create([
+        'number' => 'SVC-AUTHZ-001',
+        'status' => ServiceInstanceStatus::Active,
+        'provider_key' => 'manual',
+        'customer_id' => null,
+        'customer_email' => $customer->email,
+    ]);
+
+    expect(app(EloquentProvisionedServiceResolver::class)->resolveForCustomer($customer, $instance->id))->toBeNull();
 });
 
 test('polling preserves an existing provider reference when a provider returns the local id', function () {

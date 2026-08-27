@@ -20,6 +20,12 @@ final class WebhookUrlValidator
             return false;
         }
 
+        if (preg_match('/^(?:0x[0-9a-f]+|0[0-7]+|[0-9]+)$/i', $host) === 1
+            || preg_match('/^(?:[0-9]+\.){1,3}[0-9]+$/', $host) === 1
+        ) {
+            return false;
+        }
+
         $ip = trim($host, '[]');
         if (filter_var($ip, FILTER_VALIDATE_IP) !== false) {
             return filter_var(
