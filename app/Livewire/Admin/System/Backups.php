@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\System;
 
 use App\Agovena\Admin\AdminRegistrar;
-use App\Agovena\Backups\BackupManager;
+use App\Agovena\Backups\DatabaseBackupManager;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
 use Throwable;
@@ -19,7 +19,7 @@ final class Backups extends Component
         $this->authorize('backups.view');
     }
 
-    public function createBackup(BackupManager $backupManager): void
+    public function createBackup(DatabaseBackupManager $backupManager): void
     {
         $this->authorize('backups.manage');
 

@@ -3,6 +3,9 @@
 use App\Agovena\Admin\AdminRoleAssignmentPolicy;
 use App\Agovena\Api\ApiIpAllowlist;
 use App\Agovena\Audit\AuditLogger;
+use App\Agovena\Backups\BackupManager;
+use App\Agovena\Backups\BackupRunResult;
+use App\Agovena\Backups\DatabaseBackupManager;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -322,8 +325,6 @@ test('owner can create a category', function () {
 
 test('database backups screen renders operational status and creates a backup', function () {
     $staff = $this->createStaff();
-    $originalDefault = config('database.default');
-    $originalSqliteDatabase = config('database.connections.sqlite.database');
     $source = tempnam(storage_path('framework'), 'admin-backup-test-');
 
     expect($source)->not->toBeFalse();
@@ -331,8 +332,16 @@ test('database backups screen renders operational status and creates a backup', 
 
     try {
         Storage::fake('local');
-        config()->set('database.default', 'sqlite');
-        config()->set('database.connections.sqlite.database', $source);
+        $realBackup = app(BackupManager::class)->backupSqlite((string) $source);
+        expect($realBackup->success)->toBeTrue();
+
+        app()->instance(DatabaseBackupManager::class, new class implements DatabaseBackupManager
+        {
+            public function backupConfiguredDatabase(): BackupRunResult
+            {
+                return new BackupRunResult(true, 'backups/database-test.enc');
+            }
+        });
 
         $this->actingAs($staff)
             ->get(route('admin.backups'))
@@ -349,8 +358,6 @@ test('database backups screen renders operational status and creates a backup', 
 
         expect(Storage::disk('local')->files('backups'))->not->toBeEmpty();
     } finally {
-        config()->set('database.default', $originalDefault);
-        config()->set('database.connections.sqlite.database', $originalSqliteDatabase);
         @unlink((string) $source);
     }
 });

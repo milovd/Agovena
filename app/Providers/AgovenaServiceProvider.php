@@ -10,6 +10,8 @@ use App\Agovena\Admin\InMemoryAdminRegistrar;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Admin\SettingsField;
 use App\Agovena\Admin\SettingsGroup;
+use App\Agovena\Backups\BackupManager;
+use App\Agovena\Backups\DatabaseBackupManager;
 use App\Agovena\Cart\CartRepository;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\SessionCartRepository;
@@ -101,6 +103,7 @@ class AgovenaServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AdminRegistrar::class, InMemoryAdminRegistrar::class);
+        $this->app->singleton(DatabaseBackupManager::class, BackupManager::class);
         $this->app->singleton(CustomerAccountNav::class);
         $this->app->singleton(CustomerAccountOverview::class);
         $this->app->singleton(ProductCapabilityRegistry::class);

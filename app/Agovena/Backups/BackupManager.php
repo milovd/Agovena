@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 
-final class BackupManager
+final class BackupManager implements DatabaseBackupManager
 {
     public function backupSqlite(string $source): BackupRunResult
     {
