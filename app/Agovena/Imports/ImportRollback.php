@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Imports;
 
 use App\Enums\InvoiceStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Customer;
 use App\Models\DiscountCode;
 use App\Models\ImportIdentityReservation;
@@ -15,6 +16,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\User;
+use BackedEnum;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -132,12 +134,20 @@ final class ImportRollback
         }
 
         if ($type === Payment::class) {
-            $payment = Payment::query()->find($id);
+            $payment = Payment::query()->lockForUpdate()->find($id);
             if ($payment === null) {
                 return;
             }
-            if ($payment->refunds()->exists()) {
-                throw new RuntimeException('Imported payment has refunds and cannot be rolled back safely.');
+            if (
+                $payment->refunds()->exists()
+                || $payment->attempts()->exists()
+                || in_array($payment->status, [
+                    PaymentStatus::Paid,
+                    PaymentStatus::PartiallyRefunded,
+                    PaymentStatus::Refunded,
+                ], true)
+            ) {
+                throw new RuntimeException('Imported payment has financial history and cannot be rolled back safely.');
             }
             $payment->delete();
 
@@ -155,7 +165,33 @@ final class ImportRollback
 
         $serviceClass = 'Agovena\\Modules\\Provisioning\\Models\\ServiceInstance';
         if ($type === $serviceClass && class_exists($serviceClass)) {
-            $serviceClass::query()->find($id)?->delete();
+            $service = $serviceClass::query()->lockForUpdate()->find($id);
+            if ($service === null) {
+                return;
+            }
+
+            $status = $service->getAttribute('status');
+            $statusValue = $status instanceof BackedEnum ? $status->value : (string) $status;
+            if (
+                $statusValue !== 'pending'
+                || $service->getAttribute('order_id') !== null
+                || $service->getAttribute('order_item_id') !== null
+                || $service->getAttribute('subscription_id') !== null
+                || $service->getAttribute('external_ref') !== null
+                || $service->getAttribute('provisioning_server_id') !== null
+                || $service->getAttribute('provisioning_at') !== null
+                || $service->getAttribute('activated_at') !== null
+                || $service->getAttribute('suspended_at') !== null
+                || $service->getAttribute('terminated_at') !== null
+                || $service->getAttribute('failed_at') !== null
+                || $service->getAttribute('failure_message') !== null
+                || ($service->getAttribute('customer_id') !== null && ! $service->customer()->exists())
+                || ($service->getAttribute('product_id') !== null && ! $service->product()->exists())
+            ) {
+                throw new RuntimeException('Imported service instance has dependencies or lifecycle history and cannot be rolled back safely.');
+            }
+
+            $service->delete();
 
             return;
         }

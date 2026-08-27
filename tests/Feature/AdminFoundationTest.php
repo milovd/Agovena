@@ -370,3 +370,13 @@ test('staff without backup management permission cannot create a database backup
         ->call('createBackup')
         ->assertForbidden();
 });
+
+test('database backups screen rechecks view permission during livewire refresh', function () {
+    $staff = $this->createStaff([], ['backups.view']);
+
+    $component = Livewire::actingAs($staff)->test(Backups::class);
+    $staff->roles->firstOrFail()->revokePermissionTo('backups.view');
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    $component->call('$refresh')->assertForbidden();
+});

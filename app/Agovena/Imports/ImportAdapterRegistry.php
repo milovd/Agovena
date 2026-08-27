@@ -50,6 +50,7 @@ final class ImportAdapterRegistry
                 'external_id' => ['product_id', 'id', 'external_id'],
                 'name' => ['product_name', 'name', 'title'],
                 'price_amount' => ['price_amount', 'price', 'amount'],
+                'currency' => ['currency', 'currency_code'],
             ],
             'order' => [
                 'external_id' => ['order_id', 'id', 'external_id'],

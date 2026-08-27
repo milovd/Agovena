@@ -49,6 +49,13 @@ final class ImportExecutor
         bool $dryRun = false,
     ): ImportRun {
         $report = $this->runner->preview($path, $adapter);
+        foreach ($report->candidates as $candidate) {
+            $candidateSource = Str::before($candidate->externalId, ':');
+            if ($candidateSource === '' || $candidateSource !== $source) {
+                throw new InvalidArgumentException('Import source does not match the adapter candidate namespace.');
+            }
+        }
+
         $run = ImportRun::query()->create([
             'source' => $source,
             'entity' => $report->candidates[0]->entity ?? 'unknown',
@@ -157,14 +164,14 @@ final class ImportExecutor
 
         $source = Str::before($candidate->externalId, ':');
         $customerKey = $this->sourceKey((string) ($candidate->payload['customer_external_id'] ?? ''), $source);
-        $customerRow = $this->findImportedRow($customerKey, User::class);
+        $customerRow = $this->findImportedRow($customerKey, User::class, $source);
         $customer = User::query()->find((int) $customerRow->imported_model_id)?->customer;
         if ($customer === null) {
             throw new InvalidArgumentException('Imported customer mapping is unavailable.');
         }
 
         $productKey = $this->sourceKey((string) ($candidate->payload['product_external_id'] ?? ''), $source);
-        $productRow = $this->findImportedRow($productKey, Product::class);
+        $productRow = $this->findImportedRow($productKey, Product::class, $source);
         $product = Product::query()->find((int) $productRow->imported_model_id);
         if ($product === null) {
             throw new InvalidArgumentException('Imported product mapping is unavailable.');
@@ -510,7 +517,7 @@ final class ImportExecutor
                 if (! $this->modules->isEnabled('subscriptions') || ! class_exists($subscriptionClass)) {
                     throw new InvalidArgumentException('The subscriptions module must be enabled before mapping a service subscription.');
                 }
-                $subscriptionId = $this->findImportedRow($this->sourceKey($subscriptionExternalId, $source), $subscriptionClass)->imported_model_id;
+                $subscriptionId = $this->findImportedRow($this->sourceKey($subscriptionExternalId, $source), $subscriptionClass, $source)->imported_model_id;
                 $subscription = $subscriptionClass::query()->find((int) $subscriptionId);
                 if (! $subscription instanceof Model) {
                     throw new InvalidArgumentException('Imported subscription mapping is unavailable.');
@@ -559,7 +566,7 @@ final class ImportExecutor
         if ($externalId === '') {
             throw new InvalidArgumentException('Imported customer mapping is required.');
         }
-        $row = $this->findImportedRow($this->sourceKey($externalId, $source), User::class);
+        $row = $this->findImportedRow($this->sourceKey($externalId, $source), User::class, $source);
         $customer = User::query()->find((int) $row->imported_model_id)?->customer;
         if ($customer === null) {
             throw new InvalidArgumentException('Imported customer mapping is unavailable.');
@@ -574,7 +581,7 @@ final class ImportExecutor
         if ($externalId === '') {
             throw new InvalidArgumentException('Imported order mapping is required.');
         }
-        $row = $this->findImportedRow($this->sourceKey($externalId, $source), Order::class);
+        $row = $this->findImportedRow($this->sourceKey($externalId, $source), Order::class, $source);
         $order = Order::query()->find((int) $row->imported_model_id);
         if ($order === null) {
             throw new InvalidArgumentException('Imported order mapping is unavailable.');
@@ -599,7 +606,7 @@ final class ImportExecutor
         if ($externalId === '') {
             throw new InvalidArgumentException('Imported product mapping is required.');
         }
-        $row = $this->findImportedRow($this->sourceKey($externalId, $source), Product::class);
+        $row = $this->findImportedRow($this->sourceKey($externalId, $source), Product::class, $source);
         $product = Product::query()->find((int) $row->imported_model_id);
         if ($product === null) {
             throw new InvalidArgumentException('Imported product mapping is unavailable.');
@@ -745,7 +752,7 @@ final class ImportExecutor
             'description' => null,
             'status' => ProductStatus::Draft,
             'price_amount' => $price,
-            'currency' => strtoupper((string) ($candidate->payload['currency'] ?? 'EUR')),
+            'currency' => $this->currency((string) ($candidate->payload['currency'] ?? 'EUR'), 'Product currency'),
         ]);
 
         return [Product::class, (int) $product->getKey()];
@@ -757,7 +764,7 @@ final class ImportExecutor
         return DB::transaction(function () use ($candidate): array {
             $source = Str::before($candidate->externalId, ':');
             $customerKey = $this->sourceKey((string) ($candidate->payload['customer_external_id'] ?? ''), $source);
-            $customerRow = $this->findImportedRow($customerKey, User::class);
+            $customerRow = $this->findImportedRow($customerKey, User::class, $source);
             $user = User::query()->find((int) $customerRow->imported_model_id);
             $customer = $user?->customer;
             if ($customer === null) {
@@ -782,7 +789,7 @@ final class ImportExecutor
                     throw new InvalidArgumentException('Order line item is invalid.');
                 }
                 $productKey = $this->sourceKey((string) ($item['product_external_id'] ?? ''), $source);
-                $productRow = $this->findImportedRow($productKey, Product::class);
+                $productRow = $this->findImportedRow($productKey, Product::class, $source);
                 $product = Product::query()->find((int) $productRow->imported_model_id);
                 $quantity = filter_var($item['quantity'] ?? null, FILTER_VALIDATE_INT);
                 $unitAmount = filter_var($item['unit_amount'] ?? null, FILTER_VALIDATE_INT);
@@ -840,15 +847,24 @@ final class ImportExecutor
 
     private function sourceKey(string $value, string $source): string
     {
-        return str_contains($value, ':') ? $value : $source.':'.$value;
+        if (! str_contains($value, ':')) {
+            return $source.':'.$value;
+        }
+
+        if (Str::before($value, ':') !== $source) {
+            throw new InvalidArgumentException('Imported dependency source does not match the current import.');
+        }
+
+        return $value;
     }
 
-    private function findImportedRow(string $externalId, string $modelType): ImportRow
+    private function findImportedRow(string $externalId, string $modelType, string $source): ImportRow
     {
         $row = ImportRow::query()
             ->where('external_id', $externalId)
             ->where('status', 'imported')
             ->where('imported_model_type', $modelType)
+            ->whereHas('run', fn ($query) => $query->where('source', $source))
             ->latest('id')
             ->first();
         if ($row === null) {

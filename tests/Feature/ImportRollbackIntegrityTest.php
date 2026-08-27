@@ -3,9 +3,11 @@
 declare(strict_types=1);
 
 use App\Agovena\Imports\ImportRollback;
+use App\Enums\PaymentStatus;
 use App\Models\CustomerAddress;
 use App\Models\ImportRun;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\User;
@@ -76,6 +78,22 @@ it('explicitly refuses to rollback an imported order', function (): void {
         ->toThrow(RuntimeException::class);
 
     expect(Order::query()->whereKey($order->id)->exists())->toBeTrue()
+        ->and($run->fresh()->status)->toBe('completed')
+        ->and($run->rows()->firstOrFail()->status)->toBe('imported');
+});
+
+it('refuses to hard-delete an imported payment that is already paid', function (): void {
+    $payment = Payment::factory()->create([
+        'status' => PaymentStatus::Paid,
+        'paid_at' => now(),
+    ]);
+    $run = makeRollbackIntegrityRun('payment', Payment::class, $payment->id);
+
+    expect(fn () => app(ImportRollback::class)->handle($run))
+        ->toThrow(RuntimeException::class);
+
+    expect(Payment::query()->whereKey($payment->id)->exists())->toBeTrue()
+        ->and($payment->fresh()->status)->toBe(PaymentStatus::Paid)
         ->and($run->fresh()->status)->toBe('completed')
         ->and($run->rows()->firstOrFail()->status)->toBe('imported');
 });

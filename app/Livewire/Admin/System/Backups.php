@@ -76,6 +76,8 @@ final class Backups extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('backups.view');
+
         $allFiles = $this->backupFiles();
         $files = array_slice($allFiles, 0, 100);
 

@@ -89,12 +89,13 @@ it('imports invoices and payment transactions from mapped dependencies', functio
         ->and(Payment::query()->where('reference', 'legacy-payment-1')->value('amount'))->toBe(2500)
         ->and(Payment::query()->where('reference', 'legacy-payment-1')->first()->attempts)->toHaveCount(1);
 
-    app(ImportRollback::class)->handle($paymentRun);
+    expect(fn () => app(ImportRollback::class)->handle($paymentRun))
+        ->toThrow(RuntimeException::class);
 
     expect(fn () => app(ImportRollback::class)->handle($invoiceRun))
         ->toThrow(RuntimeException::class);
 
-    expect(Payment::query()->where('reference', 'legacy-payment-1')->exists())->toBeFalse()
+    expect(Payment::query()->where('reference', 'legacy-payment-1')->exists())->toBeTrue()
         ->and(Invoice::query()->where('number', 'LEGACY-INV-1')->first()->status->value)->toBe('paid')
         ->and($invoiceRun->fresh()->status)->toBe('completed');
 
@@ -120,9 +121,10 @@ it('imports provisioning service instances only when the module is enabled', fun
     expect($run->errors)->toBe(0)
         ->and(ServiceInstance::query()->where('number', 'SVC-LEGACY')->value('provider_key'))->toBe('manual');
 
-    app(ImportRollback::class)->handle($run);
+    expect(fn () => app(ImportRollback::class)->handle($run))
+        ->toThrow(RuntimeException::class);
 
-    expect(ServiceInstance::query()->where('number', 'SVC-LEGACY')->exists())->toBeFalse();
+    expect(ServiceInstance::query()->where('number', 'SVC-LEGACY')->exists())->toBeTrue();
 
     unlink($customerPath);
     unlink($productPath);

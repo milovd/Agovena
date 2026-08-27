@@ -71,6 +71,26 @@ test('customer logout destination remains available from account menu', function
         ->assertSee(route('customer.logout'), false);
 });
 
+test('customer logout is csrf protected and only accepts post', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->get(route('customer.logout'))
+        ->assertStatus(405);
+
+    $this->actingAs($user)
+        ->get('/')
+        ->assertSee('method="POST" action="'.route('customer.logout').'"', false)
+        ->assertSee('name="_token"', false);
+
+    $this->actingAs($user)
+        ->withSession(['_token' => 'logout-csrf-token'])
+        ->post(route('customer.logout'), ['_token' => 'logout-csrf-token'])
+        ->assertRedirect(route('storefront.home'));
+
+    $this->assertGuest();
+});
+
 test('footer uses configured store name and logo', function () {
     Storage::fake('public');
     $path = UploadedFile::fake()->image('footer-logo.png')->store('branding', 'public');

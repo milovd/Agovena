@@ -954,6 +954,19 @@ button.store-header__utility[aria-expanded="true"] {
   transition: color var(--theme-ease), background var(--theme-ease);
 }
 
+.store-account-menu__logout-form {
+  margin: 0;
+}
+
+.store-account-menu__logout-form > button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
 .store-account-menu__item .store-icon {
   flex-shrink: 0;
   opacity: 0.85;

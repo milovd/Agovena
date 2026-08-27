@@ -25,7 +25,7 @@ This file is the working release matrix for the first public Agovena release. It
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
 - Optional-packages hardening commits: `43d523f`, `0167242`, `ce2d2cf`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The current local full application suite has passed: 937 tests and 12,908 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
+- The current local full application suite has passed: 947 tests and 12,943 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -65,7 +65,7 @@ Transfers, contact updates, renewals, supported-TLD policy, billing-profile setu
 
 ### Import and migration tooling
 
-`partial`: the generic migration framework and complete core entity matrix are now implemented and covered by automated tests. It provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, source/entity/external-identity reservations, duplicate detection, reconciled invoice and payment totals, refund-ledger import, fail-closed rollback and auditable import rows. Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance writes are covered. Source-specific fixtures, independent post-fix review and provider acceptance remain external verification work.
+`partial`: the generic migration framework and complete core entity matrix are now implemented and covered by automated tests. It provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, source-isolated dependency references, source/entity/external-identity reservations, duplicate detection, reconciled invoice and payment totals, refund-ledger import, fail-closed rollback and auditable import rows. Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance writes are covered. Source-specific fixtures, independent post-fix review and provider acceptance remain external verification work.
 
 Still required for the complete roadmap matrix:
 
@@ -86,7 +86,7 @@ Still required for the complete roadmap matrix:
 `partial`.
 
 - Provider-neutral CSV/custom preview now supports header mapping, adapter validation, malformed-row reporting and duplicate detection without writing domain data.
-- Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance mappings now have transaction-safe writes, reconciled accounting fields, identity reservations and fail-closed rollback coverage.
+- Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance mappings now have transaction-safe writes, source-isolated dependencies, validated currency and accounting fields, identity reservations and fail-closed rollback coverage.
 - Source-specific fixtures, MariaDB/concurrency verification for the extended import chain, independent post-fix review and provider acceptance remain required.
 
 ### Referrals
@@ -116,6 +116,7 @@ Live provider credentials, reputation services and production browser/identity r
 
 - The extracted release has a backup and restore smoke path, plus a first-party artifact verifier for `.env`, SQLite and private/public storage paths.
 - Automatic database backups, retention, failure alerts and the documented production restore command path are implemented and feature-tested.
+- Backup storage writes are verified before success is reported, MySQL credentials use a short-lived defaults file instead of a process environment variable, and the Admin backup view rechecks authorization during Livewire renders.
 - Cookie banner, cookie settings, consent history, privacy retention and legal page review are feature-tested; legal sign-off remains an operational gate.
 - Backup verification still needs the real MariaDB and storage deployment responsibilities, not only a temporary SQLite artifact.
 
@@ -141,7 +142,7 @@ Live provider credentials, reputation services and production browser/identity r
 
 Validated gates:
 
-- full SQLite application suite: 937 tests, 12,908 assertions;
+- full SQLite application suite: 947 tests, 12,943 assertions;
 - upgrade suite: 14 tests, 132 assertions;
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
@@ -152,7 +153,7 @@ Validated gates:
 
 Still required before a release tag:
 
-- independent post-fix security review after the current hardening changes; the preceding review found 12 concrete findings and is not a release approval;
+- independent post-fix security review after the current hardening changes; the preceding review found concrete findings and is not a release approval;
 - MariaDB multi-process verification of the new role-lock and import-identity race paths; the local role-lock test was skipped because the required concurrency database is unavailable;
 - actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 18 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
 - real Namecheap/Cloudflare sandbox status matrix;

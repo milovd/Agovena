@@ -130,6 +130,11 @@ final class Show extends Component
     public function adjustCredit(CustomerCreditLedger $ledger): void
     {
         $this->authorize('customers.manage');
+
+        if (! $this->requireRecentPassword('adjustCredit')) {
+            return;
+        }
+
         $data = $this->validate([
             'entry_type' => ['required', Rule::in(['credit', 'debit'])],
             'amount' => ['required', 'integer', 'min:1'],
@@ -146,6 +151,11 @@ final class Show extends Component
     public function anonymize(AnonymizeCustomer $anonymize): void
     {
         $this->authorize('customers.manage');
+
+        if (! $this->requireRecentPassword('anonymize')) {
+            return;
+        }
+
         $this->customer = $anonymize->handle($this->customer);
         $this->customer->loadMissing('user');
         $this->name = (string) $this->customer->name;

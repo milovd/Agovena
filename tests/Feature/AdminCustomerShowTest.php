@@ -6,6 +6,7 @@ use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Livewire\Admin\Customers\Show as AdminCustomerShow;
 use App\Models\Customer;
+use App\Models\CustomerCreditEntry;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -56,4 +57,31 @@ test('admin can update customer profile from show page', function () {
         ->and($customer->email)->toBe('after@agovena.test')
         ->and($customer->user?->name)->toBe('After Name')
         ->and($customer->user?->email)->toBe('after@agovena.test');
+});
+
+test('admin customer credit adjustment requires recent password confirmation', function () {
+    $customer = Customer::factory()->create();
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(AdminCustomerShow::class, ['customer' => $customer])
+        ->set('entry_type', 'credit')
+        ->set('amount', 500)
+        ->set('reason', 'Manual adjustment')
+        ->call('adjustCredit')
+        ->assertSet('showingPasswordConfirmation', true);
+
+    expect(CustomerCreditEntry::query()->where('customer_id', $customer->id)->exists())->toBeFalse();
+});
+
+test('admin customer anonymization requires recent password confirmation', function () {
+    $customer = Customer::factory()->create();
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(AdminCustomerShow::class, ['customer' => $customer])
+        ->call('anonymize')
+        ->assertSet('showingPasswordConfirmation', true);
+
+    expect($customer->fresh()->anonymized_at)->toBeNull();
 });

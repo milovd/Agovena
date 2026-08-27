@@ -66,8 +66,11 @@
 <div class="store-account-menu__divider" role="separator"></div>
 
 <div class="store-account-menu__section" role="none">
-    <a class="store-account-menu__item store-account-menu__item--danger" role="menuitem" href="{{ route('customer.logout') }}" @click="open = false">
-        @include('theme::partials.icon', ['name' => 'log-out', 'size' => 18])
-        <span>{{ __('storefront.nav.logout') }}</span>
-    </a>
+    <form method="POST" action="{{ route('customer.logout') }}" class="store-account-menu__logout-form" @submit="open = false">
+        @csrf
+        <button type="submit" class="store-account-menu__item store-account-menu__item--danger" role="menuitem">
+            @include('theme::partials.icon', ['name' => 'log-out', 'size' => 18])
+            <span>{{ __('storefront.nav.logout') }}</span>
+        </button>
+    </form>
 </div>

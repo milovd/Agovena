@@ -685,10 +685,13 @@
                                         <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
                                     </a>
                                 @endif
-                                <a class="store-drawer__link store-drawer__link--danger" href="{{ route('customer.logout') }}" @click="navOpen = false">
-                                    <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'log-out', 'size' => 18])</span>
-                                    <span class="store-drawer__link-text">{{ __('storefront.nav.logout') }}</span>
-                                </a>
+                                <form method="POST" action="{{ route('customer.logout') }}" class="store-drawer__logout-form" @submit="navOpen = false">
+                                    @csrf
+                                    <button type="submit" class="store-drawer__link store-drawer__link--danger">
+                                        <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'log-out', 'size' => 18])</span>
+                                        <span class="store-drawer__link-text">{{ __('storefront.nav.logout') }}</span>
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     @else

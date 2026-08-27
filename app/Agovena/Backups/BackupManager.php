@@ -8,6 +8,7 @@ use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Symfony\Component\Process\Process;
 
 final class BackupManager implements DatabaseBackupManager
@@ -51,55 +52,153 @@ final class BackupManager implements DatabaseBackupManager
     /** @param array<string, mixed> $connection */
     private function backupMysql(array $connection): BackupRunResult
     {
-        $temporaryPath = storage_path('framework/backup-'.Str::lower(Str::random(24)).'.sql');
+        $temporaryDirectory = storage_path('framework/private');
+        $temporaryPath = $temporaryDirectory.'/backup-'.Str::lower(Str::random(24)).'.sql';
+        $credentialsPath = $temporaryDirectory.'/backup-'.Str::lower(Str::random(24)).'.cnf';
         $arguments = [
             (string) config('agovena.backups.mysql_dump_binary', 'mysqldump'),
+            '--defaults-extra-file='.$credentialsPath,
             '--single-transaction',
             '--routines',
             '--triggers',
-            '--host='.(string) ($connection['host'] ?? '127.0.0.1'),
-            '--port='.(string) ($connection['port'] ?? 3306),
-            '--user='.(string) ($connection['username'] ?? ''),
             (string) ($connection['database'] ?? ''),
         ];
-        $environment = [];
-        if (filled($connection['password'] ?? null)) {
-            $environment['MYSQL_PWD'] = (string) $connection['password'];
+        $result = new BackupRunResult(false, null, errorCode: 'temporary_storage_failed');
+
+        try {
+            if ($this->ensurePrivateDirectory($temporaryDirectory) && $this->writeMysqlCredentialsFile($credentialsPath, $connection)) {
+                $output = fopen($temporaryPath, 'xb');
+                if ($output !== false) {
+                    try {
+                        if (! $this->restrictPermissions($temporaryPath, false)) {
+                            $result = new BackupRunResult(false, null, errorCode: 'temporary_storage_failed');
+                        } else {
+                            $process = new Process($arguments, base_path(), [], null, 300);
+                            $process->run(static function (string $type, string $buffer) use ($output): void {
+                                if ($type === Process::OUT && fwrite($output, $buffer) === false) {
+                                    throw new RuntimeException('Backup dump output could not be written.');
+                                }
+                            });
+
+                            if (! $process->isSuccessful()) {
+                                $result = new BackupRunResult(false, null, errorCode: 'dump_failed');
+                            } else {
+                                $contents = file_get_contents($temporaryPath);
+                                $result = $contents === false
+                                    ? new BackupRunResult(false, null, errorCode: 'dump_unreadable')
+                                    : $this->storeEncrypted($contents, 'mysql');
+                            }
+                        }
+                    } finally {
+                        fclose($output);
+                    }
+                }
+            }
+        } catch (\Throwable) {
+            $result = new BackupRunResult(false, null, errorCode: 'dump_failed');
         }
 
         try {
-            $output = fopen($temporaryPath, 'wb');
-            if ($output === false) {
-                return new BackupRunResult(false, null, errorCode: 'temporary_storage_failed');
-            }
-
-            try {
-                $process = new Process($arguments, base_path(), $environment, null, 300);
-                $process->run(static function (string $type, string $buffer) use ($output): void {
-                    if ($type === Process::OUT) {
-                        fwrite($output, $buffer);
-                    }
-                });
-            } finally {
-                fclose($output);
-            }
-
-            if (! $process->isSuccessful()) {
-                return new BackupRunResult(false, null, errorCode: 'dump_failed');
-            }
-
-            $contents = file_get_contents($temporaryPath);
-            if ($contents === false) {
-                return new BackupRunResult(false, null, errorCode: 'dump_unreadable');
-            }
-
-            return $this->storeEncrypted($contents, 'mysql');
+            $this->removeTemporaryFile($temporaryPath);
+            $this->removeTemporaryFile($credentialsPath);
         } catch (\Throwable) {
-            return new BackupRunResult(false, null, errorCode: 'dump_failed');
-        } finally {
-            if (is_file($temporaryPath)) {
-                @unlink($temporaryPath);
+            return new BackupRunResult(false, null, errorCode: 'temporary_cleanup_failed');
+        }
+
+        return $result;
+    }
+
+    /** @param array<string, mixed> $connection */
+    private function writeMysqlCredentialsFile(string $path, array $connection): bool
+    {
+        $escape = static fn (mixed $value): string => addcslashes((string) $value, "\\\"\n\r");
+        $contents = implode("\n", [
+            '[client]',
+            'host="'.$escape($connection['host'] ?? '127.0.0.1').'"',
+            'port="'.$escape($connection['port'] ?? 3306).'"',
+            'user="'.$escape($connection['username'] ?? '').'"',
+            'password="'.$escape($connection['password'] ?? '').'"',
+            '',
+        ]);
+        $handle = fopen($path, 'xb');
+        if ($handle === false) {
+            return false;
+        }
+
+        try {
+            $remaining = $contents;
+            while ($remaining !== '') {
+                $written = fwrite($handle, $remaining);
+                if ($written === false || $written === 0) {
+                    return false;
+                }
+                $remaining = substr($remaining, $written);
             }
+
+            if (! fflush($handle)) {
+                return false;
+            }
+        } finally {
+            fclose($handle);
+        }
+
+        return $this->restrictPermissions($path, false) && is_readable($path);
+    }
+
+    private function ensurePrivateDirectory(string $path): bool
+    {
+        if (! is_dir($path) && ! mkdir($path, 0700, true) && ! is_dir($path)) {
+            return false;
+        }
+
+        return $this->restrictPermissions($path, true);
+    }
+
+    private function restrictPermissions(string $path, bool $directory): bool
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            $identity = trim((string) (getenv('USERNAME') ?: getenv('USER')));
+            if ($identity === '') {
+                return false;
+            }
+
+            $process = new Process([
+                'icacls',
+                $path,
+                '/inheritance:r',
+                '/grant:r',
+                $identity.':F',
+            ]);
+            $process->run();
+
+            return $process->isSuccessful();
+        }
+
+        $mode = $directory ? 0700 : 0600;
+        if (! chmod($path, $mode)) {
+            return false;
+        }
+
+        clearstatcache(true, $path);
+        $permissions = fileperms($path);
+
+        return $permissions !== false && ($permissions & 0777) === $mode;
+    }
+
+    private function removeTemporaryFile(string $path): void
+    {
+        clearstatcache(true, $path);
+        if (! is_file($path)) {
+            return;
+        }
+
+        if (! unlink($path)) {
+            throw new RuntimeException('Temporary backup file could not be removed.');
+        }
+
+        clearstatcache(true, $path);
+        if (is_file($path)) {
+            throw new RuntimeException('Temporary backup file remains after cleanup.');
         }
     }
 
@@ -115,7 +214,9 @@ final class BackupManager implements DatabaseBackupManager
         }
 
         try {
-            $disk->put($path, Crypt::encrypt($compressed));
+            if (! $disk->put($path, Crypt::encrypt($compressed)) || ! $disk->exists($path)) {
+                return new BackupRunResult(false, null, errorCode: 'storage_failed');
+            }
         } catch (\Throwable) {
             return new BackupRunResult(false, null, errorCode: 'storage_failed');
         }

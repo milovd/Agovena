@@ -152,7 +152,7 @@ Route::middleware(['guest', 'abuse'])->group(function (): void {
 });
 
 Route::middleware(['auth', 'abuse'])->prefix('account')->name('customer.')->group(function (): void {
-    Route::get('/logout', CustomerLogout::class)->name('logout');
+    Route::post('/logout', CustomerLogout::class)->name('logout');
     Route::get('/verify-email', CustomerVerifyEmail::class)->name('verification.notice');
     Route::get('/verify-email/{id}/{hash}', EmailVerificationController::class)
         ->middleware(['signed', 'throttle:6,1'])
