@@ -18,7 +18,7 @@ The project is early but has a runnable Laravel Core, Admin, default Theme store
 - Prefer simple, explicit code
 - No secrets in the repo
 - Do not describe unfinished work as shipped
-- Do not use em dashes (`—`) in UI copy, docs, comments, or commits (use commas, colons, parentheses, or spaced hyphens)
+- Do not use long dash punctuation in UI copy, docs, comments, or commits (use commas, colons, parentheses, or spaced hyphens)
 
 ## Commits
 
