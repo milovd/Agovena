@@ -16,13 +16,13 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`.
+- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`.
 - Last commit with full CI matrix green before the current Admin hardening push: `2ad3e3a` via Actions run `33030783714`.
-- Current pushed commit: `83c2e3e`. A new full CI matrix run is required before this commit can become release evidence.
+- Current functional commit: `01335a8`. This release-matrix update is documentation-only; the full CI matrix for the functional commit is still required before it can become release evidence.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
 - Optional-packages hardening commits: `43d523f`, `0167242`, `ce2d2cf`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The current local full application suite has passed: 917 tests and 12,813 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
+- The current local full application suite has passed: 921 tests and 12,833 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -138,7 +138,7 @@ Live provider credentials, reputation services and production browser/identity r
 
 Validated gates:
 
-- full SQLite application suite: 880 tests, 12,610 assertions;
+- full SQLite application suite: 921 tests, 12,833 assertions;
 - upgrade suite: 14 tests, 132 assertions;
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
