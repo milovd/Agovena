@@ -9,7 +9,7 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-it('saves independent registrar and DNS settings on a domain product', function (): void {
+it('saves registration and DNS settings from the single Domain capability', function (): void {
     installAndEnableModules(['domains']);
     $staff = $this->createStaff();
     $product = Product::factory()->active()->create(['name' => 'Domain registration']);

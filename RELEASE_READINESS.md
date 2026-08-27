@@ -19,14 +19,14 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`.
+- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`, `HEAD`.
 - Last commit with full CI matrix green before the current Admin hardening push: `2ad3e3a` via Actions run `33030783714`.
 - Previous functional baseline: `89d1b66` (including the browser, backup and import hardening); CI-163 for this baseline passed all jobs.
-- Current hardening commit: `d8b9efa`; GitHub Actions run `33116765694` for this exact commit is still in progress. It contains the MariaDB race and aggregate-type fixes identified by the failed runs for `7ca1770` and `8e0ae7e`.
+- Current Domain integration commit: `HEAD`; it consolidates registration, renewals and DNS under the single `domain-dns` package. It is local and has not been pushed or CI-verified.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
-- Optional-packages hardening commits: `43d523f`, `0167242`, `ce2d2cf`.
+- Optional-packages commits: `43d523f`, `0167242`, `ce2d2cf`, `d18c916`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The current local full application suite has passed: 947 tests and 12,943 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
+- The current local full application suite has passed: 938 tests and 12,919 assertions. This local result does not yet prove the local commits in CI, external provider behavior, or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -34,7 +34,7 @@ This file is the working release matrix for the first public Agovena release. It
 |---|---|---|
 | Core catalog, cart, checkout, orders, invoices | implemented | Feature coverage exists in the application suite. |
 | Refunds, credit notes, payment attempts, fee snapshots and webhook contracts | implemented | Automated idempotency, signature, fee pass-through and invoice snapshot tests exist. |
-| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. All 18 optional extension manifests now declare `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven. MariaDB multi-process proof and live provider failure review remain release gates. |
+| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. All 16 optional extension manifests now declare `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven. MariaDB multi-process proof and live provider failure review remain release gates. |
 | Subscriptions and recurring renewal seams | partial | Automated lifecycle coverage and subscription import coverage exist; provider-specific recurring behavior remains capability-bound. |
 | Account security, TOTP, recovery and sessions | implemented | Customer security flows and automated coverage exist. |
 | Audit logging | implemented | Capture, redaction, integrity metadata, filters, export and retention command paths are covered. |
@@ -48,19 +48,18 @@ This file is the working release matrix for the first public Agovena release. It
 
 ### Domain sales
 
-`implemented` for the provider-neutral domain layer and tested provider seams. The `domains` module provides the product capability, order-paid idempotent records, lifecycle statuses, independent registrar/DNS roles, registrar and DNS registries, provider capability checks, admin operations and customer-owned list. The `hosting` preset enables `domains` together with `provisioning` and `subscriptions`; it does not install a registrar provider or activate provider credentials.
+`implemented` for the provider-neutral domain layer and tested provider seams. The `domains` module provides the product capability, order-paid idempotent records, lifecycle statuses, registrar and DNS registries, provider capability checks, admin operations and customer-owned list. The `hosting` preset enables `domains` together with `provisioning` and `subscriptions`; it does not install the integrated Domain DNS package or activate provider credentials.
 
-The Cloudflare Registrar extension is registered outside the `domains` module and depends on it. It supplies provider-specific account/token settings, availability and registration API calls, and explicit capability metadata. The separate `cloudflare-dns` extension supplies zone discovery/creation and record list/create/update/delete operations through its own encrypted settings. Disabling an extension preserves generic domain records but removes provider actions; disabling the module removes the domain surface while preserving its data.
+The single `domain-dns` extension is registered outside the `domains` module and depends on it. It supplies Cloudflare registration and DNS operations plus the Namecheap registration and renewal adapter, with one settings surface and encrypted secret fields. Disabling the extension preserves generic domain records but removes provider actions; disabling the module removes the domain surface while preserving its data.
 
-The optional package catalog also contains a separate `namecheap-registrar` extension. It uses the same registrar contract and currently exposes only availability checks, registrations and renewals. Its XML transport and response mapping are automated-test covered, but no live Namecheap sandbox flow has been run here. It does not claim DNS, nameserver, transfer or contact-update support.
+The integrated package contains the Namecheap registrar adapter behind the same Domain workspace. It currently exposes only availability checks, registrations and renewals. Its XML transport and response mapping are automated-test covered, but no live Namecheap sandbox flow has been run here. It does not claim DNS, nameserver, transfer or contact-update support.
 
 Domain records snapshot `registrar_key` and `dns_provider_key` independently. This supports Namecheap for registration plus Cloudflare for DNS without coupling registrar billing, renewals or transfers to DNS hosting. Product configuration and admin actions are feature-tested; live provider registration, DNS and renewal verification remain external gates.
 
-- availability and price checks via `domain-check`;
-- new registrations via `registrations`;
-- encrypted account/token settings through the existing ExtensionSettingsRepository;
-- explicit capability metadata for `availability_check` and `registration`;
-- explicit unsupported behavior for renewals while the Cloudflare API beta does not expose renew endpoints.
+- availability and price checks through the integrated Domain DNS package;
+- one encrypted settings surface through the existing ExtensionSettingsRepository for Cloudflare and Namecheap credentials;
+- Cloudflare DNS zone and record management plus Cloudflare and Namecheap registrar capabilities;
+- explicit unsupported behavior for lifecycle operations that the provider contracts do not expose.
 
 Transfers, contact updates, renewals, supported-TLD policy, billing-profile setup and real sandbox registration remain provider verification gates. IDNs and unsupported extensions must not be promised.
 
@@ -143,20 +142,20 @@ Live provider credentials, reputation services and production browser/identity r
 
 Validated gates:
 
-- full SQLite application suite: 947 tests, 12,943 assertions;
+- full SQLite application suite: 938 tests, 12,919 assertions;
 - upgrade suite: 14 tests, 132 assertions;
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
 - CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
 - local Playwright browser matrix: 24 tests passed against a prepared E2E server, including desktop/mobile responsive, checkout and keyboard/accessibility flows;
 - GitHub Actions full matrix for commit `89d1b66` (CI-163): PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed;
-- Full PHPStan with `APP_ENV=testing` and a 512 MB CLI memory limit, targeted Pint, Blade cache, Vite build, npm production audit, PHP syntax and diff-check: passed on the current worktree. CI run `33116765694` on the committed tree is still in progress.
+- Full PHPStan with `APP_ENV=testing` and a 1 GB CLI memory limit, targeted Pint, Blade cache, Vite build, npm production audit, PHP syntax and diff-check: passed on the current worktree. The new local commits have not yet run in CI.
 
 Still required before a release tag:
 
 - independent post-fix security review after the current hardening changes; the preceding review found concrete findings and is not a release approval;
 - MariaDB multi-process verification of the new role-lock and import-identity race paths; the local role-lock test was skipped because the required concurrency database is unavailable;
-- actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 18 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
+- actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 16 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated browser review and human responsive/keyboard review;
 - live external webhook receiver acceptance;

@@ -46,7 +46,7 @@ Statuses:
 | PayPal Extension | MOCK-TESTED ONLY |
 | Paddle Extension | MOCK-TESTED ONLY - first-party adapter implemented; sandbox credentials not run |
 | Tebex Extension | MOCK-TESTED ONLY - first-party adapter implemented; sandbox credentials not run |
-| Cloudflare Registrar Extension | MOCK-TESTED ONLY - beta availability and registration contract; no live account/token run |
+| Integrated Domain DNS package | MOCK-TESTED ONLY - Cloudflare DNS, Cloudflare registration and Namecheap registration/renewal contracts; no live account/token run |
 | PostNL Extension | MOCK-TESTED ONLY |
 | Pterodactyl Extension | MOCK-TESTED ONLY |
 | Proxmox VE Extension | MOCK-TESTED ONLY |

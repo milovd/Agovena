@@ -241,6 +241,7 @@ final class Index extends Component
             ExtensionCategory::Authentication->value,
             ExtensionCategory::Storage->value,
             ExtensionCategory::Analytics->value,
+            ExtensionCategory::Domain->value,
             ExtensionCategory::Other->value,
         ];
         $groups = [];

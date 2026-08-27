@@ -505,6 +505,10 @@
                             @endif
 
                             @if (! empty($capabilityEnabled['domain_registration']))
+                                <div class="ag-field ag-grid__span-2">
+                                    <h3 class="ag-section__title">{{ __('admin.products.capabilities.domain_unified') }}</h3>
+                                    <p class="ag-field__hint">{{ __('admin.products.capabilities.domain_unified_help') }}</p>
+                                </div>
                                 <div class="ag-grid ag-grid--2">
                                     <div class="ag-field">
                                         <label class="ag-field__label" for="domainRegistrarKey">{{ __('admin.products.capabilities.domain_registrar') }}</label>

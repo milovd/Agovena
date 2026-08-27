@@ -9,13 +9,12 @@ enum ExtensionCategory: string
     case PaymentGateway = 'payment_gateway';
     case Provisioning = 'provisioning';
     case Shipping = 'shipping';
-    case DomainRegistrar = 'domain_registrar';
-    case DomainDnsProvider = 'domain_dns_provider';
     case Authentication = 'authentication';
     case Storage = 'storage';
     case Notifications = 'notifications';
     case Analytics = 'analytics';
     case Tax = 'tax';
+    case Domain = 'domain';
     case Other = 'other';
 
     public function labelKey(): string
@@ -32,7 +31,7 @@ enum ExtensionCategory: string
         return match ($this) {
             self::PaymentGateway => 'payments',
             self::Notifications => 'notifications',
-            self::DomainRegistrar, self::DomainDnsProvider => 'domains',
+            self::Domain => 'domains',
             default => $this->value,
         };
     }
