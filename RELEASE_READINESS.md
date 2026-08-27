@@ -20,7 +20,7 @@ This file is the working release matrix for the first public Agovena release. It
 - Last code commit with full CI matrix green: `0ce56e1`.
 - Optional-packages hardening commit: `43d523f`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The full application suite has passed: 870 tests and 12,554 assertions. Passing automated tests do not prove external provider or authenticated browser behavior.
+- The full application suite has passed: 871 tests and 12,556 assertions. Passing automated tests do not prove external provider or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -137,7 +137,7 @@ Live provider credentials, reputation services and production browser/identity r
 
 Validated gates:
 
-- full SQLite application suite: 870 tests, 12,554 assertions;
+- full SQLite application suite: 871 tests, 12,556 assertions;
 - upgrade suite: 14 tests, 132 assertions;
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
