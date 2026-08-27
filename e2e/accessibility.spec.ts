@@ -25,7 +25,7 @@ test('cart and checkout keep keyboard focus and control labels', async ({ page }
     await page.getByTestId('checkout-continue').press('Enter');
     await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
 
-    const method = page.getByTestId('checkout-payment-methods').getByRole('radio').first();
+    const method = page.getByTestId('checkout-payment-methods').locator('input[type="radio"]:enabled').first();
     await method.focus();
     await expect(method).toBeFocused();
     await page.keyboard.press('Space');

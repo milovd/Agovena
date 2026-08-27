@@ -8,8 +8,17 @@ export const guest = {
     city: 'Amsterdam',
 };
 
+export async function chooseEssentialCookies(page: Page): Promise<void> {
+    const button = page.getByRole('button', { name: 'Essential only' });
+    if (await button.count() && await button.first().isVisible()) {
+        await button.first().click();
+        await expect(page.locator('[data-cookie-banner]')).toBeHidden();
+    }
+}
+
 export async function addProductToCart(page: Page, slug: string, options: Record<string, string> = {}): Promise<void> {
     await page.goto(`/products/${slug}`);
+    await chooseEssentialCookies(page);
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeEnabled();
 
     for (const value of Object.values(options)) {
