@@ -16,13 +16,13 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`.
+- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`.
 - Last commit with full CI matrix green before the current Admin hardening push: `2ad3e3a` via Actions run `33030783714`.
-- Current functional commit: `01335a8`. This release-matrix update is documentation-only; the full CI matrix for the functional commit is still required before it can become release evidence.
+- Current functional baseline: `edf2547` plus browser-test fix `a3fb36b`. This release-matrix update also includes a CI-only Composer retry; its new full CI matrix remains required before release evidence is complete.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
 - Optional-packages hardening commits: `43d523f`, `0167242`, `ce2d2cf`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The current local full application suite has passed: 921 tests and 12,833 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
+- The current local full application suite has passed: 921 tests and 12,846 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -138,12 +138,12 @@ Live provider credentials, reputation services and production browser/identity r
 
 Validated gates:
 
-- full SQLite application suite: 921 tests, 12,833 assertions;
+- full SQLite application suite: 921 tests, 12,846 assertions;
 - upgrade suite: 14 tests, 132 assertions;
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
 - CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
-- GitHub Actions full matrix for commit `2ad3e3a`: PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed. The matrix for current commit `83c2e3e` is pending;
+- GitHub Actions full matrix for commit `2ad3e3a`: PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed. The current functional baseline (`edf2547` plus `a3fb36b`) and the workflow retry follow-up still require a fresh green matrix;
 - Pint, PHPStan, Blade cache, Vite build, Composer audit, npm production audit, PHP syntax and diff-check: passed.
 
 Still required before a release tag:

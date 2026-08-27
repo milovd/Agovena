@@ -71,7 +71,17 @@ jobs:
 
       - name: Composer audit
         if: matrix.php == '8.3'
-        run: composer audit
+        run: |
+          set -o errexit
+          status=1
+          for attempt in 1 2 3; do
+            composer audit --no-interaction && status=0 && break
+            status=$?
+            if [ "$attempt" -lt 3 ]; then
+              sleep 15
+            fi
+          done
+          exit "$status"
 
       - name: NPM audit
         if: matrix.php == '8.3'
