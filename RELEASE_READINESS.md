@@ -16,7 +16,7 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commit: `a6f7b30`.
+- Core hardening commits: `a6f7b30`, `e230fb5`.
 - Last code commit with full CI matrix green: `0ce56e1`.
 - Optional-packages hardening commit: `43d523f`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
