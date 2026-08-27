@@ -5,13 +5,23 @@ declare(strict_types=1);
 namespace App\Agovena\Imports;
 
 use App\Agovena\Imports\Contracts\ImportAdapter;
+use App\Enums\InvoiceItemKind;
+use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentAttemptStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
+use App\Models\Customer;
+use App\Models\DiscountCode;
 use App\Models\ImportRow;
 use App\Models\ImportRun;
+use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Payment;
+use App\Models\PaymentAttempt;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -86,7 +96,9 @@ final class ImportExecutor
                 }
 
                 try {
-                    [$modelType, $modelId] = $this->createEntity($candidate);
+                    [$modelType, $modelId] = DB::transaction(
+                        fn (): array => $this->createEntity($candidate),
+                    );
                     $row->update([
                         'status' => 'imported',
                         'imported_model_type' => $modelType,
@@ -118,6 +130,11 @@ final class ImportExecutor
             'product' => $this->createProduct($candidate),
             'order' => $this->createOrder($candidate),
             'subscription' => $this->createSubscription($candidate),
+            'invoice' => $this->createInvoice($candidate),
+            'payment', 'transaction' => $this->createPayment($candidate),
+            'discount', 'discount_code' => $this->createDiscountCode($candidate),
+            'media', 'product_image' => $this->createProductImage($candidate),
+            'service_instance', 'service' => $this->createServiceInstance($candidate),
             default => throw new InvalidArgumentException('This entity requires a dedicated dependency mapping.'),
         };
     }
@@ -209,6 +226,421 @@ final class ImportExecutor
         $subscription->save();
 
         return [get_class($subscription), (int) $subscription->getKey()];
+    }
+
+    /** @return array{0: class-string, 1: int} */
+    private function createInvoice(ImportCandidate $candidate): array
+    {
+        return DB::transaction(function () use ($candidate): array {
+            $source = Str::before($candidate->externalId, ':');
+            $customer = $this->importedCustomer($candidate, $source);
+            $order = $this->optionalImportedOrder($candidate, $source);
+            if ($order !== null && (int) $order->customer_id !== (int) $customer->id) {
+                throw new InvalidArgumentException('Imported invoice customer does not match its order.');
+            }
+            if ($order !== null && $order->invoice()->exists()) {
+                throw new InvalidArgumentException('Imported order already has an invoice.');
+            }
+
+            $status = InvoiceStatus::tryFrom(strtolower(trim((string) ($candidate->payload['status'] ?? 'issued'))));
+            if ($status === null) {
+                throw new InvalidArgumentException('Invoice status is invalid.');
+            }
+            $currency = $this->currency((string) ($candidate->payload['currency'] ?? 'EUR'), 'Invoice currency');
+            $items = $this->decodeJsonList($candidate->payload['items_json'] ?? null, 'Invoice items');
+            $itemRows = [];
+            $itemSubtotal = 0;
+            foreach ($items as $item) {
+                $kind = InvoiceItemKind::tryFrom(strtolower(trim((string) ($item['kind'] ?? 'product'))));
+                $label = trim((string) ($item['label'] ?? ''));
+                $quantity = $this->amount($item['quantity'] ?? null, 'Invoice item quantity', minimum: 1);
+                $unitAmount = $this->amount($item['unit_amount'] ?? null, 'Invoice item unit amount');
+                $lineAmount = $this->amount($item['line_total_amount'] ?? ($quantity * $unitAmount), 'Invoice item line amount');
+                if ($kind === null || $label === '' || $lineAmount !== $quantity * $unitAmount) {
+                    throw new InvalidArgumentException('Invoice item mapping is invalid.');
+                }
+                if (in_array($kind, [InvoiceItemKind::Product, InvoiceItemKind::Shipping], true)) {
+                    $itemSubtotal += $lineAmount;
+                }
+                $itemRows[] = [
+                    'kind' => $kind,
+                    'label' => $label,
+                    'quantity' => $quantity,
+                    'unit_amount' => $unitAmount,
+                    'line_total_amount' => $lineAmount,
+                    'currency' => $currency,
+                    'options_snapshot' => is_array($item['options_snapshot'] ?? null) ? $item['options_snapshot'] : null,
+                ];
+            }
+
+            $subtotal = $this->amount($candidate->payload['subtotal_amount'] ?? $itemSubtotal, 'Invoice subtotal');
+            $discount = $this->amount($candidate->payload['discount_amount'] ?? 0, 'Invoice discount');
+            $credit = $this->amount($candidate->payload['credit_amount'] ?? 0, 'Invoice credit');
+            $tax = $this->amount($candidate->payload['tax_amount'] ?? 0, 'Invoice tax');
+            $fee = $this->amount($candidate->payload['payment_fee_amount'] ?? 0, 'Invoice payment fee');
+            $expectedTotal = max(0, $subtotal - $discount - $credit + $tax + $fee);
+            $total = $this->amount($candidate->payload['total_amount'] ?? $expectedTotal, 'Invoice total');
+            if ($total !== $expectedTotal) {
+                throw new InvalidArgumentException('Invoice totals do not match the imported amounts.');
+            }
+
+            $number = trim((string) ($candidate->payload['number'] ?? ''));
+            if ($number === '') {
+                $number = 'IMP-INV-'.strtoupper(substr(hash('sha256', $candidate->externalId), 0, 16));
+            }
+            if (Invoice::query()->where('number', $number)->exists()) {
+                throw new InvalidArgumentException('Imported invoice number already exists.');
+            }
+
+            $issuedAt = $this->parseDate($candidate->payload['issued_at'] ?? null, 'Invoice issue date') ?? Carbon::now();
+            $paidAt = $status === InvoiceStatus::Paid
+                ? ($this->parseDate($candidate->payload['paid_at'] ?? null, 'Invoice payment date') ?? Carbon::now())
+                : null;
+            $invoice = Invoice::query()->create([
+                'number' => $number,
+                'status' => $status,
+                'order_id' => $order?->id,
+                'customer_id' => $customer->id,
+                'customer_name' => $customer->name,
+                'customer_email' => $customer->email,
+                'billing_name' => $customer->name,
+                'issued_at' => $issuedAt,
+                'due_at' => $this->parseDate($candidate->payload['due_at'] ?? null, 'Invoice due date'),
+                'subtotal_amount' => $subtotal,
+                'discount_amount' => $discount,
+                'credit_amount' => $credit,
+                'tax_amount' => $tax,
+                'payment_fee_amount' => $fee,
+                'total_amount' => $total,
+                'currency' => $currency,
+                'paid_at' => $paidAt,
+            ]);
+            foreach ($itemRows as $itemRow) {
+                $invoice->items()->create($itemRow);
+            }
+
+            return [Invoice::class, (int) $invoice->getKey()];
+        });
+    }
+
+    /** @return array{0: class-string, 1: int} */
+    private function createPayment(ImportCandidate $candidate): array
+    {
+        return DB::transaction(function () use ($candidate): array {
+            $source = Str::before($candidate->externalId, ':');
+            $order = $this->requiredImportedOrder($candidate, $source);
+            if ($order->payment()->exists()) {
+                throw new InvalidArgumentException('Imported order already has a payment transaction.');
+            }
+            $amount = $this->amount($candidate->payload['amount'] ?? null, 'Payment amount');
+            $currency = $this->currency((string) ($candidate->payload['currency'] ?? $order->currency), 'Payment currency');
+            $method = trim((string) ($candidate->payload['method'] ?? ''));
+            if ($method === '' || preg_match('/\A[A-Za-z0-9_.-]{1,32}\z/', $method) !== 1) {
+                throw new InvalidArgumentException('Payment method is invalid.');
+            }
+            $status = PaymentStatus::tryFrom(strtolower(trim((string) ($candidate->payload['status'] ?? 'pending'))));
+            if ($status === null) {
+                throw new InvalidArgumentException('Payment status is invalid.');
+            }
+            $paid = in_array($status, [PaymentStatus::Paid, PaymentStatus::Refunded, PaymentStatus::PartiallyRefunded], true);
+            $paidAt = $paid
+                ? ($this->parseDate($candidate->payload['paid_at'] ?? null, 'Payment date') ?? Carbon::now())
+                : null;
+            $payment = Payment::query()->create([
+                'order_id' => $order->id,
+                'amount' => $amount,
+                'currency' => $currency,
+                'method' => $method,
+                'status' => $status,
+                'paid_at' => $paidAt,
+                'reference' => trim((string) ($candidate->payload['reference'] ?? '')) ?: null,
+            ]);
+            PaymentAttempt::query()->create([
+                'payment_id' => $payment->id,
+                'order_id' => $order->id,
+                'gateway_id' => $method,
+                'status' => $paid ? PaymentAttemptStatus::Succeeded : match ($status) {
+                    PaymentStatus::Cancelled => PaymentAttemptStatus::Cancelled,
+                    PaymentStatus::Failed => PaymentAttemptStatus::Failed,
+                    PaymentStatus::Expired => PaymentAttemptStatus::Expired,
+                    default => PaymentAttemptStatus::Pending,
+                },
+                'external_id' => $candidate->externalId,
+                'amount' => $amount,
+                'currency' => $currency,
+                'idempotency_key' => 'import:'.$candidate->externalId,
+                'request_meta' => ['source' => 'import'],
+                'initiated_at' => Carbon::now(),
+                'completed_at' => $paid ? $paidAt : null,
+            ]);
+
+            return [Payment::class, (int) $payment->getKey()];
+        });
+    }
+
+    /** @return array{0: class-string, 1: int} */
+    private function createDiscountCode(ImportCandidate $candidate): array
+    {
+        $code = strtoupper(trim((string) ($candidate->payload['code'] ?? '')));
+        if ($code === '' || strlen($code) > 255 || preg_match('/\A[A-Z0-9][A-Z0-9_-]*\z/', $code) !== 1) {
+            throw new InvalidArgumentException('Discount code is invalid.');
+        }
+        if (DiscountCode::query()->where('code', $code)->exists()) {
+            throw new InvalidArgumentException('Discount code already exists.');
+        }
+        $type = strtolower(trim((string) ($candidate->payload['type'] ?? '')));
+        if (! in_array($type, ['fixed', 'percent'], true)) {
+            throw new InvalidArgumentException('Discount type is invalid.');
+        }
+        $value = $this->amount($candidate->payload['value'] ?? null, 'Discount value');
+        if ($type === 'percent' && $value > 100) {
+            throw new InvalidArgumentException('Discount percentage is invalid.');
+        }
+        $currency = trim((string) ($candidate->payload['currency'] ?? ''));
+        $currency = $type === 'fixed' ? $this->currency($currency, 'Discount currency') : null;
+        $active = filter_var($candidate->payload['is_active'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($active === null) {
+            throw new InvalidArgumentException('Discount active flag is invalid.');
+        }
+        $discount = DiscountCode::query()->create([
+            'code' => $code,
+            'type' => $type,
+            'value' => $value,
+            'currency' => $currency,
+            'starts_at' => $this->parseDate($candidate->payload['starts_at'] ?? null, 'Discount start date'),
+            'ends_at' => $this->parseDate($candidate->payload['ends_at'] ?? null, 'Discount end date'),
+            'max_uses' => $this->nullableAmount($candidate->payload['max_uses'] ?? null, 'Discount usage limit'),
+            'max_uses_per_customer' => $this->nullableAmount($candidate->payload['max_uses_per_customer'] ?? null, 'Discount customer usage limit'),
+            'min_subtotal_amount' => $this->amount($candidate->payload['min_subtotal_amount'] ?? 0, 'Discount minimum subtotal'),
+            'is_active' => $active,
+        ]);
+
+        return [DiscountCode::class, (int) $discount->getKey()];
+    }
+
+    /** @return array{0: class-string, 1: int} */
+    private function createProductImage(ImportCandidate $candidate): array
+    {
+        $source = Str::before($candidate->externalId, ':');
+        $product = $this->requiredImportedProduct($candidate, $source);
+        $path = trim((string) ($candidate->payload['path'] ?? ''));
+        $segments = explode('/', $path);
+        if ($path === '' || str_contains($path, '\\') || str_contains($path, '//') || in_array('', $segments, true) || in_array('.', $segments, true) || in_array('..', $segments, true) || preg_match('/\A[A-Za-z0-9][A-Za-z0-9._\/-]{0,511}\z/', $path) !== 1) {
+            throw new InvalidArgumentException('Product media path is invalid.');
+        }
+        $sort = $this->amount($candidate->payload['sort'] ?? 0, 'Product media sort', maximum: 65535);
+        $image = ProductImage::query()->create([
+            'product_id' => $product->id,
+            'path' => $path,
+            'sort' => $sort,
+        ]);
+
+        return [ProductImage::class, (int) $image->getKey()];
+    }
+
+    /** @return array{0: class-string, 1: int} */
+    private function createServiceInstance(ImportCandidate $candidate): array
+    {
+        $serviceClass = 'Agovena\\Modules\\Provisioning\\Models\\ServiceInstance';
+        if (! class_exists($serviceClass) || ! is_a($serviceClass, Model::class, true)) {
+            throw new InvalidArgumentException('The provisioning module must be enabled before importing service instances.');
+        }
+
+        return DB::transaction(function () use ($candidate, $serviceClass): array {
+            $source = Str::before($candidate->externalId, ':');
+            $customer = $this->importedCustomer($candidate, $source);
+            $order = $this->optionalImportedOrder($candidate, $source);
+            if ($order !== null && (int) $order->customer_id !== (int) $customer->id) {
+                throw new InvalidArgumentException('Imported service customer does not match its order.');
+            }
+            $product = $this->optionalImportedProduct($candidate, $source);
+            $status = strtolower(trim((string) ($candidate->payload['status'] ?? 'pending')));
+            if (! in_array($status, ['pending', 'provisioning', 'active', 'suspended', 'terminated', 'failed', 'manual_review'], true)) {
+                throw new InvalidArgumentException('Service instance status is invalid.');
+            }
+            $subscriptionId = null;
+            $subscriptionExternalId = trim((string) ($candidate->payload['subscription_external_id'] ?? ''));
+            if ($subscriptionExternalId !== '') {
+                $subscriptionClass = 'Agovena\\Modules\\Subscriptions\\Models\\Subscription';
+                if (! class_exists($subscriptionClass)) {
+                    throw new InvalidArgumentException('The subscriptions module must be enabled before mapping a service subscription.');
+                }
+                $subscriptionId = $this->findImportedRow($this->sourceKey($subscriptionExternalId, $source), $subscriptionClass)->imported_model_id;
+            }
+            $number = trim((string) ($candidate->payload['number'] ?? ''));
+            if ($number === '') {
+                $number = 'IMP-SVC-'.strtoupper(substr(hash('sha256', $candidate->externalId), 0, 16));
+            }
+            if (DB::table('service_instances')->where('number', $number)->exists()) {
+                throw new InvalidArgumentException('Imported service instance number already exists.');
+            }
+            $model = app($serviceClass);
+            if (! $model instanceof Model) {
+                throw new InvalidArgumentException('The provisioning provider is invalid.');
+            }
+            $model->fill([
+                'number' => $number,
+                'order_id' => $order?->id,
+                'order_item_id' => null,
+                'product_id' => $product?->id,
+                'customer_id' => $customer->id,
+                'customer_email' => $customer->email,
+                'customer_name' => $customer->name,
+                'subscription_id' => $subscriptionId,
+                'status' => $status,
+                'provider_key' => trim((string) ($candidate->payload['provider_key'] ?? '')) ?: null,
+                'external_ref' => trim((string) ($candidate->payload['external_ref'] ?? '')) ?: null,
+                'meta' => $this->decodeJsonObject($candidate->payload['meta_json'] ?? null, 'Service metadata'),
+            ]);
+            $model->save();
+
+            return [$serviceClass, (int) $model->getKey()];
+        });
+    }
+
+    private function importedCustomer(ImportCandidate $candidate, string $source): Customer
+    {
+        $externalId = trim((string) ($candidate->payload['customer_external_id'] ?? ''));
+        if ($externalId === '') {
+            throw new InvalidArgumentException('Imported customer mapping is required.');
+        }
+        $row = $this->findImportedRow($this->sourceKey($externalId, $source), User::class);
+        $customer = User::query()->find((int) $row->imported_model_id)?->customer;
+        if ($customer === null) {
+            throw new InvalidArgumentException('Imported customer mapping is unavailable.');
+        }
+
+        return $customer;
+    }
+
+    private function requiredImportedOrder(ImportCandidate $candidate, string $source): Order
+    {
+        $externalId = trim((string) ($candidate->payload['order_external_id'] ?? ''));
+        if ($externalId === '') {
+            throw new InvalidArgumentException('Imported order mapping is required.');
+        }
+        $row = $this->findImportedRow($this->sourceKey($externalId, $source), Order::class);
+        $order = Order::query()->find((int) $row->imported_model_id);
+        if ($order === null) {
+            throw new InvalidArgumentException('Imported order mapping is unavailable.');
+        }
+
+        return $order;
+    }
+
+    private function optionalImportedOrder(ImportCandidate $candidate, string $source): ?Order
+    {
+        $externalId = trim((string) ($candidate->payload['order_external_id'] ?? ''));
+        if ($externalId === '') {
+            return null;
+        }
+
+        return $this->requiredImportedOrder($candidate, $source);
+    }
+
+    private function requiredImportedProduct(ImportCandidate $candidate, string $source): Product
+    {
+        $externalId = trim((string) ($candidate->payload['product_external_id'] ?? ''));
+        if ($externalId === '') {
+            throw new InvalidArgumentException('Imported product mapping is required.');
+        }
+        $row = $this->findImportedRow($this->sourceKey($externalId, $source), Product::class);
+        $product = Product::query()->find((int) $row->imported_model_id);
+        if ($product === null) {
+            throw new InvalidArgumentException('Imported product mapping is unavailable.');
+        }
+
+        return $product;
+    }
+
+    private function optionalImportedProduct(ImportCandidate $candidate, string $source): ?Product
+    {
+        $externalId = trim((string) ($candidate->payload['product_external_id'] ?? ''));
+        if ($externalId === '') {
+            return null;
+        }
+
+        return $this->requiredImportedProduct($candidate, $source);
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function decodeJsonList(mixed $value, string $label): array
+    {
+        $decoded = $this->decodeJsonObject($value, $label);
+        if ($decoded === null || ! array_is_list($decoded) || $decoded === []) {
+            throw new InvalidArgumentException($label.' must be a non-empty JSON list.');
+        }
+
+        $items = [];
+        foreach ($decoded as $item) {
+            if (! is_array($item)) {
+                throw new InvalidArgumentException($label.' contains an invalid item.');
+            }
+            $items[] = $item;
+        }
+
+        return $items;
+    }
+
+    /** @return array<int|string, mixed>|null */
+    private function decodeJsonObject(mixed $value, string $label): ?array
+    {
+        $json = trim((string) ($value ?? ''));
+        if ($json === '') {
+            return null;
+        }
+        try {
+            $decoded = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable) {
+            throw new InvalidArgumentException($label.' contains invalid JSON.');
+        }
+        if (! is_array($decoded)) {
+            throw new InvalidArgumentException($label.' must be a JSON object or list.');
+        }
+
+        return $decoded;
+    }
+
+    private function amount(mixed $value, string $label, int $minimum = 0, ?int $maximum = null): int
+    {
+        $parsed = filter_var($value, FILTER_VALIDATE_INT);
+        if ($parsed === false || $parsed < $minimum || ($maximum !== null && $parsed > $maximum)) {
+            throw new InvalidArgumentException($label.' is invalid.');
+        }
+
+        return (int) $parsed;
+    }
+
+    private function nullableAmount(mixed $value, string $label): ?int
+    {
+        if ($value === null || trim((string) $value) === '') {
+            return null;
+        }
+
+        return $this->amount($value, $label);
+    }
+
+    private function currency(string $value, string $label): string
+    {
+        $currency = strtoupper(trim($value));
+        if (preg_match('/\A[A-Z]{3}\z/', $currency) !== 1) {
+            throw new InvalidArgumentException($label.' is invalid.');
+        }
+
+        return $currency;
+    }
+
+    private function parseDate(mixed $value, string $label): ?Carbon
+    {
+        $date = trim((string) ($value ?? ''));
+        if ($date === '') {
+            return null;
+        }
+        try {
+            return Carbon::parse($date);
+        } catch (Throwable) {
+            throw new InvalidArgumentException($label.' is invalid.');
+        }
     }
 
     /** @return array{0: class-string, 1: int} */

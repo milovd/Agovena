@@ -40,7 +40,7 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 - First-party domain capability with separate registrar and DNS provider contracts, Cloudflare Registrar, Namecheap Registrar, and Cloudflare DNS zone/record management
 - Product-level domain configuration for registrar, DNS provider, default domain, term and auto-renew
 - Admin domain operations for registration, renewal and DNS-zone initialization with capability and permission checks
-- Migration dry-run foundation with CSV validation, duplicate detection, source profiles, auditable rows, rollback and module-gated subscription writes
+- Migration dry-run foundation with CSV validation, duplicate detection, source profiles, auditable rows, rollback, invoice/payment/transaction/discount/media mappings, and module-gated subscription/service-instance writes
 - Referral policy, customer code management, admin activation controls, reward/credit ledger, expiry/limits and fraud review
 - Fail-closed scheduled backup failure alerts and deterministic CycloneDX 1.5 dependency SBOM generation
 - Safe section editor normalization for allowed section types, escaped text, safe links, local media paths and bounded lists
@@ -71,7 +71,7 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 - **Browser push:** the customer UI, service worker, permission handling, fallback state, and subscription API are implemented and feature-tested. End-to-end delivery still requires configured VAPID material and a real browser/provider run; it is not yet SANDBOX-VERIFIED.
 - **Outbound webhooks:** endpoint management, signing, generic and Discord-compatible payload formatting, delivery persistence, retries, SSRF validation, and admin controls are implemented and feature-tested. Delivery to a real customer-controlled HTTPS receiver is not verified in CI.
 - **Payment fees:** fee calculation and historical order/invoice snapshots are feature-tested. Merchant tax treatment and live provider reconciliation remain deployment and accounting responsibilities.
-- **Migration framework:** CSV/custom dry-run, source profiles, durable audit rows, customer/product/order writes, rollback and module-gated subscription writes are feature-tested. Service instances, invoices, transactions, discounts, media mappings and source acceptance fixtures remain open.
+- **Migration framework:** CSV/custom dry-run, source profiles, durable audit rows, customer/product/order/invoice/payment/transaction/discount/media writes, rollback and module-gated subscription/service-instance writes are feature-tested. Source-specific fixtures, MariaDB/concurrency verification for the extended import chain and provider acceptance remain open.
 - **Referrals:** policy, code creation, customer/admin management, rewards, credit ledger, expiry/limits and fraud review are feature-tested. External payment settlement and human fraud policy remain operational responsibilities.
 - **OAuth and anti-abuse:** state/nonce, provider metadata, callback exchange, account linking, challenge verification, rate policy, suspensions, IP reputation and recovery are feature-tested. Live OAuth callbacks, reputation services and authenticated browser review are not verified.
 - **SEO/editor:** canonical metadata, structured data, exports, consent history, privacy retention and the safe section editor are feature-tested. Human responsive/keyboard review remains open.

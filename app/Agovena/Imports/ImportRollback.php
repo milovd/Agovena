@@ -4,9 +4,14 @@ declare(strict_types=1);
 
 namespace App\Agovena\Imports;
 
+use App\Enums\InvoiceStatus;
 use App\Models\Customer;
+use App\Models\DiscountCode;
 use App\Models\ImportRun;
+use App\Models\Invoice;
+use App\Models\Payment;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -58,6 +63,58 @@ final class ImportRollback
                 throw new RuntimeException('Imported product is referenced by an order and cannot be rolled back safely.');
             }
             $product?->delete();
+
+            return;
+        }
+
+        if ($type === ProductImage::class) {
+            ProductImage::query()->find($id)?->delete();
+
+            return;
+        }
+
+        if ($type === DiscountCode::class) {
+            $discount = DiscountCode::query()->find($id);
+            if ($discount === null) {
+                return;
+            }
+            if ($discount->redemptions()->exists()) {
+                throw new RuntimeException('Imported discount code has redemptions and cannot be rolled back safely.');
+            }
+            $discount->delete();
+
+            return;
+        }
+
+        if ($type === Invoice::class) {
+            $invoice = Invoice::query()->find($id);
+            if ($invoice === null) {
+                return;
+            }
+            $invoice->forceFill([
+                'status' => InvoiceStatus::Void,
+                'paid_at' => null,
+            ])->saveQuietly();
+
+            return;
+        }
+
+        if ($type === Payment::class) {
+            $payment = Payment::query()->find($id);
+            if ($payment === null) {
+                return;
+            }
+            if ($payment->refunds()->exists()) {
+                throw new RuntimeException('Imported payment has refunds and cannot be rolled back safely.');
+            }
+            $payment->delete();
+
+            return;
+        }
+
+        $serviceClass = 'Agovena\\Modules\\Provisioning\\Models\\ServiceInstance';
+        if ($type === $serviceClass && class_exists($serviceClass)) {
+            $serviceClass::query()->find($id)?->delete();
 
             return;
         }

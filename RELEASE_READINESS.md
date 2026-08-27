@@ -16,12 +16,13 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`.
-- Last commit with full CI matrix green: `2ad3e3a` via Actions run `33030783714`.
+- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`.
+- Last commit with full CI matrix green before the current Admin hardening push: `2ad3e3a` via Actions run `33030783714`.
+- Current pushed commit: `83c2e3e`. A new full CI matrix run is required before this commit can become release evidence.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
-- Optional-packages hardening commits: `43d523f`, `0167242`.
+- Optional-packages hardening commits: `43d523f`, `0167242`, `ce2d2cf`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The full application suite has passed: 880 tests and 12,610 assertions. Passing automated tests do not prove external provider or authenticated browser behavior.
+- The current local full application suite has passed: 917 tests and 12,813 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -61,14 +62,12 @@ Transfers, contact updates, renewals, supported-TLD policy, billing-profile setu
 
 ### Import and migration tooling
 
-`partial`: the generic migration framework is implemented and audited, but the complete entity matrix is not yet present. It currently provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, duplicate detection, rollback and auditable import rows. Customer, product, order and module-gated subscription writes are covered.
+`partial`: the generic migration framework and complete core entity matrix are now implemented and covered by automated tests. It provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, duplicate detection, rollback and auditable import rows. Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance writes are covered. Source-specific fixtures and provider acceptance remain external verification work.
 
 Still required for the complete roadmap matrix:
 
-- service-instance/provider mapping;
-- invoices and transactions;
-- coupons/discounts and media mappings;
 - source-specific fixtures for the remaining entities;
+- MariaDB/concurrency verification for the extended import chain;
 - provider acceptance verification.
 
 ### Payment foundation
@@ -84,7 +83,8 @@ Still required for the complete roadmap matrix:
 `partial`.
 
 - Provider-neutral CSV/custom preview now supports header mapping, adapter validation, malformed-row reporting and duplicate detection without writing domain data.
-- Source-specific customer, service, invoice, product, discount, media and subscription mappings, durable import audit records, domain writes, rollback and provider acceptance fixtures remain required.
+- Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance mappings now have transaction-safe writes and rollback coverage.
+- Source-specific fixtures, MariaDB/concurrency verification for the extended import chain and provider acceptance remain required.
 
 ### Referrals
 
@@ -143,7 +143,7 @@ Validated gates:
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
 - CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
-- GitHub Actions full matrix for commit `0ce56e1`: PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed;
+- GitHub Actions full matrix for commit `2ad3e3a`: PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed. The matrix for current commit `83c2e3e` is pending;
 - Pint, PHPStan, Blade cache, Vite build, Composer audit, npm production audit, PHP syntax and diff-check: passed.
 
 Still required before a release tag:
