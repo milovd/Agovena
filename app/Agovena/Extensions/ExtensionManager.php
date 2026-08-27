@@ -97,8 +97,7 @@ final class ExtensionManager
         }
 
         foreach ($this->discover() as $manifest) {
-            if (! $this->isEnabled($manifest->id)
-                || (app()->environment('production') && ! $manifest->productionReady)) {
+            if (! $this->isEnabled($manifest->id) || ! $this->canUseManifest($manifest)) {
                 continue;
             }
 
@@ -351,7 +350,7 @@ final class ExtensionManager
 
     private function assertCompatible(ExtensionManifest $manifest): void
     {
-        if (app()->environment('production') && ! $manifest->productionReady) {
+        if (! $this->canUseManifest($manifest)) {
             throw ValidationException::withMessages([
                 'extension' => __('admin.extensions.not_production_ready', [
                     'extension' => $manifest->id,
@@ -374,6 +373,11 @@ final class ExtensionManager
                 ]),
             ]);
         }
+    }
+
+    private function canUseManifest(ExtensionManifest $manifest): bool
+    {
+        return $manifest->productionReady || app()->environment(['local', 'testing']);
     }
 
     private function assertDependencies(ExtensionManifest $manifest, bool $requireEnabled): void

@@ -148,7 +148,7 @@ Validated gates:
 Still required before a release tag:
 
 - fresh independent security review after the current hardening changes;
-- actual provider-specific implementations and acceptance tests for CPanel, Convoy, DirectAdmin, Enhance, Plesk, VirtFusion and Virtualizor, or an explicit post-release deferral; these adapters are marked `production_ready: false` and cannot be installed, enabled or booted in production;
+- actual provider-specific implementations and acceptance tests for CPanel, Convoy, DirectAdmin, Enhance, Plesk, VirtFusion and Virtualizor, or an explicit post-release deferral; these adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated browser review and human responsive/keyboard review;
 - live external webhook receiver acceptance;

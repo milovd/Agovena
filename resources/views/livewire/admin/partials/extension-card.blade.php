@@ -16,7 +16,7 @@
         ])>{{ __($row['lifecycle']->labelKey()) }}</span>
     </div>
     <p class="ag-package-card__text">{{ $manifest->description }}</p>
-    @if (! $manifest->productionReady && app()->environment('production'))
+    @if (! $manifest->productionReady && ! app()->environment(['local', 'testing']))
         <p class="ag-field__error">{{ __('admin.extensions.not_production_ready', ['extension' => $manifest->id]) }}</p>
     @endif
     <div class="ag-package-card__meta">
@@ -30,11 +30,11 @@
     </div>
     <div class="ag-package-card__actions">
         @can('extensions.manage')
-            @if (! $row['on_disk'] && $row['compatible'] && ($manifest->productionReady || ! app()->environment('production')))
+            @if (! $row['on_disk'] && $row['compatible'] && ($manifest->productionReady || app()->environment(['local', 'testing'])))
                 <button type="button" class="ag-btn ag-btn--primary ag-btn--sm" wire:click="installFromMonorepo('{{ $row['monorepo_key'] }}')" wire:key="ext-dl-{{ $manifest->id }}">
                     {{ __('admin.packages.actions.download_install') }}
                 </button>
-            @elseif (! $row['installed'] && $row['compatible'] && $row['on_disk'] && ($manifest->productionReady || ! app()->environment('production')))
+            @elseif (! $row['installed'] && $row['compatible'] && $row['on_disk'] && ($manifest->productionReady || app()->environment(['local', 'testing'])))
                 <button type="button" class="ag-btn ag-btn--primary ag-btn--sm" wire:click="install('{{ $manifest->id }}')" wire:key="ext-install-{{ $manifest->id }}">
                     {{ __('admin.extensions.actions.install') }}
                 </button>
@@ -59,7 +59,7 @@
                 >
                     {{ __('admin.packages.actions.uninstall') }}
                 </button>
-            @elseif ($row['installed'] && $row['compatible'] && ($manifest->productionReady || ! app()->environment('production')))
+            @elseif ($row['installed'] && $row['compatible'] && ($manifest->productionReady || app()->environment(['local', 'testing'])))
                 <button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="enable('{{ $manifest->id }}')" wire:key="ext-enable-{{ $manifest->id }}">
                     {{ __('admin.extensions.actions.enable') }}
                 </button>

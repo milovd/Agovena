@@ -98,6 +98,15 @@ test('extensions without production readiness cannot be installed or enabled in 
         ->and(fn () => $extensions->enable('cpanel'))->toThrow(ValidationException::class);
 });
 
+test('extensions without production readiness cannot be installed or enabled in staging', function () {
+    app()['env'] = 'staging';
+    installAndEnableModule('provisioning');
+    $extensions = app(ExtensionManager::class);
+
+    expect(fn () => $extensions->install('cpanel'))->toThrow(ValidationException::class)
+        ->and(fn () => $extensions->enable('cpanel'))->toThrow(ValidationException::class);
+});
+
 test('runtime does not boot a non-production-ready extension from a legacy enabled row', function () {
     app()['env'] = 'production';
     installAndEnableModule('provisioning');
