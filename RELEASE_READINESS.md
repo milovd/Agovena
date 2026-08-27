@@ -19,9 +19,10 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`.
+- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`.
 - Last commit with full CI matrix green before the current Admin hardening push: `2ad3e3a` via Actions run `33030783714`.
-- Current functional baseline: `89d1b66` (including the browser, backup and import hardening); CI-163 for this baseline passed all jobs.
+- Previous functional baseline: `89d1b66` (including the browser, backup and import hardening); CI-163 for this baseline passed all jobs.
+- Current hardening commit: `7ca1770`; GitHub Actions run `33113522285` for this exact commit is still in progress.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
 - Optional-packages hardening commits: `43d523f`, `0167242`, `ce2d2cf`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
@@ -149,7 +150,7 @@ Validated gates:
 - CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
 - local Playwright browser matrix: 24 tests passed against a prepared E2E server, including desktop/mobile responsive, checkout and keyboard/accessibility flows;
 - GitHub Actions full matrix for commit `89d1b66` (CI-163): PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed;
-- Full PHPStan with `APP_ENV=testing` and a 512 MB CLI memory limit, targeted Pint, Blade cache, Vite build, npm production audit, PHP syntax and diff-check: passed on the current worktree. CI on the committed tree still needs to complete.
+- Full PHPStan with `APP_ENV=testing` and a 512 MB CLI memory limit, targeted Pint, Blade cache, Vite build, npm production audit, PHP syntax and diff-check: passed on the current worktree. CI run `33113522285` on the committed tree is still in progress.
 
 Still required before a release tag:
 
