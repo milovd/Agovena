@@ -7,8 +7,10 @@ namespace App\Agovena\Imports;
 use App\Enums\InvoiceStatus;
 use App\Models\Customer;
 use App\Models\DiscountCode;
+use App\Models\ImportIdentityReservation;
 use App\Models\ImportRun;
 use App\Models\Invoice;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductImage;
@@ -30,6 +32,10 @@ final class ImportRollback
                 $row->update(['status' => 'rolled_back']);
             }
 
+            ImportIdentityReservation::query()
+                ->where('import_run_id', $run->id)
+                ->delete();
+
             $run->update([
                 'status' => 'rolled_back',
                 'completed_at' => now(),
@@ -48,8 +54,19 @@ final class ImportRollback
             }
 
             $customer = $user->customer;
-            if ($customer instanceof Customer && $customer->orders()->exists()) {
-                throw new RuntimeException('Imported customer has orders and cannot be rolled back safely.');
+            if ($customer instanceof Customer && (
+                $customer->orders()->exists()
+                || $customer->addresses()->exists()
+                || $customer->propertyValues()->exists()
+                || $customer->tickets()->exists()
+                || $customer->creditEntries()->exists()
+                || $customer->creditAccount()->exists()
+                || $customer->invoices()->exists()
+                || $customer->creditNotes()->exists()
+                || $customer->referralCodes()->exists()
+                || $customer->referralAttributions()->exists()
+            )) {
+                throw new RuntimeException('Imported customer has dependent records and cannot be rolled back safely.');
             }
             $customer?->delete();
             $user->delete();
@@ -59,8 +76,22 @@ final class ImportRollback
 
         if ($type === Product::class) {
             $product = Product::query()->find($id);
-            if ($product !== null && $product->isReferencedByOrders()) {
-                throw new RuntimeException('Imported product is referenced by an order and cannot be rolled back safely.');
+            if ($product !== null && (
+                $product->isReferencedByOrders()
+                || $product->images()->exists()
+                || $product->capabilities()->exists()
+                || $product->purchaseOptions()->exists()
+                || $product->currencyPrices()->exists()
+                || DB::table('product_plan_changes')
+                    ->where('from_product_id', $product->id)
+                    ->orWhere('to_product_id', $product->id)
+                    ->exists()
+                || DB::table('product_plan_change_requests')
+                    ->where('from_product_id', $product->id)
+                    ->orWhere('to_product_id', $product->id)
+                    ->exists()
+            )) {
+                throw new RuntimeException('Imported product has dependent records and cannot be rolled back safely.');
             }
             $product?->delete();
 
@@ -87,14 +118,15 @@ final class ImportRollback
         }
 
         if ($type === Invoice::class) {
-            $invoice = Invoice::query()->find($id);
+            $invoice = Invoice::query()->lockForUpdate()->find($id);
             if ($invoice === null) {
                 return;
             }
-            $invoice->forceFill([
-                'status' => InvoiceStatus::Void,
-                'paid_at' => null,
-            ])->saveQuietly();
+            if (! $invoice->canVoid() || $invoice->refunds()->exists()) {
+                throw new RuntimeException('Imported invoice is financially active and cannot be rolled back safely.');
+            }
+            $invoice->status = InvoiceStatus::Void;
+            $invoice->saveQuietly();
 
             return;
         }
@@ -110,6 +142,15 @@ final class ImportRollback
             $payment->delete();
 
             return;
+        }
+
+        if ($type === Order::class) {
+            throw new RuntimeException('Imported orders are not rollbackable because their numbered and fulfillment records are retained.');
+        }
+
+        $subscriptionClass = 'Agovena\\Modules\\Subscriptions\\Models\\Subscription';
+        if ($type === $subscriptionClass) {
+            throw new RuntimeException('Imported subscriptions are not rollbackable because their service history must be retained.');
         }
 
         $serviceClass = 'Agovena\\Modules\\Provisioning\\Models\\ServiceInstance';

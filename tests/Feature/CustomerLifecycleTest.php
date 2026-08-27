@@ -184,7 +184,10 @@ test('staff unpaid cancel requires recent password confirmation', function () {
 
     expect($order->fresh()->status->value)->toBe('pending');
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(AdminOrderShow::class, ['order' => $order])

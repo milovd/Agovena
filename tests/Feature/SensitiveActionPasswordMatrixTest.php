@@ -68,7 +68,10 @@ test('issuing a credit note from admin requires a recent password', function () 
 
     expect($invoice->fresh()->remainingCreditable())->toBe($invoice->total_amount);
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(AdminCreditNoteCreate::class, ['invoice' => $invoice])
@@ -103,7 +106,10 @@ test('saving extension secret credentials requires a recent password', function 
             ->exists()
     )->toBeFalse();
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(AdminExtensionsIndex::class)
@@ -130,7 +136,10 @@ test('admin API token create requires a recent password', function () {
         ->assertSet('showingPasswordConfirmation', true)
         ->assertSet('plainTextToken', null);
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(AdminApiTokens::class)

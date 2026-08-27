@@ -98,6 +98,8 @@ final class ImportAdapterRegistry
                 'status' => ['status', 'state'],
                 'reference' => ['reference', 'transaction_reference'],
                 'paid_at' => ['paid_at', 'payment_date'],
+                'refunded_amount' => ['refunded_amount', 'refunded_total', 'refund_amount'],
+                'refunded_at' => ['refunded_at', 'refund_date'],
             ],
             'discount', 'discount_code' => [
                 'external_id' => ['discount_id', 'coupon_id', 'id', 'external_id'],

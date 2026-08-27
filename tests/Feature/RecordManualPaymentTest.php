@@ -90,7 +90,10 @@ test('recording a payment from admin requires a recent password', function () {
     expect($order->fresh()->status)->toBe(OrderStatus::Pending)
         ->and($order->payment->fresh()->status)->toBe(PaymentStatus::Pending);
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(Show::class, ['order' => $order])

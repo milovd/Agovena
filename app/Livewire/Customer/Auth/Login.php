@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Customer\Auth;
 
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Auth\OAuth\OAuthProviderAvailability;
 use App\Agovena\Auth\OAuth\OAuthProviderRegistry;
 use App\Agovena\Auth\TotpTwoFactor;
@@ -66,6 +67,7 @@ final class Login extends Component
         }
 
         RateLimiter::clear($key);
+        app(ConfirmsRecentPassword::class)->forget();
         session()->regenerate();
 
         $user = Auth::user();
@@ -75,6 +77,7 @@ final class Login extends Component
 
         if ($user instanceof User && $user->hasTwoFactorEnabled()) {
             $intended = (string) (session()->pull('url.intended') ?: '');
+            app(ConfirmsRecentPassword::class)->forget();
             Auth::logout();
             session([
                 TotpTwoFactor::SESSION_PENDING_ID => $user->id,

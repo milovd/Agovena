@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Auth\TotpTwoFactor;
 use App\Models\User;
 use Closure;
@@ -13,7 +14,10 @@ use Symfony\Component\HttpFoundation\Response;
 
 final class EnsurePrivilegedTwoFactor
 {
-    public function __construct(private readonly TotpTwoFactor $totp) {}
+    public function __construct(
+        private readonly TotpTwoFactor $totp,
+        private readonly ConfirmsRecentPassword $recentPassword,
+    ) {}
 
     /**
      * @param  Closure(Request): Response  $next
@@ -43,6 +47,7 @@ final class EnsurePrivilegedTwoFactor
     private function beginChallenge(Request $request, User $user): Response
     {
         $intended = $request->fullUrl();
+        $this->recentPassword->forget();
         Auth::logout();
         $request->session()->put([
             TotpTwoFactor::SESSION_PENDING_ID => $user->id,

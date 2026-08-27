@@ -68,7 +68,10 @@ test('phase 2 vertical slice end to end with persisted data', function () {
     expect($order->fresh()->items->first()->unit_amount)->toBe(1999);
 
     $this->actingAs($staff);
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::test(Show::class, ['order' => $order])
         ->call('startRecordPayment')

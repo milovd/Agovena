@@ -23,6 +23,7 @@ use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Refund;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -66,6 +67,43 @@ function runRaceWorkers(string $action, array $payload, int $copies = 2): array
 
     for ($i = 0; $i < $copies; $i++) {
         $process = new Process([PHP_BINARY, $script, $action, $json, $envPath], base_path());
+        $process->setTimeout(60);
+        $process->start();
+        $processes[] = $process;
+    }
+
+    $results = [];
+    foreach ($processes as $process) {
+        $process->wait();
+        $line = trim($process->getOutput());
+        $decoded = $line !== '' ? json_decode($line, true) : null;
+        $results[] = is_array($decoded) ? $decoded : [
+            'ok' => false,
+            'error' => 'bad-output:'.$process->getErrorOutput().$line,
+            'exit' => $process->getExitCode(),
+        ];
+    }
+
+    @unlink($envPath);
+
+    return $results;
+}
+
+/** @param list<array{action: string, payload: array<string, mixed>}> $jobs */
+function runRaceWorkerJobs(array $jobs): array
+{
+    $envPath = raceEnvPath();
+    $script = base_path('tests/MultiProcess/workers/race_worker.php');
+    $processes = [];
+
+    foreach ($jobs as $job) {
+        $process = new Process([
+            PHP_BINARY,
+            $script,
+            $job['action'],
+            json_encode($job['payload'], JSON_THROW_ON_ERROR),
+            $envPath,
+        ], base_path());
         $process->setTimeout(60);
         $process->start();
         $processes[] = $process;
@@ -150,6 +188,59 @@ test('two processes cannot over-credit remaining invoice quantity', function () 
 
     expect($oks)->toBe(1)
         ->and($invoice->fresh()->remainingCreditable())->toBe(0);
+});
+
+test('a concurrent limited role update cannot demote a promoted owner', function () {
+    $owner = test()->createStaff();
+    $limited = test()->createStaff([], ['users.view', 'users.update']);
+    $target = User::factory()->create();
+
+    $results = runRaceWorkerJobs([
+        [
+            'action' => 'role-sync',
+            'payload' => [
+                'actor_id' => $owner->id,
+                'target_id' => $target->id,
+                'roles' => ['owner'],
+            ],
+        ],
+        [
+            'action' => 'role-sync',
+            'payload' => [
+                'actor_id' => $limited->id,
+                'target_id' => $target->id,
+                'roles' => ['staff_limited'],
+            ],
+        ],
+    ]);
+
+    expect(collect($results)->where('ok', true)->count())->toBeGreaterThanOrEqual(1)
+        ->and($target->fresh()->hasRole('owner'))->toBeTrue();
+});
+
+test('concurrent imports reserve one source identity', function () {
+    try {
+        DB::connection('mysql')->getPdo();
+    } catch (Throwable) {
+        test()->markTestSkipped('MariaDB concurrency suite');
+    }
+
+    $path = tempnam(sys_get_temp_dir(), 'agovena-import-race-');
+    file_put_contents($path, "external_id,email,name\nC-IMPORT-RACE,import-race@example.test,Import Race\n");
+
+    $results = runRaceWorkers('import', [
+        'path' => $path,
+        'source' => 'csv',
+        'entity' => 'customer',
+    ]);
+
+    unlink($path);
+
+    expect(collect($results)->where('ok', true)->count())->toBe(2)
+        ->and(collect($results)->sum('imported'))->toBe(1)
+        ->and(collect($results)->sum('duplicates'))->toBe(1)
+        ->and(collect($results)->sum('errors'))->toBe(0)
+        ->and(User::query()->where('email', 'import-race@example.test')->count())->toBe(1);
 });
 
 test('two renewal processors create one renewal order only', function () {

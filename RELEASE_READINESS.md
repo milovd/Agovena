@@ -4,7 +4,7 @@ This file is the working release matrix for the first public Agovena release. It
 
 ## Release verdict
 
-**Not ready for v0.0.1.** The current runtime baseline has a green local and GitHub CI matrix, but provider sandbox, deployment, live receiver, independent security, human UI and legal gates remain open. No release tag or GitHub Release has been created.
+**Not ready for v0.0.1.** The current runtime baseline has a green local matrix, but provider sandbox, deployment, live receiver, post-fix independent security, human UI and legal gates remain open. The independent review of the preceding hardening work found 12 concrete security and integrity findings; the current work adds regression coverage and mitigations, but has not yet received an independent post-fix verdict. No release tag or GitHub Release has been created.
 
 
 - `implemented`: present in the current repositories and covered by relevant automated tests.
@@ -25,7 +25,7 @@ This file is the working release matrix for the first public Agovena release. It
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
 - Optional-packages hardening commits: `43d523f`, `0167242`, `ce2d2cf`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The current local full application suite has passed: 921 tests and 12,846 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
+- The current local full application suite has passed: 937 tests and 12,908 assertions. This local result does not yet prove the pushed commit in CI, external provider behavior, or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -65,7 +65,7 @@ Transfers, contact updates, renewals, supported-TLD policy, billing-profile setu
 
 ### Import and migration tooling
 
-`partial`: the generic migration framework and complete core entity matrix are now implemented and covered by automated tests. It provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, duplicate detection, rollback and auditable import rows. Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance writes are covered. Source-specific fixtures and provider acceptance remain external verification work.
+`partial`: the generic migration framework and complete core entity matrix are now implemented and covered by automated tests. It provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, source/entity/external-identity reservations, duplicate detection, reconciled invoice and payment totals, refund-ledger import, fail-closed rollback and auditable import rows. Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance writes are covered. Source-specific fixtures, independent post-fix review and provider acceptance remain external verification work.
 
 Still required for the complete roadmap matrix:
 
@@ -86,8 +86,8 @@ Still required for the complete roadmap matrix:
 `partial`.
 
 - Provider-neutral CSV/custom preview now supports header mapping, adapter validation, malformed-row reporting and duplicate detection without writing domain data.
-- Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance mappings now have transaction-safe writes and rollback coverage.
-- Source-specific fixtures, MariaDB/concurrency verification for the extended import chain and provider acceptance remain required.
+- Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance mappings now have transaction-safe writes, reconciled accounting fields, identity reservations and fail-closed rollback coverage.
+- Source-specific fixtures, MariaDB/concurrency verification for the extended import chain, independent post-fix review and provider acceptance remain required.
 
 ### Referrals
 
@@ -141,18 +141,19 @@ Live provider credentials, reputation services and production browser/identity r
 
 Validated gates:
 
-- full SQLite application suite: 921 tests, 12,846 assertions;
+- full SQLite application suite: 937 tests, 12,908 assertions;
 - upgrade suite: 14 tests, 132 assertions;
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
 - CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
 - local Playwright browser matrix: 24 tests passed against a prepared E2E server, including desktop/mobile responsive, checkout and keyboard/accessibility flows;
 - GitHub Actions full matrix for commit `89d1b66` (CI-163): PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed;
-- Pint, PHPStan, Blade cache, Vite build, Composer audit, npm production audit, PHP syntax and diff-check: passed.
+- Full PHPStan with `APP_ENV=testing` and a 512 MB CLI memory limit, targeted Pint, Blade cache, Vite build, npm production audit, PHP syntax and diff-check: passed on the current worktree. CI on the committed tree still needs to complete.
 
 Still required before a release tag:
 
-- fresh independent security review after the current hardening changes;
+- independent post-fix security review after the current hardening changes; the preceding review found 12 concrete findings and is not a release approval;
+- MariaDB multi-process verification of the new role-lock and import-identity race paths; the local role-lock test was skipped because the required concurrency database is unavailable;
 - actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 18 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated browser review and human responsive/keyboard review;

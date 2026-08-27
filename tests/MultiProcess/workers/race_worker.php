@@ -9,7 +9,10 @@ declare(strict_types=1);
 use Agovena\Modules\Events\EventService;
 use Agovena\Modules\Provisioning\Jobs\ProvisionServiceInstance;
 use Agovena\Modules\Subscriptions\SubscriptionService;
+use App\Agovena\Admin\AdminRoleAssignmentPolicy;
 use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Imports\ImportAdapterRegistry;
+use App\Agovena\Imports\ImportExecutor;
 use App\Agovena\Invoices\IssueCreditNote;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordRefund;
@@ -63,6 +66,28 @@ try {
                 $payload['quantities'] ?? null,
             );
             $result['ok'] = true;
+            break;
+        case 'role-sync':
+            $actor = User::query()->findOrFail((int) $payload['actor_id']);
+            $target = User::query()->findOrFail((int) $payload['target_id']);
+            app(AdminRoleAssignmentPolicy::class)->syncRoles(
+                $actor,
+                $target,
+                array_values(array_filter($payload['roles'] ?? [], 'is_string')),
+                'roles',
+            );
+            $result['ok'] = true;
+            break;
+        case 'import':
+            $run = app(ImportExecutor::class)->run(
+                (string) $payload['path'],
+                app(ImportAdapterRegistry::class)->for((string) $payload['source'], (string) $payload['entity']),
+                (string) $payload['source'],
+            );
+            $result['ok'] = true;
+            $result['imported'] = $run->rows()->where('status', 'imported')->count();
+            $result['duplicates'] = $run->rows()->where('status', 'duplicate')->count();
+            $result['errors'] = $run->errors;
             break;
         case 'renewal':
             $now = CarbonImmutable::parse((string) $payload['now']);

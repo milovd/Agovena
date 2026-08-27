@@ -16,7 +16,10 @@ test('staff can mark a linked customer email as verified', function () {
     $customer = Customer::factory()->unverified()->create();
     $staff = $this->createStaff(permissions: ['customers.view', 'customers.manage']);
 
-    $this->withSession([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    $this->withSession([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(AdminCustomerShow::class, ['customer' => $customer])
@@ -34,7 +37,10 @@ test('staff can mark a linked customer email as unverified', function () {
     $customer = Customer::factory()->create();
     $staff = $this->createStaff(permissions: ['customers.view', 'customers.manage']);
 
-    $this->withSession([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    $this->withSession([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(AdminCustomerShow::class, ['customer' => $customer])
@@ -49,7 +55,10 @@ test('staff without customer management permission cannot change email verificat
     $customer = Customer::factory()->unverified()->create();
     $staff = $this->createStaff(permissions: ['customers.view']);
 
-    $this->withSession([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    $this->withSession([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(AdminCustomerShow::class, ['customer' => $customer])

@@ -5,14 +5,17 @@ declare(strict_types=1);
 namespace App\Agovena\Imports;
 
 use App\Agovena\Imports\Contracts\ImportAdapter;
+use App\Agovena\Modules\ModuleManager;
 use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
+use App\Enums\RefundStatus;
 use App\Models\Customer;
 use App\Models\DiscountCode;
+use App\Models\ImportIdentityReservation;
 use App\Models\ImportRow;
 use App\Models\ImportRun;
 use App\Models\Invoice;
@@ -22,9 +25,11 @@ use App\Models\Payment;
 use App\Models\PaymentAttempt;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Models\Refund;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -32,7 +37,10 @@ use Throwable;
 
 final class ImportExecutor
 {
-    public function __construct(private readonly CsvImportRunner $runner) {}
+    public function __construct(
+        private readonly CsvImportRunner $runner,
+        private readonly ModuleManager $modules,
+    ) {}
 
     public function run(
         string $path,
@@ -85,10 +93,7 @@ final class ImportExecutor
                     continue;
                 }
 
-                if (ImportRow::query()
-                    ->where('external_id', $candidate->externalId)
-                    ->where('status', 'imported')
-                    ->exists()) {
+                if (! $this->reserveIdentity($run, $row, $candidate)) {
                     $row->update(['status' => 'duplicate', 'error' => 'Source identifier was already imported.']);
                     $run->increment('duplicates');
 
@@ -105,6 +110,9 @@ final class ImportExecutor
                         'imported_model_id' => $modelId,
                     ]);
                 } catch (Throwable $exception) {
+                    ImportIdentityReservation::query()
+                        ->where('import_row_id', $row->id)
+                        ->delete();
                     $row->update([
                         'status' => 'failed',
                         'error' => $this->safeError($exception->getMessage()),
@@ -143,7 +151,7 @@ final class ImportExecutor
     private function createSubscription(ImportCandidate $candidate): array
     {
         $modelClass = 'Agovena\\Modules\\Subscriptions\\Models\\Subscription';
-        if (! class_exists($modelClass)) {
+        if (! $this->modules->isEnabled('subscriptions') || ! class_exists($modelClass)) {
             throw new InvalidArgumentException('The subscriptions module must be enabled before importing subscriptions.');
         }
 
@@ -274,8 +282,14 @@ final class ImportExecutor
             }
 
             $subtotal = $this->amount($candidate->payload['subtotal_amount'] ?? $itemSubtotal, 'Invoice subtotal');
+            if ($subtotal !== $itemSubtotal) {
+                throw new InvalidArgumentException('Invoice subtotal does not match its product and shipping lines.');
+            }
             $discount = $this->amount($candidate->payload['discount_amount'] ?? 0, 'Invoice discount');
             $credit = $this->amount($candidate->payload['credit_amount'] ?? 0, 'Invoice credit');
+            if ($discount + $credit > $subtotal) {
+                throw new InvalidArgumentException('Invoice discounts and credits exceed its subtotal.');
+            }
             $tax = $this->amount($candidate->payload['tax_amount'] ?? 0, 'Invoice tax');
             $fee = $this->amount($candidate->payload['payment_fee_amount'] ?? 0, 'Invoice payment fee');
             $expectedTotal = max(0, $subtotal - $discount - $credit + $tax + $fee);
@@ -334,6 +348,12 @@ final class ImportExecutor
             }
             $amount = $this->amount($candidate->payload['amount'] ?? null, 'Payment amount');
             $currency = $this->currency((string) ($candidate->payload['currency'] ?? $order->currency), 'Payment currency');
+            if ($amount !== (int) $order->total_amount) {
+                throw new InvalidArgumentException('Payment amount does not match the imported order total.');
+            }
+            if ($currency !== strtoupper((string) $order->currency)) {
+                throw new InvalidArgumentException('Payment currency does not match the imported order currency.');
+            }
             $method = trim((string) ($candidate->payload['method'] ?? ''));
             if ($method === '' || preg_match('/\A[A-Za-z0-9_.-]{1,32}\z/', $method) !== 1) {
                 throw new InvalidArgumentException('Payment method is invalid.');
@@ -342,7 +362,20 @@ final class ImportExecutor
             if ($status === null) {
                 throw new InvalidArgumentException('Payment status is invalid.');
             }
+            $refundedAmount = $this->amount($candidate->payload['refunded_amount'] ?? 0, 'Payment refunded amount');
             $paid = in_array($status, [PaymentStatus::Paid, PaymentStatus::Refunded, PaymentStatus::PartiallyRefunded], true);
+            if ($refundedAmount > 0 && ! $paid) {
+                throw new InvalidArgumentException('Only paid payments can have a refunded amount.');
+            }
+            if ($status === PaymentStatus::PartiallyRefunded && ($refundedAmount <= 0 || $refundedAmount >= $amount)) {
+                throw new InvalidArgumentException('Partially refunded payments require a refund below the payment amount.');
+            }
+            if ($status === PaymentStatus::Refunded && $refundedAmount !== $amount) {
+                throw new InvalidArgumentException('Refunded payments require a complete refunded amount.');
+            }
+            if ($status === PaymentStatus::Paid && $refundedAmount !== 0) {
+                throw new InvalidArgumentException('Paid payments cannot carry a refunded amount.');
+            }
             $paidAt = $paid
                 ? ($this->parseDate($candidate->payload['paid_at'] ?? null, 'Payment date') ?? Carbon::now())
                 : null;
@@ -373,6 +406,18 @@ final class ImportExecutor
                 'initiated_at' => Carbon::now(),
                 'completed_at' => $paid ? $paidAt : null,
             ]);
+            if ($refundedAmount > 0) {
+                Refund::query()->create([
+                    'payment_id' => $payment->id,
+                    'order_id' => $order->id,
+                    'invoice_id' => $order->invoice?->id,
+                    'amount' => $refundedAmount,
+                    'currency' => $currency,
+                    'status' => RefundStatus::Completed,
+                    'reason' => 'Historical refund imported.',
+                    'completed_at' => $this->parseDate($candidate->payload['refunded_at'] ?? null, 'Refund date') ?? $paidAt ?? Carbon::now(),
+                ]);
+            }
 
             return [Payment::class, (int) $payment->getKey()];
         });
@@ -442,7 +487,7 @@ final class ImportExecutor
     private function createServiceInstance(ImportCandidate $candidate): array
     {
         $serviceClass = 'Agovena\\Modules\\Provisioning\\Models\\ServiceInstance';
-        if (! class_exists($serviceClass) || ! is_a($serviceClass, Model::class, true)) {
+        if (! $this->modules->isEnabled('provisioning') || ! class_exists($serviceClass) || ! is_a($serviceClass, Model::class, true)) {
             throw new InvalidArgumentException('The provisioning module must be enabled before importing service instances.');
         }
 
@@ -462,10 +507,20 @@ final class ImportExecutor
             $subscriptionExternalId = trim((string) ($candidate->payload['subscription_external_id'] ?? ''));
             if ($subscriptionExternalId !== '') {
                 $subscriptionClass = 'Agovena\\Modules\\Subscriptions\\Models\\Subscription';
-                if (! class_exists($subscriptionClass)) {
+                if (! $this->modules->isEnabled('subscriptions') || ! class_exists($subscriptionClass)) {
                     throw new InvalidArgumentException('The subscriptions module must be enabled before mapping a service subscription.');
                 }
                 $subscriptionId = $this->findImportedRow($this->sourceKey($subscriptionExternalId, $source), $subscriptionClass)->imported_model_id;
+                $subscription = $subscriptionClass::query()->find((int) $subscriptionId);
+                if (! $subscription instanceof Model) {
+                    throw new InvalidArgumentException('Imported subscription mapping is unavailable.');
+                }
+                if ((int) $subscription->getAttribute('customer_id') !== (int) $customer->id) {
+                    throw new InvalidArgumentException('Imported service subscription customer does not match the service customer.');
+                }
+                if ($product === null || (int) $subscription->getAttribute('product_id') !== (int) $product->id) {
+                    throw new InvalidArgumentException('Imported service subscription product does not match the service product.');
+                }
             }
             $number = trim((string) ($candidate->payload['number'] ?? ''));
             if ($number === '') {
@@ -806,5 +861,42 @@ final class ImportExecutor
     private function safeError(string $message): string
     {
         return mb_substr(trim($message !== '' ? $message : 'Import row failed.'), 0, 500);
+    }
+
+    private function reserveIdentity(ImportRun $run, ImportRow $row, ImportCandidate $candidate): bool
+    {
+        if (ImportRow::query()
+            ->where('external_id', $candidate->externalId)
+            ->where('entity', $candidate->entity)
+            ->where('status', 'imported')
+            ->whereHas('run', fn ($query) => $query->where('source', $run->source))
+            ->exists()) {
+            return false;
+        }
+
+        try {
+            ImportIdentityReservation::query()->create([
+                'source' => $run->source,
+                'entity' => $candidate->entity,
+                'external_id' => $candidate->externalId,
+                'import_run_id' => $run->id,
+                'import_row_id' => $row->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return true;
+        } catch (QueryException $exception) {
+            $alreadyReserved = ImportIdentityReservation::query()
+                ->where('source', $run->source)
+                ->where('entity', $candidate->entity)
+                ->where('external_id', $candidate->externalId)
+                ->exists();
+            if (! $alreadyReserved) {
+                throw $exception;
+            }
+
+            return false;
+        }
     }
 }

@@ -90,10 +90,13 @@ it('imports invoices and payment transactions from mapped dependencies', functio
         ->and(Payment::query()->where('reference', 'legacy-payment-1')->first()->attempts)->toHaveCount(1);
 
     app(ImportRollback::class)->handle($paymentRun);
-    app(ImportRollback::class)->handle($invoiceRun);
+
+    expect(fn () => app(ImportRollback::class)->handle($invoiceRun))
+        ->toThrow(RuntimeException::class);
 
     expect(Payment::query()->where('reference', 'legacy-payment-1')->exists())->toBeFalse()
-        ->and(Invoice::query()->where('number', 'LEGACY-INV-1')->first()->status->value)->toBe('void');
+        ->and(Invoice::query()->where('number', 'LEGACY-INV-1')->first()->status->value)->toBe('paid')
+        ->and($invoiceRun->fresh()->status)->toBe('completed');
 
     unlink($customerPath);
     unlink($productPath);

@@ -25,7 +25,10 @@ test('owner can list and create users with a role from customers admin', functio
         ->assertSee(__('admin.customers.title'), false)
         ->assertSee(__('admin.customers.add_user'), false);
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(CustomersIndex::class)
@@ -56,7 +59,10 @@ test('owner can assign roles to a user from the customer detail', function () {
         ->assertSee(__('admin.customers.save_roles'), false)
         ->assertDontSee(route('admin.users.index'), false);
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(CustomersShow::class, ['customer' => $customer])
@@ -108,7 +114,10 @@ test('legacy users view permission preserves access to the customers admin', fun
 test('owner can create a role with permissions', function () {
     $staff = $this->createStaff();
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(RolesIndex::class)
@@ -127,7 +136,10 @@ test('owner can create a role with permissions', function () {
 
 test('limited staff cannot assign the owner role to a new customer account', function () {
     $staff = $this->createStaff([], ['customers.view', 'users.create']);
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(CustomersIndex::class)
@@ -147,7 +159,10 @@ test('limited staff cannot assign a role with permissions they do not have', fun
     $permission = Permission::findOrCreate('settings.update', User::GUARD);
     $role = Role::findOrCreate('settings_admin', User::GUARD);
     $role->syncPermissions([$permission]);
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(CustomersIndex::class)
@@ -165,7 +180,10 @@ test('limited staff cannot assign a role with permissions they do not have', fun
 test('staff cannot change their own customer roles', function () {
     $staff = $this->createStaff([], ['customers.view', 'users.update']);
     $customer = $staff->customer()->firstOrFail();
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(CustomersShow::class, ['customer' => $customer])
@@ -179,7 +197,10 @@ test('staff cannot change their own customer roles', function () {
 test('owner cannot remove the owner role from their own account', function () {
     $staff = $this->createStaff();
     $customer = $staff->customer()->firstOrFail();
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(CustomersShow::class, ['customer' => $customer])
@@ -194,7 +215,10 @@ test('owner role cannot be deleted', function () {
     $staff = $this->createStaff();
     $owner = Role::findOrCreate('owner', 'web');
 
-    session([ConfirmsRecentPassword::SESSION_KEY => time()]);
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
 
     Livewire::actingAs($staff)
         ->test(RolesIndex::class)

@@ -50,9 +50,19 @@ final class AdminRoleAssignmentPolicy
     public function syncRoles(User $actor, User $target, array $roleNames, string $field): User
     {
         return DB::transaction(function () use ($actor, $target, $roleNames, $field): User {
-            $this->lockOwnerUsers();
-            $lockedTarget = User::query()->whereKey($target->getKey())->firstOrFail();
-            $this->assertCanChangeRoles($actor, $lockedTarget, $roleNames, $field);
+            $lockedUsers = $this->lockUsersForRoleChange($actor, $target);
+            $lockedActor = $lockedUsers->firstWhere('id', $actor->getKey());
+            $lockedTarget = $lockedUsers->firstWhere('id', $target->getKey());
+
+            if (! $lockedActor instanceof User || ! $lockedTarget instanceof User) {
+                throw ValidationException::withMessages([
+                    $field => __('admin.customers.role_not_assignable'),
+                ]);
+            }
+
+            $lockedActor->load('roles');
+            $lockedTarget->load('roles');
+            $this->assertCanChangeRoles($lockedActor, $lockedTarget, $roleNames, $field);
             $lockedTarget->syncRoles($roleNames);
 
             return $lockedTarget->fresh(['roles']);
@@ -116,15 +126,26 @@ final class AdminRoleAssignmentPolicy
         }
     }
 
-    private function lockOwnerUsers(): void
+    /**
+     * @return Collection<int, User>
+     */
+    private function lockUsersForRoleChange(User $actor, User $target): Collection
     {
-        User::query()
+        $ids = User::query()
             ->whereHas('roles', fn ($query) => $query
                 ->where('guard_name', User::GUARD)
                 ->where('name', 'owner'))
+            ->pluck('id')
+            ->push($actor->getKey())
+            ->push($target->getKey())
+            ->unique()
+            ->sort()
+            ->values();
+
+        return User::query()
+            ->whereKey($ids->all())
             ->orderBy('id')
             ->lockForUpdate()
-            ->select('users.id')
             ->get();
     }
 

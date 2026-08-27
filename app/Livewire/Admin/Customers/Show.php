@@ -60,6 +60,8 @@ final class Show extends Component
 
     public function selectPanel(string $panel): void
     {
+        $this->authorize('customers.view');
+
         $allowed = ['overview', 'profile', 'addresses', 'commerce', 'credits', 'capabilities'];
         if (! in_array($panel, $allowed, true)) {
             return;
@@ -167,6 +169,8 @@ final class Show extends Component
         CustomerCreditLedger $ledger,
         CustomerPropertyService $properties,
     ) {
+        $this->authorize('customers.view');
+
         $account = CustomerCreditAccount::query()->where('customer_id', $this->customer->id)->first();
 
         $this->customer->loadMissing(['user.roles', 'addresses']);
