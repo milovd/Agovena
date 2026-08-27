@@ -138,7 +138,7 @@
             --theme-focus: 0 0 0 3px color-mix(in srgb, {{ $darkAccent }} 40%, transparent);
         }
     </style>
-    @vite([$cssEntry])
+    @vite([$cssEntry, 'resources/js/storefront.js'])
     @livewireStyles
 </head>
 <body
@@ -159,10 +159,7 @@
     </main>
 
     @include('theme::partials.footer', ['themeConfig' => $config])
-
-    @if (! request()->cookie(\App\Agovena\Privacy\RecordCookieConsent::COOKIE_NAME))
-        @include('theme::partials.cookie-consent')
-    @endif
+    @include('theme::partials.cookie-consent')
 
     @livewireScripts
     @stack('scripts')

@@ -11,6 +11,7 @@ export default defineConfig({
                 'themes/default/resources/css/admin.css',
                 'resources/js/admin.js',
                 'resources/js/installer.js',
+                'resources/js/storefront.js',
             ],
             refresh: true,
         }),

@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? __('storefront.checkout.title') }} | {{ $siteName ?? __('storefront.shop') }}</title>
     <script>
         (function () {
@@ -98,7 +99,7 @@
             --theme-focus: 0 0 0 3px color-mix(in srgb, {{ $darkAccent }} 40%, transparent);
         }
     </style>
-    @vite([$cssEntry])
+    @vite([$cssEntry, 'resources/js/storefront.js'])
     @livewireStyles
 </head>
 <body class="store store--checkout store--sticky-header">
@@ -114,6 +115,7 @@
         {{ $slot }}
     </main>
     @include('theme::partials.footer', ['themeConfig' => $config])
+    @include('theme::partials.cookie-consent')
     @livewireScripts
 </body>
 </html>

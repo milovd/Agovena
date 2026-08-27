@@ -59,6 +59,20 @@ test('admin updates shows pending migrations instead of a public takeover page',
         ->assertDontSee('SQLSTATE', false);
 });
 
+test('admin updates does not redirect to itself when its schema status probe fails', function () {
+    $staff = $this->createStaff();
+    $this->dropCustomerPropertySchema();
+    Schema::dropIfExists('agovena_packages');
+    app(ApplicationSchemaStatus::class)->refresh();
+
+    $response = $this->actingAs($staff)->get(route('admin.updates'));
+
+    $response
+        ->assertStatus(503)
+        ->assertHeaderMissing('Location')
+        ->assertSee(__('errors.503.heading'), false);
+});
+
 test('customer properties admin sends operators to updates instead of a SQL 500', function () {
     $staff = $this->createStaff();
     $this->dropCustomerPropertySchema();

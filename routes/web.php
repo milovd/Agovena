@@ -85,6 +85,7 @@ use App\Livewire\Storefront\CategoriesIndex as StorefrontCategoriesIndex;
 use App\Livewire\Storefront\CategoryShow;
 use App\Livewire\Storefront\CheckoutPage;
 use App\Livewire\Storefront\ContentPage;
+use App\Livewire\Storefront\CookiePolicy;
 use App\Livewire\Storefront\OrderConfirmation;
 use App\Livewire\Storefront\PaymentStatusPage;
 use App\Livewire\Storefront\ProductShow;
@@ -106,6 +107,7 @@ Route::get('/sw.js', static function () {
     ]);
 })->name('notifications.service-worker');
 
+Route::get('/cookies', CookiePolicy::class)->name('privacy.cookies');
 Route::get('/', CatalogIndex::class)->name('storefront.home');
 Route::post('/preferences/locale', [PreferencesController::class, 'locale'])->name('storefront.preferences.locale');
 Route::post('/preferences/currency', [PreferencesController::class, 'currency'])->name('storefront.preferences.currency');

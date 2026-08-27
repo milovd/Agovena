@@ -68,6 +68,22 @@
                     @foreach ($legalNav as $item)
                         <li><a href="{{ $item['url'] }}">{{ $item['label'] }}</a></li>
                     @endforeach
+                    <li>
+                        <button type="button" class="store-footer__inline-btn" data-cookie-open>
+                            {{ __('storefront.cookie_consent.settings_link') }}
+                        </button>
+                    </li>
+                </ul>
+            </nav>
+        @else
+            <nav class="store-footer__col" aria-labelledby="store-footer-legal-heading">
+                <p id="store-footer-legal-heading" class="store-footer__heading">{{ __('storefront.footer.legal') }}</p>
+                <ul class="store-footer__list" role="list">
+                    <li>
+                        <button type="button" class="store-footer__inline-btn" data-cookie-open>
+                            {{ __('storefront.cookie_consent.settings_link') }}
+                        </button>
+                    </li>
                 </ul>
             </nav>
         @endif

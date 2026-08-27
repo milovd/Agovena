@@ -171,6 +171,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 503);
             }
 
+            if ($request->routeIs('admin.updates')) {
+                return response()->view('errors.503', status: 503);
+            }
+
             return new RedirectResponse(route('admin.updates'));
         });
     })->create();

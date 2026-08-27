@@ -15,15 +15,22 @@ final class RecordCookieConsent
 
     private const CONSENT_VERSION = '1';
 
-    /** @return array{version: string, choice: string, categories: array<string, bool>} */
+    /** @return array{version: string, choice: string, categories: array<string, bool>, id: string, date: string} */
     public function record(Request $request, string $choice, string $source = 'banner'): array
     {
-        $categories = [
-            'necessary' => true,
-            'functional' => $choice === 'all',
-            'analytics' => $choice === 'all',
-            'marketing' => $choice === 'all',
-        ];
+        $categories = $choice === 'analytics'
+            ? [
+                'necessary' => true,
+                'functional' => false,
+                'analytics' => true,
+                'marketing' => false,
+            ]
+            : [
+                'necessary' => true,
+                'functional' => false,
+                'analytics' => false,
+                'marketing' => false,
+            ];
 
         $event = ConsentEvent::query()->create([
             'user_id' => $request->user()?->getAuthIdentifier(),
@@ -47,10 +54,12 @@ final class RecordCookieConsent
             'version' => self::CONSENT_VERSION,
             'choice' => $choice,
             'categories' => $categories,
+            'id' => (string) $event->getKey(),
+            'date' => $event->created_at?->toIso8601String() ?? now()->toIso8601String(),
         ];
     }
 
-    /** @param array{version: string, choice: string, categories: array<string, bool>} $payload */
+    /** @param array{version: string, choice: string, categories: array<string, bool>, id: string, date: string} $payload */
     public function cookie(array $payload): Cookie
     {
         return app(CookieJar::class)->make(
