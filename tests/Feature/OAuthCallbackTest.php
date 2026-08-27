@@ -42,8 +42,8 @@ it('exchanges a Discord code and creates a verified OAuth user', function (): vo
         ], 200),
     ]);
 
-    $state = app(OAuthStateStore::class)->issue('discord', '/account/security');
-    $result = app(OAuthIdentityService::class)->handleCallback('discord', $state, 'authorization-code');
+    $state = app(OAuthStateStore::class)->issue('discord', '/account/security', 'browser-session-a');
+    $result = app(OAuthIdentityService::class)->handleCallback('discord', $state, 'authorization-code', 'browser-session-a');
 
     expect($result->redirect)->toBe('/account/security')
         ->and(Auth::user())->toBeInstanceOf(User::class)
@@ -64,10 +64,29 @@ it('links a Discord identity to the authenticated user and rejects state replay'
         ], 200),
     ]);
 
-    $state = app(OAuthStateStore::class)->issue('discord', '/account/security');
-    app(OAuthIdentityService::class)->handleCallback('discord', $state, 'authorization-code');
+    $state = app(OAuthStateStore::class)->issue('discord', '/account/security', 'browser-session-a');
+    app(OAuthIdentityService::class)->handleCallback('discord', $state, 'authorization-code', 'browser-session-a');
 
     expect(OAuthIdentity::query()->where('user_id', $user->id)->where('subject', 'discord-user-2')->exists())->toBeTrue()
-        ->and(fn () => app(OAuthIdentityService::class)->handleCallback('discord', $state, 'authorization-code'))
+        ->and(fn () => app(OAuthIdentityService::class)->handleCallback('discord', $state, 'authorization-code', 'browser-session-a'))
         ->toThrow(ValidationException::class);
+});
+
+it('rejects a callback delivered into a different browser session', function (): void {
+    configureDiscordOAuth();
+    Http::fake([
+        'https://discord.com/api/oauth2/token' => Http::response(['access_token' => 'discord-access-token'], 200),
+        'https://discord.com/api/users/@me' => Http::response([
+            'id' => 'discord-session-bound-user',
+            'email' => 'attacker@example.test',
+            'username' => 'Attacker',
+            'verified' => true,
+        ], 200),
+    ]);
+
+    $state = app(OAuthStateStore::class)->issue('discord', '/account/security', 'attacker-session');
+
+    expect(fn () => app(OAuthIdentityService::class)->handleCallback('discord', $state, 'authorization-code', 'victim-session'))
+        ->toThrow(ValidationException::class);
+    expect(OAuthIdentity::query()->where('subject', 'discord-session-bound-user')->exists())->toBeFalse();
 });

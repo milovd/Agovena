@@ -61,6 +61,26 @@ it('shows only the authenticated customer domains', function (): void {
         ->assertDontSee('hidden.example.test');
 });
 
+it('does not expose a guest domain through a matching email address', function (): void {
+    installAndEnableModules(['domains']);
+    $customer = Customer::factory()->create(['email' => 'shared@example.test']);
+    $order = Order::factory()->create(['customer_id' => null, 'customer_email' => $customer->email]);
+    $product = Product::factory()->active()->create(['name' => 'Domain registration']);
+    DomainRegistration::query()->create([
+        'number' => 'DOM-GUEST001',
+        'order_id' => $order->id,
+        'product_id' => $product->id,
+        'customer_id' => null,
+        'customer_email' => $customer->email,
+        'domain_name' => 'guest-owned.example.test',
+        'status' => 'active',
+    ]);
+
+    $this->actingAs($customer->user)->get('/account/domains')
+        ->assertOk()
+        ->assertDontSee('guest-owned.example.test');
+});
+
 it('lets authorized staff execute registrar and DNS actions from the domain screen', function (): void {
     installAndEnableModules(['domains']);
     $staff = $this->createStaff();

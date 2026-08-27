@@ -9,6 +9,7 @@ use App\Agovena\Extensions\ExtensionManifest;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\PaymentGatewayRegistry;
+use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Livewire\Admin\Extensions\Index as ExtensionsIndex;
 use App\Models\AgovenaExtension;
 use App\Models\AgovenaModule;
@@ -83,6 +84,32 @@ test('extension enable fails when platform version is incompatible', function ()
 
     expect(fn () => app(ExtensionManager::class)->enable('mollie'))
         ->toThrow(ValidationException::class);
+});
+
+test('extensions without production readiness cannot be installed or enabled in production', function () {
+    app()['env'] = 'production';
+    installAndEnableModule('provisioning');
+    $extensions = app(ExtensionManager::class);
+    $manifest = $extensions->manifest('cpanel');
+
+    expect($manifest)->not->toBeNull()
+        ->and($manifest?->productionReady)->toBeFalse()
+        ->and(fn () => $extensions->install('cpanel'))->toThrow(ValidationException::class)
+        ->and(fn () => $extensions->enable('cpanel'))->toThrow(ValidationException::class);
+});
+
+test('runtime does not boot a non-production-ready extension from a legacy enabled row', function () {
+    app()['env'] = 'production';
+    installAndEnableModule('provisioning');
+    $extensions = app(ExtensionManager::class);
+    AgovenaExtension::query()->updateOrCreate(
+        ['extension_id' => 'cpanel'],
+        ['version' => '1.0.0', 'installed_at' => now(), 'enabled' => true],
+    );
+
+    $extensions->rebuildRuntime();
+
+    expect(app(ProvisionerRegistry::class)->get('cpanel'))->toBeNull();
 });
 
 test('enable registers payment gateway and disable removes it while preserving settings', function () {

@@ -1382,6 +1382,7 @@ return [
         'module_dependency_not_installed' => 'Installeer Module :module voordat je Extension :extension installeert.',
         'module_dependency_disabled' => 'Schakel Module :module in voordat je Extension :extension inschakelt.',
         'incompatible' => 'Extensie :extension vereist Agovena :constraint (platform is :platform).',
+        'not_production_ready' => 'Extensie :extension is niet productiegereed en kan niet worden geïnstalleerd of ingeschakeld.',
         'purge_not_implemented' => 'Data-purge bij uninstall is nog niet geïmplementeerd. Schakel uit om data te bewaren.',
         'settings_title' => 'Instellingen: :extension',
         'settings_empty' => 'Deze Extensie heeft geen configureerbare instellingen.',

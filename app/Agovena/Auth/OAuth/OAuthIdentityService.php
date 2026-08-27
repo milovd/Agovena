@@ -20,9 +20,9 @@ final class OAuthIdentityService
         private readonly OAuthProviderAvailability $availability,
     ) {}
 
-    public function handleCallback(string $providerId, string $state, string $code): OAuthCallbackResult
+    public function handleCallback(string $providerId, string $state, string $code, string $sessionId): OAuthCallbackResult
     {
-        $statePayload = $this->states->consumePayload($providerId, $state);
+        $statePayload = $this->states->consumePayload($providerId, $state, $sessionId);
         if ($statePayload === null || trim($code) === '') {
             throw ValidationException::withMessages(['provider' => 'The OAuth callback is invalid or expired.']);
         }

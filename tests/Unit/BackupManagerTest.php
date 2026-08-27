@@ -42,3 +42,20 @@ it('fails closed when a sqlite backup source is missing', function (): void {
         ->and($result->path)->toBeNull()
         ->and($result->errorCode)->toBe('source_missing');
 });
+
+it('does not prune unrelated encrypted files', function (): void {
+    $source = storage_path('framework/testing-backup-unrelated.sqlite');
+    file_put_contents($source, 'private database payload');
+    config()->set('agovena.backups.disk', 'local');
+    config()->set('agovena.backups.directory', 'testing-backups');
+    config()->set('agovena.backups.retention_days', 30);
+    config()->set('agovena.backups.retention_count', 1);
+    Storage::fake('local');
+    Storage::disk('local')->put('testing-backups/unrelated.enc', 'do not delete');
+    sleep(1);
+
+    app(BackupManager::class)->backupSqlite($source);
+
+    expect(Storage::disk('local')->exists('testing-backups/unrelated.enc'))->toBeTrue();
+    unlink($source);
+});

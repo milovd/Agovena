@@ -31,7 +31,7 @@ final class OAuthController
         if (! is_string($redirect)) {
             throw ValidationException::withMessages(['redirect' => 'The OAuth redirect is not allowed.']);
         }
-        $state = $states->issueWithNonce($definition->id, $redirect);
+        $state = $states->issueWithNonce($definition->id, $redirect, $this->sessionId($request));
         $parameters = [
             'client_id' => (string) $config['client_id'],
             'redirect_uri' => route('oauth.callback', ['provider' => $definition->id]),
@@ -57,8 +57,17 @@ final class OAuthController
             throw ValidationException::withMessages(['provider' => 'The OAuth callback is invalid.']);
         }
 
-        $result = $identities->handleCallback($provider, $state, $code);
+        $result = $identities->handleCallback($provider, $state, $code, $this->sessionId($request));
 
         return redirect()->to($result->redirect);
+    }
+
+    private function sessionId(Request $request): string
+    {
+        if (! $request->hasSession() || trim($request->session()->getId()) === '') {
+            throw ValidationException::withMessages(['provider' => 'The OAuth session is invalid.']);
+        }
+
+        return $request->session()->getId();
     }
 }

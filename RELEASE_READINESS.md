@@ -20,7 +20,7 @@ This file is the working release matrix for the first public Agovena release. It
 - Last code commit with full CI matrix green: `0ce56e1`.
 - Last pushed optional-package commit: `b3951b9`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The full application suite has passed: 861 tests and 12,530 assertions. Passing automated tests do not prove external provider or authenticated browser behavior.
+- The full application suite has passed: 870 tests and 12,554 assertions. Passing automated tests do not prove external provider or authenticated browser behavior.
 
 ## Implemented or feature-tested foundations
 
@@ -28,7 +28,7 @@ This file is the working release matrix for the first public Agovena release. It
 |---|---|---|
 | Core catalog, cart, checkout, orders, invoices | implemented | Feature coverage exists in the application suite. |
 | Refunds, credit notes, payment attempts, fee snapshots and webhook contracts | implemented | Automated idempotency, signature, fee pass-through and invoice snapshot tests exist. |
-| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation and manual-review transitions are covered; MariaDB multi-process proof and live provider failure review remain release gates. |
+| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. The seven generic server adapters remain explicitly non-production-ready because their provider-specific endpoints and request mappings are not proven. MariaDB multi-process proof and live provider failure review remain release gates. |
 | Subscriptions and recurring renewal seams | partial | Automated lifecycle coverage and subscription import coverage exist; provider-specific recurring behavior remains capability-bound. |
 | Account security, TOTP, recovery and sessions | implemented | Customer security flows and automated coverage exist. |
 | Audit logging | implemented | Capture, redaction, integrity metadata, filters, export and retention command paths are covered. |
@@ -95,7 +95,7 @@ Still required for the complete roadmap matrix:
 
 ### Merchant trust and identity
 
-`implemented` for code and automated test scope; live OAuth provider verification and authenticated browser review remain external gates:
+`implemented` for code and automated test scope; live OAuth provider verification and authenticated browser review remain external gates. OAuth callback state is now bound to the initiating browser session:
 
 - OAuth/OIDC state/nonce storage, provider metadata, callback token exchange, verified user creation, account linking and replay rejection are feature-tested;
 - Google and Discord login metadata is limited to explicitly enabled providers;
@@ -137,7 +137,7 @@ Live provider credentials, reputation services and production browser/identity r
 
 Validated gates:
 
-- full SQLite application suite: 861 tests, 12,530 assertions;
+- full SQLite application suite: 870 tests, 12,554 assertions;
 - upgrade suite: 14 tests, 132 assertions;
 - Release archive build and extracted-release smoke: passed;
 - backup/restore smoke: passed;
@@ -147,6 +147,8 @@ Validated gates:
 
 Still required before a release tag:
 
+- fresh independent security review after the current hardening changes;
+- actual provider-specific implementations and acceptance tests for CPanel, Convoy, DirectAdmin, Enhance, Plesk, VirtFusion and Virtualizor, or an explicit post-release deferral; these adapters are marked `production_ready: false` and cannot be installed, enabled or booted in production;
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated browser review and human responsive/keyboard review;
 - live external webhook receiver acceptance;

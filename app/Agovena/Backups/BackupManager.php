@@ -127,7 +127,8 @@ final class BackupManager
     {
         $files = array_values(array_filter(
             $disk->files($directory),
-            static fn (string $path): bool => Str::endsWith($path, '.enc'),
+            static fn (string $path): bool => Str::startsWith($path, ($directory === '' ? '' : $directory.'/').'database-')
+                && Str::endsWith($path, '.enc'),
         ));
         $retentionDays = max(1, (int) config('agovena.backups.retention_days', 30));
         $retentionCount = max(1, (int) config('agovena.backups.retention_count', 10));

@@ -41,6 +41,27 @@ it('discovers all requested first-party server extensions', function (): void {
     }
 });
 
+it('publishes all first-party server extension paths in the package catalog', function (): void {
+    $packages = config('agovena.packages.monorepo.packages');
+    $expected = [
+        'cpanel' => 'extensions/provisioning/cpanel',
+        'convoy' => 'extensions/provisioning/convoy',
+        'directadmin' => 'extensions/provisioning/directadmin',
+        'enhance' => 'extensions/provisioning/enhance',
+        'plesk' => 'extensions/provisioning/plesk',
+        'pterodactyl' => 'extensions/provisioning/pterodactyl',
+        'virtfusion' => 'extensions/provisioning/virtfusion',
+        'virtualizor' => 'extensions/provisioning/virtualizor',
+    ];
+
+    foreach ($expected as $id => $path) {
+        expect($packages[$id] ?? null)->toBe([
+            'kind' => 'extension',
+            'path' => $path,
+        ]);
+    }
+});
+
 it('loads each new server API through its first-party discovery namespace', function (): void {
     app(ModuleManager::class)->discover();
     app(ExtensionManager::class)->discover();

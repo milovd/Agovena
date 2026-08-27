@@ -18,7 +18,7 @@ final class OAuthStateStore
         private readonly Repository $cache,
     ) {}
 
-    public function issueWithNonce(string $provider, string $redirect): array
+    public function issueWithNonce(string $provider, string $redirect, string $sessionId): array
     {
         $provider = strtolower(trim($provider));
         if (! in_array($provider, self::PROVIDERS, true)) {
@@ -29,26 +29,31 @@ final class OAuthStateStore
             throw ValidationException::withMessages(['redirect' => 'The OAuth redirect is not allowed.']);
         }
 
+        if (trim($sessionId) === '') {
+            throw ValidationException::withMessages(['provider' => 'The OAuth session is invalid.']);
+        }
+
         $state = bin2hex(random_bytes(32));
         $nonce = bin2hex(random_bytes(32));
         $this->cache->put($this->key($provider, $state), [
             'redirect' => $redirect,
             'nonce' => $nonce,
+            'session_hash' => hash('sha256', $sessionId),
         ], self::TTL_SECONDS);
 
         return ['state' => $state, 'nonce' => $nonce];
     }
 
-    public function issue(string $provider, string $redirect): string
+    public function issue(string $provider, string $redirect, string $sessionId): string
     {
-        return $this->issueWithNonce($provider, $redirect)['state'];
+        return $this->issueWithNonce($provider, $redirect, $sessionId)['state'];
     }
 
     /** @return array{redirect: string, nonce: string}|null */
-    public function consumePayload(string $provider, string $state): ?array
+    public function consumePayload(string $provider, string $state, string $sessionId): ?array
     {
         $provider = strtolower(trim($provider));
-        if (! in_array($provider, self::PROVIDERS, true) || ! preg_match('/^[a-f0-9]{64}$/', $state)) {
+        if (! in_array($provider, self::PROVIDERS, true) || ! preg_match('/^[a-f0-9]{64}$/', $state) || trim($sessionId) === '') {
             return null;
         }
 
@@ -57,13 +62,15 @@ final class OAuthStateStore
         return is_array($payload)
             && is_string($payload['redirect'] ?? null)
             && is_string($payload['nonce'] ?? null)
+            && is_string($payload['session_hash'] ?? null)
+            && hash_equals($payload['session_hash'], hash('sha256', $sessionId))
             ? ['redirect' => $payload['redirect'], 'nonce' => $payload['nonce']]
             : null;
     }
 
-    public function consume(string $provider, string $state): ?string
+    public function consume(string $provider, string $state, string $sessionId): ?string
     {
-        return $this->consumePayload($provider, $state)['redirect'] ?? null;
+        return $this->consumePayload($provider, $state, $sessionId)['redirect'] ?? null;
     }
 
     private function key(string $provider, string $state): string

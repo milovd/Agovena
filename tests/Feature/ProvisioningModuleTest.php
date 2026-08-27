@@ -7,6 +7,7 @@ use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstanceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServicesIndex;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
+use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
 use Agovena\Modules\Provisioning\ProvisioningService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
@@ -17,9 +18,14 @@ use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Provisioning\Contracts\Provisioner;
+use App\Agovena\Provisioning\Contracts\ProvisionerLifecycle;
+use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Provisioning\RunProvisionerAction;
+use App\Agovena\Provisioning\ServiceInstanceInfo;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\ProvisioningServer;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -81,6 +87,93 @@ test('paid provisionable order creates pending service instances per quantity', 
     expect($instances)->toHaveCount(2)
         ->and($instances->every(fn ($i) => $i->status === ServiceInstanceStatus::Pending))->toBeTrue()
         ->and($instances->first()->provider_key)->toBe('manual');
+});
+
+test('an unavailable configured provisioning server fails closed into manual review', function () {
+    enableProvisioningModule();
+    $customer = Customer::factory()->create();
+    $server = ProvisioningServer::query()->create([
+        'name' => 'Inactive server',
+        'provider_key' => 'manual',
+        'settings' => ['api_url' => 'https://provider.invalid', 'api_token' => '[REDACTED]'],
+        'is_active' => false,
+    ]);
+    $product = makeProvisionableProduct([
+        'provider_key' => 'manual',
+        'server_id' => $server->id,
+    ]);
+
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+        'customer_id' => $customer->id,
+        'billing' => billingForProvisioning(),
+    ]);
+    app(RecordManualPayment::class)->handle($order, $this->createStaff());
+
+    $instance = ServiceInstance::query()->where('order_id', $order->id)->firstOrFail();
+    expect($instance->status)->toBe(ServiceInstanceStatus::ManualReview)
+        ->and($instance->provider_key)->toBeNull()
+        ->and($instance->provisioning_server_id)->toBeNull()
+        ->and($instance->failure_message)->not->toBeNull();
+});
+
+test('polling preserves an existing provider reference when a provider returns the local id', function () {
+    enableProvisioningModule();
+    $instance = ServiceInstance::query()->create([
+        'number' => 'SVC-MAPPING-001',
+        'status' => ServiceInstanceStatus::Provisioning,
+        'provider_key' => 'fixture-mapping',
+        'external_ref' => 'provider-reference-1',
+        'customer_email' => 'mapping@example.test',
+    ]);
+    $provider = new class implements Provisioner, ProvisionerLifecycle
+    {
+        public function id(): string
+        {
+            return 'fixture-mapping';
+        }
+
+        public function label(): string
+        {
+            return 'Fixture mapping';
+        }
+
+        public function provision(ServiceInstanceInfo $instance): void {}
+
+        public function poll(ServiceInstanceInfo $instance): ServiceInstanceInfo
+        {
+            return $this->syncStatus($instance);
+        }
+
+        public function activate(ServiceInstanceInfo $instance): void {}
+
+        public function suspend(ServiceInstanceInfo $instance): void {}
+
+        public function unsuspend(ServiceInstanceInfo $instance): void {}
+
+        public function terminate(ServiceInstanceInfo $instance): void {}
+
+        public function changePlan(ServiceInstanceInfo $instance, string $plan): void {}
+
+        public function syncStatus(ServiceInstanceInfo $instance): ServiceInstanceInfo
+        {
+            return new ServiceInstanceInfo(
+                id: $instance->id,
+                label: $instance->label,
+                status: 'active',
+                providerKey: 'fixture-mapping',
+                externalRef: 'agovena-fixture-mapping-'.$instance->id,
+                meta: [],
+            );
+        }
+    };
+    app(ProvisionerRegistry::class)->register($provider);
+
+    $updated = app(ProvisioningOrchestrator::class)->sync($instance);
+
+    expect($updated->fresh()->external_ref)->toBe('provider-reference-1');
 });
 
 test('admin can activate suspend and terminate a service instance', function () {

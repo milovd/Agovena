@@ -97,7 +97,8 @@ final class ExtensionManager
         }
 
         foreach ($this->discover() as $manifest) {
-            if (! $this->isEnabled($manifest->id)) {
+            if (! $this->isEnabled($manifest->id)
+                || (app()->environment('production') && ! $manifest->productionReady)) {
                 continue;
             }
 
@@ -350,6 +351,14 @@ final class ExtensionManager
 
     private function assertCompatible(ExtensionManifest $manifest): void
     {
+        if (app()->environment('production') && ! $manifest->productionReady) {
+            throw ValidationException::withMessages([
+                'extension' => __('admin.extensions.not_production_ready', [
+                    'extension' => $manifest->id,
+                ]),
+            ]);
+        }
+
         $platform = (string) config('agovena.version', '0.1.0');
         $constraint = $manifest->agovena;
         if ($constraint === '*' || $constraint === '') {
