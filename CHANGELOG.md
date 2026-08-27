@@ -15,7 +15,7 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 - Optional Modules and Extensions distributed from the [optional-packages](https://github.com/milovd/optional-packages) monorepo (install/update from Admin; migrations run on install/enable)
 - First-party payment Extensions: Mollie, Stripe, PayPal (hosted checkout; no card data in Core)
 - First-party provisioning Extensions: Pterodactyl, Proxmox VE
-- First-party Domain capability with the integrated `domain-dns` package for Cloudflare DNS, Cloudflare registration and Namecheap registration flows
+- First-party Domain capability with separate provider Extensions: `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS; `namecheap-domain` combines Namecheap registration and renewal management
 - First-party payment Extensions: Paddle and Tebex (contract-tested; live sandbox still pending)
 - First-party shipping Extension: PostNL
 - Customer **Account → Security**: TOTP 2FA, recovery codes, and logged-in session revoke for all accounts
@@ -37,7 +37,7 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 - Admin outbound webhook management with HTTPS and SSRF validation, encrypted signing secrets, event allowlists, generic and Discord-compatible destinations, delivery history, audit events, and controlled retries
 - Provider-neutral payment fee policy with integer minor-unit arithmetic, order/invoice snapshots, and invoice fee lines
 - Inventory reservations with idempotent cancellation release, provisioning retry propagation, and manual-review transitions
-- First-party Domain capability with one integrated registration, renewal and Cloudflare DNS package behind the single Domain workspace
+- First-party Domain capability with one Domain workspace and provider-specific extensions. `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS; `namecheap-domain` combines Namecheap registration and renewal management.
 - Product-level domain configuration for registrar, DNS provider, default domain, term and auto-renew
 - Admin domain operations for registration, renewal and DNS-zone initialization with capability and permission checks
 - Migration dry-run foundation with CSV validation, duplicate detection, source profiles, auditable rows, rollback, invoice/payment/transaction/discount/media mappings, and module-gated subscription/service-instance writes
@@ -64,7 +64,8 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 
 ### Known limitations (honest for first RC)
 
-- **Integrated Domain DNS package:** MOCK-TESTED ONLY for Cloudflare DNS, Cloudflare availability/registration and Namecheap availability/registration/renewal scope. Renewals, transfers, contact updates, TLD coverage and live billing-profile registration are not verified here.
+- **Cloudflare domain Extension:** MOCK-TESTED ONLY for Cloudflare DNS and Cloudflare availability/registration. Cloudflare Registrar renewals are explicitly unsupported by the current provider API adapter.
+- **Namecheap domain Extension:** MOCK-TESTED ONLY for availability, registration and renewal. Transfers, contact updates, nameserver management, TLD coverage and live billing-profile registration are not verified here.
 - **Mollie / Stripe / PayPal / PostNL / Pterodactyl / Proxmox:** MOCK-TESTED ONLY until real sandbox credentials complete `deploy/LIVE_PROVIDER_CHECKS.md` (then SANDBOX-VERIFIED; never PRODUCTION-VERIFIED from test mode alone)
 - **Paddle / Tebex:** MOCK-TESTED ONLY. Core API contracts and signed/idempotent webhook paths have automated tests, but no real sandbox API, hosted checkout, refund, or provider webhook has been verified in this environment. Recurring lifecycle and partial refunds remain outside the first capability surface.
 - **Browser push:** the customer UI, service worker, permission handling, fallback state, and subscription API are implemented and feature-tested. End-to-end delivery still requires configured VAPID material and a real browser/provider run; it is not yet SANDBOX-VERIFIED.

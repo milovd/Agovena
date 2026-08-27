@@ -22,7 +22,7 @@ This file is the working release matrix for the first public Agovena release. It
 - Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`, `HEAD`.
 - Last commit with full CI matrix green before the current Admin hardening push: `2ad3e3a` via Actions run `33030783714`.
 - Previous functional baseline: `89d1b66` (including the browser, backup and import hardening); CI-163 for this baseline passed all jobs.
-- Current Domain integration commit: `HEAD`; it consolidates registration, renewals and DNS under the single `domain-dns` package. It is local and has not been pushed or CI-verified.
+- Current Domain integration commit: `HEAD`; it provides two provider-specific extensions: `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS, while `namecheap-domain` combines Namecheap registration and renewal management. The commits are local and have not yet been pushed or CI-verified.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
 - Optional-packages commits: `43d523f`, `0167242`, `ce2d2cf`, `d18c916`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
@@ -48,16 +48,16 @@ This file is the working release matrix for the first public Agovena release. It
 
 ### Domain sales
 
-`implemented` for the provider-neutral domain layer and tested provider seams. The `domains` module provides the product capability, order-paid idempotent records, lifecycle statuses, registrar and DNS registries, provider capability checks, admin operations and customer-owned list. The `hosting` preset enables `domains` together with `provisioning` and `subscriptions`; it does not install the integrated Domain DNS package or activate provider credentials.
+`implemented` for the provider-neutral domain layer and tested provider seams. The `domains` module provides the product capability, order-paid idempotent records, lifecycle statuses, registrar and DNS registries, provider capability checks, admin operations and customer-owned list. The `hosting` preset enables `domains` together with `provisioning` and `subscriptions`; it does not install either provider extension or activate provider credentials.
 
-The single `domain-dns` extension is registered outside the `domains` module and depends on it. It supplies Cloudflare registration and DNS operations plus the Namecheap registration and renewal adapter, with one settings surface and encrypted secret fields. Disabling the extension preserves generic domain records but removes provider actions; disabling the module removes the domain surface while preserving its data.
+The `cloudflare-domain` extension is registered outside the `domains` module and depends on it. It supplies Cloudflare registration and DNS operations behind its own settings surface. The separate `namecheap-domain` extension supplies Namecheap registration and renewal operations behind its own settings surface. Both extensions preserve generic domain records when disabled; disabling the module removes the domain surface while preserving its data.
 
-The integrated package contains the Namecheap registrar adapter behind the same Domain workspace. It currently exposes only availability checks, registrations and renewals. Its XML transport and response mapping are automated-test covered, but no live Namecheap sandbox flow has been run here. It does not claim DNS, nameserver, transfer or contact-update support.
+The `namecheap-domain` extension contains the Namecheap registrar adapter. It currently exposes only availability checks, registrations and renewals. Its XML transport and response mapping are automated-test covered, but no live Namecheap sandbox flow has been run here. It does not claim DNS, nameserver, transfer or contact-update support.
 
 Domain records snapshot `registrar_key` and `dns_provider_key` independently. This supports Namecheap for registration plus Cloudflare for DNS without coupling registrar billing, renewals or transfers to DNS hosting. Product configuration and admin actions are feature-tested; live provider registration, DNS and renewal verification remain external gates.
 
-- availability and price checks through the integrated Domain DNS package;
-- one encrypted settings surface through the existing ExtensionSettingsRepository for Cloudflare and Namecheap credentials;
+- availability and price checks through the provider-specific Domain extensions;
+- separate encrypted settings surfaces through the existing ExtensionSettingsRepository for Cloudflare and Namecheap credentials;
 - Cloudflare DNS zone and record management plus Cloudflare and Namecheap registrar capabilities;
 - explicit unsupported behavior for lifecycle operations that the provider contracts do not expose.
 

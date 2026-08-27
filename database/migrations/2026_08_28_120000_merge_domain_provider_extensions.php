@@ -2,7 +2,6 @@
 
 declare(strict_types=1);
 
-use App\Agovena\Extensions\ExtensionCategory;
 use App\Agovena\Extensions\ExtensionManifest;
 use App\Enums\PackageSourceType;
 use Illuminate\Database\Migrations\Migration;
@@ -11,131 +10,207 @@ use Illuminate\Support\Facades\File;
 
 return new class extends Migration
 {
-    private const TARGET = 'domain-dns';
+    private const VERSION = '1.0.0';
 
-    private const EXPECTED_PROVIDER = 'Agovena\\Extensions\\DomainDns\\DomainDnsServiceProvider';
+    private const AGOVENA_CONSTRAINT = '^0.0.1';
 
-    /** @var array<string, string> */
-    private const EXPECTED_AUTOLOAD = [
-        'Agovena\\Extensions\\DomainDns\\' => 'src/',
-    ];
-
-    /** @var list<string> */
-    private const EXPECTED_MANIFEST_KEYS = [
-        'id',
-        'name',
-        'version',
-        'description',
-        'author',
-        'category',
-        'production_ready',
-        'agovena',
-        'provider',
-        'module_dependencies',
-        'dependencies',
-        'autoload',
-        'settings',
-    ];
-
-    /** @var list<array{key: string, label: string, type: string, secret: bool, required: bool, default: mixed, help: string}> */
-    private const EXPECTED_SETTINGS = [
-        [
-            'key' => 'cloudflare_account_id',
-            'label' => 'domain-dns::messages.settings.cloudflare_account_id',
-            'type' => 'string',
-            'secret' => false,
-            'required' => false,
-            'default' => '',
-            'help' => 'domain-dns::messages.settings.cloudflare_account_id_help',
-        ],
-        [
-            'key' => 'cloudflare_api_token',
-            'label' => 'domain-dns::messages.settings.cloudflare_api_token',
-            'type' => 'string',
-            'secret' => true,
-            'required' => false,
-            'default' => '',
-            'help' => 'domain-dns::messages.settings.cloudflare_api_token_help',
-        ],
-        [
-            'key' => 'namecheap_api_user',
-            'label' => 'domain-dns::messages.settings.namecheap_api_user',
-            'type' => 'string',
-            'secret' => false,
-            'required' => false,
-            'default' => '',
-            'help' => 'domain-dns::messages.settings.namecheap_api_user_help',
-        ],
-        [
-            'key' => 'namecheap_api_key',
-            'label' => 'domain-dns::messages.settings.namecheap_api_key',
-            'type' => 'string',
-            'secret' => true,
-            'required' => false,
-            'default' => '',
-            'help' => 'domain-dns::messages.settings.namecheap_api_key_help',
-        ],
-        [
-            'key' => 'namecheap_username',
-            'label' => 'domain-dns::messages.settings.namecheap_username',
-            'type' => 'string',
-            'secret' => false,
-            'required' => false,
-            'default' => '',
-            'help' => 'domain-dns::messages.settings.namecheap_username_help',
-        ],
-        [
-            'key' => 'namecheap_client_ip',
-            'label' => 'domain-dns::messages.settings.namecheap_client_ip',
-            'type' => 'string',
-            'secret' => false,
-            'required' => false,
-            'default' => '',
-            'help' => 'domain-dns::messages.settings.namecheap_client_ip_help',
-        ],
-        [
-            'key' => 'namecheap_sandbox',
-            'label' => 'domain-dns::messages.settings.namecheap_sandbox',
-            'type' => 'boolean',
-            'secret' => false,
-            'required' => false,
-            'default' => true,
-            'help' => 'domain-dns::messages.settings.namecheap_sandbox_help',
-        ],
-    ];
-
-    /** @var list<string> */
-    private const REQUIRED_FILES = [
-        'src/CloudflareApi.php',
-        'src/CloudflareDnsApi.php',
-        'src/CloudflareDnsProvider.php',
-        'src/CloudflareRegistrar.php',
-        'src/CloudflareRegistrarOperationNotSupported.php',
-        'src/DomainDnsExtension.php',
-        'src/DomainDnsServiceProvider.php',
-        'src/HttpCloudflareApi.php',
-        'src/HttpCloudflareDnsApi.php',
-        'src/HttpNamecheapApi.php',
-        'src/NamecheapApi.php',
-        'src/NamecheapRegistrar.php',
-    ];
-
-    /** @var array<string, string> */
-    private const SETTING_MAP = [
-        'cloudflare-registrar:account_id' => 'cloudflare_account_id',
-        'cloudflare-dns:account_id' => 'cloudflare_account_id',
-        'cloudflare-registrar:api_token' => 'cloudflare_api_token',
-        'cloudflare-dns:api_token' => 'cloudflare_api_token',
-        'namecheap-registrar:api_user' => 'namecheap_api_user',
-        'namecheap-registrar:api_key' => 'namecheap_api_key',
-        'namecheap-registrar:username' => 'namecheap_username',
-        'namecheap-registrar:client_ip' => 'namecheap_client_ip',
-        'namecheap-registrar:sandbox' => 'namecheap_sandbox',
-    ];
+    /** @return array<string, array<string, mixed>> */
+    private function definitions(): array
+    {
+        return [
+            'cloudflare-domain' => [
+                'legacy_ids' => ['cloudflare-dns', 'cloudflare-registrar'],
+                'manifest' => [
+                    'id' => 'cloudflare-domain',
+                    'name' => 'Cloudflare Domains',
+                    'version' => self::VERSION,
+                    'description' => 'Cloudflare domain availability, registration and DNS management in one provider integration.',
+                    'author' => 'Agovena',
+                    'category' => 'domain',
+                    'production_ready' => false,
+                    'agovena' => self::AGOVENA_CONSTRAINT,
+                    'provider' => 'Agovena\\Extensions\\CloudflareDomain\\CloudflareDomainServiceProvider',
+                    'module_dependencies' => ['domains'],
+                    'dependencies' => [],
+                    'autoload' => [
+                        'psr-4' => [
+                            'Agovena\\Extensions\\CloudflareDomain\\' => 'src/',
+                        ],
+                    ],
+                    'settings' => [
+                        [
+                            'key' => 'account_id',
+                            'label' => 'cloudflare-domain::messages.settings.account_id',
+                            'type' => 'string',
+                            'secret' => false,
+                            'required' => false,
+                            'default' => '',
+                            'help' => 'cloudflare-domain::messages.settings.account_id_help',
+                        ],
+                        [
+                            'key' => 'api_token',
+                            'label' => 'cloudflare-domain::messages.settings.api_token',
+                            'type' => 'string',
+                            'secret' => true,
+                            'required' => false,
+                            'default' => '',
+                            'help' => 'cloudflare-domain::messages.settings.api_token_help',
+                        ],
+                    ],
+                ],
+                'required_files' => [
+                    'src/CloudflareApi.php',
+                    'src/CloudflareDnsApi.php',
+                    'src/CloudflareDnsProvider.php',
+                    'src/CloudflareRegistrar.php',
+                    'src/CloudflareRegistrarOperationNotSupported.php',
+                    'src/CloudflareDomainExtension.php',
+                    'src/CloudflareDomainServiceProvider.php',
+                    'src/HttpCloudflareApi.php',
+                    'src/HttpCloudflareDnsApi.php',
+                    'lang/en/messages.php',
+                    'lang/nl/messages.php',
+                ],
+                'setting_map' => [
+                    'cloudflare-dns:account_id' => 'account_id',
+                    'cloudflare-dns:api_token' => 'api_token',
+                    'cloudflare-registrar:account_id' => 'account_id',
+                    'cloudflare-registrar:api_token' => 'api_token',
+                ],
+                'setting_secrets' => [
+                    'account_id' => false,
+                    'api_token' => true,
+                ],
+            ],
+            'namecheap-domain' => [
+                'legacy_ids' => ['namecheap-registrar'],
+                'manifest' => [
+                    'id' => 'namecheap-domain',
+                    'name' => 'Namecheap Domains',
+                    'version' => self::VERSION,
+                    'description' => 'Namecheap domain availability, registration and renewal management in one provider integration.',
+                    'author' => 'Agovena',
+                    'category' => 'domain',
+                    'production_ready' => false,
+                    'agovena' => self::AGOVENA_CONSTRAINT,
+                    'provider' => 'Agovena\\Extensions\\NamecheapDomain\\NamecheapDomainServiceProvider',
+                    'module_dependencies' => ['domains'],
+                    'dependencies' => [],
+                    'autoload' => [
+                        'psr-4' => [
+                            'Agovena\\Extensions\\NamecheapDomain\\' => 'src/',
+                        ],
+                    ],
+                    'settings' => [
+                        [
+                            'key' => 'api_user',
+                            'label' => 'namecheap-domain::messages.settings.api_user',
+                            'type' => 'string',
+                            'secret' => false,
+                            'required' => false,
+                            'default' => '',
+                            'help' => 'namecheap-domain::messages.settings.api_user_help',
+                        ],
+                        [
+                            'key' => 'api_key',
+                            'label' => 'namecheap-domain::messages.settings.api_key',
+                            'type' => 'string',
+                            'secret' => true,
+                            'required' => false,
+                            'default' => '',
+                            'help' => 'namecheap-domain::messages.settings.api_key_help',
+                        ],
+                        [
+                            'key' => 'username',
+                            'label' => 'namecheap-domain::messages.settings.username',
+                            'type' => 'string',
+                            'secret' => false,
+                            'required' => false,
+                            'default' => '',
+                            'help' => 'namecheap-domain::messages.settings.username_help',
+                        ],
+                        [
+                            'key' => 'client_ip',
+                            'label' => 'namecheap-domain::messages.settings.client_ip',
+                            'type' => 'string',
+                            'secret' => false,
+                            'required' => false,
+                            'default' => '',
+                            'help' => 'namecheap-domain::messages.settings.client_ip_help',
+                        ],
+                        [
+                            'key' => 'sandbox',
+                            'label' => 'namecheap-domain::messages.settings.sandbox',
+                            'type' => 'boolean',
+                            'secret' => false,
+                            'required' => false,
+                            'default' => true,
+                            'help' => 'namecheap-domain::messages.settings.sandbox_help',
+                        ],
+                    ],
+                ],
+                'required_files' => [
+                    'src/NamecheapApi.php',
+                    'src/HttpNamecheapApi.php',
+                    'src/NamecheapRegistrar.php',
+                    'src/NamecheapDomainExtension.php',
+                    'src/NamecheapDomainServiceProvider.php',
+                    'lang/en/messages.php',
+                    'lang/nl/messages.php',
+                ],
+                'setting_map' => [
+                    'namecheap-registrar:api_user' => 'api_user',
+                    'namecheap-registrar:api_key' => 'api_key',
+                    'namecheap-registrar:username' => 'username',
+                    'namecheap-registrar:client_ip' => 'client_ip',
+                    'namecheap-registrar:sandbox' => 'sandbox',
+                ],
+                'setting_secrets' => [
+                    'api_user' => false,
+                    'api_key' => true,
+                    'username' => false,
+                    'client_ip' => false,
+                    'sandbox' => false,
+                ],
+            ],
+        ];
+    }
 
     public function up(): void
     {
-        $legacyIds = $this->legacyIds();
+        $plans = [];
+
+        foreach ($this->definitions() as $targetId => $definition) {
+            $plan = $this->prepareTargetMigration($targetId, $definition);
+            if ($plan !== null) {
+                $plans[] = $plan;
+            }
+        }
+
+        if ($plans === []) {
+            return;
+        }
+
+        DB::transaction(function () use ($plans): void {
+            foreach ($plans as $plan) {
+                $this->applyTargetMigration($plan);
+            }
+        });
+
+        foreach ($plans as $plan) {
+            $this->cleanupLegacyPackageDirectories($plan['legacy_packages']);
+        }
+    }
+
+    public function down(): void
+    {
+        throw new RuntimeException('The unified Domain provider migration is intentionally irreversible. Restore the database backup to roll it back.');
+    }
+
+    /** @param array<string, mixed> $definition @return array<string, mixed>|null */
+    private function prepareTargetMigration(string $targetId, array $definition): ?array
+    {
+        $legacyIds = $definition['legacy_ids'];
         $legacyExtensions = DB::table('agovena_extensions')
             ->whereIn('extension_id', $legacyIds)
             ->orderByDesc('enabled')
@@ -146,114 +221,181 @@ return new class extends Migration
             ->whereIn('agovena_id', $legacyIds)
             ->orderByDesc('id')
             ->get();
+        $legacySettingsExist = DB::table('extension_settings')
+            ->whereIn('extension_id', $legacyIds)
+            ->exists();
 
-        if ($legacyExtensions->isEmpty() && $legacyPackages->isEmpty()) {
-            return;
+        if ($legacyExtensions->isEmpty() && $legacyPackages->isEmpty() && ! $legacySettingsExist) {
+            return null;
         }
 
-        $packagePath = $this->materializeIntegratedPackage();
-        if ($packagePath === null) {
-            throw new RuntimeException('The unified Domain DNS package is not available. Install or materialize extensions/domains/domain-dns before upgrading. No legacy domain records were changed.');
-        }
-
-        $legacyExtension = $legacyExtensions->first();
         $legacyPackage = $legacyPackages->first();
-        $now = now();
-        $sourceType = $legacyPackage?->source_type ?? 'path';
-        if (! in_array($sourceType, array_column(PackageSourceType::cases(), 'value'), true)) {
-            throw new RuntimeException('The legacy Domain DNS package has an unsupported source type. No legacy domain records were changed.');
+        $sourceType = $legacyPackage?->source_type ?? PackageSourceType::Path->value;
+        if (PackageSourceType::tryFrom((string) $sourceType) === null) {
+            throw new RuntimeException("The {$targetId} package has an unsupported source type. No legacy domain records were changed.");
         }
+
         $sourceLocator = $legacyPackage?->source_locator;
-        if ($sourceType === 'path' || ! is_string($sourceLocator) || trim($sourceLocator) === '') {
+        if ($sourceType !== PackageSourceType::Path->value
+            && (! is_string($sourceLocator) || trim($sourceLocator) === '')
+        ) {
+            throw new RuntimeException("The {$targetId} package has an invalid source locator. No legacy domain records were changed.");
+        }
+
+        $migratedSettings = $this->collectMigratedSettings($legacyIds, $definition);
+        $packagePath = $this->materializeIntegratedPackage($targetId, $definition);
+        if ($packagePath === null) {
+            throw new RuntimeException("The {$targetId} package is unavailable or invalid. No legacy domain records were changed.");
+        }
+        if ($sourceType === PackageSourceType::Path->value) {
             $sourceLocator = $packagePath;
         }
+        $targetExtension = DB::table('agovena_extensions')->where('extension_id', $targetId)->first();
+        $targetPackage = DB::table('agovena_packages')
+            ->where('kind', 'extension')
+            ->where('agovena_id', $targetId)
+            ->first();
 
-        DB::transaction(function () use ($legacyIds, $legacyExtensions, $legacyExtension, $legacyPackage, $now, $sourceType, $sourceLocator, $packagePath): void {
-            DB::table('agovena_extensions')->updateOrInsert(
-                ['extension_id' => self::TARGET],
-                [
-                    'version' => '1.0.0',
-                    'enabled' => (bool) $legacyExtensions->contains(fn (object $row): bool => (bool) $row->enabled),
-                    'installed_at' => $legacyExtension?->installed_at ?? $now,
-                    'enabled_at' => $legacyExtensions->firstWhere('enabled', true)?->enabled_at,
-                    'disabled_at' => null,
-                    'meta' => $legacyExtension?->meta ?? json_encode([]),
-                    'created_at' => $legacyExtension?->created_at ?? $now,
-                    'updated_at' => $now,
-                ],
-            );
+        return [
+            'target_id' => $targetId,
+            'definition' => $definition,
+            'legacy_ids' => $legacyIds,
+            'legacy_extensions' => $legacyExtensions,
+            'legacy_extension' => $legacyExtensions->first(),
+            'legacy_packages' => $legacyPackages,
+            'legacy_package' => $legacyPackage,
+            'migrated_settings' => $migratedSettings,
+            'target_extension' => $targetExtension,
+            'target_package' => $targetPackage,
+            'source_type' => (string) $sourceType,
+            'source_locator' => (string) $sourceLocator,
+            'package_path' => $packagePath,
+            'now' => now(),
+        ];
+    }
 
-            DB::table('agovena_packages')->updateOrInsert(
-                ['kind' => 'extension', 'agovena_id' => self::TARGET],
-                [
-                    'composer_name' => self::TARGET,
-                    'source_type' => $sourceType,
-                    'source_locator' => $sourceLocator,
-                    'version_constraint' => $legacyPackage?->version_constraint ?: '*',
-                    'installed_version' => '1.0.0',
-                    'available_version' => '1.0.0',
-                    'install_path' => $packagePath,
-                    'is_bundled' => false,
-                    'created_at' => $legacyPackage?->created_at ?? $now,
-                    'updated_at' => $now,
-                ],
-            );
+    /** @param array<string, mixed> $plan */
+    private function applyTargetMigration(array $plan): void
+    {
+        $targetId = $plan['target_id'];
+        $definition = $plan['definition'];
+        $legacyExtensions = $plan['legacy_extensions'];
+        $legacyExtension = $plan['legacy_extension'];
+        $legacyPackage = $plan['legacy_package'];
+        $targetExtension = $plan['target_extension'];
+        $targetPackage = $plan['target_package'];
+        $now = $plan['now'];
 
-            foreach (self::SETTING_MAP as $legacy => $target) {
-                [$legacyId, $legacyKey] = explode(':', $legacy, 2);
-                $setting = DB::table('extension_settings')
-                    ->where('extension_id', $legacyId)
-                    ->where('key', $legacyKey)
-                    ->first();
-                if ($setting === null) {
-                    continue;
+        $enabled = (bool) ($targetExtension?->enabled ?? false)
+            || $legacyExtensions->contains(fn (object $row): bool => (bool) $row->enabled);
+        $installedAt = $targetExtension?->installed_at
+            ?? $legacyExtension?->installed_at
+            ?? $now;
+        $meta = $targetExtension?->meta
+            ?? $legacyExtension?->meta
+            ?? json_encode([]);
+
+        DB::table('agovena_extensions')->updateOrInsert(
+            ['extension_id' => $targetId],
+            [
+                'version' => self::VERSION,
+                'enabled' => $enabled,
+                'installed_at' => $installedAt,
+                'enabled_at' => $enabled
+                    ? ($targetExtension?->enabled_at ?? $legacyExtensions->firstWhere('enabled', true)?->enabled_at ?? $now)
+                    : null,
+                'disabled_at' => $enabled ? null : ($targetExtension?->disabled_at ?? $now),
+                'meta' => $meta,
+                'created_at' => $targetExtension?->created_at ?? $now,
+                'updated_at' => $now,
+            ],
+        );
+
+        DB::table('agovena_packages')->updateOrInsert(
+            [
+                'kind' => 'extension',
+                'agovena_id' => $targetId,
+            ],
+            [
+                'composer_name' => $targetId,
+                'source_type' => $plan['source_type'],
+                'source_locator' => $plan['source_locator'],
+                'version_constraint' => $legacyPackage?->version_constraint
+                    ?? $targetPackage?->version_constraint
+                    ?? '*',
+                'installed_version' => self::VERSION,
+                'available_version' => self::VERSION,
+                'install_path' => $plan['package_path'],
+                'is_bundled' => false,
+                'created_at' => $targetPackage?->created_at ?? $now,
+                'updated_at' => $now,
+            ],
+        );
+
+        foreach ($plan['migrated_settings'] as $targetKey => $setting) {
+            $existing = DB::table('extension_settings')
+                ->where('extension_id', $targetId)
+                ->where('key', $targetKey)
+                ->first();
+            $expectedSecret = $definition['setting_secrets'][$targetKey];
+
+            if ($existing !== null) {
+                if ($existing->value !== $setting->value || (bool) $existing->is_secret !== $expectedSecret) {
+                    throw new RuntimeException("The {$targetId} setting conflicts with an existing unified setting. No legacy domain records were changed.");
                 }
 
-                $exists = DB::table('extension_settings')
-                    ->where('extension_id', self::TARGET)
-                    ->where('key', $target)
-                    ->exists();
-                if (! $exists) {
-                    DB::table('extension_settings')->insert([
-                        'extension_id' => self::TARGET,
-                        'key' => $target,
-                        'value' => $setting->value,
-                        'is_secret' => $setting->is_secret,
-                        'created_at' => $setting->created_at,
-                        'updated_at' => $now,
-                    ]);
-                }
+                continue;
             }
 
-            DB::table('extension_settings')->whereIn('extension_id', $legacyIds)->delete();
-            DB::table('agovena_extensions')->whereIn('extension_id', $legacyIds)->delete();
-            DB::table('agovena_packages')
-                ->where('kind', 'extension')
-                ->whereIn('agovena_id', $legacyIds)
-                ->delete();
-        });
+            DB::table('extension_settings')->insert([
+                'extension_id' => $targetId,
+                'key' => $targetKey,
+                'value' => $setting->value,
+                'is_secret' => $expectedSecret,
+                'created_at' => $setting->created_at,
+                'updated_at' => $now,
+            ]);
+        }
 
-        $this->cleanupLegacyPackageDirectories($legacyPackages);
+        DB::table('extension_settings')->whereIn('extension_id', $plan['legacy_ids'])->delete();
+        DB::table('agovena_extensions')->whereIn('extension_id', $plan['legacy_ids'])->delete();
+        DB::table('agovena_packages')
+            ->where('kind', 'extension')
+            ->whereIn('agovena_id', $plan['legacy_ids'])
+            ->delete();
     }
 
-    public function down(): void
+    /** @param list<string> $legacyIds @param array<string, mixed> $definition @return array<string, object> */
+    private function collectMigratedSettings(array $legacyIds, array $definition): array
     {
-        throw new RuntimeException('The unified Domain DNS migration is intentionally irreversible. Restore the database backup to roll it back.');
+        $settings = [];
+
+        foreach (DB::table('extension_settings')->whereIn('extension_id', $legacyIds)->get() as $setting) {
+            $legacyKey = $setting->extension_id.':'.$setting->key;
+            if (! array_key_exists($legacyKey, $definition['setting_map'])) {
+                throw new RuntimeException('The legacy Domain provider contains an unmapped setting. No legacy domain records were changed.');
+            }
+
+            $targetKey = $definition['setting_map'][$legacyKey];
+            if ((bool) $setting->is_secret !== $definition['setting_secrets'][$targetKey]) {
+                throw new RuntimeException('The legacy Domain provider contains invalid setting secret metadata. No legacy domain records were changed.');
+            }
+
+            if (isset($settings[$targetKey]) && $settings[$targetKey]->value !== $setting->value) {
+                throw new RuntimeException('The legacy Domain provider contains conflicting setting values. No legacy domain records were changed.');
+            }
+
+            $settings[$targetKey] = $setting;
+        }
+
+        return $settings;
     }
 
-    /** @return list<string> */
-    private function legacyIds(): array
+    /** @param array<string, mixed> $definition */
+    private function materializeIntegratedPackage(string $targetId, array $definition): ?string
     {
-        return array_values(array_unique(array_map(
-            static fn (string $key): string => explode(':', $key, 2)[0],
-            array_keys(self::SETTING_MAP),
-        )));
-    }
-
-    private function materializeIntegratedPackage(): ?string
-    {
-        $destination = storage_path('app/packages/extensions/'.self::TARGET);
-        if ($this->hasIntegratedManifest($destination)) {
+        $destination = storage_path('app/packages/extensions/'.$targetId);
+        if ($this->hasCanonicalManifest($destination, $definition)) {
             return realpath($destination) ?: $destination;
         }
 
@@ -262,8 +404,8 @@ return new class extends Migration
             return null;
         }
 
-        $source = rtrim(trim($optionalRoot), '/\\').DIRECTORY_SEPARATOR.'extensions'.DIRECTORY_SEPARATOR.'domains'.DIRECTORY_SEPARATOR.self::TARGET;
-        if (! $this->hasIntegratedManifest($source)) {
+        $source = rtrim(trim($optionalRoot), '/\\').DIRECTORY_SEPARATOR.'extensions'.DIRECTORY_SEPARATOR.'domains'.DIRECTORY_SEPARATOR.$targetId;
+        if (! $this->hasCanonicalManifest($source, $definition)) {
             return null;
         }
 
@@ -273,7 +415,7 @@ return new class extends Migration
         }
         File::copyDirectory($source, $destination);
 
-        if (! $this->hasIntegratedManifest($destination)) {
+        if (! $this->hasCanonicalManifest($destination, $definition)) {
             File::deleteDirectory($destination);
 
             return null;
@@ -282,7 +424,8 @@ return new class extends Migration
         return realpath($destination) ?: $destination;
     }
 
-    private function hasIntegratedManifest(string $directory): bool
+    /** @param array<string, mixed> $definition */
+    private function hasCanonicalManifest(string $directory, array $definition): bool
     {
         $manifestPath = $directory.DIRECTORY_SEPARATOR.'extension.json';
         if (! is_file($manifestPath)) {
@@ -290,48 +433,20 @@ return new class extends Migration
         }
 
         $manifestData = json_decode((string) file_get_contents($manifestPath), true);
-        if (! is_array($manifestData)) {
+        if (! is_array($manifestData)
+            || $this->canonicalize($manifestData) !== $this->canonicalize($definition['manifest'])) {
             return false;
         }
 
         try {
-            $manifest = ExtensionManifest::fromArray($manifestData, $directory);
+            ExtensionManifest::fromArray($manifestData, $directory);
         } catch (Throwable) {
             return false;
         }
 
-        $manifestKeys = array_keys($manifestData);
-        $expectedManifestKeys = self::EXPECTED_MANIFEST_KEYS;
-        sort($manifestKeys);
-        sort($expectedManifestKeys);
-
-        if ($manifestKeys !== $expectedManifestKeys
-            || ($manifestData['description'] ?? null) !== 'Domain availability, registration, renewals and Cloudflare DNS management in one domain integration.'
-            || ($manifestData['author'] ?? null) !== 'Agovena'
-            || ($manifestData['production_ready'] ?? null) !== false
-            || ($manifestData['agovena'] ?? null) !== '^0.0.1'
-            || ($manifestData['module_dependencies'] ?? null) !== ['domains']
-            || ($manifestData['dependencies'] ?? null) !== []
-            || ($manifestData['autoload'] ?? null) !== ['psr-4' => self::EXPECTED_AUTOLOAD]
-            || ($manifestData['settings'] ?? null) !== self::EXPECTED_SETTINGS
-            || $manifest->id !== self::TARGET
-            || $manifest->name !== 'Domain DNS'
-            || $manifest->version !== '1.0.0'
-            || $manifest->provider !== self::EXPECTED_PROVIDER
-            || $manifest->category !== ExtensionCategory::Domain
-            || $manifest->agovena !== '^0.0.1'
-            || $manifest->dependencies !== []
-            || $manifest->moduleDependencies !== ['domains']
-            || $manifest->author !== 'Agovena'
-            || $manifest->settings !== self::EXPECTED_SETTINGS
-            || $manifest->autoloadPsr4 !== self::EXPECTED_AUTOLOAD
-            || $manifest->productionReady
-        ) {
-            return false;
-        }
-
-        foreach (self::REQUIRED_FILES as $relativePath) {
-            if (! is_file($directory.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relativePath))) {
+        foreach ($definition['required_files'] as $relativePath) {
+            $path = $directory.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relativePath);
+            if (! is_file($path)) {
                 return false;
             }
         }
@@ -339,30 +454,69 @@ return new class extends Migration
         return true;
     }
 
-    /** @param  iterable<object>  $legacyPackages */
+    private function canonicalize(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        if (array_is_list($value)) {
+            return array_map(fn (mixed $item): mixed => $this->canonicalize($item), $value);
+        }
+
+        $canonical = [];
+        foreach ($value as $key => $item) {
+            $canonical[(string) $key] = $this->canonicalize($item);
+        }
+        ksort($canonical);
+
+        return $canonical;
+    }
+
+    /** @param iterable<object> $legacyPackages */
     private function cleanupLegacyPackageDirectories(iterable $legacyPackages): void
     {
         $allowedRoot = realpath(storage_path('app/packages/extensions'));
         if ($allowedRoot === false) {
             return;
         }
+        $allowedLegacyIds = array_keys($this->legacyToTarget());
+        $allowedRoot = $this->normalize($allowedRoot);
 
         foreach ($legacyPackages as $package) {
             $legacyId = (string) ($package->agovena_id ?? '');
-            if (! in_array($legacyId, $this->legacyIds(), true)) {
+            if (! in_array($legacyId, $allowedLegacyIds, true)) {
                 continue;
             }
 
             $path = realpath((string) ($package->install_path ?? ''));
-            if ($path === false || ! str_starts_with($path, $allowedRoot.DIRECTORY_SEPARATOR)) {
+            if ($path === false) {
                 continue;
             }
-            if ($path === realpath(storage_path('app/packages/extensions/'.self::TARGET))
-                || basename($path) !== $legacyId) {
+            $path = $this->normalize($path);
+            if ($this->normalize(dirname($path)) !== $allowedRoot || basename($path) !== $legacyId) {
                 continue;
             }
 
             File::deleteDirectory($path);
         }
+    }
+
+    /** @return array<string, string> */
+    private function legacyToTarget(): array
+    {
+        $map = [];
+        foreach ($this->definitions() as $targetId => $definition) {
+            foreach ($definition['legacy_ids'] as $legacyId) {
+                $map[$legacyId] = $targetId;
+            }
+        }
+
+        return $map;
+    }
+
+    private function normalize(string $path): string
+    {
+        return rtrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $path), DIRECTORY_SEPARATOR);
     }
 };
