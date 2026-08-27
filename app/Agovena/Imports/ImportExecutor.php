@@ -29,10 +29,11 @@ use App\Models\Refund;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\QueryException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
+use RuntimeException;
 use Throwable;
 
 final class ImportExecutor
@@ -890,29 +891,39 @@ final class ImportExecutor
             return false;
         }
 
-        try {
-            ImportIdentityReservation::query()->create([
-                'source' => $run->source,
-                'entity' => $candidate->entity,
-                'external_id' => $candidate->externalId,
-                'import_run_id' => $run->id,
-                'import_row_id' => $row->id,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+        $values = [
+            'source' => $run->source,
+            'entity' => $candidate->entity,
+            'external_id' => $candidate->externalId,
+            'import_run_id' => $run->id,
+            'import_row_id' => $row->id,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ];
 
-            return true;
-        } catch (QueryException $exception) {
-            $alreadyReserved = ImportIdentityReservation::query()
-                ->where('source', $run->source)
-                ->where('entity', $candidate->entity)
-                ->where('external_id', $candidate->externalId)
-                ->exists();
-            if (! $alreadyReserved) {
-                throw $exception;
+        if (DB::connection()->getDriverName() === 'mysql') {
+            DB::statement(
+                'insert into `import_identity_reservations` (`source`, `entity`, `external_id`, `import_run_id`, `import_row_id`, `created_at`, `updated_at`) values (?, ?, ?, ?, ?, ?, ?) on duplicate key update `id` = `id`',
+                array_values($values),
+            );
+        } else {
+            try {
+                ImportIdentityReservation::query()->create($values);
+            } catch (UniqueConstraintViolationException) {
+                // Another transaction owns the identity reservation.
             }
-
-            return false;
         }
+
+        $reservation = ImportIdentityReservation::query()
+            ->where('source', $run->source)
+            ->where('entity', $candidate->entity)
+            ->where('external_id', $candidate->externalId)
+            ->first();
+        if ($reservation === null) {
+            throw new RuntimeException('Unable to reserve imported identity.');
+        }
+
+        return (int) $reservation->import_run_id === $run->id
+            && (int) $reservation->import_row_id === $row->id;
     }
 }

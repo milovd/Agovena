@@ -114,7 +114,7 @@ it('imports the completed refund amount for a partially refunded payment', funct
         ->and($payment->status)->toBe(PaymentStatus::PartiallyRefunded)
         ->and($payment->refundedAmount())->toBe(1000)
         ->and($payment->remainingRefundable())->toBe(1500)
-        ->and(Refund::query()->where('payment_id', $payment->id)->sum('amount'))->toBe(1000);
+        ->and((int) Refund::query()->where('payment_id', $payment->id)->sum('amount'))->toBe(1000);
 
     $staff = $this->createStaff([], ['payments.refund']);
     expect(fn () => app(RecordRefund::class)->handle($payment, $staff, 2500, 'Second full refund'))
