@@ -2,7 +2,10 @@
 
 This file is the working release matrix for the first public Agovena release. It deliberately distinguishes implementation from provider, browser, deployment, and production verification.
 
-## Status vocabulary
+## Release verdict
+
+**Not ready for v0.0.1.** The current runtime baseline has a green local and GitHub CI matrix, but provider sandbox, deployment, live receiver, independent security, human UI and legal gates remain open. No release tag or GitHub Release has been created.
+
 
 - `implemented`: present in the current repositories and covered by relevant automated tests.
 - `partial`: a foundation exists, but release scope or edge cases remain.
