@@ -104,7 +104,8 @@ it('migrates Cloudflare DNS and registrar into one Cloudflare extension', functi
         foreach ($legacyPaths as $path) {
             expect(File::exists($path))->toBeFalse();
         }
-        expect(File::exists(storage_path('app/packages/extensions/.cloudflare-domain.staging')))->toBeFalse();
+        expect(File::exists(storage_path('app/packages/extensions/.cloudflare-domain.staging')))->toBeFalse()
+            ->and(File::exists(storage_path('app/packages/extensions/.cloudflare-domain.backup')))->toBeFalse();
     } finally {
         File::deleteDirectory(storage_path('app/packages/extensions/cloudflare-domain'));
         foreach ($legacyPaths as $path) {

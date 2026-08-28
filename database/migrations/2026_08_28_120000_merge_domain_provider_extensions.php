@@ -410,11 +410,22 @@ return new class extends Migration
         }
 
         $staging = storage_path('app/packages/extensions/.'.$targetId.'.staging');
+        $backup = storage_path('app/packages/extensions/.'.$targetId.'.backup');
         File::ensureDirectoryExists(dirname($destination));
 
         try {
             if (is_dir($staging)) {
                 File::deleteDirectory($staging);
+            }
+
+            if (File::exists($backup)) {
+                if (! File::exists($destination)) {
+                    if (! rename($backup, $destination)) {
+                        throw new RuntimeException("Unable to restore the {$targetId} package backup.");
+                    }
+                } else {
+                    $this->deleteFilesystemPath($backup);
+                }
             }
 
             File::copyDirectory($source, $staging);
@@ -424,32 +435,52 @@ return new class extends Migration
                 return null;
             }
 
-            if (is_dir($destination)) {
-                File::deleteDirectory($destination);
-            } elseif (is_file($destination)) {
-                File::delete($destination);
+            $hadDestination = File::exists($destination);
+            if ($hadDestination && ! rename($destination, $backup)) {
+                throw new RuntimeException("Unable to stage the existing {$targetId} package.");
             }
 
-            if (! File::moveDirectory($staging, $destination)) {
-                File::deleteDirectory($staging);
+            if (! rename($staging, $destination)) {
+                if ($hadDestination && File::exists($backup)) {
+                    rename($backup, $destination);
+                }
+
+                throw new RuntimeException("Unable to activate the {$targetId} package.");
+            }
+
+            if (! $this->hasCanonicalManifest($destination, $definition)) {
+                $this->deleteFilesystemPath($destination);
+                if ($hadDestination && File::exists($backup)) {
+                    rename($backup, $destination);
+                }
 
                 return null;
+            }
+
+            if (File::exists($backup)) {
+                $this->deleteFilesystemPath($backup);
             }
         } catch (Throwable) {
             if (is_dir($staging)) {
                 File::deleteDirectory($staging);
             }
-
-            return null;
-        }
-
-        if (! $this->hasCanonicalManifest($destination, $definition)) {
-            File::deleteDirectory($destination);
+            if (! File::exists($destination) && File::exists($backup)) {
+                rename($backup, $destination);
+            }
 
             return null;
         }
 
         return realpath($destination) ?: $destination;
+    }
+
+    private function deleteFilesystemPath(string $path): void
+    {
+        if (is_dir($path)) {
+            File::deleteDirectory($path);
+        } elseif (File::exists($path)) {
+            File::delete($path);
+        }
     }
 
     /** @param array<string, mixed> $definition */
