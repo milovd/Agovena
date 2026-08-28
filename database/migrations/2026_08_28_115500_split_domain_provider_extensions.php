@@ -14,7 +14,7 @@ return new class extends Migration
 
     private const AGOVENA_CONSTRAINT = '^0.0.1';
 
-    private const FILESYSTEM_RETRY_ATTEMPTS = 10;
+    private const FILESYSTEM_RETRY_ATTEMPTS = 50;
 
     private const FILESYSTEM_RETRY_DELAY_MICROSECONDS = 100_000;
 
@@ -455,24 +455,31 @@ return new class extends Migration
         File::ensureDirectoryExists(dirname($destination));
 
         try {
-            if (is_dir($staging)) {
-                $this->deleteFilesystemPath($staging);
+            if (File::exists($staging) && ! $this->deleteFilesystemPath($staging)) {
+                throw new RuntimeException("Unable to clear the staged {$targetId} package.");
             }
 
             if (File::exists($backup)) {
-                if (! File::exists($destination)) {
+                if ($this->hasCanonicalManifest($destination, $definition)) {
+                    if (! $this->deleteFilesystemPath($backup)) {
+                        throw new RuntimeException("Unable to remove the stale {$targetId} package backup.");
+                    }
+                } else {
+                    if (File::exists($destination) && ! $this->deleteFilesystemPath($destination)) {
+                        throw new RuntimeException("Unable to clear the invalid {$targetId} package destination.");
+                    }
                     if (! $this->renameFilesystemPath($backup, $destination)) {
                         throw new RuntimeException("Unable to restore the {$targetId} package backup.");
                     }
-                } else {
-                    $this->deleteFilesystemPath($backup);
                 }
             }
 
             $stagingIsValid = false;
             for ($attempt = 0; $attempt < 3; $attempt++) {
-                if (is_dir($staging)) {
-                    $this->deleteFilesystemPath($staging);
+                if (File::exists($staging) && ! $this->deleteFilesystemPath($staging)) {
+                    usleep(100_000);
+
+                    continue;
                 }
 
                 $copied = File::copyDirectory($source, $staging);
@@ -483,13 +490,17 @@ return new class extends Migration
                     break;
                 }
 
-                if (is_dir($staging)) {
+                if (File::exists($staging)) {
                     $this->deleteFilesystemPath($staging);
                 }
 
                 usleep(100_000);
             }
             if (! $stagingIsValid) {
+                if (File::exists($staging)) {
+                    throw new RuntimeException("Unable to clean up the invalid staged {$targetId} package.");
+                }
+
                 return null;
             }
 
@@ -502,36 +513,48 @@ return new class extends Migration
             if (! $activated) {
                 $activated = $this->copyFilesystemPath($staging, $destination, $definition);
                 if ($activated) {
-                    $this->deleteFilesystemPath($staging);
+                    if (! $this->deleteFilesystemPath($staging)) {
+                        throw new RuntimeException("Unable to clean up the staged {$targetId} package after activation.");
+                    }
                 }
             }
 
             if (! $activated) {
-                if ($hadDestination && File::exists($backup)) {
-                    $this->renameFilesystemPath($backup, $destination);
+                if ($hadDestination && File::exists($backup)
+                    && ! $this->renameFilesystemPath($backup, $destination)) {
+                    throw new RuntimeException("Unable to restore the {$targetId} package after activation failed.");
                 }
 
                 throw new RuntimeException("Unable to activate the {$targetId} package.");
             }
 
             if (! $this->hasCanonicalManifest($destination, $definition)) {
-                $this->deleteFilesystemPath($destination);
-                if ($hadDestination && File::exists($backup)) {
-                    $this->renameFilesystemPath($backup, $destination);
+                if (! $this->deleteFilesystemPath($destination)) {
+                    throw new RuntimeException("Unable to remove the invalid {$targetId} package destination.");
+                }
+                if ($hadDestination && File::exists($backup)
+                    && ! $this->renameFilesystemPath($backup, $destination)) {
+                    throw new RuntimeException("Unable to restore the {$targetId} package after validation failed.");
                 }
 
                 return null;
             }
 
-            if (File::exists($backup)) {
-                $this->deleteFilesystemPath($backup);
+            if (File::exists($backup) && ! $this->deleteFilesystemPath($backup)) {
+                throw new RuntimeException("Unable to remove the {$targetId} package backup after activation.");
             }
         } catch (Throwable) {
-            if (is_dir($staging)) {
-                $this->deleteFilesystemPath($staging);
+            if (File::exists($staging) && ! $this->deleteFilesystemPath($staging)) {
+                throw new RuntimeException("Unable to clean up the staged {$targetId} package.");
             }
-            if (! File::exists($destination) && File::exists($backup)) {
-                $this->renameFilesystemPath($backup, $destination);
+
+            if (File::exists($backup) && ! $this->hasCanonicalManifest($destination, $definition)) {
+                if (File::exists($destination) && ! $this->deleteFilesystemPath($destination)) {
+                    throw new RuntimeException("Unable to clear the failed {$targetId} package destination.");
+                }
+                if (! $this->renameFilesystemPath($backup, $destination)) {
+                    throw new RuntimeException("Unable to restore the {$targetId} package after migration failed.");
+                }
             }
 
             return null;
@@ -544,8 +567,10 @@ return new class extends Migration
     private function copyFilesystemPath(string $source, string $destination, array $definition): bool
     {
         for ($attempt = 0; $attempt < self::FILESYSTEM_RETRY_ATTEMPTS; $attempt++) {
-            if (is_dir($destination)) {
-                $this->deleteFilesystemPath($destination);
+            if (File::exists($destination) && ! $this->deleteFilesystemPath($destination)) {
+                usleep(self::FILESYSTEM_RETRY_DELAY_MICROSECONDS);
+
+                continue;
             }
 
             if (File::copyDirectory($source, $destination)
@@ -553,7 +578,7 @@ return new class extends Migration
                 return true;
             }
 
-            if (is_dir($destination)) {
+            if (File::exists($destination)) {
                 $this->deleteFilesystemPath($destination);
             }
 
@@ -579,10 +604,14 @@ return new class extends Migration
         return false;
     }
 
-    private function deleteFilesystemPath(string $path): void
+    private function deleteFilesystemPath(string $path): bool
     {
         for ($attempt = 0; $attempt < self::FILESYSTEM_RETRY_ATTEMPTS; $attempt++) {
             clearstatcache(true, $path);
+
+            if (! is_dir($path) && ! File::exists($path)) {
+                return true;
+            }
 
             if (is_dir($path)) {
                 File::deleteDirectory($path);
@@ -592,11 +621,13 @@ return new class extends Migration
 
             clearstatcache(true, $path);
             if (! is_dir($path) && ! File::exists($path)) {
-                return;
+                return true;
             }
 
             usleep(self::FILESYSTEM_RETRY_DELAY_MICROSECONDS);
         }
+
+        return false;
     }
 
     /** @param array<string, mixed> $definition */
@@ -673,7 +704,9 @@ return new class extends Migration
                 continue;
             }
 
-            File::deleteDirectory($path);
+            if (! $this->deleteFilesystemPath($path)) {
+                throw new RuntimeException("Unable to remove the legacy {$legacyId} package directory.");
+            }
         }
     }
 
