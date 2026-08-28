@@ -14,6 +14,10 @@ return new class extends Migration
 
     private const AGOVENA_CONSTRAINT = '^0.0.1';
 
+    private const FILESYSTEM_RETRY_ATTEMPTS = 10;
+
+    private const FILESYSTEM_RETRY_DELAY_MICROSECONDS = 100_000;
+
     /** @return array<string, array<string, mixed>> */
     private function definitions(): array
     {
@@ -452,12 +456,12 @@ return new class extends Migration
 
         try {
             if (is_dir($staging)) {
-                File::deleteDirectory($staging);
+                $this->deleteFilesystemPath($staging);
             }
 
             if (File::exists($backup)) {
                 if (! File::exists($destination)) {
-                    if (! rename($backup, $destination)) {
+                    if (! $this->renameFilesystemPath($backup, $destination)) {
                         throw new RuntimeException("Unable to restore the {$targetId} package backup.");
                     }
                 } else {
@@ -468,18 +472,19 @@ return new class extends Migration
             $stagingIsValid = false;
             for ($attempt = 0; $attempt < 3; $attempt++) {
                 if (is_dir($staging)) {
-                    File::deleteDirectory($staging);
+                    $this->deleteFilesystemPath($staging);
                 }
 
-                if (File::copyDirectory($source, $staging)
-                    && $this->hasCanonicalManifest($staging, $definition)) {
+                $copied = File::copyDirectory($source, $staging);
+                $stagingCanonical = $this->hasCanonicalManifest($staging, $definition);
+                if ($copied && $stagingCanonical) {
                     $stagingIsValid = true;
 
                     break;
                 }
 
                 if (is_dir($staging)) {
-                    File::deleteDirectory($staging);
+                    $this->deleteFilesystemPath($staging);
                 }
 
                 usleep(100_000);
@@ -489,13 +494,21 @@ return new class extends Migration
             }
 
             $hadDestination = File::exists($destination);
-            if ($hadDestination && ! rename($destination, $backup)) {
+            if ($hadDestination && ! $this->renameFilesystemPath($destination, $backup)) {
                 throw new RuntimeException("Unable to stage the existing {$targetId} package.");
             }
 
-            if (! rename($staging, $destination)) {
+            $activated = $this->renameFilesystemPath($staging, $destination);
+            if (! $activated) {
+                $activated = $this->copyFilesystemPath($staging, $destination, $definition);
+                if ($activated) {
+                    $this->deleteFilesystemPath($staging);
+                }
+            }
+
+            if (! $activated) {
                 if ($hadDestination && File::exists($backup)) {
-                    rename($backup, $destination);
+                    $this->renameFilesystemPath($backup, $destination);
                 }
 
                 throw new RuntimeException("Unable to activate the {$targetId} package.");
@@ -504,7 +517,7 @@ return new class extends Migration
             if (! $this->hasCanonicalManifest($destination, $definition)) {
                 $this->deleteFilesystemPath($destination);
                 if ($hadDestination && File::exists($backup)) {
-                    rename($backup, $destination);
+                    $this->renameFilesystemPath($backup, $destination);
                 }
 
                 return null;
@@ -515,10 +528,10 @@ return new class extends Migration
             }
         } catch (Throwable) {
             if (is_dir($staging)) {
-                File::deleteDirectory($staging);
+                $this->deleteFilesystemPath($staging);
             }
             if (! File::exists($destination) && File::exists($backup)) {
-                rename($backup, $destination);
+                $this->renameFilesystemPath($backup, $destination);
             }
 
             return null;
@@ -527,12 +540,62 @@ return new class extends Migration
         return realpath($destination) ?: $destination;
     }
 
+    /** @param array<string, mixed> $definition */
+    private function copyFilesystemPath(string $source, string $destination, array $definition): bool
+    {
+        for ($attempt = 0; $attempt < self::FILESYSTEM_RETRY_ATTEMPTS; $attempt++) {
+            if (is_dir($destination)) {
+                $this->deleteFilesystemPath($destination);
+            }
+
+            if (File::copyDirectory($source, $destination)
+                && $this->hasCanonicalManifest($destination, $definition)) {
+                return true;
+            }
+
+            if (is_dir($destination)) {
+                $this->deleteFilesystemPath($destination);
+            }
+
+            usleep(self::FILESYSTEM_RETRY_DELAY_MICROSECONDS);
+        }
+
+        return false;
+    }
+
+    private function renameFilesystemPath(string $source, string $destination): bool
+    {
+        for ($attempt = 0; $attempt < self::FILESYSTEM_RETRY_ATTEMPTS; $attempt++) {
+            clearstatcache(true, $source);
+            clearstatcache(true, $destination);
+
+            if (@rename($source, $destination)) {
+                return true;
+            }
+
+            usleep(self::FILESYSTEM_RETRY_DELAY_MICROSECONDS);
+        }
+
+        return false;
+    }
+
     private function deleteFilesystemPath(string $path): void
     {
-        if (is_dir($path)) {
-            File::deleteDirectory($path);
-        } elseif (File::exists($path)) {
-            File::delete($path);
+        for ($attempt = 0; $attempt < self::FILESYSTEM_RETRY_ATTEMPTS; $attempt++) {
+            clearstatcache(true, $path);
+
+            if (is_dir($path)) {
+                File::deleteDirectory($path);
+            } elseif (File::exists($path)) {
+                File::delete($path);
+            }
+
+            clearstatcache(true, $path);
+            if (! is_dir($path) && ! File::exists($path)) {
+                return;
+            }
+
+            usleep(self::FILESYSTEM_RETRY_DELAY_MICROSECONDS);
         }
     }
 

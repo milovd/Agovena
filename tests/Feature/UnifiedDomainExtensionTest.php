@@ -102,9 +102,6 @@ it('migrates Cloudflare DNS and registrar into one Cloudflare extension', functi
             ->and(DB::table('extension_settings')->where('extension_id', 'cloudflare-domain')->where('key', 'api_token')->value('is_secret'))->toBe(1)
             ->and(DB::table('agovena_packages')->where('agovena_id', 'cloudflare-domain')->count())->toBe(1);
         foreach ($legacyPaths as $path) {
-            if (File::exists($path)) {
-                fwrite(STDERR, "remaining legacy path: {$path}\\n");
-            }
             expect(File::exists($path))->toBeFalse();
         }
         expect(File::exists(storage_path('app/packages/extensions/.cloudflare-domain.staging')))->toBeFalse()
