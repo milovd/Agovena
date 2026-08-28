@@ -4,7 +4,7 @@ This file is the working release matrix for the first public Agovena release. It
 
 ## Release verdict
 
-**Not ready for v0.0.1.** The current runtime baseline has a green local matrix, but provider sandbox, deployment, live receiver, post-fix independent security, human UI and legal gates remain open. The independent review of the preceding hardening work found 12 concrete security and integrity findings; the current work adds regression coverage and mitigations, but has not yet received an independent post-fix verdict. No release tag or GitHub Release has been created.
+**Not ready for v0.0.1.** The current runtime baseline has a green local matrix and a green GitHub Actions matrix on `f36a777` (including MariaDB concurrency), but provider sandbox, deployment, live receiver, post-fix independent security, human UI and legal gates remain open. No release tag or GitHub Release has been created.
 
 
 - `implemented`: present in the current repositories and covered by relevant automated tests.
@@ -19,14 +19,15 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`, `HEAD`.
-- Last commit with full CI matrix green before the current Admin hardening push: `2ad3e3a` via Actions run `33030783714`.
+- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`, `24a14b5`, `f36a777`.
+- GitHub Actions run `33129833665` is green on `f36a777`, including the MariaDB import-identity concurrency regression.
+- Previous successful baseline run `33030783714` remains historical evidence only.
 - Previous functional baseline: `89d1b66` (including the browser, backup and import hardening); CI-163 for this baseline passed all jobs.
-- Current Domain integration commit: `HEAD`; it provides two provider-specific extensions: `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS, while `namecheap-domain` combines Namecheap registration and renewal management. The commits are local and have not yet been pushed or CI-verified.
+- Current Domain integration commit: `f36a777`; it provides two provider-specific extensions: `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS, while `namecheap-domain` combines Namecheap registration and renewal management. Core and optional-packages commits are pushed to their `main` branches.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
-- Optional-packages commits: `43d523f`, `0167242`, `ce2d2cf`, `d18c916`.
+- Optional-packages commits: `43d523f`, `0167242`, `ce2d2cf`, `d18c916`, `a176fbd`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The current local full application suite has passed: 938 tests and 12,919 assertions. This local result does not yet prove the local commits in CI, external provider behavior, or authenticated browser behavior.
+- The current local full application suite has passed: 948 tests and 12,956 assertions. GitHub Actions run `33129833665` passed PHP 8.3, PHP 8.4, browser, native-linux, release-artifact and MariaDB feature/upgrade/concurrency checks.
 
 ## Implemented or feature-tested foundations
 
@@ -34,7 +35,7 @@ This file is the working release matrix for the first public Agovena release. It
 |---|---|---|
 | Core catalog, cart, checkout, orders, invoices | implemented | Feature coverage exists in the application suite. |
 | Refunds, credit notes, payment attempts, fee snapshots and webhook contracts | implemented | Automated idempotency, signature, fee pass-through and invoice snapshot tests exist. |
-| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. All 16 optional extension manifests now declare `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven. MariaDB multi-process proof and live provider failure review remain release gates. |
+| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. All 16 optional extension manifests now declare `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven. Live provider failure review remains a release gate; the MariaDB multi-process matrix is green in CI. |
 | Subscriptions and recurring renewal seams | partial | Automated lifecycle coverage and subscription import coverage exist; provider-specific recurring behavior remains capability-bound. |
 | Account security, TOTP, recovery and sessions | implemented | Customer security flows and automated coverage exist. |
 | Audit logging | implemented | Capture, redaction, integrity metadata, filters, export and retention command paths are covered. |
@@ -148,18 +149,18 @@ Validated gates:
 - backup/restore smoke: passed;
 - CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
 - local Playwright browser matrix: 24 tests passed against a prepared E2E server, including desktop/mobile responsive, checkout and keyboard/accessibility flows;
-- GitHub Actions full matrix for commit `89d1b66` (CI-163): PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed;
-- Full PHPStan with `APP_ENV=testing` and a 1 GB CLI memory limit, targeted Pint, Blade cache, Vite build, npm production audit, PHP syntax and diff-check: passed on the current worktree. The new local commits have not yet run in CI.
+- GitHub Actions full matrix for commit `f36a777` (run `33129833665`): PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed;
+- Full PHPStan with `APP_ENV=testing` and a 1 GB CLI memory limit, targeted Pint, Blade cache, Vite build, npm production audit, PHP syntax and diff-check: passed on the current worktree.
 
 Still required before a release tag:
 
 - independent post-fix security review after the current hardening changes; the preceding review found concrete findings and is not a release approval;
-- MariaDB multi-process verification of the new role-lock and import-identity race paths; the local role-lock test was skipped because the required concurrency database is unavailable;
+- MariaDB multi-process proof is now green in GitHub Actions run `33129833665`, including the import identity race regression after the current-read reservation fix. Local MariaDB remains unavailable, so this evidence is CI-host evidence rather than local-host evidence.
 - actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 16 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated browser review and human responsive/keyboard review;
 - live external webhook receiver acceptance;
-- final legal/privacy sign-off and third-party attribution review; npm package license inventory is not independently verified.
+- final legal/privacy sign-off and third-party attribution review; dependency license metadata is present in `composer.lock` for 155 packages and npm production packages report SPDX licenses, but legal approval of upstream data terms is still an operator responsibility;
 
 ## Explicitly deferred after v0.0.1
 
