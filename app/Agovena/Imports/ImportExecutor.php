@@ -918,6 +918,7 @@ final class ImportExecutor
             ->where('source', $run->source)
             ->where('entity', $candidate->entity)
             ->where('external_id', $candidate->externalId)
+            ->lockForUpdate()
             ->first();
         if ($reservation === null) {
             throw new RuntimeException('Unable to reserve imported identity.');
