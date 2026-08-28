@@ -4,7 +4,7 @@ This file is the working release matrix for the first public Agovena release. It
 
 ## Release verdict
 
-**Not ready for v0.0.1.** The current runtime baseline has a green local matrix and the public GitHub Actions `main` badge is passing on `c148dff`, including the staging-hardening follow-up. The commit-specific Actions API was temporarily rate-limited during verification, so the exact job detail is not reproduced here. Provider sandbox, deployment, live receiver, post-fix independent security, human UI and legal gates remain open. No release tag or GitHub Release has been created.
+**Not ready for v0.0.1.** The current runtime baseline has a green targeted local matrix and the public GitHub Actions `main` badge is passing on `953652e`, including the migration-history follow-up. The commit-specific Actions API was temporarily rate-limited during verification, so individual job details are not reproduced here. Provider sandbox, deployment, live receiver, full security sign-off, human UI and legal gates remain open. No release tag or GitHub Release has been created.
 
 
 - `implemented`: present in the current repositories and covered by relevant automated tests.
@@ -19,15 +19,15 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`, `24a14b5`, `f36a777`, `c148dff`.
+- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`, `24a14b5`, `f36a777`, `c148dff`, `18ef798`, `953652e`.
 - GitHub Actions run `33129833665` is green on `f36a777`, including the MariaDB import-identity concurrency regression.
 - Previous successful baseline run `33030783714` remains historical evidence only.
 - Previous functional baseline: `89d1b66` (including the browser, backup and import hardening); CI-163 for this baseline passed all jobs.
-- Current Domain integration commit: `c148dff`; it provides two provider-specific extensions: `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS, while `namecheap-domain` combines Namecheap registration and renewal management. Core and optional-packages commits are pushed to their `main` branches.
+- Current Domain integration commit: `953652e`; it provides two provider-specific extensions: `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS, while `namecheap-domain` combines Namecheap registration and renewal management. The new `115500` split migration handles both loose legacy records and already-applied `domain-dns` records before the historical `120000` migration. Core and optional-packages commits are pushed to their `main` branches.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
 - Optional-packages commits: `43d523f`, `0167242`, `ce2d2cf`, `d18c916`, `a176fbd`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The current local full application suite has passed: 948 tests and 12,957 assertions. GitHub Actions run `33129833665` passed PHP 8.3, PHP 8.4, browser, native-linux, release-artifact and MariaDB feature/upgrade/concurrency checks on the pre-staging code baseline. The public `main` badge is now passing on c148dff.
+- The current targeted provider and migration suite on `953652e` has passed: 88 tests and 336 assertions. The public `main` badge is passing for the current branch; the commit-specific API was rate-limited after the run completed its fast jobs.
 
 ## Implemented or feature-tested foundations
 
@@ -87,7 +87,7 @@ Still required for the complete roadmap matrix:
 
 - Provider-neutral CSV/custom preview now supports header mapping, adapter validation, malformed-row reporting and duplicate detection without writing domain data.
 - Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance mappings now have transaction-safe writes, source-isolated dependencies, validated currency and accounting fields, identity reservations and fail-closed rollback coverage.
-- Source-specific fixtures, independent post-fix review and provider acceptance remain required.
+- Source-specific fixtures and provider acceptance remain required.
 
 ### Referrals
 
@@ -153,8 +153,8 @@ Validated gates:
 
 Still required before a release tag:
 
-- independent post-fix security review after the current hardening changes; the preceding review found concrete findings and is not a release approval;
-- MariaDB multi-process proof is now green in GitHub Actions run `33129833665`, including the import identity race regression after the current-read reservation fix. Local MariaDB remains unavailable, so this evidence is CI-host evidence rather than local-host evidence.
+- general production security sign-off remains required; the bounded migration-history review passed and is not a general production security sign-off;
+- MariaDB multi-process proof is green in GitHub Actions run `33136582919` according to the public `main` passing status. Local MariaDB remains unavailable, so this evidence is CI-host evidence rather than local-host evidence.
 - actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 16 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated Admin desktop browser review of the Domain extension catalog and product Automation surface: passed; full human responsive/keyboard review remains open;
