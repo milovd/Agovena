@@ -158,7 +158,7 @@ Still required before a release tag:
 - MariaDB multi-process proof is now green in GitHub Actions run `33129833665`, including the import identity race regression after the current-read reservation fix. Local MariaDB remains unavailable, so this evidence is CI-host evidence rather than local-host evidence.
 - actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 16 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
 - real Namecheap/Cloudflare sandbox status matrix;
-- authenticated browser review and human responsive/keyboard review;
+- authenticated Admin desktop browser review of the Domain extension catalog and product Automation surface: passed; full human responsive/keyboard review remains open;
 - live external webhook receiver acceptance;
 - final legal/privacy sign-off and third-party attribution review; dependency license metadata is present in `composer.lock` for 155 packages and npm production packages report SPDX licenses, but legal approval of upstream data terms is still an operator responsibility;
 
