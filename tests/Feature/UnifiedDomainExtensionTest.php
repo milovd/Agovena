@@ -23,7 +23,7 @@ uses(CreatesStaff::class);
 
 function runDomainProviderMigration(): void
 {
-    $migration = require base_path('database/migrations/2026_08_28_120000_merge_domain_provider_extensions.php');
+    $migration = require base_path('database/migrations/2026_08_28_115500_split_domain_provider_extensions.php');
     $migration->up();
 }
 
@@ -102,6 +102,9 @@ it('migrates Cloudflare DNS and registrar into one Cloudflare extension', functi
             ->and(DB::table('extension_settings')->where('extension_id', 'cloudflare-domain')->where('key', 'api_token')->value('is_secret'))->toBe(1)
             ->and(DB::table('agovena_packages')->where('agovena_id', 'cloudflare-domain')->count())->toBe(1);
         foreach ($legacyPaths as $path) {
+            if (File::exists($path)) {
+                fwrite(STDERR, "remaining legacy path: {$path}\\n");
+            }
             expect(File::exists($path))->toBeFalse();
         }
         expect(File::exists(storage_path('app/packages/extensions/.cloudflare-domain.staging')))->toBeFalse()
@@ -134,6 +137,34 @@ it('migrates Namecheap into a separate Namecheap extension', function (): void {
             ->and(DB::table('extension_settings')->where('extension_id', 'namecheap-domain')->where('key', 'sandbox')->value('value'))->toBe('1')
             ->and(File::exists($legacyPath))->toBeFalse();
     } finally {
+        File::deleteDirectory(storage_path('app/packages/extensions/namecheap-domain'));
+        File::deleteDirectory($legacyPath);
+    }
+});
+
+it('splits an already unified Domain DNS installation into both provider extensions', function (): void {
+    $legacyPath = insertLegacyDomainPackage('domain-dns');
+    insertLegacyDomainExtension('domain-dns');
+    insertLegacyDomainSetting('domain-dns', 'cloudflare_account_id', 'fixture-account');
+    insertLegacyDomainSetting('domain-dns', 'cloudflare_api_token', '[REDACTED]', true);
+    insertLegacyDomainSetting('domain-dns', 'namecheap_api_user', 'fixture-user');
+    insertLegacyDomainSetting('domain-dns', 'namecheap_api_key', '[REDACTED]', true);
+    insertLegacyDomainSetting('domain-dns', 'namecheap_username', 'fixture-user');
+    insertLegacyDomainSetting('domain-dns', 'namecheap_client_ip', '198.51.100.10');
+    insertLegacyDomainSetting('domain-dns', 'namecheap_sandbox', true);
+
+    try {
+        runDomainProviderMigration();
+        runDomainProviderMigration();
+
+        expect(DB::table('agovena_extensions')->whereIn('extension_id', ['cloudflare-domain', 'namecheap-domain'])->count())->toBe(2)
+            ->and(DB::table('agovena_extensions')->where('extension_id', 'domain-dns')->exists())->toBeFalse()
+            ->and(DB::table('agovena_packages')->whereIn('agovena_id', ['cloudflare-domain', 'namecheap-domain'])->count())->toBe(2)
+            ->and(DB::table('extension_settings')->where('extension_id', 'cloudflare-domain')->where('key', 'api_token')->value('value'))->toBe('[REDACTED]')
+            ->and(DB::table('extension_settings')->where('extension_id', 'namecheap-domain')->where('key', 'api_key')->value('value'))->toBe('[REDACTED]')
+            ->and(File::exists($legacyPath))->toBeFalse();
+    } finally {
+        File::deleteDirectory(storage_path('app/packages/extensions/cloudflare-domain'));
         File::deleteDirectory(storage_path('app/packages/extensions/namecheap-domain'));
         File::deleteDirectory($legacyPath);
     }
