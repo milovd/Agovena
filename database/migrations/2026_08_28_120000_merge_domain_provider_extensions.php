@@ -409,11 +409,39 @@ return new class extends Migration
             return null;
         }
 
+        $staging = storage_path('app/packages/extensions/.'.$targetId.'.staging');
         File::ensureDirectoryExists(dirname($destination));
-        if (is_dir($destination)) {
-            File::deleteDirectory($destination);
+
+        try {
+            if (is_dir($staging)) {
+                File::deleteDirectory($staging);
+            }
+
+            File::copyDirectory($source, $staging);
+            if (! $this->hasCanonicalManifest($staging, $definition)) {
+                File::deleteDirectory($staging);
+
+                return null;
+            }
+
+            if (is_dir($destination)) {
+                File::deleteDirectory($destination);
+            } elseif (is_file($destination)) {
+                File::delete($destination);
+            }
+
+            if (! File::moveDirectory($staging, $destination)) {
+                File::deleteDirectory($staging);
+
+                return null;
+            }
+        } catch (Throwable) {
+            if (is_dir($staging)) {
+                File::deleteDirectory($staging);
+            }
+
+            return null;
         }
-        File::copyDirectory($source, $destination);
 
         if (! $this->hasCanonicalManifest($destination, $definition)) {
             File::deleteDirectory($destination);
