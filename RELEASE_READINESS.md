@@ -4,7 +4,7 @@ This file is the working release matrix for the first public Agovena release. It
 
 ## Release verdict
 
-**Not ready for v0.0.1.** The current runtime baseline has a green targeted local matrix and the public GitHub Actions `main` badge is passing on `953652e`, including the migration-history follow-up. The commit-specific Actions API was temporarily rate-limited during verification, so individual job details are not reproduced here. Provider sandbox, deployment, live receiver, full security sign-off, human UI and legal gates remain open. No release tag or GitHub Release has been created.
+**Not ready for v0.0.1.** The current runtime baseline has a green targeted local matrix and the public GitHub Actions `main` badge is passing on `d83b768`, including the migration-history and filesystem-resilience follow-ups. The commit-specific Actions API was temporarily rate-limited during verification, so individual job details are not reproduced here. Provider sandbox, deployment, live receiver, full security sign-off, human UI and legal gates remain open. No release tag or GitHub Release has been created.
 
 
 - `implemented`: present in the current repositories and covered by relevant automated tests.
@@ -19,15 +19,15 @@ This file is the working release matrix for the first public Agovena release. It
 - Release line: `v0.0.1`.
 - Core source of truth: `config/agovena.php` and `CHANGELOG.md`.
 - Optional package source: the `optional-packages` monorepo.
-- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`, `24a14b5`, `f36a777`, `c148dff`, `18ef798`, `953652e`.
+- Core hardening commits: `a6f7b30`, `e230fb5`, `6188770`, `83c2e3e`, `01335a8`, `a3fb36b`, `edf2547`, `7f7beb4`, `89d1b66`, `04d4da1`, `7ca1770`, `d8b9efa`, `24a14b5`, `f36a777`, `c148dff`, `18ef798`, `953652e`, `d83b768`.
 - GitHub Actions run `33129833665` is green on `f36a777`, including the MariaDB import-identity concurrency regression.
 - Previous successful baseline run `33030783714` remains historical evidence only.
 - Previous functional baseline: `89d1b66` (including the browser, backup and import hardening); CI-163 for this baseline passed all jobs.
-- Current Domain integration commit: `953652e`; it provides two provider-specific extensions: `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS, while `namecheap-domain` combines Namecheap registration and renewal management. The new `115500` split migration handles both loose legacy records and already-applied `domain-dns` records before the historical `120000` migration. Core and optional-packages commits are pushed to their `main` branches.
+- Current Domain integration commit: `d83b768`; it provides two provider-specific extensions: `cloudflare-domain` combines Cloudflare Registrar and Cloudflare DNS, while `namecheap-domain` combines Namecheap registration and renewal management. The new `115500` split migration handles both loose legacy records and already-applied `domain-dns` records before the historical `120000` migration, with retry and copy fallback for transient filesystem rename failures. Core and optional-packages commits are pushed to their `main` branches.
 - Earlier hardening run `33026830598` for `e230fb5` failed; it is superseded by the successful current-baseline run and is not used as release evidence.
 - Optional-packages commits: `43d523f`, `0167242`, `ce2d2cf`, `d18c916`, `a176fbd`.
 - Core has only the local `.hermes/` workspace directory untracked; optional-packages is clean.
-- The current targeted provider and migration suite on `953652e` has passed: 88 tests and 336 assertions. The public `main` badge is passing for the current branch; the commit-specific API was rate-limited after the run completed its fast jobs.
+- The current targeted provider and migration suite on `d83b768` has passed: 88 tests and 336 assertions. The exact Cloudflare migration repro also passed 20 consecutive runs after the filesystem fallback. The public `main` badge is passing for the current branch; the commit-specific API was rate-limited after the run completed its fast jobs.
 
 ## Implemented or feature-tested foundations
 
