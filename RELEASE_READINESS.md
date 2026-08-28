@@ -148,13 +148,14 @@ Validated gates:
 - backup/restore smoke: passed;
 - CycloneDX 1.5 dependency SBOM generated and validated with 203 components;
 - local Playwright browser matrix: 24 tests passed against a prepared E2E server, including desktop/mobile responsive, checkout and keyboard/accessibility flows;
-- GitHub Actions full matrix for commit `f36a777` (run `33129833665`): PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data: passed;
-- Full PHPStan with `APP_ENV=testing` and a 1 GB CLI memory limit, targeted Pint, Blade cache, Vite build, npm production audit, PHP syntax and diff-check: passed on the current worktree.
+- GitHub Actions full matrix for commit `f36a777` (run `33129833665`) is historical evidence: PHP 8.3, PHP 8.4, browser, native-linux, release-artifact, MariaDB feature/upgrade/concurrency/large-data passed on that baseline;
+- The current targeted Domain/provider migration suite passed on `d83b768`: 88 tests and 336 assertions. The working tree now contains unrelated uncommitted provisioning/order changes, so it is not a clean release candidate for a full-current-worktree claim.
 
 Still required before a release tag:
 
 - general production security sign-off remains required; the bounded migration-history review passed and is not a general production security sign-off;
-- MariaDB multi-process proof is green in GitHub Actions run `33136582919` according to the public `main` passing status. Local MariaDB remains unavailable, so this evidence is CI-host evidence rather than local-host evidence.
+- MariaDB multi-process proof on the current docs-head run `33138516086` was still `in_progress` at the last API check; previous green MariaDB evidence remains historical and local MariaDB remains unavailable, so this is CI-host evidence rather than local-host evidence.
+- Upgrade materialization for legacy records with `source_type=monorepo`, `vcs` or `composer` still requires an actual source-resolution test; the current split migration materializes from the configured optional-package root and does not invoke the normal `MonorepoCheckout` or Composer/VCS resolver.
 - actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 16 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated Admin desktop browser review of the Domain extension catalog and product Automation surface: passed; full human responsive/keyboard review remains open;
