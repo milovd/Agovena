@@ -69,6 +69,30 @@ test('monorepo source installs a module subdirectory into storage', function () 
         ->and(app(ModuleManager::class)->isInstalled('sample'))->toBeTrue();
 });
 
+test('monorepo source already at the destination completes without a phantom materialization commit', function () {
+    configureMonorepoFixtures();
+    $packagesRoot = storage_path('app/packages');
+    $destination = $packagesRoot.'/modules/sample';
+    File::copyDirectory(base_path('tests/fixtures/packages/monorepo/modules/sample'), $destination);
+
+    $fake = new FakeMonorepoCheckout(app(MonorepoPackageMap::class));
+    $fake->map('https://github.com/agovena/packages-fixture', $packagesRoot);
+    app()->forgetInstance(MonorepoCheckout::class);
+    app()->instance(MonorepoCheckout::class, $fake);
+
+    $package = app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Monorepo,
+        locator: 'https://github.com/agovena/packages-fixture',
+        constraint: 'main',
+        composerName: 'sample',
+    ));
+
+    expect($package->agovena_id)->toBe('sample')
+        ->and(app(ModuleManager::class)->isInstalled('sample'))->toBeTrue()
+        ->and(is_dir($destination))->toBeTrue();
+});
+
 test('monorepo install validates manifest id and kind against mapping', function () {
     configureMonorepoFixtures();
     bindFakeMonorepoCheckout();

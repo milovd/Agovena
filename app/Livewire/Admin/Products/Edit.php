@@ -453,6 +453,10 @@ final class Edit extends Component
             $this->validate($rules);
         }
 
+        if (in_array('domain_registration', $desired, true) && $available->has('domain_registration')) {
+            $this->validateDomainProviderSelections();
+        }
+
         $desired = array_values(array_filter(
             $desired,
             static function (string $key) use ($desired, $available): bool {
@@ -503,10 +507,11 @@ final class Edit extends Component
                 ];
             }
             if ($key === 'provisionable') {
+                $providerSettings = $this->providerSettingsForPersistence();
                 $config = [
                     'server_id' => $this->provisioningServerId,
                     'provider_key' => trim($this->providerKey) !== '' ? trim($this->providerKey) : null,
-                    'provider_settings' => $this->providerSettings,
+                    'provider_settings' => $providerSettings,
                 ];
             }
             if ($key === 'domain_registration') {
@@ -542,6 +547,9 @@ final class Edit extends Component
         }
 
         $this->product->refresh()->load('capabilities');
+        $provisionable = $this->product->capability('provisionable');
+        $publicSettings = $provisionable?->config['provider_settings'] ?? [];
+        $this->providerSettings = is_array($publicSettings) ? $publicSettings : [];
 
         if (
             $this->product->hasCapability('inventory')
@@ -556,6 +564,34 @@ final class Edit extends Component
         }
 
         session()->flash('status', __('admin.products.flash.capabilities_updated'));
+    }
+
+    /** @return array<string, mixed> */
+    private function providerSettingsForPersistence(): array
+    {
+        $settings = $this->providerSettings;
+        $capability = $this->product->capability('provisionable');
+        $existing = $capability?->runtimeConfig();
+        $existingProvider = is_array($existing) ? ($existing['provider_key'] ?? null) : null;
+        $sameProvider = is_string($existingProvider) && $existingProvider === trim($this->providerKey);
+        $existingSettings = is_array($existing['provider_settings'] ?? null)
+            ? $existing['provider_settings']
+            : [];
+
+        foreach ($this->providerSettingDefinitions() as $definition) {
+            if (! $definition->secret || ! $sameProvider) {
+                continue;
+            }
+
+            $submitted = $settings[$definition->key] ?? null;
+            if (($submitted === null || $submitted === '' || $submitted === '[REDACTED]')
+                && array_key_exists($definition->key, $existingSettings)
+            ) {
+                $settings[$definition->key] = $existingSettings[$definition->key];
+            }
+        }
+
+        return $settings;
     }
 
     public function setDraft(): void
@@ -593,6 +629,61 @@ final class Edit extends Component
             $this->confirmingDelete = false;
             session()->flash('error', $e->errors()['product'][0] ?? $e->getMessage());
         }
+    }
+
+    private function validateDomainProviderSelections(): void
+    {
+        $errors = [];
+        $registrarKey = trim($this->domainRegistrarKey);
+        $dnsProviderKey = trim($this->domainDnsProviderKey);
+
+        if ($registrarKey !== '') {
+            $registrar = $this->domainProviderFromRegistry(
+                'Agovena\\Modules\\Domains\\DomainRegistrarRegistry',
+                $registrarKey,
+            );
+            if ($registrar === null) {
+                $errors['domainRegistrarKey'] = __('admin.products.validation.domain_registrar_unavailable');
+            } elseif (! method_exists($registrar, 'capabilities')
+                || ! in_array('registration', $registrar->capabilities(), true)
+            ) {
+                $errors['domainRegistrarKey'] = __('admin.products.validation.domain_registrar_registration');
+            }
+        }
+
+        if ($dnsProviderKey !== '') {
+            $dnsProvider = $this->domainProviderFromRegistry(
+                'Agovena\\Modules\\Domains\\DomainDnsProviderRegistry',
+                $dnsProviderKey,
+            );
+            if ($dnsProvider === null) {
+                $errors['domainDnsProviderKey'] = __('admin.products.validation.domain_dns_provider_unavailable');
+            } elseif (! method_exists($dnsProvider, 'capabilities')
+                || ! in_array('zone_management', $dnsProvider->capabilities(), true)
+            ) {
+                $errors['domainDnsProviderKey'] = __('admin.products.validation.domain_dns_provider_zone_management');
+            }
+        }
+
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+    }
+
+    private function domainProviderFromRegistry(string $registryClass, string $key): ?object
+    {
+        if (! class_exists($registryClass) || ! app()->bound($registryClass)) {
+            return null;
+        }
+
+        $registry = app($registryClass);
+        if (! method_exists($registry, 'get')) {
+            return null;
+        }
+
+        $provider = $registry->get($key);
+
+        return is_object($provider) ? $provider : null;
     }
 
     public function updatedProviderKey(): void

@@ -6,6 +6,7 @@ namespace App\Agovena\Billing;
 
 use App\Agovena\Audit\AuditLogger;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
+use App\Agovena\Security\SensitiveDataRedactor;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
@@ -45,7 +46,7 @@ final class ConsolidatedRenewalOrderBuilder
         usort($identity, static fn (array $left, array $right): int => $left <=> $right);
         $idempotencyKey = 'consolidated-renewal:'.hash('sha256', json_encode([
             'customer_id' => $first->customerId,
-            'customer_email' => $first->customerEmail,
+            'customer_email' => strtolower(trim((string) $first->customerEmail)),
             'currency' => $first->currency,
             'gateway' => $first->gatewayId,
             'lines' => $identity,
@@ -102,7 +103,7 @@ final class ConsolidatedRenewalOrderBuilder
                         'unit_amount' => $line->billableUnitAmount(),
                         'line_total_amount' => $line->lineTotal(),
                         'currency' => $line->currency,
-                        'options_snapshot' => array_merge($line->optionsSnapshot, [
+                        'options_snapshot' => SensitiveDataRedactor::redact(array_merge($line->optionsSnapshot, [
                             'consolidated_billing' => [
                                 'source_type' => $line->sourceType,
                                 'source_id' => $line->sourceId,
@@ -111,7 +112,7 @@ final class ConsolidatedRenewalOrderBuilder
                                 'period_days' => $line->periodDays,
                                 'days_already_paid' => $line->daysAlreadyPaid,
                             ],
-                        ]),
+                        ])),
                     ]);
                 }
 
@@ -150,7 +151,7 @@ final class ConsolidatedRenewalOrderBuilder
     private function assertCompatible(ConsolidatedBillingLine $first, ConsolidatedBillingLine $line): void
     {
         if ($line->customerId !== $first->customerId
-            || $line->customerEmail !== $first->customerEmail
+            || strtolower(trim($line->customerEmail)) !== strtolower(trim($first->customerEmail))
             || $line->currency !== $first->currency
             || $line->gatewayId !== $first->gatewayId) {
             throw new InvalidArgumentException('Consolidated billing lines must share customer, currency and gateway.');

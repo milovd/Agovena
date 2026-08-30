@@ -14,5 +14,9 @@ final readonly class ServiceInstanceInfo
         public ?string $providerKey,
         public ?string $externalRef,
         public array $meta = [],
+        /** @var array<string, mixed>|null */
+        public ?array $serverSettings = null,
+        /** @var array<string, mixed>|null */
+        public ?array $providerSettings = null,
     ) {}
 }

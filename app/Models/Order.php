@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string $currency
  * @property CarbonInterface|null $due_at
  * @property string|null $idempotency_key
+ * @property string|null $idempotency_owner_hash
  * @property string|null $storefront_token
  * @property-read Collection<int, OrderItem> $items
  * @property-read Payment|null $payment
@@ -81,6 +82,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
     'currency',
     'due_at',
     'idempotency_key',
+    'idempotency_owner_hash',
     'custom_properties_snapshot',
 ])]
 #[Hidden(['storefront_token'])]
@@ -164,6 +166,26 @@ class Order extends Model
 
     public function isAwaitingPayment(): bool
     {
+        return $this->hasPaymentStatus([
+            PaymentStatus::Pending,
+            PaymentStatus::Failed,
+            PaymentStatus::Cancelled,
+        ]);
+    }
+
+    public function isRetryablePayment(): bool
+    {
+        return $this->hasPaymentStatus([
+            PaymentStatus::Pending,
+            PaymentStatus::Failed,
+            PaymentStatus::Cancelled,
+            PaymentStatus::Expired,
+        ]);
+    }
+
+    /** @param list<PaymentStatus> $statuses */
+    private function hasPaymentStatus(array $statuses): bool
+    {
         if ($this->status !== OrderStatus::Pending) {
             return false;
         }
@@ -172,13 +194,7 @@ class Order extends Model
             return false;
         }
 
-        $status = $this->payment?->status;
-
-        return in_array($status, [
-            PaymentStatus::Pending,
-            PaymentStatus::Failed,
-            PaymentStatus::Cancelled,
-        ], true);
+        return in_array($this->payment?->status, $statuses, true);
     }
 
     public function canCancelUnpaid(): bool

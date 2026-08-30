@@ -28,7 +28,7 @@ trait PaysUnpaidOrders
     public function payNow(StartOrderPayment $start): void
     {
         $order = $this->unpaidOrder();
-        abort_unless($order !== null && $order->isAwaitingPayment(), 404);
+        abort_unless($order !== null && $order->isRetryablePayment(), 404);
 
         $options = $this->paymentGatewayOptions();
         $gatewayId = $this->pay_gateway !== ''
@@ -60,7 +60,7 @@ trait PaysUnpaidOrders
 
         $order = $order->fresh(['items', 'payment']) ?? $order;
 
-        if ($attempt->status === PaymentAttemptStatus::Succeeded || ! $order->isAwaitingPayment()) {
+        if ($attempt->status === PaymentAttemptStatus::Succeeded || ! $order->isRetryablePayment()) {
             session()->flash('status', __('customer.account.payment_completed'));
         } elseif ($attempt->status === PaymentAttemptStatus::Failed) {
             session()->flash('status', __('customer.account.payment_failed'));

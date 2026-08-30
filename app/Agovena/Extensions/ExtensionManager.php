@@ -111,7 +111,7 @@ final class ExtensionManager
         }
     }
 
-    public function install(string $extensionId): AgovenaExtension
+    public function install(string $extensionId, ?string $migrationJournal = null): AgovenaExtension
     {
         $manifest = $this->requireManifest($extensionId);
         $this->assertCompatible($manifest);
@@ -125,7 +125,7 @@ final class ExtensionManager
         $row->save();
 
         try {
-            $this->runExtensionMigrations($manifest);
+            $this->runExtensionMigrations($manifest, $migrationJournal);
             $this->seedDefaultSettings($manifest);
         } catch (\Throwable $exception) {
             $row->delete();
@@ -186,6 +186,8 @@ final class ExtensionManager
         if (! $this->extensionsTableReady()) {
             return;
         }
+
+        $this->migrations->reconcile();
 
         foreach ($this->discover() as $manifest) {
             if (! $this->isInstalled($manifest->id)) {
@@ -343,9 +345,9 @@ final class ExtensionManager
         }
     }
 
-    private function runExtensionMigrations(ExtensionManifest $manifest): void
+    private function runExtensionMigrations(ExtensionManifest $manifest, ?string $migrationJournal = null): void
     {
-        $this->migrations->run($manifest->id, $manifest->path);
+        $this->migrations->run($manifest->id, $manifest->path, $migrationJournal);
     }
 
     private function assertCompatible(ExtensionManifest $manifest): void

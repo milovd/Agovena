@@ -26,6 +26,8 @@ use Illuminate\Support\Carbon;
  * @property PaymentStatus $status
  * @property Carbon|null $paid_at
  * @property string|null $reference
+ * @property string|null $reconciliation_status
+ * @property array<string, mixed>|null $reconciliation_meta
  */
 #[Fillable([
     'order_id',
@@ -48,6 +50,7 @@ class Payment extends Model
             'method' => 'string',
             'status' => PaymentStatus::class,
             'paid_at' => 'datetime',
+            'reconciliation_meta' => 'array',
         ];
     }
 

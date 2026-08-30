@@ -27,6 +27,7 @@ use App\Agovena\Provisioning\ServiceInstanceInfo;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProvisioningServer;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -90,7 +91,24 @@ test('paid provisionable order creates pending service instances per quantity', 
         ->and($instances->first()->provider_key)->toBe('manual');
 });
 
-test('an unavailable configured provisioning server fails closed into manual review', function () {
+test('paid non-provisionable order does not create service instances', function () {
+    enableProvisioningModule();
+    $customer = Customer::factory()->create();
+    $product = Product::factory()->active()->create(['price_amount' => 5000]);
+
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+        'customer_id' => $customer->id,
+        'billing' => billingForProvisioning(),
+    ]);
+    app(RecordManualPayment::class)->handle($order, $this->createStaff());
+
+    expect(ServiceInstance::query()->where('order_id', $order->id)->count())->toBe(0);
+});
+
+test('an unavailable configured provisioning server blocks checkout', function () {
     enableProvisioningModule();
     $customer = Customer::factory()->create();
     $server = ProvisioningServer::query()->create([
@@ -105,19 +123,13 @@ test('an unavailable configured provisioning server fails closed into manual rev
     ]);
 
     app(CartService::class)->add($product->id, 1);
-    $order = app(PlaceOrder::class)->handle([
+    expect(fn () => app(PlaceOrder::class)->handle([
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => billingForProvisioning(),
-    ]);
-    app(RecordManualPayment::class)->handle($order, $this->createStaff());
-
-    $instance = ServiceInstance::query()->where('order_id', $order->id)->firstOrFail();
-    expect($instance->status)->toBe(ServiceInstanceStatus::ManualReview)
-        ->and($instance->provider_key)->toBeNull()
-        ->and($instance->provisioning_server_id)->toBeNull()
-        ->and($instance->failure_message)->not->toBeNull();
+    ]))->toThrow(ValidationException::class)
+        ->and(ServiceInstance::query()->count())->toBe(0);
 });
 
 test('a service instance without customer ownership is not authorized by matching email', function () {
@@ -170,7 +182,7 @@ test('polling preserves an existing provider reference when a provider returns t
 
         public function terminate(ServiceInstanceInfo $instance): void {}
 
-        public function changePlan(ServiceInstanceInfo $instance, string $plan): void {}
+        public function changePlan(ServiceInstanceInfo $instance, string|array $plan): void {}
 
         public function syncStatus(ServiceInstanceInfo $instance): ServiceInstanceInfo
         {

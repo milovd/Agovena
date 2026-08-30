@@ -10,8 +10,8 @@ use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
-use App\Models\Payment;
 use App\Models\PaymentAttempt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -40,20 +40,7 @@ final class StartOrderPayment
         $order->loadMissing('payment', 'invoice');
         $this->assertInvoiceCanBePaid->handle($order);
         $payment = $order->payment;
-
         if ($payment === null) {
-            throw ValidationException::withMessages([
-                'payment' => __('storefront.errors.payment_unavailable'),
-            ]);
-        }
-
-        if ($payment->status === PaymentStatus::Paid) {
-            throw ValidationException::withMessages([
-                'payment' => __('storefront.errors.already_paid'),
-            ]);
-        }
-
-        if (! $order->isAwaitingPayment()) {
             throw ValidationException::withMessages([
                 'payment' => __('storefront.errors.payment_unavailable'),
             ]);
@@ -61,35 +48,62 @@ final class StartOrderPayment
 
         $this->requireGateway($selection->gatewayId);
 
-        if (in_array($payment->status, [PaymentStatus::Failed, PaymentStatus::Cancelled, PaymentStatus::Expired], true)) {
-            $payment->status = PaymentStatus::Pending;
-            $payment->save();
-        }
+        return DB::transaction(function () use ($order, $selection, $returnUrl, $cancelUrl, $idempotencyKey, $checkoutMethod): PaymentAttempt {
+            /** @var Order $lockedOrder */
+            $lockedOrder = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
+            $lockedOrder->loadMissing('payment', 'invoice');
+            $lockedPayment = $lockedOrder->payment;
 
-        if ($payment->method !== $selection->gatewayId) {
-            $payment->method = $selection->gatewayId;
-            $payment->save();
-        }
+            if ($lockedPayment === null) {
+                throw ValidationException::withMessages([
+                    'payment' => __('storefront.errors.payment_unavailable'),
+                ]);
+            }
 
-        $open = PaymentAttempt::query()
-            ->where('payment_id', $payment->id)
-            ->where('gateway_id', $selection->gatewayId)
-            ->whereIn('status', [PaymentAttemptStatus::Pending, PaymentAttemptStatus::Processing])
-            ->latest('id')
-            ->first();
+            if ($lockedPayment->status === PaymentStatus::Paid) {
+                throw ValidationException::withMessages([
+                    'payment' => __('storefront.errors.already_paid'),
+                ]);
+            }
 
-        if ($open !== null) {
-            return $open;
-        }
+            if (! $lockedOrder->isRetryablePayment()) {
+                throw ValidationException::withMessages([
+                    'payment' => __('storefront.errors.payment_unavailable'),
+                ]);
+            }
 
-        return $this->initiate->handle(
-            $payment->fresh() ?? $payment,
-            $selection->gatewayId,
-            $returnUrl,
-            $cancelUrl,
-            $idempotencyKey,
-            $selection->method ?? $checkoutMethod,
-        );
+            $this->assertInvoiceCanBePaid->handle($lockedOrder);
+
+            if (in_array($lockedPayment->status, [PaymentStatus::Failed, PaymentStatus::Cancelled, PaymentStatus::Expired], true)) {
+                $lockedPayment->status = PaymentStatus::Pending;
+                $lockedPayment->save();
+            }
+
+            if ($lockedPayment->method !== $selection->gatewayId) {
+                $lockedPayment->method = $selection->gatewayId;
+                $lockedPayment->save();
+            }
+
+            $open = PaymentAttempt::query()
+                ->where('payment_id', $lockedPayment->id)
+                ->where('gateway_id', $selection->gatewayId)
+                ->whereIn('status', [PaymentAttemptStatus::Pending, PaymentAttemptStatus::Processing])
+                ->latest('id')
+                ->first();
+
+            if ($open !== null) {
+                return $open;
+            }
+
+            return $this->initiate->handle(
+                $lockedPayment,
+                $selection->gatewayId,
+                $returnUrl,
+                $cancelUrl,
+                $idempotencyKey,
+                $selection->method ?? $checkoutMethod,
+            );
+        });
     }
 
     public function requireGateway(string $gatewayId): PaymentGateway

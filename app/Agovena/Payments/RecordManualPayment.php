@@ -33,14 +33,15 @@ final class RecordManualPayment
         return DB::transaction(function () use ($order, $reference): Payment {
             /** @var Order $locked */
             $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
-            $locked->loadMissing('invoice');
-            $this->assertInvoiceCanBePaid->handle($locked);
             /** @var Payment $payment */
             $payment = Payment::query()->where('order_id', $locked->id)->lockForUpdate()->firstOrFail();
 
             if ($payment->status === PaymentStatus::Paid) {
-                return $payment;
+                return $payment->fresh();
             }
+
+            $locked->loadMissing('invoice');
+            $this->assertInvoiceCanBePaid->handle($locked);
 
             if ($payment->status === PaymentStatus::Cancelled) {
                 throw ValidationException::withMessages([

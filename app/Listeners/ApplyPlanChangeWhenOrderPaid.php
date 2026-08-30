@@ -7,9 +7,14 @@ namespace App\Listeners;
 use App\Agovena\PlanChanges\ApplyPlanChange;
 use App\Events\OrderPaid;
 use App\Models\ProductPlanChangeRequest;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 
-final class ApplyPlanChangeWhenOrderPaid
+final class ApplyPlanChangeWhenOrderPaid implements ShouldQueueAfterCommit
 {
+    public int $tries = 5;
+
+    public array $backoff = [10, 60, 300];
+
     public function __construct(
         private readonly ApplyPlanChange $apply,
     ) {}
@@ -18,7 +23,7 @@ final class ApplyPlanChangeWhenOrderPaid
     {
         $request = ProductPlanChangeRequest::query()
             ->where('order_id', $event->order->id)
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'applying'])
             ->first();
 
         if ($request === null) {

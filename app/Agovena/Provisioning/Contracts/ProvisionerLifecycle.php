@@ -24,7 +24,8 @@ interface ProvisionerLifecycle
 
     public function terminate(ServiceInstanceInfo $instance): void;
 
-    public function changePlan(ServiceInstanceInfo $instance, string $plan): void;
+    /** @param string|array<string, mixed> $plan */
+    public function changePlan(ServiceInstanceInfo $instance, string|array $plan): void;
 
     public function syncStatus(ServiceInstanceInfo $instance): ServiceInstanceInfo;
 }

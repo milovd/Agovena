@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Invoices;
 
 use App\Agovena\Audit\AuditLogger;
+use App\Agovena\Security\SensitiveDataRedactor;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
@@ -79,6 +80,7 @@ final class IssueInvoiceFromOrder
             ]);
 
             foreach ($locked->items as $item) {
+                $optionsSnapshot = $item->getAttribute('options_snapshot');
                 InvoiceItem::query()->create([
                     'invoice_id' => $invoice->id,
                     'kind' => InvoiceItemKind::Product,
@@ -87,7 +89,9 @@ final class IssueInvoiceFromOrder
                     'unit_amount' => $item->unit_amount,
                     'line_total_amount' => $item->line_total_amount,
                     'currency' => $item->currency,
-                    'options_snapshot' => $item->options_snapshot,
+                    'options_snapshot' => SensitiveDataRedactor::redact(
+                        is_array($optionsSnapshot) ? $optionsSnapshot : [],
+                    ),
                 ]);
             }
 

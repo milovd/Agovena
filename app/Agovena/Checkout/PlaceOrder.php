@@ -24,12 +24,14 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Events\OrderCreated;
 use App\Events\OrderPlacing;
+use App\Events\OrderPreflight;
 use App\Models\Customer;
 use App\Models\DiscountRedemption;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Models\Product;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -75,11 +77,16 @@ final class PlaceOrder
     public function handle(array $guest): Order
     {
         $idempotencyKey = $guest['idempotency_key'] ?? null;
+        $customerId = isset($guest['customer_id']) ? (int) $guest['customer_id'] : null;
+        if ($customerId !== null && $customerId < 1) {
+            $customerId = null;
+        }
+        $idempotencyOwnerHash = $this->idempotencyOwnerHash($customerId);
 
         if (filled($idempotencyKey)) {
-            $existing = Order::query()->where('idempotency_key', $idempotencyKey)->first();
+            $existing = $this->existingIdempotentOrder($idempotencyKey, $idempotencyOwnerHash, $customerId);
             if ($existing !== null) {
-                return $existing->load(['items', 'payment']);
+                return $this->resumeIdempotentOrder($existing);
             }
         }
 
@@ -102,12 +109,6 @@ final class PlaceOrder
 
         $method = $guest['payment_method'] ?? null;
         $referralCode = is_string($guest['referral_code'] ?? null) ? trim($guest['referral_code']) : '';
-        $customerId = isset($guest['customer_id']) ? (int) $guest['customer_id'] : null;
-        if ($customerId !== null && $customerId < 1) {
-            $customerId = null;
-        }
-
-        event(new OrderPlacing($lines));
 
         /** @var AddressData|null $billing */
         $billing = $guest['billing'] ?? null;
@@ -193,146 +194,168 @@ final class PlaceOrder
             $total = $total->add($tax->tax);
         }
 
-        $order = DB::transaction(function () use (
-            $guest,
-            $lines,
-            $subtotal,
-            $total,
-            $shippingAmount,
-            $shippingLabel,
-            $shippingMethodId,
-            $shippingCarrierId,
-            $shippingServiceCode,
-            $discount,
-            $tax,
-            $idempotencyKey,
-            $method,
-            $referralCode,
-            $customerId,
-            $billing,
-            $shipping,
-            $shippingSame,
-        ): Order {
-            $payload = [
-                'number' => $this->generateNumber(),
-                'status' => OrderStatus::Pending,
-                'customer_name' => $guest['customer_name'],
-                'customer_email' => $guest['customer_email'],
-                'customer_id' => $customerId,
-                'subtotal_amount' => $subtotal->amount,
-                'shipping_amount' => $shippingAmount->amount,
-                'shipping_method_label' => $shippingLabel,
-                'shipping_carrier_id' => $shippingCarrierId,
-                'shipping_service_code' => $shippingServiceCode,
-                'discount_amount' => $discount?->amount->amount ?? 0,
-                'tax_amount' => $tax->tax->amount,
-                'credit_amount' => 0,
-                'discount_code' => $discount?->code->code,
-                'tax_rate_name' => $tax->rateName,
-                'tax_rate_bps' => $tax->rateBps,
-                'total_amount' => $total->amount,
-                'currency' => $subtotal->currency,
-                'idempotency_key' => $idempotencyKey,
-                'shipping_same_as_billing' => $shippingSame,
-            ];
+        $preflight = new OrderPreflight($lines);
+        event($preflight);
 
-            if ($billing instanceof AddressData) {
-                $payload = [...$payload, ...$billing->toOrderBillingColumns()];
-            }
+        try {
+            $order = DB::transaction(function () use (
+                $preflight,
+                $guest,
+                $lines,
+                $subtotal,
+                $total,
+                $shippingAmount,
+                $shippingLabel,
+                $shippingMethodId,
+                $shippingCarrierId,
+                $shippingServiceCode,
+                $discount,
+                $tax,
+                $idempotencyKey,
+                $idempotencyOwnerHash,
+                $method,
+                $referralCode,
+                $customerId,
+                $billing,
+                $shipping,
+                $shippingSame,
+            ): Order {
+                $payload = [
+                    'number' => $this->generateNumber(),
+                    'status' => OrderStatus::Pending,
+                    'customer_name' => $guest['customer_name'],
+                    'customer_email' => $guest['customer_email'],
+                    'customer_id' => $customerId,
+                    'subtotal_amount' => $subtotal->amount,
+                    'shipping_amount' => $shippingAmount->amount,
+                    'shipping_method_label' => $shippingLabel,
+                    'shipping_carrier_id' => $shippingCarrierId,
+                    'shipping_service_code' => $shippingServiceCode,
+                    'discount_amount' => $discount?->amount->amount ?? 0,
+                    'tax_amount' => $tax->tax->amount,
+                    'credit_amount' => 0,
+                    'discount_code' => $discount?->code->code,
+                    'tax_rate_name' => $tax->rateName,
+                    'tax_rate_bps' => $tax->rateBps,
+                    'total_amount' => $total->amount,
+                    'currency' => $subtotal->currency,
+                    'idempotency_key' => $idempotencyKey,
+                    'idempotency_owner_hash' => $idempotencyOwnerHash,
+                    'shipping_same_as_billing' => $shippingSame,
+                ];
 
-            if ($shipping instanceof AddressData) {
-                $payload = [...$payload, ...$shipping->toOrderShippingColumns()];
-            }
+                if ($billing instanceof AddressData) {
+                    $payload = [...$payload, ...$billing->toOrderBillingColumns()];
+                }
 
-            $propertyOverlay = is_array($guest['custom_properties'] ?? null) ? $guest['custom_properties'] : [];
-            $customer = $customerId !== null ? Customer::query()->find($customerId) : null;
-            if ($customer !== null && $propertyOverlay !== []) {
-                $this->properties->save(
-                    $customer,
-                    $this->properties->definitionsFor('checkout'),
-                    $propertyOverlay,
-                    'customer',
+                if ($shipping instanceof AddressData) {
+                    $payload = [...$payload, ...$shipping->toOrderShippingColumns()];
+                }
+
+                $propertyOverlay = is_array($guest['custom_properties'] ?? null) ? $guest['custom_properties'] : [];
+                unset($propertyOverlay['origin']);
+                $customer = $customerId !== null ? Customer::query()->find($customerId) : null;
+                if ($customer !== null && $propertyOverlay !== []) {
+                    $this->properties->save(
+                        $customer,
+                        $this->properties->definitionsFor('checkout'),
+                        $propertyOverlay,
+                        'customer',
+                    );
+                }
+                $payload['custom_properties_snapshot'] = array_values(array_filter(
+                    $this->properties->snapshot($customer, $propertyOverlay, invoiceOnly: true),
+                    static fn (array $property): bool => $property['key'] !== 'origin',
+                ));
+
+                $order = Order::query()->create($payload);
+                if ($referralCode !== '') {
+                    $this->referrals->attribute($order, $referralCode);
+                }
+
+                $creditAmount = 0;
+                if (($guest['apply_credit'] ?? false) && $customerId !== null) {
+                    $customer = Customer::query()->findOrFail($customerId);
+                    $creditAmount = $this->applyCredit->handle(
+                        $order,
+                        $customer,
+                        isset($guest['credit_amount']) ? (int) $guest['credit_amount'] : $total->amount,
+                    );
+                    if ($creditAmount > 0) {
+                        $order->update(['credit_amount' => $creditAmount]);
+                    }
+                }
+
+                $amountDue = $total->amount - $creditAmount;
+                $resolvedMethod = $this->resolvePaymentMethod(
+                    is_string($method) ? $method : null,
+                    $amountDue,
                 );
-            }
-            $payload['custom_properties_snapshot'] = $this->properties->snapshot($customer, $propertyOverlay, invoiceOnly: true);
-
-            $order = Order::query()->create($payload);
-            if ($referralCode !== '') {
-                $this->referrals->attribute($order, $referralCode);
-            }
-
-            $creditAmount = 0;
-            if (($guest['apply_credit'] ?? false) && $customerId !== null) {
-                $customer = Customer::query()->findOrFail($customerId);
-                $creditAmount = $this->applyCredit->handle(
-                    $order,
-                    $customer,
-                    isset($guest['credit_amount']) ? (int) $guest['credit_amount'] : $total->amount,
+                $paymentFee = $this->paymentFees->calculate(
+                    $resolvedMethod,
+                    Money::of($amountDue, $subtotal->currency),
                 );
-                if ($creditAmount > 0) {
-                    $order->update(['credit_amount' => $creditAmount]);
+                $amountDue += $paymentFee->amount;
+                $order->update([
+                    'total_amount' => $total->amount + $paymentFee->amount,
+                    'payment_fee_amount' => $paymentFee->amount,
+                    'payment_fee_snapshot' => $paymentFee->snapshot,
+                ]);
+
+                foreach ($lines as $line) {
+                    $product = Product::query()->find($line->productId);
+                    OrderItem::query()->create([
+                        'order_id' => $order->id,
+                        'product_id' => $line->productId,
+                        'label' => $line->label,
+                        'quantity' => $line->quantity,
+                        'unit_amount' => $line->unitPrice->amount,
+                        'line_total_amount' => $line->lineTotal->amount,
+                        'currency' => $line->unitPrice->currency,
+                        'options_snapshot' => $product === null
+                            ? []
+                            : $this->optionPricer->snapshot($product, $line->selections),
+                    ]);
+                }
+                event(new OrderPlacing($lines, $order, $preflight));
+
+                Payment::query()->create([
+                    'order_id' => $order->id,
+                    'amount' => $amountDue,
+                    'currency' => $subtotal->currency,
+                    'method' => $resolvedMethod,
+                    'status' => PaymentStatus::Pending,
+                    'paid_at' => null,
+                    'reference' => null,
+                ]);
+
+                if ($discount !== null) {
+                    DiscountRedemption::query()->create([
+                        'discount_code_id' => $discount->code->id,
+                        'order_id' => $order->id,
+                        'customer_id' => $customerId,
+                        'code' => $discount->code->code,
+                        'amount' => $discount->amount->amount,
+                    ]);
+                }
+
+                $order = $order->load(['items', 'payment']);
+
+                // Inside the transaction so Module listeners (e.g. inventory/shipping) can roll back on failure.
+                event(new OrderCreated($order, $shippingMethodId, $preflight));
+
+                return $order;
+            });
+        } catch (QueryException $exception) {
+            if (filled($idempotencyKey) && $this->isIdempotencyUniqueViolation($exception)) {
+                $existing = $this->existingIdempotentOrder($idempotencyKey, $idempotencyOwnerHash, $customerId);
+                if ($existing !== null) {
+                    return $this->resumeIdempotentOrder($existing);
                 }
             }
 
-            $amountDue = $total->amount - $creditAmount;
-            $resolvedMethod = $this->resolvePaymentMethod(
-                is_string($method) ? $method : null,
-                $amountDue,
-            );
-            $paymentFee = $this->paymentFees->calculate(
-                $resolvedMethod,
-                Money::of($amountDue, $subtotal->currency),
-            );
-            $amountDue += $paymentFee->amount;
-            $order->update([
-                'total_amount' => $total->amount + $paymentFee->amount,
-                'payment_fee_amount' => $paymentFee->amount,
-                'payment_fee_snapshot' => $paymentFee->snapshot,
-            ]);
-
-            foreach ($lines as $line) {
-                $product = Product::query()->find($line->productId);
-                OrderItem::query()->create([
-                    'order_id' => $order->id,
-                    'product_id' => $line->productId,
-                    'label' => $line->label,
-                    'quantity' => $line->quantity,
-                    'unit_amount' => $line->unitPrice->amount,
-                    'line_total_amount' => $line->lineTotal->amount,
-                    'currency' => $line->unitPrice->currency,
-                    'options_snapshot' => $product === null
-                        ? []
-                        : $this->optionPricer->snapshot($product, $line->selections),
-                ]);
-            }
-
-            Payment::query()->create([
-                'order_id' => $order->id,
-                'amount' => $amountDue,
-                'currency' => $subtotal->currency,
-                'method' => $resolvedMethod,
-                'status' => PaymentStatus::Pending,
-                'paid_at' => null,
-                'reference' => null,
-            ]);
-
-            if ($discount !== null) {
-                DiscountRedemption::query()->create([
-                    'discount_code_id' => $discount->code->id,
-                    'order_id' => $order->id,
-                    'customer_id' => $customerId,
-                    'code' => $discount->code->code,
-                    'amount' => $discount->amount->amount,
-                ]);
-            }
-
-            $order = $order->load(['items', 'payment']);
-
-            // Inside the transaction so Module listeners (e.g. inventory/shipping) can roll back on failure.
-            event(new OrderCreated($order, $shippingMethodId));
-
-            return $order;
-        });
+            throw $exception;
+        }
 
         $this->cart->clear();
 
@@ -351,6 +374,66 @@ final class PlaceOrder
         }
 
         return $order;
+    }
+
+    private function resumeIdempotentOrder(Order $order): Order
+    {
+        $payment = $order->payment;
+        if ($payment === null
+            || ! $order->isRetryablePayment()
+            || in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::Refunded, PaymentStatus::PartiallyRefunded], true)
+        ) {
+            return $order;
+        }
+
+        if ($payment->method === 'account_balance' || (int) $payment->amount === 0) {
+            $this->accountBalancePayment->handle($order);
+        } elseif ($payment->method === 'development') {
+            $this->developmentPayment->handle($order);
+        }
+
+        return $order->fresh(['items', 'payment']) ?? $order;
+    }
+
+    private function idempotencyOwnerHash(?int $customerId): string
+    {
+        $owner = $customerId !== null
+            ? 'customer|'.$customerId
+            : 'session|'.session()->getId();
+
+        return hash('sha256', $owner);
+    }
+
+    private function existingIdempotentOrder(string $idempotencyKey, string $ownerHash, ?int $customerId): ?Order
+    {
+        $existing = Order::query()->where('idempotency_key', $idempotencyKey)->first();
+        if ($existing === null) {
+            return null;
+        }
+
+        if ($existing->idempotency_owner_hash === null) {
+            if ($customerId === null || (int) $existing->customer_id !== $customerId) {
+                throw ValidationException::withMessages([
+                    'idempotency_key' => __('api.checkout_failed'),
+                ]);
+            }
+
+            $existing->forceFill(['idempotency_owner_hash' => $ownerHash])->save();
+        } elseif (! hash_equals($existing->idempotency_owner_hash, $ownerHash)) {
+            throw ValidationException::withMessages([
+                'idempotency_key' => __('api.checkout_failed'),
+            ]);
+        }
+
+        return $existing->load(['items', 'payment']);
+    }
+
+    private function isIdempotencyUniqueViolation(QueryException $exception): bool
+    {
+        $sqlState = (string) ($exception->errorInfo[0] ?? $exception->getCode());
+
+        return in_array($sqlState, ['23000', '23505'], true)
+            && str_contains(strtolower($exception->getMessage()), 'idempotency');
     }
 
     private function resolvePaymentMethod(?string $value, int $amountDue): string

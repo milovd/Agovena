@@ -7,12 +7,15 @@ namespace App\Agovena\Catalog\Options;
 use App\Agovena\Money\CurrencyConverter;
 use App\Agovena\Money\Money;
 use App\Agovena\Money\ResolveProductPrice;
+use App\Agovena\Security\SensitiveDataRedactor;
 use App\Agovena\Storefront\StorefrontPreferences;
 use App\Enums\ProductOptionType;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
+use Illuminate\Support\Facades\Crypt;
 use InvalidArgumentException;
+use Throwable;
 
 final class ProductOptionPricer
 {
@@ -56,12 +59,47 @@ final class ProductOptionPricer
      *     type: string,
      *     value: mixed,
      *     display: string,
-     *     price_adjustment_amount: int
+     *     price_adjustment_amount: int,
+     *     value_encrypted?: string
      * }>
      */
     public function snapshot(Product $product, array $selections): array
     {
-        return $this->resolved($product, $selections);
+        return array_map(function (array $row): array {
+            if ($this->isSensitiveOptionKey((string) $row['key'])) {
+                $row['value_encrypted'] = Crypt::encryptString(json_encode(
+                    $row['value'],
+                    JSON_THROW_ON_ERROR,
+                ));
+                $row['value'] = '[REDACTED]';
+                $row['display'] = '[REDACTED]';
+            }
+
+            $row['value'] = SensitiveDataRedactor::redact($row['value']);
+            $redactedDisplay = SensitiveDataRedactor::redact($row['display']);
+            $row['display'] = is_string($redactedDisplay) ? $redactedDisplay : '[REDACTED]';
+
+            return $row;
+        }, $this->resolved($product, $selections));
+    }
+
+    public function runtimeValue(array $snapshotRow): mixed
+    {
+        $key = (string) ($snapshotRow['key'] ?? '');
+        if (! $this->isSensitiveOptionKey($key)) {
+            return $snapshotRow['value'] ?? null;
+        }
+
+        $encrypted = $snapshotRow['value_encrypted'] ?? null;
+        if (! is_string($encrypted) || trim($encrypted) === '') {
+            throw new InvalidArgumentException('Sensitive product option is not encrypted.');
+        }
+
+        try {
+            return json_decode(Crypt::decryptString($encrypted), true, 512, JSON_THROW_ON_ERROR);
+        } catch (Throwable $exception) {
+            throw new InvalidArgumentException('Sensitive product option cannot be decrypted.', previous: $exception);
+        }
     }
 
     /**
@@ -188,5 +226,13 @@ final class ProductOptionPricer
         return $choices->first(
             static fn (ProductOptionChoice $choice): bool => $choice->is_active && $choice->value === $value,
         );
+    }
+
+    private function isSensitiveOptionKey(string $key): bool
+    {
+        $normalizedKey = strtolower(trim($key));
+
+        return $normalizedKey === 'environment'
+            || preg_match('/(?:api[_-]?key|access[_-]?key|token|secret|password|passwd|credential|authorization|private[_-]?key|connection|string|dsn)/', $normalizedKey) === 1;
     }
 }

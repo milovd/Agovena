@@ -25,11 +25,20 @@ final class FakeProxmoxApi implements ProxmoxApi
 
     public bool $failClone = false;
 
+    public bool $failStart = false;
+
     public bool $unauthorized = false;
 
     public bool $unreachable = false;
 
     public bool $timeout = false;
+
+    /** @var array{memory_free: int|float, cpu_cores: int|float, storage_free: int|float} */
+    public array $nodeCapacity = [
+        'memory_free' => 1024 * 1024 * 1024 * 1024,
+        'cpu_cores' => 100,
+        'storage_free' => 1024 * 1024 * 1024 * 1024,
+    ];
 
     public function withConnection(array $settings): ProxmoxApi
     {
@@ -43,6 +52,14 @@ final class FakeProxmoxApi implements ProxmoxApi
         $this->guardTransport();
 
         return ['data' => ['version' => '8.2.0']];
+    }
+
+    public function nodeCapacity(string $node, string $storage): array
+    {
+        unset($node, $storage);
+        $this->guardTransport();
+
+        return $this->nodeCapacity;
     }
 
     public function nextVmId(): int
@@ -65,7 +82,10 @@ final class FakeProxmoxApi implements ProxmoxApi
             'node' => $node,
             'template' => $templateVmid,
             'name' => (string) ($payload['name'] ?? 'vm-'.$vmid),
-            'config' => [],
+            'config' => [
+                'scsi0' => 'local-lvm:vm-'.$vmid.'-disk-0,size=20G',
+                'net0' => 'virtio=AA:BB:CC:DD:EE:FF,bridge=vmbr0',
+            ],
         ];
         $this->statusByKey[$node.':'.$vmid] = ['status' => 'stopped'];
 
@@ -84,6 +104,9 @@ final class FakeProxmoxApi implements ProxmoxApi
     public function start(string $node, int $vmid): void
     {
         $this->guardTransport();
+        if ($this->failStart) {
+            throw ProxmoxProviderException::failed('proxmox::messages.errors.provider_failed');
+        }
         $this->statusByKey[$node.':'.$vmid] = ['status' => 'running'];
     }
 
@@ -105,6 +128,18 @@ final class FakeProxmoxApi implements ProxmoxApi
         $this->guardTransport();
 
         return $this->statusByKey[$node.':'.$vmid] ?? ['status' => 'unknown'];
+    }
+
+    public function findVmByName(string $node, string $name): ?array
+    {
+        $this->guardTransport();
+        foreach ($this->vms as $vmid => $vm) {
+            if ((string) ($vm['node'] ?? '') === $node && (string) ($vm['name'] ?? '') === $name) {
+                return ['node' => $node, 'vmid' => (int) $vmid, 'name' => $name];
+            }
+        }
+
+        return null;
     }
 
     public function findVmConfig(string $node, int $vmid): ?array

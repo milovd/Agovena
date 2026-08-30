@@ -7,6 +7,7 @@ namespace App\Console\Commands\Agovena;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Packages\PackageInstaller;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
@@ -15,8 +16,9 @@ use Illuminate\Console\Command;
 #[Description('Apply pending Agovena database migrations without destroying existing data')]
 final class UpgradeCommand extends Command
 {
-    public function handle(ApplicationSchemaStatus $schema, ModuleManager $modules, ExtensionManager $extensions): int
+    public function handle(ApplicationSchemaStatus $schema, ModuleManager $modules, ExtensionManager $extensions, PackageInstaller $packages): int
     {
+        $packages->recover();
         $pending = $schema->pending();
         if ($pending !== []) {
             $this->info('Pending application migrations:');
@@ -28,7 +30,12 @@ final class UpgradeCommand extends Command
             $this->line('No pending Core migrations detected before upgrade.');
         }
 
-        $this->call('migrate', ['--force' => true]);
+        if ($this->call('migrate', ['--force' => true]) !== self::SUCCESS) {
+            $this->error('Core migrations failed. Package migrations were not started.');
+
+            return self::FAILURE;
+        }
+
         $modules->migrateInstalled();
         $extensions->migrateInstalled();
 

@@ -32,6 +32,14 @@ final class FakePterodactylApi implements PterodactylApi
 
     public int $buildCalls = 0;
 
+    /** @var array<string, mixed> */
+    public array $lastBuildPayload = [];
+
+    public int $startupCalls = 0;
+
+    /** @var array<string, mixed> */
+    public array $lastStartupPayload = [];
+
     public int $nextServerId = 10;
 
     public string $nextStatus = 'active';
@@ -62,6 +70,50 @@ final class FakePterodactylApi implements PterodactylApi
 
     public bool $malformed = false;
 
+    public int $deployableNodeCount = 100;
+
+    /** @var list<array<string, mixed>>|null */
+    public ?array $deployableNodeOverride = null;
+
+    public int $capacityCalls = 0;
+
+    public function getCapacityVector(int $locationId): array
+    {
+        unset($locationId);
+        $this->guardTransport();
+        $this->capacityCalls++;
+        if ($this->malformed) {
+            throw PterodactylProviderException::failed('pterodactyl::messages.errors.malformed');
+        }
+
+        return [
+            'memory' => $this->deployableNodeCount * 1024,
+            'disk' => $this->deployableNodeCount * 2048,
+        ];
+    }
+
+    public function getDeployableNodes(int $locationId, int $memory, int $disk): array
+    {
+        unset($locationId);
+        $this->guardTransport();
+        $this->capacityCalls++;
+        if ($this->malformed) {
+            throw PterodactylProviderException::failed('pterodactyl::messages.errors.malformed');
+        }
+        if ($this->deployableNodeOverride !== null) {
+            return $this->deployableNodeOverride;
+        }
+        $availableNodes = max(0, $this->deployableNodeCount);
+        if ($memory > $availableNodes * 1024 || $disk > $availableNodes * 2048 || $availableNodes === 0) {
+            return [];
+        }
+
+        return array_map(
+            static fn (int $index): array => ['id' => $index + 1, 'capacity' => 1],
+            range(0, $availableNodes - 1),
+        );
+    }
+
     public function connectionTest(): array
     {
         $this->guardTransport();
@@ -80,7 +132,7 @@ final class FakePterodactylApi implements PterodactylApi
     {
         $this->guardTransport();
         if ($this->failGet) {
-            throw PterodactylProviderException::failed('pterodactyl::messages.errors.provider_failed');
+            throw PterodactylProviderException::failed('pterodactyl::messages.errors.provider_failed', 503);
         }
         if ($this->malformed) {
             throw PterodactylProviderException::failed('pterodactyl::messages.errors.malformed');
@@ -132,10 +184,20 @@ final class FakePterodactylApi implements PterodactylApi
             'identifier' => 'abc'.$id,
             'uuid' => 'uuid-'.$id,
             'name' => (string) ($payload['name'] ?? 'server'),
-            'status' => $this->nextStatus === 'active' ? null : $this->nextStatus,
+            'status' => $this->nextStatus,
             'suspended' => false,
             'allocation' => 1,
+            'node_id' => 1,
+            'location_id' => $payload['deploy']['locations'][0] ?? 1,
+            'user' => $payload['user'] ?? 0,
+            'nest' => $payload['nest'] ?? 0,
+            'egg' => $payload['egg'] ?? 0,
             'limits' => $payload['limits'] ?? [],
+            'feature_limits' => $payload['feature_limits'] ?? [],
+            'dedicated_ip' => (bool) ($payload['deploy']['dedicated_ip'] ?? false),
+            'environment' => $payload['environment'] ?? [],
+            'startup' => $payload['startup'] ?? '',
+            'docker_image' => $payload['docker_image'] ?? '',
         ];
         $this->serversById[$id] = $server;
         if ($server['external_id'] !== '') {
@@ -162,7 +224,7 @@ final class FakePterodactylApi implements PterodactylApi
             throw PterodactylProviderException::failed('pterodactyl::messages.errors.provider_failed');
         }
         $this->serversById[$serverId]['suspended'] = false;
-        $this->serversById[$serverId]['status'] = null;
+        $this->serversById[$serverId]['status'] = 'active';
     }
 
     public function delete(int $serverId): void
@@ -182,14 +244,33 @@ final class FakePterodactylApi implements PterodactylApi
     {
         $this->guardTransport();
         $this->buildCalls++;
+        $this->lastBuildPayload = $payload;
         if ($this->failBuild) {
             throw PterodactylProviderException::failed('pterodactyl::messages.errors.quota', 400);
         }
         $this->serversById[$serverId]['limits'] = [
             'memory' => $payload['memory'] ?? 0,
+            'swap' => $payload['swap'] ?? 0,
             'disk' => $payload['disk'] ?? 0,
+            'io' => $payload['io'] ?? 0,
             'cpu' => $payload['cpu'] ?? 0,
         ];
+        $this->serversById[$serverId]['feature_limits'] = $payload['feature_limits'] ?? [];
+        $this->serversById[$serverId]['dedicated_ip'] = (bool) ($payload['dedicated_ip'] ?? false);
+
+        return $this->serversById[$serverId];
+    }
+
+    public function updateStartup(int $serverId, array $payload): array
+    {
+        $this->guardTransport();
+        $this->startupCalls++;
+        $this->lastStartupPayload = $payload;
+        $this->serversById[$serverId]['docker_image'] = (string) ($payload['image'] ?? '');
+        $this->serversById[$serverId]['startup'] = (string) ($payload['startup'] ?? '');
+        $this->serversById[$serverId]['environment'] = is_array($payload['environment'] ?? null)
+            ? $payload['environment']
+            : [];
 
         return $this->serversById[$serverId];
     }
@@ -200,6 +281,7 @@ final class FakePterodactylApi implements PterodactylApi
 
         return [
             'identifier' => $identifier,
+            'status' => 'active',
             'current_state' => 'running',
         ];
     }

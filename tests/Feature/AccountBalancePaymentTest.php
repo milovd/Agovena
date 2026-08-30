@@ -5,11 +5,18 @@ declare(strict_types=1);
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Credits\CustomerCreditLedger;
+use App\Agovena\Payments\CompleteAccountBalancePayment;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RecordManualPayment;
+use App\Enums\PaymentStatus;
+use App\Events\OrderPaid;
+use App\Events\PaymentRecorded;
 use App\Models\Customer;
+use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Product;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesStaff;
 
@@ -89,4 +96,38 @@ test('partial account balance without a gateway is rejected', function () {
         'customer_id' => $customer->id,
         'apply_credit' => true,
     ]))->toThrow(ValidationException::class);
+});
+
+test('repeating account balance completion does not replay paid fulfillment events', function () {
+    $order = Order::factory()->create(['status' => 'paid']);
+    Payment::factory()->create([
+        'order_id' => $order->id,
+        'amount' => 0,
+        'currency' => 'EUR',
+        'method' => 'account_balance',
+        'status' => PaymentStatus::Paid,
+        'paid_at' => now(),
+    ]);
+    app(CompleteAccountBalancePayment::class)->handle($order->fresh(['payment']));
+    Event::fake([OrderPaid::class, PaymentRecorded::class]);
+
+    app(CompleteAccountBalancePayment::class)->handle($order->fresh(['payment']));
+
+    Event::assertNotDispatched(OrderPaid::class);
+    Event::assertNotDispatched(PaymentRecorded::class);
+});
+
+test('account balance completion refuses a refunded payment', function () {
+    $order = Order::factory()->create();
+    $payment = Payment::factory()->create([
+        'order_id' => $order->id,
+        'amount' => 0,
+        'currency' => 'EUR',
+        'method' => 'account_balance',
+        'status' => PaymentStatus::Refunded,
+    ]);
+
+    expect(fn () => app(CompleteAccountBalancePayment::class)->handle($order->fresh(['payment'])))
+        ->toThrow(ValidationException::class);
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Refunded);
 });

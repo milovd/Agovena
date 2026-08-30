@@ -25,6 +25,11 @@ function makeGenericProvisionerTestApi(): ServerApi
     {
         public int $createCalls = 0;
 
+        public string $status = 'active';
+
+        /** @var array<string, mixed> */
+        public array $lastPlanPayload = [];
+
         /** @var array<string, mixed> */
         public array $createResult = ['status' => 'active'];
 
@@ -40,6 +45,13 @@ function makeGenericProvisionerTestApi(): ServerApi
             return ['ok' => true];
         }
 
+        public function availableCapacity(array $requirements): int
+        {
+            unset($requirements);
+
+            return 100;
+        }
+
         public function findServerByExternalId(string $externalId): ?array
         {
             unset($externalId);
@@ -49,7 +61,7 @@ function makeGenericProvisionerTestApi(): ServerApi
 
         public function getServer(string $externalId): array
         {
-            return ['id' => $externalId, 'status' => 'active'];
+            return ['id' => $externalId, 'status' => $this->status];
         }
 
         public function createServer(array $payload): array
@@ -77,7 +89,8 @@ function makeGenericProvisionerTestApi(): ServerApi
 
         public function changePlan(string $externalId, array $payload): void
         {
-            unset($externalId, $payload);
+            unset($externalId);
+            $this->lastPlanPayload = $payload;
         }
 
         public function action(string $externalId, string $action): void
@@ -130,6 +143,8 @@ function genericServiceInfo(ServiceInstance $instance): ServiceInstanceInfo
         providerKey: 'generic-test',
         externalRef: $instance->external_ref,
         meta: $instance->meta ?? [],
+        serverSettings: is_array($instance->meta['server_settings'] ?? null) ? $instance->meta['server_settings'] : null,
+        providerSettings: is_array($instance->meta['provider_settings'] ?? null) ? $instance->meta['provider_settings'] : null,
     );
 }
 
@@ -144,7 +159,7 @@ it('does not treat a legacy external reference as a provider mapping', function 
         'customer_email' => 'generic@example.test',
         'meta' => [
             'server_settings_required' => true,
-            'server_settings' => ['api_url' => 'https://provider.example.test', 'api_token' => 'test-token'],
+            'server_settings' => ['api_url' => 'https://provider.example.test', 'api_token' => '[REDACTED]'],
         ],
     ]);
 
@@ -163,10 +178,51 @@ it('rejects a provider response without a provider resource id', function (): vo
         'customer_email' => 'generic@example.test',
         'meta' => [
             'server_settings_required' => true,
-            'server_settings' => ['api_url' => 'https://provider.example.test', 'api_token' => 'test-token'],
+            'server_settings' => ['api_url' => 'https://provider.example.test', 'api_token' => '[REDACTED]'],
         ],
     ]);
 
     expect(fn () => $provisioner->provision(genericServiceInfo($instance)))
         ->toThrow(ValidationException::class);
+});
+
+it('keeps the generic scaffold explicitly unsupported', function (): void {
+    $api = makeGenericProvisionerTestApi();
+    $provisioner = makeGenericProvisioner($api);
+    $instance = ServiceInstance::query()->create([
+        'number' => 'SVC-GENERIC-UNKNOWN',
+        'status' => ServiceInstanceStatus::Provisioning,
+        'provider_key' => 'generic-test',
+        'customer_email' => 'generic@example.test',
+    ]);
+
+    expect(fn () => $provisioner->provision(genericServiceInfo($instance)))
+        ->toThrow(ValidationException::class)
+        ->and($api->createCalls)->toBe(0);
+});
+
+it('does not attempt generic provider plan mutations', function (): void {
+    $api = makeGenericProvisionerTestApi();
+    $provisioner = makeGenericProvisioner($api);
+    $instance = ServiceInstance::query()->create([
+        'number' => 'SVC-GENERIC-PLAN',
+        'status' => ServiceInstanceStatus::Active,
+        'provider_key' => 'generic-test',
+        'external_ref' => 'generic-42',
+        'customer_email' => 'generic@example.test',
+        'meta' => [
+            'provider_mapping' => ['provider_id' => 'generic-42'],
+            'server_settings_required' => true,
+            'server_settings' => ['api_url' => 'https://provider.example.test', 'api_token' => '[REDACTED]'],
+        ],
+    ]);
+
+    expect(fn () => $provisioner->changePlan(genericServiceInfo($instance), [
+        'id' => 'target-plan',
+        'provider_settings' => ['memory' => 4096],
+        'server_settings' => ['node' => 'target-node'],
+        'server_id' => 7,
+        'target_settings' => ['feature' => false],
+    ]))->toThrow(ValidationException::class)
+        ->and($api->lastPlanPayload)->toBe([]);
 });

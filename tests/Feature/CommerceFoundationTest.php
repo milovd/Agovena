@@ -5,10 +5,8 @@ use App\Enums\ProductStatus;
 use App\Livewire\Storefront\CheckoutPage;
 use App\Livewire\Storefront\ProductShow;
 use App\Models\Customer;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductPlanChange;
-use App\Models\ProductPlanChangeRequest;
 use App\Notifications\OrderPlaced;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Notification;
@@ -47,7 +45,7 @@ test('placing an order sends the order notification to the customer email', func
     );
 });
 
-test('an allowed immediate plan upgrade creates a pending difference order', function () {
+test('an immediate plan upgrade without a subscription is rejected', function () {
     $customer = Customer::factory()->create();
     $from = Product::factory()->create(['price_amount' => 1000, 'currency' => 'EUR']);
     $to = Product::factory()->create(['price_amount' => 2500, 'currency' => 'EUR']);
@@ -60,13 +58,8 @@ test('an allowed immediate plan upgrade creates a pending difference order', fun
         'sort' => 0,
     ]);
 
-    $request = app(RequestPlanChange::class)->handle($customer, $from, $to);
-
-    expect($request)->toBeInstanceOf(ProductPlanChangeRequest::class)
-        ->and($request->order_id)->not->toBeNull()
-        ->and(Order::query()->findOrFail($request->order_id)->total_amount)->toBe(1500)
-        ->and(Order::query()->findOrFail($request->order_id)->items()->firstOrFail()->label)
-        ->toBe('Plan change to '.$to->name);
+    expect(fn () => app(RequestPlanChange::class)->handle($customer, $from, $to))
+        ->toThrow(ValidationException::class);
 });
 
 test('a disallowed plan change is rejected', function () {

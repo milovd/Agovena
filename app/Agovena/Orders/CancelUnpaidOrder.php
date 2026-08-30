@@ -48,8 +48,16 @@ final class CancelUnpaidOrder
             ]);
         }
 
-        if ($order->payment !== null) {
-            $this->attemptProviderCancel($order->payment);
+        if ($order->payment !== null && ! $this->attemptProviderCancel($order->payment)) {
+            if ($source === UnpaidOrderCancelSource::Scheduler) {
+                return $order->fresh(['items', 'payment', 'invoice']) ?? $order;
+            }
+
+            throw ValidationException::withMessages([
+                'order' => $source === UnpaidOrderCancelSource::Customer
+                    ? __('customer.account.cannot_cancel_order')
+                    : __('admin.orders.cannot_cancel'),
+            ]);
         }
 
         return DB::transaction(function () use ($order, $source, $staff): Order {
@@ -136,26 +144,62 @@ final class CancelUnpaidOrder
         });
     }
 
-    private function attemptProviderCancel(Payment $payment): void
+    private function attemptProviderCancel(Payment $payment): bool
     {
         $method = (string) $payment->method;
         if ($method === '' || in_array($method, ['manual', 'development'], true)) {
-            return;
+            return true;
         }
 
         $gateway = $this->gateways->get($method);
         if (! $gateway instanceof CancelsPayments) {
-            return;
+            return true;
         }
 
+        $gatewayId = $gateway->id();
         try {
             $gateway->cancel($payment);
+
+            return true;
         } catch (Throwable $exception) {
             Log::warning('payment.provider_cancel_failed', [
                 'payment_id' => $payment->id,
-                'gateway_id' => $gateway->id(),
-                'error' => $exception->getMessage(),
+                'gateway_id' => $gatewayId,
             ]);
+            $this->recordProviderCancellationFailure($payment, $gatewayId);
+
+            return false;
         }
+    }
+
+    private function recordProviderCancellationFailure(Payment $payment, string $gatewayId): void
+    {
+        DB::transaction(function () use ($payment, $gatewayId): void {
+            $lockedPayment = Payment::query()->whereKey($payment->id)->lockForUpdate()->first();
+            if ($lockedPayment === null) {
+                throw new RuntimeException('Payment disappeared while recording cancellation failure.');
+            }
+
+            $lockedPayment->reconciliation_status = 'manual_review';
+            $lockedPayment->reconciliation_meta = [
+                'reason' => 'provider_cancel_failed',
+                'gateway_id' => $gatewayId,
+                'recorded_at' => now()->toIso8601String(),
+            ];
+            $lockedPayment->save();
+
+            $this->audit->log(
+                'payment.reconciliation_required',
+                $lockedPayment,
+                [
+                    'payment_id' => $lockedPayment->id,
+                    'gateway_id' => $gatewayId,
+                    'reason' => 'provider_cancel_failed',
+                ],
+                outcome: 'manual_review',
+                severity: 'high',
+                category: 'payments',
+            );
+        });
     }
 }

@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Agovena\Extensions\NamecheapDomain\HttpNamecheapApi;
+use App\Agovena\Extensions\ExtensionSettingsRepository;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 
@@ -10,11 +11,12 @@ it('parses the Namecheap XML availability response without exposing credentials'
     installAndEnableModules(['domains']);
     installAndEnableExtension('namecheap-domain');
 
-    putenv('AGOVENA_EXT_NAMECHEAP_DOMAIN_API_USER=fixture-user');
-    putenv('AGOVENA_EXT_NAMECHEAP_DOMAIN_API_KEY=[REDACTED]');
-    putenv('AGOVENA_EXT_NAMECHEAP_DOMAIN_USERNAME=fixture-user');
-    putenv('AGOVENA_EXT_NAMECHEAP_DOMAIN_CLIENT_IP=198.51.100.10');
-    putenv('AGOVENA_EXT_NAMECHEAP_DOMAIN_SANDBOX=true');
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->set('namecheap-domain', 'api_user', 'fixture-user');
+    $settings->set('namecheap-domain', 'api_key', '[REDACTED]', secret: true);
+    $settings->set('namecheap-domain', 'username', 'fixture-user');
+    $settings->set('namecheap-domain', 'client_ip', '198.51.100.10');
+    $settings->set('namecheap-domain', 'sandbox', true);
     Http::fake([
         'https://api.sandbox.namecheap.com/xml.response' => Http::response(
             '<?xml version="1.0" encoding="UTF-8"?><ApiResponse Status="OK"><Errors/><CommandResponse><DomainCheckResult Domain="example.test" Available="true" RegistrationPrice="12.50" Currency="USD"/></CommandResponse></ApiResponse>',

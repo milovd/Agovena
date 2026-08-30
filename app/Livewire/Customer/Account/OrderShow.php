@@ -41,7 +41,7 @@ final class OrderShow extends Component
 
     protected function unpaidOrder(): ?Order
     {
-        return $this->order->isAwaitingPayment() ? $this->order : null;
+        return $this->order->isRetryablePayment() ? $this->order : null;
     }
 
     protected function afterPaymentAttempt(Order $order): void

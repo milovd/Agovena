@@ -76,6 +76,24 @@ test('customer portal can pay a pending order with the development gateway', fun
         ->and($order->payment->fresh()->status)->toBe(PaymentStatus::Paid);
 });
 
+test('customer portal can retry an expired payment with the development gateway', function () {
+    config(['agovena.payments.allow_development_instant_pay' => true]);
+    [$customer, $order] = pendingCustomerOrder();
+    $order->payment()->update(['status' => PaymentStatus::Expired]);
+    $order->refresh();
+    expect($order->isAwaitingPayment())->toBeFalse()
+        ->and($order->isRetryablePayment())->toBeTrue();
+
+    Livewire::actingAs($customer->user)
+        ->test(OrderShow::class, ['order' => $order->fresh(['payment', 'invoice'])])
+        ->set('pay_gateway', 'development')
+        ->call('payNow')
+        ->assertHasNoErrors();
+
+    expect($order->fresh()->status)->toBe(OrderStatus::Paid)
+        ->and($order->payment->fresh()->status)->toBe(PaymentStatus::Paid);
+});
+
 test('manual initiate does not mark the order paid', function () {
     [$customer, $order] = pendingCustomerOrder();
 

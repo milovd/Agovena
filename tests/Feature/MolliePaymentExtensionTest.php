@@ -184,6 +184,28 @@ test('return url does not mark the order paid', function () {
         ->and($attempt->fresh()->status)->toBe(PaymentAttemptStatus::Processing);
 });
 
+test('mollie idempotency keys cannot cross payment orders', function () {
+    enableMollie();
+    $firstPayment = placeMollieOrder();
+    $secondPayment = placeMollieOrder();
+
+    app(StartOrderPayment::class)->handle(
+        $firstPayment->order,
+        'mollie',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'mollie-cross-order-key',
+    );
+
+    expect(fn () => app(StartOrderPayment::class)->handle(
+        $secondPayment->order,
+        'mollie',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'mollie-cross-order-key',
+    ))->toThrow(ValidationException::class);
+});
+
 test('mollie webhook paid confirms order and invoice', function () {
     $api = enableMollie();
     $payment = placeMollieOrder();

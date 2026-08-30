@@ -12,6 +12,7 @@ use App\Events\OrderPaid;
 use App\Events\PaymentRecorded;
 use App\Models\Payment;
 use App\Models\PaymentAttempt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -26,69 +27,88 @@ final class ApplyNormalizedPaymentStatus
 
     public function handle(PaymentAttempt $attempt, PaymentStatus $status): PaymentStatusApplyResult
     {
-        /** @var Payment $payment */
-        $payment = Payment::query()->whereKey($attempt->payment_id)->lockForUpdate()->firstOrFail();
+        return DB::transaction(function () use ($attempt, $status): PaymentStatusApplyResult {
+            /** @var PaymentAttempt $lockedAttempt */
+            $lockedAttempt = PaymentAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
+            /** @var Payment $payment */
+            $payment = Payment::query()->whereKey($lockedAttempt->payment_id)->lockForUpdate()->firstOrFail();
 
-        if ($this->isPaidLike($payment) && $this->isFailure($status)) {
-            return new PaymentStatusApplyResult($attempt, applied: false);
-        }
+            if ($this->isPaidLike($payment) && $this->isFailure($status)) {
+                return new PaymentStatusApplyResult($lockedAttempt, applied: false);
+            }
 
-        if ($status === PaymentStatus::Paid && $payment->status !== PaymentStatus::Paid) {
             $order = $payment->order()->lockForUpdate()->first();
-            if ($order !== null) {
-                try {
-                    $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoice'));
-                } catch (ValidationException) {
-                    return new PaymentStatusApplyResult(
-                        $attempt,
-                        applied: false,
-                        blockedByTerminalState: true,
-                    );
+            if ($status === PaymentStatus::Paid) {
+                if (in_array($payment->status, [PaymentStatus::Refunded, PaymentStatus::PartiallyRefunded], true)) {
+                    return new PaymentStatusApplyResult($lockedAttempt, applied: false);
                 }
+
+                if ($order !== null) {
+                    try {
+                        $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoice'));
+                    } catch (ValidationException) {
+                        return new PaymentStatusApplyResult(
+                            $lockedAttempt,
+                            applied: false,
+                            blockedByTerminalState: true,
+                        );
+                    }
+                }
+
+                $paymentWasPaid = $payment->status === PaymentStatus::Paid;
+                if ($payment->status !== PaymentStatus::Paid) {
+                    $payment->status = PaymentStatus::Paid;
+                    $payment->paid_at = $payment->paid_at ?? now();
+                    $payment->save();
+                }
+
+                $lockedAttempt->status = PaymentAttemptStatus::Succeeded;
+                $lockedAttempt->completed_at = $lockedAttempt->completed_at ?? now();
+                $lockedAttempt->save();
+
+                $orderWasPaid = $order?->status === OrderStatus::Paid;
+                if ($order !== null) {
+                    if (! $orderWasPaid) {
+                        $order->status = OrderStatus::Paid;
+                        $order->save();
+                    }
+
+                    if (! $paymentWasPaid) {
+                        event(new PaymentRecorded($payment->fresh() ?? $payment));
+                    }
+                    if (! $orderWasPaid) {
+                        event(new OrderPaid($order->fresh(['items', 'payment']) ?? $order));
+                    }
+                }
+
+                return new PaymentStatusApplyResult($lockedAttempt->fresh() ?? $lockedAttempt, applied: true);
             }
 
-            $payment->status = PaymentStatus::Paid;
-            $payment->paid_at = now();
-            $payment->save();
+            if ($status === PaymentStatus::Refunded || $status === PaymentStatus::PartiallyRefunded) {
+                if (in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::PartiallyRefunded, PaymentStatus::Refunded], true)) {
+                    $payment->status = $status;
+                    $payment->save();
 
-            $attempt->status = PaymentAttemptStatus::Succeeded;
-            $attempt->completed_at = now();
-            $attempt->save();
+                    return new PaymentStatusApplyResult($lockedAttempt, applied: true);
+                }
 
-            if ($order !== null && $order->status !== OrderStatus::Paid) {
-                $order->status = OrderStatus::Paid;
-                $order->save();
-                event(new PaymentRecorded($payment->fresh() ?? $payment));
-                event(new OrderPaid($order->fresh(['items', 'payment']) ?? $order));
+                return new PaymentStatusApplyResult($lockedAttempt, applied: false);
             }
 
-            return new PaymentStatusApplyResult($attempt->fresh() ?? $attempt, applied: true);
-        }
+            if ($this->isFailure($status)) {
+                $lockedAttempt->status = match ($status) {
+                    PaymentStatus::Cancelled => PaymentAttemptStatus::Cancelled,
+                    PaymentStatus::Expired => PaymentAttemptStatus::Expired,
+                    default => PaymentAttemptStatus::Failed,
+                };
+                $lockedAttempt->completed_at = now();
+                $lockedAttempt->save();
 
-        if ($status === PaymentStatus::Refunded || $status === PaymentStatus::PartiallyRefunded) {
-            if (in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::PartiallyRefunded, PaymentStatus::Refunded], true)) {
-                $payment->status = $status;
-                $payment->save();
-
-                return new PaymentStatusApplyResult($attempt, applied: true);
+                return new PaymentStatusApplyResult($lockedAttempt->fresh() ?? $lockedAttempt, applied: true);
             }
 
-            return new PaymentStatusApplyResult($attempt, applied: false);
-        }
-
-        if ($this->isFailure($status)) {
-            $attempt->status = match ($status) {
-                PaymentStatus::Cancelled => PaymentAttemptStatus::Cancelled,
-                PaymentStatus::Expired => PaymentAttemptStatus::Expired,
-                default => PaymentAttemptStatus::Failed,
-            };
-            $attempt->completed_at = now();
-            $attempt->save();
-
-            return new PaymentStatusApplyResult($attempt->fresh() ?? $attempt, applied: true);
-        }
-
-        return new PaymentStatusApplyResult($attempt->fresh() ?? $attempt, applied: false);
+            return new PaymentStatusApplyResult($lockedAttempt, applied: false);
+        });
     }
 
     private function isPaidLike(Payment $payment): bool

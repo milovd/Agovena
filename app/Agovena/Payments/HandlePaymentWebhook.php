@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\ValidatesWebhookPayload;
+use App\Agovena\Security\SensitiveDataRedactor;
+use App\Enums\PaymentStatus;
 use App\Models\PaymentAttempt;
 use App\Models\PaymentWebhookEvent;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -49,6 +51,21 @@ final class HandlePaymentWebhook
             /** @var PaymentWebhookEvent $locked */
             $locked = PaymentWebhookEvent::query()->whereKey($event->id)->lockForUpdate()->firstOrFail();
             if (in_array($locked->processing_status, ['processed', 'ignored'], true)) {
+                if ($locked->processing_status === 'processed'
+                    && $locked->status === PaymentStatus::Paid->value
+                    && $locked->external_payment_id !== null
+                ) {
+                    $attempt = PaymentAttempt::query()
+                        ->where('gateway_id', $gatewayId)
+                        ->where('external_id', $locked->external_payment_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if ($attempt !== null) {
+                        $this->applyStatus->handle($attempt, PaymentStatus::Paid);
+                    }
+                }
+
                 return ['event' => $locked, 'duplicate' => true];
             }
 
@@ -162,28 +179,6 @@ final class HandlePaymentWebhook
      */
     private function redact(array $raw): array
     {
-        $out = [];
-        foreach ($raw as $key => $value) {
-            $lower = strtolower((string) $key);
-            if (str_contains($lower, 'secret')
-                || str_contains($lower, 'token')
-                || str_contains($lower, 'password')
-                || str_contains($lower, 'signature')
-                || str_contains($lower, 'api_key')
-                || $lower === 'key'
-                || str_ends_with($lower, '_key')) {
-                $out[$key] = '[redacted]';
-
-                continue;
-            }
-            if (is_array($value)) {
-                $out[$key] = $this->redact($value);
-
-                continue;
-            }
-            $out[$key] = $value;
-        }
-
-        return $out;
+        return SensitiveDataRedactor::redact($raw);
     }
 }

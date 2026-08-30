@@ -19,9 +19,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'line_total_amount',
     'currency',
     'options_snapshot',
+    'provisioning_server_settings_snapshot',
+    'provisioning_provider_settings_snapshot',
 ])]
 class OrderItem extends Model
 {
+    protected $hidden = [
+        'provisioning_server_settings_snapshot',
+        'provisioning_provider_settings_snapshot',
+    ];
+
     /** @use HasFactory<OrderItemFactory> */
     use HasFactory;
 
@@ -32,6 +39,8 @@ class OrderItem extends Model
             'unit_amount' => 'integer',
             'line_total_amount' => 'integer',
             'options_snapshot' => 'array',
+            'provisioning_server_settings_snapshot' => 'encrypted:array',
+            'provisioning_provider_settings_snapshot' => 'encrypted:array',
         ];
     }
 

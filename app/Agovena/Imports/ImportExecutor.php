@@ -6,6 +6,7 @@ namespace App\Agovena\Imports;
 
 use App\Agovena\Imports\Contracts\ImportAdapter;
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Security\SensitiveDataRedactor;
 use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
@@ -29,7 +30,6 @@ use App\Models\Refund;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -94,7 +94,7 @@ final class ImportExecutor
                     'entity' => $candidate->entity,
                     'external_id' => $candidate->externalId,
                     'status' => $dryRun ? 'preview' : 'pending',
-                    'payload' => $candidate->payload,
+                    'payload' => SensitiveDataRedactor::redact($candidate->payload),
                 ]);
 
                 if ($dryRun) {
@@ -285,7 +285,9 @@ final class ImportExecutor
                     'unit_amount' => $unitAmount,
                     'line_total_amount' => $lineAmount,
                     'currency' => $currency,
-                    'options_snapshot' => is_array($item['options_snapshot'] ?? null) ? $item['options_snapshot'] : null,
+                    'options_snapshot' => is_array($item['options_snapshot'] ?? null)
+                        ? SensitiveDataRedactor::redact($item['options_snapshot'])
+                        : null,
                 ];
             }
 
@@ -553,7 +555,9 @@ final class ImportExecutor
                 'status' => $status,
                 'provider_key' => trim((string) ($candidate->payload['provider_key'] ?? '')) ?: null,
                 'external_ref' => trim((string) ($candidate->payload['external_ref'] ?? '')) ?: null,
-                'meta' => $this->decodeJsonObject($candidate->payload['meta_json'] ?? null, 'Service metadata'),
+                'meta' => SensitiveDataRedactor::redact(
+                    $this->decodeJsonObject($candidate->payload['meta_json'] ?? null, 'Service metadata'),
+                ),
             ]);
             $model->save();
 
@@ -901,18 +905,7 @@ final class ImportExecutor
             'updated_at' => now(),
         ];
 
-        if (DB::connection()->getDriverName() === 'mysql') {
-            DB::statement(
-                'insert into `import_identity_reservations` (`source`, `entity`, `external_id`, `import_run_id`, `import_row_id`, `created_at`, `updated_at`) values (?, ?, ?, ?, ?, ?, ?) on duplicate key update `id` = `id`',
-                array_values($values),
-            );
-        } else {
-            try {
-                ImportIdentityReservation::query()->create($values);
-            } catch (UniqueConstraintViolationException) {
-                // Another transaction owns the identity reservation.
-            }
-        }
+        DB::table('import_identity_reservations')->insertOrIgnore([$values]);
 
         $reservation = ImportIdentityReservation::query()
             ->where('source', $run->source)

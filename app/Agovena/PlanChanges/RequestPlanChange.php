@@ -32,6 +32,12 @@ final class RequestPlanChange
         Product $to,
         ?int $subscriptionId = null,
     ): ProductPlanChangeRequest {
+        if (! $from->status->isPurchasable() || ! $to->status->isPurchasable()) {
+            throw ValidationException::withMessages([
+                'plan' => __('notifications.plan_changes.not_allowed'),
+            ]);
+        }
+
         $mapping = ProductPlanChange::query()
             ->where('from_product_id', $from->id)
             ->where('to_product_id', $to->id)
@@ -50,20 +56,61 @@ final class RequestPlanChange
             ]);
         }
 
-        if ($subscriptionId !== null) {
-            $pending = ProductPlanChangeRequest::query()
-                ->where('subscription_id', $subscriptionId)
-                ->where('status', 'pending')
-                ->exists();
-            if ($pending) {
+        $activeRequestKey = $this->activeRequestKey($customer->id, $subscriptionId, $from->id, $to->id);
+        $request = DB::transaction(function () use ($customer, $from, $to, $mapping, $subscriptionId, $activeRequestKey): ProductPlanChangeRequest {
+            if ($subscriptionId !== null) {
+                $subscription = DB::table('subscriptions')
+                    ->where('id', $subscriptionId)
+                    ->lockForUpdate()
+                    ->first();
+                if ($subscription === null) {
+                    throw ValidationException::withMessages([
+                        'plan' => __('notifications.plan_changes.cannot_apply'),
+                    ]);
+                }
+                if ((int) ($subscription->customer_id ?? 0) !== $customer->id
+                    || (string) $subscription->status !== 'active'
+                    || (int) ($subscription->product_id ?? 0) !== $from->id
+                ) {
+                    throw ValidationException::withMessages([
+                        'plan' => __('notifications.plan_changes.cannot_apply'),
+                    ]);
+                }
+                if (ProductPlanChangeRequest::query()
+                    ->where('subscription_id', $subscriptionId)
+                    ->whereIn('status', ['pending', 'applying'])
+                    ->exists()
+                ) {
+                    throw ValidationException::withMessages([
+                        'plan' => __('notifications.plan_changes.already_pending'),
+                    ]);
+                }
+            } else {
+                Customer::query()
+                    ->whereKey($customer->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                if (ProductPlanChangeRequest::query()
+                    ->where('customer_id', $customer->id)
+                    ->whereNull('subscription_id')
+                    ->where('from_product_id', $from->id)
+                    ->where('to_product_id', $to->id)
+                    ->whereIn('status', ['pending', 'applying'])
+                    ->exists()
+                ) {
+                    throw ValidationException::withMessages([
+                        'plan' => __('notifications.plan_changes.already_pending'),
+                    ]);
+                }
+            }
+
+            $difference = $this->pricer->chargeAmount($from, $to);
+            if ($subscriptionId === null && $difference > 0) {
                 throw ValidationException::withMessages([
-                    'plan' => __('notifications.plan_changes.already_pending'),
+                    'plan' => __('notifications.plan_changes.cannot_apply'),
                 ]);
             }
-        }
-
-        return DB::transaction(function () use ($customer, $from, $to, $mapping, $subscriptionId): ProductPlanChangeRequest {
-            $difference = $this->pricer->chargeAmount($from, $to);
             $order = $mapping->timing === 'immediate' && $difference > 0
                 ? $this->createOrder($customer, $to, $difference)
                 : null;
@@ -77,6 +124,7 @@ final class RequestPlanChange
                 'order_id' => $order?->id,
                 'timing' => $mapping->timing,
                 'status' => 'pending',
+                'active_request_key' => $activeRequestKey,
             ]);
 
             if ($order !== null) {
@@ -84,11 +132,17 @@ final class RequestPlanChange
             }
 
             if ($request->timing === 'immediate' && $request->order_id === null) {
-                return $this->apply->handle($request);
+                return $request;
             }
 
             return $request;
         });
+
+        if ($request->timing === 'immediate' && $request->order_id === null) {
+            return $this->apply->handle($request);
+        }
+
+        return $request;
     }
 
     private function createOrder(Customer $customer, Product $target, int $difference): Order
@@ -104,6 +158,7 @@ final class RequestPlanChange
             'shipping_amount' => 0,
             'total_amount' => $difference,
             'shipping_same_as_billing' => true,
+            'custom_properties_snapshot' => ['origin' => 'plan_change_surcharge'],
         ]);
 
         OrderItem::query()->create([
@@ -134,5 +189,14 @@ final class RequestPlanChange
         } while (Order::query()->where('number', $number)->exists());
 
         return $number;
+    }
+
+    private function activeRequestKey(int $customerId, ?int $subscriptionId, int $fromProductId, int $toProductId): string
+    {
+        $parts = $subscriptionId !== null
+            ? [$customerId, 'subscription', $subscriptionId]
+            : [$customerId, 'customer', $fromProductId, $toProductId];
+
+        return hash('sha256', implode('|', $parts));
     }
 }

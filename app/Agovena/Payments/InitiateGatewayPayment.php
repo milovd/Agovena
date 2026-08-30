@@ -6,9 +6,12 @@ namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
+use App\Agovena\Security\SensitiveDataRedactor;
 use App\Enums\PaymentAttemptStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Models\PaymentAttempt;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +24,7 @@ final class InitiateGatewayPayment
 {
     public function __construct(
         private readonly PaymentGatewayRegistry $gateways,
+        private readonly ApplyNormalizedPaymentStatus $applyStatus,
     ) {}
 
     public function handle(
@@ -34,66 +38,95 @@ final class InitiateGatewayPayment
         $gateway = $this->requireGateway($gatewayId);
         $payment->loadMissing('order');
 
-        if ($idempotencyKey !== null && $idempotencyKey !== '') {
-            $existing = PaymentAttempt::query()->where('idempotency_key', $idempotencyKey)->first();
-            if ($existing !== null) {
-                return $existing;
-            }
-        }
+        try {
+            return DB::transaction(function () use ($payment, $gateway, $returnUrl, $cancelUrl, $idempotencyKey, $checkoutMethod): PaymentAttempt {
+                /** @var Payment $lockedPayment */
+                $lockedPayment = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
+                $lockedPayment->loadMissing('order');
+                $key = $idempotencyKey ?: 'att-'.Str::uuid()->toString();
 
-        return DB::transaction(function () use ($payment, $gateway, $returnUrl, $cancelUrl, $idempotencyKey, $checkoutMethod): PaymentAttempt {
-            $key = $idempotencyKey ?: 'att-'.Str::uuid()->toString();
-            $attempt = PaymentAttempt::query()->create([
-                'payment_id' => $payment->id,
-                'order_id' => $payment->order_id,
-                'gateway_id' => $gateway->id(),
-                'status' => PaymentAttemptStatus::Pending,
-                'amount' => $payment->amount,
-                'currency' => $payment->currency,
-                'idempotency_key' => $key,
-                'request_meta' => $this->redact(array_filter([
-                    'checkout_method' => $checkoutMethod,
-                ])),
-                'initiated_at' => now(),
-            ]);
+                if ($idempotencyKey !== null && $idempotencyKey !== '') {
+                    $existing = PaymentAttempt::query()->where('idempotency_key', $idempotencyKey)->lockForUpdate()->first();
+                    if ($existing !== null) {
+                        $this->assertAttemptMatches($existing, $lockedPayment, $gateway->id());
 
-            try {
-                $result = $gateway->initiate(new PaymentInitiation(
-                    order: $payment->order,
-                    payment: $payment,
-                    returnUrl: $returnUrl,
-                    cancelUrl: $cancelUrl,
-                    metadata: array_filter([
+                        if ($existing->status === PaymentAttemptStatus::Succeeded) {
+                            $this->applyStatus->handle($existing, PaymentStatus::Paid);
+                        }
+
+                        return $existing->fresh() ?? $existing;
+                    }
+                }
+
+                $attempt = PaymentAttempt::query()->create([
+                    'payment_id' => $lockedPayment->id,
+                    'order_id' => $lockedPayment->order_id,
+                    'gateway_id' => $gateway->id(),
+                    'status' => PaymentAttemptStatus::Pending,
+                    'amount' => $lockedPayment->amount,
+                    'currency' => $lockedPayment->currency,
+                    'idempotency_key' => $key,
+                    'request_meta' => $this->redact(array_filter([
                         'checkout_method' => $checkoutMethod,
-                    ]),
-                    idempotencyKey: $key,
-                ));
-            } catch (Throwable $exception) {
-                report($exception);
-                $attempt->status = PaymentAttemptStatus::Failed;
-                $attempt->completed_at = now();
-                $attempt->response_meta = ['error' => 'provider_unavailable'];
+                    ])),
+                    'initiated_at' => now(),
+                ]);
+
+                try {
+                    $result = $gateway->initiate(new PaymentInitiation(
+                        order: $lockedPayment->order,
+                        payment: $lockedPayment,
+                        returnUrl: $returnUrl,
+                        cancelUrl: $cancelUrl,
+                        metadata: array_filter([
+                            'checkout_method' => $checkoutMethod,
+                        ]),
+                        idempotencyKey: $key,
+                    ));
+                } catch (Throwable $exception) {
+                    report($exception);
+                    $attempt->status = PaymentAttemptStatus::Failed;
+                    $attempt->completed_at = now();
+                    $attempt->response_meta = ['error' => 'provider_unavailable'];
+                    $attempt->save();
+
+                    return $attempt;
+                }
+
+                $attempt->external_id = $result->externalId;
+                $attempt->redirect_url = $result->redirectUrl;
+                $attempt->response_meta = $this->redact($result->metadata);
+                $attempt->status = match ($result->status) {
+                    'completed' => PaymentAttemptStatus::Succeeded,
+                    'failed' => PaymentAttemptStatus::Failed,
+                    'redirect', 'pending' => PaymentAttemptStatus::Processing,
+                    default => PaymentAttemptStatus::Processing,
+                };
+                if ($attempt->status === PaymentAttemptStatus::Succeeded || $attempt->status === PaymentAttemptStatus::Failed) {
+                    $attempt->completed_at = now();
+                }
                 $attempt->save();
 
-                return $attempt;
+                if ($result->status === 'completed') {
+                    $this->applyStatus->handle($attempt, PaymentStatus::Paid);
+                }
+
+                return $attempt->fresh() ?? $attempt;
+            });
+        } catch (UniqueConstraintViolationException $exception) {
+            if ($idempotencyKey === null || $idempotencyKey === '') {
+                throw $exception;
             }
 
-            $attempt->external_id = $result->externalId;
-            $attempt->redirect_url = $result->redirectUrl;
-            $attempt->response_meta = $this->redact($result->metadata);
-            $attempt->status = match ($result->status) {
-                'completed' => PaymentAttemptStatus::Succeeded,
-                'failed' => PaymentAttemptStatus::Failed,
-                'redirect', 'pending' => PaymentAttemptStatus::Processing,
-                default => PaymentAttemptStatus::Processing,
-            };
-            if ($attempt->status === PaymentAttemptStatus::Succeeded || $attempt->status === PaymentAttemptStatus::Failed) {
-                $attempt->completed_at = now();
+            $existing = PaymentAttempt::query()->where('idempotency_key', $idempotencyKey)->first();
+            if ($existing === null) {
+                throw $exception;
             }
-            $attempt->save();
 
-            return $attempt->fresh() ?? $attempt;
-        });
+            $this->assertAttemptMatches($existing, $payment, $gateway->id());
+
+            return $existing;
+        }
     }
 
     public function requireGateway(string $gatewayId): PaymentGateway
@@ -117,17 +150,20 @@ final class InitiateGatewayPayment
      */
     private function redact(array $meta): array
     {
-        $out = [];
-        foreach ($meta as $key => $value) {
-            $lower = strtolower((string) $key);
-            if (str_contains($lower, 'secret') || str_contains($lower, 'token') || str_contains($lower, 'password') || str_contains($lower, 'key')) {
-                $out[$key] = '[redacted]';
+        return SensitiveDataRedactor::redact($meta);
+    }
 
-                continue;
-            }
-            $out[$key] = $value;
+    private function assertAttemptMatches(PaymentAttempt $attempt, Payment $payment, string $gatewayId): void
+    {
+        if ((int) $attempt->payment_id !== (int) $payment->id
+            || (int) $attempt->order_id !== (int) $payment->order_id
+            || $attempt->gateway_id !== $gatewayId
+            || (int) $attempt->amount !== (int) $payment->amount
+            || strtoupper($attempt->currency) !== strtoupper($payment->currency)
+        ) {
+            throw ValidationException::withMessages([
+                'payment' => __('storefront.errors.payment_unavailable'),
+            ]);
         }
-
-        return $out;
     }
 }

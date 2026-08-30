@@ -98,7 +98,7 @@ final class ModuleManager
         }
     }
 
-    public function install(string $moduleId): AgovenaModule
+    public function install(string $moduleId, ?string $migrationJournal = null): AgovenaModule
     {
         $manifest = $this->requireManifest($moduleId);
         $this->assertCompatible($manifest);
@@ -111,7 +111,7 @@ final class ModuleManager
         $row->save();
 
         try {
-            $this->runModuleMigrations($manifest);
+            $this->runModuleMigrations($manifest, $migrationJournal);
         } catch (\Throwable $exception) {
             $row->delete();
             throw $exception;
@@ -168,6 +168,8 @@ final class ModuleManager
         if (! $this->modulesTableReady()) {
             return;
         }
+
+        $this->migrations->reconcile();
 
         foreach ($this->discover() as $manifest) {
             if (! $this->isInstalled($manifest->id)) {
@@ -279,9 +281,9 @@ final class ModuleManager
         throw new RuntimeException("Unable to resolve Module contract for [{$manifest->id}].");
     }
 
-    private function runModuleMigrations(ModuleManifest $manifest): void
+    private function runModuleMigrations(ModuleManifest $manifest, ?string $migrationJournal = null): void
     {
-        $this->migrations->run($manifest->id, $manifest->path);
+        $this->migrations->run($manifest->id, $manifest->path, $migrationJournal);
     }
 
     private function assertDependencies(ModuleManifest $manifest, bool $requireEnabled): void

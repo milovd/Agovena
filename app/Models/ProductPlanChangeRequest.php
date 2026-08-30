@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'order_id',
     'timing',
     'status',
+    'active_request_key',
 ])]
 class ProductPlanChangeRequest extends Model
 {

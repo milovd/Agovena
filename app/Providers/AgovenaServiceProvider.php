@@ -48,6 +48,7 @@ use App\Agovena\Notifications\MinishlinkPushTransport;
 use App\Agovena\Notifications\PushTransport;
 use App\Agovena\Packages\ComposerRunner;
 use App\Agovena\Packages\GitMonorepoCheckout;
+use App\Agovena\Packages\LockedMigrator;
 use App\Agovena\Packages\MonorepoCheckout;
 use App\Agovena\Packages\PackageMigrationRunner;
 use App\Agovena\Packages\ProcessComposerRunner;
@@ -88,13 +89,16 @@ use App\Listeners\SettleReferralRewardWhenOrderPaid;
 use App\Models\Customer;
 use App\Models\User;
 use App\Models\UserNotification;
+use App\Queue\AfterCommitFailoverConnector;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
+use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -110,6 +114,9 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ProductCapabilityManager::class);
         $this->app->singleton(ModuleManager::class);
         $this->app->singleton(PackageMigrationRunner::class);
+        $this->app->extend('migrator', static function (Migrator $migrator, $app): LockedMigrator {
+            return new LockedMigrator($migrator->getRepository(), $app['db'], $app['files'], $app['events']);
+        });
         $this->app->singleton(ComposerRunner::class, ProcessComposerRunner::class);
         $this->app->singleton(MonorepoCheckout::class, GitMonorepoCheckout::class);
         $this->app->singleton(ExtensionSettingsRepository::class);
@@ -166,6 +173,11 @@ class AgovenaServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Queue::extend('after_commit_failover', fn (): AfterCommitFailoverConnector => new AfterCommitFailoverConnector(
+            $this->app['queue'],
+            $this->app['events'],
+        ));
+
         Gate::before(static function (User $user, string $ability): ?bool {
             if ($ability !== 'customers.view') {
                 return null;

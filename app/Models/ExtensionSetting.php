@@ -13,8 +13,9 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $key
  * @property string|null $value
  * @property bool $is_secret
+ * @property bool $is_corrupt
  */
-#[Fillable(['extension_id', 'key', 'value', 'is_secret'])]
+#[Fillable(['extension_id', 'key', 'value', 'is_secret', 'is_corrupt'])]
 class ExtensionSetting extends Model
 {
     protected $table = 'extension_settings';
@@ -23,6 +24,7 @@ class ExtensionSetting extends Model
     {
         return [
             'is_secret' => 'boolean',
+            'is_corrupt' => 'boolean',
         ];
     }
 }

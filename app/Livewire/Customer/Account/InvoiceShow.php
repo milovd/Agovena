@@ -31,7 +31,7 @@ final class InvoiceShow extends Component
     {
         $order = $this->invoice->order;
 
-        return $order !== null && $order->isAwaitingPayment() ? $order : null;
+        return $order !== null && $order->isRetryablePayment() ? $order : null;
     }
 
     protected function afterPaymentAttempt(Order $order): void

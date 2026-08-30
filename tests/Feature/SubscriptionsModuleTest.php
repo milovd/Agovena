@@ -115,6 +115,34 @@ test('customer portal lists subscriptions and can cancel at period end', functio
         ->and($subscription->fresh()->status)->toBe(SubscriptionStatus::Active);
 });
 
+test('customer id ownership cannot be replaced by a matching legacy email', function () {
+    enableSubscriptionsModule();
+    $owner = Customer::factory()->create();
+    $other = Customer::factory()->create();
+    $product = makeSubscribableProduct();
+    $subscription = Subscription::query()->create([
+        'number' => 'SUB-OWNERSHIP-1',
+        'customer_id' => $owner->id,
+        'customer_email' => $other->email,
+        'customer_name' => $owner->name,
+        'product_id' => $product->id,
+        'status' => SubscriptionStatus::Active,
+        'interval' => 'month',
+        'interval_count' => 1,
+        'price_amount' => $product->price_amount,
+        'currency' => $product->currency,
+        'quantity' => 1,
+    ]);
+
+    Livewire::actingAs($other->user)
+        ->test(SubscriptionsIndex::class)
+        ->assertDontSee($product->name);
+
+    Livewire::actingAs($other->user)
+        ->test(CustomerSubscriptionShow::class, ['subscription' => $subscription])
+        ->assertStatus(404);
+});
+
 test('customer can undo period-end cancellation from subscription detail', function () {
     enableSubscriptionsModule();
     $customer = Customer::factory()->create();

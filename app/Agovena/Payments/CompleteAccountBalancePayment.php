@@ -28,11 +28,18 @@ final class CompleteAccountBalancePayment
         return DB::transaction(function () use ($order): Payment {
             /** @var Order $locked */
             $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
-            $locked->loadMissing('invoice');
-            $this->assertInvoiceCanBePaid->handle($locked);
 
             /** @var Payment $payment */
             $payment = Payment::query()->where('order_id', $locked->id)->lockForUpdate()->firstOrFail();
+
+            if (in_array($payment->status, [PaymentStatus::Refunded, PaymentStatus::PartiallyRefunded], true)) {
+                throw ValidationException::withMessages([
+                    'payment' => __('storefront.errors.payment_unavailable'),
+                ]);
+            }
+
+            $locked->loadMissing('invoice');
+            $this->assertInvoiceCanBePaid->handle($locked);
 
             if ($payment->status === PaymentStatus::Paid) {
                 return $payment;

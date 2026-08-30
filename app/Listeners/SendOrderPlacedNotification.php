@@ -6,9 +6,10 @@ namespace App\Listeners;
 
 use App\Events\OrderCreated;
 use App\Notifications\OrderPlaced;
+use Illuminate\Contracts\Queue\ShouldQueueAfterCommit;
 use Illuminate\Support\Facades\Notification;
 
-final class SendOrderPlacedNotification
+final class SendOrderPlacedNotification implements ShouldQueueAfterCommit
 {
     public function handle(OrderCreated $event): void
     {

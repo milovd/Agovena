@@ -85,6 +85,11 @@ final readonly class ExtensionManifest
             }
         }
 
+        $productionReady = $data['production_ready'] ?? false;
+        if (! is_bool($productionReady)) {
+            throw new \InvalidArgumentException('Extension manifest production_ready must be boolean.');
+        }
+
         return new self(
             id: (string) $data['id'],
             name: (string) $data['name'],
@@ -99,7 +104,7 @@ final readonly class ExtensionManifest
             author: (string) ($data['author'] ?? 'Agovena'),
             settings: $normalizedSettings,
             autoloadPsr4: $psr4,
-            productionReady: (bool) ($data['production_ready'] ?? false),
+            productionReady: $productionReady,
         );
     }
 }

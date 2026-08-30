@@ -53,6 +53,10 @@ return [
         'extra_extension_paths' => [],
         'optional_packages_path' => env('AGOVENA_OPTIONAL_PACKAGES_PATH'),
         'composer_timeout' => 180,
+        'migration_lock_seconds' => 3600,
+        'zip_max_entries' => 1000,
+        'zip_max_compressed_bytes' => 50 * 1024 * 1024,
+        'zip_max_uncompressed_bytes' => 100 * 1024 * 1024,
         'composer_binary' => env('AGOVENA_COMPOSER_BINARY'),
         /*
          * GitHub monorepo distribution (option B). Core installs individual packages

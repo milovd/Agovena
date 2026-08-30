@@ -16,17 +16,15 @@ final class ExtensionSettingsRepository
 {
     public function get(string $extensionId, string $key, mixed $default = null): mixed
     {
-        $fromEnv = $this->envOverride($extensionId, $key);
-        if ($fromEnv !== null) {
-            return $fromEnv;
-        }
-
         $row = ExtensionSetting::query()
             ->where('extension_id', $extensionId)
             ->where('key', $key)
             ->first();
 
         if ($row === null) {
+            return $this->envOverride($extensionId, $key) ?? $default;
+        }
+        if ($row->is_corrupt) {
             return $default;
         }
 
@@ -34,6 +32,8 @@ final class ExtensionSettingsRepository
             try {
                 return Crypt::decryptString((string) $row->value);
             } catch (\Throwable) {
+                $row->forceFill(['is_corrupt' => true])->save();
+
                 return $default;
             }
         }
@@ -45,16 +45,15 @@ final class ExtensionSettingsRepository
 
     public function isConfigured(string $extensionId, string $key): bool
     {
-        if ($this->envOverride($extensionId, $key) !== null) {
-            return true;
-        }
-
-        return ExtensionSetting::query()
+        $row = ExtensionSetting::query()
             ->where('extension_id', $extensionId)
             ->where('key', $key)
+            ->where('is_corrupt', false)
             ->whereNotNull('value')
             ->where('value', '!=', '')
-            ->exists();
+            ->first();
+
+        return $row !== null || $this->envOverride($extensionId, $key) !== null;
     }
 
     public function set(string $extensionId, string $key, mixed $value, bool $secret = false): void
@@ -65,7 +64,7 @@ final class ExtensionSettingsRepository
 
         ExtensionSetting::query()->updateOrCreate(
             ['extension_id' => $extensionId, 'key' => $key],
-            ['value' => $stored, 'is_secret' => $secret],
+            ['value' => $stored, 'is_secret' => $secret, 'is_corrupt' => false],
         );
     }
 
@@ -91,8 +90,66 @@ final class ExtensionSettingsRepository
             ->delete();
     }
 
+    /** @return list<array{key: string, value: string|null, is_secret: bool}> */
+    public function snapshot(string $extensionId): array
+    {
+        return ExtensionSetting::query()
+            ->where('extension_id', $extensionId)
+            ->get(['key', 'value', 'is_secret'])
+            ->map(fn (ExtensionSetting $setting): array => [
+                'key' => $setting->key,
+                'value' => $setting->value,
+                'is_secret' => $setting->is_secret,
+            ])
+            ->values()
+            ->all();
+    }
+
+    /** @param list<mixed> $snapshot */
+    public function restore(string $extensionId, array $snapshot): void
+    {
+        $validated = [];
+        foreach ($snapshot as $setting) {
+            if (! is_array($setting)) {
+                throw new \RuntimeException('Extension settings snapshot is invalid.');
+            }
+
+            $key = $setting['key'] ?? null;
+            $value = $setting['value'] ?? null;
+            $isSecret = $setting['is_secret'] ?? null;
+            if (! is_string($key)
+                || $key === ''
+                || ($value !== null && ! is_string($value))
+                || ! is_bool($isSecret)
+            ) {
+                throw new \RuntimeException('Extension settings snapshot is invalid.');
+            }
+
+            $validated[] = [
+                'key' => $key,
+                'value' => $value,
+                'is_secret' => $isSecret,
+            ];
+        }
+
+        ExtensionSetting::query()->where('extension_id', $extensionId)->delete();
+        foreach ($validated as $setting) {
+            ExtensionSetting::query()->create([
+                'extension_id' => $extensionId,
+                'key' => $setting['key'],
+                'value' => $setting['value'],
+                'is_secret' => $setting['is_secret'],
+                'is_corrupt' => false,
+            ]);
+        }
+    }
+
     private function envOverride(string $extensionId, string $key): mixed
     {
+        if ($this->isSensitiveKey($key)) {
+            return null;
+        }
+
         $name = 'AGOVENA_EXT_'.strtoupper(preg_replace('/[^A-Za-z0-9]+/', '_', $extensionId.'_'.$key) ?? '');
         $value = Env::get($name);
         if (! is_string($value) || trim($value) === '') {
@@ -100,5 +157,10 @@ final class ExtensionSettingsRepository
         }
 
         return $value;
+    }
+
+    private function isSensitiveKey(string $key): bool
+    {
+        return preg_match('/(?:api[_-]?key|access[_-]?key|token|secret|password|passwd|credential|authorization|private[_-]?key|connection|string|dsn)/i', $key) === 1;
     }
 }

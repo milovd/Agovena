@@ -19,6 +19,10 @@ final class FakeComposerRunner implements ComposerRunner
     /** @var list<string> */
     public array $removed = [];
 
+    public ?\Closure $onRequire = null;
+
+    public ?\Closure $onRemove = null;
+
     public function map(string $packageName, string $path): void
     {
         $this->packages[$packageName] = $path;
@@ -32,6 +36,10 @@ final class FakeComposerRunner implements ComposerRunner
             'url' => $repositoryUrl,
         ];
 
+        if ($this->onRequire !== null) {
+            ($this->onRequire)();
+        }
+
         $path = $this->packages[$packageName] ?? null;
         if ($path === null || ! is_dir($path)) {
             throw ValidationException::withMessages([
@@ -44,6 +52,9 @@ final class FakeComposerRunner implements ComposerRunner
 
     public function remove(string $packageName): void
     {
+        if ($this->onRemove !== null) {
+            ($this->onRemove)();
+        }
         $this->removed[] = $packageName;
     }
 
