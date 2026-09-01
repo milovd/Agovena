@@ -1567,6 +1567,12 @@ return [
         'deleted' => 'Discount code deleted.',
         'delete_used' => 'A redeemed discount code cannot be deleted. Deactivate it instead.',
         'delete_confirm' => 'Delete this discount code?',
+        'actions' => [
+            'edit' => 'Edit discount code',
+            'edit_aria' => 'Edit discount code :code',
+            'delete' => 'Delete discount code',
+            'delete_aria' => 'Delete discount code :code',
+        ],
     ],
     'customers' => [
         'title' => 'Customers',

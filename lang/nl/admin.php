@@ -1567,6 +1567,12 @@ return [
         'deleted' => 'Kortingscode verwijderd.',
         'delete_used' => 'Een gebruikte kortingscode kan niet worden verwijderd. Deactiveer deze in plaats daarvan.',
         'delete_confirm' => 'Deze kortingscode verwijderen?',
+        'actions' => [
+            'edit' => 'Kortingscode bewerken',
+            'edit_aria' => 'Kortingscode :code bewerken',
+            'delete' => 'Kortingscode verwijderen',
+            'delete_aria' => 'Kortingscode :code verwijderen',
+        ],
     ],
     'customers' => [
         'title' => 'Klanten',

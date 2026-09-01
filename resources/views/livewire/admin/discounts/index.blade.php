@@ -92,11 +92,30 @@
                             <td>{{ $discount->type === 'percent' ? $discount->value.'%' : \App\Support\MoneyFormatter::format($discount->value, $discount->currency) }}</td>
                             <td>{{ $discount->redemptions_count }}{{ $discount->max_uses ? ' / '.$discount->max_uses : '' }}</td>
                             <td><span class="ag-badge">{{ $discount->is_active ? __('common.active') : __('common.inactive') }}</span></td>
-                            <td>
-                                @can('discounts.manage')
-                                    <button class="ag-btn ag-btn--ghost" type="button" wire:click="edit({{ $discount->id }})">{{ __('common.edit') }}</button>
-                                    <button class="ag-btn ag-btn--ghost" type="button" wire:click="delete({{ $discount->id }})" wire:confirm="{{ __('admin.discounts.delete_confirm') }}">{{ __('common.delete') }}</button>
-                                @endcan
+                            <td class="ag-table__actions">
+                                <div class="ag-row-actions">
+                                    @can('discounts.manage')
+                                        <button
+                                            type="button"
+                                            class="ag-icon-btn"
+                                            wire:click="edit({{ $discount->id }})"
+                                            title="{{ __('admin.discounts.actions.edit') }}"
+                                            aria-label="{{ __('admin.discounts.actions.edit_aria', ['code' => $discount->code]) }}"
+                                        >
+                                            <x-ag.icon name="pencil" :size="16" />
+                                        </button>
+                                        <button
+                                            type="button"
+                                            class="ag-icon-btn ag-icon-btn--danger"
+                                            wire:click="delete({{ $discount->id }})"
+                                            wire:confirm="{{ __('admin.discounts.delete_confirm') }}"
+                                            title="{{ __('admin.discounts.actions.delete') }}"
+                                            aria-label="{{ __('admin.discounts.actions.delete_aria', ['code' => $discount->code]) }}"
+                                        >
+                                            <x-ag.icon name="trash" :size="16" />
+                                        </button>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @endforeach
