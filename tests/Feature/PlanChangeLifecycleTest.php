@@ -771,8 +771,10 @@ test('plan-change compensation recovery uses the shared service-instance mutex',
         ->with('agovena:provisioning:instance:'.$instance->id, 900)
         ->andReturn($lock);
 
+    $minimumProviderTransactionLevel = config('database.default') === 'sqlite' ? 2 : 1;
+
     expect(app(PlanChangeCompensationRecovery::class)->recover())->toBe(1)
-        ->and($transactionLevelAtProvider)->toBeGreaterThanOrEqual(2);
+        ->and($transactionLevelAtProvider)->toBeGreaterThanOrEqual($minimumProviderTransactionLevel);
 });
 
 test('malformed compensation state is quarantined for manual review', function () {

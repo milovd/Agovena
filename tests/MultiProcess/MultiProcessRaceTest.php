@@ -180,7 +180,10 @@ test('two processes cannot over-refund the same payment', function () {
 
     expect($successfulRefundIds)->toHaveCount(1, json_encode($results, JSON_THROW_ON_ERROR))
         ->and(Refund::query()->where('payment_id', $payment->id)->count())->toBe(1)
-        ->and(AuditLog::query()->where('action', 'refund.completed')->where('auditable_id', $payment->id)->count())->toBe(1)
+        ->and(AuditLog::query()
+            ->where('action', 'refund.completed')
+            ->where('subject_type', Refund::class)
+            ->count())->toBe(1)
         ->and($payment->fresh()->remainingRefundable())->toBe(0);
 });
 
