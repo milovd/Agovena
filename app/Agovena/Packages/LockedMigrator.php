@@ -164,7 +164,9 @@ final class LockedMigrator extends Migrator
     {
         $connection = $this->resolveConnection($migration->getConnection());
         if ($this->sqliteBootstrapConnection !== $connection->getName() || ! $migration->withinTransaction) {
-            return parent::runMigration($migration, $method, $name);
+            parent::runMigration($migration, $method, $name);
+
+            return;
         }
 
         if (method_exists($migration, $method)) {

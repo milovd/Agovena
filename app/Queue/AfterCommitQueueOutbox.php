@@ -319,7 +319,7 @@ final class AfterCommitQueueOutbox
     {
         $decoded = json_decode($payload, true);
         $delay = is_array($decoded) ? ($decoded['delay'] ?? 0) : 0;
-        if ($delay === null || $delay === 0) {
+        if ($delay === 0) {
             return now();
         }
         if (! is_int($delay) && (! is_string($delay) || ! ctype_digit($delay))) {

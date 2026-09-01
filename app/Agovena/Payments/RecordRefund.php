@@ -65,6 +65,7 @@ final class RecordRefund
             }
 
             $creditNote = $this->resolveCreditNote($locked, $creditNoteId);
+            $creditNoteKey = $creditNote instanceof CreditNote ? (int) $creditNote->id : 0;
             $gateway = $this->resolveGateway($locked);
 
             if (! $gateway->capabilities()->refunds) {
@@ -88,7 +89,7 @@ final class RecordRefund
             if ($pendingRefund !== null) {
                 if ($pendingRefund->amount !== $amount
                     || $pendingRefund->reason !== $reason
-                    || (int) ($pendingRefund->credit_note_id ?? 0) !== (int) ($creditNote?->id ?? 0)
+                    || (int) ($pendingRefund->credit_note_id ?? 0) !== $creditNoteKey
                 ) {
                     throw ValidationException::withMessages([
                         'payment' => __('admin.refunds.gateway_failed'),

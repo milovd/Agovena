@@ -502,7 +502,7 @@ test('legacy service settings are encrypted before metadata redaction', function
     ]);
     app(ServiceInstanceRuntimeSecretStore::class)->forget($instance->id);
 
-    $migration = require base_path('../optional-packages/modules/provisioning/database/migrations/2026_09_01_000100_migrate_legacy_runtime_secrets.php');
+    $migration = require optionalModuleRoot('provisioning').'/database/migrations/2026_09_01_000100_migrate_legacy_runtime_secrets.php';
     $migration->up();
     $row = DB::table('service_instances')->where('id', $instance->id)->first();
     $meta = json_decode((string) $row->meta, true);

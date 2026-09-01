@@ -150,10 +150,8 @@ final class HandlePaymentWebhook
                     return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
                 }
 
-                if ($attempt !== null) {
-                    $result = $this->applyStatus->handle($attempt, $payload->status);
-                    $blocked = $result->blockedByTerminalState;
-                }
+                $result = $this->applyStatus->handle($attempt, $payload->status);
+                $blocked = $result->blockedByTerminalState;
 
                 if ($blocked) {
                     $payment = Payment::query()->whereKey($attempt->payment_id)->lockForUpdate()->firstOrFail();

@@ -219,8 +219,10 @@ final class CancelUnpaidOrder
         $allCancelled = true;
 
         foreach ($targets as $attempt) {
-            $gatewayId = $attempt?->gateway_id ?? $method;
-            if (! is_string($gatewayId) || $gatewayId === '') {
+            $gatewayId = $attempt instanceof PaymentAttempt
+                ? (string) $attempt->gateway_id
+                : $method;
+            if ($gatewayId === '') {
                 $allCancelled = false;
 
                 continue;
