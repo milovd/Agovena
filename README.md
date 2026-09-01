@@ -14,7 +14,7 @@
 
 ## Getting started
 
-Agovena is in early development. It is a normal self-hosted Laravel application.
+Agovena is in early development: a modular, self-hosted commerce platform built on Laravel, with a commerce core, optional modules, provider extensions, themes, and operational tooling.
 
 **Native Linux is the primary production path.** Docker is optional convenience, not a runtime requirement.
 
