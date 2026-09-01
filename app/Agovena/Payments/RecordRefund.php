@@ -57,13 +57,6 @@ final class RecordRefund
             $locked = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
             $locked->loadMissing('order.invoice');
 
-            $remaining = $locked->remainingRefundable();
-            if ($amount > $remaining) {
-                throw ValidationException::withMessages([
-                    'amount' => __('admin.refunds.exceeds_remaining'),
-                ]);
-            }
-
             $creditNote = $this->resolveCreditNote($locked, $creditNoteId);
             $creditNoteKey = $creditNote instanceof CreditNote ? (int) $creditNote->id : 0;
             $gateway = $this->resolveGateway($locked);
@@ -74,12 +67,7 @@ final class RecordRefund
                 ]);
             }
 
-            if ($amount < $remaining && ! $gateway->capabilities()->partialRefunds) {
-                throw ValidationException::withMessages([
-                    'amount' => __('admin.refunds.partial_not_supported'),
-                ]);
-            }
-
+            $remaining = $locked->remainingRefundable();
             $pendingRefund = Refund::query()
                 ->where('payment_id', $locked->id)
                 ->whereIn('status', [RefundStatus::Pending, RefundStatus::Processing])
@@ -109,7 +97,25 @@ final class RecordRefund
                         'shouldInvoke' => false,
                     ];
                 }
-            } else {
+
+                if ($refund->status === RefundStatus::Processing) {
+                    $remaining += $refund->amount;
+                }
+            }
+
+            if ($amount > $remaining) {
+                throw ValidationException::withMessages([
+                    'amount' => __('admin.refunds.exceeds_remaining'),
+                ]);
+            }
+
+            if ($amount < $remaining && ! $gateway->capabilities()->partialRefunds) {
+                throw ValidationException::withMessages([
+                    'amount' => __('admin.refunds.partial_not_supported'),
+                ]);
+            }
+
+            if ($pendingRefund === null) {
                 $refund = Refund::query()->create([
                     'payment_id' => $locked->id,
                     'order_id' => $locked->order_id,
