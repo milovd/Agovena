@@ -67,7 +67,6 @@ final class RecordRefund
                 ]);
             }
 
-            $remaining = $locked->remainingRefundable();
             $pendingRefund = Refund::query()
                 ->where('payment_id', $locked->id)
                 ->whereIn('status', [RefundStatus::Pending, RefundStatus::Processing])
@@ -98,24 +97,20 @@ final class RecordRefund
                     ];
                 }
 
-                if ($refund->status === RefundStatus::Processing) {
-                    $remaining += $refund->amount;
+            } else {
+                $remaining = $locked->remainingRefundable();
+                if ($amount > $remaining) {
+                    throw ValidationException::withMessages([
+                        'amount' => __('admin.refunds.exceeds_remaining'),
+                    ]);
                 }
-            }
 
-            if ($amount > $remaining) {
-                throw ValidationException::withMessages([
-                    'amount' => __('admin.refunds.exceeds_remaining'),
-                ]);
-            }
+                if ($amount < $remaining && ! $gateway->capabilities()->partialRefunds) {
+                    throw ValidationException::withMessages([
+                        'amount' => __('admin.refunds.partial_not_supported'),
+                    ]);
+                }
 
-            if ($amount < $remaining && ! $gateway->capabilities()->partialRefunds) {
-                throw ValidationException::withMessages([
-                    'amount' => __('admin.refunds.partial_not_supported'),
-                ]);
-            }
-
-            if ($pendingRefund === null) {
                 $refund = Refund::query()->create([
                     'payment_id' => $locked->id,
                     'order_id' => $locked->order_id,
