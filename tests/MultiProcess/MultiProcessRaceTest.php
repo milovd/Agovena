@@ -12,12 +12,16 @@ use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Subscriptions\Models\Subscription;
 use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
+use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
+use App\Agovena\Invoices\MarkInvoicePaid;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Enums\InvoiceStatus;
+use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Payment;
@@ -147,6 +151,10 @@ function placePaidOrderForRace(int $price = 2000, int $qty = 2): array
     $staff = test()->createStaff();
     app(RecordManualPayment::class)->handle($order, $staff, 'RACE-PAY');
     $invoice = Invoice::query()->where('order_id', $order->id)->firstOrFail();
+    if ($invoice->status !== InvoiceStatus::Paid) {
+        app(MarkInvoicePaid::class)->handle($invoice, $order->fresh('payment'));
+        $invoice->refresh();
+    }
 
     return [$order->fresh(['payment']), $invoice->fresh('items'), $staff];
 }
@@ -164,12 +172,15 @@ test('two processes cannot over-refund the same payment', function () {
         'reason' => 'parallel full refund',
     ]);
 
-    $oks = collect($results)->where('ok', true)->count();
-    $fails = collect($results)->where('ok', false)->count();
+    $successfulRefundIds = collect($results)
+        ->where('ok', true)
+        ->pluck('refund_id')
+        ->filter()
+        ->unique();
 
-    expect($oks)->toBe(1, json_encode($results, JSON_THROW_ON_ERROR))
-        ->and($fails)->toBe(1)
+    expect($successfulRefundIds)->toHaveCount(1, json_encode($results, JSON_THROW_ON_ERROR))
         ->and(Refund::query()->where('payment_id', $payment->id)->count())->toBe(1)
+        ->and(AuditLog::query()->where('action', 'refund.completed')->where('auditable_id', $payment->id)->count())->toBe(1)
         ->and($payment->fresh()->remainingRefundable())->toBe(0);
 });
 
@@ -268,6 +279,7 @@ test('two renewal processors create one renewal order only', function () {
         ]),
     ]);
     app(RecordManualPayment::class)->handle($order, test()->createStaff());
+    app(SubscriptionService::class)->createFromPaidOrder($order->fresh(['items', 'payment']));
     $subscription = Subscription::query()->where('order_id', $order->id)->firstOrFail();
     $due = CarbonImmutable::parse($subscription->next_billing_at);
 

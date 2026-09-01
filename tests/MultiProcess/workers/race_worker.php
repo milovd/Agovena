@@ -53,8 +53,9 @@ try {
         case 'refund':
             $staff = User::query()->findOrFail((int) $payload['staff_id']);
             $payment = Payment::query()->findOrFail((int) $payload['payment_id']);
-            app(RecordRefund::class)->handle($payment, $staff, (int) $payload['amount'], (string) $payload['reason']);
+            $refund = app(RecordRefund::class)->handle($payment, $staff, (int) $payload['amount'], (string) $payload['reason']);
             $result['ok'] = true;
+            $result['refund_id'] = $refund->id;
             break;
         case 'credit':
             $staff = User::query()->findOrFail((int) $payload['staff_id']);

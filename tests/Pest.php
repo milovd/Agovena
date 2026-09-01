@@ -62,6 +62,12 @@ pest()->extend(MultiProcessTestCase::class)->in('MultiProcess');
 pest()->extend(UpgradeTestCase::class)->in('Upgrade');
 
 pest()->beforeEach(function (): void {
+    if (config('database.default') !== 'mysql') {
+        test()->markTestSkipped('MariaDB concurrency suite');
+    }
+})->in('Concurrency', 'MultiProcess');
+
+pest()->beforeEach(function (): void {
     if (! $this->app->runningUnitTests()) {
         return;
     }
@@ -80,9 +86,3 @@ pest()->beforeEach(function (): void {
 pest()->beforeEach(function (): void {
     registerTestPendingPaymentGateway();
 })->in('Feature', 'Concurrency', 'MultiProcess', 'Upgrade', 'Performance');
-
-pest()->beforeEach(function (): void {
-    if (config('database.default') !== 'mysql') {
-        test()->markTestSkipped('MariaDB concurrency suite');
-    }
-})->in('Concurrency', 'MultiProcess');

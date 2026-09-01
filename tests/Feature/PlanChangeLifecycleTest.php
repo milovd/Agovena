@@ -622,6 +622,7 @@ test('compensation journal has isolated storage for the active database driver',
 test('compensation journal uses its independent connection for persistent test databases', function () {
     enablePlanChangeModules();
     $defaultConnection = config('database.default');
+    $defaultCompensationConnection = config('database.compensation_connection');
     $persistentConnection = array_merge(
         (array) config('database.connections.sqlite'),
         ['database' => database_path('persistent-test.sqlite')],
@@ -642,7 +643,10 @@ test('compensation journal uses its independent connection for persistent test d
         expect($database()->getName())->toBe('compensation_journal');
         expect($journalSchema()->getConnection()->getName())->toBe('compensation_journal');
     } finally {
-        config(['database.default' => $defaultConnection]);
+        config([
+            'database.default' => $defaultConnection,
+            'database.compensation_connection' => $defaultCompensationConnection,
+        ]);
         DB::purge('persistent_default');
     }
 });
