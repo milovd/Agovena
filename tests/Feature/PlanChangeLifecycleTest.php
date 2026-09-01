@@ -604,12 +604,19 @@ test('compensation journal finalization requires the active claim owner', functi
     expect(iterator_to_array($journal->entries())[0]['payload']['phase'])->toBe('applied');
 });
 
-test('compensation journal has an independent sqlite database outside testing', function () {
-    expect(config('database.connections.compensation_journal.driver'))->toBe('sqlite')
-        ->and(config('database.connections.compensation_journal.database'))
-        ->toBe(database_path('compensation-journal.sqlite'))
-        ->and(config('database.connections.compensation_journal.database'))
-        ->not->toBe(config('database.connections.sqlite.database'));
+test('compensation journal has isolated storage for the active database driver', function () {
+    $driver = (string) config('database.connections.compensation_journal.driver');
+    $compensationDatabase = config('database.connections.compensation_journal.database');
+    $defaultDatabase = config('database.connections.'.config('database.default').'.database');
+
+    if ($driver === 'sqlite') {
+        expect($driver)->toBe(config('database.default'))
+            ->and($compensationDatabase)->toBe(database_path('compensation-journal.sqlite'))
+            ->and($compensationDatabase)->not->toBe($defaultDatabase);
+    } else {
+        expect($driver)->toBe(config('database.default'))
+            ->and($compensationDatabase)->toBe($defaultDatabase);
+    }
 });
 
 test('compensation journal uses its independent connection for persistent test databases', function () {

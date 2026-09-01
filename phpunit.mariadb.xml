@@ -40,6 +40,7 @@
         <env name="DB_DATABASE" value="agovena_test" force="true"/>
         <env name="DB_USERNAME" value="agovena" force="true"/>
         <env name="DB_PASSWORD" value="secret" force="true"/>
+        <env name="DB_COMPENSATION_DATABASE" value="agovena_test" force="true"/>
         <env name="DB_URL" value="" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
