@@ -17,5 +17,6 @@
 @import './admin/components/_audit-log.css';
 @import './admin/components/_theme-customizer.css';
 @import './admin/components/_notification-templates.css';
+@import './admin/components/_api-tokens.css';
 @import './admin/components/_print.css';
 @import './admin/utilities/_a11y.css';

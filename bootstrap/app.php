@@ -5,6 +5,7 @@ use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Http\Middleware\EnforceAbusePolicy;
 use App\Http\Middleware\EnforceApiIpAllowlist;
 use App\Http\Middleware\EnsureAgovenaInstalled;
+use App\Http\Middleware\EnsureApiTokenAbility;
 use App\Http\Middleware\EnsureCanAccessAdmin;
 use App\Http\Middleware\EnsureCustomerEmailIsVerified;
 use App\Http\Middleware\EnsurePrivilegedTwoFactor;
@@ -86,6 +87,7 @@ return Application::configure(basePath: dirname(__DIR__))
             SecurityHeaders::class,
         ]);
         $middleware->alias([
+            'api.ability' => EnsureApiTokenAbility::class,
             'customer.verified' => EnsureCustomerEmailIsVerified::class,
             'admin.access' => EnsureCanAccessAdmin::class,
             'admin.2fa' => EnsurePrivilegedTwoFactor::class,

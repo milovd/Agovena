@@ -8,6 +8,7 @@ return [
     'not_found' => 'De gevraagde bron is niet gevonden.',
     'rate_limited' => 'Te veel verzoeken. Probeer het zo opnieuw.',
     'ip_not_allowed' => 'Dit IP-adres heeft geen toegang tot de API.',
+    'insufficient_scope' => 'Dit API-token heeft niet de vereiste toegang.',
     'not_installed' => 'Deze winkel is nog niet geïnstalleerd.',
     'payment_failed' => 'Betaling kon niet worden gestart.',
     'checkout_failed' => 'Afrekenen kon niet worden afgerond.',

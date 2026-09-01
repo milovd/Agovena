@@ -113,7 +113,7 @@ final class ModuleContext
     public function apiRoutes(callable $routes): void
     {
         Route::group([
-            'middleware' => ['api', 'auth:sanctum', 'throttle:api'],
+            'middleware' => ['api', 'auth:sanctum', 'throttle:api', 'api.ability'],
             'prefix' => 'api/v1',
             'as' => 'api.v1.',
         ], $routes);

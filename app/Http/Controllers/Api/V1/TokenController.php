@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1;
 
 use App\Agovena\Api\ApiError;
+use App\Agovena\Api\ApiTokenAbilities;
 use App\Agovena\Audit\AuditLogger;
 use App\Http\Resources\Api\V1\AccountResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -22,6 +24,8 @@ final class TokenController
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
             'name' => ['required', 'string', 'max:80'],
+            'abilities' => ['sometimes', 'array', 'max:50'],
+            'abilities.*' => ['string', Rule::in(ApiTokenAbilities::keys())],
         ]);
 
         $user = User::query()->where('email', $data['email'])->first();
@@ -35,7 +39,9 @@ final class TokenController
             return ApiError::json('unauthorized', __('api.auth.unavailable'), 403);
         }
 
-        $new = $user->createToken($data['name'], ['*']);
+        $abilities = ApiTokenAbilities::normalize($data['abilities'] ?? [ApiTokenAbilities::ALL]);
+        $new = $user->createToken($data['name'], $abilities);
+        $new->accessToken->forceFill(['ip_allowlist' => []])->save();
         $audit->log('api_token.created', $user, [
             'token_name' => $data['name'],
             'token_id' => $new->accessToken->id,

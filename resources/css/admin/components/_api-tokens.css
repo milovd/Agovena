@@ -1,0 +1,97 @@
+.ag-api-token-editor {
+  margin-bottom: var(--ag-space-6);
+}
+
+.ag-api-token-permission-groups {
+  display: grid;
+  gap: var(--ag-space-4);
+  margin-top: var(--ag-space-5);
+}
+
+.ag-api-token-permission-group {
+  min-width: 0;
+  margin: 0;
+  padding: var(--ag-space-3);
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+}
+
+.ag-api-token-permission-group__title {
+  padding: 0 var(--ag-space-2);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.ag-api-token-permission-group__items {
+  display: grid;
+  gap: var(--ag-space-2);
+}
+
+.ag-api-token-permission {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ag-space-3);
+  min-width: 0;
+  padding: var(--ag-space-3);
+  border: 1px solid transparent;
+  border-radius: var(--ag-radius-md);
+  cursor: pointer;
+  transition: background-color var(--ag-transition), border-color var(--ag-transition);
+}
+
+.ag-api-token-permission:hover {
+  border-color: var(--ag-color-border);
+  background: var(--ag-color-surface-muted);
+}
+
+.ag-api-token-permission:has(input:focus-visible) {
+  border-color: var(--ag-color-primary);
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-api-token-permission--all {
+  border-color: color-mix(in srgb, var(--ag-color-primary) 24%, var(--ag-color-border));
+  background: color-mix(in srgb, var(--ag-color-primary) 5%, var(--ag-color-surface));
+}
+
+.ag-api-token-permission input {
+  flex: 0 0 auto;
+  margin-top: 0.2rem;
+}
+
+.ag-api-token-permission__copy {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.ag-api-token-permission__copy strong {
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+.ag-api-token-permission__copy small {
+  color: var(--ag-color-text-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.ag-api-token-list {
+  overflow: visible;
+}
+
+.ag-api-token-list .ag-section__body {
+  padding-top: var(--ag-space-4);
+}
+
+@media (min-width: 900px) {
+  .ag-api-token-permission-groups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-api-token-permission {
+    transition: none;
+  }
+}
