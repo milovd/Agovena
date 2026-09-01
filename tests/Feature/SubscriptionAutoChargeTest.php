@@ -255,7 +255,8 @@ test('provider timeout leaves the attempt open and retry uses the same payment a
     $attempt = PaymentAttempt::query()->where('idempotency_key', 'like', 'recurring-%')->firstOrFail();
     expect($attempt->status)->toBe(PaymentAttemptStatus::Processing)
         ->and($api->createCalls)->toBe($createsAfterFirst)
-        ->and($renewal->charge_attempts)->toBe(1);
+        ->and($attempt->response_meta['provider_outcome'])->toBe('unknown')
+        ->and($renewal->charge_attempts)->toBe(0);
 
     $api->timeout = false;
     $api->nextStatus = 'paid';

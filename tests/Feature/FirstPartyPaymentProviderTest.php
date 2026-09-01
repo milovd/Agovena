@@ -10,14 +10,21 @@ use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\HandlePaymentWebhook;
+use App\Agovena\Payments\PaymentGatewayRegistry;
+use App\Agovena\Payments\PaymentInitiation;
+use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Payments\StartOrderPayment;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Tests\Support\CreatesStaff;
 use Tests\Support\FakePaddleApi;
 use Tests\Support\FakeTebexApi;
+
+uses(CreatesStaff::class);
 
 function enableFirstPartyPaddle(?FakePaddleApi $api = null): FakePaddleApi
 {
@@ -126,6 +133,85 @@ test('tebex checkout creates a mapped package basket', function (): void {
     expect($attempt->redirect_url)->toBe('https://checkout.tebex.test/basket-ident')
         ->and($attempt->status)->toBe(PaymentAttemptStatus::Processing)
         ->and($api->basketCalls)->toBe(1);
+});
+
+test('tebex unknown package outcomes require payment reconciliation', function (): void {
+    $api = enableFirstPartyTebex();
+    $api->throwOn = 'add_package';
+    $payment = placeFirstPartyOrder('tebex:tebex', 2);
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'tebex:tebex',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'tebex-unknown-1',
+    );
+
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($attempt->response_meta['provider_outcome'] ?? null)->toBe('unknown')
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and($api->basketCalls)->toBe(1);
+});
+
+test('tebex retry does not add a package twice after basket response loss', function (): void {
+    $api = enableFirstPartyTebex();
+    $api->throwOn = 'get_basket_after_add';
+    $payment = placeFirstPartyOrder('tebex:tebex', 2);
+    $gateway = app(PaymentGatewayRegistry::class)->get('tebex');
+    $request = new PaymentInitiation(
+        order: $payment->order,
+        payment: $payment,
+        returnUrl: 'https://example.test/return',
+        cancelUrl: 'https://example.test/cancel',
+        idempotencyKey: 'tebex-package-retry-1',
+    );
+
+    $firstResult = $gateway->initiate($request);
+    expect($firstResult->status)->toBe('unknown');
+    $api->throwOn = null;
+    $result = $gateway->initiate($request);
+
+    expect($result->redirectUrl)->toBe('https://checkout.tebex.test/basket-ident')
+        ->and($api->addPackageCalls)->toBe(1)
+        ->and($api->addPackageIdempotencyKeys)->toBe(['tebex-package-retry-1:package:12345']);
+});
+
+test('tebex refund unknown outcome remains pending for reconciliation', function (): void {
+    $api = enableFirstPartyTebex();
+    $payment = placeFirstPartyOrder('tebex:tebex', 2);
+    app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'tebex:tebex',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'tebex-refund-attempt-1',
+    );
+    $payment->update(['status' => PaymentStatus::Paid, 'paid_at' => now()]);
+    $payment->order()->update(['status' => OrderStatus::Paid]);
+    $api->throwOn = 'refund';
+
+    $refund = app(RecordRefund::class)->handle(
+        $payment->fresh(),
+        $this->createStaff(),
+        $payment->amount,
+        'Provider response lost',
+    );
+
+    $api->throwOn = null;
+    $retry = app(RecordRefund::class)->handle(
+        $payment->fresh(),
+        $this->createStaff(),
+        $payment->amount,
+        'Provider response lost',
+    );
+
+    expect($refund->status->value)->toBe('pending')
+        ->and($retry->id)->toBe($refund->id)
+        ->and($retry->status->value)->toBe('completed')
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and($payment->fresh()->reconciliation_meta['reason'] ?? null)->toBe('provider_refund_outcome_unknown')
+        ->and($api->refundIdempotencyKeys)->toBe(['refund-'.$refund->id, 'refund-'.$refund->id]);
 });
 
 test('tebex signed completed webhook completes a matching payment', function (): void {

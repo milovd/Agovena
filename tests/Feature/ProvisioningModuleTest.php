@@ -2,11 +2,13 @@
 
 declare(strict_types=1);
 
+use Agovena\Modules\Provisioning\CapacityReservationService;
 use Agovena\Modules\Provisioning\EloquentProvisionedServiceResolver;
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Http\Livewire\Admin\InstanceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServicesIndex;
+use Agovena\Modules\Provisioning\Models\CapacityReservation;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
 use Agovena\Modules\Provisioning\ProvisioningService;
@@ -24,9 +26,15 @@ use App\Agovena\Provisioning\Contracts\ProvisionerLifecycle;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Provisioning\RunProvisionerAction;
 use App\Agovena\Provisioning\ServiceInstanceInfo;
+use App\Agovena\Security\OrderItemRuntimeSecretStore;
+use App\Events\OrderPreflight;
 use App\Models\Customer;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProvisioningServer;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -91,6 +99,186 @@ test('paid provisionable order creates pending service instances per quantity', 
         ->and($instances->first()->provider_key)->toBe('manual');
 });
 
+test('provisioning settings are stored outside order item snapshots', function () {
+    enableProvisioningModule();
+    $customer = Customer::factory()->create();
+    $server = ProvisioningServer::query()->create([
+        'name' => 'Runtime server',
+        'provider_key' => 'manual',
+        'settings' => ['endpoint' => 'https://provider.invalid', 'api_token' => '[REDACTED]'],
+        'is_active' => true,
+    ]);
+    $product = makeProvisionableProduct([
+        'provider_key' => 'manual',
+        'server_id' => $server->id,
+    ]);
+    $order = Order::factory()->create(['customer_id' => $customer->id]);
+    $item = OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'product_id' => $product->id,
+        'options_snapshot' => [],
+    ]);
+    $order->setRelation('items', collect([$item]));
+    $preflight = new OrderPreflight([]);
+    $preflight->checks[0] = [
+        'product_id' => $product->id,
+        'provisionable' => true,
+        'provider_key' => 'manual',
+        'server_id' => $server->id,
+        'server_settings' => ['endpoint' => 'https://provider.invalid', 'api_token' => '[REDACTED]'],
+        'provider_settings' => ['api_token' => '[REDACTED]'],
+        'requirements' => [],
+    ];
+
+    app(ProvisioningService::class)->snapshotOrderConfiguration($order, $preflight);
+
+    $storedItem = OrderItem::query()->findOrFail($item->id);
+    $runtimeValues = DB::table('order_item_runtime_secrets')
+        ->where('order_item_id', $item->id)
+        ->pluck('value_encrypted', 'key');
+
+    expect($storedItem->provisioning_server_settings_snapshot)->toBeNull()
+        ->and($storedItem->provisioning_provider_settings_snapshot)->toBeNull()
+        ->and($runtimeValues)->toHaveKeys([
+            'provisioning_server_settings',
+            'provisioning_provider_settings',
+        ])
+        ->and(Crypt::decryptString((string) $runtimeValues['provisioning_server_settings']))
+        ->toBe(json_encode(['endpoint' => 'https://provider.invalid', 'api_token' => '[REDACTED]'], JSON_THROW_ON_ERROR))
+        ->and(Crypt::decryptString((string) $runtimeValues['provisioning_provider_settings']))
+        ->toBe(json_encode(['api_token' => '[REDACTED]'], JSON_THROW_ON_ERROR));
+});
+
+test('service instance settings stay out of persistent snapshots', function () {
+    enableProvisioningModule();
+    $customer = Customer::factory()->create();
+    $server = ProvisioningServer::query()->create([
+        'name' => 'Runtime service server',
+        'provider_key' => 'manual',
+        'settings' => ['endpoint' => 'https://provider.invalid', 'api_token' => '[REDACTED]'],
+        'is_active' => true,
+    ]);
+    $product = makeProvisionableProduct([
+        'provider_key' => 'manual',
+        'server_id' => $server->id,
+    ]);
+    $order = Order::factory()->create(['customer_id' => $customer->id]);
+    $item = OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'product_id' => $product->id,
+        'options_snapshot' => [],
+    ]);
+    $order->setRelation('items', collect([$item]));
+    $preflight = new OrderPreflight([]);
+    $preflight->checks[0] = [
+        'product_id' => $product->id,
+        'provisionable' => true,
+        'provider_key' => 'manual',
+        'server_id' => $server->id,
+        'server_settings' => ['endpoint' => 'https://provider.invalid', 'api_token' => '[REDACTED]'],
+        'provider_settings' => ['api_token' => '[REDACTED]'],
+        'requirements' => [],
+    ];
+
+    $service = app(ProvisioningService::class);
+    $service->snapshotOrderConfiguration($order, $preflight);
+    $service->createFromPaidOrder($order);
+    $instance = ServiceInstance::query()->where('order_id', $order->id)->firstOrFail();
+    $runtime = DB::table('service_instance_runtime_secrets')->where('service_instance_id', $instance->id)->first();
+
+    expect($instance->server_settings_snapshot)->toBeNull()
+        ->and($instance->provider_settings_snapshot)->toBeNull()
+        ->and($runtime)->not->toBeNull()
+        ->and(Crypt::decryptString((string) $runtime->server_settings_encrypted))
+        ->toBe(json_encode(['endpoint' => 'https://provider.invalid', 'api_token' => '[REDACTED]'], JSON_THROW_ON_ERROR))
+        ->and(Crypt::decryptString((string) $runtime->provider_settings_encrypted))
+        ->toBe(json_encode(['api_token' => '[REDACTED]'], JSON_THROW_ON_ERROR));
+});
+
+test('empty service reconciliation removes prior runtime settings', function () {
+    enableProvisioningModule();
+    $customer = Customer::factory()->create();
+    $server = ProvisioningServer::query()->create([
+        'name' => 'Cleanup server',
+        'provider_key' => 'manual',
+        'settings' => ['endpoint' => 'https://provider.invalid', 'api_token' => '[REDACTED]'],
+        'is_active' => true,
+    ]);
+    $product = makeProvisionableProduct([
+        'provider_key' => 'manual',
+        'server_id' => $server->id,
+    ]);
+    $order = Order::factory()->create(['customer_id' => $customer->id]);
+    $item = OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'product_id' => $product->id,
+        'quantity' => 1,
+        'options_snapshot' => [],
+    ]);
+    $order->setRelation('items', collect([$item]));
+    $preflight = new OrderPreflight([]);
+    $preflight->checks[0] = [
+        'product_id' => $product->id,
+        'provisionable' => true,
+        'provider_key' => 'manual',
+        'server_id' => $server->id,
+        'server_settings' => ['endpoint' => 'https://provider.invalid', 'api_token' => '[REDACTED]'],
+        'provider_settings' => ['api_token' => '[REDACTED]'],
+        'requirements' => [],
+    ];
+
+    $service = app(ProvisioningService::class);
+    $service->snapshotOrderConfiguration($order, $preflight);
+    $service->createFromPaidOrder($order);
+    $instance = ServiceInstance::query()->where('order_id', $order->id)->firstOrFail();
+    expect(DB::table('service_instance_runtime_secrets')->where('service_instance_id', $instance->id)->exists())->toBeTrue();
+
+    $item->update(['quantity' => 2, 'options_snapshot' => []]);
+    $runtimeSecrets = app(OrderItemRuntimeSecretStore::class);
+    $runtimeSecrets->forget($item->id, 'provisioning_server_settings');
+    $runtimeSecrets->forget($item->id, 'provisioning_provider_settings');
+    $service->createFromPaidOrder($order->fresh());
+
+    expect(DB::table('service_instance_runtime_secrets')->where('service_instance_id', $instance->id)->exists())->toBeFalse();
+});
+
+test('manual-review provisioning retains its existing capacity reservation', function () {
+    enableProvisioningModule();
+    $customer = Customer::factory()->create();
+    $product = makeProvisionableProduct(['provider_key' => 'unavailable-provider']);
+    $order = Order::factory()->create(['customer_id' => $customer->id]);
+    $item = OrderItem::factory()->create([
+        'order_id' => $order->id,
+        'product_id' => $product->id,
+        'quantity' => 1,
+        'options_snapshot' => [
+            '__provisioning' => [
+                'provider_key' => 'unavailable-provider',
+                'capacity_key' => 'unavailable-provider:pool',
+                'requirements' => ['memory' => 1024],
+                'provider_settings' => [],
+            ],
+        ],
+    ]);
+    $order->setRelation('items', collect([$item]));
+    app(CapacityReservationService::class)->reserve(
+        $order,
+        $product,
+        'unavailable-provider',
+        'unavailable-provider:pool',
+        1,
+        ['memory' => 1024],
+        orderItemId: $item->id,
+    );
+
+    app(ProvisioningService::class)->createFromPaidOrder($order);
+
+    expect(ServiceInstance::query()->where('order_id', $order->id)->firstOrFail()->status)
+        ->toBe(ServiceInstanceStatus::ManualReview)
+        ->and(CapacityReservation::query()->where('order_id', $order->id)->value('quantity'))
+        ->toBe(1);
+});
+
 test('paid non-provisionable order does not create service instances', function () {
     enableProvisioningModule();
     $customer = Customer::factory()->create();
@@ -144,6 +332,23 @@ test('a service instance without customer ownership is not authorized by matchin
     ]);
 
     expect(app(EloquentProvisionedServiceResolver::class)->resolveForCustomer($customer, $instance->id))->toBeNull();
+});
+
+test('a populated service customer id cannot be bypassed by a matching email', function () {
+    enableProvisioningModule();
+    $owner = Customer::factory()->create(['email' => 'service-owner@example.test']);
+    $other = Customer::factory()->create(['email' => 'service-other@example.test']);
+    $instance = ServiceInstance::query()->create([
+        'number' => 'SVC-AUTHZ-002',
+        'status' => ServiceInstanceStatus::Active,
+        'provider_key' => 'manual',
+        'customer_id' => $owner->id,
+        'customer_email' => $other->email,
+    ]);
+    $method = new ReflectionMethod(ServiceShow::class, 'owns');
+    $method->setAccessible(true);
+
+    expect($method->invoke(new ServiceShow, $instance, $other))->toBeFalse();
 });
 
 test('polling preserves an existing provider reference when a provider returns the local id', function () {

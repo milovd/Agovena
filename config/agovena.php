@@ -35,6 +35,7 @@ return [
         'allow_development_instant_pay' => env('AGOVENA_DEV_INSTANT_PAY') !== null
             ? filter_var(env('AGOVENA_DEV_INSTANT_PAY'), FILTER_VALIDATE_BOOLEAN)
             : (env('APP_ENV') === 'local' && filter_var(env('APP_DEBUG', false), FILTER_VALIDATE_BOOLEAN)),
+        'pending_attempt_stale_seconds' => (int) env('AGOVENA_PENDING_ATTEMPT_STALE_SECONDS', 900),
     ],
 
     /*

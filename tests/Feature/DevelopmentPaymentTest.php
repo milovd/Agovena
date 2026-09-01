@@ -11,6 +11,7 @@ use App\Events\PaymentRecorded;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\PaymentAttempt;
 use App\Models\Product;
 use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesStaff;
@@ -38,7 +39,9 @@ test('development instant payment completes order when enabled', function () {
 
     expect($order->payment->method)->toBe('development')
         ->and($order->payment->status)->toBe(PaymentStatus::Paid)
-        ->and($order->fresh()->status->value)->toBe('paid');
+        ->and($order->fresh()->status->value)->toBe('paid')
+        ->and(PaymentAttempt::query()->where('payment_id', $order->payment->id)->value('status')?->value)
+        ->toBe('succeeded');
 });
 
 test('repeating development completion does not replay paid fulfillment events', function () {

@@ -27,6 +27,11 @@ final class PlanChangeApplied
         $this->compensations[] = $compensation;
     }
 
+    public function hasCompensations(): bool
+    {
+        return $this->compensations !== [];
+    }
+
     public function compensate(): void
     {
         $failures = [];

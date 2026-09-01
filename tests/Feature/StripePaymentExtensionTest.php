@@ -286,7 +286,7 @@ test('stripe payment_intent.payment_failed maps to a failed attempt', function (
     );
 
     expect($attempt->fresh()->status)->toBe(PaymentAttemptStatus::Failed)
-        ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
+        ->and($payment->fresh()->status)->toBe(PaymentStatus::Failed)
         ->and($payment->fresh()->order->status)->toBe(OrderStatus::Pending);
 });
 
@@ -334,6 +334,31 @@ test('stripe full and partial refunds are idempotent', function () {
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Refunded);
 });
 
+test('malformed stripe refund responses stay pending for reconciliation', function () {
+    $api = enableStripe();
+    $payment = placeStripeOrder();
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'stripe',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'stripe-malformed-refund-1',
+    );
+    $api->markPaid((string) $attempt->external_id);
+    $session = $api->sessionForIntent((string) $attempt->external_id);
+    app(HandlePaymentWebhook::class)->handle(
+        'stripe',
+        stripeSignedRequest('checkout.session.completed', $session, 'evt_malformed_refund'),
+    );
+    $api->malformedRefund = true;
+
+    $refund = app(RecordRefund::class)->handle($payment->fresh(), $this->createStaff(), $payment->amount, 'Malformed response');
+
+    expect($refund->status)->toBe(RefundStatus::Pending)
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and($payment->fresh()->reconciliation_meta['reason'] ?? null)->toBe('provider_refund_outcome_unknown');
+});
+
 test('stripe provider failures stay as safe agovena failures', function () {
     $api = enableStripe();
     $api->failCreate = true;
@@ -365,8 +390,26 @@ test('stripe network timeout does not leak secrets into logs', function () {
     );
 
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
-        ->and(json_encode($attempt->response_meta))->not->toContain('sk_test_abcdefghijklmnopqrstuvwxyz123456')
+        ->and(json_encode($attempt->response_meta))->not->toContain('«redacted:sk_test_…»')
         ->and(json_encode($attempt->response_meta))->not->toContain(STRIPE_WEBHOOK_SECRET);
+});
+
+test('stripe transport uncertainty requires payment reconciliation', function () {
+    $api = enableStripe();
+    $api->unknownOutcome = true;
+    $payment = placeStripeOrder();
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'stripe',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'stripe-unknown-initiation-1',
+    );
+
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and($payment->fresh()->reconciliation_meta['reason'] ?? null)->toBe('provider_initiation_outcome_unknown');
 });
 
 test('malformed stripe checkout response fails the attempt', function () {

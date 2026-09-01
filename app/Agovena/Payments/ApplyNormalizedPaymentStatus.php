@@ -10,6 +10,7 @@ use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Events\OrderPaid;
 use App\Events\PaymentRecorded;
+use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentAttempt;
 use Illuminate\Support\Facades\DB;
@@ -27,32 +28,48 @@ final class ApplyNormalizedPaymentStatus
 
     public function handle(PaymentAttempt $attempt, PaymentStatus $status): PaymentStatusApplyResult
     {
+        return $this->handleLocked($attempt, $status);
+    }
+
+    private function handleLocked(PaymentAttempt $attempt, PaymentStatus $status): PaymentStatusApplyResult
+    {
         return DB::transaction(function () use ($attempt, $status): PaymentStatusApplyResult {
+            /** @var Order $order */
+            $order = Order::query()->whereKey($attempt->order_id)->lockForUpdate()->firstOrFail();
+            /** @var Payment $payment */
+            $payment = Payment::query()->whereKey($attempt->payment_id)->lockForUpdate()->firstOrFail();
+            if ((int) $payment->order_id !== (int) $order->id) {
+                throw ValidationException::withMessages([
+                    'payment' => __('storefront.errors.payment_unavailable'),
+                ]);
+            }
             /** @var PaymentAttempt $lockedAttempt */
             $lockedAttempt = PaymentAttempt::query()->whereKey($attempt->id)->lockForUpdate()->firstOrFail();
-            /** @var Payment $payment */
-            $payment = Payment::query()->whereKey($lockedAttempt->payment_id)->lockForUpdate()->firstOrFail();
+            if ((int) $lockedAttempt->payment_id !== (int) $payment->id
+                || (int) $lockedAttempt->order_id !== (int) $order->id
+            ) {
+                throw ValidationException::withMessages([
+                    'payment' => __('storefront.errors.payment_unavailable'),
+                ]);
+            }
 
             if ($this->isPaidLike($payment) && $this->isFailure($status)) {
                 return new PaymentStatusApplyResult($lockedAttempt, applied: false);
             }
 
-            $order = $payment->order()->lockForUpdate()->first();
             if ($status === PaymentStatus::Paid) {
                 if (in_array($payment->status, [PaymentStatus::Refunded, PaymentStatus::PartiallyRefunded], true)) {
                     return new PaymentStatusApplyResult($lockedAttempt, applied: false);
                 }
 
-                if ($order !== null) {
-                    try {
-                        $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoice'));
-                    } catch (ValidationException) {
-                        return new PaymentStatusApplyResult(
-                            $lockedAttempt,
-                            applied: false,
-                            blockedByTerminalState: true,
-                        );
-                    }
+                try {
+                    $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoice'));
+                } catch (ValidationException) {
+                    return new PaymentStatusApplyResult(
+                        $lockedAttempt,
+                        applied: false,
+                        blockedByTerminalState: true,
+                    );
                 }
 
                 $paymentWasPaid = $payment->status === PaymentStatus::Paid;
@@ -66,25 +83,27 @@ final class ApplyNormalizedPaymentStatus
                 $lockedAttempt->completed_at = $lockedAttempt->completed_at ?? now();
                 $lockedAttempt->save();
 
-                $orderWasPaid = $order?->status === OrderStatus::Paid;
-                if ($order !== null) {
-                    if (! $orderWasPaid) {
-                        $order->status = OrderStatus::Paid;
-                        $order->save();
-                    }
+                $orderWasPaid = $order->status === OrderStatus::Paid;
+                if (! $orderWasPaid) {
+                    $order->status = OrderStatus::Paid;
+                    $order->save();
+                }
 
-                    if (! $paymentWasPaid) {
-                        event(new PaymentRecorded($payment->fresh() ?? $payment));
-                    }
-                    if (! $orderWasPaid) {
-                        event(new OrderPaid($order->fresh(['items', 'payment']) ?? $order));
-                    }
+                if (! $paymentWasPaid) {
+                    event(new PaymentRecorded($payment->fresh() ?? $payment));
+                }
+                if (! $orderWasPaid) {
+                    event(new OrderPaid($order->fresh(['items', 'payment']) ?? $order));
                 }
 
                 return new PaymentStatusApplyResult($lockedAttempt->fresh() ?? $lockedAttempt, applied: true);
             }
 
             if ($status === PaymentStatus::Refunded || $status === PaymentStatus::PartiallyRefunded) {
+                if ($payment->status === PaymentStatus::Refunded && $status === PaymentStatus::PartiallyRefunded) {
+                    return new PaymentStatusApplyResult($lockedAttempt, applied: false);
+                }
+
                 if (in_array($payment->status, [PaymentStatus::Paid, PaymentStatus::PartiallyRefunded, PaymentStatus::Refunded], true)) {
                     $payment->status = $status;
                     $payment->save();
@@ -96,6 +115,11 @@ final class ApplyNormalizedPaymentStatus
             }
 
             if ($this->isFailure($status)) {
+                if (! $this->isPaidLike($payment)) {
+                    $payment->status = $status;
+                    $payment->save();
+                }
+
                 $lockedAttempt->status = match ($status) {
                     PaymentStatus::Cancelled => PaymentAttemptStatus::Cancelled,
                     PaymentStatus::Expired => PaymentAttemptStatus::Expired,

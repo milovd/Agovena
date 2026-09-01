@@ -170,6 +170,7 @@ class Order extends Model
             PaymentStatus::Pending,
             PaymentStatus::Failed,
             PaymentStatus::Cancelled,
+            PaymentStatus::Expired,
         ]);
     }
 

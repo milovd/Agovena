@@ -7,13 +7,15 @@ namespace App\Agovena\Catalog\Options;
 use App\Agovena\Money\CurrencyConverter;
 use App\Agovena\Money\Money;
 use App\Agovena\Money\ResolveProductPrice;
+use App\Agovena\Provisioning\Contracts\ConfiguresProvisionedProducts;
+use App\Agovena\Provisioning\ProvisionerRegistry;
+use App\Agovena\Security\OrderItemRuntimeSecretStore;
 use App\Agovena\Security\SensitiveDataRedactor;
 use App\Agovena\Storefront\StorefrontPreferences;
 use App\Enums\ProductOptionType;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
-use Illuminate\Support\Facades\Crypt;
 use InvalidArgumentException;
 use Throwable;
 
@@ -24,6 +26,8 @@ final class ProductOptionPricer
         private readonly ResolveProductPrice $resolveProductPrice,
         private readonly CurrencyConverter $converter,
         private readonly StorefrontPreferences $preferences,
+        private readonly OrderItemRuntimeSecretStore $runtimeSecrets,
+        private readonly ProvisionerRegistry $provisioners,
     ) {}
 
     /**
@@ -60,17 +64,12 @@ final class ProductOptionPricer
      *     value: mixed,
      *     display: string,
      *     price_adjustment_amount: int,
-     *     value_encrypted?: string
      * }>
      */
     public function snapshot(Product $product, array $selections): array
     {
-        return array_map(function (array $row): array {
-            if ($this->isSensitiveOptionKey((string) $row['key'])) {
-                $row['value_encrypted'] = Crypt::encryptString(json_encode(
-                    $row['value'],
-                    JSON_THROW_ON_ERROR,
-                ));
+        return array_map(function (array $row) use ($product): array {
+            if ($this->isSensitiveOptionKey((string) $row['key'], $product)) {
                 $row['value'] = '[REDACTED]';
                 $row['display'] = '[REDACTED]';
             }
@@ -83,23 +82,62 @@ final class ProductOptionPricer
         }, $this->resolved($product, $selections));
     }
 
-    public function runtimeValue(array $snapshotRow): mixed
+    public function storeRuntimeSecrets(int $orderItemId, Product $product, array $selections): void
+    {
+        foreach ($this->resolved($product, $selections) as $row) {
+            if (! $this->isSensitiveOptionKey((string) $row['key'], $product)
+                && ! SensitiveDataRedactor::isSensitiveValue($row['value'])
+            ) {
+                continue;
+            }
+
+            $this->runtimeSecrets->put($orderItemId, (string) $row['key'], $row['value']);
+        }
+    }
+
+    public function runtimeValue(array $snapshotRow, ?int $orderItemId = null): mixed
     {
         $key = (string) ($snapshotRow['key'] ?? '');
         if (! $this->isSensitiveOptionKey($key)) {
+            if ($orderItemId !== null) {
+                try {
+                    $runtimeValue = $this->runtimeSecrets->get($orderItemId, $key);
+                } catch (Throwable $exception) {
+                    throw new InvalidArgumentException('Product option cannot be decrypted.', previous: $exception);
+                }
+                if ($runtimeValue !== null) {
+                    return $runtimeValue;
+                }
+            }
+
             return $snapshotRow['value'] ?? null;
         }
 
-        $encrypted = $snapshotRow['value_encrypted'] ?? null;
-        if (! is_string($encrypted) || trim($encrypted) === '') {
-            throw new InvalidArgumentException('Sensitive product option is not encrypted.');
+        if ($orderItemId === null) {
+            throw new InvalidArgumentException('Sensitive product option has no runtime owner.');
         }
 
         try {
-            return json_decode(Crypt::decryptString($encrypted), true, 512, JSON_THROW_ON_ERROR);
+            $value = $this->runtimeSecrets->get($orderItemId, $key);
         } catch (Throwable $exception) {
             throw new InvalidArgumentException('Sensitive product option cannot be decrypted.', previous: $exception);
         }
+        if ($value === null) {
+            throw new InvalidArgumentException('Sensitive product option runtime value is unavailable.');
+        }
+
+        return $value;
+    }
+
+    public function runtimeValueForSelection(Product $product, string $key, array $selections): mixed
+    {
+        foreach ($this->resolved($product, $selections) as $row) {
+            if ($row['key'] === $key) {
+                return $row['value'];
+            }
+        }
+
+        throw new InvalidArgumentException('Product option selection is not valid.');
     }
 
     /**
@@ -228,11 +266,33 @@ final class ProductOptionPricer
         );
     }
 
-    private function isSensitiveOptionKey(string $key): bool
+    private function isSensitiveOptionKey(string $key, ?Product $product = null): bool
     {
         $normalizedKey = strtolower(trim($key));
 
-        return $normalizedKey === 'environment'
-            || preg_match('/(?:api[_-]?key|access[_-]?key|token|secret|password|passwd|credential|authorization|private[_-]?key|connection|string|dsn)/', $normalizedKey) === 1;
+        if ($normalizedKey === 'environment'
+            || preg_match('/(?:api[_-]?key|access[_-]?key|token|secret|password|passwd|credential|authorization|private[_-]?key|connection|string|dsn)/', $normalizedKey) === 1
+        ) {
+            return true;
+        }
+
+        if (! $product instanceof Product) {
+            return false;
+        }
+
+        $config = $product->capability('provisionable')?->runtimeConfig() ?? [];
+        $providerKey = is_string($config['provider_key'] ?? null) ? trim($config['provider_key']) : '';
+        $provider = $providerKey !== '' ? $this->provisioners->get($providerKey) : null;
+        if (! $provider instanceof ConfiguresProvisionedProducts) {
+            return $providerKey !== '';
+        }
+
+        foreach ($provider->productSettings() as $definition) {
+            if ($definition->secret && $definition->key === $key) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

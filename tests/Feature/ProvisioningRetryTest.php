@@ -6,9 +6,13 @@ use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
 use Agovena\Modules\Provisioning\ProvisioningService;
+use Agovena\Modules\Provisioning\ServiceInstanceRuntimeSecretStore;
 use App\Agovena\Provisioning\Contracts\Provisioner;
 use App\Agovena\Provisioning\Contracts\ProvisionerLifecycle;
 use App\Agovena\Provisioning\ProvisionerRegistry;
+use App\Agovena\Provisioning\ServiceInstanceInfo;
+use App\Models\Product;
+use Illuminate\Validation\ValidationException;
 
 it('keeps transient provider failures retryable after recording failed state', function (): void {
     installAndEnableModule('provisioning');
@@ -34,6 +38,72 @@ it('keeps transient provider failures retryable after recording failed state', f
         ->toThrow(RuntimeException::class, 'temporary provider outage');
 
     expect($instance->fresh()->status)->toBe(ServiceInstanceStatus::Failed);
+});
+
+it('compensation uses the explicit previous runtime settings after a failed plan mutation', function (): void {
+    installAndEnableModule('provisioning');
+
+    $registry = app(ProvisionerRegistry::class);
+    $registry->clear();
+    $from = Product::factory()->active()->create();
+    $to = Product::factory()->active()->create();
+    $instance = ServiceInstance::query()->create([
+        'number' => 'SVC-PLAN-ROLLBACK-1',
+        'status' => ServiceInstanceStatus::Active,
+        'customer_email' => 'rollback@example.test',
+        'product_id' => $from->id,
+        'provider_key' => 'rollback-provider',
+        'meta' => [],
+    ]);
+    $previousProviderSettings = ['location' => 'previous-location'];
+    $previousServerSettings = ['node' => 'previous-node'];
+    $targetProviderSettings = ['location' => 'target-location'];
+    $targetServerSettings = ['node' => 'target-node'];
+    app(ServiceInstanceRuntimeSecretStore::class)->put($instance->id, $targetServerSettings, $targetProviderSettings);
+    $calls = [];
+    $provider = Mockery::mock(Provisioner::class, ProvisionerLifecycle::class);
+    $provider->shouldReceive('id')->andReturn('rollback-provider');
+    $provider->shouldReceive('changePlan')->twice()->ordered()->andReturnUsing(function (ServiceInstanceInfo $info, string|array $plan) use (&$calls): void {
+        $calls[] = [$info, $plan];
+        if (count($calls) === 1) {
+            throw new RuntimeException('provider mutation failed');
+        }
+    });
+    $provider->shouldReceive('syncStatus')->once()->andReturn(new ServiceInstanceInfo(
+        id: $instance->id,
+        label: $instance->number,
+        status: 'active',
+        providerKey: 'rollback-provider',
+        externalRef: null,
+        meta: [],
+        serverSettings: $previousServerSettings,
+        providerSettings: $previousProviderSettings,
+    ));
+    $registry->register($provider);
+
+    $exception = null;
+    try {
+        app(ProvisioningOrchestrator::class)->changePlan($instance, [
+            'id' => (string) $to->id,
+            'product_id' => $to->id,
+            'provider_key' => 'rollback-provider',
+            'provider_settings' => $targetProviderSettings,
+            'server_settings' => $targetServerSettings,
+            'previous_product_id' => $from->id,
+            'previous_provider_key' => 'rollback-provider',
+            'previous_provider_settings' => $previousProviderSettings,
+            'previous_server_settings' => $previousServerSettings,
+        ]);
+    } catch (Throwable $caught) {
+        $exception = $caught;
+    }
+
+    expect($exception)->toBeInstanceOf(ValidationException::class);
+
+    expect($calls[1][0]->providerSettings)->toBe($previousProviderSettings)
+        ->and($calls[1][0]->serverSettings)->toBe($previousServerSettings)
+        ->and($calls[1][1]['provider_settings'])->toBe($previousProviderSettings)
+        ->and($calls[1][1]['server_settings'])->toBe($previousServerSettings);
 });
 
 it('requires manual review before a failed service can re-enter provisioning', function (): void {

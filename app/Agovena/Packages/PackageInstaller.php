@@ -15,6 +15,7 @@ use Composer\Semver\Comparator;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Throwable;
 
@@ -75,8 +76,15 @@ final class PackageInstaller
             try {
                 $package = $this->installResolved($source, $origin->path, $expectedAgovenaId, $operationJournal);
             } catch (Throwable $exception) {
-                if ($origin->cleanupPath !== null && ! $this->deletePath($origin->cleanupPath)) {
-                    throw new \RuntimeException('Package extraction cleanup did not complete.', 0, $exception);
+                if ($origin->cleanupPath !== null) {
+                    try {
+                        if (! $this->deletePath($origin->cleanupPath)) {
+                            $this->queuePendingPackageCleanup($origin->cleanupPath);
+                        }
+                    } catch (Throwable $cleanupException) {
+                        report($cleanupException);
+                        $this->queuePendingPackageCleanup($origin->cleanupPath);
+                    }
                 }
 
                 throw $exception;
@@ -86,14 +94,7 @@ final class PackageInstaller
             $operationCommitted = true;
             $this->finalizeCommittedPackageOperation($operationJournal);
             if ($origin->cleanupPath !== null) {
-                try {
-                    if (! $this->deletePath($origin->cleanupPath)) {
-                        $this->queuePendingPackageCleanup($origin->cleanupPath);
-                    }
-                } catch (Throwable $cleanupException) {
-                    report($cleanupException);
-                    $this->queuePendingPackageCleanup($origin->cleanupPath);
-                }
+                $this->deferCommittedCleanup($origin->cleanupPath);
             }
 
             return $package;
@@ -110,6 +111,32 @@ final class PackageInstaller
         } finally {
             if ($composerSnapshot !== null) {
                 $this->releaseComposerLock();
+            }
+        }
+    }
+
+    private function deferCommittedCleanup(string $path): void
+    {
+        try {
+            if (! $this->deletePath($path)) {
+                $this->queuePendingPackageCleanup($path);
+            }
+        } catch (Throwable $cleanupException) {
+            report($cleanupException);
+
+            try {
+                $this->queuePendingPackageCleanup($path);
+            } catch (Throwable $journalException) {
+                report($journalException);
+                Log::critical('Committed package cleanup could not be journaled.', [
+                    'exception' => $journalException::class,
+                    'phase' => 'post_commit_cleanup',
+                ]);
+
+                throw new \RuntimeException(
+                    'Committed package cleanup could not be journaled.',
+                    previous: $journalException,
+                );
             }
         }
     }

@@ -32,6 +32,11 @@ final readonly class PaymentInitiationResult
         return new self(status: 'pending', externalId: $externalId, metadata: $metadata, message: $message);
     }
 
+    public static function unknown(?string $externalId = null, array $metadata = [], ?string $message = null): self
+    {
+        return new self(status: 'unknown', externalId: $externalId, metadata: $metadata, message: $message);
+    }
+
     public static function failed(string $message, array $metadata = []): self
     {
         return new self(status: 'failed', metadata: $metadata, message: $message);

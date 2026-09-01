@@ -111,6 +111,10 @@ final class ApplyPlanChange
                         report($compensationException);
                     }
 
+                    if (! $appliedEvent->hasCompensations()) {
+                        $recoveryState['manual_review_required'] = true;
+                    }
+
                     throw $exception;
                 }
 

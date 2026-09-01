@@ -18,6 +18,7 @@ use Agovena\Modules\Provisioning\Models\CapacityReservation;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
 use Agovena\Modules\Provisioning\ProvisioningService;
+use Agovena\Modules\Provisioning\ServiceInstanceRuntimeSecretStore;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -464,6 +465,11 @@ test('legacy plaintext environment is redacted before runtime resolution', funct
     $instance->meta = $meta;
     $instance->provider_settings_snapshot = null;
     $instance->save();
+    $runtimeStore = app(ServiceInstanceRuntimeSecretStore::class);
+    $runtimeSettings = $runtimeStore->get($instance->id) ?? [];
+    $providerSettings = $runtimeSettings['provider_settings'] ?? [];
+    $providerSettings['environment'] = '[REDACTED]';
+    $runtimeStore->put($instance->id, $runtimeSettings['server_settings'] ?? [], $providerSettings);
 
     $info = EloquentProvisionedServiceResolver::info($instance->fresh());
 
@@ -494,27 +500,34 @@ test('legacy service settings are encrypted before metadata redaction', function
         ], JSON_THROW_ON_ERROR),
         'server_settings_snapshot' => null,
     ]);
+    app(ServiceInstanceRuntimeSecretStore::class)->forget($instance->id);
 
-    $migration = require base_path('../optional-packages/modules/provisioning/database/migrations/2026_08_29_000100_redact_legacy_service_meta.php');
+    $migration = require base_path('../optional-packages/modules/provisioning/database/migrations/2026_09_01_000100_migrate_legacy_runtime_secrets.php');
     $migration->up();
     $row = DB::table('service_instances')->where('id', $instance->id)->first();
     $meta = json_decode((string) $row->meta, true);
+    $runtime = DB::table('service_instance_runtime_secrets')->where('service_instance_id', $instance->id)->first();
 
     expect($meta['provider_settings']['application_api_key'] ?? null)->toBe('[REDACTED]')
-        ->and($meta['provider_settings_encrypted'] ?? null)->toBeString()->not->toBe('')
-        ->and(Crypt::decryptString((string) $meta['provider_settings_encrypted']))
+        ->and($meta['provider_settings_encrypted'] ?? null)->toBeNull()
+        ->and($runtime)->not->toBeNull()
+        ->and(Crypt::decryptString((string) $runtime->provider_settings_encrypted))
         ->toBe(json_encode($legacyProviderSettings))
-        ->and(Crypt::decryptString((string) $row->server_settings_snapshot))
-        ->toBe(json_encode($legacyServerSettings));
+        ->and(Crypt::decryptString((string) $runtime->server_settings_encrypted))
+        ->toBe(json_encode($legacyServerSettings))
+        ->and($row->server_settings_snapshot)->toBeNull();
 
-    $providerCipher = $meta['provider_settings_encrypted'];
-    $serverCipher = $row->server_settings_snapshot;
+    $providerCipher = $runtime->provider_settings_encrypted;
+    $serverCipher = $runtime->server_settings_encrypted;
     $migration->up();
     $rerun = DB::table('service_instances')->where('id', $instance->id)->first();
     $rerunMeta = json_decode((string) $rerun->meta, true);
+    $rerunRuntime = DB::table('service_instance_runtime_secrets')->where('service_instance_id', $instance->id)->first();
 
-    expect($rerunMeta['provider_settings_encrypted'] ?? null)->toBe($providerCipher)
-        ->and($rerun->server_settings_snapshot)->toBe($serverCipher);
+    expect($rerunMeta['provider_settings_encrypted'] ?? null)->toBeNull()
+        ->and($rerunRuntime->provider_settings_encrypted)->toBe($providerCipher)
+        ->and($rerunRuntime->server_settings_encrypted)->toBe($serverCipher)
+        ->and($rerun->server_settings_snapshot)->toBeNull();
 });
 
 test('pterodactyl uses the selected server user id when creating a server', function () {
@@ -537,7 +550,10 @@ test('pterodactyl uses the selected server user id when creating a server', func
 
     $instance = ServiceInstance::query()->latest('id')->firstOrFail();
 
-    expect($instance->server_settings_snapshot['user_id'] ?? null)->toBe('42');
+    $runtimeSettings = app(ServiceInstanceRuntimeSecretStore::class)->get($instance->id);
+
+    expect($runtimeSettings['server_settings']['user_id'] ?? null)->toBe('42')
+        ->and($instance->server_settings_snapshot)->toBeNull();
     expect($api->lastCreatePayload['user'] ?? null)->toBe(42);
 });
 

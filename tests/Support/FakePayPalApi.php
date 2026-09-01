@@ -23,6 +23,8 @@ final class FakePayPalApi implements PayPalApi
 
     public bool $failCreate = false;
 
+    public bool $unknownCreate = false;
+
     public bool $unauthorized = false;
 
     public bool $unreachable = false;
@@ -31,6 +33,10 @@ final class FakePayPalApi implements PayPalApi
 
     public bool $failRefund = false;
 
+    public bool $unknownRefund = false;
+
+    public bool $malformedRefund = false;
+
     public bool $verifyWebhook = true;
 
     public function createOrder(array $payload, ?string $idempotencyKey = null): array
@@ -38,6 +44,9 @@ final class FakePayPalApi implements PayPalApi
         $this->guard();
         if ($this->failCreate) {
             throw PayPalProviderException::failed('paypal::messages.errors.create_failed');
+        }
+        if ($this->unknownCreate) {
+            throw PayPalProviderException::unknown('paypal::messages.health.unreachable');
         }
         if (is_string($idempotencyKey) && $idempotencyKey !== '' && isset($this->idempotency[$idempotencyKey])) {
             return $this->orders[$this->idempotency[$idempotencyKey]];
@@ -95,8 +104,11 @@ final class FakePayPalApi implements PayPalApi
         if ($this->failRefund) {
             throw PayPalProviderException::failed('paypal::messages.errors.refund_failed');
         }
+        if ($this->unknownRefund) {
+            throw PayPalProviderException::unknown('paypal::messages.health.unreachable');
+        }
 
-        return ['id' => 'REFUND_'.$captureId, 'status' => 'COMPLETED'];
+        return ['id' => $this->malformedRefund ? '' : 'REFUND_'.$captureId, 'status' => 'COMPLETED'];
     }
 
     public function verifyWebhookSignature(array $payload): bool

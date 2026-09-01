@@ -31,11 +31,15 @@ final class FakeStripeApi implements StripeApi
 
     public bool $timeout = false;
 
+    public bool $unknownOutcome = false;
+
     public bool $malformed = false;
 
     public bool $failGet = false;
 
     public bool $failRefund = false;
+
+    public bool $malformedRefund = false;
 
     public bool $failCancel = false;
 
@@ -169,7 +173,7 @@ final class FakeStripeApi implements StripeApi
         $this->intents[$paymentIntentId]['latest_charge'] = $latest;
 
         return [
-            'id' => 're_test_'.$this->refundCalls,
+            'id' => $this->malformedRefund ? '' : 're_test_'.$this->refundCalls,
             'payment_intent' => $paymentIntentId,
             'amount' => $amount,
             'status' => 'succeeded',
@@ -250,6 +254,9 @@ final class FakeStripeApi implements StripeApi
 
     private function guard(): void
     {
+        if ($this->unknownOutcome) {
+            throw StripeProviderException::unknown('stripe::messages.health.unreachable');
+        }
         if ($this->timeout) {
             throw StripeProviderException::failed('stripe::messages.health.unreachable');
         }

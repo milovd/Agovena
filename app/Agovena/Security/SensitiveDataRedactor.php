@@ -22,6 +22,10 @@ final class SensitiveDataRedactor
 
         $redacted = [];
         foreach ($value as $nestedKey => $nestedValue) {
+            if (is_string($nestedKey) && str_ends_with(strtolower(trim($nestedKey)), '_encrypted')) {
+                continue;
+            }
+
             if (is_array($nestedValue)
                 && is_string($nestedValue['key'] ?? null)
                 && array_key_exists('value', $nestedValue)
@@ -48,8 +52,13 @@ final class SensitiveDataRedactor
 
         return $normalizedKey === 'environment'
             || $normalizedKey === 'server_settings'
-            || (str_ends_with($normalizedKey, '_encrypted') && $normalizedKey !== 'value_encrypted')
+            || str_ends_with($normalizedKey, '_encrypted')
             || preg_match('/(?:api[_-]?key|access[_-]?key|token|secret|password|passwd|credential|authorization|private[_-]?key|connection|string|dsn)/', $normalizedKey) === 1;
+    }
+
+    public static function isSensitiveValue(mixed $value): bool
+    {
+        return is_string($value) && self::containsEmbeddedSecret($value);
     }
 
     private static function containsEmbeddedSecret(string $value): bool

@@ -12,10 +12,12 @@ use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
+use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\RefundStatus;
 use App\Models\ExtensionSetting;
 use App\Models\Payment;
 use App\Models\PaymentWebhookEvent;
@@ -140,6 +142,24 @@ test('paypal checkout redirects without marking the order paid', function () {
         ->and($api->createCalls)->toBe(1);
 });
 
+test('paypal transport uncertainty requires payment reconciliation', function () {
+    $api = enablePayPal();
+    $api->unknownCreate = true;
+    $payment = placePayPalOrder();
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paypal:paypal',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paypal-unknown-initiation-1',
+    );
+
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and($payment->fresh()->reconciliation_meta['reason'] ?? null)->toBe('provider_initiation_outcome_unknown');
+});
+
 test('verified paypal webhook marks payment paid', function () {
     enablePayPal();
     $payment = placePayPalOrder();
@@ -162,6 +182,34 @@ test('verified paypal webhook marks payment paid', function () {
 
     expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
         ->and(PaymentWebhookEvent::query()->count())->toBe(1);
+});
+
+test('malformed paypal refund responses stay pending for reconciliation', function () {
+    $api = enablePayPal();
+    $payment = placePayPalOrder();
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paypal:paypal',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paypal-malformed-refund-1',
+    );
+    $api->captureOrder((string) $attempt->external_id);
+    app(HandlePaymentWebhook::class)->handle(
+        'paypal',
+        paypalSignedRequest('PAYMENT.CAPTURE.COMPLETED', [
+            'id' => 'CAPTURE_'.(string) $attempt->external_id,
+            'status' => 'COMPLETED',
+            'supplementary_data' => ['related_ids' => ['order_id' => $attempt->external_id]],
+        ], 'WH-TEST-EVT-REFUND'),
+    );
+    $api->malformedRefund = true;
+
+    $refund = app(RecordRefund::class)->handle($payment->fresh(), $this->createStaff(), $payment->amount, 'Malformed response');
+
+    expect($refund->status)->toBe(RefundStatus::Pending)
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and($payment->fresh()->reconciliation_meta['reason'] ?? null)->toBe('provider_refund_outcome_unknown');
 });
 
 test('invalid paypal webhook signatures are rejected', function () {

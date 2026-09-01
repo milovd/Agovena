@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use App\Agovena\Payments\Contracts\PaymentGateway;
+use App\Agovena\Payments\Contracts\ValidatesWebhookPayload;
 use App\Agovena\Payments\HealthResult;
 use App\Agovena\Payments\PaymentGatewayCapabilities;
 use App\Agovena\Payments\PaymentInitiation;
@@ -13,12 +14,13 @@ use App\Agovena\Payments\RefundRequest;
 use App\Agovena\Payments\RefundResult;
 use App\Agovena\Payments\WebhookPayload;
 use App\Enums\PaymentStatus;
+use App\Models\PaymentAttempt;
 use Illuminate\Http\Request;
 
 /**
  * Test-only webhook-capable gateway for ingress/idempotency coverage.
  */
-final class FakeWebhookGateway implements PaymentGateway
+final class FakeWebhookGateway implements PaymentGateway, ValidatesWebhookPayload
 {
     public function __construct(
         private readonly string $secret = 'test-secret',
@@ -75,6 +77,11 @@ final class FakeWebhookGateway implements PaymentGateway
             status: $this->mapStatus((string) ($raw['status'] ?? 'pending')),
             raw: $raw,
         );
+    }
+
+    public function validateWebhookPayload(PaymentAttempt $attempt, WebhookPayload $payload): bool
+    {
+        return $attempt->external_id === $payload->externalPaymentId;
     }
 
     public function refund(RefundRequest $request): RefundResult

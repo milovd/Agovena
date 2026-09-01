@@ -58,3 +58,10 @@ test('custom property and product option schema can be applied onto an existing 
         ->and(Customer::query()->whereKey($customerId)->value('email'))->toBe($user->email)
         ->and(CustomerPropertyDefinition::query()->count())->toBe(0);
 });
+
+test('legacy option secret backfill uses bounded id batches', function () {
+    $migration = file_get_contents(database_path('migrations/2026_08_31_000202_backfill_legacy_order_option_runtime_secrets.php'));
+
+    expect($migration)->toContain('->chunkById(500')
+        ->and($migration)->not->toContain("->orderBy('id')\n            ->get(['id', 'options_snapshot'])");
+});

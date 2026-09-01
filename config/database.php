@@ -9,6 +9,10 @@ if (class_exists(Mysql::class)) {
 } elseif (defined('PDO::MYSQL_ATTR_SSL_CA')) {
     $mysqlSslCa = constant('PDO::MYSQL_ATTR_SSL_CA');
 }
+$defaultDatabaseConnection = env('DB_CONNECTION', 'sqlite');
+$compensationDatabase = env('DB_COMPENSATION_DATABASE', $defaultDatabaseConnection === 'sqlite'
+    ? database_path('compensation-journal.sqlite')
+    : 'agovena_compensation');
 
 return [
 
@@ -25,6 +29,7 @@ return [
     */
 
     'default' => env('DB_CONNECTION', 'sqlite'),
+    'compensation_connection' => env('DB_COMPENSATION_CONNECTION', 'compensation_journal'),
 
     /*
     |--------------------------------------------------------------------------
@@ -119,6 +124,26 @@ return [
             'prefix_indexes' => true,
             // 'encrypt' => env('DB_ENCRYPT', 'yes'),
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
+        ],
+
+        'compensation_journal' => [
+            'driver' => env('DB_COMPENSATION_DRIVER', $defaultDatabaseConnection),
+            'url' => env('DB_COMPENSATION_URL'),
+            'host' => env('DB_COMPENSATION_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('DB_COMPENSATION_PORT', env('DB_PORT', '3306')),
+            'database' => $compensationDatabase,
+            'username' => env('DB_COMPENSATION_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('DB_COMPENSATION_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('DB_COMPENSATION_SOCKET', env('DB_SOCKET', '')),
+            'charset' => env('DB_COMPENSATION_CHARSET', env('DB_CHARSET', 'utf8mb4')),
+            'collation' => env('DB_COMPENSATION_COLLATION', env('DB_COLLATION', 'utf8mb4_unicode_ci')),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => true,
+            'engine' => null,
+            'options' => extension_loaded('pdo_mysql') ? array_filter([
+                $mysqlSslCa => env('MYSQL_ATTR_SSL_CA'),
+            ]) : [],
         ],
 
     ],

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Agovena\Security\SensitiveDataRedactor;
 
-it('redacts sensitive associative and option values without redacting ciphertext', function (): void {
+it('redacts sensitive values and removes encrypted fields', function (): void {
     $value = SensitiveDataRedactor::redact([
         'provider_settings' => [
             'location_id' => '1',
@@ -28,12 +28,11 @@ it('redacts sensitive associative and option values without redacting ciphertext
             'api_key' => '[REDACTED]',
         ],
         'server_settings' => '[REDACTED]',
-        'provider_settings_encrypted' => '[REDACTED]',
         'options' => [
             ['key' => 'environment', 'value' => '[REDACTED]', 'display' => '[REDACTED]'],
             ['key' => 'memory', 'value' => '1024', 'display' => '1024'],
         ],
-    ]);
+    ])->and($value)->not->toHaveKey('provider_settings_encrypted');
 });
 
 it('redacts embedded URL and connection-string credentials under ordinary keys', function (): void {

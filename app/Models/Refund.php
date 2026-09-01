@@ -25,6 +25,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $reason
  * @property string|null $provider_reference
  * @property Carbon|null $completed_at
+ * @property Carbon|null $provider_claimed_at
  */
 #[Fillable([
     'payment_id',
@@ -38,6 +39,7 @@ use Illuminate\Support\Carbon;
     'reason',
     'provider_reference',
     'completed_at',
+    'provider_claimed_at',
 ])]
 class Refund extends Model
 {
@@ -47,6 +49,7 @@ class Refund extends Model
             'amount' => 'integer',
             'status' => RefundStatus::class,
             'completed_at' => 'datetime',
+            'provider_claimed_at' => 'datetime',
         ];
     }
 

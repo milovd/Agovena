@@ -6,6 +6,7 @@ use Agovena\Modules\Inventory\InventoryService;
 use Agovena\Modules\Inventory\Models\InventoryStock;
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
+use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServicesIndex;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Provisioning\ProvisioningService;
 use Agovena\Modules\Shipping\Enums\ShipmentStatus;
@@ -243,6 +244,30 @@ test('customer can open a service detail page', function () {
         ->assertSee('Hosted Box')
         ->assertSee('box-1')
         ->assertSee($order->number);
+});
+
+test('service list does not use email fallback for instances with a customer id', function () {
+    enableLifecycleModules(['provisioning']);
+    $owner = Customer::factory()->create();
+    $intruder = Customer::factory()->create();
+    $product = Product::factory()->active()->create(['price_amount' => 5000, 'name' => 'Private Service']);
+    app(ProductCapabilityManager::class)->enable($product, 'provisionable');
+
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => $owner->name,
+        'customer_email' => $owner->email,
+        'customer_id' => $owner->id,
+        'billing' => lifecycleBilling(),
+    ]);
+    app(RecordManualPayment::class)->handle($order, $this->createStaff());
+    $instance = ServiceInstance::query()->firstOrFail();
+    $instance->forceFill(['customer_email' => $intruder->email])->save();
+
+    Livewire::actingAs($intruder->user)
+        ->test(ServicesIndex::class)
+        ->assertOk()
+        ->assertViewHas('instances', fn ($instances): bool => $instances->doesntContain('id', $instance->id));
 });
 
 test('immediate subscription cancel suspends linked active services but period-end cancel does not', function () {

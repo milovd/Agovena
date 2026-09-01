@@ -38,6 +38,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('agovena:deliver-webhooks')
             ->everyMinute()
             ->withoutOverlapping(10);
+        $schedule->command('agovena:reconcile-payment-webhooks')
+            ->everyMinute()
+            ->withoutOverlapping(10);
+        $schedule->command('agovena:recover-queue-outbox')
+            ->everyMinute()
+            ->withoutOverlapping(10);
         $schedule->command('agovena:process-subscription-renewals')
             ->everyMinute()
             ->withoutOverlapping(10);

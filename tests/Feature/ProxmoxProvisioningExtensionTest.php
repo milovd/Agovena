@@ -14,6 +14,7 @@ use Agovena\Modules\Provisioning\Http\Livewire\Admin\Servers as ProvisioningServ
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Provisioning\ProvisioningOrchestrator;
 use Agovena\Modules\Provisioning\ProvisioningService;
+use Agovena\Modules\Provisioning\ServiceInstanceRuntimeSecretStore;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -171,6 +172,69 @@ test('proxmox power and delete operations reject successful responses without va
         expect(fn () => $api->{$operation}('pve1', 200))
             ->toThrow(ProxmoxProviderException::class);
     }
+});
+
+test('proxmox accepts a standard task identifier with six components', function () {
+    enableProxmox();
+    $api = new HttpProxmoxApi(app(ExtensionSettingsRepository::class), [
+        'api_url' => 'https://pve.example.test:8006',
+        'token_user' => 'root@pam',
+        'token_id' => 'agovena',
+        'token_secret' => '[REDACTED]',
+    ]);
+    $method = new ReflectionMethod(HttpProxmoxApi::class, 'taskId');
+    $method->setAccessible(true);
+
+    $exception = null;
+    try {
+        $method->invoke($api, [
+            'data' => 'UPID:pve:000000A5:00000000:5E7A7C3E:qmstart:200:',
+        ], 'start');
+    } catch (Throwable $caught) {
+        $exception = $caught;
+    }
+
+    expect($exception)->toBeNull();
+});
+
+test('proxmox deletes an already stopped vm without issuing a stop request', function () {
+    enableProxmox();
+    $api = new HttpProxmoxApi(app(ExtensionSettingsRepository::class), [
+        'api_url' => 'https://pve.example.test:8006',
+        'token_user' => 'root@pam',
+        'token_id' => 'agovena',
+        'token_secret' => '[REDACTED]',
+    ]);
+    Http::fake([
+        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/200/status/current' => Http::response([
+            'data' => ['status' => 'stopped'],
+        ]),
+        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/200' => Http::response([
+            'data' => 'UPID:pve:000000A5:00000000:5E7A7C3E:qmdelete:200:',
+        ]),
+        'https://pve.example.test:8006/api2/json/nodes/pve1/tasks/UPID%3Apve%3A000000A5%3A00000000%3A5E7A7C3E%3Aqmdelete%3A200%3A/status' => Http::response([
+            'data' => ['status' => 'stopped', 'exitstatus' => 'OK'],
+        ]),
+    ]);
+
+    $api->deleteVm('pve1', 200);
+
+    Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/qemu/200/status/stop'));
+});
+
+test('proxmox treats an already absent vm during delete as success', function () {
+    enableProxmox();
+    $api = new HttpProxmoxApi(app(ExtensionSettingsRepository::class), [
+        'api_url' => 'https://pve.example.test:8006',
+        'token_user' => 'root@pam',
+        'token_id' => 'agovena',
+        'token_secret' => '[REDACTED]',
+    ]);
+    Http::fake(fn () => Http::response([], 404));
+
+    $api->deleteVm('pve1', 200);
+
+    Http::assertSentCount(3);
 });
 
 test('proxmox plan changes send the complete target vm configuration', function () {
@@ -506,8 +570,11 @@ test('server scoped provisioning uses the encrypted placement snapshot after ser
     app(ProvisioningService::class)->createFromPaidOrder($order->fresh(['items']));
 
     $instance = ServiceInstance::query()->where('order_id', $order->id)->firstOrFail();
+    $runtimeSettings = app(ServiceInstanceRuntimeSecretStore::class)->get($instance->id);
+
     expect($api->vms[200]['node'] ?? null)->toBe('pve-a')
-        ->and($instance->server_settings_snapshot['node'] ?? null)->toBe('pve-a');
+        ->and($runtimeSettings['server_settings']['node'] ?? null)->toBe('pve-a')
+        ->and($instance->server_settings_snapshot)->toBeNull();
 });
 
 test('paid proxmox order provisions a vm and stores extension-owned mapping', function () {

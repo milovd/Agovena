@@ -81,7 +81,7 @@ test('customer portal can retry an expired payment with the development gateway'
     [$customer, $order] = pendingCustomerOrder();
     $order->payment()->update(['status' => PaymentStatus::Expired]);
     $order->refresh();
-    expect($order->isAwaitingPayment())->toBeFalse()
+    expect($order->isAwaitingPayment())->toBeTrue()
         ->and($order->isRetryablePayment())->toBeTrue();
 
     Livewire::actingAs($customer->user)

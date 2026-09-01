@@ -188,6 +188,11 @@ final class ChargeRecurringPayment
                 'message' => $result->message,
             ]);
         }
+        if ($result->status === 'unknown') {
+            $attempt->response_meta = array_merge($attempt->response_meta ?? [], [
+                'provider_outcome' => 'unknown',
+            ]);
+        }
 
         if ($result->status === 'completed') {
             $attempt->save();

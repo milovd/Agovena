@@ -2,15 +2,19 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\InvoiceStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
+use App\Models\Payment;
+use App\Models\PaymentAttempt;
 use App\Models\Product;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesStaff;
+use Tests\Support\FakeWebhookGateway;
 
 uses(CreatesStaff::class);
 
@@ -192,4 +196,31 @@ test('api cart persists across requests with the cart token header', function ()
         ->assertOk()
         ->assertJsonPath('data.item_count', 2)
         ->assertJsonPath('data.lines.0.product_id', $product->id);
+});
+
+test('api payment forwards the caller idempotency key to the payment attempt', function () {
+    $customer = Customer::factory()->create();
+    $order = Order::factory()->create([
+        'customer_id' => $customer->id,
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+    ]);
+    $payment = Payment::factory()->create([
+        'order_id' => $order->id,
+        'method' => 'fake-webhook',
+        'amount' => 1000,
+    ]);
+    app(PaymentGatewayRegistry::class)->register(new FakeWebhookGateway);
+    Sanctum::actingAs($customer->user);
+
+    $this->withHeader('Idempotency-Key', 'api-attempt-key-1')
+        ->postJson('/api/v1/orders/'.$order->id.'/pay', [
+            'gateway' => 'fake-webhook',
+            'return_url' => 'https://example.test/return',
+            'cancel_url' => 'https://example.test/cancel',
+        ])
+        ->assertOk();
+
+    expect(PaymentAttempt::query()->where('payment_id', $payment->id)->value('idempotency_key'))
+        ->toBe('api-attempt-key-1');
 });

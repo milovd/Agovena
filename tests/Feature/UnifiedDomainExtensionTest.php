@@ -14,6 +14,7 @@ use Agovena\Modules\Domains\Models\DomainRegistration;
 use App\Agovena\Extensions\ExtensionCategory;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Livewire\Admin\Extensions\Index;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
@@ -285,6 +286,31 @@ it('selects the earliest timestamp for identical migrated settings', function ()
         File::deleteDirectory(storage_path('app/packages/extensions/.cloudflare-domain.backup'));
         File::deleteDirectory($dnsPath);
         File::deleteDirectory($registrarPath);
+    }
+});
+
+it('accepts equivalent encrypted settings with different ciphertext', function (): void {
+    insertLegacyDomainSetting('cloudflare-dns', 'api_token', Crypt::encryptString('[REDACTED]'), true);
+    insertLegacyDomainSetting('cloudflare-registrar', 'api_token', Crypt::encryptString('[REDACTED]'), true);
+    $preflight = require base_path('database/migrations/2026_08_28_115400_normalize_legacy_domain_secret_settings.php');
+    $preflight->up();
+    $migration = require base_path('database/migrations/2026_08_28_115500_split_domain_provider_extensions.php');
+    $method = new ReflectionMethod($migration, 'collectMigratedSettings');
+    $method->setAccessible(true);
+
+    try {
+        $settings = $method->invoke($migration, ['cloudflare-dns', 'cloudflare-registrar'], [
+            'setting_map' => [
+                'cloudflare-dns:api_token' => 'cloudflare_api_token',
+                'cloudflare-registrar:api_token' => 'cloudflare_api_token',
+            ],
+            'setting_secrets' => ['cloudflare_api_token' => true],
+            'ignored_setting_keys' => [],
+        ]);
+
+        expect($settings)->toHaveKey('cloudflare_api_token');
+    } finally {
+        DB::table('extension_settings')->whereIn('extension_id', ['cloudflare-dns', 'cloudflare-registrar'])->delete();
     }
 });
 

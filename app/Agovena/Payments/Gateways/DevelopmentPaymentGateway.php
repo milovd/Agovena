@@ -52,7 +52,7 @@ final class DevelopmentPaymentGateway implements PaymentGateway
             return PaymentInitiationResult::failed(__('storefront.checkout.development_disabled'));
         }
 
-        $this->complete->handle($request->order->fresh(['payment']) ?? $request->order);
+        $this->complete->handle($request->order->fresh(['payment']) ?? $request->order, lifecycleLockHeld: true);
 
         return PaymentInitiationResult::completed(
             externalId: 'dev-'.$request->payment->id,

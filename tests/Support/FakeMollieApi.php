@@ -33,6 +33,10 @@ final class FakeMollieApi implements MollieApi
 
     public bool $malformed = false;
 
+    public bool $missingPaymentId = false;
+
+    public bool $malformedRefund = false;
+
     public bool $unauthorized = false;
 
     public bool $serverError = false;
@@ -48,7 +52,7 @@ final class FakeMollieApi implements MollieApi
     public function createPayment(array $payload, ?string $idempotencyKey = null): array
     {
         if ($this->timeout) {
-            throw MollieProviderException::failed('mollie::messages.health.unreachable');
+            throw MollieProviderException::unknown('mollie::messages.health.unreachable');
         }
         if ($this->unauthorized) {
             throw MollieProviderException::failed('mollie::messages.errors.unauthorized');
@@ -80,6 +84,9 @@ final class FakeMollieApi implements MollieApi
         ];
         if ($this->malformed) {
             $payment['id'] = $id;
+        }
+        if ($this->missingPaymentId) {
+            unset($payment['id']);
         }
         $this->payments[$id] = $payment;
         if (is_string($idempotencyKey) && $idempotencyKey !== '') {
@@ -137,13 +144,15 @@ final class FakeMollieApi implements MollieApi
             $this->idempotency['refund:'.$idempotencyKey] = $refundId;
         }
 
-        return ['id' => $refundId, 'status' => 'refunded', 'payment_id' => $paymentId];
+        return $this->malformedRefund
+            ? []
+            : ['id' => $refundId, 'status' => 'refunded', 'payment_id' => $paymentId];
     }
 
     public function listEnabledMethods(): array
     {
         if ($this->timeout) {
-            throw MollieProviderException::failed('mollie::messages.health.unreachable');
+            throw MollieProviderException::unknown('mollie::messages.health.unreachable');
         }
 
         return $this->methods;

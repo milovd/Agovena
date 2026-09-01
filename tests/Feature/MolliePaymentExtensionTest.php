@@ -247,7 +247,7 @@ test('duplicate mollie webhook is harmless', function () {
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Paid);
 });
 
-test('mollie webhook failed cancelled and expired map to normalized states', function (string $provider, PaymentAttemptStatus $expected) {
+test('mollie webhook failed cancelled and expired map to normalized states', function (string $provider, PaymentAttemptStatus $expected, PaymentStatus $paymentStatus) {
     $api = enableMollie();
     $payment = placeMollieOrder();
     $attempt = app(StartOrderPayment::class)->handle(
@@ -264,12 +264,12 @@ test('mollie webhook failed cancelled and expired map to normalized states', fun
     );
 
     expect($attempt->fresh()->status)->toBe($expected)
-        ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
+        ->and($payment->fresh()->status)->toBe($paymentStatus)
         ->and($payment->fresh()->order->status)->toBe(OrderStatus::Pending);
 })->with([
-    ['failed', PaymentAttemptStatus::Failed],
-    ['canceled', PaymentAttemptStatus::Cancelled],
-    ['expired', PaymentAttemptStatus::Expired],
+    ['failed', PaymentAttemptStatus::Failed, PaymentStatus::Failed],
+    ['canceled', PaymentAttemptStatus::Cancelled, PaymentStatus::Cancelled],
+    ['expired', PaymentAttemptStatus::Expired, PaymentStatus::Expired],
 ]);
 
 test('status sync can confirm a paid mollie payment after webhook delay', function () {
@@ -315,6 +315,30 @@ test('mollie full and partial refunds are idempotent', function () {
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Refunded);
 });
 
+test('malformed mollie refund responses stay pending for reconciliation', function () {
+    $api = enableMollie();
+    $payment = placeMollieOrder();
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'mollie',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'mollie-malformed-refund-1',
+    );
+    $api->markPaid($attempt->external_id);
+    app(HandlePaymentWebhook::class)->handle(
+        'mollie',
+        Request::create('/webhooks/payments/mollie', 'POST', ['id' => $attempt->external_id]),
+    );
+    $api->malformedRefund = true;
+
+    $refund = app(RecordRefund::class)->handle($payment->fresh(), $this->createStaff(), $payment->amount, 'Malformed response');
+
+    expect($refund->status)->toBe(RefundStatus::Pending)
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and($payment->fresh()->reconciliation_meta['reason'] ?? null)->toBe('provider_refund_outcome_unknown');
+});
+
 test('mollie provider failures stay as safe agovena failures', function () {
     $api = enableMollie();
     $api->failCreate = true;
@@ -347,6 +371,8 @@ test('mollie network timeout does not leak secrets into logs', function () {
     );
 
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($attempt->response_meta['provider_outcome'] ?? null)->toBe('unknown')
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
         ->and(json_encode($attempt->response_meta))->not->toContain('test_abcdefghijklmnopqrstuvwxyz123456');
 });
 
@@ -364,6 +390,31 @@ test('malformed mollie checkout response fails the attempt', function () {
     );
 
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed);
+});
+
+test('mollie initiation without a provider payment id requires reconciliation', function () {
+    $api = enableMollie();
+    $api->missingPaymentId = true;
+    $payment = placeMollieOrder();
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'mollie',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'mollie-missing-payment-id-1',
+    );
+
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($attempt->response_meta['provider_outcome'] ?? null)->toBe('unknown')
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and(fn (): mixed => app(StartOrderPayment::class)->handle(
+            $payment->order,
+            'mollie',
+            'https://example.test/return',
+            'https://example.test/cancel',
+            'mollie-missing-payment-id-2',
+        ))->toThrow(ValidationException::class);
 });
 
 test('mollie unauthorized and server errors fail safely without leaking secrets', function () {

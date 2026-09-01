@@ -78,10 +78,15 @@ final class CheckoutController
     public function pay(Request $request, Order $order, StartOrderPayment $start): JsonResponse
     {
         $this->assertOwned($order);
+        if (! $request->has('idempotency_key') && $request->headers->has('Idempotency-Key')) {
+            $request->merge(['idempotency_key' => $request->header('Idempotency-Key')]);
+        }
+
         $data = $request->validate([
             'gateway' => ['required', 'string', 'max:40'],
             'return_url' => ['required', 'url', 'max:500'],
             'cancel_url' => ['required', 'url', 'max:500'],
+            'idempotency_key' => ['nullable', 'string', 'max:64'],
         ]);
 
         try {
@@ -90,6 +95,7 @@ final class CheckoutController
                 $data['gateway'],
                 $data['return_url'],
                 $data['cancel_url'],
+                $data['idempotency_key'] ?? null,
             );
         } catch (ValidationException $e) {
             return ApiError::json('payment_failed', $e->getMessage(), 422, $e->errors());

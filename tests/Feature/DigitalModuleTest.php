@@ -157,6 +157,8 @@ test('digital downloads stay on the private disk and reject other customers', fu
     expect($entitlement)->not->toBeNull()
         ->and($asset->disk)->toBe('local');
 
+    $entitlement->forceFill(['customer_email' => $intruder->email])->save();
+
     $this->get('/storage/'.$asset->path)->assertNotFound();
 
     $this->get(route('customer.downloads.file', $entitlement->token))
@@ -165,6 +167,10 @@ test('digital downloads stay on the private disk and reject other customers', fu
     $this->actingAs($intruder->user)
         ->get(route('customer.downloads.file', $entitlement->token))
         ->assertNotFound();
+
+    Livewire::actingAs($intruder->user)
+        ->test(DownloadsIndex::class)
+        ->assertDontSee($entitlement->token);
 });
 
 test('mixed physical and digital order only grants digital entitlements for digital lines', function () {

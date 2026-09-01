@@ -304,7 +304,7 @@ final class PlaceOrder
 
                 foreach ($lines as $line) {
                     $product = Product::query()->find($line->productId);
-                    OrderItem::query()->create([
+                    $item = OrderItem::query()->create([
                         'order_id' => $order->id,
                         'product_id' => $line->productId,
                         'label' => $line->label,
@@ -316,6 +316,9 @@ final class PlaceOrder
                             ? []
                             : $this->optionPricer->snapshot($product, $line->selections),
                     ]);
+                    if ($product !== null) {
+                        $this->optionPricer->storeRuntimeSecrets($item->id, $product, $line->selections);
+                    }
                 }
                 event(new OrderPlacing($lines, $order, $preflight));
 

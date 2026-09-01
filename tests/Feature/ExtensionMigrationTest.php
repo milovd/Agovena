@@ -6,6 +6,7 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Agovena\Modules\ModuleManager;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -71,4 +72,25 @@ test('enabled extension migrations are included in schema status', function () {
     app(ApplicationSchemaStatus::class)->refresh();
 
     expect(app(ApplicationSchemaStatus::class)->isCurrent())->toBeTrue();
+});
+
+test('forward migration encrypts legacy plaintext secret settings', function () {
+    DB::table('extension_settings')->insert([
+        'extension_id' => 'migration-fixture',
+        'key' => 'api_token',
+        'value' => 'legacy-fixture',
+        'is_secret' => true,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+
+    $migration = require database_path('migrations/2026_09_01_000100_encrypt_legacy_extension_secrets.php');
+    $migration->up();
+    $row = DB::table('extension_settings')
+        ->where('extension_id', 'migration-fixture')
+        ->where('key', 'api_token')
+        ->first();
+
+    expect($row->value)->not->toBe('legacy-fixture')
+        ->and(Crypt::decryptString((string) $row->value))->toBe('legacy-fixture');
 });

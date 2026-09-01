@@ -15,6 +15,10 @@ return [
 
     'default' => env('QUEUE_CONNECTION', 'failover'),
 
+    'outbox_claim_lease_seconds' => (int) env('QUEUE_OUTBOX_CLAIM_LEASE_SECONDS', 300),
+    'outbox_fallback_disk' => env('QUEUE_OUTBOX_FALLBACK_DISK', 'local'),
+    'outbox_fallback_shared' => (bool) env('QUEUE_OUTBOX_FALLBACK_SHARED', false),
+
     /*
     |--------------------------------------------------------------------------
     | Queue Connections
@@ -101,6 +105,7 @@ return [
 
         'failover' => [
             'driver' => 'after_commit_failover',
+            'queue' => env('QUEUE_NAME', 'default'),
             'connections' => [
                 'failover_database',
                 'failover_redis',
