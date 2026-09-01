@@ -87,7 +87,6 @@ class Payment extends Model
 
         $reserved = (int) $this->refunds()
             ->whereIn('status', [
-                RefundStatus::Pending,
                 RefundStatus::Processing,
                 RefundStatus::Completed,
             ])
