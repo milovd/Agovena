@@ -94,17 +94,27 @@ if ! grep -Fq 'Packages bootstrapped (profile=smoke).' <<< "$BOOTSTRAP_OUTPUT"; 
   echo "::error::package bootstrap did not report success" >&2
   exit 1
 fi
+SMOKE_PASSWORD="$(php -r 'echo bin2hex(random_bytes(24));')"
 run_artisan "agovena:install" agovena:install --no-interaction \
   --name="Release Smoke Owner" \
   --email="release-smoke@example.test" \
-  --password="Agovena-Release-Smoke-9f3a" \
+  --password="$SMOKE_PASSWORD" \
   --site-name="Release Smoke" \
   --locale=en \
   --timezone=UTC \
   --currency=EUR \
   --theme=default \
   --presets=physical,digital
-run_artisan "agovena:backup" agovena:backup --no-interaction
+echo "==> agovena:backup"
+if ! BACKUP_OUTPUT="$(php artisan agovena:backup --no-interaction 2>&1)"; then
+  printf '%s\n' "$BACKUP_OUTPUT" >&2
+  echo "::error::artisan failed: agovena:backup" >&2
+  exit 1
+fi
+printf '%s\n' "$BACKUP_OUTPUT"
+BACKUP_PATH="$(printf '%s\n' "$BACKUP_OUTPUT" | tr -d '\r' | sed -E $'s/\033\\[[0-9;]*m//g' | sed -n 's/.*Backup created: //p' | sed -n '$p')"
+[[ -n "$BACKUP_PATH" ]] || { echo "::error::backup command did not report an artifact path"; exit 1; }
+run_artisan "agovena:backup-verify" agovena:backup-verify "$BACKUP_PATH" --no-interaction
 
 bash "$APP/scripts/smoke-backup-restore.sh" "$APP"
 

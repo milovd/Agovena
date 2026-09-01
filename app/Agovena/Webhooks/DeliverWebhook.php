@@ -50,7 +50,8 @@ final class DeliverWebhook implements ShouldQueue
         $delivery->increment('attempt_count');
         $delivery->refresh();
 
-        if (! WebhookUrlValidator::isAllowed($endpoint->url)) {
+        $resolvedIp = WebhookUrlValidator::allowedPublicIp($endpoint->url);
+        if ($resolvedIp === null) {
             $this->recordFailure($delivery, 'Endpoint URL rejected by SSRF policy.', false, 'ssrf_rejected');
 
             return;
@@ -61,9 +62,21 @@ final class DeliverWebhook implements ShouldQueue
         $response = null;
 
         try {
+            $parts = parse_url($endpoint->url);
+            $host = (string) ($parts['host'] ?? '');
+            $port = (int) ($parts['port'] ?? 443);
+            $resolveAddress = filter_var($resolvedIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false
+                ? '['.$resolvedIp.']'
+                : $resolvedIp;
+
             $response = Http::connectTimeout(5)
                 ->timeout(10)
-                ->withOptions(['allow_redirects' => false])
+                ->withOptions([
+                    'allow_redirects' => false,
+                    'curl' => [
+                        CURLOPT_RESOLVE => [$host.':'.$port.':'.$resolveAddress],
+                    ],
+                ])
                 ->acceptJson()
                 ->withHeaders([
                     'Content-Type' => 'application/json',

@@ -19,7 +19,7 @@ it('allows authorized staff to create and manage outbound webhook endpoints', fu
     Livewire::test(Index::class)
         ->set('name', 'Order listener')
         ->set('destination', 'discord')
-        ->set('url', 'https://hooks.example.test/orders')
+        ->set('url', 'https://example.com/orders')
         ->set('secret', '[REDACTED]')
         ->set('events', ['order.created', 'order.paid'])
         ->call('save')
@@ -58,7 +58,7 @@ it('queues failed deliveries for a controlled retry', function (): void {
     $this->actingAs($staff);
     $endpoint = WebhookEndpoint::query()->create([
         'name' => 'Orders',
-        'url' => 'https://hooks.example.test/orders',
+        'url' => 'https://example.com/orders',
         'secret' => '[REDACTED]',
         'events' => ['order.created'],
         'active' => true,

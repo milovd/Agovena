@@ -49,7 +49,7 @@ final class TicketAttachmentDownloadController
         );
 
         return Storage::disk($attachment->disk)->download($attachment->path, $downloadName, [
-            'Content-Type' => $attachment->mime,
+            'Content-Type' => TicketAttachmentPolicy::safeMime((string) $attachment->mime),
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
             'Content-Disposition' => 'attachment; filename="'.$downloadName.'"',

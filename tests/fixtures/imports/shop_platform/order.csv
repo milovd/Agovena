@@ -1,0 +1,2 @@
+order_id,userid,total,currency_code,order_number,items
+SP-O-1,SP-C-1,2500,EUR,SP-ORDER-1,"[{""product_external_id"":""SP-P-1"",""quantity"":1,""unit_amount"":2500}]"

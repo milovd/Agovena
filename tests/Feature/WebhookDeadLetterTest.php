@@ -12,11 +12,11 @@ use Illuminate\Support\Facades\Queue;
 it('moves an exhausted webhook delivery to the dead-letter state', function (): void {
     Queue::fake();
     Http::fake([
-        'https://hooks.example.test/*' => Http::response(['error' => 'permanent'], 503),
+        'https://example.com/*' => Http::response(['error' => 'permanent'], 503),
     ]);
     $endpoint = WebhookEndpoint::query()->create([
         'name' => 'Orders',
-        'url' => 'https://hooks.example.test/orders',
+        'url' => 'https://example.com/orders',
         'secret' => '[REDACTED]',
         'events' => ['order.created'],
         'active' => true,

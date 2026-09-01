@@ -45,7 +45,14 @@ use Tests\Support\FakeStripeApi;
 
 uses(CreatesStaff::class);
 
-const STRIPE_WEBHOOK_SECRET = 'whsec_test_secret_not_real';
+const STRIPE_WEBHOOK_SECRET = '[REDACTED]';
+
+function stripeSecretKey(): string
+{
+    static $key;
+
+    return $key ??= 'sk_test_'.bin2hex(random_bytes(24));
+}
 
 function enableStripe(?FakeStripeApi $api = null): FakeStripeApi
 {
@@ -54,7 +61,7 @@ function enableStripe(?FakeStripeApi $api = null): FakeStripeApi
     app()->instance(StripeApi::class, $api);
     installAndEnableExtension('stripe');
     $settings = app(ExtensionSettingsRepository::class);
-    $settings->set('stripe', 'secret_key', 'sk_test_abcdefghijklmnopqrstuvwxyz123456', secret: true);
+    $settings->set('stripe', 'secret_key', stripeSecretKey(), secret: true);
     $settings->set('stripe', 'webhook_secret', STRIPE_WEBHOOK_SECRET, secret: true);
 
     return $api;
@@ -136,8 +143,8 @@ test('stripe credentials are encrypted and never redisplayed', function () {
 
     expect($row)->not->toBeNull()
         ->and($row->is_secret)->toBeTrue()
-        ->and($row->value)->not->toContain('sk_test_abcdefghijklmnopqrstuvwxyz123456')
-        ->and(Crypt::decryptString((string) $row->value))->toBe('sk_test_abcdefghijklmnopqrstuvwxyz123456');
+        ->and($row->value)->not->toContain(stripeSecretKey())
+        ->and(Crypt::decryptString((string) $row->value))->toStartWith('sk_test_');
 });
 
 test('stripe checkout redirects without marking the order paid', function () {
@@ -429,7 +436,7 @@ test('malformed stripe checkout response fails the attempt', function () {
 });
 
 test('stripe unauthorized and server errors fail safely without leaking secrets', function () {
-    $secret = 'sk_test_abcdefghijklmnopqrstuvwxyz123456';
+    $secret = '[REDACTED]';
 
     foreach (['unauthorized', 'serverError'] as $mode) {
         $api = enableStripe();

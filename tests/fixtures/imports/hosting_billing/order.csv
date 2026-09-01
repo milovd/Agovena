@@ -1,0 +1,2 @@
+order_id,userid,total,currency_code,order_number,items
+HB-O-1,HB-C-1,2500,EUR,HB-ORDER-1,"[{""product_external_id"":""HB-P-1"",""quantity"":1,""unit_amount"":2500}]"

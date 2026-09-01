@@ -93,10 +93,11 @@ file_put_contents($path, $env);
 echo "==> migrate"
 php artisan migrate --force --no-interaction || fail "migrate failed"
 echo "==> agovena:install"
+SMOKE_PASSWORD="$(php -r 'echo bin2hex(random_bytes(24));')"
 php artisan agovena:install --no-interaction \
   --name="Native Smoke Owner" \
   --email="native-smoke@example.test" \
-  --password="Agovena-Native-Smoke-9f3a" \
+  --password="$SMOKE_PASSWORD" \
   --site-name="Native Smoke" \
   --locale=en \
   --timezone=UTC \

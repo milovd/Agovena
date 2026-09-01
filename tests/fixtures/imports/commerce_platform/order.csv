@@ -1,0 +1,2 @@
+order_id,userid,total,currency_code,order_number,items
+CP-O-1,CP-C-1,2500,EUR,CP-ORDER-1,"[{""product_external_id"":""CP-P-1"",""quantity"":1,""unit_amount"":2500}]"

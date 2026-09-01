@@ -34,11 +34,46 @@ final class BackupRestoreVerifier
         }
 
         $isSqlite = str_starts_with($payload, 'SQLite format 3');
+        if ($isSqlite && ! $this->hasValidSqliteIntegrity($payload)) {
+            return new BackupRestoreVerificationResult(false, 'database_integrity_failed');
+        }
         $isSqlDump = str_contains($payload, 'CREATE TABLE') || str_contains($payload, 'CREATE DATABASE');
         if (! $isSqlite && ! $isSqlDump) {
             return new BackupRestoreVerificationResult(false, 'payload_type_unknown');
         }
 
         return new BackupRestoreVerificationResult(true);
+    }
+
+    private function hasValidSqliteIntegrity(string $payload): bool
+    {
+        $path = tempnam(sys_get_temp_dir(), 'agovena-backup-');
+        if ($path === false) {
+            return false;
+        }
+
+        try {
+            $written = file_put_contents($path, $payload);
+            if ($written !== strlen($payload)) {
+                return false;
+            }
+
+            $database = new \PDO('sqlite:'.$path, options: [
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
+            $integrity = $database->query('PRAGMA integrity_check')->fetchColumn();
+
+            return is_string($integrity) && strtolower(trim($integrity)) === 'ok';
+        } catch (Throwable) {
+            return false;
+        } finally {
+            if (is_file($path)) {
+                try {
+                    unlink($path);
+                } catch (Throwable) {
+                    // The verification result must not expose the temporary payload.
+                }
+            }
+        }
     }
 }

@@ -138,3 +138,10 @@ test('store policy refuses more than max attachments', function () {
     expect(fn () => app(StoreTicketMessageAttachments::class)->handle($ticket, $message, $uploads))
         ->toThrow(ValidationException::class);
 });
+
+test('download metadata is normalized before it reaches response headers', function () {
+    expect(TicketAttachmentPolicy::safeDownloadName("invoice\r\nX-Injected: yes", "pdf\r\nX-Injected: yes"))
+        ->toBe('invoice-X-Injected-yes.bin')
+        ->and(TicketAttachmentPolicy::safeMime("application/pdf\r\nX-Injected: yes"))
+        ->toBe('application/octet-stream');
+});

@@ -418,7 +418,7 @@ test('mollie initiation without a provider payment id requires reconciliation', 
 });
 
 test('mollie unauthorized and server errors fail safely without leaking secrets', function () {
-    $secret = 'test_abcdefghijklmnopqrstuvwxyz123456';
+    $secret = '[REDACTED]';
 
     foreach (['unauthorized', 'serverError'] as $mode) {
         $api = enableMollie();

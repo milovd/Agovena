@@ -85,7 +85,20 @@ final class TicketAttachmentPolicy
         $base = pathinfo($original, PATHINFO_FILENAME);
         $base = preg_replace('/[^A-Za-z0-9._-]+/', '-', (string) $base) ?: 'attachment';
         $base = trim($base, '.-_') ?: 'attachment';
+        $extension = strtolower(trim($extension));
+        if (! in_array($extension, self::ALLOWED_EXTENSIONS, true)) {
+            $extension = 'bin';
+        }
 
         return $base.'.'.$extension;
+    }
+
+    public static function safeMime(string $mime): string
+    {
+        $mime = strtolower(trim($mime));
+
+        return in_array($mime, self::ALLOWED_MIMES, true)
+            ? $mime
+            : 'application/octet-stream';
     }
 }

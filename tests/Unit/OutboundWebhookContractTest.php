@@ -22,13 +22,14 @@ it('rejects malformed or stale webhook signatures', function (): void {
 });
 
 it('allows public HTTPS webhook endpoints and rejects SSRF-shaped URLs', function (): void {
-    expect(WebhookUrlValidator::isAllowed('https://hooks.example.test/agovena'))->toBeTrue()
-        ->and(WebhookUrlValidator::isAllowed('http://hooks.example.test/agovena'))->toBeFalse()
+    expect(WebhookUrlValidator::isAllowed('https://example.com/agovena'))->toBeTrue()
+        ->and(WebhookUrlValidator::isAllowed('http://example.com/agovena'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://localhost/hook'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://127.0.0.1/hook'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://10.0.0.10/hook'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://2130706433/hook'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://0x7f000001/hook'))->toBeFalse()
         ->and(WebhookUrlValidator::isAllowed('https://127.1/hook'))->toBeFalse()
-        ->and(WebhookUrlValidator::isAllowed('https://user:pass@example.test/hook'))->toBeFalse();
+        ->and(WebhookUrlValidator::isAllowed('https://user:pass@example.test/hook'))->toBeFalse()
+        ->and(WebhookUrlValidator::isAllowed('https://definitely-unresolvable.invalid/hook'))->toBeFalse();
 });
