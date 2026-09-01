@@ -85,6 +85,14 @@ class Payment extends Model
             return 0;
         }
 
-        return max(0, (int) $this->amount - $this->refundedAmount());
+        $reserved = (int) $this->refunds()
+            ->whereIn('status', [
+                RefundStatus::Pending,
+                RefundStatus::Processing,
+                RefundStatus::Completed,
+            ])
+            ->sum('amount');
+
+        return max(0, (int) $this->amount - $reserved);
     }
 }

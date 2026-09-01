@@ -167,7 +167,7 @@ test('two processes cannot over-refund the same payment', function () {
     $oks = collect($results)->where('ok', true)->count();
     $fails = collect($results)->where('ok', false)->count();
 
-    expect($oks)->toBe(1)
+    expect($oks)->toBe(1, json_encode($results, JSON_THROW_ON_ERROR))
         ->and($fails)->toBe(1)
         ->and(Refund::query()->where('payment_id', $payment->id)->count())->toBe(1)
         ->and($payment->fresh()->remainingRefundable())->toBe(0);
@@ -186,7 +186,7 @@ test('two processes cannot over-credit remaining invoice quantity', function () 
 
     $oks = collect($results)->where('ok', true)->count();
 
-    expect($oks)->toBe(1)
+    expect($oks)->toBe(1, json_encode($results, JSON_THROW_ON_ERROR))
         ->and($invoice->fresh()->remainingCreditable())->toBe(0);
 });
 

@@ -51,7 +51,7 @@ it('quarantines malformed legacy capability config during encryption migration',
     $id = DB::table('product_capabilities')->insertGetId([
         'product_id' => $product->id,
         'capability' => 'provisionable',
-        'config' => '{malformed',
+        'config' => json_encode('malformed', JSON_THROW_ON_ERROR),
         'created_at' => now(),
         'updated_at' => now(),
     ]);
@@ -61,7 +61,7 @@ it('quarantines malformed legacy capability config during encryption migration',
     $row = DB::table('product_capabilities')->where('id', $id)->first();
 
     expect($row->config)->toContain('invalid_legacy_config')
-        ->and($row->config)->not->toContain('{malformed')
+        ->and($row->config)->not->toContain('malformed')
         ->and(Crypt::decryptString((string) $row->config_encrypted))
         ->toBe(json_encode(['_migration_status' => 'invalid_legacy_config']));
 });

@@ -633,7 +633,7 @@ test('package updates recover pending state before reading the update source', f
             'lifecycle' => null,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES)),
     ]);
-    DB::table('agovena_packages')->whereKey($package->id)->update([
+    DB::table('agovena_packages')->where('id', $package->id)->update([
         'source_locator' => storage_path('app/packages/not-the-package'),
     ]);
 
