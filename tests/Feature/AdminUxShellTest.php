@@ -104,6 +104,17 @@ test('dashboard chart ranges return the requested number of daily points', funct
         ->and(count($metrics->build('month')['revenueSeries']['labels']))->toBeBetween(1, 31);
 });
 
+test('dashboard chart renders filled revenue bars and selected line markers', function () {
+    $view = file_get_contents(resource_path('views/livewire/admin/dashboard.blade.php'));
+    $script = file_get_contents(resource_path('js/admin.js'));
+
+    expect($view)->toContain("'barBackgroundColor' => 'var(--ag-color-chart-1)'")
+        ->and($script)->toContain('buildLinePointRadii')
+        ->and($script)->toContain('barBackgroundColor')
+        ->and($script)->toContain('Intl.NumberFormat')
+        ->and($script)->toContain('pointHitRadius');
+});
+
 test('dashboard shows prioritized support tickets and current active users', function () {
     $staff = $this->createStaff();
     $customer = Customer::factory()->create();
