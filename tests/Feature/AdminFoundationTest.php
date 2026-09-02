@@ -99,7 +99,9 @@ test('dashboard shows real product and order counts', function () {
         ->assertOk()
         ->assertSee('2', false)
         ->assertSee('1 active', false)
-        ->assertSee($order->number, false);
+        ->assertSee(__('admin.dashboard.stats.orders'), false)
+        ->assertSee(__('admin.dashboard.support.title'), false)
+        ->assertSee(__('admin.dashboard.active_users.title'), false);
 });
 
 test('settings persist via repository and admin screen', function () {

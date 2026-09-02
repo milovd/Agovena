@@ -336,12 +336,8 @@ test('admin customer show lists orders invoices subscriptions and services', fun
         ->test(AdminCustomerShow::class, ['customer' => $customer])
         ->assertOk()
         ->assertSee($order->number)
-        ->assertSee(__('admin.customers.panels.overview'), false);
-
-    $page->call('selectPanel', 'commerce')
-        ->assertSee($invoice->number);
-
-    $page->call('selectPanel', 'capabilities')
+        ->assertSee($invoice->number)
+        ->assertSee(__('admin.customers.activity_heading'), false)
         ->assertSee($subscription->number)
         ->assertSee($instance->number);
 });

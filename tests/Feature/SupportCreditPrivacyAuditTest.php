@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Auth\TotpTwoFactor;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Credits\CustomerCreditLedger;
@@ -14,6 +15,7 @@ use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -69,6 +71,22 @@ test('gdpr anonymization keeps order rows', function () {
         ->and($order->fresh()?->customer_id)->toBe($customer->id)
         ->and($customer->fresh()?->anonymized_at)->not->toBeNull()
         ->and($customer->fresh()?->email)->toBe('deleted+'.$customer->id.'@anonymized.invalid');
+});
+
+test('gdpr anonymization clears customer two factor material', function () {
+    $customer = Customer::factory()->create();
+    $customer->user?->forceFill([
+        'two_factor_secret' => app(TotpTwoFactor::class)->generateSecret(),
+        'two_factor_recovery_codes' => [Str::random(32)],
+        'two_factor_confirmed_at' => now(),
+    ])->save();
+
+    app(AnonymizeCustomer::class)->handle($customer);
+
+    $user = $customer->user?->fresh();
+    expect($user?->two_factor_secret)->toBeNull()
+        ->and($user?->two_factor_recovery_codes)->toBeNull()
+        ->and($user?->two_factor_confirmed_at)->toBeNull();
 });
 
 test('staff credit adjustment creates an audit entry', function () {

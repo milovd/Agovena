@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Agovena\Privacy;
 
 use App\Agovena\Audit\AuditLogger;
+use App\Agovena\Auth\ManageUserSessions;
+use App\Agovena\Auth\TotpTwoFactor;
 use App\Enums\TicketStatus;
 use App\Models\Customer;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +15,11 @@ use Illuminate\Support\Str;
 
 final class AnonymizeCustomer
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly ManageUserSessions $sessions,
+        private readonly TotpTwoFactor $totp,
+    ) {}
 
     public function handle(Customer $customer): Customer
     {
@@ -33,6 +39,8 @@ final class AnonymizeCustomer
 
             $user = $customer->user;
             if ($user !== null) {
+                $this->sessions->revokeAll($user);
+                $this->totp->disable($user);
                 $user->forceFill([
                     'name' => $name,
                     'email' => $email,

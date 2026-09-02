@@ -291,7 +291,6 @@ test('staff customer-property edits synchronize the primary address card', funct
 
     Livewire::actingAs($staff)
         ->test(AdminCustomerShow::class, ['customer' => $customer])
-        ->call('selectPanel', 'profile')
         ->set('propertyValues.phone', '+31 70 666 7777')
         ->set('propertyValues.company_name', 'Staff Property BV')
         ->set('propertyValues.country', 'NL')

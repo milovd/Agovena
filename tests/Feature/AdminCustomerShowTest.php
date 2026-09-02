@@ -26,8 +26,6 @@ test('admin customer show renders with empty module capability sections', functi
         ->test(AdminCustomerShow::class, ['customer' => $customer])
         ->assertOk()
         ->assertSee('Empty Caps Customer')
-        ->call('selectPanel', 'capabilities')
-        ->assertOk()
         ->assertSee(__('digital::admin.customer_empty'), false)
         ->assertSee(__('digital-delivery::admin.customer_empty'), false)
         ->assertSee(__('events::admin.no_customer_tickets'), false);
@@ -45,7 +43,6 @@ test('admin can update customer profile from show page', function () {
 
     Livewire::actingAs($this->createStaff())
         ->test(AdminCustomerShow::class, ['customer' => $customer])
-        ->call('selectPanel', 'profile')
         ->set('name', 'After Name')
         ->set('email', 'after@agovena.test')
         ->call('saveProfile')

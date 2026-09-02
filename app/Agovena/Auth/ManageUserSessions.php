@@ -82,6 +82,18 @@ final class ManageUserSessions
             ->delete();
     }
 
+    public function revokeAll(User $user): int
+    {
+        if (! $this->usesDatabaseDriver()) {
+            return 0;
+        }
+
+        return DB::connection(config('session.connection'))
+            ->table(config('session.table', 'sessions'))
+            ->where('user_id', $user->id)
+            ->delete();
+    }
+
     private function deviceLabel(?string $userAgent): string
     {
         if ($userAgent === null || trim($userAgent) === '') {

@@ -21,5 +21,6 @@
 @import './admin/components/_notification-templates.css';
 @import './admin/components/_api-tokens.css';
 @import './admin/components/_backups.css';
+@import './admin/components/_customer-workspace.css';
 @import './admin/components/_print.css';
 @import './admin/utilities/_a11y.css';
