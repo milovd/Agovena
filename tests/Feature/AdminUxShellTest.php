@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Admin\DashboardMetrics;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Theme\StorefrontBrand;
@@ -51,6 +52,39 @@ test('dashboard renders real metrics without fake trends', function () {
         ->assertSee(__('admin.dashboard.heading'), false)
         ->assertSee(__('admin.dashboard.stats.orders'), false)
         ->assertSee(__('admin.dashboard.charts.revenue'), false);
+});
+
+test('dashboard keeps six focused metrics and one configurable chart', function () {
+    $component = Livewire::actingAs($this->createStaff())
+        ->test(Dashboard::class)
+        ->assertOk();
+    $html = $component->html();
+
+    expect(substr_count($html, 'class="ag-metric"'))->toBe(6)
+        ->and(substr_count($html, 'x-data="agChart'))->toBe(1)
+        ->and($html)->toContain(htmlspecialchars((string) __('admin.dashboard.charts.overview'), ENT_QUOTES, 'UTF-8'))
+        ->and($html)->toContain('wire:click="setChartRange(\'7\')"')
+        ->and($html)->toContain('wire:click="setChartRange(\'month\')"')
+        ->and($html)->toContain('wire:click="setChartType(\'bar\')"')
+        ->and($html)->not->toContain(__('admin.dashboard.stats.open_tickets'), false);
+
+    $component
+        ->call('setChartRange', '7')
+        ->assertSet('chartRange', '7')
+        ->assertSee('dashboard-chart-7-line', false)
+        ->call('setChartType', 'bar')
+        ->assertSet('chartType', 'bar')
+        ->assertSee('dashboard-chart-7-bar', false);
+});
+
+test('dashboard chart ranges return the requested number of daily points', function () {
+    $this->createStaff();
+    $metrics = app(DashboardMetrics::class);
+
+    expect($metrics->build('7')['revenueSeries']['labels'])->toHaveCount(7)
+        ->and($metrics->build('14')['revenueSeries']['labels'])->toHaveCount(14)
+        ->and($metrics->build('90')['revenueSeries']['labels'])->toHaveCount(90)
+        ->and(count($metrics->build('month')['revenueSeries']['labels']))->toBeBetween(1, 31);
 });
 
 test('customer index shows identity and commerce columns', function () {

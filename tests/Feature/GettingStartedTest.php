@@ -40,6 +40,10 @@ test('dashboard summary shows progress without a duplicate checklist status', fu
         'metrics' => [],
         'revenueSeries' => ['labels' => [], 'values' => []],
         'orderSeries' => ['labels' => [], 'values' => []],
+        'chartRange' => '14',
+        'chartType' => 'line',
+        'chartRanges' => [],
+        'chartTypes' => [],
         'recentOrders' => collect(),
         'attentionItems' => [],
     ])->render();

@@ -141,6 +141,44 @@
   flex-wrap: wrap;
 }
 
+.ag-chart-card__eyebrow,
+.ag-chart-control__label {
+  margin: 0;
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ag-chart-card__eyebrow {
+  margin-bottom: var(--ag-space-1);
+  color: var(--ag-color-primary);
+}
+
+.ag-chart-card__toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  gap: var(--ag-space-3);
+  flex-wrap: wrap;
+}
+
+.ag-chart-control {
+  display: grid;
+  gap: var(--ag-space-1);
+}
+
+.ag-chart-control .ag-tabs {
+  gap: 0.125rem;
+}
+
+.ag-chart-control .ag-tabs__tab {
+  min-height: 2.5rem;
+  padding: 0.4rem 0.65rem;
+  font-size: var(--ag-font-size-xs);
+}
+
 .ag-chart-card__title {
   margin: 0;
   font-size: 0.95rem;
@@ -156,7 +194,7 @@
 .ag-chart-card__canvas {
   position: relative;
   width: 100%;
-  height: 14rem;
+  height: 18rem;
 }
 
 .ag-chart-card__canvas canvas {

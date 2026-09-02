@@ -78,72 +78,101 @@
         <div class="ag-dashboard-stack">
             <section
                 class="ag-chart-card"
-                aria-labelledby="revenue-chart-title"
+                wire:key="dashboard-chart-{{ $chartRange }}-{{ $chartType }}"
+                aria-labelledby="dashboard-chart-title"
                 x-data="agChart(@js([
-                    'type' => 'line',
+                    'type' => $chartType,
+                    'showLegend' => true,
+                    'dualAxis' => true,
                     'labels' => $revenueSeries['labels'],
-                    'datasets' => [[
-                        'label' => __('admin.dashboard.charts.revenue'),
-                        'data' => $revenueSeries['values'],
-                        'borderColor' => 'var(--ag-color-chart-1)',
-                        'backgroundColor' => 'var(--ag-color-primary-soft)',
-                        'fill' => true,
-                        'tension' => 0.3,
-                        'borderWidth' => 2.5,
-                        'pointRadius' => 0,
-                        'pointHoverRadius' => 4,
-                        'pointHoverBackgroundColor' => 'var(--ag-color-chart-1)',
-                    ]],
+                    'axisLabels' => [
+                        'revenue' => __('admin.dashboard.charts.revenue_axis'),
+                        'orders' => __('admin.dashboard.charts.orders_axis'),
+                    ],
+                    'datasets' => [
+                        [
+                            'label' => __('admin.dashboard.charts.revenue'),
+                            'data' => $revenueSeries['values'],
+                            'yAxisID' => 'y',
+                            'borderColor' => 'var(--ag-color-chart-1)',
+                            'backgroundColor' => 'var(--ag-color-primary-soft)',
+                            'pointBackgroundColor' => 'var(--ag-color-chart-1)',
+                            'fill' => true,
+                            'tension' => 0.3,
+                            'borderWidth' => 2.5,
+                            'pointRadius' => 0,
+                            'pointHoverRadius' => 4,
+                            'pointHoverBackgroundColor' => 'var(--ag-color-chart-1)',
+                        ],
+                        [
+                            'label' => __('admin.dashboard.charts.orders'),
+                            'data' => $orderSeries['values'],
+                            'yAxisID' => 'y1',
+                            'borderColor' => 'var(--ag-color-chart-2)',
+                            'backgroundColor' => 'var(--ag-color-chart-2)',
+                            'pointBackgroundColor' => 'var(--ag-color-chart-2)',
+                            'fill' => false,
+                            'tension' => 0.3,
+                            'borderWidth' => 2.5,
+                            'pointRadius' => 0,
+                            'pointHoverRadius' => 4,
+                            'pointHoverBackgroundColor' => 'var(--ag-color-chart-2)',
+                            'borderRadius' => 5,
+                        ],
+                    ],
                 ]))"
             >
                 <header class="ag-chart-card__header">
                     <div>
-                        <h2 id="revenue-chart-title" class="ag-chart-card__title">{{ __('admin.dashboard.charts.revenue') }}</h2>
-                        <p class="ag-chart-card__lede">{{ __('admin.dashboard.charts.revenue_lede') }}</p>
+                        <p class="ag-chart-card__eyebrow">{{ __('admin.dashboard.charts.eyebrow') }}</p>
+                        <h2 id="dashboard-chart-title" class="ag-chart-card__title">{{ __('admin.dashboard.charts.overview') }}</h2>
+                        <p class="ag-chart-card__lede">{{ __('admin.dashboard.charts.overview_lede') }}</p>
+                    </div>
+                    <div class="ag-chart-card__toolbar">
+                        <div class="ag-chart-control">
+                            <span id="dashboard-chart-range-label" class="ag-chart-control__label">{{ __('admin.dashboard.charts.range_label') }}</span>
+                            <div class="ag-tabs" role="group" aria-labelledby="dashboard-chart-range-label">
+                                @foreach ($chartRanges as $range => $label)
+                                    <button
+                                        type="button"
+                                        class="ag-tabs__tab @if ($chartRange === $range) ag-tabs__tab--active @endif"
+                                        aria-pressed="{{ $chartRange === $range ? 'true' : 'false' }}"
+                                        wire:click="setChartRange('{{ $range }}')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="setChartRange"
+                                    >
+                                        {{ $label }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="ag-chart-control">
+                            <span id="dashboard-chart-type-label" class="ag-chart-control__label">{{ __('admin.dashboard.charts.type_label') }}</span>
+                            <div class="ag-tabs" role="group" aria-labelledby="dashboard-chart-type-label">
+                                @foreach ($chartTypes as $type => $label)
+                                    <button
+                                        type="button"
+                                        class="ag-tabs__tab @if ($chartType === $type) ag-tabs__tab--active @endif"
+                                        aria-pressed="{{ $chartType === $type ? 'true' : 'false' }}"
+                                        wire:click="setChartType('{{ $type }}')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="setChartType"
+                                    >
+                                        {{ $label }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
                 </header>
-                @if (array_sum($revenueSeries['values']) === 0)
+                @if (array_sum($revenueSeries['values']) === 0 && array_sum($orderSeries['values']) === 0)
                     <div class="ag-empty" role="status">
                         <p class="ag-empty__title">{{ __('admin.dashboard.charts.empty_title') }}</p>
-                        <p class="ag-empty__text">{{ __('admin.dashboard.charts.empty_revenue') }}</p>
+                        <p class="ag-empty__text">{{ __('admin.dashboard.charts.empty_overview') }}</p>
                     </div>
                 @else
-                    <div class="ag-chart-card__canvas">
-                        <canvas x-ref="canvas" role="img" aria-label="{{ __('admin.dashboard.charts.revenue') }}"></canvas>
-                    </div>
-                @endif
-            </section>
-
-            <section
-                class="ag-chart-card"
-                aria-labelledby="orders-chart-title"
-                x-data="agChart(@js([
-                    'type' => 'bar',
-                    'labels' => $orderSeries['labels'],
-                    'datasets' => [[
-                        'label' => __('admin.dashboard.charts.orders'),
-                        'data' => $orderSeries['values'],
-                        'backgroundColor' => 'var(--ag-color-chart-2)',
-                        'borderColor' => 'var(--ag-color-chart-2)',
-                        'borderRadius' => 4,
-                        'borderWidth' => 1,
-                    ]],
-                ]))"
-            >
-                <header class="ag-chart-card__header">
-                    <div>
-                        <h2 id="orders-chart-title" class="ag-chart-card__title">{{ __('admin.dashboard.charts.orders') }}</h2>
-                        <p class="ag-chart-card__lede">{{ __('admin.dashboard.charts.orders_lede') }}</p>
-                    </div>
-                </header>
-                @if (array_sum($orderSeries['values']) === 0)
-                    <div class="ag-empty" role="status">
-                        <p class="ag-empty__title">{{ __('admin.dashboard.charts.empty_title') }}</p>
-                        <p class="ag-empty__text">{{ __('admin.dashboard.charts.empty_orders') }}</p>
-                    </div>
-                @else
-                    <div class="ag-chart-card__canvas">
-                        <canvas x-ref="canvas" role="img" aria-label="{{ __('admin.dashboard.charts.orders') }}"></canvas>
+                    <div class="ag-chart-card__canvas ag-chart-card__canvas--legend">
+                        <canvas x-ref="canvas" role="img" aria-label="{{ __('admin.dashboard.charts.overview') }}"></canvas>
                     </div>
                 @endif
             </section>

@@ -34,6 +34,52 @@ document.addEventListener('alpine:init', () => {
             const border = cssToken('--ag-color-border', '#e2e8f0');
             const text = cssToken('--ag-color-text', '#0f172a');
             const surface = cssToken('--ag-color-surface', '#ffffff');
+            const scaleDefaults = {
+                beginAtZero: true,
+                border: {
+                    display: false,
+                },
+                ticks: {
+                    color: muted,
+                    precision: 0,
+                },
+            };
+            const scales = config.dualAxis
+                ? {
+                    y: {
+                        ...scaleDefaults,
+                        title: {
+                            display: true,
+                            color: muted,
+                            text: config.axisLabels?.revenue || '',
+                        },
+                        grid: {
+                            color: border,
+                            borderDash: [4, 4],
+                        },
+                    },
+                    y1: {
+                        ...scaleDefaults,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            color: muted,
+                            text: config.axisLabels?.orders || '',
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    },
+                }
+                : {
+                    y: {
+                        ...scaleDefaults,
+                        grid: {
+                            color: border,
+                            borderDash: [4, 4],
+                        },
+                    },
+                };
 
             this.chart = new Chart(this.$refs.canvas, {
                 type: config.type || 'line',
@@ -75,6 +121,7 @@ document.addEventListener('alpine:init', () => {
                                 boxWidth: 12,
                                 boxHeight: 12,
                                 padding: 16,
+                                usePointStyle: true,
                             },
                         },
                         tooltip: {
@@ -85,7 +132,7 @@ document.addEventListener('alpine:init', () => {
                             borderWidth: 1,
                             padding: 10,
                             cornerRadius: 8,
-                            displayColors: false,
+                            displayColors: true,
                         },
                     },
                     scales: {
@@ -102,20 +149,7 @@ document.addEventListener('alpine:init', () => {
                                 autoSkipPadding: 12,
                             },
                         },
-                        y: {
-                            beginAtZero: true,
-                            border: {
-                                display: false,
-                            },
-                            grid: {
-                                color: border,
-                                borderDash: [4, 4],
-                            },
-                            ticks: {
-                                color: muted,
-                                precision: 0,
-                            },
-                        },
+                        ...scales,
                     },
                 },
             });

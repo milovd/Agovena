@@ -42,10 +42,9 @@ final class DashboardMetrics
      *     paidRevenueByCurrency: Collection<string, int>
      * }
      */
-    public function build(): array
+    public function build(string $chartRange = '14'): array
     {
-        $days = 14;
-        $from = CarbonImmutable::now()->subDays($days - 1)->startOfDay();
+        ['from' => $from, 'days' => $days] = $this->chartWindow($chartRange);
 
         $productCount = Product::query()->count();
         $activeProductCount = Product::query()->where('status', ProductStatus::Active)->count();
@@ -112,61 +111,18 @@ final class DashboardMetrics
             ],
         ];
 
-        if (auth()->user()?->can('tickets.view')) {
-            $metrics[] = [
-                'id' => 'tickets',
-                'label' => (string) __('admin.dashboard.stats.open_tickets'),
-                'value' => number_format($openTicketCount),
-                'hint' => null,
-                'href' => route('admin.tickets.index'),
-            ];
-        }
-
-        if ($this->modules->isEnabled('subscriptions') && Schema::hasTable('subscriptions')) {
-            $activeSubscriptions = DB::table('subscriptions')->where('status', 'active')->count();
-            $metrics[] = [
-                'id' => 'subscriptions',
-                'label' => (string) __('admin.dashboard.stats.active_subscriptions'),
-                'value' => number_format($activeSubscriptions),
-                'hint' => null,
-                'href' => auth()->user()?->can('subscriptions.view') ? route('admin.subscriptions.index') : null,
-            ];
-        }
-
-        if ($this->modules->isEnabled('provisioning') && Schema::hasTable('service_instances')) {
-            $activeServices = DB::table('service_instances')->where('status', 'active')->count();
-            $metrics[] = [
-                'id' => 'services',
-                'label' => (string) __('admin.dashboard.stats.active_services'),
-                'value' => number_format($activeServices),
-                'hint' => null,
-                'href' => auth()->user()?->can('provisioning.view') ? route('admin.provisioning.index') : null,
-            ];
-        }
-
-        if ($this->modules->isEnabled('inventory') && Schema::hasTable('inventory_stocks')) {
-            $lowStock = DB::table('inventory_stocks')->where('quantity', '<=', 5)->count();
-            $metrics[] = [
-                'id' => 'low_stock',
-                'label' => (string) __('admin.dashboard.stats.low_stock'),
-                'value' => number_format($lowStock),
-                'hint' => (string) __('admin.dashboard.stats.low_stock_hint'),
-                'href' => auth()->user()?->can('inventory.view') ? route('admin.inventory.index') : null,
-            ];
-        }
-
-        if ($this->modules->isEnabled('shipping') && Schema::hasTable('shipments')) {
-            $pendingFulfillment = DB::table('shipments')
-                ->whereIn('status', ['pending', 'processing'])
-                ->count();
-            $metrics[] = [
-                'id' => 'fulfillment',
-                'label' => (string) __('admin.dashboard.stats.pending_fulfillment'),
-                'value' => number_format($pendingFulfillment),
-                'hint' => null,
-                'href' => auth()->user()?->can('shipping.view') ? route('admin.shipping.methods') : null,
-            ];
-        }
+        $activeServices = $this->modules->isEnabled('provisioning') && Schema::hasTable('service_instances')
+            ? DB::table('service_instances')->where('status', 'active')->count()
+            : null;
+        $metrics[] = [
+            'id' => 'services',
+            'label' => (string) __('admin.dashboard.stats.active_services'),
+            'value' => $activeServices === null ? (string) __('common.em_dash') : number_format($activeServices),
+            'hint' => $activeServices === null ? (string) __('admin.dashboard.stats.services_unavailable') : null,
+            'href' => $activeServices !== null && auth()->user()?->can('provisioning.view')
+                ? route('admin.provisioning.index')
+                : null,
+        ];
 
         $attention = [];
         if ($pendingPaymentCount > 0 && auth()->user()?->can('orders.view')) {
@@ -306,6 +262,25 @@ final class DashboardMetrics
             'labels' => $labels,
             'values' => $values,
             'currency' => $currency,
+        ];
+    }
+
+    /**
+     * @return array{from: CarbonImmutable, days: int}
+     */
+    private function chartWindow(string $range): array
+    {
+        $today = CarbonImmutable::now()->startOfDay();
+        $from = match ($range) {
+            '7' => $today->subDays(6),
+            'month' => $today->startOfMonth(),
+            '90' => $today->subDays(89),
+            default => $today->subDays(13),
+        };
+
+        return [
+            'from' => $from,
+            'days' => (int) $from->diffInDays($today) + 1,
         ];
     }
 }
