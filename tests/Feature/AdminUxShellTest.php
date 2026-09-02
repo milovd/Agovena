@@ -62,18 +62,20 @@ test('dashboard keeps six focused metrics and one configurable chart', function 
 
     expect(substr_count($html, 'class="ag-metric"'))->toBe(6)
         ->and(substr_count($html, 'x-data="agChart'))->toBe(1)
-        ->and(substr_count($html, 'aria-pressed="true"'))->toBe(2)
+        ->and(substr_count($html, 'aria-pressed="true"'))->toBe(1)
         ->and($html)->toContain(htmlspecialchars((string) __('admin.dashboard.charts.overview'), ENT_QUOTES, 'UTF-8'))
         ->and($html)->toContain('wire:click="setChartRange(\'7\')"')
         ->and($html)->toContain('wire:click="setChartRange(\'month\')"')
-        ->and($html)->toContain('wire:click="setChartType(\'bar\')"')
+        ->and($html)->toContain('id="dashboard-chart-type"')
+        ->and($html)->toContain('wire:model.live="chartType"')
+        ->and($html)->toContain('var(--ag-color-chart-4)')
         ->and($html)->not->toContain(__('admin.dashboard.stats.open_tickets'), false);
 
     $component
         ->call('setChartRange', '7')
         ->assertSet('chartRange', '7')
         ->assertSee('dashboard-chart-7-line', false)
-        ->call('setChartType', 'bar')
+        ->set('chartType', 'bar')
         ->assertSet('chartType', 'bar')
         ->assertSee('dashboard-chart-7-bar', false);
 });

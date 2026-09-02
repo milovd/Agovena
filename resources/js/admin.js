@@ -118,10 +118,10 @@ document.addEventListener('alpine:init', () => {
                             position: 'bottom',
                             labels: {
                                 color: muted,
-                                boxWidth: 12,
-                                boxHeight: 12,
+                                boxWidth: 18,
+                                boxHeight: 8,
                                 padding: 16,
-                                usePointStyle: true,
+                                usePointStyle: false,
                             },
                         },
                         tooltip: {

@@ -179,6 +179,11 @@
   font-size: var(--ag-font-size-xs);
 }
 
+.ag-chart-control .ag-select {
+  min-width: 8.5rem;
+  max-width: 12rem;
+}
+
 .ag-chart-card__title {
   margin: 0;
   font-size: 0.95rem;

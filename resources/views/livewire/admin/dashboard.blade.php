@@ -108,15 +108,15 @@
                             'label' => __('admin.dashboard.charts.orders'),
                             'data' => $orderSeries['values'],
                             'yAxisID' => 'y1',
-                            'borderColor' => 'var(--ag-color-chart-2)',
-                            'backgroundColor' => 'var(--ag-color-chart-2)',
-                            'pointBackgroundColor' => 'var(--ag-color-chart-2)',
+                            'borderColor' => 'var(--ag-color-chart-4)',
+                            'backgroundColor' => 'var(--ag-color-chart-4)',
+                            'pointBackgroundColor' => 'var(--ag-color-chart-4)',
                             'fill' => false,
                             'tension' => 0.3,
                             'borderWidth' => 2.5,
                             'pointRadius' => 0,
                             'pointHoverRadius' => 4,
-                            'pointHoverBackgroundColor' => 'var(--ag-color-chart-2)',
+                            'pointHoverBackgroundColor' => 'var(--ag-color-chart-4)',
                             'borderRadius' => 5,
                         ],
                     ],
@@ -147,21 +147,17 @@
                             </div>
                         </div>
                         <div class="ag-chart-control">
-                            <span id="dashboard-chart-type-label" class="ag-chart-control__label">{{ __('admin.dashboard.charts.type_label') }}</span>
-                            <div class="ag-tabs" role="group" aria-labelledby="dashboard-chart-type-label">
+                            <label class="ag-chart-control__label" for="dashboard-chart-type">{{ __('admin.dashboard.charts.type_label') }}</label>
+                            <select
+                                id="dashboard-chart-type"
+                                class="ag-select"
+                                wire:model.live="chartType"
+                                wire:loading.attr="disabled"
+                            >
                                 @foreach ($chartTypes as $type => $label)
-                                    <button
-                                        type="button"
-                                        class="ag-tabs__tab @if ((string) $chartType === (string) $type) ag-tabs__tab--active @endif"
-                                        aria-pressed="{{ (string) $chartType === (string) $type ? 'true' : 'false' }}"
-                                        wire:click="setChartType('{{ $type }}')"
-                                        wire:loading.attr="disabled"
-                                        wire:target="setChartType"
-                                    >
-                                        {{ $label }}
-                                    </button>
+                                    <option value="{{ $type }}">{{ $label }}</option>
                                 @endforeach
-                            </div>
+                            </select>
                         </div>
                     </div>
                 </header>

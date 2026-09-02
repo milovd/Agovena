@@ -45,14 +45,6 @@ final class Dashboard extends Component
         $this->chartRange = $range;
     }
 
-    public function setChartType(string $type): void
-    {
-        $this->authorize('dashboard.view');
-        abort_unless(in_array($type, self::CHART_TYPES, true), 404);
-
-        $this->chartType = $type;
-    }
-
     public function render(AdminRegistrar $admin, GettingStartedChecklist $gettingStarted, DashboardMetrics $metrics)
     {
         $this->normalizeChartState();
