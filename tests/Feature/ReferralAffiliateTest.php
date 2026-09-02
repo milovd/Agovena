@@ -131,6 +131,7 @@ it('shows affiliate link and conversion statistics in the customer tab', functio
         ->assertSee(__('customer.referrals.link_clicks'), false)
         ->assertSee(__('customer.referrals.paid_purchases'), false)
         ->assertSee(__('customer.referrals.earned_rewards'), false)
+        ->assertDontSee('Every click counts, including repeat visits.', false)
         ->assertSee(__('customer.referrals.share_heading'), false)
         ->assertSee('store-referral-stat__icon', false)
         ->assertSee('store-referral-link__label', false)

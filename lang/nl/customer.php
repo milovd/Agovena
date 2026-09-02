@@ -186,7 +186,6 @@ return [
         'window_label' => 'dagen om te kopen',
         'stats_label' => 'Affiliateprestaties',
         'link_clicks' => 'Linkkliks',
-        'link_clicks_hint' => 'Elke klik telt, ook herhaalde bezoeken.',
         'link_visits' => 'Bereikte mensen',
         'link_visits_hint' => 'Unieke bezoekers; elke bezoeker telt één keer.',
         'paid_purchases' => 'Aankopen via link',

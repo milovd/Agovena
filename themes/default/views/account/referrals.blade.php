@@ -23,7 +23,6 @@
                 <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="share-2" :size="18" /></span>
                 <strong class="store-referral-stat__value">{{ $linkClicks }}</strong>
                 <span class="store-referral-stat__label">{{ __('customer.referrals.link_clicks') }}</span>
-                <span class="store-referral-stat__hint">{{ __('customer.referrals.link_clicks_hint') }}</span>
             </article>
             <article class="store-referral-stat">
                 <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="shopping-bag" :size="18" /></span>

@@ -7063,12 +7063,6 @@ a.store-order-card__item-title:focus-visible {
   white-space: nowrap;
 }
 
-.store-referral-stat__hint {
-  color: var(--theme-color-text-muted);
-  font-size: 0.6875rem;
-  line-height: 1.4;
-}
-
 .store-referral-link {
   display: grid;
   grid-template-columns: minmax(0, 0.95fr) minmax(18rem, 1.05fr);

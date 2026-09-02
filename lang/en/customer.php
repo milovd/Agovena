@@ -186,7 +186,6 @@ return [
         'window_label' => 'days to purchase',
         'stats_label' => 'Affiliate performance',
         'link_clicks' => 'Link clicks',
-        'link_clicks_hint' => 'Every click counts, including repeat visits.',
         'link_visits' => 'People reached',
         'link_visits_hint' => 'Unique visitors; each visitor counts once.',
         'paid_purchases' => 'Purchases via link',
