@@ -48,9 +48,9 @@
             <p class="ag-card__description">{{ __('admin.backups.schedule_description') }}</p>
         </header>
         <div class="ag-card__content">
-            <form class="ag-form" wire:submit="saveSchedule">
-                <div class="ag-form__row">
-                    <div class="ag-field">
+            <form class="ag-form ag-backup-schedule" wire:submit="saveSchedule">
+                <div class="ag-backup-schedule__grid">
+                    <div class="ag-field ag-backup-schedule__interval">
                         <label class="ag-field__label" for="backup-interval">{{ __('admin.backups.interval_label') }}</label>
                         <select id="backup-interval" class="ag-input" wire:model="backupInterval">
                             @foreach ($intervalOptions as $value => $label)
@@ -63,14 +63,16 @@
                     </div>
 
                     <div class="ag-field ag-backup-schedule__status">
-                        <span class="ag-field__label">{{ __('admin.backups.cron_status') }}</span>
-                        @if ($backupInterval === 'disabled')
-                            <span class="ag-badge ag-badge--muted">{{ __('admin.backups.cron_disabled') }}</span>
-                        @elseif ($schedulerHealthy)
-                            <span class="ag-badge ag-badge--success">{{ __('admin.backups.cron_active') }}</span>
-                        @else
-                            <span class="ag-badge ag-badge--warning">{{ __('admin.backups.cron_attention') }}</span>
-                        @endif
+                        <div class="ag-backup-schedule__status-head">
+                            <span class="ag-field__label">{{ __('admin.backups.cron_status') }}</span>
+                            @if ($backupInterval === 'disabled')
+                                <span class="ag-badge ag-badge--muted">{{ __('admin.backups.cron_disabled') }}</span>
+                            @elseif ($schedulerHealthy)
+                                <span class="ag-badge ag-badge--success">{{ __('admin.backups.cron_active') }}</span>
+                            @else
+                                <span class="ag-badge ag-badge--warning">{{ __('admin.backups.cron_attention') }}</span>
+                            @endif
+                        </div>
                         <p class="ag-field__help">
                             @if ($schedulerLastHeartbeat)
                                 {{ __('admin.backups.cron_last_run', ['time' => $schedulerLastHeartbeat->format('Y-m-d H:i')]) }}
@@ -81,13 +83,16 @@
                     </div>
                 </div>
 
-                <div class="ag-form__actions">
+                <div class="ag-backup-schedule__footer">
                     @can('backups.manage')
                         <button type="submit" class="ag-btn ag-btn--secondary" wire:loading.attr="disabled" wire:target="saveSchedule">
                             {{ __('admin.backups.save_schedule') }}
                         </button>
                     @endcan
-                    <p class="ag-form__hint">{{ __('admin.backups.cron_hint') }}</p>
+                    <p class="ag-backup-schedule__hint">
+                        <x-ag.icon name="calendar" :size="15" />
+                        <span>{{ __('admin.backups.cron_hint') }}</span>
+                    </p>
                 </div>
             </form>
         </div>
@@ -99,18 +104,27 @@
             <p class="ag-card__description">{{ __('admin.backups.storage_description') }}</p>
         </header>
         <div class="ag-card__content">
-            <dl class="ag-dl">
-                <div>
-                    <dt>{{ __('admin.backups.storage_label') }}</dt>
-                    <dd>{{ $diskName }}</dd>
+            <dl class="ag-backup-storage">
+                <div class="ag-backup-storage__item">
+                    <span class="ag-backup-storage__icon" aria-hidden="true"><x-ag.icon name="server" :size="17" /></span>
+                    <div class="ag-backup-storage__copy">
+                        <dt>{{ __('admin.backups.storage_label') }}</dt>
+                        <dd>{{ $diskName }}</dd>
+                    </div>
                 </div>
-                <div>
-                    <dt>{{ __('admin.backups.directory_label') }}</dt>
-                    <dd>{{ $directory !== '' ? $directory : '/' }}</dd>
+                <div class="ag-backup-storage__item">
+                    <span class="ag-backup-storage__icon" aria-hidden="true"><x-ag.icon name="folders" :size="17" /></span>
+                    <div class="ag-backup-storage__copy">
+                        <dt>{{ __('admin.backups.directory_label') }}</dt>
+                        <dd>{{ $directory !== '' ? $directory : '/' }}</dd>
+                    </div>
                 </div>
-                <div>
-                    <dt>{{ __('admin.backups.encryption_label') }}</dt>
-                    <dd><span class="ag-badge ag-badge--success">{{ __('admin.backups.encrypted') }}</span></dd>
+                <div class="ag-backup-storage__item ag-backup-storage__item--protected">
+                    <span class="ag-backup-storage__icon" aria-hidden="true"><x-ag.icon name="shield" :size="17" /></span>
+                    <div class="ag-backup-storage__copy">
+                        <dt>{{ __('admin.backups.encryption_label') }}</dt>
+                        <dd><span class="ag-badge ag-badge--success">{{ __('admin.backups.encrypted') }}</span></dd>
+                    </div>
                 </div>
             </dl>
         </div>
@@ -141,14 +155,28 @@
                                 <td>{{ date('Y-m-d H:i', $file['modifiedAt']) }}</td>
                                 <td>{{ number_format($file['size'] / 1024, 1) }} KB</td>
                                 <td><span class="ag-badge ag-badge--success">{{ __('admin.backups.encrypted') }}</span></td>
-                                <td>
+                                <td class="ag-table__actions">
                                     @can('backups.manage')
-                                        <div class="ag-actions">
-                                            <button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="restoreBackup('{{ $file['path'] }}')" wire:confirm="{{ __('admin.backups.restore_confirm') }}">
-                                                {{ __('admin.backups.restore') }}
+                                        <div class="ag-row-actions">
+                                            <button
+                                                type="button"
+                                                class="ag-icon-btn"
+                                                wire:click="restoreBackup('{{ $file['path'] }}')"
+                                                wire:confirm="{{ __('admin.backups.restore_confirm') }}"
+                                                title="{{ __('admin.backups.restore_aria', ['name' => $file['name']]) }}"
+                                                aria-label="{{ __('admin.backups.restore_aria', ['name' => $file['name']]) }}"
+                                            >
+                                                <x-ag.icon name="rotate-ccw" :size="16" />
                                             </button>
-                                            <button type="button" class="ag-btn ag-btn--danger-outline ag-btn--sm" wire:click="deleteBackup('{{ $file['path'] }}')" wire:confirm="{{ __('admin.backups.delete_confirm') }}">
-                                                {{ __('admin.backups.delete') }}
+                                            <button
+                                                type="button"
+                                                class="ag-icon-btn ag-icon-btn--danger"
+                                                wire:click="deleteBackup('{{ $file['path'] }}')"
+                                                wire:confirm="{{ __('admin.backups.delete_confirm') }}"
+                                                title="{{ __('admin.backups.delete_aria', ['name' => $file['name']]) }}"
+                                                aria-label="{{ __('admin.backups.delete_aria', ['name' => $file['name']]) }}"
+                                            >
+                                                <x-ag.icon name="trash" :size="16" />
                                             </button>
                                         </div>
                                     @endcan
