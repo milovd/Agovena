@@ -5,12 +5,69 @@
             <h1 class="admin-page__heading">{{ __('admin.referrals.title') }}</h1>
             <p class="admin-page__lede">{{ __('admin.referrals.lede') }}</p>
         </div>
+        @can('referrals.manage')
+            <div class="admin-page__actions">
+                <button type="button" class="ag-btn ag-btn--primary" wire:click="createCode">
+                    {{ __('admin.referrals.add_code') }}
+                </button>
+            </div>
+        @endcan
     </header>
 
     @if (session('status'))
         <div class="ag-alert ag-alert--success" role="status" aria-live="polite">
             <div class="ag-alert__body">{{ session('status') }}</div>
         </div>
+    @endif
+
+    @if ($showCodeForm)
+        <section class="admin-panel" aria-labelledby="new-referral-code-heading">
+            <h2 id="new-referral-code-heading" class="admin-panel__title">{{ __('admin.referrals.new_code') }}</h2>
+            <form wire:submit="saveCode" class="ag-form" novalidate>
+                <div class="ag-grid ag-grid--2">
+                    <div class="ag-field ag-combobox">
+                        <label class="ag-field__label" for="referral-code-customer">{{ __('admin.referrals.customer') }}</label>
+                        <input id="referral-code-customer" class="ag-input" type="search" wire:model.live.debounce.300ms="customerSearch" role="combobox" aria-autocomplete="list" aria-controls="referral-customer-options" aria-expanded="{{ $customerId === null && $customers->isNotEmpty() ? 'true' : 'false' }}" placeholder="{{ __('admin.referrals.customer_placeholder') }}" autocomplete="off" required>
+                        <p class="ag-field__help">{{ __('admin.referrals.customer_help') }}</p>
+                        @if ($customerId === null && $customers->isNotEmpty())
+                            <div id="referral-customer-options" class="ag-combobox__options" role="listbox">
+                                @foreach ($customers as $customer)
+                                    <button type="button" class="ag-combobox__option" role="option" wire:click="selectCustomer({{ $customer->id }})">
+                                        <span>{{ $customer->name }}</span>
+                                        <span class="ag-combobox__option-email">{{ $customer->email }}</span>
+                                    </button>
+                                @endforeach
+                            </div>
+                        @elseif ($customerSearch !== '' && $customerId === null)
+                            <p class="ag-field__help">{{ __('admin.referrals.no_customers') }}</p>
+                        @endif
+                        @error('customerId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="referral-code-value">{{ __('admin.referrals.code') }}</label>
+                        <input id="referral-code-value" class="ag-input" type="text" wire:model="newCode" required maxlength="64" autocomplete="off">
+                        <p class="ag-field__help">{{ __('admin.referrals.code_help') }}</p>
+                        @error('newCode') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="referral-code-max-uses">{{ __('admin.referrals.max_uses') }}</label>
+                        <input id="referral-code-max-uses" class="ag-input" type="number" min="1" wire:model.number="maxUses">
+                        <p class="ag-field__help">{{ __('admin.referrals.max_uses_help') }}</p>
+                        @error('maxUses') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="referral-code-expires-at">{{ __('admin.referrals.expires_at') }}</label>
+                        <input id="referral-code-expires-at" class="ag-input" type="datetime-local" wire:model="expiresAt">
+                        <p class="ag-field__help">{{ __('admin.referrals.expires_at_help') }}</p>
+                        @error('expiresAt') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+                <div class="ag-form__actions">
+                    <button type="submit" class="ag-btn ag-btn--primary">{{ __('common.save') }}</button>
+                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelCode">{{ __('common.cancel') }}</button>
+                </div>
+            </form>
+        </section>
     @endif
 
     <div class="admin-dashboard">
