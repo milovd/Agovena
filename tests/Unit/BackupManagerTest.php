@@ -94,6 +94,9 @@ it('deletes only encrypted database artifacts inside the configured backup direc
 });
 
 it('restores a verified sqlite backup over the configured database', function (): void {
+    $originalDefault = config('database.default');
+    $originalConnection = config('database.connections.restore_target');
+
     Storage::fake('local');
     config()->set('agovena.backups.disk', 'local');
     config()->set('agovena.backups.directory', 'testing-backups');
@@ -112,8 +115,6 @@ it('restores a verified sqlite backup over the configured database', function ()
     $targetDatabase->exec('CREATE TABLE old_records (id INTEGER PRIMARY KEY)');
     $targetDatabase->close();
 
-    $originalDefault = config('database.default');
-    $originalConnection = config('database.connections.restore_target');
     config()->set('database.connections.restore_target', [
         'driver' => 'sqlite',
         'database' => (string) $target,

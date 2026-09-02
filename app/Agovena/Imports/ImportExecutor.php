@@ -587,7 +587,7 @@ final class ImportExecutor
             ]);
             $model->save();
 
-            return [$serviceClass, (int) $model->getKey()];
+            return [get_class($model), (int) $model->getKey()];
         });
     }
 
