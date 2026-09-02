@@ -14,10 +14,6 @@ final class PackageAutoload
     public function register(string $packagePath, array $psr4): void
     {
         $loader = $this->classLoader();
-        if ($loader === null) {
-            return;
-        }
-
         $root = rtrim($packagePath, '/\\').DIRECTORY_SEPARATOR;
         foreach ($psr4 as $prefix => $relative) {
             if (! str_ends_with($prefix, '\\') || str_contains($relative, '..')) {
@@ -29,7 +25,25 @@ final class PackageAutoload
                 continue;
             }
 
-            $loader->addPsr4($prefix, $dir);
+            if ($loader !== null) {
+                $loader->addPsr4($prefix, $dir);
+            }
+
+            spl_autoload_register(static function (string $class) use ($prefix, $dir): void {
+                if (! str_starts_with($class, $prefix)) {
+                    return;
+                }
+
+                $relativeClass = substr($class, strlen($prefix));
+                if ($relativeClass === '' || str_contains($relativeClass, '..')) {
+                    return;
+                }
+
+                $file = $dir.DIRECTORY_SEPARATOR.str_replace('\\', DIRECTORY_SEPARATOR, $relativeClass).'.php';
+                if (is_file($file)) {
+                    require_once $file;
+                }
+            });
         }
     }
 

@@ -215,7 +215,7 @@ final class ImportExecutor
             'year' => $start->copy()->addYears((int) $intervalCount),
             default => $start->copy()->addMonths((int) $intervalCount),
         };
-        $subscription = app($modelClass);
+        $subscription = $this->resolveImportedModel($modelClass);
         if (! $subscription instanceof Model) {
             throw new InvalidArgumentException('The subscriptions provider is invalid.');
         }
@@ -523,7 +523,7 @@ final class ImportExecutor
     private function createServiceInstance(ImportCandidate $candidate): array
     {
         $serviceClass = 'Agovena\\Modules\\Provisioning\\Models\\ServiceInstance';
-        if (! $this->modules->isEnabled('provisioning') || ! class_exists($serviceClass) || ! is_a($serviceClass, Model::class, true)) {
+        if (! $this->modules->isEnabled('provisioning') || ! class_exists($serviceClass) || ! $this->isEloquentModelClass($serviceClass)) {
             throw new InvalidArgumentException('The provisioning module must be enabled before importing service instances.');
         }
 
@@ -547,7 +547,7 @@ final class ImportExecutor
                     throw new InvalidArgumentException('The subscriptions module must be enabled before mapping a service subscription.');
                 }
                 $subscriptionId = $this->findImportedRow($this->sourceKey($subscriptionExternalId, $source), $subscriptionClass, $source)->imported_model_id;
-                $subscription = $subscriptionClass::query()->find((int) $subscriptionId);
+                $subscription = $this->findImportedModel($subscriptionClass, (int) $subscriptionId);
                 if (! $subscription instanceof Model) {
                     throw new InvalidArgumentException('Imported subscription mapping is unavailable.');
                 }
@@ -565,7 +565,7 @@ final class ImportExecutor
             if (DB::table('service_instances')->where('number', $number)->exists()) {
                 throw new InvalidArgumentException('Imported service instance number already exists.');
             }
-            $model = app($serviceClass);
+            $model = $this->resolveImportedModel($serviceClass);
             if (! $model instanceof Model) {
                 throw new InvalidArgumentException('The provisioning provider is invalid.');
             }
@@ -589,6 +589,21 @@ final class ImportExecutor
 
             return [$serviceClass, (int) $model->getKey()];
         });
+    }
+
+    private function resolveImportedModel(string $class): mixed
+    {
+        return app($class);
+    }
+
+    private function findImportedModel(string $class, int $id): mixed
+    {
+        return $class::query()->find($id);
+    }
+
+    private function isEloquentModelClass(string $class): bool
+    {
+        return is_a($class, Model::class, true);
     }
 
     private function importedCustomer(ImportCandidate $candidate, string $source): Customer

@@ -68,6 +68,9 @@ final class Index extends Component
         $headlinePercentage = $primaryCode === null
             ? $referrals->defaultRewardPercentage()
             : ($primaryCode->reward_percentage ?? $referrals->defaultRewardPercentage());
+        $headlineWindowDays = $primaryCode === null
+            ? $referrals->defaultWindowDays()
+            : (int) ($primaryCode->getAttribute('effective_window_days') ?? $referrals->defaultWindowDays());
 
         return view($theme->view('account.referrals'), [
             'theme' => $theme,
@@ -78,7 +81,7 @@ final class Index extends Component
             'defaultRewardPercentage' => $referrals->defaultRewardPercentage(),
             'headlinePercentage' => $headlinePercentage,
             'defaultWindowDays' => $referrals->defaultWindowDays(),
-            'headlineWindowDays' => $primaryCode?->effective_window_days ?? $referrals->defaultWindowDays(),
+            'headlineWindowDays' => $headlineWindowDays,
             'referralLink' => $primaryCode !== null ? $referrals->linkFor($primaryCode) : null,
             'linkClicks' => (int) $codes->sum('visits_sum_clicks_count'),
             'uniqueVisitors' => (int) $codes->sum('visits_count'),

@@ -1,3 +1,13 @@
+@php
+    $supportTicketCount = $supportTicketCount ?? 0;
+    $supportTickets = $supportTickets ?? collect();
+    $supportTicketsAvailable = $supportTicketsAvailable ?? false;
+    $activeUserCount = $activeUserCount ?? 0;
+    $activeUsers = $activeUsers ?? [];
+    $activeUsersAvailable = $activeUsersAvailable ?? false;
+    $activeUsersHasMore = $activeUsersHasMore ?? false;
+@endphp
+
 <section class="admin-dashboard" aria-label="{{ __('admin.dashboard.aria') }}">
     <x-ag.page-header :heading="__('admin.dashboard.heading')" :lede="__('admin.dashboard.lede')" />
 
