@@ -3,7 +3,6 @@
 declare(strict_types=1);
 
 use App\Agovena\Payments\PaymentGatewayRegistry;
-use App\Agovena\Settings\SettingsRepository;
 use App\Enums\InvoiceStatus;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -39,38 +38,6 @@ test('catalog endpoints are public and paginated', function () {
     $this->getJson('/api/v1/openapi.json')
         ->assertOk()
         ->assertJsonPath('openapi', '3.0.3');
-});
-
-test('api ip allowlist permits every address when empty and only listed addresses when configured', function () {
-    app(SettingsRepository::class)->set('api', 'ip_allowlist', []);
-
-    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
-        ->getJson('/api/v1/products')
-        ->assertOk();
-
-    app(SettingsRepository::class)->set('api', 'ip_allowlist', ['203.0.113.10']);
-
-    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.10'])
-        ->getJson('/api/v1/products')
-        ->assertOk();
-
-    $this->withServerVariables([
-        'REMOTE_ADDR' => '203.0.113.11',
-        'HTTP_X_FORWARDED_FOR' => '203.0.113.10',
-    ])
-        ->getJson('/api/v1/products')
-        ->assertForbidden()
-        ->assertJsonPath('code', 'ip_not_allowed');
-});
-
-test('api ip allowlist rejection follows the configured site locale', function () {
-    app(SettingsRepository::class)->set('general', 'locale', 'nl');
-    app(SettingsRepository::class)->set('api', 'ip_allowlist', ['203.0.113.10']);
-
-    $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.11'])
-        ->getJson('/api/v1/products')
-        ->assertForbidden()
-        ->assertJsonPath('message', __('api.ip_not_allowed', [], 'nl'));
 });
 
 test('token auth returns the secret once and scopes orders to the owner', function () {

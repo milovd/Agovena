@@ -8,7 +8,6 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Api\ApiIpAllowlist;
 use App\Agovena\Api\ApiTokenAbilities;
 use App\Agovena\Audit\AuditLogger;
-use App\Agovena\Settings\SettingsRepository;
 use App\Livewire\Concerns\ManagesPersonalApiTokens;
 use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\User;
@@ -22,21 +21,6 @@ final class ApiTokens extends Component
     use ManagesPersonalApiTokens;
     use RequiresRecentPassword {
         confirmRecentPassword as protected confirmRecentPasswordAfterAuthorization;
-    }
-
-    public string $apiIpAllowlist = '';
-
-    public function mount(SettingsRepository $settings, ApiIpAllowlist $allowlist): void
-    {
-        $this->authorize('api.tokens');
-        try {
-            $this->apiIpAllowlist = implode(PHP_EOL, $allowlist->normalizeStored(
-                $settings->get(ApiIpAllowlist::GROUP, ApiIpAllowlist::KEY, []),
-            ));
-        } catch (\InvalidArgumentException) {
-            $this->apiIpAllowlist = '';
-            $this->addError('apiIpAllowlist', __('admin.api_tokens.ip_allowlist_invalid'));
-        }
     }
 
     public function create(): void
@@ -114,47 +98,6 @@ final class ApiTokens extends Component
             'title' => __('admin.api_tokens.title'),
             'navigation' => $admin->navigationItems(),
         ]);
-    }
-
-    public function saveIpAllowlist(SettingsRepository $settings, ApiIpAllowlist $allowlist, AuditLogger $audit): void
-    {
-        $this->authorize('api.tokens');
-
-        if (! $this->requireRecentPassword('saveIpAllowlist')) {
-            return;
-        }
-
-        $this->validate([
-            'apiIpAllowlist' => ['nullable', 'string', 'max:5000'],
-        ]);
-
-        try {
-            $ips = $allowlist->parse($this->apiIpAllowlist);
-        } catch (\InvalidArgumentException) {
-            $this->addError('apiIpAllowlist', __('admin.api_tokens.ip_allowlist_invalid'));
-
-            return;
-        }
-
-        try {
-            $previous = $allowlist->normalizeStored(
-                $settings->get(ApiIpAllowlist::GROUP, ApiIpAllowlist::KEY, []),
-            );
-        } catch (\InvalidArgumentException) {
-            $previous = null;
-        }
-        $settings->set(ApiIpAllowlist::GROUP, ApiIpAllowlist::KEY, $ips);
-        $audit->log('security.api_ip_allowlist_updated', $this->tokenOwner(), [
-            'ip_count' => count($ips),
-            'mode' => $ips === [] ? 'allow_all' : 'allow_list',
-        ], [
-            'ip_count' => is_array($previous) ? count($previous) : 0,
-            'mode' => $previous === null ? 'invalid' : ($previous === [] ? 'allow_all' : 'allow_list'),
-        ], [
-            'ip_count' => count($ips),
-            'mode' => $ips === [] ? 'allow_all' : 'allow_list',
-        ]);
-        session()->flash('status', __('admin.api_tokens.ip_allowlist_saved'));
     }
 
     protected function tokenOwner(): User

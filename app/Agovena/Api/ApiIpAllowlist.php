@@ -6,10 +6,6 @@ namespace App\Agovena\Api;
 
 final class ApiIpAllowlist
 {
-    public const GROUP = 'api';
-
-    public const KEY = 'ip_allowlist';
-
     private const MAX_ENTRIES = 256;
 
     /**

@@ -2,9 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Agovena\Api\ApiIpAllowlist;
 use App\Agovena\Api\ApiTokenAbilities;
-use App\Agovena\Settings\SettingsRepository;
 use App\Livewire\Admin\System\ApiTokens;
 use App\Models\Customer;
 use Livewire\Livewire;
@@ -183,18 +181,4 @@ test('api token ip policy is isolated per token and an empty policy allows every
         ->withServerVariables(['REMOTE_ADDR' => '198.51.100.50'])
         ->getJson('/api/v1/me')
         ->assertOk();
-});
-
-test('empty token ip policy cannot bypass the global api ip policy', function () {
-    $customer = Customer::factory()->create();
-    $created = $customer->user->createToken('Open token', ['account.read']);
-    $created->accessToken->forceFill(['ip_allowlist' => []])->save();
-
-    app(SettingsRepository::class)->set(ApiIpAllowlist::GROUP, ApiIpAllowlist::KEY, ['203.0.113.10']);
-
-    $this->withToken($created->plainTextToken)
-        ->withServerVariables(['REMOTE_ADDR' => '203.0.113.11'])
-        ->getJson('/api/v1/me')
-        ->assertForbidden()
-        ->assertJsonPath('code', 'ip_not_allowed');
 });

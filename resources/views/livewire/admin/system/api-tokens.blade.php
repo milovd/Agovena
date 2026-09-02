@@ -202,34 +202,5 @@
         </div>
     </section>
 
-    <section class="ag-section" aria-labelledby="api-ip-policy-title">
-        <header class="ag-section__header">
-            <h2 id="api-ip-policy-title" class="ag-section__title">{{ __('admin.api_tokens.ip_allowlist_heading') }}</h2>
-            <p class="ag-section__lede">{{ __('admin.api_tokens.ip_allowlist_lede') }}</p>
-        </header>
-        <div class="ag-section__body">
-            <form class="ag-form" wire:submit="saveIpAllowlist">
-                <div class="ag-field">
-                    <label class="ag-field__label" for="api-ip-allowlist">{{ __('admin.api_tokens.ip_allowlist_label') }}</label>
-                    <textarea
-                        id="api-ip-allowlist"
-                        class="ag-input ag-input--area"
-                        rows="5"
-                        wire:model="apiIpAllowlist"
-                        placeholder="203.0.113.10&#10;2001:db8::1"
-                        spellcheck="false"
-                    ></textarea>
-                    <p class="ag-field__help">{{ __('admin.api_tokens.ip_allowlist_help') }}</p>
-                    @error('apiIpAllowlist') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                </div>
-                <div class="ag-form__actions">
-                    <button class="ag-btn ag-btn--secondary" type="submit" wire:loading.attr="disabled">
-                        {{ __('admin.api_tokens.ip_allowlist_save') }}
-                    </button>
-                </div>
-            </form>
-        </div>
-    </section>
-
     @include('livewire.admin.partials.confirm-password-modal')
 </div>

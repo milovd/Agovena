@@ -115,69 +115,20 @@ test('settings persist via repository and admin screen', function () {
         ->assertSee('Acme Commerce', false);
 });
 
-test('api token screen renders the ip access policy card', function () {
+test('api token screen renders the per-token ip editor', function () {
     $staff = $this->createStaff();
 
     $this->actingAs($staff)
         ->get(route('admin.api-tokens'))
         ->assertOk()
-        ->assertSee(__('admin.api_tokens.ip_allowlist_heading'), false)
-        ->assertSee('api-ip-allowlist', false)
-        ->assertSee(__('admin.api_tokens.ip_allowlist_save'), false);
-});
-
-test('api token screen saves a normalized api ip allowlist after password confirmation', function () {
-    $staff = $this->createStaff();
+        ->assertSee(__('admin.api_tokens.add'), false)
+        ->assertDontSee('api-ip-allowlist', false)
+        ->assertDontSee('API access by IP address', false);
 
     Livewire::actingAs($staff)
         ->test(ApiTokens::class)
-        ->set('apiIpAllowlist', "203.0.113.10\n2001:0db8:0:0:0:0:0:1")
-        ->call('saveIpAllowlist')
-        ->assertSet('showingPasswordConfirmation', true)
-        ->set('recentPassword', 'password')
-        ->call('confirmRecentPassword')
-        ->assertHasNoErrors();
-
-    expect(app(SettingsRepository::class)->get('api', 'ip_allowlist'))->toBe([
-        '203.0.113.10',
-        '2001:db8::1',
-    ]);
-});
-
-test('api token screen rejects invalid api ip allowlist entries', function () {
-    $staff = $this->createStaff();
-
-    Livewire::actingAs($staff)
-        ->test(ApiTokens::class)
-        ->set('apiIpAllowlist', 'not-an-ip')
-        ->call('saveIpAllowlist')
-        ->set('recentPassword', 'password')
-        ->call('confirmRecentPassword')
-        ->assertHasErrors(['apiIpAllowlist']);
-});
-
-test('api token screen exposes a repairable error for a corrupt stored ip allowlist', function () {
-    $staff = $this->createStaff();
-    app(SettingsRepository::class)->set('api', 'ip_allowlist', ['not-an-ip']);
-
-    Livewire::actingAs($staff)
-        ->test(ApiTokens::class)
-        ->assertHasErrors(['apiIpAllowlist']);
-});
-
-test('api token screen can replace a corrupt stored ip allowlist', function () {
-    $staff = $this->createStaff();
-    app(SettingsRepository::class)->set('api', 'ip_allowlist', ['not-an-ip']);
-
-    Livewire::actingAs($staff)
-        ->test(ApiTokens::class)
-        ->set('apiIpAllowlist', '203.0.113.10')
-        ->call('saveIpAllowlist')
-        ->set('recentPassword', 'password')
-        ->call('confirmRecentPassword')
-        ->assertHasNoErrors();
-
-    expect(app(SettingsRepository::class)->get('api', 'ip_allowlist'))->toBe(['203.0.113.10']);
+        ->call('create')
+        ->assertSee('token-ip-allowlist', false);
 });
 
 test('api token creation completes after recent password confirmation', function () {
@@ -239,20 +190,16 @@ test('api token actions reauthorize after permission removal', function () {
     $staff->roles()->first()->revokePermissionTo('api.tokens');
     app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-    expect(fn () => $component->saveIpAllowlist(
-        app(SettingsRepository::class),
-        app(ApiIpAllowlist::class),
+    expect(fn () => $component->saveToken(
         app(AuditLogger::class),
+        app(ApiIpAllowlist::class),
     ))->toThrow(AuthorizationException::class);
-
-    expect(app(SettingsRepository::class)->get('api', 'ip_allowlist', []))->toBe([]);
 });
 
 test('api token creation reauthorizes after permission removal during password confirmation', function () {
     $staff = $this->createStaff([], ['api.tokens']);
     $this->actingAs($staff);
     $component = new ApiTokens;
-    $component->mount(app(SettingsRepository::class), app(ApiIpAllowlist::class));
     $component->token_name = 'late-create';
     $component->createToken(app(AuditLogger::class));
 
