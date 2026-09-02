@@ -36,6 +36,10 @@
     font-size: clamp(2rem, 3vw, 3.25rem);
     white-space: nowrap;
   }
+
+  .store-error[data-error-status="404"] .store-error__art {
+    margin-top: clamp(0.75rem, 1.5vh, 1.25rem);
+  }
 }
 
 .store-error__lede {

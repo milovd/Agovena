@@ -127,10 +127,13 @@ body {
   margin: 0;
   padding: 0.35rem var(--ag-space-3);
   color: var(--ag-color-text-muted);
-  font-size: var(--ag-font-size-xs);
+  overflow: hidden;
+  font-size: 0.68rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.025em;
+  text-overflow: ellipsis;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .admin-sidebar__footer-link {

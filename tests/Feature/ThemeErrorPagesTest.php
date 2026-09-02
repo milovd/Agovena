@@ -59,7 +59,8 @@ test('error page puts the action below the illustration and keeps it viewport-sa
         ->and($css)->toContain('width: 100%')
         ->and($css)->toContain('height: 100%')
         ->and($css)->toContain('width: min(100%, 26rem)')
-        ->and($css)->toContain('.store-error[data-error-status="404"] .store-error__title');
+        ->and($css)->toContain('.store-error[data-error-status="404"] .store-error__title')
+        ->and($css)->toContain('margin-top: clamp(0.75rem, 1.5vh, 1.25rem)');
 });
 
 test('theme error layout exposes persisted color mode support', function () {

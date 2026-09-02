@@ -46,6 +46,14 @@ test('admin shell shows grouped catalog, sales, and system navigation', function
         ->assertDontSee('Configuration', false);
 });
 
+test('admin sidebar keeps its powered by credit on one line', function () {
+    $css = file_get_contents(base_path('resources/css/admin/components/_admin-shell.css'));
+    preg_match('/\.admin-sidebar__footer-meta\s*\{(?<body>.*?)\}/s', $css, $matches);
+
+    expect($matches['body'] ?? '')->toContain('white-space: nowrap')
+        ->and($matches['body'] ?? '')->toContain('text-overflow: ellipsis');
+});
+
 test('settings hub lists registered groups from the admin registrar', function () {
     $staff = $this->createStaff();
 
