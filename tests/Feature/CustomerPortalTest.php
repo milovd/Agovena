@@ -53,6 +53,8 @@ test('customer can register login and open account dashboard', function () {
         ->assertSee('store-account-dashboard__welcome', false)
         ->assertDontSee('store-account-hero', false)
         ->assertDontSee('ag-avatar', false)
+        ->assertDontSee(__('customer.account.cards.open_tickets'), false)
+        ->assertDontSee('store-account-dashboard__referral-card', false)
         ->assertSee('ag-empty', false);
 });
 

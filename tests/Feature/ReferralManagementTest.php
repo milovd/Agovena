@@ -36,15 +36,14 @@ it('makes customer referrals discoverable from the account navigation', function
         ->assertSeeInOrder([route('customer.referrals'), route('customer.credits')], false);
 });
 
-it('shows a referral action on the customer dashboard', function (): void {
+it('keeps the referral action on its dedicated account page', function (): void {
     $customer = Customer::factory()->create();
 
     $this->actingAs($customer->user)
         ->get(route('customer.account'))
         ->assertOk()
-        ->assertSee(__('customer.account.referral_card_heading'), false)
-        ->assertSee(__('customer.account.referral_card_cta'), false)
-        ->assertSee(route('customer.referrals'), false);
+        ->assertDontSee(__('customer.account.referral_card_heading'), false)
+        ->assertDontSee('store-account-dashboard__referral-card', false);
 });
 
 it('keeps referral review actions behind staff permissions', function (): void {

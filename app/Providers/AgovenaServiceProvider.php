@@ -27,7 +27,6 @@ use App\Agovena\Checkout\Contributors\ShippableRequirementContributor;
 use App\Agovena\Checkout\NullShippingQuoteResolver;
 use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Content\MenuResolver;
-use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Extensions\ExtensionManager;
@@ -64,7 +63,6 @@ use App\Agovena\Theme\StorefrontBrand;
 use App\Agovena\Theme\ThemeManager;
 use App\Agovena\Theme\ThemeSurface;
 use App\Agovena\Webhooks\WebhookEventSubscriber;
-use App\Enums\TicketStatus;
 use App\Events\CreditNoteIssued;
 use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
@@ -86,7 +84,6 @@ use App\Listeners\SendPaymentRecordedNotification;
 use App\Listeners\SendPlanChangeAppliedNotification;
 use App\Listeners\SendRefundProcessedNotification;
 use App\Listeners\SettleReferralRewardWhenOrderPaid;
-use App\Models\Customer;
 use App\Models\User;
 use App\Models\UserNotification;
 use App\Queue\AfterCommitFailoverConnector;
@@ -213,7 +210,6 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->registerPermissions($admin);
         $this->registerSettings($admin);
         $this->registerWidgets($admin);
-        $this->registerCustomerAccountCards();
 
         // Feature tests rebuild the schema after the application boots. Persistent
         // databases still contain the previous test's enabled packages at this
@@ -1061,26 +1057,5 @@ class AgovenaServiceProvider extends ServiceProvider
             permission: 'dashboard.view',
             sort: 30,
         ));
-    }
-
-    private function registerCustomerAccountCards(): void
-    {
-        $this->app->make(CustomerAccountOverview::class)->register(
-            'support-tickets',
-            static fn (Customer $customer): AccountOverviewCard => new AccountOverviewCard(
-                id: 'support-tickets',
-                label: 'customer.account.cards.open_tickets',
-                countOrValue: (string) $customer->tickets()
-                    ->whereIn('status', [
-                        TicketStatus::Open->value,
-                        TicketStatus::Pending->value,
-                        TicketStatus::Answered->value,
-                    ])
-                    ->count(),
-                routeName: 'customer.tickets.index',
-                sort: 50,
-            ),
-            50,
-        );
     }
 }

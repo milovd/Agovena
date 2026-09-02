@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Livewire\Customer\Account;
 
 use App\Agovena\Customer\CustomerAccountOverview;
-use App\Agovena\Referrals\ReferralService;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -15,7 +14,7 @@ use Livewire\Component;
 
 final class Dashboard extends Component
 {
-    public function render(ThemeManager $themes, CustomerAccountOverview $overview, ReferralService $referrals)
+    public function render(ThemeManager $themes, CustomerAccountOverview $overview)
     {
         $theme = $themes->active();
         $customer = authenticated_customer();
@@ -45,7 +44,6 @@ final class Dashboard extends Component
             ->latest('id')
             ->limit(8)
             ->get();
-        $referralCode = $customer->referralCodes()->latest('id')->first();
 
         return view($theme->view('account.dashboard'), [
             'theme' => $theme,
@@ -55,9 +53,6 @@ final class Dashboard extends Component
             'recentOrders' => $recentOrders,
             'recentInvoices' => $recentInvoices,
             'unpaidOrders' => $unpaidOrders,
-            'referralsEnabled' => $referrals->isEnabled(),
-            'referralCode' => $referralCode,
-            'referralRewardPercentage' => $referrals->defaultRewardPercentage(),
             'accountSection' => 'overview',
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.account.overview_title'),
