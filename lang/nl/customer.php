@@ -183,7 +183,6 @@ return [
         'affiliate_eyebrow' => 'Affiliateprogramma',
         'affiliate_title' => 'Maak van referrals winkeltegoed',
         'affiliate_lede' => 'Verdien :percentage% van de eerste aankoop van elke nieuwe klant.',
-        'per_first_purchase' => 'van eerste aankoop',
         'window_label' => 'dagen om te kopen',
         'stats_label' => 'Affiliateprestaties',
         'link_clicks' => 'Linkkliks',

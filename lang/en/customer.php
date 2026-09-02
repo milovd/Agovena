@@ -183,7 +183,6 @@ return [
         'affiliate_eyebrow' => 'Affiliate program',
         'affiliate_title' => 'Turn referrals into store credit',
         'affiliate_lede' => 'Earn :percentage% of every new customer\'s first purchase.',
-        'per_first_purchase' => 'per first purchase',
         'window_label' => 'days to purchase',
         'stats_label' => 'Affiliate performance',
         'link_clicks' => 'Link clicks',

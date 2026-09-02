@@ -16,10 +16,6 @@
                 <h1 id="referrals-heading" class="store-account-panel__title">{{ __('customer.referrals.affiliate_title') }}</h1>
                 <p class="store-account-panel__lede">{{ __('customer.referrals.affiliate_lede', ['percentage' => $headlinePercentage]) }}</p>
             </div>
-            <div class="store-referral-hero__mark" aria-hidden="true">
-                <span>{{ $headlinePercentage }}%</span>
-                <small>{{ __('customer.referrals.per_first_purchase') }}</small>
-            </div>
         </header>
 
         <section class="store-referral-stats" aria-label="{{ __('customer.referrals.stats_label') }}">
@@ -55,7 +51,7 @@
                         <p>{{ __('customer.referrals.share_lede') }}</p>
                     </div>
                     <div class="store-referral-link__control">
-                        <label class="sr-only" for="referral-share-link">{{ __('customer.referrals.share_link') }}</label>
+                        <label class="store-referral-link__label" for="referral-share-link">{{ __('customer.referrals.share_link') }}</label>
                         <input id="referral-share-link" class="store-input" type="text" value="{{ $referralLink }}" readonly x-ref="link">
                         <button
                             type="button"

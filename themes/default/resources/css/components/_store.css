@@ -7004,50 +7004,14 @@ a.store-order-card__item-title:focus-visible {
 }
 
 .store-referral-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--theme-space-8);
   padding: var(--theme-space-8);
   border: 1px solid color-mix(in srgb, var(--theme-color-accent) 18%, var(--theme-color-border));
   border-radius: var(--theme-radius-lg);
-  background:
-    radial-gradient(circle at 92% 12%, var(--theme-color-accent-soft), transparent 32%),
-    var(--theme-color-surface);
+  background: var(--theme-color-surface);
 }
 
 .store-referral-hero__copy {
-  max-width: 38rem;
-}
-
-.store-referral-hero__mark {
-  display: grid;
-  flex: 0 0 8.5rem;
-  place-items: center;
-  width: 8.5rem;
-  height: 8.5rem;
-  padding: var(--theme-space-4);
-  border-radius: 2rem;
-  background: var(--theme-color-accent);
-  color: var(--theme-color-bg);
-  box-shadow: var(--theme-shadow-md);
-  transform: rotate(3deg);
-}
-
-.store-referral-hero__mark span {
-  font-size: 2.25rem;
-  font-weight: 800;
-  letter-spacing: -0.06em;
-  line-height: 1;
-}
-
-.store-referral-hero__mark small {
-  max-width: 5.5rem;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  line-height: 1.25;
-  text-align: center;
-  text-transform: uppercase;
+  max-width: 44rem;
 }
 
 .store-referral-stats {
@@ -7137,6 +7101,15 @@ a.store-order-card__item-title:focus-visible {
   min-width: 0;
 }
 
+.store-referral-link__label {
+  flex: 0 0 auto;
+  align-self: center;
+  color: var(--theme-color-text);
+  font-size: 0.875rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
 .store-referral-link__control .store-input {
   min-width: 0;
   flex: 1 1 auto;
@@ -7165,24 +7138,16 @@ a.store-order-card__item-title:focus-visible {
 
 @media (max-width: 680px) {
   .store-referral-hero {
-    align-items: flex-start;
     padding: var(--theme-space-6);
-  }
-
-  .store-referral-hero__mark {
-    flex-basis: 6.5rem;
-    width: 6.5rem;
-    height: 6.5rem;
-    border-radius: 1.5rem;
-  }
-
-  .store-referral-hero__mark span {
-    font-size: 1.75rem;
   }
 
   .store-referral-link__control {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .store-referral-link__label {
+    justify-self: start;
   }
 
   .store-referral-link__control .store-btn {
