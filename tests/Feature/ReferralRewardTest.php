@@ -6,6 +6,7 @@ use App\Agovena\Referrals\ReferralService;
 use App\Agovena\Settings\SettingsRepository;
 use App\Events\OrderPaid;
 use App\Models\Customer;
+use App\Models\CustomerCreditAccount;
 use App\Models\CustomerCreditEntry;
 use App\Models\Order;
 use Illuminate\Support\Carbon;
@@ -32,6 +33,51 @@ it('posts a configured referral reward to the existing customer credit ledger on
         ->and(CustomerCreditEntry::query()->where('reason', 'referral_reward')->value('amount'))->toBe(500)
         ->and($attribution->fresh()->status)->toBe('posted')
         ->and(CustomerCreditEntry::query()->where('reason', 'referral_reward')->value('reference_id'))->toBe($attribution->id);
+});
+
+it('credits the referrer with the configured percentage of the discounted product subtotal', function (): void {
+    $referrer = Customer::factory()->create();
+    $referred = Customer::factory()->create();
+    $settings = app(SettingsRepository::class);
+    $settings->set('referrals', 'enabled', true);
+    $settings->set('store', 'referral_reward_percentage', 10);
+
+    $service = app(ReferralService::class);
+    $code = $service->createCode($referrer, 'PERCENT-REF');
+    $order = Order::factory()->create([
+        'customer_id' => $referred->id,
+        'subtotal_amount' => 20_000,
+        'discount_amount' => 2_000,
+        'total_amount' => 18_000,
+    ]);
+    $attribution = $service->attribute($order, $code->code);
+
+    $service->settle($order->fresh());
+
+    expect($attribution->fresh()->reward_percentage)->toBe(10)
+        ->and($attribution->fresh()->reward_amount)->toBe(1_800)
+        ->and(CustomerCreditEntry::query()->where('reason', 'referral_reward')->value('amount'))->toBe(1_800)
+        ->and(CustomerCreditAccount::query()->where('customer_id', $referrer->id)->value('balance_amount'))->toBe(1_800);
+});
+
+it('uses a per-code referral percentage override and snapshots it on the attribution', function (): void {
+    $referrer = Customer::factory()->create();
+    $referred = Customer::factory()->create();
+    app(SettingsRepository::class)->set('referrals', 'enabled', true);
+    $service = app(ReferralService::class);
+    $code = $service->createCode($referrer, 'OVERRIDE-REF', rewardPercentage: 15);
+    $order = Order::factory()->create([
+        'customer_id' => $referred->id,
+        'subtotal_amount' => 10_000,
+        'discount_amount' => 0,
+        'total_amount' => 10_000,
+    ]);
+
+    $attribution = $service->attribute($order, $code->code);
+
+    expect($code->fresh()->reward_percentage)->toBe(15)
+        ->and($attribution->reward_percentage)->toBe(15)
+        ->and($attribution->reward_amount)->toBe(1_500);
 });
 
 it('enforces referral expiry and maximum uses before attribution', function (): void {

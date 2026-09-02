@@ -51,6 +51,26 @@
                 </div>
             @endif
 
+            @if ($referralsEnabled)
+                @php $referralPercentage = $referralCode?->reward_percentage ?? $referralRewardPercentage; @endphp
+                <x-ag.card class="store-account-dashboard__referral-card">
+                    <x-ag.card.header>
+                        <x-ag.card.title>{{ __('customer.account.referral_card_heading') }}</x-ag.card.title>
+                        <x-ag.card.description>{{ __('customer.account.referral_card_lede', ['percentage' => $referralPercentage]) }}</x-ag.card.description>
+                    </x-ag.card.header>
+                    <x-ag.card.content>
+                        @if ($referralCode)
+                            <p class="store-account-entry__meta">{{ __('customer.account.referral_card_code', ['code' => $referralCode->code]) }}</p>
+                        @else
+                            <p class="store-account-entry__meta">{{ __('customer.account.referral_card_create_hint') }}</p>
+                        @endif
+                    </x-ag.card.content>
+                    <x-ag.card.footer>
+                        <a class="store-btn store-btn--primary" href="{{ route('customer.referrals') }}">{{ __('customer.account.referral_card_cta') }}</a>
+                    </x-ag.card.footer>
+                </x-ag.card>
+            @endif
+
             @if (! $emailVerified)
                 <x-ag.card class="ag-card--alert">
                     <x-ag.card.header>

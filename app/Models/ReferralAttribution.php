@@ -17,6 +17,7 @@ final class ReferralAttribution extends Model
         'code_snapshot',
         'status',
         'reward_amount',
+        'reward_percentage',
         'reward_currency',
         'fraud_review_required',
         'reviewed_at',
@@ -25,6 +26,7 @@ final class ReferralAttribution extends Model
 
     protected $casts = [
         'reward_amount' => 'integer',
+        'reward_percentage' => 'integer',
         'fraud_review_required' => 'boolean',
         'reviewed_at' => 'datetime',
         'credited_at' => 'datetime',

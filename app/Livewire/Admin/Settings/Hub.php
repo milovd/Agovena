@@ -233,6 +233,7 @@ final class Hub extends Component
             ],
             'timezone' => ['required', 'timezone'],
             'integer' => ['required', 'integer', 'min:0', 'max:365'],
+            'percentage' => ['required', 'integer', 'min:0', 'max:100'],
             'email' => ['nullable', 'email', 'max:255'],
             'text' => ['nullable', 'string', 'max:5000'],
             'image' => ['nullable', 'string', 'max:255'],
@@ -273,7 +274,7 @@ final class Hub extends Component
             return filter_var($stored, FILTER_VALIDATE_BOOLEAN);
         }
 
-        if ($field->type === 'integer') {
+        if (in_array($field->type, ['integer', 'percentage'], true)) {
             if ($stored === null) {
                 return (int) $field->default;
             }

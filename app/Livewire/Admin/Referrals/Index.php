@@ -19,6 +19,8 @@ final class Index extends Component
 
     public bool $showCodeForm = false;
 
+    public ?int $editingCodeId = null;
+
     public ?int $customerId = null;
 
     public string $customerSearch = '';
@@ -26,6 +28,8 @@ final class Index extends Component
     public string $newCode = '';
 
     public ?int $maxUses = null;
+
+    public ?int $rewardPercentage = null;
 
     public string $expiresAt = '';
 
@@ -57,6 +61,21 @@ final class Index extends Component
         $this->showCodeForm = true;
     }
 
+    public function editCode(int $id): void
+    {
+        $this->authorize('referrals.manage');
+        $code = ReferralCode::query()->findOrFail($id);
+
+        $this->editingCodeId = $code->id;
+        $this->customerId = $code->customer_id;
+        $this->customerSearch = $code->customer?->name.' ('.$code->customer?->email.')';
+        $this->newCode = $code->code;
+        $this->maxUses = $code->max_uses;
+        $this->rewardPercentage = $code->reward_percentage;
+        $this->expiresAt = $code->expires_at?->format('Y-m-d\\TH:i') ?? '';
+        $this->showCodeForm = true;
+    }
+
     public function selectCustomer(int $id): void
     {
         $this->authorize('referrals.manage');
@@ -76,6 +95,10 @@ final class Index extends Component
     {
         $this->authorize('referrals.manage');
         $this->newCode = strtoupper(trim($this->newCode));
+        $codeRule = Rule::unique('referral_codes', 'code');
+        if ($this->editingCodeId !== null) {
+            $codeRule->ignore($this->editingCodeId);
+        }
 
         $data = $this->validate([
             'customerId' => ['required', 'integer', Rule::exists('customers', 'id')],
@@ -85,20 +108,33 @@ final class Index extends Component
                 'min:3',
                 'max:64',
                 'regex:/^[A-Z0-9][A-Z0-9_-]{2,63}$/',
-                Rule::unique('referral_codes', 'code'),
+                $codeRule,
             ],
             'maxUses' => ['nullable', 'integer', 'min:1'],
             'expiresAt' => ['nullable', 'date', 'after:now'],
+            'rewardPercentage' => ['nullable', 'integer', 'min:0', 'max:100'],
         ]);
+
+        $expiresAt = $data['expiresAt'] !== null && $data['expiresAt'] !== ''
+            ? Carbon::parse($data['expiresAt'])
+            : null;
+
+        if ($this->editingCodeId !== null) {
+            $code = ReferralCode::query()->findOrFail($this->editingCodeId);
+            $referrals->updateCode($code, $data['maxUses'], $expiresAt, $data['rewardPercentage']);
+            session()->flash('status', __('admin.referrals.updated'));
+            $this->resetCodeForm();
+
+            return;
+        }
 
         $customer = Customer::query()->findOrFail($data['customerId']);
         $referrals->createCode(
             $customer,
             $data['newCode'],
             $data['maxUses'],
-            $data['expiresAt'] !== null && $data['expiresAt'] !== ''
-                ? Carbon::parse($data['expiresAt'])
-                : null,
+            $expiresAt,
+            $data['rewardPercentage'],
         );
 
         session()->flash('status', __('admin.referrals.created'));
@@ -124,7 +160,7 @@ final class Index extends Component
         session()->flash('status', __('admin.referrals.activated'));
     }
 
-    public function render()
+    public function render(ReferralService $referrals)
     {
         return view('livewire.admin.referrals.index', [
             'attributions' => ReferralAttribution::query()
@@ -150,6 +186,7 @@ final class Index extends Component
             'activeCodeCount' => ReferralCode::query()->where('is_active', true)->count(),
             'reviewCount' => ReferralAttribution::query()->where('status', 'review')->count(),
             'postedRewardCount' => ReferralAttribution::query()->where('status', 'posted')->count(),
+            'defaultRewardPercentage' => $referrals->defaultRewardPercentage(),
         ])->layout('layouts.admin', [
             'title' => __('admin.referrals.title'),
         ]);
@@ -157,7 +194,7 @@ final class Index extends Component
 
     private function resetCodeForm(): void
     {
-        $this->reset(['showCodeForm', 'customerId', 'customerSearch', 'newCode', 'maxUses', 'expiresAt']);
+        $this->reset(['showCodeForm', 'editingCodeId', 'customerId', 'customerSearch', 'newCode', 'maxUses', 'rewardPercentage', 'expiresAt']);
         $this->resetValidation();
     }
 }

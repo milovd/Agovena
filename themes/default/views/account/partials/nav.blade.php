@@ -16,7 +16,7 @@
     $purchasesActive = in_array($section, ['orders', 'invoices', 'returns'], true)
         || $purchasesExtraNav->contains(static fn ($item): bool => $item->section === $section);
     $servicesActive = $servicesNav->contains(static fn ($item): bool => $item->section === $section);
-    $accountActive = in_array($section, ['profile', 'addresses', 'credits', 'notification-settings', 'subscriptions', 'security'], true)
+    $accountActive = in_array($section, ['profile', 'addresses', 'credits', 'referrals', 'notification-settings', 'subscriptions', 'security'], true)
         || $accountExtraNav->contains(static fn ($item): bool => $item->section === $section);
 @endphp
 
@@ -186,6 +186,14 @@
                 >
                     <x-ag.icon name="coins" class="store-account__link-icon" :size="16" />
                     <span>{{ __('customer.account.nav_credits') }}</span>
+                </a>
+                <a
+                    class="store-account__link store-account__link--child {{ $section === 'referrals' ? 'is-active' : '' }}"
+                    href="{{ route('customer.referrals') }}"
+                    @if ($section === 'referrals') aria-current="page" @endif
+                >
+                    <x-ag.icon name="share-2" class="store-account__link-icon" :size="16" />
+                    <span>{{ __('customer.account.nav_referrals') }}</span>
                 </a>
                 <a
                     class="store-account__link store-account__link--child {{ $section === 'notification-settings' ? 'is-active' : '' }}"

@@ -984,6 +984,24 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
+            key: 'referrals_enabled',
+            label: 'admin.settings.fields.referrals_enabled',
+            type: 'boolean',
+            default: true,
+            help: 'admin.settings.field_help.referrals_enabled',
+            sort: 35,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'referral_reward_percentage',
+            label: 'admin.settings.fields.referral_reward_percentage',
+            type: 'percentage',
+            default: 10,
+            help: 'admin.settings.field_help.referral_reward_percentage',
+            sort: 36,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
             key: 'tax_enabled',
             label: 'admin.settings.fields.tax_enabled',
             type: 'boolean',

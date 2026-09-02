@@ -11,7 +11,7 @@ final class ReferralCode extends Model
 {
     protected $fillable = [
         'customer_id', 'code', 'uses_count', 'is_active', 'max_uses', 'expires_at',
-        'reward_amount', 'reward_currency', 'fraud_review_required',
+        'reward_amount', 'reward_percentage', 'reward_currency', 'fraud_review_required',
     ];
 
     protected $casts = [
@@ -20,6 +20,7 @@ final class ReferralCode extends Model
         'max_uses' => 'integer',
         'expires_at' => 'datetime',
         'reward_amount' => 'integer',
+        'reward_percentage' => 'integer',
         'fraud_review_required' => 'boolean',
     ];
 

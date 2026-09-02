@@ -87,9 +87,11 @@
                 <input
                     id="setting-{{ $field->key }}"
                     class="ag-input"
-                    type="{{ $field->type === 'email' ? 'email' : ($field->type === 'integer' ? 'number' : ($field->type === 'password' ? 'password' : 'text')) }}"
+                    type="{{ $field->type === 'email' ? 'email' : (in_array($field->type, ['integer', 'percentage'], true) ? 'number' : ($field->type === 'password' ? 'password' : 'text')) }}"
                     wire:model="values.{{ $field->key }}"
                     @disabled(! $canUpdate)
+                    @if (in_array($field->type, ['integer', 'percentage'], true)) min="0" @endif
+                    @if ($field->type === 'percentage') max="100" step="1" @endif
                     @if ($field->type === 'password') autocomplete="new-password" @endif
                 >
             @endif

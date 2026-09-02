@@ -17,6 +17,8 @@ use Illuminate\Validation\ValidationException;
 
 final class ReferralService
 {
+    public const DEFAULT_REWARD_PERCENTAGE = 10;
+
     public function __construct(
         private readonly SettingsRepository $settings,
         private readonly CustomerCreditLedger $creditLedger,
@@ -27,11 +29,13 @@ final class ReferralService
         string $code,
         ?int $maxUses = null,
         ?CarbonInterface $expiresAt = null,
+        ?int $rewardPercentage = null,
     ): ReferralCode {
         $normalized = strtoupper(trim($code));
         if (! preg_match('/^[A-Z0-9][A-Z0-9_-]{2,63}$/', $normalized)) {
             throw ValidationException::withMessages(['code' => 'The referral code format is invalid.']);
         }
+        $this->assertRewardPercentage($rewardPercentage);
 
         $existing = ReferralCode::query()->where('code', $normalized)->first();
         if ($existing instanceof ReferralCode && $existing->customer_id !== $customer->id) {
@@ -60,7 +64,8 @@ final class ReferralService
             'is_active' => true,
             'max_uses' => $configuredMaxUses,
             'expires_at' => $expiresAt,
-            'reward_amount' => max(0, (int) $this->settings->get('referrals', 'reward_amount', 0)),
+            'reward_amount' => $this->legacyRewardAmount(),
+            'reward_percentage' => $rewardPercentage,
             'reward_currency' => $rewardCurrency,
             'fraud_review_required' => filter_var(
                 $this->settings->get('referrals', 'fraud_review_required', false),
@@ -71,7 +76,7 @@ final class ReferralService
 
     public function attribute(Order $order, string $code): ?ReferralAttribution
     {
-        if (! filter_var($this->settings->get('referrals', 'enabled', false), FILTER_VALIDATE_BOOLEAN)) {
+        if (! $this->isEnabled()) {
             return null;
         }
 
@@ -107,6 +112,14 @@ final class ReferralService
                 throw ValidationException::withMessages(['code' => 'A customer cannot refer their own order.']);
             }
 
+            $usesLegacyFixedReward = $referral->reward_percentage === null && (int) $referral->reward_amount > 0;
+            $rewardPercentage = $usesLegacyFixedReward
+                ? null
+                : ($referral->reward_percentage ?? $this->defaultRewardPercentage());
+            $rewardAmount = $usesLegacyFixedReward
+                ? max(0, (int) $referral->reward_amount)
+                : $this->calculateRewardAmount($order, (int) $rewardPercentage);
+
             $attribution = ReferralAttribution::query()->create([
                 'order_id' => $order->id,
                 'referral_code_id' => $referral->id,
@@ -114,7 +127,8 @@ final class ReferralService
                 'referred_customer_id' => $order->customer_id,
                 'code_snapshot' => $referral->code,
                 'status' => 'pending',
-                'reward_amount' => $referral->reward_amount,
+                'reward_amount' => $rewardAmount,
+                'reward_percentage' => $rewardPercentage,
                 'reward_currency' => $referral->reward_currency,
                 'fraud_review_required' => $referral->fraud_review_required,
             ]);
@@ -171,6 +185,43 @@ final class ReferralService
         });
     }
 
+    public function updateCode(
+        ReferralCode $referral,
+        ?int $maxUses = null,
+        ?CarbonInterface $expiresAt = null,
+        ?int $rewardPercentage = null,
+    ): ReferralCode {
+        $this->assertRewardPercentage($rewardPercentage);
+
+        $configuredMaxUses = $maxUses;
+        if ($configuredMaxUses !== null && $configuredMaxUses < 1) {
+            throw ValidationException::withMessages(['max_uses' => 'The referral use limit must be positive.']);
+        }
+
+        $referral->update([
+            'max_uses' => $configuredMaxUses,
+            'expires_at' => $expiresAt,
+            'reward_amount' => 0,
+            'reward_percentage' => $rewardPercentage,
+        ]);
+
+        return $referral->fresh() ?? $referral;
+    }
+
+    public function defaultRewardPercentage(): int
+    {
+        $configured = $this->settings->get('store', 'referral_reward_percentage', null);
+        if ($configured === null) {
+            $configured = $this->settings->get('referrals', 'reward_percentage', null);
+        }
+
+        if ($configured === null) {
+            return self::DEFAULT_REWARD_PERCENTAGE;
+        }
+
+        return max(0, min(100, (int) $configured));
+    }
+
     public function approveReview(ReferralAttribution $attribution): ?CustomerCreditEntry
     {
         $attribution->update([
@@ -185,5 +236,46 @@ final class ReferralService
     public function rejectReview(ReferralAttribution $attribution): void
     {
         $attribution->update(['status' => 'void', 'reviewed_at' => now()]);
+    }
+
+    public function isEnabled(): bool
+    {
+        $configured = $this->settings->get('store', 'referrals_enabled', null);
+        if ($configured === null) {
+            $configured = $this->settings->get('referrals', 'enabled', true);
+        }
+
+        return filter_var($configured, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function legacyRewardAmount(): int
+    {
+        if ($this->settings->get('store', 'referral_reward_percentage', null) !== null
+            || $this->settings->get('referrals', 'reward_percentage', null) !== null
+        ) {
+            return 0;
+        }
+
+        return max(0, (int) $this->settings->get('referrals', 'reward_amount', 0));
+    }
+
+    private function calculateRewardAmount(Order $order, int $percentage): int
+    {
+        if ($percentage < 1) {
+            return 0;
+        }
+
+        $baseAmount = max(0, (int) $order->subtotal_amount - (int) $order->discount_amount);
+
+        return min($baseAmount, intdiv($baseAmount * $percentage, 100));
+    }
+
+    private function assertRewardPercentage(?int $percentage): void
+    {
+        if ($percentage !== null && ($percentage < 0 || $percentage > 100)) {
+            throw ValidationException::withMessages([
+                'reward_percentage' => 'The referral reward percentage must be between 0 and 100.',
+            ]);
+        }
     }
 }
