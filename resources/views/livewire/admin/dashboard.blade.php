@@ -135,8 +135,8 @@
                                 @foreach ($chartRanges as $range => $label)
                                     <button
                                         type="button"
-                                        class="ag-tabs__tab @if ($chartRange === $range) ag-tabs__tab--active @endif"
-                                        aria-pressed="{{ $chartRange === $range ? 'true' : 'false' }}"
+                                        class="ag-tabs__tab @if ((string) $chartRange === (string) $range) ag-tabs__tab--active @endif"
+                                        aria-pressed="{{ (string) $chartRange === (string) $range ? 'true' : 'false' }}"
                                         wire:click="setChartRange('{{ $range }}')"
                                         wire:loading.attr="disabled"
                                         wire:target="setChartRange"
@@ -152,8 +152,8 @@
                                 @foreach ($chartTypes as $type => $label)
                                     <button
                                         type="button"
-                                        class="ag-tabs__tab @if ($chartType === $type) ag-tabs__tab--active @endif"
-                                        aria-pressed="{{ $chartType === $type ? 'true' : 'false' }}"
+                                        class="ag-tabs__tab @if ((string) $chartType === (string) $type) ag-tabs__tab--active @endif"
+                                        aria-pressed="{{ (string) $chartType === (string) $type ? 'true' : 'false' }}"
                                         wire:click="setChartType('{{ $type }}')"
                                         wire:loading.attr="disabled"
                                         wire:target="setChartType"

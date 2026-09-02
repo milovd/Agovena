@@ -62,6 +62,7 @@ test('dashboard keeps six focused metrics and one configurable chart', function 
 
     expect(substr_count($html, 'class="ag-metric"'))->toBe(6)
         ->and(substr_count($html, 'x-data="agChart'))->toBe(1)
+        ->and(substr_count($html, 'aria-pressed="true"'))->toBe(2)
         ->and($html)->toContain(htmlspecialchars((string) __('admin.dashboard.charts.overview'), ENT_QUOTES, 'UTF-8'))
         ->and($html)->toContain('wire:click="setChartRange(\'7\')"')
         ->and($html)->toContain('wire:click="setChartRange(\'month\')"')
@@ -75,6 +76,15 @@ test('dashboard keeps six focused metrics and one configurable chart', function 
         ->call('setChartType', 'bar')
         ->assertSet('chartType', 'bar')
         ->assertSee('dashboard-chart-7-bar', false);
+});
+
+test('dashboard normalizes unsupported chart state before rendering', function () {
+    $component = Livewire::actingAs($this->createStaff())
+        ->test(Dashboard::class)
+        ->set('chartRange', 'unsupported')
+        ->assertSet('chartRange', '14')
+        ->set('chartType', 'scatter')
+        ->assertSet('chartType', 'line');
 });
 
 test('dashboard chart ranges return the requested number of daily points', function () {
