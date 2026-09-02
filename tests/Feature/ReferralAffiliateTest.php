@@ -126,11 +126,16 @@ it('shows affiliate link and conversion statistics in the customer tab', functio
         ->test(CustomerReferrals::class)
         ->assertSee(route('referrals.visit', ['code' => $code->code]), false)
         ->assertSee(__('customer.referrals.affiliate_title'), false)
-        ->assertSee(__('customer.referrals.affiliate_lede', ['percentage' => 10]), false)
-        ->assertSee(__('customer.referrals.link_clicks_hint'), false)
-        ->assertSee(__('customer.referrals.link_visits'), false)
-        ->assertSee(__('customer.referrals.link_visits_hint'), false)
+        ->assertSee(__('customer.referrals.affiliate_lede', ['percentage' => 10]))
+        ->assertSee(__('customer.referrals.per_first_purchase'), false)
+        ->assertSee(__('customer.referrals.window_label'), false)
+        ->assertSee(__('customer.referrals.link_clicks'), false)
         ->assertSee(__('customer.referrals.paid_purchases'), false)
+        ->assertSee(__('customer.referrals.earned_rewards'), false)
+        ->assertSee(__('customer.referrals.share_heading'), false)
+        ->assertDontSee(__('customer.referrals.link_visits'), false)
+        ->assertDontSee(__('customer.referrals.activity_heading'), false)
+        ->assertDontSee(__('customer.referrals.codes_heading'), false)
         ->assertSee('3', false);
 });
 
