@@ -54,7 +54,7 @@ test('error page puts the action below the illustration and keeps it viewport-sa
         ->and($descriptionPosition)->toBeLessThan($actionsPosition)
         ->and($ledePosition)->toBeLessThan($actionsPosition)
         ->and($css)->toContain('100svh')
-        ->and($css)->toContain('aspect-ratio: 620 / 320')
+        ->and($css)->toContain('aspect-ratio: 620 / 270')
         ->and($css)->toContain('container-type: inline-size')
         ->and($css)->toContain('width: 100%')
         ->and($css)->toContain('height: 100%')
