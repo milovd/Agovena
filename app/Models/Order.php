@@ -37,6 +37,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property string|null $idempotency_owner_hash
  * @property string|null $storefront_token
  * @property-read Collection<int, OrderItem> $items
+ * @property-read Invoice|null $invoice
+ * @property-read Collection<int, Invoice> $invoices
  * @property-read Payment|null $payment
  */
 #[Fillable([
@@ -146,6 +148,12 @@ class Order extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    /** @return HasMany<Invoice, $this> */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(Invoice::class);
+    }
+
     /** @return HasOne<Invoice, $this> */
     public function invoice(): HasOne
     {
@@ -191,7 +199,10 @@ class Order extends Model
             return false;
         }
 
-        if ($this->invoice?->status === InvoiceStatus::Void) {
+        $invoices = $this->relationLoaded('invoices')
+            ? $this->invoices
+            : $this->invoices()->get();
+        if ($invoices->contains(static fn (Invoice $invoice): bool => $invoice->status === InvoiceStatus::Void)) {
             return false;
         }
 

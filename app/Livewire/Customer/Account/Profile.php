@@ -41,7 +41,7 @@ final class Profile extends Component
 
     public function saveProfile(UpdateCustomerProfile $update, CustomerPropertyService $properties): void
     {
-        $definitions = $properties->definitionsFor('account');
+        $definitions = $properties->nonAddressDefinitionsFor('account');
         $data = $this->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255'],
@@ -109,7 +109,7 @@ final class Profile extends Component
             'emailVerified' => $customer->hasVerifiedEmail(),
             'deletionRequested' => $customer->deletion_requested_at !== null,
             'accountSection' => 'profile',
-            'propertyDefinitions' => $properties->definitionsFor('account'),
+            'propertyDefinitions' => $properties->nonAddressDefinitionsFor('account'),
             'actor' => 'customer',
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('customer.account.profile_title'),

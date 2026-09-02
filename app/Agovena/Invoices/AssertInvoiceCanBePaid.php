@@ -20,11 +20,11 @@ final class AssertInvoiceCanBePaid
             ]);
         }
 
-        $invoice = $order->relationLoaded('invoice')
-            ? $order->invoice
-            : Invoice::query()->where('order_id', $order->id)->first();
+        $invoices = $order->relationLoaded('invoices')
+            ? $order->invoices
+            : Invoice::query()->where('order_id', $order->id)->get();
 
-        if ($invoice !== null && $invoice->status === InvoiceStatus::Void) {
+        if ($invoices->contains(static fn (Invoice $invoice): bool => $invoice->status === InvoiceStatus::Void)) {
             throw ValidationException::withMessages([
                 'invoice' => __('admin.invoices.cannot_pay_void'),
             ]);

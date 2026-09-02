@@ -259,6 +259,7 @@ return [
         'default_shipping' => 'Standaard verzendadres',
         'save' => 'Adres opslaan',
         'saved' => 'Adres opgeslagen.',
+        'required_address' => 'Vul de verplichte adresvelden in voordat je opslaat.',
         'edit' => 'Bewerken',
         'delete' => 'Verwijderen',
         'deleted' => 'Adres verwijderd.',

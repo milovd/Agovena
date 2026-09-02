@@ -55,9 +55,18 @@
                         <p>{{ $creditNote->billing_line2 }}</p>
                     @endif
                     <p>{{ $creditNote->billing_postal_code }} {{ $creditNote->billing_city }}</p>
+                    @if ($creditNote->billing_region)
+                        <p>{{ $creditNote->billing_region }}</p>
+                    @endif
                     <p>{{ $creditNote->billing_country }}</p>
                 @endif
+                @if ($creditNote->billing_phone)
+                    <p>{{ $creditNote->billing_phone }}</p>
+                @endif
                 <p>{{ $creditNote->customer_email }}</p>
+                @foreach ($creditNote->custom_properties_snapshot ?? [] as $property)
+                    <p><strong>{{ $property['label'] ?? $property['key'] }}:</strong> {{ $property['value'] ?? '' }}</p>
+                @endforeach
             </td>
             <td>
                 <h2>{{ __('credit_notes.reason') }}</h2>

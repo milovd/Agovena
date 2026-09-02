@@ -45,10 +45,14 @@
                     <dd><a href="{{ route('customer.orders.show', $instance->order) }}">{{ $instance->order->number }}</a></dd>
                 </div>
             @endif
-            @if ($instance->order?->invoice)
+            @if ($instance->order?->invoices?->isNotEmpty())
                 <div>
                     <dt>{{ __('customer.account.invoice_number') }}</dt>
-                    <dd><a href="{{ route('customer.invoices.show', $instance->order->invoice) }}">{{ $instance->order->invoice->number }}</a></dd>
+                    <dd>
+                        @foreach ($instance->order->invoices as $invoice)
+                            <a href="{{ route('customer.invoices.show', $invoice) }}">{{ $invoice->number }}</a>@if (! $loop->last), @endif
+                        @endforeach
+                    </dd>
                 </div>
             @endif
             @if ($subscription)

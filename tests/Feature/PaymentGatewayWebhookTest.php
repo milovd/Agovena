@@ -88,7 +88,7 @@ test('stale open payment attempts are closed instead of returned for retry', fun
     ]);
 
     $result = app(StartOrderPayment::class)->handle(
-        $payment->order->fresh(['invoice', 'payment']),
+        $payment->order->fresh(['invoices', 'payment']),
         'manual',
         'https://store.test/return',
         'https://store.test/cancel',
@@ -385,7 +385,7 @@ test('completed gateway initiation records manual reconciliation when local sett
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('blocked-completed-gateway');
     $gateway->shouldReceive('initiate')->once()->andReturnUsing(function () use ($payment): PaymentInitiationResult {
-        $payment->order->invoice()->update(['status' => InvoiceStatus::Void]);
+        $payment->order->invoices()->update(['status' => InvoiceStatus::Void]);
 
         return PaymentInitiationResult::completed('completed-blocked-1');
     });
@@ -447,7 +447,7 @@ test('cancellation with an open attempt without provider id requires reconciliat
     app(PaymentGatewayRegistry::class)->register($gateway);
 
     expect(fn () => app(CancelUnpaidOrder::class)->handle(
-        $payment->order->fresh(['invoice', 'payment']),
+        $payment->order->fresh(['invoices', 'payment']),
         UnpaidOrderCancelSource::Customer,
     ))->toThrow(ValidationException::class);
 
@@ -465,7 +465,7 @@ test('provider cancellation failure keeps the order pending for manual reconcili
     $payment->update(['method' => 'failing-cancel']);
 
     expect(fn () => app(CancelUnpaidOrder::class)->handle(
-        $payment->order->fresh(['invoice', 'payment']),
+        $payment->order->fresh(['invoices', 'payment']),
         UnpaidOrderCancelSource::Customer,
     ))->toThrow(ValidationException::class);
 
@@ -490,7 +490,7 @@ test('provider cancellation runs without holding database row locks', function (
     $payment->update(['method' => 'transaction-free-cancel']);
 
     $result = app(CancelUnpaidOrder::class)->handle(
-        $payment->order->fresh(['invoice', 'payment']),
+        $payment->order->fresh(['invoices', 'payment']),
         UnpaidOrderCancelSource::Customer,
     );
 
@@ -505,7 +505,7 @@ test('provider cancellation without an explicit capability fails closed', functi
     app(PaymentGatewayRegistry::class)->register(new FakeWebhookGateway);
 
     expect(fn () => app(CancelUnpaidOrder::class)->handle(
-        $payment->order->fresh(['invoice', 'payment']),
+        $payment->order->fresh(['invoices', 'payment']),
         UnpaidOrderCancelSource::Customer,
     ))->toThrow(ValidationException::class);
 
@@ -523,7 +523,7 @@ test('scheduler provider cancellation failure keeps the order payable for reconc
     $payment->update(['method' => 'scheduler-failing-cancel']);
 
     $result = app(CancelUnpaidOrder::class)->handle(
-        $payment->order->fresh(['invoice', 'payment']),
+        $payment->order->fresh(['invoices', 'payment']),
         UnpaidOrderCancelSource::Scheduler,
     );
 
@@ -901,7 +901,7 @@ test('paid webhook after unpaid cancel does not resurrect the order', function (
     ]);
 
     app(CancelUnpaidOrder::class)->handle(
-        $payment->order->fresh(['invoice', 'payment']),
+        $payment->order->fresh(['invoices', 'payment']),
         UnpaidOrderCancelSource::Customer,
     );
 
@@ -916,7 +916,7 @@ test('paid webhook after unpaid cancel does not resurrect the order', function (
     expect($result->event->processing_status)->toBe('ignored')
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Cancelled)
         ->and($payment->fresh()->order->status)->toBe(OrderStatus::Cancelled)
-        ->and($payment->fresh()->order->invoice?->status)->toBe(InvoiceStatus::Void);
+        ->and($payment->fresh()->order->invoices->first()?->status)->toBe(InvoiceStatus::Void);
 });
 
 test('paid status retry repairs an order left pending after a payment commit', function () {
@@ -1085,7 +1085,7 @@ test('order cancellation cancels open attempts for every gateway', function () {
     }
 
     app(CancelUnpaidOrder::class)->handle(
-        $payment->order->fresh(['invoice', 'payment']),
+        $payment->order->fresh(['invoices', 'payment']),
         UnpaidOrderCancelSource::Customer,
     );
 
@@ -1134,7 +1134,7 @@ test('paid webhook after terminal cancellation requires payment reconciliation',
     app(PaymentGatewayRegistry::class)->register(new FakeWebhookGateway);
     $payment = placePendingOrderPayment();
     $payment->order()->update(['status' => OrderStatus::Cancelled]);
-    $payment->order->invoice()->update(['status' => InvoiceStatus::Void]);
+    $payment->order->invoices()->update(['status' => InvoiceStatus::Void]);
     $attempt = PaymentAttempt::query()->create([
         'payment_id' => $payment->id,
         'order_id' => $payment->order_id,

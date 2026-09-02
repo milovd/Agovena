@@ -9,6 +9,7 @@ use App\Agovena\Admin\AdminRoleAssignmentPolicy;
 use App\Agovena\Auth\SetUserEmailVerification;
 use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\Properties\CustomerPropertyService;
+use App\Agovena\Customer\SaveCustomerAddress;
 use App\Agovena\Customer\UpdateCustomerProfile;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Privacy\AnonymizeCustomer;
@@ -52,6 +53,10 @@ final class Show extends Component
         $this->authorize('customers.view');
         $this->customer = $customer;
         $this->customer->loadMissing('user.roles');
+        $requestedPanel = (string) request()->query('panel', 'overview');
+        if (in_array($requestedPanel, ['overview', 'profile', 'addresses', 'commerce', 'credits', 'capabilities'], true)) {
+            $this->panel = $requestedPanel;
+        }
         $this->name = (string) $customer->name;
         $this->email = (string) $customer->email;
         $this->selectedRoles = $this->customer->user?->roles->pluck('name')->values()->all() ?? [];
@@ -123,7 +128,23 @@ final class Show extends Component
         $this->authorize('customers.manage');
         $definitions = $properties->definitionsFor('staff');
         $data = $this->validate($properties->livewireRules($definitions));
-        $properties->save($this->customer, $definitions, $data['propertyValues'] ?? $this->propertyValues, 'staff');
+        $submitted = $data['propertyValues'] ?? $this->propertyValues;
+        $properties->save($this->customer, $definitions, $submitted, 'staff');
+
+        $address = $properties->addressFromProperties($this->customer, $submitted);
+        if ($address !== null) {
+            $existing = $this->customer->addresses()->where('is_default_billing', true)->first();
+            app(SaveCustomerAddress::class)->handle(
+                $this->customer,
+                $address,
+                [
+                    'label' => optional($existing)->label ?? __('customer.addresses.checkout_saved_label'),
+                    'is_default_billing' => true,
+                    'is_default_shipping' => (bool) (optional($existing)->is_default_shipping ?? false),
+                ],
+                $existing,
+            );
+        }
         session()->flash('status', __('admin.customer_properties.values_saved'));
     }
 

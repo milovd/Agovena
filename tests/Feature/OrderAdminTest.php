@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
+use App\Agovena\Invoices\LinkInvoiceToOrder;
+use App\Agovena\Invoices\UnlinkInvoiceFromOrder;
 use App\Agovena\Orders\DeleteOrder;
+use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Livewire\Admin\Orders\Edit as OrderEdit;
@@ -111,6 +114,134 @@ test('order detail keeps the important information in a compact address section'
         ->assertSee(__('admin.orders.show.billing_address'), false)
         ->assertSee(__('admin.orders.show.shipping_address'), false)
         ->assertSee('Market street 1', false);
+});
+
+test('an order can have multiple invoices and mutable invoices can be linked and unlinked', function () {
+    $staff = $this->createStaff([], ['orders.view', 'invoices.view', 'invoices.manage']);
+    $order = Order::factory()->create([
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+    ]);
+    $invoiceAttributes = [
+        'status' => InvoiceStatus::Issued,
+        'customer_name' => $order->customer_name,
+        'customer_email' => $order->customer_email,
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => $order->currency,
+    ];
+    $first = Invoice::query()->create(['number' => 'INV-LINK-00001', ...$invoiceAttributes]);
+    $second = Invoice::query()->create(['number' => 'INV-LINK-00002', ...$invoiceAttributes]);
+
+    app(LinkInvoiceToOrder::class)->handle($first, $order, $staff);
+    app(LinkInvoiceToOrder::class)->handle($second, $order, $staff);
+
+    expect($order->fresh('invoices')->invoices)->toHaveCount(2)
+        ->and($first->fresh()->order_id)->toBe($order->id)
+        ->and($second->fresh()->order_id)->toBe($order->id);
+
+    app(UnlinkInvoiceFromOrder::class)->handle($first->fresh(), $staff);
+
+    expect($first->fresh()->order_id)->toBeNull()
+        ->and($order->fresh('invoices')->invoices)->toHaveCount(1);
+});
+
+test('financially relevant invoices cannot be unlinked from an order', function () {
+    $staff = $this->createStaff([], ['invoices.manage']);
+    $order = Order::factory()->create([
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+    ]);
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-LINK-00003',
+        'status' => InvoiceStatus::Paid,
+        'order_id' => $order->id,
+        'customer_name' => $order->customer_name,
+        'customer_email' => $order->customer_email,
+        'issued_at' => now()->toDateString(),
+        'paid_at' => now(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => $order->currency,
+    ]);
+
+    expect(fn () => app(UnlinkInvoiceFromOrder::class)->handle($invoice, $staff))
+        ->toThrow(ValidationException::class);
+
+    expect($invoice->fresh()->order_id)->toBe($order->id);
+});
+
+test('order and invoice detail pages expose the invoice relationship in both directions', function () {
+    $staff = $this->createStaff([], ['orders.view', 'invoices.view', 'invoices.manage']);
+    $order = Order::factory()->create([
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+    ]);
+    $attributes = [
+        'status' => InvoiceStatus::Issued,
+        'order_id' => $order->id,
+        'customer_name' => $order->customer_name,
+        'customer_email' => $order->customer_email,
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => $order->currency,
+    ];
+    $first = Invoice::query()->create(['number' => 'INV-LINK-00006', ...$attributes]);
+    $second = Invoice::query()->create(['number' => 'INV-LINK-00007', ...$attributes]);
+
+    $this->actingAs($staff)
+        ->get(route('admin.orders.show', $order))
+        ->assertOk()
+        ->assertSee($first->number, false)
+        ->assertSee($second->number, false)
+        ->assertSee(route('admin.invoices.show', $first), false);
+
+    $this->get(route('admin.invoices.show', $first))
+        ->assertOk()
+        ->assertSee($order->number, false)
+        ->assertSee(route('admin.orders.show', $order), false);
+});
+
+test('a pending order with a paid invoice cannot accept another invoice or be deleted', function () {
+    $staff = $this->createStaff([], ['invoices.manage', 'orders.delete']);
+    $order = Order::factory()->create([
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+    ]);
+    $attributes = [
+        'customer_name' => $order->customer_name,
+        'customer_email' => $order->customer_email,
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => $order->currency,
+    ];
+    $paid = Invoice::query()->create([
+        'number' => 'INV-LINK-00004',
+        'status' => InvoiceStatus::Paid,
+        'order_id' => $order->id,
+        'paid_at' => now(),
+        ...$attributes,
+    ]);
+    $candidate = Invoice::query()->create([
+        'number' => 'INV-LINK-00005',
+        'status' => InvoiceStatus::Issued,
+        ...$attributes,
+    ]);
+
+    expect(fn () => app(LinkInvoiceToOrder::class)->handle($candidate, $order, $staff))
+        ->toThrow(ValidationException::class);
+    expect(fn () => app(DeleteOrder::class)->handle($order, $staff))
+        ->toThrow(ValidationException::class);
+
+    expect($paid->fresh()->order_id)->toBe($order->id)
+        ->and($candidate->fresh()->order_id)->toBeNull();
 });
 
 test('staff without update permission cannot open order editing', function () {

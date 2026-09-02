@@ -81,8 +81,10 @@
                         <p>{{ __('customer.account.net_paid', ['amount' => \App\Support\MoneyFormatter::format($order->payment->amount - $order->payment->refundedAmount(), $order->payment->currency)]) }}</p>
                     @endif
                 @endif
-                @if ($order->invoice)
-                    <p><a href="{{ route('customer.invoices.show', $order->invoice) }}">{{ $order->invoice->number }}</a></p>
+                @if ($order->invoices->isNotEmpty())
+                    @foreach ($order->invoices as $invoice)
+                        <p><a href="{{ route('customer.invoices.show', $invoice) }}">{{ $invoice->number }}</a></p>
+                    @endforeach
                 @endif
                 @foreach ($order->creditNotes as $note)
                     <p><a href="{{ route('customer.credit-notes.show', $note) }}">{{ $note->number }}</a></p>
@@ -97,10 +99,28 @@
                     <p>{{ $order->billing_line1 }}</p>
                     @if ($order->billing_line2)<p>{{ $order->billing_line2 }}</p>@endif
                     <p>{{ $order->billing_postal_code }} {{ $order->billing_city }}</p>
+                    @if ($order->billing_region)<p>{{ $order->billing_region }}</p>@endif
                     <p>{{ $order->billing_country }}</p>
                 @endif
+                @if ($order->billing_phone)<p>{{ $order->billing_phone }}</p>@endif
                 <p>{{ $order->customer_email }}</p>
                 <p>{{ $order->created_at?->timezone(config('app.timezone'))->format('Y-m-d H:i') }}</p>
+
+                @if ($order->shipping_line1 || $order->shipping_city || $order->shipping_country)
+                    <h2>{{ __('common.shipping') }}</h2>
+                    <p>{{ $order->shipping_name ?: $order->customer_name }}</p>
+                    @if ($order->shipping_company)<p>{{ $order->shipping_company }}</p>@endif
+                    <p>{{ $order->shipping_line1 }}</p>
+                    @if ($order->shipping_line2)<p>{{ $order->shipping_line2 }}</p>@endif
+                    <p>{{ $order->shipping_postal_code }} {{ $order->shipping_city }}</p>
+                    @if ($order->shipping_region)<p>{{ $order->shipping_region }}</p>@endif
+                    <p>{{ $order->shipping_country }}</p>
+                    @if ($order->shipping_phone)<p>{{ $order->shipping_phone }}</p>@endif
+                @endif
+
+                @foreach ($order->custom_properties_snapshot ?? [] as $property)
+                    <p><strong>{{ $property['label'] ?? $property['key'] }}:</strong> {{ $property['value'] ?? '' }}</p>
+                @endforeach
             </div>
 
             @if (($shipments ?? []) !== [])

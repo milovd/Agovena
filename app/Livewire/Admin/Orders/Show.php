@@ -6,12 +6,17 @@ namespace App\Livewire\Admin\Orders;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\InMemoryAdminRegistrar;
+use App\Agovena\Invoices\LinkInvoiceToOrder;
+use App\Agovena\Invoices\UnlinkInvoiceFromOrder;
 use App\Agovena\Orders\CancelUnpaidOrder;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RecordManualPayment;
+use App\Enums\InvoiceStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Livewire\Concerns\RequiresRecentPassword;
+use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -32,10 +37,14 @@ final class Show extends Component
 
     public bool $confirmingCancel = false;
 
+    public bool $showInvoiceLinker = false;
+
+    public string $invoiceSearch = '';
+
     public function mount(Order $order): void
     {
         $this->authorize('orders.view');
-        $this->order = $order->load(['items', 'payment.attempts', 'invoice', 'creditNotes', 'refunds']);
+        $this->order = $order->load(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds']);
     }
 
     public function startRecordPayment(): void
@@ -72,7 +81,7 @@ final class Show extends Component
         $staff = Auth::user();
 
         $this->order = $cancel->handle($this->order, UnpaidOrderCancelSource::Staff, $staff)
-            ->load(['items', 'payment.attempts', 'invoice', 'creditNotes', 'refunds']);
+            ->load(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds']);
         $this->confirmingCancel = false;
         session()->flash('status', __('admin.orders.flash.cancelled'));
     }
@@ -94,9 +103,47 @@ final class Show extends Component
             filled($this->reference) ? $this->reference : null,
         );
 
-        $this->order->refresh()->load(['items', 'payment.attempts', 'invoice', 'creditNotes', 'refunds']);
+        $this->order->refresh()->load(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds']);
         $this->confirmingPayment = false;
         session()->flash('status', __('admin.orders.flash.payment_recorded'));
+    }
+
+    public function startLinkInvoice(): void
+    {
+        $this->authorize('invoices.manage');
+        $this->showInvoiceLinker = true;
+    }
+
+    public function cancelLinkInvoice(): void
+    {
+        $this->showInvoiceLinker = false;
+        $this->invoiceSearch = '';
+    }
+
+    public function linkInvoice(int $invoiceId, LinkInvoiceToOrder $link): void
+    {
+        $this->authorize('invoices.manage');
+
+        $invoice = Invoice::query()->whereKey($invoiceId)->firstOrFail();
+        /** @var User $staff */
+        $staff = Auth::user();
+        $link->handle($invoice, $this->order, $staff);
+        $this->refreshOrder();
+        $this->cancelLinkInvoice();
+        session()->flash('status', __('admin.orders.flash.invoice_linked'));
+    }
+
+    public function unlinkInvoice(int $invoiceId, UnlinkInvoiceFromOrder $unlink): void
+    {
+        $this->authorize('invoices.manage');
+
+        $invoice = Invoice::query()->whereKey($invoiceId)->firstOrFail();
+        abort_unless((int) $invoice->order_id === (int) $this->order->id, 404);
+        /** @var User $staff */
+        $staff = Auth::user();
+        $unlink->handle($invoice, $staff);
+        $this->refreshOrder();
+        session()->flash('status', __('admin.orders.flash.invoice_unlinked'));
     }
 
     public function render(AdminRegistrar $admin)
@@ -107,10 +154,38 @@ final class Show extends Component
             && $this->order->payment?->status === PaymentStatus::Pending;
         $canCancelUnpaid = $this->order->canCancelUnpaid()
             && ($user?->can('orders.cancel') === true || $user?->can('invoices.void') === true);
+        $canManageInvoices = $user?->can('invoices.manage') === true
+            && $this->order->status === OrderStatus::Pending
+            && ($this->order->payment === null || $this->order->payment->status === PaymentStatus::Pending)
+            && ! $this->order->invoices()->where(function ($query): void {
+                $query->where('status', '!=', InvoiceStatus::Issued)
+                    ->orWhereNotNull('paid_at')
+                    ->orWhereHas('creditNotes')
+                    ->orWhereHas('refunds');
+            })->exists();
+        $invoiceCandidates = collect();
+        if ($this->showInvoiceLinker && $canManageInvoices) {
+            $term = trim($this->invoiceSearch);
+            $invoiceCandidates = Invoice::query()
+                ->whereNull('order_id')
+                ->where('status', InvoiceStatus::Issued)
+                ->when($term !== '', static function ($query) use ($term): void {
+                    $query->where(function ($query) use ($term): void {
+                        $query->where('number', 'like', "%{$term}%")
+                            ->orWhere('customer_name', 'like', "%{$term}%")
+                            ->orWhere('customer_email', 'like', "%{$term}%");
+                    });
+                })
+                ->latest('id')
+                ->limit(8)
+                ->get();
+        }
 
         return view('livewire.admin.orders.show', [
             'canRecord' => $canRecord,
             'canCancelUnpaid' => $canCancelUnpaid,
+            'canManageInvoices' => $canManageInvoices,
+            'invoiceCandidates' => $invoiceCandidates,
             'orderDetailSections' => $admin->orderDetailSections(),
             'navigation' => $admin->navigationItems(),
             'paymentGatewayLabel' => $this->paymentGatewayLabel(),
@@ -145,5 +220,11 @@ final class Show extends Component
                 && ($user->can('orders.cancel') || $user->can('invoices.void')),
             403,
         );
+    }
+
+    private function refreshOrder(): void
+    {
+        $this->order = Order::query()->whereKey($this->order->id)->firstOrFail()
+            ->load(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds']);
     }
 }

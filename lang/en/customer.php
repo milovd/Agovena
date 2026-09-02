@@ -259,6 +259,7 @@ return [
         'default_shipping' => 'Default shipping',
         'save' => 'Save address',
         'saved' => 'Address saved.',
+        'required_address' => 'Complete the required address properties before saving.',
         'edit' => 'Edit',
         'delete' => 'Delete',
         'deleted' => 'Address deleted.',

@@ -157,7 +157,7 @@ test('cancelling an unpaid renewal order cancels its pending renewals', function
 
     app(SubscriptionService::class)->processDue();
     $renewal = SubscriptionRenewal::query()->firstOrFail();
-    $order = $renewal->order()->with(['invoice', 'payment'])->firstOrFail();
+    $order = $renewal->order()->with(['invoices', 'payment'])->firstOrFail();
 
     app(CancelUnpaidOrder::class)->handle($order, UnpaidOrderCancelSource::Customer);
 
@@ -206,7 +206,7 @@ test('credit reservations roll back when renewal settlement fails', function () 
     app(SubscriptionService::class)->processDue();
 
     $renewal = $subscription->renewals()->latest('id')->firstOrFail();
-    $renewal->order->invoice->update(['status' => InvoiceStatus::Void]);
+    $renewal->order->invoices->firstOrFail()->update(['status' => InvoiceStatus::Void]);
 
     $ledger = app(CustomerCreditLedger::class);
     $ledger->credit($customer, 1999, 'test_credit');

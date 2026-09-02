@@ -106,6 +106,54 @@ it('imports invoices and payment transactions from mapped dependencies', functio
     unlink($paymentPath);
 });
 
+it('imports linked invoice addresses and properties from the order snapshot', function (): void {
+    $executor = app(ImportExecutor::class);
+    $registry = app(ImportAdapterRegistry::class);
+    $customerPath = writeExtendedImportFixture("external_id,email,name\nC-SNAPSHOT,snapshot@example.test,Current Customer\n");
+    $executor->run($customerPath, $registry->for('csv', 'customer'), 'csv');
+    $productPath = writeExtendedImportFixture("external_id,name,price_amount\nP-SNAPSHOT,Snapshot product,2500\n");
+    $executor->run($productPath, $registry->for('csv', 'product'), 'csv');
+    $orderPath = writeExtendedCsvFixture(
+        [
+            'external_id', 'customer_external_id', 'total_amount', 'currency', 'items_json',
+            'billing_name', 'billing_company', 'billing_line1', 'billing_line2', 'billing_city',
+            'billing_region', 'billing_postal_code', 'billing_country', 'billing_phone',
+            'shipping_name', 'shipping_company', 'shipping_line1', 'shipping_line2', 'shipping_city',
+            'shipping_region', 'shipping_postal_code', 'shipping_country', 'shipping_phone',
+            'custom_properties_json',
+        ],
+        [
+            'O-SNAPSHOT', 'C-SNAPSHOT', 2500, 'EUR',
+            json_encode([['product_external_id' => 'P-SNAPSHOT', 'quantity' => 1, 'unit_amount' => 2500]], JSON_THROW_ON_ERROR),
+            'Historical Customer', 'Historical BV', 'Historical Street 7', 'Suite 8', 'Amsterdam',
+            'Noord-Holland', '1000 AA', 'NL', '+31 20 000 0000',
+            'Delivery Customer', 'Delivery BV', 'Delivery Road 9', 'Dock 4', 'Rotterdam',
+            'Zuid-Holland', '3000 BB', 'NL', '+31 10 000 0000',
+            json_encode([['key' => 'vat_number', 'label' => 'VAT number', 'value' => 'NL444444444B04']], JSON_THROW_ON_ERROR),
+        ],
+    );
+    $orderRun = $executor->run($orderPath, $registry->for('csv', 'order'), 'csv');
+
+    $invoicePath = writeExtendedCsvFixture(
+        ['external_id', 'customer_external_id', 'order_external_id', 'number', 'status', 'subtotal_amount', 'tax_amount', 'total_amount', 'currency', 'items_json'],
+        ['I-SNAPSHOT', 'C-SNAPSHOT', 'O-SNAPSHOT', 'LEGACY-INV-SNAPSHOT', 'issued', 2500, 0, 2500, 'EUR', json_encode([['kind' => 'product', 'label' => 'Snapshot product', 'quantity' => 1, 'unit_amount' => 2500, 'line_total_amount' => 2500]], JSON_THROW_ON_ERROR)],
+    );
+    $invoiceRun = $executor->run($invoicePath, $registry->for('csv', 'invoice'), 'csv');
+    $invoice = Invoice::query()->where('number', 'LEGACY-INV-SNAPSHOT')->firstOrFail();
+
+    expect($orderRun->errors)->toBe(0)
+        ->and($invoiceRun->errors)->toBe(0)
+        ->and($invoice->billing_company)->toBe('Historical BV')
+        ->and($invoice->billing_line1)->toBe('Historical Street 7')
+        ->and($invoice->billing_phone)->toBe('+31 20 000 0000')
+        ->and($invoice->custom_properties_snapshot[0]['value'])->toBe('NL444444444B04');
+
+    unlink($customerPath);
+    unlink($productPath);
+    unlink($orderPath);
+    unlink($invoicePath);
+});
+
 it('imports provisioning service instances only when the module is enabled', function (): void {
     installAndEnableModules(['provisioning']);
     $executor = app(ImportExecutor::class);

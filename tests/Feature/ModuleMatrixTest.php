@@ -7,22 +7,12 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Modules\ModuleManager;
-use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Models\AgovenaModule;
 use App\Models\Customer;
 use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
-
-/**
- * @param  list<string>  $ids
- */
-function enableFirstPartyModules(array $ids): void
-{
-    installAndEnableModules($ids);
-    app(SyncRegisteredPermissions::class)(force: true);
-}
 
 test('module enable fails when module is not installed', function () {
     AgovenaModule::query()->where('module_id', 'inventory')->delete();

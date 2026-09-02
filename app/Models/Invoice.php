@@ -24,6 +24,7 @@ use RuntimeException;
  * @property int $payment_fee_amount
  * @property array<string, int|string|bool>|null $payment_fee_snapshot
  * @property int|null $customer_id
+ * @property Carbon|null $due_at
  * @property Carbon|null $paid_at
  * @property Carbon|null $issued_at
  * @property-read Collection<int, InvoiceItem> $items
@@ -145,6 +146,14 @@ class Invoice extends Model
         return $this->status === InvoiceStatus::Issued
             && $this->paid_at === null
             && $this->creditNotes()->doesntExist();
+    }
+
+    public function canChangeOrderAssociation(): bool
+    {
+        return $this->status === InvoiceStatus::Issued
+            && $this->paid_at === null
+            && $this->creditNotes()->doesntExist()
+            && $this->refunds()->doesntExist();
     }
 
     public function canIssueCreditNote(): bool

@@ -175,6 +175,11 @@
                                 <dt>{{ __('admin.invoices.order') }}</dt>
                                 <dd><a href="{{ route('admin.orders.show', $invoice->order) }}">{{ $invoice->order->number }}</a></dd>
                             </div>
+                        @else
+                            <div>
+                                <dt>{{ __('admin.invoices.order') }}</dt>
+                                <dd class="ag-muted">{{ __('admin.invoices.order_none') }}</dd>
+                            </div>
                         @endif
                         <div>
                             <dt>{{ __('admin.invoices.credited') }}</dt>
@@ -199,12 +204,22 @@
                                 <dt>{{ __('admin.invoices.billing') }}</dt>
                                 <dd>
                                     {{ $invoice->billing_name }}<br>
+                                    @if ($invoice->billing_company){{ $invoice->billing_company }}<br>@endif
                                     {{ $invoice->billing_line1 }}<br>
+                                    @if ($invoice->billing_line2){{ $invoice->billing_line2 }}<br>@endif
                                     {{ $invoice->billing_postal_code }} {{ $invoice->billing_city }}<br>
+                                    @if ($invoice->billing_region){{ $invoice->billing_region }}<br>@endif
                                     {{ $invoice->billing_country }}
+                                    @if ($invoice->billing_phone)<br>{{ $invoice->billing_phone }}@endif
                                 </dd>
                             </div>
                         @endif
+                        @foreach ($invoice->custom_properties_snapshot ?? [] as $property)
+                            <div>
+                                <dt>{{ $property['label'] ?? $property['key'] }}</dt>
+                                <dd>{{ $property['value'] ?? '' }}</dd>
+                            </div>
+                        @endforeach
                     </dl>
                 </div>
             </section>

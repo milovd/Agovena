@@ -19,7 +19,7 @@ final class InvoiceResource extends JsonResource
     {
         /** @var Invoice $invoice */
         $invoice = $this->resource;
-        $invoice->loadMissing(['items', 'creditNotes']);
+        $invoice->loadMissing(['items', 'creditNotes', 'order']);
 
         return [
             'id' => $invoice->id,
@@ -27,11 +27,34 @@ final class InvoiceResource extends JsonResource
             'status' => $invoice->status->value,
             'issued_at' => $invoice->issued_at?->toDateString(),
             'currency' => $invoice->currency,
+            'customer' => [
+                'id' => $invoice->customer_id,
+                'name' => $invoice->customer_name,
+                'email' => $invoice->customer_email,
+            ],
+            'billing' => [
+                'name' => $invoice->billing_name,
+                'company' => $invoice->billing_company,
+                'line1' => $invoice->billing_line1,
+                'line2' => $invoice->billing_line2,
+                'city' => $invoice->billing_city,
+                'region' => $invoice->billing_region,
+                'postal_code' => $invoice->billing_postal_code,
+                'country' => $invoice->billing_country,
+                'phone' => $invoice->billing_phone,
+            ],
+            'custom_properties' => $invoice->custom_properties_snapshot ?? [],
+            'custom_properties_snapshot' => $invoice->custom_properties_snapshot ?? [],
             'subtotal_amount' => $invoice->subtotal_amount,
             'tax_amount' => $invoice->tax_amount,
             'total_amount' => $invoice->total_amount,
             'total_formatted' => MoneyFormatter::format($invoice->total_amount, $invoice->currency),
             'credited_amount' => $invoice->creditedAmount(),
+            'order' => $invoice->order === null ? null : [
+                'id' => $invoice->order->id,
+                'number' => $invoice->order->number,
+                'status' => $invoice->order->status->value,
+            ],
             'items' => $invoice->items->map(static fn ($item): array => [
                 'label' => $item->label,
                 'quantity' => $item->quantity,

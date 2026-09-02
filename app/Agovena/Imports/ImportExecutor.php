@@ -254,9 +254,6 @@ final class ImportExecutor
             if ($order !== null && (int) $order->customer_id !== (int) $customer->id) {
                 throw new InvalidArgumentException('Imported invoice customer does not match its order.');
             }
-            if ($order !== null && $order->invoice()->exists()) {
-                throw new InvalidArgumentException('Imported order already has an invoice.');
-            }
 
             $status = InvoiceStatus::tryFrom(strtolower(trim((string) ($candidate->payload['status'] ?? 'issued'))));
             if ($status === null) {
@@ -320,6 +317,32 @@ final class ImportExecutor
             $paidAt = $status === InvoiceStatus::Paid
                 ? ($this->parseDate($candidate->payload['paid_at'] ?? null, 'Invoice payment date') ?? Carbon::now())
                 : null;
+            $billing = $order === null
+                ? [
+                    'billing_name' => $this->nullableString($candidate->payload['billing_name'] ?? null) ?? $customer->name,
+                    'billing_company' => $this->nullableString($candidate->payload['billing_company'] ?? null),
+                    'billing_line1' => $this->nullableString($candidate->payload['billing_line1'] ?? null),
+                    'billing_line2' => $this->nullableString($candidate->payload['billing_line2'] ?? null),
+                    'billing_city' => $this->nullableString($candidate->payload['billing_city'] ?? null),
+                    'billing_region' => $this->nullableString($candidate->payload['billing_region'] ?? null),
+                    'billing_postal_code' => $this->nullableString($candidate->payload['billing_postal_code'] ?? null),
+                    'billing_country' => $this->nullableString($candidate->payload['billing_country'] ?? null),
+                    'billing_phone' => $this->nullableString($candidate->payload['billing_phone'] ?? null),
+                ]
+                : [
+                    'billing_name' => $order->billing_name,
+                    'billing_company' => $order->billing_company,
+                    'billing_line1' => $order->billing_line1,
+                    'billing_line2' => $order->billing_line2,
+                    'billing_city' => $order->billing_city,
+                    'billing_region' => $order->billing_region,
+                    'billing_postal_code' => $order->billing_postal_code,
+                    'billing_country' => $order->billing_country,
+                    'billing_phone' => $order->billing_phone,
+                ];
+            $customPropertiesSnapshot = $order === null
+                ? $this->importedSnapshot($candidate->payload['custom_properties_json'] ?? null)
+                : $order->custom_properties_snapshot;
             $invoice = Invoice::query()->create([
                 'number' => $number,
                 'status' => $status,
@@ -327,7 +350,7 @@ final class ImportExecutor
                 'customer_id' => $customer->id,
                 'customer_name' => $customer->name,
                 'customer_email' => $customer->email,
-                'billing_name' => $customer->name,
+                ...$billing,
                 'issued_at' => $issuedAt,
                 'due_at' => $this->parseDate($candidate->payload['due_at'] ?? null, 'Invoice due date'),
                 'subtotal_amount' => $subtotal,
@@ -338,6 +361,7 @@ final class ImportExecutor
                 'total_amount' => $total,
                 'currency' => $currency,
                 'paid_at' => $paidAt,
+                'custom_properties_snapshot' => $customPropertiesSnapshot,
             ]);
             foreach ($itemRows as $itemRow) {
                 $invoice->items()->create($itemRow);
@@ -420,7 +444,9 @@ final class ImportExecutor
                 Refund::query()->create([
                     'payment_id' => $payment->id,
                     'order_id' => $order->id,
-                    'invoice_id' => $order->invoice?->id,
+                    'invoice_id' => $order->invoices()->count() === 1
+                        ? $order->invoices()->value('id')
+                        : null,
                     'amount' => $refundedAmount,
                     'currency' => $currency,
                     'status' => RefundStatus::Completed,
@@ -630,6 +656,39 @@ final class ImportExecutor
         return $this->requiredImportedProduct($candidate, $source);
     }
 
+    private function nullableString(mixed $value): ?string
+    {
+        $value = trim((string) ($value ?? ''));
+
+        return $value === '' ? null : $value;
+    }
+
+    /** @return list<array{key: string, label: string, value: string}>|null */
+    private function importedSnapshot(mixed $value): ?array
+    {
+        if ($this->nullableString($value) === null) {
+            return null;
+        }
+
+        $rows = $this->decodeJsonList($value, 'Customer property snapshot');
+        $snapshot = [];
+        foreach ($rows as $row) {
+            $key = $this->nullableString($row['key'] ?? null);
+            $label = $this->nullableString($row['label'] ?? null);
+            if ($key === null || $label === null || ! array_key_exists('value', $row)) {
+                throw new InvalidArgumentException('Customer property snapshot item is invalid.');
+            }
+
+            $snapshot[] = [
+                'key' => $key,
+                'label' => $label,
+                'value' => trim((string) $row['value']),
+            ];
+        }
+
+        return $snapshot;
+    }
+
     /** @return list<array<string, mixed>> */
     private function decodeJsonList(mixed $value, string $label): array
     {
@@ -817,12 +876,59 @@ final class ImportExecutor
                 throw new InvalidArgumentException('Imported order number already exists.');
             }
 
+            $billingName = $this->nullableString($candidate->payload['billing_name'] ?? null) ?? $customer->name;
+            $billing = [
+                'billing_name' => $billingName,
+                'billing_company' => $this->nullableString($candidate->payload['billing_company'] ?? null),
+                'billing_line1' => $this->nullableString($candidate->payload['billing_line1'] ?? null),
+                'billing_line2' => $this->nullableString($candidate->payload['billing_line2'] ?? null),
+                'billing_city' => $this->nullableString($candidate->payload['billing_city'] ?? null),
+                'billing_region' => $this->nullableString($candidate->payload['billing_region'] ?? null),
+                'billing_postal_code' => $this->nullableString($candidate->payload['billing_postal_code'] ?? null),
+                'billing_country' => $this->nullableString($candidate->payload['billing_country'] ?? null),
+                'billing_phone' => $this->nullableString($candidate->payload['billing_phone'] ?? null),
+            ];
+            $shippingSameAsBilling = filter_var(
+                $candidate->payload['shipping_same_as_billing'] ?? true,
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE,
+            );
+            if ($shippingSameAsBilling === null) {
+                throw new InvalidArgumentException('Imported shipping address flag is invalid.');
+            }
+            $shipping = $shippingSameAsBilling
+                ? [
+                    'shipping_name' => $billing['billing_name'],
+                    'shipping_company' => $billing['billing_company'],
+                    'shipping_line1' => $billing['billing_line1'],
+                    'shipping_line2' => $billing['billing_line2'],
+                    'shipping_city' => $billing['billing_city'],
+                    'shipping_region' => $billing['billing_region'],
+                    'shipping_postal_code' => $billing['billing_postal_code'],
+                    'shipping_country' => $billing['billing_country'],
+                    'shipping_phone' => $billing['billing_phone'],
+                ]
+                : [
+                    'shipping_name' => $this->nullableString($candidate->payload['shipping_name'] ?? null),
+                    'shipping_company' => $this->nullableString($candidate->payload['shipping_company'] ?? null),
+                    'shipping_line1' => $this->nullableString($candidate->payload['shipping_line1'] ?? null),
+                    'shipping_line2' => $this->nullableString($candidate->payload['shipping_line2'] ?? null),
+                    'shipping_city' => $this->nullableString($candidate->payload['shipping_city'] ?? null),
+                    'shipping_region' => $this->nullableString($candidate->payload['shipping_region'] ?? null),
+                    'shipping_postal_code' => $this->nullableString($candidate->payload['shipping_postal_code'] ?? null),
+                    'shipping_country' => $this->nullableString($candidate->payload['shipping_country'] ?? null),
+                    'shipping_phone' => $this->nullableString($candidate->payload['shipping_phone'] ?? null),
+                ];
             $order = Order::query()->create([
                 'number' => $number,
                 'status' => OrderStatus::Pending,
                 'customer_id' => $customer->id,
                 'customer_name' => $customer->name,
                 'customer_email' => $customer->email,
+                ...$billing,
+                ...$shipping,
+                'shipping_same_as_billing' => $shippingSameAsBilling,
+                'custom_properties_snapshot' => $this->importedSnapshot($candidate->payload['custom_properties_json'] ?? null),
                 'subtotal_amount' => (int) $total,
                 'shipping_amount' => 0,
                 'discount_amount' => 0,

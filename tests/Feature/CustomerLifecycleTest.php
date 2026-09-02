@@ -83,10 +83,10 @@ test('customer can cancel an unpaid order which voids the invoice and restocks i
         ->assertHasNoErrors()
         ->assertSee(__('customer.account.order_cancelled'), false);
 
-    $order = $order->fresh(['invoice', 'payment']);
+    $order = $order->fresh(['invoices', 'payment']);
     expect($order->status)->toBe(OrderStatus::Cancelled)
         ->and($order->isAwaitingPayment())->toBeFalse()
-        ->and($order->invoice?->status)->toBe(InvoiceStatus::Void)
+        ->and($order->invoices->first()?->status)->toBe(InvoiceStatus::Void)
         ->and($order->payment?->status)->toBe(PaymentStatus::Cancelled)
         ->and(InventoryStock::query()->where('product_id', $product->id)->value('quantity'))->toBe(5)
         ->and(AuditLog::query()->where('action', 'order.cancelled')->exists())->toBeTrue()
@@ -142,7 +142,7 @@ test('paid orders cannot be cancelled as unpaid', function () {
     ]);
     app(RecordManualPayment::class)->handle($order, $this->createStaff());
 
-    expect(fn () => app(CancelUnpaidOrder::class)->handle($order->fresh(['invoice', 'payment']), UnpaidOrderCancelSource::Customer))
+    expect(fn () => app(CancelUnpaidOrder::class)->handle($order->fresh(['invoices', 'payment']), UnpaidOrderCancelSource::Customer))
         ->toThrow(ValidationException::class);
 });
 

@@ -35,7 +35,7 @@ final class ChargeRecurringPayment
 
     public function handle(Order $order, ?string $idempotencyKey = null): RecurringChargeResult
     {
-        $order->loadMissing('payment', 'invoice');
+        $order->loadMissing('payment', 'invoices');
         $payment = $order->payment;
 
         if ($payment === null) {

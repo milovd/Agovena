@@ -45,60 +45,12 @@
             <input id="address-label" class="store-input" type="text" wire:model="label">
             @error('label') <p class="store-field__error">{{ $message }}</p> @enderror
         </div>
-        <div class="store-field">
-            <label class="store-field__label" for="address-name">{{ __('customer.addresses.name') }}</label>
-            <input id="address-name" class="store-input" type="text" wire:model="name" required>
-            @error('name') <p class="store-field__error">{{ $message }}</p> @enderror
-        </div>
-        <div class="store-field">
-            <label class="store-field__label" for="address-company">{{ __('customer.addresses.company') }}</label>
-            <input id="address-company" class="store-input" type="text" wire:model="company">
-        </div>
-        <div class="store-field store-suggest">
-            <label class="store-field__label" for="address-line1">{{ __('customer.addresses.line1') }}</label>
-            <input
-                id="address-line1"
-                class="store-input"
-                type="text"
-                wire:model.live.debounce.300ms="line1"
-                wire:blur="clearAddressSuggestions"
-                required
-                aria-autocomplete="list"
-            >
-            @include('theme::checkout.partials.address-suggestions', ['scope' => 'account'])
-            @error('line1') <p class="store-field__error">{{ $message }}</p> @enderror
-        </div>
-        <div class="store-field">
-            <label class="store-field__label" for="address-line2">{{ __('customer.addresses.line2') }}</label>
-            <input id="address-line2" class="store-input" type="text" wire:model="line2">
-        </div>
-        <div class="store-field">
-            <label class="store-field__label" for="address-city">{{ __('customer.addresses.city') }}</label>
-            <input id="address-city" class="store-input" type="text" wire:model="city" required>
-            @error('city') <p class="store-field__error">{{ $message }}</p> @enderror
-        </div>
-        <div class="store-field">
-            <label class="store-field__label" for="address-region">{{ __('customer.addresses.region') }}</label>
-            <input id="address-region" class="store-input" type="text" wire:model="region">
-        </div>
-        <div class="store-field">
-            <label class="store-field__label" for="address-postal">{{ __('customer.addresses.postal_code') }}</label>
-            <input id="address-postal" class="store-input" type="text" wire:model="postal_code" required>
-            @error('postal_code') <p class="store-field__error">{{ $message }}</p> @enderror
-        </div>
-        <div class="store-field">
-            <label class="store-field__label" for="address-country">{{ __('customer.addresses.country') }}</label>
-            <select id="address-country" class="store-input" wire:model="country" required>
-                @foreach ($countries as $code => $label)
-                    <option value="{{ $code }}">{{ $label }}</option>
-                @endforeach
-            </select>
-            @error('country') <p class="store-field__error">{{ $message }}</p> @enderror
-        </div>
-        <div class="store-field">
-            <label class="store-field__label" for="address-phone">{{ __('customer.addresses.phone') }}</label>
-            <input id="address-phone" class="store-input" type="text" wire:model="phone">
-        </div>
+        @include('partials.custom-property-fields', [
+            'propertyDefinitions' => $propertyDefinitions,
+            'propertyValues' => $propertyValues,
+            'actor' => $actor,
+            'addressSuggestionScope' => 'account',
+        ])
         <label class="store-check">
             <input type="checkbox" wire:model="is_default_billing">
             <span>{{ __('customer.addresses.default_billing') }}</span>

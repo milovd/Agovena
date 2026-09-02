@@ -42,7 +42,7 @@ final class StartOrderPayment
 
         try {
             return $this->lifecycleLock->run($order->id, function () use ($order, $selection, $returnUrl, $cancelUrl, $idempotencyKey, $checkoutMethod): PaymentAttempt {
-                $order->loadMissing('payment', 'invoice');
+                $order->loadMissing('payment', 'invoices');
                 $this->assertInvoiceCanBePaid->handle($order);
                 $payment = $order->payment;
                 if ($payment === null) {
@@ -56,7 +56,7 @@ final class StartOrderPayment
                 $payment = DB::transaction(function () use ($order, $selection, $idempotencyKey): Payment {
                     /** @var Order $lockedOrder */
                     $lockedOrder = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
-                    $lockedOrder->loadMissing('payment', 'invoice');
+                    $lockedOrder->loadMissing('payment', 'invoices');
                     $lockedPayment = $lockedOrder->payment;
 
                     if ($lockedPayment === null) {

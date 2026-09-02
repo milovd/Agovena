@@ -285,6 +285,8 @@ test('database backups screen renders operational status and creates a backup', 
     file_put_contents((string) $source, 'SQLite format 3 backup fixture');
 
     try {
+        config()->set('agovena.backups.disk', 'local');
+        config()->set('agovena.backups.directory', 'backups');
         Storage::fake('local');
         $realBackup = app(BackupManager::class)->backupSqlite((string) $source);
         expect($realBackup->success)->toBeTrue();

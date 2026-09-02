@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
+use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Enums\CustomerPropertyType;
 use App\Models\Customer;
 use App\Models\CustomerPropertyDefinition;
@@ -107,6 +108,8 @@ it('does not let customer properties spoof the internal plan-change origin', fun
         'custom_properties' => ['origin' => 'plan_change_surcharge'],
     ]);
 
-    expect($order->custom_properties_snapshot)->toBe([])
-        ->and($customer->propertyValues()->count())->toBe(0);
+    expect(collect($order->custom_properties_snapshot)->pluck('key')->all())
+        ->not->toContain('origin')
+        ->and(app(CustomerPropertyService::class)->valuesMap($customer->fresh()))
+        ->not->toHaveKey('origin');
 });

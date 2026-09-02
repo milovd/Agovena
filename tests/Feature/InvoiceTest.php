@@ -23,6 +23,7 @@ use App\Models\CreditNote;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
@@ -311,6 +312,28 @@ test('deleting an unpaid invoice requires recent password and removes its line i
 
     expect(Invoice::query()->whereKey($invoice->id)->exists())->toBeFalse()
         ->and(InvoiceItem::query()->whereKey($item->id)->exists())->toBeFalse();
+});
+
+test('deleting an invoice never deletes its linked order', function () {
+    $staff = $this->createStaff([], ['invoices.delete']);
+    $order = Order::factory()->create();
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-DELETE-ORDER-00001',
+        'status' => InvoiceStatus::Issued,
+        'order_id' => $order->id,
+        'customer_name' => $order->customer_name,
+        'customer_email' => $order->customer_email,
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => $order->currency,
+    ]);
+
+    app(DeleteInvoice::class)->handle($invoice, $staff);
+
+    expect(Invoice::query()->whereKey($invoice->id)->exists())->toBeFalse()
+        ->and(Order::query()->whereKey($order->id)->exists())->toBeTrue();
 });
 
 test('paid invoices cannot be deleted', function () {

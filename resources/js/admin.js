@@ -43,6 +43,8 @@ document.addEventListener('alpine:init', () => {
                         ...dataset,
                         borderColor: resolveCssColor(dataset.borderColor),
                         backgroundColor: resolveCssColor(dataset.backgroundColor),
+                        pointBackgroundColor: resolveCssColor(dataset.pointBackgroundColor),
+                        pointHoverBackgroundColor: resolveCssColor(dataset.pointHoverBackgroundColor),
                         borderWidth: dataset.borderWidth ?? 2,
                         pointRadius: dataset.pointRadius ?? 2,
                         pointHoverRadius: dataset.pointHoverRadius ?? 4,
@@ -51,6 +53,15 @@ document.addEventListener('alpine:init', () => {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            top: 4,
+                            right: 4,
+                        },
+                    },
+                    animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                        ? false
+                        : { duration: 220 },
                     interaction: {
                         mode: 'index',
                         intersect: false,
@@ -67,15 +78,21 @@ document.addEventListener('alpine:init', () => {
                             },
                         },
                         tooltip: {
-                            backgroundColor: text,
-                            titleColor: surface,
-                            bodyColor: border,
+                            backgroundColor: surface,
+                            titleColor: text,
+                            bodyColor: text,
+                            borderColor: border,
+                            borderWidth: 1,
                             padding: 10,
                             cornerRadius: 8,
+                            displayColors: false,
                         },
                     },
                     scales: {
                         x: {
+                            border: {
+                                display: false,
+                            },
                             grid: {
                                 display: false,
                             },
@@ -87,8 +104,12 @@ document.addEventListener('alpine:init', () => {
                         },
                         y: {
                             beginAtZero: true,
+                            border: {
+                                display: false,
+                            },
                             grid: {
                                 color: border,
+                                borderDash: [4, 4],
                             },
                             ticks: {
                                 color: muted,

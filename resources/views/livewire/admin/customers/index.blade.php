@@ -144,14 +144,25 @@
                                 </span>
                             </td>
                             <td class="ag-table__actions">
-                                <a
-                                    class="ag-icon-btn"
-                                    href="{{ route('admin.customers.show', $customer) }}"
-                                    title="{{ __('common.view') }}"
-                                    aria-label="{{ __('admin.customers.open_aria', ['name' => $customer->name]) }}"
-                                >
-                                    <x-ag.icon name="external-link" :size="16" />
-                                </a>
+                                <div class="ag-row-actions">
+                                    @can('customers.view')
+                                        <a
+                                            class="ag-btn ag-btn--ghost ag-btn--sm"
+                                            href="{{ route('admin.customers.show', ['customer' => $customer, 'panel' => 'profile']) }}"
+                                            aria-label="{{ __('admin.customers.edit_aria', ['name' => $customer->name]) }}"
+                                        >{{ __('common.edit') }}</a>
+                                    @endcan
+                                    @can('customers.manage')
+                                        @if (! $customer->anonymized_at)
+                                            <button
+                                                type="button"
+                                                class="ag-btn ag-btn--danger ag-btn--sm"
+                                                wire:click="delete({{ $customer->id }})"
+                                                wire:confirm="{{ __('admin.customers.delete_confirm') }}"
+                                            >{{ __('common.delete') }}</button>
+                                        @endif
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -160,4 +171,6 @@
         </div>
         {{ $customers->links() }}
     @endif
+
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

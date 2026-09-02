@@ -56,12 +56,19 @@
             <div>
                 <h2>{{ __('customer.account.billing') }}</h2>
                 <p>{{ $creditNote->billing_name ?: $creditNote->customer_name }}</p>
+                @if ($creditNote->billing_company)<p>{{ $creditNote->billing_company }}</p>@endif
                 @if ($creditNote->billing_line1)
                     <p>{{ $creditNote->billing_line1 }}</p>
+                    @if ($creditNote->billing_line2)<p>{{ $creditNote->billing_line2 }}</p>@endif
                     <p>{{ $creditNote->billing_postal_code }} {{ $creditNote->billing_city }}</p>
+                    @if ($creditNote->billing_region)<p>{{ $creditNote->billing_region }}</p>@endif
                     <p>{{ $creditNote->billing_country }}</p>
                 @endif
+                @if ($creditNote->billing_phone)<p>{{ $creditNote->billing_phone }}</p>@endif
                 <p>{{ $creditNote->customer_email }}</p>
+                @foreach ($creditNote->custom_properties_snapshot ?? [] as $property)
+                    <p><strong>{{ $property['label'] ?? $property['key'] }}:</strong> {{ $property['value'] ?? '' }}</p>
+                @endforeach
                 <p>{{ __('customer.account.reason') }}: {{ $creditNote->reason }}</p>
                 @if ($creditNote->invoice)
                     <p>

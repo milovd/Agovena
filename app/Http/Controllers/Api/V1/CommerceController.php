@@ -21,7 +21,7 @@ final class CommerceController
         $customer = authenticated_customer();
 
         return OrderResource::collection(
-            $customer->orders()->with(['items', 'payment', 'invoice', 'creditNotes'])->latest('id')->paginate(20),
+            $customer->orders()->with(['items', 'payment', 'invoices', 'creditNotes'])->latest('id')->paginate(20),
         );
     }
 
@@ -29,7 +29,7 @@ final class CommerceController
     {
         $this->assertOwnedOrder($order);
 
-        return new OrderResource($order->load(['items', 'payment.refunds', 'invoice', 'creditNotes']));
+        return new OrderResource($order->load(['items', 'payment.refunds', 'invoices', 'creditNotes']));
     }
 
     public function invoices(): AnonymousResourceCollection

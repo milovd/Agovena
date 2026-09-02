@@ -1300,13 +1300,13 @@ final class PackageInstaller
                 }
 
                 if ($payload['status'] === 'committed') {
-                    if (File::exists($staging) && ! $this->deletePath($staging)) {
+                    if (File::exists($staging) && ! $this->deletePathWithRetry($staging)) {
                         throw new \RuntimeException('Committed materialization staging could not be removed.');
                     }
-                    if (File::exists($backup) && ! $this->deletePath($backup)) {
+                    if (File::exists($backup) && ! $this->deletePathWithRetry($backup)) {
                         throw new \RuntimeException('Committed materialization backup could not be removed.');
                     }
-                    if (! $this->deletePath($journal)) {
+                    if (! $this->deletePathWithRetry($journal)) {
                         throw new \RuntimeException('Committed materialization journal could not be removed.');
                     }
 

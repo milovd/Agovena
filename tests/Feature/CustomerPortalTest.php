@@ -30,6 +30,12 @@ test('customer can register login and open account dashboard', function () {
         ->set('email', 'ada@example.com')
         ->set('password', 'password-secret')
         ->set('password_confirmation', 'password-secret')
+        ->set('propertyValues.phone', '+31 20 123 4567')
+        ->set('propertyValues.country', 'NL')
+        ->set('propertyValues.address', 'Customer Street 1')
+        ->set('propertyValues.city', 'Amsterdam')
+        ->set('propertyValues.state', 'Noord-Holland')
+        ->set('propertyValues.zip', '1000 AA')
         ->call('register')
         ->assertRedirect(route('customer.verification.notice'));
 

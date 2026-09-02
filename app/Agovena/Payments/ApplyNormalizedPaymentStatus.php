@@ -63,7 +63,7 @@ final class ApplyNormalizedPaymentStatus
                 }
 
                 try {
-                    $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoice'));
+                    $this->assertInvoiceCanBePaid->handle($order->loadMissing('invoices'));
                 } catch (ValidationException) {
                     return new PaymentStatusApplyResult(
                         $lockedAttempt,

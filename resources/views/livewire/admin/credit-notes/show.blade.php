@@ -64,6 +64,27 @@
                 @endif
                 <div><dt>{{ __('admin.credit_notes.reason') }}</dt><dd>{{ $creditNote->reason }}</dd></div>
                 <div><dt>{{ __('common.customer') }}</dt><dd>{{ $creditNote->customer_name }} · {{ $creditNote->customer_email }}</dd></div>
+                @if ($creditNote->billing_line1)
+                    <div>
+                        <dt>{{ __('admin.invoices.billing') }}</dt>
+                        <dd>
+                            {{ $creditNote->billing_name }}<br>
+                            @if ($creditNote->billing_company){{ $creditNote->billing_company }}<br>@endif
+                            {{ $creditNote->billing_line1 }}<br>
+                            @if ($creditNote->billing_line2){{ $creditNote->billing_line2 }}<br>@endif
+                            {{ $creditNote->billing_postal_code }} {{ $creditNote->billing_city }}<br>
+                            @if ($creditNote->billing_region){{ $creditNote->billing_region }}<br>@endif
+                            {{ $creditNote->billing_country }}
+                            @if ($creditNote->billing_phone)<br>{{ $creditNote->billing_phone }}@endif
+                        </dd>
+                    </div>
+                @endif
+                @foreach ($creditNote->custom_properties_snapshot ?? [] as $property)
+                    <div>
+                        <dt>{{ $property['label'] ?? $property['key'] }}</dt>
+                        <dd>{{ $property['value'] ?? '' }}</dd>
+                    </div>
+                @endforeach
             </dl>
         </section>
     </div>

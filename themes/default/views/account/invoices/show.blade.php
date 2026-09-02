@@ -80,11 +80,15 @@
             <div>
                 <h2>{{ __('customer.account.billing') }}</h2>
                 <p>{{ $invoice->billing_name ?: $invoice->customer_name }}</p>
+                @if ($invoice->billing_company)<p>{{ $invoice->billing_company }}</p>@endif
                 @if ($invoice->billing_line1)
                     <p>{{ $invoice->billing_line1 }}</p>
+                    @if ($invoice->billing_line2)<p>{{ $invoice->billing_line2 }}</p>@endif
                     <p>{{ $invoice->billing_postal_code }} {{ $invoice->billing_city }}</p>
+                    @if ($invoice->billing_region)<p>{{ $invoice->billing_region }}</p>@endif
                     <p>{{ $invoice->billing_country }}</p>
                 @endif
+                @if ($invoice->billing_phone)<p>{{ $invoice->billing_phone }}</p>@endif
                 <p>{{ $invoice->customer_email }}</p>
                 @foreach ($invoice->custom_properties_snapshot ?? [] as $property)
                     <p><strong>{{ $property['label'] ?? $property['key'] }}:</strong> {{ $property['value'] ?? '' }}</p>

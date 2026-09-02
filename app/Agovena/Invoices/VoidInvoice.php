@@ -38,7 +38,9 @@ final class VoidInvoice
         if ($invoice->order_id !== null) {
             $order = Order::query()->whereKey($invoice->order_id)->firstOrFail();
 
-            return $this->cancelUnpaidOrder->handle($order, UnpaidOrderCancelSource::Staff, $staff)->invoice
+            $cancelled = $this->cancelUnpaidOrder->handle($order, UnpaidOrderCancelSource::Staff, $staff);
+
+            return $cancelled->invoices->firstWhere('id', $invoice->id)
                 ?? throw new RuntimeException('Voided invoice disappeared.');
         }
 

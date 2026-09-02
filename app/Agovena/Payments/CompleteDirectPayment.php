@@ -62,7 +62,7 @@ final class CompleteDirectPayment
                 return $payment;
             }
 
-            $lockedOrder->loadMissing('invoice');
+            $lockedOrder->loadMissing('invoices');
             $this->assertInvoiceCanBePaid->handle($lockedOrder);
 
             if ($requiredPaymentMethod !== null && $payment->method !== $requiredPaymentMethod) {

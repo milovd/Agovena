@@ -11,6 +11,7 @@ use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
+use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentAttempt;
@@ -50,7 +51,7 @@ final class InitiateGatewayPayment
                 $lockedOrder = Order::query()->whereKey($payment->order_id)->lockForUpdate()->firstOrFail();
                 /** @var Payment $lockedPayment */
                 $lockedPayment = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
-                $lockedOrder->loadMissing('invoice');
+                $lockedOrder->loadMissing('invoices');
                 $key = $idempotencyKey ?: 'att-'.Str::uuid()->toString();
 
                 if ($idempotencyKey !== null && $idempotencyKey !== '') {
@@ -118,7 +119,7 @@ final class InitiateGatewayPayment
 
             try {
                 $freshPayment = $payment->fresh() ?? $payment;
-                $freshOrder = $payment->order->fresh(['invoice', 'items']) ?? $payment->order;
+                $freshOrder = $payment->order->fresh(['invoices', 'items']) ?? $payment->order;
                 $result = $gateway->initiate(new PaymentInitiation(
                     order: $freshOrder,
                     payment: $freshPayment,
@@ -204,13 +205,13 @@ final class InitiateGatewayPayment
             $lockedOrder = Order::query()->whereKey($payment->order_id)->lockForUpdate()->firstOrFail();
             /** @var Payment $lockedPayment */
             $lockedPayment = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
-            $lockedOrder->loadMissing('invoice');
+            $lockedOrder->loadMissing('invoices');
             $lockedOrder->setRelation('payment', $lockedPayment);
 
             return $lockedPayment->reconciliation_status !== 'manual_review'
                 && $lockedPayment->status === PaymentStatus::Pending
                 && $lockedOrder->status === OrderStatus::Pending
-                && $lockedOrder->invoice?->status !== InvoiceStatus::Void;
+                && ! $lockedOrder->invoices->contains(static fn (Invoice $invoice): bool => $invoice->status === InvoiceStatus::Void);
         });
 
         if ($allowed) {

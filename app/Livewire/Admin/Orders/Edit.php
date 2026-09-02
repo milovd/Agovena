@@ -72,7 +72,7 @@ final class Edit extends Component
     {
         $this->authorize('orders.update');
 
-        $this->order = $order->load(['invoice', 'creditNotes', 'refunds']);
+        $this->order = $order->load(['invoices', 'creditNotes', 'refunds']);
         $this->fillFromOrder();
     }
 

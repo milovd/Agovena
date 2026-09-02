@@ -26,7 +26,7 @@ final class OrderShow extends Component
             404,
         );
 
-        $this->order = $order->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+        $this->order = $order->load(['items', 'payment', 'invoices', 'creditNotes', 'refunds']);
     }
 
     public function cancelUnpaid(CancelUnpaidOrder $cancel): void
@@ -35,7 +35,7 @@ final class OrderShow extends Component
         abort_unless((int) $this->order->customer_id === (int) $customer->id, 404);
 
         $this->order = $cancel->handle($this->order, UnpaidOrderCancelSource::Customer)
-            ->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+            ->load(['items', 'payment', 'invoices', 'creditNotes', 'refunds']);
         session()->flash('status', __('customer.account.order_cancelled'));
     }
 
@@ -46,7 +46,7 @@ final class OrderShow extends Component
 
     protected function afterPaymentAttempt(Order $order): void
     {
-        $this->order = $order->load(['items', 'payment', 'invoice', 'creditNotes', 'refunds']);
+        $this->order = $order->load(['items', 'payment', 'invoices', 'creditNotes', 'refunds']);
     }
 
     public function render(ThemeManager $themes, OrderFulfillmentPresenter $fulfillment)

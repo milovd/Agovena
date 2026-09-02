@@ -24,6 +24,7 @@ final class ReferralCode extends Model
         'fraud_review_required' => 'boolean',
     ];
 
+    /** @return BelongsTo<Customer, $this> */
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);

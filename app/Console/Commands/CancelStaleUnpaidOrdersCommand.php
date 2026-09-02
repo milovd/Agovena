@@ -38,7 +38,7 @@ final class CancelStaleUnpaidOrdersCommand extends Command
 
         $cancelled = 0;
         foreach ($ids as $id) {
-            $order = Order::query()->with(['invoice', 'payment'])->whereKey($id)->first();
+            $order = Order::query()->with(['invoices', 'payment'])->whereKey($id)->first();
             if ($order === null || ! $order->isAwaitingPayment()) {
                 continue;
             }

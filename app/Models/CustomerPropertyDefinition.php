@@ -11,7 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Merchant-defined extra customer field. Never replaces core identity or addresses.
+ * Merchant-defined customer field. Core identity remains on Customer; address fields
+ * use the reserved Paymenter-compatible property keys and mapping layer.
  *
  * @property int $id
  * @property string $key

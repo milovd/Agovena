@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Api\ApiTokenAbilities;
 use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
@@ -9,12 +10,15 @@ use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Enums\CustomerPropertyType;
 use App\Livewire\Admin\Customers\Index as CustomersIndex;
+use App\Livewire\Admin\Customers\Show as AdminCustomerShow;
+use App\Livewire\Customer\Account\Addresses;
 use App\Livewire\Customer\Auth\Register;
 use App\Livewire\Storefront\CheckoutPage;
 use App\Models\Customer;
 use App\Models\CustomerPropertyDefinition;
 use App\Models\Product;
 use Illuminate\Support\Collection;
+use Laravel\Sanctum\Sanctum;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -186,4 +190,118 @@ test('customers index exposes edit and delete actions and delete anonymizes the 
 
     expect($customer->fresh()->anonymized_at)->not->toBeNull()
         ->and($customer->fresh()->email)->toBe('deleted+'.$customer->id.'@anonymized.invalid');
+});
+
+test('account address editor saves the Paymenter properties as the primary address', function () {
+    $customer = Customer::factory()->create([
+        'name' => 'Address Property Customer',
+        'email' => 'address-property@example.com',
+    ]);
+
+    Livewire::actingAs($customer->user)
+        ->test(Addresses::class)
+        ->set('propertyValues.phone', '+31 40 222 3333')
+        ->set('propertyValues.company_name', 'Address Property BV')
+        ->set('propertyValues.country', 'NL')
+        ->set('propertyValues.address', 'Property Street 12')
+        ->set('propertyValues.address2', 'Unit 3')
+        ->set('propertyValues.city', 'Eindhoven')
+        ->set('propertyValues.state', 'Noord-Brabant')
+        ->set('propertyValues.zip', '5600 DD')
+        ->set('is_default_billing', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $customer->refresh();
+    $values = app(CustomerPropertyService::class)->valuesMap($customer);
+
+    expect($values)->toMatchArray([
+        'phone' => '+31 40 222 3333',
+        'company_name' => 'Address Property BV',
+        'country' => 'NL',
+        'address' => 'Property Street 12',
+        'address2' => 'Unit 3',
+        'city' => 'Eindhoven',
+        'state' => 'Noord-Brabant',
+        'zip' => '5600 DD',
+    ])
+        ->and($customer->addresses()->where('is_default_billing', true)->value('line1'))->toBe('Property Street 12');
+});
+
+test('address API reads and writes the Paymenter customer properties', function () {
+    $customer = Customer::factory()->create([
+        'name' => 'API Property Customer',
+        'email' => 'api-property@example.com',
+    ]);
+    app(CustomerPropertyService::class)->save(
+        $customer,
+        paymenterAddressDefinitions(),
+        [
+            'phone' => '+31 50 444 5555',
+            'country' => 'NL',
+            'address' => 'API Street 20',
+            'city' => 'Groningen',
+            'state' => 'Groningen',
+            'zip' => '9700 EE',
+        ],
+        'customer',
+    );
+
+    Sanctum::actingAs($customer->user, [ApiTokenAbilities::ADDRESSES_READ]);
+    $this->getJson('/api/v1/addresses')
+        ->assertOk()
+        ->assertJsonPath('data.0.id', null)
+        ->assertJsonPath('data.0.properties.address', 'API Street 20')
+        ->assertJsonPath('data.0.properties.zip', '9700 EE');
+
+    Sanctum::actingAs($customer->user, [ApiTokenAbilities::ADDRESSES_CREATE]);
+    $this->postJson('/api/v1/addresses', [
+        'name' => 'API Property Customer',
+        'line1' => 'API Street 21',
+        'city' => 'Groningen',
+        'postal_code' => '9700 FF',
+        'country' => 'NL',
+        'properties' => [
+            'address' => 'API Street 21',
+            'city' => 'Groningen',
+            'state' => 'Groningen',
+            'zip' => '9700 FF',
+            'country' => 'NL',
+            'phone' => '+31 50 444 5556',
+        ],
+        'is_default_billing' => true,
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.properties.address', 'API Street 21');
+
+    expect(app(CustomerPropertyService::class)->valuesMap($customer->fresh()))
+        ->toMatchArray([
+            'address' => 'API Street 21',
+            'zip' => '9700 FF',
+            'phone' => '+31 50 444 5556',
+        ]);
+});
+
+test('staff customer-property edits synchronize the primary address card', function () {
+    $staff = $this->createStaff();
+    $customer = Customer::factory()->create([
+        'name' => 'Staff Property Customer',
+        'email' => 'staff-property@example.com',
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(AdminCustomerShow::class, ['customer' => $customer])
+        ->call('selectPanel', 'profile')
+        ->set('propertyValues.phone', '+31 70 666 7777')
+        ->set('propertyValues.company_name', 'Staff Property BV')
+        ->set('propertyValues.country', 'NL')
+        ->set('propertyValues.address', 'Staff Street 30')
+        ->set('propertyValues.city', 'The Hague')
+        ->set('propertyValues.state', 'Zuid-Holland')
+        ->set('propertyValues.zip', '2500 GG')
+        ->call('saveProperties')
+        ->assertHasNoErrors();
+
+    expect($customer->addresses()->where('is_default_billing', true)->value('line1'))->toBe('Staff Street 30')
+        ->and($customer->addresses()->where('is_default_billing', true)->value('company'))->toBe('Staff Property BV');
 });

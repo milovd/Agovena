@@ -91,9 +91,10 @@ $order = app(PlaceOrder::class)->handle([
     ]),
 ]);
 
-$order = $order->fresh(['payment', 'invoice']);
+$order = $order->fresh(['payment', 'invoices']);
 abort_unless($order instanceof Order, 1);
 abort_unless($order->payment?->status === PaymentStatus::Paid, 1);
-abort_unless($order->invoice instanceof Invoice, 1);
+abort_unless($order->invoices->first() instanceof Invoice, 1);
 
-fwrite(STDOUT, "native-order-ok order={$order->number} invoice={$order->invoice->number}\n");
+$invoice = $order->invoices->first();
+fwrite(STDOUT, "native-order-ok order={$order->number} invoice={$invoice->number}\n");

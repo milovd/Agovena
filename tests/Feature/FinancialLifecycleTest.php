@@ -65,7 +65,7 @@ function placePaidCustomerOrder(int $priceAmount = 4000, int $qty = 2): array
 
     $invoice = Invoice::query()->where('order_id', $order->id)->firstOrFail();
 
-    return [$order->fresh(['items', 'payment', 'invoice']), $invoice->fresh('items'), $customer, $staff, $product];
+    return [$order->fresh(['items', 'payment', 'invoices']), $invoice->fresh('items'), $customer, $staff, $product];
 }
 
 test('partial credit note and partial refund leave the issued invoice unchanged', function () {

@@ -139,16 +139,21 @@ final class CheckoutPage extends Component
             $this->customer_name = $customer->name;
             $this->customer_email = $customer->email;
 
-            /** @var CustomerAddress|null $defaultBilling */
-            $defaultBilling = $customer->addresses()
-                ->where('is_default_billing', true)
-                ->first()
-                ?? $customer->addresses()->latest('id')->first();
-
-            if ($defaultBilling !== null) {
-                $this->fillBillingFromAddress($defaultBilling);
+            $propertyAddress = $properties->addressFromProperties($customer);
+            if ($propertyAddress !== null) {
+                $this->fillBillingFromData($propertyAddress);
             } else {
-                $this->billing_name = $customer->name;
+                /** @var CustomerAddress|null $defaultBilling */
+                $defaultBilling = $customer->addresses()
+                    ->where('is_default_billing', true)
+                    ->first()
+                    ?? $customer->addresses()->latest('id')->first();
+
+                if ($defaultBilling !== null) {
+                    $this->fillBillingFromAddress($defaultBilling);
+                } else {
+                    $this->billing_name = $customer->name;
+                }
             }
 
             if (app(CustomerCreditLedger::class)->available($customer) > 0) {
@@ -320,7 +325,7 @@ final class CheckoutPage extends Component
 
         $requirements = $composer->compose($cart);
         $requiresShipping = $requirements->requiresShipping();
-        $checkoutProperties = $properties->definitionsFor('checkout');
+        $checkoutProperties = $properties->nonAddressDefinitionsFor('checkout');
         $amountDue = $this->estimatedAmountDue($cart, $composer, $creditLedger);
         if ($usingBalance) {
             $paymentRules = ['required', 'string', Rule::in(['account_balance'])];
@@ -597,7 +602,7 @@ final class CheckoutPage extends Component
             'registrationEnabled' => $registration->allowsRegistration(),
             'requiresShipping' => $requiresShipping,
             'requiresCustomProperties' => $requirements->has(CartRequirement::CustomProperties),
-            'propertyDefinitions' => $properties->definitionsFor('checkout'),
+            'propertyDefinitions' => $properties->nonAddressDefinitionsFor('checkout'),
             'actor' => 'customer',
             'pricesIncludeTax' => $pricesIncludeTax,
             'creditBalance' => $creditBalance,
@@ -616,13 +621,28 @@ final class CheckoutPage extends Component
 
     private function fillBillingFromAddress(CustomerAddress $address): void
     {
+        $this->fillBillingFromData(AddressData::fromArray([
+            'name' => $address->name,
+            'company' => $address->company,
+            'line1' => $address->line1,
+            'line2' => $address->line2,
+            'city' => $address->city,
+            'region' => $address->region,
+            'postal_code' => $address->postal_code,
+            'country' => $address->country,
+            'phone' => $address->phone,
+        ]));
+    }
+
+    private function fillBillingFromData(AddressData $address): void
+    {
         $this->billing_name = $address->name;
         $this->billing_company = (string) ($address->company ?? '');
         $this->billing_line1 = $address->line1;
         $this->billing_line2 = (string) ($address->line2 ?? '');
         $this->billing_city = $address->city;
         $this->billing_region = (string) ($address->region ?? '');
-        $this->billing_postal_code = $address->postal_code;
+        $this->billing_postal_code = $address->postalCode;
         $this->billing_country = $address->country;
         $this->billing_phone = (string) ($address->phone ?? '');
     }
@@ -725,7 +745,7 @@ final class CheckoutPage extends Component
                 'customer_name' => ['required', 'string', 'max:255'],
                 'customer_email' => ['required', 'email', 'max:255'],
                 ...AddressValidation::rules('billing'),
-                ...$properties->livewireRules($properties->definitionsFor('checkout')),
+                ...$properties->livewireRules($properties->nonAddressDefinitionsFor('checkout')),
             ],
             CheckoutStep::Delivery, CheckoutStep::Fulfillment => [
                 'shipping_same_as_billing' => ['boolean'],

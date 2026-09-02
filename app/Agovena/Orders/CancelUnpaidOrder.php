@@ -100,7 +100,7 @@ final class CancelUnpaidOrder
                 ]);
             }
 
-            return $order->fresh(['items', 'invoice', 'payment'])
+            return $order->fresh(['items', 'invoices', 'payment'])
                 ?? throw new RuntimeException('Order disappeared after provider cancellation failure.');
         }
 
@@ -111,7 +111,7 @@ final class CancelUnpaidOrder
 
             $payment = Payment::query()->where('order_id', $locked->id)->lockForUpdate()->first();
             $locked->setRelation('payment', $payment);
-            $locked->load(['invoice']);
+            $locked->load(['invoices']);
 
             if ($payment !== null && $payment->status === PaymentStatus::Paid) {
                 $paidDuringCancellation = true;
@@ -127,8 +127,7 @@ final class CancelUnpaidOrder
                     ?? throw new RuntimeException('Order disappeared during cancellation recheck.');
             }
 
-            $invoice = $locked->invoice;
-            if ($invoice !== null) {
+            foreach ($locked->invoices as $invoice) {
                 /** @var Invoice $invoice */
                 $invoice = Invoice::query()->whereKey($invoice->id)->lockForUpdate()->firstOrFail();
                 if (! $invoice->canVoid()) {
@@ -163,17 +162,17 @@ final class CancelUnpaidOrder
                     ]);
             }
 
-            $fresh = $locked->fresh(['items', 'invoice', 'payment'])
+            $fresh = $locked->fresh(['items', 'invoices', 'payment'])
                 ?? throw new RuntimeException('Cancelled order disappeared.');
 
-            if ($fresh->invoice !== null) {
-                $this->audit->log('invoice.voided', $fresh->invoice, [
-                    'invoice_number' => $fresh->invoice->number,
+            foreach ($fresh->invoices as $invoice) {
+                $this->audit->log('invoice.voided', $invoice, [
+                    'invoice_number' => $invoice->number,
                     'order_id' => $fresh->id,
                     'source' => $source->value,
                     'staff_id' => $staff?->id,
                 ]);
-                event(new InvoiceVoided($fresh->invoice));
+                event(new InvoiceVoided($invoice));
             }
 
             $this->audit->log('order.cancelled', $fresh, [

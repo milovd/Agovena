@@ -56,7 +56,13 @@
                         <p>{{ $invoice->billing_line2 }}</p>
                     @endif
                     <p>{{ $invoice->billing_postal_code }} {{ $invoice->billing_city }}</p>
+                    @if ($invoice->billing_region)
+                        <p>{{ $invoice->billing_region }}</p>
+                    @endif
                     <p>{{ $invoice->billing_country }}</p>
+                @endif
+                @if ($invoice->billing_phone)
+                    <p>{{ $invoice->billing_phone }}</p>
                 @endif
                 <p>{{ $invoice->customer_email }}</p>
                 @foreach ($invoice->custom_properties_snapshot ?? [] as $property)

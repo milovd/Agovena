@@ -254,6 +254,12 @@ final class PlaceOrder
 
                 $propertyOverlay = is_array($guest['custom_properties'] ?? null) ? $guest['custom_properties'] : [];
                 unset($propertyOverlay['origin']);
+                if ($billing instanceof AddressData) {
+                    $propertyOverlay = [
+                        ...$propertyOverlay,
+                        ...$this->properties->addressPropertyValues($billing),
+                    ];
+                }
                 $customer = $customerId !== null ? Customer::query()->find($customerId) : null;
                 if ($customer !== null && $propertyOverlay !== []) {
                     $this->properties->save(

@@ -23,6 +23,7 @@ use RuntimeException;
  * @property int|null $order_id
  * @property int|null $customer_id
  * @property int|null $created_by
+ * @property array<int, array{key: string, label: string, value: string}>|null $custom_properties_snapshot
  * @property Carbon $issued_at
  * @property-read Collection<int, CreditNoteItem> $items
  * @property-read Invoice $invoice
@@ -55,6 +56,7 @@ use RuntimeException;
     'tax_rate_name',
     'tax_rate_bps',
     'currency',
+    'custom_properties_snapshot',
 ])]
 class CreditNote extends Model
 {
@@ -74,6 +76,7 @@ class CreditNote extends Model
             'tax_amount' => 'integer',
             'total_amount' => 'integer',
             'tax_rate_bps' => 'integer',
+            'custom_properties_snapshot' => 'array',
         ];
     }
 

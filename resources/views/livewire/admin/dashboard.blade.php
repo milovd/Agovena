@@ -85,10 +85,14 @@
                     'datasets' => [[
                         'label' => __('admin.dashboard.charts.revenue'),
                         'data' => $revenueSeries['values'],
-                        'borderColor' => '#155eef',
-                        'backgroundColor' => 'rgba(21, 94, 239, 0.12)',
+                        'borderColor' => 'var(--ag-color-chart-1)',
+                        'backgroundColor' => 'var(--ag-color-primary-soft)',
                         'fill' => true,
-                        'tension' => 0.35,
+                        'tension' => 0.3,
+                        'borderWidth' => 2.5,
+                        'pointRadius' => 0,
+                        'pointHoverRadius' => 4,
+                        'pointHoverBackgroundColor' => 'var(--ag-color-chart-1)',
                     ]],
                 ]))"
             >
@@ -119,8 +123,10 @@
                     'datasets' => [[
                         'label' => __('admin.dashboard.charts.orders'),
                         'data' => $orderSeries['values'],
-                        'backgroundColor' => 'rgba(21, 94, 239, 0.65)',
+                        'backgroundColor' => 'var(--ag-color-chart-2)',
+                        'borderColor' => 'var(--ag-color-chart-2)',
                         'borderRadius' => 4,
+                        'borderWidth' => 1,
                     ]],
                 ]))"
             >

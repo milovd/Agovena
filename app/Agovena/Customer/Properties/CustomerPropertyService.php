@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Customer\Properties;
 
+use App\Agovena\Customer\AddressData;
 use App\Agovena\Support\CountryList;
 use App\Enums\CustomerPropertyType;
 use App\Models\Customer;
@@ -29,10 +30,59 @@ final class CustomerPropertyService
             'registration' => $query->where('show_on_registration', true)->where('internal_only', false)->get(),
             'checkout' => $query->where('show_on_checkout', true)->where('internal_only', false)->get(),
             'account' => $query->where('show_on_account', true)->where('internal_only', false)->get(),
-            'invoice' => $query->where('show_on_invoice', true)->get(),
+            'invoice' => $query->where('show_on_invoice', true)->where('internal_only', false)->get(),
             'staff' => $query->where('staff_editable', true)->get(),
             default => collect(),
         };
+    }
+
+    /**
+     * @return Collection<int, CustomerPropertyDefinition>
+     */
+    public function addressDefinitionsFor(string $surface): Collection
+    {
+        return $this->definitionsFor($surface)
+            ->filter(static fn (CustomerPropertyDefinition $definition): bool => CustomerAddressProperties::isAddressKey($definition->key))
+            ->values();
+    }
+
+    /**
+     * @return Collection<int, CustomerPropertyDefinition>
+     */
+    public function nonAddressDefinitionsFor(string $surface): Collection
+    {
+        return $this->definitionsFor($surface)
+            ->reject(static fn (CustomerPropertyDefinition $definition): bool => CustomerAddressProperties::isAddressKey($definition->key))
+            ->values();
+    }
+
+    public function addressFromProperties(?Customer $customer, ?array $overlay = null): ?AddressData
+    {
+        if ($customer === null) {
+            return null;
+        }
+
+        return CustomerAddressProperties::toAddress($customer, [
+            ...$this->valuesMap($customer),
+            ...($overlay ?? []),
+        ]);
+    }
+
+    /** @return array<string, string|null> */
+    public function addressPropertyValues(AddressData $address): array
+    {
+        return CustomerAddressProperties::values($address);
+    }
+
+    public function saveAddressProperties(Customer $customer, AddressData $address, string $actor): void
+    {
+        $definitions = CustomerPropertyDefinition::query()
+            ->active()
+            ->whereIn('key', CustomerAddressProperties::keys())
+            ->ordered()
+            ->get();
+
+        $this->save($customer, $definitions, $this->addressPropertyValues($address), $actor);
     }
 
     /**

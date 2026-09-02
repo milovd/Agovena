@@ -116,6 +116,12 @@ test('registration collects required custom properties', function () {
         ->set('email', 'ada-props@example.com')
         ->set('password', 'password-secret')
         ->set('password_confirmation', 'password-secret')
+        ->set('propertyValues.phone', '+31 20 123 4567')
+        ->set('propertyValues.country', 'NL')
+        ->set('propertyValues.address', 'Customer Street 1')
+        ->set('propertyValues.city', 'Amsterdam')
+        ->set('propertyValues.state', 'Noord-Holland')
+        ->set('propertyValues.zip', '1000 AA')
         ->call('register')
         ->assertHasErrors(['propertyValues.vat_number']);
 
@@ -124,6 +130,12 @@ test('registration collects required custom properties', function () {
         ->set('email', 'ada-props@example.com')
         ->set('password', 'password-secret')
         ->set('password_confirmation', 'password-secret')
+        ->set('propertyValues.phone', '+31 20 123 4567')
+        ->set('propertyValues.country', 'NL')
+        ->set('propertyValues.address', 'Customer Street 1')
+        ->set('propertyValues.city', 'Amsterdam')
+        ->set('propertyValues.state', 'Noord-Holland')
+        ->set('propertyValues.zip', '1000 AA')
         ->set('propertyValues.vat_number', 'NL123456789B01')
         ->call('register')
         ->assertHasNoErrors()
@@ -133,7 +145,8 @@ test('registration collects required custom properties', function () {
     $values = app(CustomerPropertyService::class)->valuesMap($customer);
 
     expect($customer)->not->toBeNull()
-        ->and($values['vat_number'] ?? null)->toBe('NL123456789B01');
+        ->and($values['vat_number'] ?? null)->toBe('NL123456789B01')
+        ->and($customer->addresses()->where('is_default_billing', true)->value('line1'))->toBe('Customer Street 1');
 });
 
 test('invoice visible properties are snapshotted and do not change later', function () {
@@ -165,6 +178,10 @@ test('invoice visible properties are snapshotted and do not change later', funct
 
     expect($order->custom_properties_snapshot)->toBe([
         ['key' => 'vat_number', 'label' => 'VAT number', 'value' => 'NL111111111B01'],
+        ['key' => 'country', 'label' => 'Country', 'value' => 'Netherlands'],
+        ['key' => 'address', 'label' => 'Address', 'value' => 'Street 1'],
+        ['key' => 'city', 'label' => 'City', 'value' => 'Amsterdam'],
+        ['key' => 'zip', 'label' => 'ZIP', 'value' => '1000 AA'],
     ]);
 
     $staff = $this->createStaff();
@@ -180,6 +197,10 @@ test('invoice visible properties are snapshotted and do not change later', funct
 
     expect($invoice->fresh()->custom_properties_snapshot)->toBe([
         ['key' => 'vat_number', 'label' => 'VAT number', 'value' => 'NL111111111B01'],
+        ['key' => 'country', 'label' => 'Country', 'value' => 'Netherlands'],
+        ['key' => 'address', 'label' => 'Address', 'value' => 'Street 1'],
+        ['key' => 'city', 'label' => 'City', 'value' => 'Amsterdam'],
+        ['key' => 'zip', 'label' => 'ZIP', 'value' => '1000 AA'],
     ]);
 });
 

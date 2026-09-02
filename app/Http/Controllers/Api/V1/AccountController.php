@@ -6,47 +6,65 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\TokenCartRepository;
+use App\Agovena\Checkout\CheckoutCountries;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\DeleteCustomerAddress;
+use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Agovena\Customer\SaveCustomerAddress;
 use App\Http\Resources\Api\V1\AddressResource;
 use App\Models\CustomerAddress;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 
 final class AccountController
 {
-    public function addresses(): AnonymousResourceCollection
+    public function addresses(CustomerPropertyService $properties): AnonymousResourceCollection
     {
         $customer = authenticated_customer();
+        $addresses = $customer->addresses()->latest('id')->get();
+        if ($addresses->isEmpty()) {
+            $propertyAddress = $properties->addressFromProperties($customer);
+            if ($propertyAddress !== null) {
+                return AddressResource::collection(collect([$propertyAddress]));
+            }
+        }
 
-        return AddressResource::collection($customer->addresses()->latest('id')->get());
+        return AddressResource::collection($addresses);
     }
 
-    public function storeAddress(Request $request, SaveCustomerAddress $save): AddressResource
+    public function storeAddress(Request $request, SaveCustomerAddress $save, CustomerPropertyService $properties): AddressResource
     {
         $data = $this->validatedAddress($request);
+        $customer = authenticated_customer();
+        $hasAddresses = $customer->addresses()->exists();
+        $addressData = $this->addressData($data);
         $address = $save->handle(
-            authenticated_customer(),
-            AddressData::fromArray($data),
+            $customer,
+            $addressData,
             [
                 'label' => $data['label'] ?? null,
                 'is_default_billing' => (bool) ($data['is_default_billing'] ?? false),
                 'is_default_shipping' => (bool) ($data['is_default_shipping'] ?? false),
             ],
         );
+        if (! $hasAddresses || $address->is_default_billing) {
+            $properties->saveAddressProperties($customer, $addressData, 'customer');
+        }
 
         return new AddressResource($address);
     }
 
-    public function updateAddress(Request $request, CustomerAddress $address, SaveCustomerAddress $save): AddressResource
+    public function updateAddress(Request $request, CustomerAddress $address, SaveCustomerAddress $save, CustomerPropertyService $properties): AddressResource
     {
         $this->assertOwned($address);
         $data = $this->validatedAddress($request);
+        $customer = authenticated_customer();
+        $addressData = $this->addressData($data);
         $updated = $save->handle(
-            authenticated_customer(),
-            AddressData::fromArray($data),
+            $customer,
+            $addressData,
             [
                 'label' => $data['label'] ?? null,
                 'is_default_billing' => (bool) ($data['is_default_billing'] ?? false),
@@ -54,6 +72,9 @@ final class AccountController
             ],
             $address,
         );
+        if ($updated->is_default_billing) {
+            $properties->saveAddressProperties($customer, $addressData, 'customer');
+        }
 
         return new AddressResource($updated);
     }
@@ -121,8 +142,35 @@ final class AccountController
             'postal_code' => ['required', 'string', 'max:20'],
             'country' => ['required', 'string', 'size:2'],
             'phone' => ['nullable', 'string', 'max:40'],
+            'properties' => ['nullable', 'array'],
+            'properties.phone' => ['nullable', 'string', 'max:40'],
+            'properties.company_name' => ['nullable', 'string', 'max:255'],
+            'properties.address' => ['nullable', 'string', 'max:255'],
+            'properties.address2' => ['nullable', 'string', 'max:255'],
+            'properties.city' => ['nullable', 'string', 'max:120'],
+            'properties.state' => ['nullable', 'string', 'max:120'],
+            'properties.zip' => ['nullable', 'string', 'max:20'],
+            'properties.country' => ['nullable', 'string', 'size:2', Rule::in(CheckoutCountries::codes())],
             'is_default_billing' => ['sometimes', 'boolean'],
             'is_default_shipping' => ['sometimes', 'boolean'],
+        ]);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function addressData(array $data): AddressData
+    {
+        $propertyValues = is_array($data['properties'] ?? null) ? $data['properties'] : [];
+
+        return AddressData::fromArray([
+            'name' => $data['name'],
+            'company' => $propertyValues['company_name'] ?? ($data['company'] ?? null),
+            'line1' => $propertyValues['address'] ?? $data['line1'],
+            'line2' => $propertyValues['address2'] ?? ($data['line2'] ?? null),
+            'city' => $propertyValues['city'] ?? $data['city'],
+            'region' => $propertyValues['state'] ?? ($data['region'] ?? null),
+            'postal_code' => $propertyValues['zip'] ?? $data['postal_code'],
+            'country' => $propertyValues['country'] ?? $data['country'],
+            'phone' => $propertyValues['phone'] ?? ($data['phone'] ?? null),
         ]);
     }
 

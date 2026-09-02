@@ -7,6 +7,7 @@ namespace App\Livewire\Admin\Customers;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\AdminRoleAssignmentPolicy;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Privacy\AnonymizeCustomer;
 use App\Enums\OrderStatus;
 use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\Customer;
@@ -104,6 +105,24 @@ final class Index extends Component
     public function cancelUser(): void
     {
         $this->resetUserForm();
+    }
+
+    public function delete(int $customerId, AnonymizeCustomer $anonymize): void
+    {
+        $this->authorize('customers.manage');
+
+        if (! $this->requireRecentPassword('delete', ['customerId' => $customerId])) {
+            return;
+        }
+
+        $customer = Customer::query()->findOrFail($customerId);
+        if ($customer->anonymized_at !== null) {
+            return;
+        }
+
+        $anonymize->handle($customer);
+        session()->flash('status', __('admin.customers.deleted'));
+        $this->resetPage();
     }
 
     public function render(AdminRegistrar $admin, AdminRoleAssignmentPolicy $rolePolicy)

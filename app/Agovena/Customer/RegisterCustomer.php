@@ -35,10 +35,23 @@ final class RegisterCustomer
                 'password' => $data['password'],
             ]);
 
+            $customer = $user->ensureCustomer();
             $submitted = is_array($data['properties'] ?? null) ? $data['properties'] : [];
             if ($submitted !== []) {
                 $definitions = $this->properties->definitionsFor('registration');
-                $this->properties->save($user->ensureCustomer(), $definitions, $submitted, 'customer');
+                $this->properties->save($customer, $definitions, $submitted, 'customer');
+            }
+
+            $address = $this->properties->addressFromProperties($customer, $submitted);
+            if ($address !== null) {
+                app(SaveCustomerAddress::class)->handle(
+                    $customer,
+                    $address,
+                    [
+                        'label' => __('customer.addresses.checkout_saved_label'),
+                        'is_default_billing' => true,
+                    ],
+                );
             }
 
             return $user;

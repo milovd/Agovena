@@ -67,7 +67,7 @@ final class UpdateOrder
                 );
             }
 
-            $fresh = $locked->fresh(['items', 'payment.attempts', 'invoice', 'creditNotes', 'refunds']);
+            $fresh = $locked->fresh(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds']);
             if ($fresh === null) {
                 throw new RuntimeException('Order disappeared after update.');
             }

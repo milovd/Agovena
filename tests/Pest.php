@@ -5,6 +5,7 @@ use App\Agovena\Installation\InstallationState;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Agovena\Payments\PaymentGatewayRegistry;
+use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
 use Tests\MultiProcessTestCase;
 use Tests\TestCase;
@@ -40,6 +41,15 @@ function installAndEnableExtension(string $id): ExtensionManager
     $extensions->enable($id);
 
     return $extensions;
+}
+
+/**
+ * @param  list<string>  $ids
+ */
+function enableFirstPartyModules(array $ids): void
+{
+    installAndEnableModules($ids);
+    app(SyncRegisteredPermissions::class)(force: true);
 }
 
 /**

@@ -55,6 +55,7 @@ final class CheckoutController
             'shipping_same_as_billing' => ['sometimes', 'boolean'],
             'shipping_method_id' => ['nullable', 'integer'],
             'discount_code' => ['nullable', 'string', 'max:40'],
+            'custom_properties' => ['nullable', 'array'],
         ]);
 
         $order = $place->handle([
@@ -70,9 +71,10 @@ final class CheckoutController
             'shipping_same_as_billing' => (bool) ($data['shipping_same_as_billing'] ?? true),
             'shipping_method_id' => isset($data['shipping_method_id']) ? (int) $data['shipping_method_id'] : null,
             'discount_code' => $data['discount_code'] ?? null,
+            'custom_properties' => is_array($data['custom_properties'] ?? null) ? $data['custom_properties'] : [],
         ]);
 
-        return new OrderResource($order->load(['items', 'payment', 'invoice', 'creditNotes']));
+        return new OrderResource($order->load(['items', 'payment', 'invoices', 'creditNotes']));
     }
 
     public function pay(Request $request, Order $order, StartOrderPayment $start): JsonResponse

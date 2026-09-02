@@ -90,6 +90,7 @@ final class IssueCreditNote
                 'tax_rate_name' => $locked->tax_rate_name,
                 'tax_rate_bps' => $locked->tax_rate_bps,
                 'currency' => $locked->currency,
+                'custom_properties_snapshot' => $locked->custom_properties_snapshot,
             ]);
 
             foreach ($allocation['items'] as $item) {

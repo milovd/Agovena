@@ -8,6 +8,7 @@ use Agovena\Modules\Shipping\Models\Shipment;
 use Agovena\Modules\Shipping\Models\ShippingMethod;
 use Agovena\Modules\Shipping\Models\ShippingZone;
 use Agovena\Modules\Shipping\ShipmentService;
+use App\Agovena\Cart\CartRepository;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -291,7 +292,7 @@ test('disabling shipping preserves shipment rows', function () {
 test('requiresShipping ignores shippable rows when module capability is unregistered', function () {
     $product = Product::factory()->active()->create();
     $product->capabilities()->create(['capability' => 'shippable', 'config' => null]);
-    app(CartService::class)->add($product->id, 1);
+    app(CartRepository::class)->add($product->id, 1);
 
     expect(app(CartService::class)->requiresShipping())->toBeFalse();
 });

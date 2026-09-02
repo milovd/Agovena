@@ -55,7 +55,7 @@ final class RecordRefund
         $preparation = DB::transaction(function () use ($payment, $staff, $amount, $reason, $creditNoteId): array {
             /** @var Payment $locked */
             $locked = Payment::query()->whereKey($payment->id)->lockForUpdate()->firstOrFail();
-            $locked->loadMissing('order.invoice');
+            $locked->loadMissing('order.invoices');
 
             $creditNote = $this->resolveCreditNote($locked, $creditNoteId);
             $creditNoteKey = $creditNote instanceof CreditNote ? (int) $creditNote->id : 0;
@@ -114,7 +114,9 @@ final class RecordRefund
                 $refund = Refund::query()->create([
                     'payment_id' => $locked->id,
                     'order_id' => $locked->order_id,
-                    'invoice_id' => $locked->order?->invoice?->id,
+                    'invoice_id' => $locked->order?->invoices()->count() === 1
+                        ? $locked->order->invoices()->value('id')
+                        : null,
                     'credit_note_id' => $creditNote?->id,
                     'created_by' => $staff->id,
                     'amount' => $amount,

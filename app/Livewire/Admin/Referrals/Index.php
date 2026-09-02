@@ -171,12 +171,10 @@ final class Index extends Component
             'codes' => ReferralCode::query()->with('customer')->latest('id')->limit(100)->get(),
             'customers' => $this->showCodeForm && trim($this->customerSearch) !== ''
                 ? Customer::query()
-                    ->when($this->customerSearch !== '', function ($query): void {
+                    ->where(function ($query): void {
                         $term = '%'.trim($this->customerSearch).'%';
-                        $query->where(function ($nested) use ($term): void {
-                            $nested->where('name', 'like', $term)
-                                ->orWhere('email', 'like', $term);
-                        });
+                        $query->where('name', 'like', $term)
+                            ->orWhere('email', 'like', $term);
                     })
                     ->orderBy('name')
                     ->orderBy('id')

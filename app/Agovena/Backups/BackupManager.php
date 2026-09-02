@@ -67,7 +67,7 @@ final class BackupManager implements DatabaseBackupManager
                 return new BackupActionResult(false, 'artifact_missing');
             }
 
-            if (! $disk->delete($path) || $disk->exists($path)) {
+            if (! $disk->delete($path) || $this->artifactExists($disk, $path)) {
                 return new BackupActionResult(false, 'delete_failed');
             }
 
@@ -140,6 +140,12 @@ final class BackupManager implements DatabaseBackupManager
         }
 
         return $matches[1];
+    }
+
+    /** Filesystem adapters can change state between two existence checks. */
+    private function artifactExists(Filesystem $disk, string $path): bool
+    {
+        return $disk->exists($path);
     }
 
     private function decryptArtifact(string $path): string
