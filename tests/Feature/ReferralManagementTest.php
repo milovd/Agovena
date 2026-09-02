@@ -115,6 +115,7 @@ it('keeps customer search and selection inside one customer field', function ():
         ->call('createCode')
         ->set('customerSearch', 'Milo')
         ->assertSee('role="combobox"', false)
+        ->assertSee('ag-combobox__control', false)
         ->assertSee('referral-customer-options', false)
         ->assertDontSee('referral-customer-search', false);
 });

@@ -27,20 +27,22 @@
                 <div class="ag-grid ag-grid--2">
                     <div class="ag-field ag-combobox">
                         <label class="ag-field__label" for="referral-code-customer">{{ __('admin.referrals.customer') }}</label>
-                        <input id="referral-code-customer" class="ag-input" type="search" wire:model.live.debounce.300ms="customerSearch" role="combobox" aria-autocomplete="list" aria-controls="referral-customer-options" aria-expanded="{{ $customerId === null && $customers->isNotEmpty() ? 'true' : 'false' }}" placeholder="{{ __('admin.referrals.customer_placeholder') }}" autocomplete="off" required>
+                        <div class="ag-combobox__control">
+                            <input id="referral-code-customer" class="ag-input" type="search" wire:model.live.debounce.300ms="customerSearch" role="combobox" aria-autocomplete="list" aria-controls="referral-customer-options" aria-expanded="{{ $customerId === null && $customers->isNotEmpty() ? 'true' : 'false' }}" placeholder="{{ __('admin.referrals.customer_placeholder') }}" autocomplete="off" required>
+                            @if ($customerId === null && $customers->isNotEmpty())
+                                <div id="referral-customer-options" class="ag-combobox__options" role="listbox">
+                                    @foreach ($customers as $customer)
+                                        <button type="button" class="ag-combobox__option" role="option" wire:click="selectCustomer({{ $customer->id }})">
+                                            <span>{{ $customer->name }}</span>
+                                            <span class="ag-combobox__option-email">{{ $customer->email }}</span>
+                                        </button>
+                                    @endforeach
+                                </div>
+                            @elseif ($customerSearch !== '' && $customerId === null)
+                                <p class="ag-combobox__empty">{{ __('admin.referrals.no_customers') }}</p>
+                            @endif
+                        </div>
                         <p class="ag-field__help">{{ __('admin.referrals.customer_help') }}</p>
-                        @if ($customerId === null && $customers->isNotEmpty())
-                            <div id="referral-customer-options" class="ag-combobox__options" role="listbox">
-                                @foreach ($customers as $customer)
-                                    <button type="button" class="ag-combobox__option" role="option" wire:click="selectCustomer({{ $customer->id }})">
-                                        <span>{{ $customer->name }}</span>
-                                        <span class="ag-combobox__option-email">{{ $customer->email }}</span>
-                                    </button>
-                                @endforeach
-                            </div>
-                        @elseif ($customerSearch !== '' && $customerId === null)
-                            <p class="ag-field__help">{{ __('admin.referrals.no_customers') }}</p>
-                        @endif
                         @error('customerId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
