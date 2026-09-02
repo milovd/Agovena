@@ -67,7 +67,6 @@ final class Index extends Component
 
         return view($theme->view('account.referrals'), [
             'theme' => $theme,
-            'primaryCode' => $primaryCode,
             'headlinePercentage' => $headlinePercentage,
             'headlineWindowDays' => $headlineWindowDays,
             'referralLink' => $primaryCode !== null ? $referrals->linkFor($primaryCode) : null,
