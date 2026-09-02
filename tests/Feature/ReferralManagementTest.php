@@ -32,7 +32,8 @@ it('makes customer referrals discoverable from the account navigation', function
         ->get(route('customer.account'))
         ->assertOk()
         ->assertSee(route('customer.referrals'), false)
-        ->assertSee(__('customer.account.nav_referrals'), false);
+        ->assertSee(__('customer.account.nav_referrals'), false)
+        ->assertSeeInOrder([route('customer.referrals'), route('customer.credits')], false);
 });
 
 it('shows a referral action on the customer dashboard', function (): void {

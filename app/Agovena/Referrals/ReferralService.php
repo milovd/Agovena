@@ -6,11 +6,13 @@ namespace App\Agovena\Referrals;
 
 use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Settings\SettingsRepository;
+use App\Enums\PaymentStatus;
 use App\Models\Customer;
 use App\Models\CustomerCreditEntry;
 use App\Models\Order;
 use App\Models\ReferralAttribution;
 use App\Models\ReferralCode;
+use App\Models\ReferralVisit;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +20,12 @@ use Illuminate\Validation\ValidationException;
 final class ReferralService
 {
     public const DEFAULT_REWARD_PERCENTAGE = 10;
+
+    public const DEFAULT_WINDOW_DAYS = 30;
+
+    public const TRACKING_COOKIE = 'agovena_referral';
+
+    public const VISITOR_COOKIE = 'agovena_referral_visitor';
 
     public function __construct(
         private readonly SettingsRepository $settings,
@@ -30,12 +38,14 @@ final class ReferralService
         ?int $maxUses = null,
         ?CarbonInterface $expiresAt = null,
         ?int $rewardPercentage = null,
+        ?int $windowDays = null,
     ): ReferralCode {
         $normalized = strtoupper(trim($code));
         if (! preg_match('/^[A-Z0-9][A-Z0-9_-]{2,63}$/', $normalized)) {
             throw ValidationException::withMessages(['code' => 'The referral code format is invalid.']);
         }
         $this->assertRewardPercentage($rewardPercentage);
+        $this->assertWindowDays($windowDays);
 
         $existing = ReferralCode::query()->where('code', $normalized)->first();
         if ($existing instanceof ReferralCode && $existing->customer_id !== $customer->id) {
@@ -66,6 +76,7 @@ final class ReferralService
             'expires_at' => $expiresAt,
             'reward_amount' => $this->legacyRewardAmount(),
             'reward_percentage' => $rewardPercentage,
+            'window_days' => $windowDays,
             'reward_currency' => $rewardCurrency,
             'fraud_review_required' => filter_var(
                 $this->settings->get('referrals', 'fraud_review_required', false),
@@ -74,7 +85,87 @@ final class ReferralService
         ]);
     }
 
-    public function attribute(Order $order, string $code): ?ReferralAttribution
+    public function recordVisit(string $code, string $visitorHash): ?ReferralVisit
+    {
+        $referral = $this->findActiveCode($code);
+        if (! $referral instanceof ReferralCode) {
+            return null;
+        }
+
+        $now = now();
+        $trackingExpiresAt = $this->trackingExpiry($referral, $now);
+
+        return DB::transaction(function () use ($referral, $visitorHash, $now, $trackingExpiresAt): ReferralVisit {
+            $visit = ReferralVisit::query()
+                ->where('referral_code_id', $referral->id)
+                ->where('visitor_hash', $visitorHash)
+                ->lockForUpdate()
+                ->first();
+
+            if ($visit instanceof ReferralVisit) {
+                $attributes = [
+                    'last_clicked_at' => $now,
+                    'clicks_count' => $visit->clicks_count + 1,
+                ];
+                if ($visit->converted_at === null && $visit->expires_at?->isPast()) {
+                    $attributes['expires_at'] = $trackingExpiresAt;
+                }
+                $visit->update($attributes);
+
+                return $visit->fresh(['code']) ?? $visit;
+            }
+
+            return ReferralVisit::query()->create([
+                'referral_code_id' => $referral->id,
+                'visitor_hash' => $visitorHash,
+                'clicks_count' => 1,
+                'first_clicked_at' => $now,
+                'last_clicked_at' => $now,
+                'expires_at' => $trackingExpiresAt,
+            ]);
+        });
+    }
+
+    public function cookieValue(ReferralVisit $visit): string
+    {
+        return json_encode([
+            'visit_id' => $visit->id,
+            'code' => $visit->code?->code,
+        ], JSON_THROW_ON_ERROR);
+    }
+
+    public function visitFromCookie(?string $cookie): ?ReferralVisit
+    {
+        if (! is_string($cookie) || trim($cookie) === '') {
+            return null;
+        }
+
+        try {
+            $payload = json_decode($cookie, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return null;
+        }
+
+        if (! is_array($payload) || ! is_numeric($payload['visit_id'] ?? null)) {
+            return null;
+        }
+
+        $visit = ReferralVisit::query()->with('code')->find((int) $payload['visit_id']);
+        $referral = $visit?->code;
+        if (! $visit instanceof ReferralVisit || ! $referral instanceof ReferralCode) {
+            return null;
+        }
+        if (strtoupper((string) ($payload['code'] ?? '')) !== $referral->code) {
+            return null;
+        }
+        if ($visit->expires_at?->isPast() || ! $this->isAvailable($referral)) {
+            return null;
+        }
+
+        return $visit;
+    }
+
+    public function attribute(Order $order, string $code, ?int $visitId = null): ?ReferralAttribution
     {
         if (! $this->isEnabled()) {
             return null;
@@ -82,7 +173,7 @@ final class ReferralService
 
         $normalized = strtoupper(trim($code));
 
-        return DB::transaction(function () use ($order, $normalized): ReferralAttribution {
+        return DB::transaction(function () use ($order, $normalized, $visitId): ?ReferralAttribution {
             $existing = ReferralAttribution::query()->where('order_id', $order->id)->lockForUpdate()->first();
             if ($existing instanceof ReferralAttribution) {
                 if ($existing->code_snapshot !== $normalized) {
@@ -111,6 +202,21 @@ final class ReferralService
             if ($order->customer_id !== null && $order->customer_id === $referral->customer_id) {
                 throw ValidationException::withMessages(['code' => 'A customer cannot refer their own order.']);
             }
+            if ($order->customer_id !== null && $this->hasPriorPaidOrder($order->customer_id, $order->id)) {
+                return null;
+            }
+
+            $visit = null;
+            if ($visitId !== null) {
+                $visit = ReferralVisit::query()->whereKey($visitId)->lockForUpdate()->first();
+                if (! $visit instanceof ReferralVisit
+                    || $visit->referral_code_id !== $referral->id
+                    || $visit->expires_at?->isPast()
+                    || ReferralAttribution::query()->where('referral_visit_id', $visit->id)->exists()
+                ) {
+                    return null;
+                }
+            }
 
             $usesLegacyFixedReward = $referral->reward_percentage === null && (int) $referral->reward_amount > 0;
             $rewardPercentage = $usesLegacyFixedReward
@@ -123,6 +229,7 @@ final class ReferralService
             $attribution = ReferralAttribution::query()->create([
                 'order_id' => $order->id,
                 'referral_code_id' => $referral->id,
+                'referral_visit_id' => $visit?->id,
                 'referrer_customer_id' => $referral->customer_id,
                 'referred_customer_id' => $order->customer_id,
                 'code_snapshot' => $referral->code,
@@ -131,6 +238,8 @@ final class ReferralService
                 'reward_percentage' => $rewardPercentage,
                 'reward_currency' => $referral->reward_currency,
                 'fraud_review_required' => $referral->fraud_review_required,
+                'clicked_at' => $visit?->last_clicked_at,
+                'tracking_expires_at' => $visit?->expires_at,
             ]);
 
             $order->forceFill(['referral_code' => $referral->code])->save();
@@ -149,7 +258,18 @@ final class ReferralService
 
         return DB::transaction(function () use ($attribution): ?CustomerCreditEntry {
             $locked = ReferralAttribution::query()->whereKey($attribution->id)->lockForUpdate()->firstOrFail();
+            if ($locked->purchased_at === null) {
+                $locked->update(['purchased_at' => now()]);
+            }
+            $this->markVisitConverted($locked);
             if (in_array($locked->status, ['posted', 'no_reward', 'review', 'void'], true)) {
+                return null;
+            }
+            if ($locked->referred_customer_id !== null
+                && $this->hasPriorPaidOrder($locked->referred_customer_id, $locked->order_id)
+            ) {
+                $locked->update(['status' => 'no_reward']);
+
                 return null;
             }
             if ($locked->reward_amount < 1) {
@@ -190,8 +310,10 @@ final class ReferralService
         ?int $maxUses = null,
         ?CarbonInterface $expiresAt = null,
         ?int $rewardPercentage = null,
+        ?int $windowDays = null,
     ): ReferralCode {
         $this->assertRewardPercentage($rewardPercentage);
+        $this->assertWindowDays($windowDays);
 
         $configuredMaxUses = $maxUses;
         if ($configuredMaxUses !== null && $configuredMaxUses < 1) {
@@ -203,6 +325,7 @@ final class ReferralService
             'expires_at' => $expiresAt,
             'reward_amount' => 0,
             'reward_percentage' => $rewardPercentage,
+            'window_days' => $windowDays,
         ]);
 
         return $referral->fresh() ?? $referral;
@@ -220,6 +343,30 @@ final class ReferralService
         }
 
         return max(0, min(100, (int) $configured));
+    }
+
+    public function defaultWindowDays(): int
+    {
+        $configured = $this->settings->get('store', 'referral_window_days', null);
+        if ($configured === null) {
+            $configured = $this->settings->get('referrals', 'window_days', null);
+        }
+
+        if ($configured === null) {
+            return self::DEFAULT_WINDOW_DAYS;
+        }
+
+        return max(1, min(365, (int) $configured));
+    }
+
+    public function windowDaysFor(ReferralCode $referral): int
+    {
+        return $referral->window_days ?? $this->defaultWindowDays();
+    }
+
+    public function linkFor(ReferralCode $referral): string
+    {
+        return route('referrals.visit', ['code' => $referral->code]);
     }
 
     public function approveReview(ReferralAttribution $attribution): ?CustomerCreditEntry
@@ -246,6 +393,16 @@ final class ReferralService
         }
 
         return filter_var($configured, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    public function findActiveCode(string $code): ?ReferralCode
+    {
+        $referral = ReferralCode::query()
+            ->where('code', strtoupper(trim($code)))
+            ->where('is_active', true)
+            ->first();
+
+        return $referral instanceof ReferralCode && $this->isAvailable($referral) ? $referral : null;
     }
 
     private function legacyRewardAmount(): int
@@ -277,5 +434,52 @@ final class ReferralService
                 'reward_percentage' => 'The referral reward percentage must be between 0 and 100.',
             ]);
         }
+    }
+
+    private function assertWindowDays(?int $days): void
+    {
+        if ($days !== null && ($days < 1 || $days > 365)) {
+            throw ValidationException::withMessages([
+                'window_days' => 'The referral window must be between 1 and 365 days.',
+            ]);
+        }
+    }
+
+    private function isAvailable(ReferralCode $referral): bool
+    {
+        $expiresAt = $referral->expires_at;
+
+        return $referral->is_active && (! $expiresAt instanceof CarbonInterface || ! $expiresAt->isPast());
+    }
+
+    private function trackingExpiry(ReferralCode $referral, CarbonInterface $now): CarbonInterface
+    {
+        $trackingExpiresAt = $now->copy()->addDays($this->windowDaysFor($referral));
+        $codeExpiresAt = $referral->expires_at;
+
+        return $codeExpiresAt instanceof CarbonInterface && $codeExpiresAt->lessThan($trackingExpiresAt)
+            ? $codeExpiresAt
+            : $trackingExpiresAt;
+    }
+
+    private function hasPriorPaidOrder(int $customerId, int $exceptOrderId): bool
+    {
+        return Order::query()
+            ->where('customer_id', $customerId)
+            ->whereKeyNot($exceptOrderId)
+            ->whereHas('payment', static fn ($query) => $query->where('status', PaymentStatus::Paid->value))
+            ->exists();
+    }
+
+    private function markVisitConverted(ReferralAttribution $attribution): void
+    {
+        if ($attribution->referral_visit_id === null) {
+            return;
+        }
+
+        ReferralVisit::query()->whereKey($attribution->referral_visit_id)->update([
+            'referred_customer_id' => $attribution->referred_customer_id,
+            'converted_at' => $attribution->purchased_at ?? now(),
+        ]);
     }
 }

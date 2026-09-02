@@ -180,20 +180,20 @@
                     <span>{{ __('customer.account.nav_security') }}</span>
                 </a>
                 <a
-                    class="store-account__link store-account__link--child {{ $section === 'credits' ? 'is-active' : '' }}"
-                    href="{{ route('customer.credits') }}"
-                    @if ($section === 'credits') aria-current="page" @endif
-                >
-                    <x-ag.icon name="coins" class="store-account__link-icon" :size="16" />
-                    <span>{{ __('customer.account.nav_credits') }}</span>
-                </a>
-                <a
                     class="store-account__link store-account__link--child {{ $section === 'referrals' ? 'is-active' : '' }}"
                     href="{{ route('customer.referrals') }}"
                     @if ($section === 'referrals') aria-current="page" @endif
                 >
                     <x-ag.icon name="share-2" class="store-account__link-icon" :size="16" />
                     <span>{{ __('customer.account.nav_referrals') }}</span>
+                </a>
+                <a
+                    class="store-account__link store-account__link--child {{ $section === 'credits' ? 'is-active' : '' }}"
+                    href="{{ route('customer.credits') }}"
+                    @if ($section === 'credits') aria-current="page" @endif
+                >
+                    <x-ag.icon name="coins" class="store-account__link-icon" :size="16" />
+                    <span>{{ __('customer.account.nav_credits') }}</span>
                 </a>
                 <a
                     class="store-account__link store-account__link--child {{ $section === 'notification-settings' ? 'is-active' : '' }}"

@@ -2,11 +2,15 @@
     @include('theme::account.partials.nav', ['accountSection' => $accountSection])
 
     <section class="store-account__main store-account-panel" aria-labelledby="referrals-heading">
-        <header class="store-account-panel__header">
-            <div>
-                <p class="store-account-panel__eyebrow">{{ __('customer.account.nav_referrals') }}</p>
-                <h1 id="referrals-heading" class="store-account-panel__title">{{ __('customer.referrals.title') }}</h1>
-                <p class="store-account-panel__lede">{{ __('customer.referrals.lede') }}</p>
+        <header class="store-account-panel__header store-referral-hero">
+            <div class="store-referral-hero__copy">
+                <p class="store-account-panel__eyebrow">{{ __('customer.referrals.affiliate_eyebrow') }}</p>
+                <h1 id="referrals-heading" class="store-account-panel__title">{{ __('customer.referrals.affiliate_title') }}</h1>
+                <p class="store-account-panel__lede">{{ __('customer.referrals.affiliate_lede', ['percentage' => $headlinePercentage]) }}</p>
+            </div>
+            <div class="store-referral-hero__mark" aria-hidden="true">
+                <span>{{ $headlinePercentage }}%</span>
+                <small>{{ __('customer.referrals.of_first_purchase') }}</small>
             </div>
         </header>
 
@@ -18,18 +22,51 @@
             <p class="store-alert store-alert--info" role="status">{{ __('customer.referrals.disabled') }}</p>
         @endif
 
-        <div class="store-account-cards" aria-label="{{ __('customer.referrals.balance_heading') }}">
-            <a class="store-account-card store-account-card--link" href="{{ route('customer.credits') }}">
-                <p class="store-account-card__label">{{ __('customer.referrals.balance_heading') }}</p>
-                <strong class="store-account-card__value">{{ $accountBalance }}</strong>
-                <p class="store-account-card__hint">{{ __('customer.referrals.balance_lede') }}</p>
-            </a>
-            <div class="store-account-card">
-                <p class="store-account-card__label">{{ __('customer.referrals.default_rate') }}</p>
-                <strong class="store-account-card__value">{{ $defaultRewardPercentage }}%</strong>
-                <p class="store-account-card__hint">{{ __('customer.referrals.rate_value', ['percentage' => $defaultRewardPercentage]) }}</p>
-            </div>
-        </div>
+        <section class="store-referral-stats" aria-label="{{ __('customer.referrals.stats_label') }}">
+            <article class="store-referral-stat">
+                <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="share-2" :size="18" /></span>
+                <strong class="store-referral-stat__value">{{ $linkClicks }}</strong>
+                <span class="store-referral-stat__label">{{ __('customer.referrals.link_clicks') }}</span>
+            </article>
+            <article class="store-referral-stat">
+                <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="users" :size="18" /></span>
+                <strong class="store-referral-stat__value">{{ $uniqueVisitors }}</strong>
+                <span class="store-referral-stat__label">{{ __('customer.referrals.link_visits') }}</span>
+            </article>
+            <article class="store-referral-stat">
+                <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="shopping-bag" :size="18" /></span>
+                <strong class="store-referral-stat__value">{{ $paidPurchases }}</strong>
+                <span class="store-referral-stat__label">{{ __('customer.referrals.paid_purchases') }}</span>
+            </article>
+            <article class="store-referral-stat">
+                <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="coins" :size="18" /></span>
+                <strong class="store-referral-stat__value">{{ $earnedRewards }}</strong>
+                <span class="store-referral-stat__label">{{ __('customer.referrals.earned_rewards') }}</span>
+            </article>
+        </section>
+
+        @if ($referralLink !== null)
+            <section class="store-referral-link" x-data="{ copied: false }" aria-labelledby="referral-link-heading">
+                <div class="store-referral-link__copy">
+                    <p class="store-account-panel__eyebrow">{{ __('customer.referrals.share_eyebrow') }}</p>
+                    <h2 id="referral-link-heading">{{ __('customer.referrals.share_heading') }}</h2>
+                    <p>{{ __('customer.referrals.share_lede', ['days' => $headlineWindowDays, 'percentage' => $headlinePercentage]) }}</p>
+                </div>
+                <div class="store-referral-link__control">
+                    <label class="sr-only" for="referral-share-link">{{ __('customer.referrals.share_link') }}</label>
+                    <input id="referral-share-link" class="store-input" type="text" value="{{ $referralLink }}" readonly x-ref="link">
+                    <button
+                        type="button"
+                        class="store-btn store-btn--secondary"
+                        @click="navigator.clipboard.writeText($refs.link.value).then(() => { copied = true; setTimeout(() => copied = false, 1800) })"
+                        :aria-label="copied ? '{{ __('customer.referrals.copied') }}' : '{{ __('customer.referrals.copy_link') }}'"
+                    >
+                        <x-ag.icon name="share-2" :size="16" aria-hidden="true" />
+                        <span x-text="copied ? '{{ __('customer.referrals.copied') }}' : '{{ __('customer.referrals.copy_link') }}'">{{ __('customer.referrals.copy_link') }}</span>
+                    </button>
+                </div>
+            </section>
+        @endif
 
         <section class="store-account-panel__section" aria-labelledby="referral-code-heading">
             <div class="store-account-panel__section-head">
@@ -55,14 +92,21 @@
                 <div class="store-account-card-list">
                     @foreach ($codes as $code)
                         @php $percentage = $code->reward_percentage ?? $defaultRewardPercentage; @endphp
-                        <article class="store-account-entry">
+                        <article class="store-account-entry store-referral-code">
                             <div class="store-account-entry__body">
-                                <h3 class="store-account-entry__title">{{ $code->code }}</h3>
-                                <p class="store-account-entry__meta">{{ $code->uses_count }} {{ __('customer.referrals.uses') }} · {{ $percentage }}%</p>
+                                <div class="store-referral-code__heading">
+                                    <h3 class="store-account-entry__title">{{ $code->code }}</h3>
+                                    <span class="ag-badge {{ $code->is_active ? 'ag-badge--success' : 'ag-badge--muted' }}">
+                                        {{ $code->is_active ? __('customer.referrals.active') : __('customer.referrals.inactive') }}
+                                    </span>
+                                </div>
+                                <p class="store-account-entry__meta">{{ $percentage }}% · {{ __('customer.referrals.window_days', ['days' => $code->effective_window_days]) }}</p>
+                                <a class="store-referral-code__link" href="{{ $code->referral_link }}" target="_blank" rel="noreferrer">{{ $code->referral_link }}</a>
                             </div>
-                            <span class="ag-badge {{ $code->is_active ? 'ag-badge--success' : 'ag-badge--muted' }}">
-                                {{ $code->is_active ? __('customer.referrals.active') : __('customer.referrals.inactive') }}
-                            </span>
+                            <div class="store-referral-code__stats" aria-label="{{ __('customer.referrals.code_stats') }}">
+                                <span><strong>{{ $code->visits_count }}</strong> {{ __('customer.referrals.link_visits') }}</span>
+                                <span><strong>{{ $code->paid_purchases_count }}</strong> {{ __('customer.referrals.paid_purchases') }}</span>
+                            </div>
                         </article>
                     @endforeach
                 </div>
@@ -71,7 +115,10 @@
 
         <section class="store-account-panel__section" aria-labelledby="referral-activity-heading">
             <div class="store-account-panel__section-head">
-                <h2 id="referral-activity-heading">{{ __('customer.referrals.activity_heading') }}</h2>
+                <div>
+                    <h2 id="referral-activity-heading">{{ __('customer.referrals.activity_heading') }}</h2>
+                    <p class="store-account-panel__lede">{{ __('customer.referrals.activity_lede') }}</p>
+                </div>
             </div>
             <div class="store-account-card-list">
                 @forelse ($attributions as $attribution)

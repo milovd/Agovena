@@ -69,6 +69,12 @@
                         @error('rewardPercentage') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
+                        <label class="ag-field__label" for="referral-code-window-days">{{ __('admin.referrals.window_days') }}</label>
+                        <input id="referral-code-window-days" class="ag-input" type="number" min="1" max="365" step="1" wire:model.number="windowDays">
+                        <p class="ag-field__help">{{ __('admin.referrals.window_days_help', ['days' => $defaultWindowDays]) }}</p>
+                        @error('windowDays') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
                         <label class="ag-field__label" for="referral-code-max-uses">{{ __('admin.referrals.max_uses') }}</label>
                         <input id="referral-code-max-uses" class="ag-input" type="number" min="1" wire:model.number="maxUses">
                         <p class="ag-field__help">{{ __('admin.referrals.max_uses_help') }}</p>
@@ -106,6 +112,21 @@
                 <p class="ag-stats__value">{{ $postedRewardCount }}</p>
                 <p class="ag-stats__hint">{{ __('admin.referrals.posted_rewards_hint') }}</p>
             </div>
+            <div class="ag-stats__item">
+                <p class="ag-stats__label">{{ __('admin.referrals.link_clicks') }}</p>
+                <p class="ag-stats__value">{{ $linkClicks }}</p>
+                <p class="ag-stats__hint">{{ __('admin.referrals.link_clicks_hint') }}</p>
+            </div>
+            <div class="ag-stats__item">
+                <p class="ag-stats__label">{{ __('admin.referrals.unique_visitors') }}</p>
+                <p class="ag-stats__value">{{ $uniqueVisitors }}</p>
+                <p class="ag-stats__hint">{{ __('admin.referrals.unique_visitors_hint') }}</p>
+            </div>
+            <div class="ag-stats__item">
+                <p class="ag-stats__label">{{ __('admin.referrals.paid_purchases') }}</p>
+                <p class="ag-stats__value">{{ $paidPurchases }}</p>
+                <p class="ag-stats__hint">{{ __('admin.referrals.paid_purchases_hint') }}</p>
+            </div>
         </section>
 
         <section class="ag-card" aria-labelledby="referral-codes-heading">
@@ -121,8 +142,11 @@
                             <tr>
                                 <th scope="col">{{ __('admin.referrals.code') }}</th>
                                 <th scope="col">{{ __('admin.referrals.customer') }}</th>
-                                <th scope="col">{{ __('admin.referrals.uses') }}</th>
+                                <th scope="col">{{ __('admin.referrals.link_clicks') }}</th>
+                                <th scope="col">{{ __('admin.referrals.unique_visitors') }}</th>
+                                <th scope="col">{{ __('admin.referrals.paid_purchases') }}</th>
                                 <th scope="col">{{ __('admin.referrals.reward_percentage') }}</th>
+                                <th scope="col">{{ __('admin.referrals.window_days') }}</th>
                                 <th scope="col">{{ __('admin.referrals.status') }}</th>
                                 <th scope="col">{{ __('admin.referrals.actions') }}</th>
                             </tr>
@@ -130,9 +154,15 @@
                         <tbody>
                             @forelse ($codes as $code)
                                 <tr>
-                                    <td><strong>{{ $code->code }}</strong></td>
+                                    <td>
+                                        <strong>{{ $code->code }}</strong>
+                                        <a href="{{ route('referrals.visit', ['code' => $code->code]) }}" target="_blank" rel="noreferrer" class="ag-muted">{{ __('admin.referrals.share_link') }}</a>
+                                        <span class="ag-muted">{{ $code->uses_count }}{{ $code->max_uses ? ' / '.$code->max_uses : '' }} {{ __('admin.referrals.uses') }}</span>
+                                    </td>
                                     <td>{{ $code->customer?->name ?? __('admin.referrals.not_available') }}</td>
-                                    <td>{{ $code->uses_count }}{{ $code->max_uses ? ' / '.$code->max_uses : '' }}</td>
+                                    <td>{{ $code->visits_sum_clicks_count ?? 0 }}</td>
+                                    <td>{{ $code->visits_count }}</td>
+                                    <td>{{ $code->paid_purchases_count }}</td>
                                     <td>
                                         @if ($code->reward_percentage !== null)
                                             {{ $code->reward_percentage }}%
@@ -142,6 +172,7 @@
                                             <span class="ag-muted">{{ __('admin.referrals.store_default_percentage', ['percentage' => $defaultRewardPercentage]) }}</span>
                                         @endif
                                     </td>
+                                    <td>{{ $code->window_days ?? $defaultWindowDays }}</td>
                                     <td>
                                         <span class="ag-badge {{ $code->is_active ? 'ag-badge--success' : 'ag-badge--muted' }}">
                                             {{ $code->is_active ? __('admin.referrals.active') : __('admin.referrals.inactive') }}
@@ -169,7 +200,7 @@
                                     </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="6">{{ __('admin.referrals.codes_empty') }}</td></tr>
+                                <tr><td colspan="9">{{ __('admin.referrals.codes_empty') }}</td></tr>
                             @endforelse
                         </tbody>
                     </table>

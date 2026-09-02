@@ -12,6 +12,7 @@ final class ReferralAttribution extends Model
     protected $fillable = [
         'order_id',
         'referral_code_id',
+        'referral_visit_id',
         'referrer_customer_id',
         'referred_customer_id',
         'code_snapshot',
@@ -22,6 +23,9 @@ final class ReferralAttribution extends Model
         'fraud_review_required',
         'reviewed_at',
         'credited_at',
+        'clicked_at',
+        'tracking_expires_at',
+        'purchased_at',
     ];
 
     protected $casts = [
@@ -30,6 +34,9 @@ final class ReferralAttribution extends Model
         'fraud_review_required' => 'boolean',
         'reviewed_at' => 'datetime',
         'credited_at' => 'datetime',
+        'clicked_at' => 'datetime',
+        'tracking_expires_at' => 'datetime',
+        'purchased_at' => 'datetime',
     ];
 
     public function order(): BelongsTo
@@ -40,6 +47,11 @@ final class ReferralAttribution extends Model
     public function code(): BelongsTo
     {
         return $this->belongsTo(ReferralCode::class, 'referral_code_id');
+    }
+
+    public function visit(): BelongsTo
+    {
+        return $this->belongsTo(ReferralVisit::class, 'referral_visit_id');
     }
 
     public function referrer(): BelongsTo

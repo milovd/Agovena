@@ -69,6 +69,7 @@ final class PlaceOrder
      *     shipping_quote_key?: string|null,
      *     discount_code?: string|null,
      *     referral_code?: string|null,
+     *     referral_visit_id?: int|null,
      *     apply_credit?: bool,
      *     credit_amount?: int|null,
      *     custom_properties?: array<string, mixed>
@@ -109,6 +110,7 @@ final class PlaceOrder
 
         $method = $guest['payment_method'] ?? null;
         $referralCode = is_string($guest['referral_code'] ?? null) ? trim($guest['referral_code']) : '';
+        $referralVisitId = isset($guest['referral_visit_id']) ? (int) $guest['referral_visit_id'] : null;
 
         /** @var AddressData|null $billing */
         $billing = $guest['billing'] ?? null;
@@ -215,6 +217,7 @@ final class PlaceOrder
                 $idempotencyOwnerHash,
                 $method,
                 $referralCode,
+                $referralVisitId,
                 $customerId,
                 $billing,
                 $shipping,
@@ -276,7 +279,7 @@ final class PlaceOrder
 
                 $order = Order::query()->create($payload);
                 if ($referralCode !== '') {
-                    $this->referrals->attribute($order, $referralCode);
+                    $this->referrals->attribute($order, $referralCode, $referralVisitId);
                 }
 
                 $creditAmount = 0;

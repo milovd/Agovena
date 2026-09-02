@@ -9,6 +9,7 @@ use App\Http\Controllers\InvoiceDocumentController;
 use App\Http\Controllers\Privacy\CookieConsentController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\Storefront\PreferencesController;
+use App\Http\Controllers\Storefront\ReferralVisitController;
 use App\Http\Controllers\Storefront\SearchSuggestController;
 use App\Http\Controllers\Support\TicketAttachmentDownloadController;
 use App\Http\Controllers\Webhooks\PaymentWebhookController;
@@ -108,6 +109,10 @@ Route::get('/sw.js', static function () {
         'Cache-Control' => 'no-cache',
     ]);
 })->name('notifications.service-worker');
+
+Route::get('/r/{code}', ReferralVisitController::class)
+    ->where('code', '[A-Za-z0-9][A-Za-z0-9_-]{2,63}')
+    ->name('referrals.visit');
 
 Route::get('/cookies', CookiePolicy::class)->name('privacy.cookies');
 Route::get('/', CatalogIndex::class)->name('storefront.home');

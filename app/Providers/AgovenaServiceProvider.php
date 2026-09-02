@@ -1002,6 +1002,15 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
+            key: 'referral_window_days',
+            label: 'admin.settings.fields.referral_window_days',
+            type: 'integer',
+            default: 30,
+            help: 'admin.settings.field_help.referral_window_days',
+            sort: 37,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
             key: 'tax_enabled',
             label: 'admin.settings.fields.tax_enabled',
             type: 'boolean',

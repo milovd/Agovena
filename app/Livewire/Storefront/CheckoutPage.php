@@ -30,6 +30,7 @@ use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\CheckoutPaymentSelection;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\StartOrderPayment;
+use App\Agovena\Referrals\ReferralService;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Tax\TaxCalculator;
 use App\Agovena\Tax\TaxRateResolver;
@@ -407,6 +408,10 @@ final class CheckoutPage extends Component
             ]);
         }
 
+        $referralVisit = app(ReferralService::class)->visitFromCookie(
+            request()->cookie(ReferralService::TRACKING_COOKIE),
+        );
+
         $order = $placeOrder->handle([
             'customer_name' => $data['customer_name'],
             'customer_email' => $data['customer_email'],
@@ -421,6 +426,8 @@ final class CheckoutPage extends Component
             'discount_code' => $this->applied_coupon_code !== '' ? $this->applied_coupon_code : null,
             'apply_credit' => $usingBalance || (bool) ($data['apply_credit'] ?? false),
             'custom_properties' => $data['propertyValues'] ?? $this->propertyValues,
+            'referral_code' => $referralVisit?->code?->code,
+            'referral_visit_id' => $referralVisit?->id,
         ]);
 
         $order->loadMissing('payment');
