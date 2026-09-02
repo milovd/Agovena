@@ -420,6 +420,25 @@ return [
             'attention' => 'Needs attention',
         ],
 
+        'support' => [
+            'title' => 'Support',
+            'lede' => 'Active tickets, prioritized by urgency and latest reply.',
+            'empty_title' => 'No active tickets',
+            'empty_text' => 'Your support queue is clear right now.',
+            'unavailable_title' => 'Support unavailable',
+            'unavailable_text' => 'You do not have permission to view support tickets.',
+        ],
+
+        'active_users' => [
+            'title' => 'Active users',
+            'lede' => 'Users with a session active within the configured session lifetime.',
+            'empty_title' => 'No active users',
+            'empty_text' => 'No signed-in users have an active session right now.',
+            'unavailable_title' => 'Active users unavailable',
+            'unavailable_text' => 'Active users require the database session driver.',
+            'more' => 'Showing :shown of :total active users.',
+        ],
+
         'stats' => [
             'products' => 'Products',
             'products_active' => ':count active',
@@ -1895,6 +1914,7 @@ return [
         'unassigned' => 'Unassigned',
         'all_statuses' => 'All statuses',
         'status' => ['open' => 'Open', 'pending' => 'Pending', 'answered' => 'Answered', 'closed' => 'Closed'],
+        'priority' => ['low' => 'Low', 'normal' => 'Normal', 'high' => 'High'],
         'ticket_title' => 'Ticket :number',
         'back' => 'Back to tickets',
         'assign_self' => 'Assign to me',

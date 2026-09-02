@@ -185,26 +185,102 @@
         </div>
 
         <div class="ag-dashboard-stack">
-            <section class="admin-panel" aria-labelledby="attention-heading">
-                <h2 id="attention-heading" class="admin-panel__title">{{ __('admin.dashboard.attention.title') }}</h2>
-                <ul class="ag-attention" role="list">
-                    @forelse ($attentionItems as $item)
-                        <li class="ag-attention__item" wire:key="attention-{{ $loop->index }}">
-                            <span>{{ $item['label'] }}</span>
-                            <a class="ag-checklist__action" href="{{ $item['href'] }}">
-                                <span>{{ __('admin.dashboard.attention.review') }}</span>
-                                <x-ag.icon name="chevron-right" :size="16" />
-                            </a>
-                        </li>
-                    @empty
-                        <li class="ag-attention__item ag-attention__item--ok">{{ __('admin.dashboard.attention.all_clear') }}</li>
-                    @endforelse
-                </ul>
+            <section class="admin-panel ag-dashboard-widget" aria-labelledby="support-heading">
+                <header class="ag-dashboard-widget__header">
+                    <div>
+                        <h2 id="support-heading" class="admin-panel__title">
+                            {{ __('admin.dashboard.support.title') }}
+                            @if ($supportTicketsAvailable)
+                                ({{ number_format($supportTicketCount) }})
+                            @endif
+                        </h2>
+                        <p class="ag-dashboard-widget__lede">{{ __('admin.dashboard.support.lede') }}</p>
+                    </div>
+                    @if ($supportTicketsAvailable)
+                        <a class="ag-dashboard-widget__link" href="{{ route('admin.tickets.index') }}">
+                            {{ __('admin.dashboard.view_details') }}
+                        </a>
+                    @endif
+                </header>
+
+                @if (! $supportTicketsAvailable)
+                    <div class="ag-empty--soft" role="status">
+                        <p class="ag-empty__title">{{ __('admin.dashboard.support.unavailable_title') }}</p>
+                        <p class="ag-empty__text">{{ __('admin.dashboard.support.unavailable_text') }}</p>
+                    </div>
+                @elseif ($supportTickets->isEmpty())
+                    <div class="ag-empty--soft" role="status">
+                        <p class="ag-empty__title">{{ __('admin.dashboard.support.empty_title') }}</p>
+                        <p class="ag-empty__text">{{ __('admin.dashboard.support.empty_text') }}</p>
+                    </div>
+                @else
+                    <ul class="ag-dashboard-list" role="list">
+                        @foreach ($supportTickets as $ticket)
+                            <li class="ag-dashboard-list__item" wire:key="dashboard-ticket-{{ $ticket->id }}">
+                                <div class="ag-dashboard-list__copy">
+                                    <a class="ag-dashboard-list__title" href="{{ route('admin.tickets.show', $ticket) }}">
+                                        {{ $ticket->subject }}
+                                    </a>
+                                    <span class="ag-dashboard-list__meta">
+                                        {{ $ticket->number }} · {{ __('admin.tickets.priority.'.$ticket->priority->value) }} ·
+                                        {{ ($ticket->last_reply_at ?? $ticket->created_at)->diffForHumans() }}
+                                    </span>
+                                </div>
+                                <span @class([
+                                    'ag-badge',
+                                    'ag-badge--success' => $ticket->status->value === 'answered',
+                                    'ag-badge--warning' => $ticket->status->value === 'pending',
+                                    'ag-badge--info' => $ticket->status->value === 'open',
+                                ])>{{ __('admin.tickets.status.'.$ticket->status->value) }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
             </section>
 
-            <section class="admin-panel" aria-labelledby="recent-orders-heading">
-                <h2 id="recent-orders-heading" class="admin-panel__title">{{ __('admin.dashboard.widgets.recent_orders') }}</h2>
-                @include('admin.widgets.recent-orders', ['recentOrders' => $recentOrders])
+            <section class="admin-panel ag-dashboard-widget" aria-labelledby="active-users-heading">
+                <header class="ag-dashboard-widget__header">
+                    <div>
+                        <h2 id="active-users-heading" class="admin-panel__title">
+                            {{ __('admin.dashboard.active_users.title') }}
+                            @if ($activeUsersAvailable)
+                                ({{ number_format($activeUserCount) }})
+                            @endif
+                        </h2>
+                        <p class="ag-dashboard-widget__lede">{{ __('admin.dashboard.active_users.lede') }}</p>
+                    </div>
+                </header>
+
+                @if (! $activeUsersAvailable)
+                    <div class="ag-empty--soft" role="status">
+                        <p class="ag-empty__title">{{ __('admin.dashboard.active_users.unavailable_title') }}</p>
+                        <p class="ag-empty__text">{{ __('admin.dashboard.active_users.unavailable_text') }}</p>
+                    </div>
+                @elseif ($activeUsers === [])
+                    <div class="ag-empty--soft" role="status">
+                        <p class="ag-empty__title">{{ __('admin.dashboard.active_users.empty_title') }}</p>
+                        <p class="ag-empty__text">{{ __('admin.dashboard.active_users.empty_text') }}</p>
+                    </div>
+                @else
+                    <ul class="ag-dashboard-list" role="list">
+                        @foreach ($activeUsers as $activeUser)
+                            <li class="ag-dashboard-list__item" wire:key="dashboard-active-user-{{ $activeUser['id'] }}">
+                                <div class="ag-dashboard-list__copy">
+                                    <strong class="ag-dashboard-list__title">{{ $activeUser['name'] }}</strong>
+                                    <span class="ag-dashboard-list__meta">{{ $activeUser['email'] }}</span>
+                                </div>
+                                <time class="ag-dashboard-list__time" datetime="{{ $activeUser['last_activity']->toIso8601String() }}">
+                                    {{ $activeUser['last_activity']->diffForHumans() }}
+                                </time>
+                            </li>
+                        @endforeach
+                    </ul>
+                    @if ($activeUsersHasMore)
+                        <p class="ag-dashboard-widget__more">
+                            {{ __('admin.dashboard.active_users.more', ['shown' => count($activeUsers), 'total' => $activeUserCount]) }}
+                        </p>
+                    @endif
+                @endif
             </section>
         </div>
     </div>

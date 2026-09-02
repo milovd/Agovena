@@ -7,10 +7,14 @@ use App\Agovena\Admin\DashboardMetrics;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Theme\StorefrontBrand;
+use App\Enums\TicketPriority;
+use App\Enums\TicketStatus;
 use App\Livewire\Admin\Customers\Index as CustomersIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Models\Customer;
 use App\Models\Product;
+use App\Models\Ticket;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -69,7 +73,8 @@ test('dashboard keeps six focused metrics and one configurable chart', function 
         ->and($html)->toContain('id="dashboard-chart-type"')
         ->and($html)->toContain('wire:model.live="chartType"')
         ->and($html)->toContain('var(--ag-color-chart-4)')
-        ->and($html)->not->toContain(__('admin.dashboard.stats.open_tickets'), false);
+        ->and($html)->toContain('wire:key="metric-aov"')
+        ->and($html)->toContain('href="'.route('admin.orders.index').'">View details', false);
 
     $component
         ->call('setChartRange', '7')
@@ -97,6 +102,77 @@ test('dashboard chart ranges return the requested number of daily points', funct
         ->and($metrics->build('14')['revenueSeries']['labels'])->toHaveCount(14)
         ->and($metrics->build('90')['revenueSeries']['labels'])->toHaveCount(90)
         ->and(count($metrics->build('month')['revenueSeries']['labels']))->toBeBetween(1, 31);
+});
+
+test('dashboard shows prioritized support tickets and current active users', function () {
+    $staff = $this->createStaff();
+    $customer = Customer::factory()->create();
+    $now = now();
+
+    $highPriority = Ticket::query()->create([
+        'number' => 'TKT-HIGH',
+        'customer_id' => $customer->id,
+        'subject' => 'Urgent support request',
+        'status' => TicketStatus::Open,
+        'priority' => TicketPriority::High,
+        'last_reply_at' => $now->copy()->subHour(),
+    ]);
+    Ticket::query()->create([
+        'number' => 'TKT-NORMAL',
+        'customer_id' => $customer->id,
+        'subject' => 'Normal support request',
+        'status' => TicketStatus::Answered,
+        'priority' => TicketPriority::Normal,
+        'last_reply_at' => $now,
+    ]);
+    Ticket::query()->create([
+        'number' => 'TKT-CLOSED',
+        'customer_id' => $customer->id,
+        'subject' => 'Closed support request',
+        'status' => TicketStatus::Closed,
+        'priority' => TicketPriority::High,
+        'last_reply_at' => $now,
+    ]);
+
+    config([
+        'session.driver' => 'database',
+        'session.lifetime' => 120,
+    ]);
+    DB::table('sessions')->insert([
+        [
+            'id' => 'active-staff',
+            'user_id' => $staff->id,
+            'payload' => '',
+            'last_activity' => $now->getTimestamp(),
+        ],
+        [
+            'id' => 'active-customer',
+            'user_id' => $customer->user_id,
+            'payload' => '',
+            'last_activity' => $now->copy()->subMinutes(10)->getTimestamp(),
+        ],
+        [
+            'id' => 'stale-staff',
+            'user_id' => $staff->id,
+            'payload' => '',
+            'last_activity' => $now->copy()->subMinutes(121)->getTimestamp(),
+        ],
+    ]);
+
+    $this->actingAs($staff);
+    $data = app(DashboardMetrics::class)->build();
+    $html = Livewire::actingAs($staff)->test(Dashboard::class)->html();
+
+    expect($data['supportTicketCount'])->toBe(2)
+        ->and($data['supportTickets']->first()?->id)->toBe($highPriority->id)
+        ->and($data['activeUserCount'])->toBe(2)
+        ->and($data['activeUsers'])->toHaveCount(2)
+        ->and($html)->toContain(__('admin.dashboard.support.title'), false)
+        ->and($html)->toContain(__('admin.dashboard.active_users.title'), false)
+        ->and($html)->toContain('Urgent support request', false)
+        ->and($html)->toContain('id="active-users-heading"', false)
+        ->and($html)->not->toContain(__('admin.dashboard.widgets.attention'), false)
+        ->and($html)->not->toContain(__('admin.dashboard.widgets.recent_orders'), false);
 });
 
 test('customer index shows identity and commerce columns', function () {

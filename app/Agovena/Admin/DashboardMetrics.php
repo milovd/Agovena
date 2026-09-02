@@ -17,6 +17,7 @@ use App\Models\Product;
 use App\Models\Ticket;
 use App\Support\MoneyFormatter;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -24,6 +25,10 @@ use Throwable;
 
 final class DashboardMetrics
 {
+    private const SUPPORT_TICKET_PREVIEW_LIMIT = 5;
+
+    private const ACTIVE_USER_PREVIEW_LIMIT = 8;
+
     public function __construct(
         private readonly ModuleManager $modules,
     ) {}
@@ -33,8 +38,13 @@ final class DashboardMetrics
      *     metrics: list<array{id: string, label: string, value: string, hint: ?string, href: ?string}>,
      *     revenueSeries: array{labels: list<string>, values: list<int>, currency: string},
      *     orderSeries: array{labels: list<string>, values: list<int>},
-     *     recentOrders: \Illuminate\Database\Eloquent\Collection<int, Order>,
-     *     attention: list<array{label: string, href: string, count: int}>,
+     *     supportTicketCount: int,
+     *     supportTickets: EloquentCollection<int, Ticket>,
+     *     supportTicketsAvailable: bool,
+     *     activeUserCount: int,
+     *     activeUsers: list<array{id: int, name: string, email: string, last_activity: CarbonImmutable}>,
+     *     activeUsersAvailable: bool,
+     *     activeUsersHasMore: bool,
      *     productCount: int,
      *     activeProductCount: int,
      *     orderCount: int,
@@ -51,7 +61,7 @@ final class DashboardMetrics
         $orderCount = Order::query()->count();
         $customerCount = Customer::query()->count();
         $pendingPaymentCount = Payment::query()->where('status', PaymentStatus::Pending)->count();
-        $openTicketCount = Ticket::query()->where('status', '!=', TicketStatus::Closed)->count();
+        $canViewTickets = auth()->user()?->can('tickets.view') ?? false;
 
         $paidRevenueByCurrency = Payment::query()
             ->where('status', PaymentStatus::Paid)
@@ -100,7 +110,7 @@ final class DashboardMetrics
                     ? MoneyFormatter::format($aov, $displayCurrency)
                     : (string) __('common.em_dash'),
                 'hint' => (string) __('admin.dashboard.stats.aov_hint'),
-                'href' => null,
+                'href' => auth()->user()?->can('orders.view') ? route('admin.orders.index') : null,
             ],
             [
                 'id' => 'products',
@@ -124,41 +134,92 @@ final class DashboardMetrics
                 : null,
         ];
 
-        $attention = [];
-        if ($pendingPaymentCount > 0 && auth()->user()?->can('orders.view')) {
-            $attention[] = [
-                'label' => (string) trans_choice('admin.dashboard.attention.pending_payments', $pendingPaymentCount, ['count' => $pendingPaymentCount]),
-                'href' => route('admin.orders.index'),
-                'count' => $pendingPaymentCount,
-            ];
-        }
-        if ($openTicketCount > 0 && auth()->user()?->can('tickets.view')) {
-            $attention[] = [
-                'label' => (string) trans_choice('admin.dashboard.attention.open_tickets', $openTicketCount, ['count' => $openTicketCount]),
-                'href' => route('admin.tickets.index'),
-                'count' => $openTicketCount,
-            ];
-        }
-        if ($productCount === 0 && auth()->user()?->can('products.create')) {
-            $attention[] = [
-                'label' => (string) __('admin.dashboard.attention.no_products'),
-                'href' => route('admin.products.create'),
-                'count' => 0,
-            ];
-        }
+        $supportTickets = $canViewTickets
+            ? Ticket::query()
+                ->where('status', '!=', TicketStatus::Closed)
+                ->orderByRaw("CASE priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 WHEN 'low' THEN 2 ELSE 3 END")
+                ->orderByDesc('last_reply_at')
+                ->limit(self::SUPPORT_TICKET_PREVIEW_LIMIT)
+                ->get()
+            : new EloquentCollection;
+        $supportTicketCount = $canViewTickets
+            ? Ticket::query()->where('status', '!=', TicketStatus::Closed)->count()
+            : 0;
+        $activeUserSnapshot = $this->activeUsers();
 
         return [
             'metrics' => $metrics,
             'revenueSeries' => $this->dailyPaidRevenue($from, $days, $displayCurrency),
             'orderSeries' => $this->dailyOrderCounts($from, $days),
-            'recentOrders' => Order::query()->with('payment')->latest('id')->limit(8)->get(),
-            'attention' => $attention,
+            'supportTicketCount' => $supportTicketCount,
+            'supportTickets' => $supportTickets,
+            'supportTicketsAvailable' => $canViewTickets,
+            'activeUserCount' => $activeUserSnapshot['count'],
+            'activeUsers' => $activeUserSnapshot['users'],
+            'activeUsersAvailable' => $activeUserSnapshot['available'],
+            'activeUsersHasMore' => $activeUserSnapshot['hasMore'],
             'productCount' => $productCount,
             'activeProductCount' => $activeProductCount,
             'orderCount' => $orderCount,
             'pendingPaymentCount' => $pendingPaymentCount,
             'paidRevenueByCurrency' => $paidRevenueByCurrency,
         ];
+    }
+
+    /**
+     * @return array{
+     *     count: int,
+     *     users: list<array{id: int, name: string, email: string, last_activity: CarbonImmutable}>,
+     *     available: bool,
+     *     hasMore: bool
+     * }
+     */
+    private function activeUsers(): array
+    {
+        if (config('session.driver') !== 'database') {
+            return ['count' => 0, 'users' => [], 'available' => false, 'hasMore' => false];
+        }
+
+        try {
+            $table = (string) config('session.table', 'sessions');
+            $connection = DB::connection(config('session.connection'));
+            if (! $connection->getSchemaBuilder()->hasTable($table)) {
+                return ['count' => 0, 'users' => [], 'available' => false, 'hasMore' => false];
+            }
+
+            $cutoff = now()->subMinutes(max(1, (int) config('session.lifetime', 120)))->getTimestamp();
+            $query = $connection->table($table)
+                ->join('users', 'users.id', '=', "{$table}.user_id")
+                ->whereNotNull("{$table}.user_id")
+                ->where("{$table}.last_activity", '>=', $cutoff);
+            $count = (clone $query)->distinct()->count("{$table}.user_id");
+            $rows = (clone $query)
+                ->select([
+                    'users.id',
+                    'users.name',
+                    'users.email',
+                ])
+                ->selectRaw("MAX({$table}.last_activity) as last_activity")
+                ->groupBy('users.id', 'users.name', 'users.email')
+                ->orderByDesc('last_activity')
+                ->limit(self::ACTIVE_USER_PREVIEW_LIMIT + 1)
+                ->get();
+            $hasMore = $rows->count() > self::ACTIVE_USER_PREVIEW_LIMIT;
+
+            return [
+                'count' => (int) $count,
+                'users' => $rows->take(self::ACTIVE_USER_PREVIEW_LIMIT)->map(fn (object $row): array => [
+                    'id' => (int) $row->id,
+                    'name' => (string) $row->name,
+                    'email' => (string) $row->email,
+                    'last_activity' => CarbonImmutable::createFromTimestamp((int) $row->last_activity),
+                ])->values()->all(),
+                'available' => true,
+                'hasMore' => $hasMore,
+            ];
+        } catch (Throwable) {
+            return ['count' => 0, 'users' => [], 'available' => false, 'hasMore' => false];
+        }
     }
 
     /**

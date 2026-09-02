@@ -420,6 +420,25 @@ return [
             'attention' => 'Vraagt aandacht',
         ],
 
+        'support' => [
+            'title' => 'Support',
+            'lede' => 'Actieve tickets, gesorteerd op prioriteit en laatste antwoord.',
+            'empty_title' => 'Geen actieve tickets',
+            'empty_text' => 'Je supportwachtrij is momenteel leeg.',
+            'unavailable_title' => 'Support niet beschikbaar',
+            'unavailable_text' => 'Je hebt geen toestemming om supporttickets te bekijken.',
+        ],
+
+        'active_users' => [
+            'title' => 'Actieve gebruikers',
+            'lede' => 'Gebruikers met een actieve sessie binnen de ingestelde sessieduur.',
+            'empty_title' => 'Geen actieve gebruikers',
+            'empty_text' => 'Er zijn nu geen ingelogde gebruikers met een actieve sessie.',
+            'unavailable_title' => 'Actieve gebruikers niet beschikbaar',
+            'unavailable_text' => 'Actieve gebruikers vereisen de database-sessiedriver.',
+            'more' => 'De eerste :shown van :total actieve gebruikers worden getoond.',
+        ],
+
         'stats' => [
             'products' => 'Producten',
             'products_active' => ':count actief',
@@ -1895,6 +1914,7 @@ return [
         'unassigned' => 'Niet toegewezen',
         'all_statuses' => 'Alle statussen',
         'status' => ['open' => 'Open', 'pending' => 'In afwachting', 'answered' => 'Beantwoord', 'closed' => 'Gesloten'],
+        'priority' => ['low' => 'Laag', 'normal' => 'Normaal', 'high' => 'Hoog'],
         'ticket_title' => 'Ticket :number',
         'back' => 'Terug naar tickets',
         'assign_self' => 'Aan mij toewijzen',
