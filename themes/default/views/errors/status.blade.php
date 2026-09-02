@@ -7,7 +7,7 @@
 
     <div class="store-error__art" aria-hidden="true">
         <span class="store-error__number">{{ $status }}</span>
-        <svg class="store-error__illustration" viewBox="0 45 620 270" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="store-error__illustration" viewBox="0 0 620 320" fill="none" xmlns="http://www.w3.org/2000/svg">
             <ellipse class="store-error__illustration-shadow" cx="310" cy="286" rx="172" ry="16" />
             <path class="store-error__route" d="M102 230C167 172 203 238 263 186C323 134 364 198 422 144C465 104 500 120 537 88" />
             <path class="store-error__route-arrow" d="m521 87 18 1-8 16" />

@@ -54,13 +54,13 @@ test('error page puts the action below the illustration and keeps it viewport-sa
         ->and($descriptionPosition)->toBeLessThan($actionsPosition)
         ->and($ledePosition)->toBeLessThan($actionsPosition)
         ->and($css)->toContain('100svh')
-        ->and($css)->toContain('aspect-ratio: 620 / 270')
+        ->and($css)->toContain('aspect-ratio: 620 / 320')
         ->and($css)->toContain('container-type: inline-size')
         ->and($css)->toContain('width: 100%')
         ->and($css)->toContain('height: 100%')
         ->and($css)->toContain('width: min(100%, 26rem)')
         ->and($css)->toContain('.store-error[data-error-status="404"] .store-error__title')
-        ->and($css)->toContain('margin-top: clamp(0.75rem, 1.5vh, 1.25rem)');
+        ->and($css)->toContain('margin-top: -1.5rem');
 });
 
 test('theme error layout exposes persisted color mode support', function () {
