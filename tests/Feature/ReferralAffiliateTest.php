@@ -127,7 +127,9 @@ it('shows affiliate link and conversion statistics in the customer tab', functio
         ->assertSee(route('referrals.visit', ['code' => $code->code]), false)
         ->assertSee(__('customer.referrals.affiliate_title'), false)
         ->assertSee(__('customer.referrals.affiliate_lede', ['percentage' => 10]), false)
+        ->assertSee(__('customer.referrals.link_clicks_hint'), false)
         ->assertSee(__('customer.referrals.link_visits'), false)
+        ->assertSee(__('customer.referrals.link_visits_hint'), false)
         ->assertSee(__('customer.referrals.paid_purchases'), false)
         ->assertSee('3', false);
 });

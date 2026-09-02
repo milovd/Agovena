@@ -27,11 +27,13 @@
                 <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="share-2" :size="18" /></span>
                 <strong class="store-referral-stat__value">{{ $linkClicks }}</strong>
                 <span class="store-referral-stat__label">{{ __('customer.referrals.link_clicks') }}</span>
+                <span class="store-referral-stat__hint">{{ __('customer.referrals.link_clicks_hint') }}</span>
             </article>
             <article class="store-referral-stat">
                 <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="users" :size="18" /></span>
                 <strong class="store-referral-stat__value">{{ $uniqueVisitors }}</strong>
                 <span class="store-referral-stat__label">{{ __('customer.referrals.link_visits') }}</span>
+                <span class="store-referral-stat__hint">{{ __('customer.referrals.link_visits_hint') }}</span>
             </article>
             <article class="store-referral-stat">
                 <span class="store-referral-stat__icon" aria-hidden="true"><x-ag.icon name="shopping-bag" :size="18" /></span>
@@ -61,7 +63,7 @@
                         @click="navigator.clipboard.writeText($refs.link.value).then(() => { copied = true; setTimeout(() => copied = false, 1800) })"
                         :aria-label="copied ? '{{ __('customer.referrals.copied') }}' : '{{ __('customer.referrals.copy_link') }}'"
                     >
-                        <x-ag.icon name="share-2" :size="16" aria-hidden="true" />
+                        <x-ag.icon name="file-text" :size="16" aria-hidden="true" />
                         <span x-text="copied ? '{{ __('customer.referrals.copied') }}' : '{{ __('customer.referrals.copy_link') }}'">{{ __('customer.referrals.copy_link') }}</span>
                     </button>
                 </div>
