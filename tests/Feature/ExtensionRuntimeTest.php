@@ -3,10 +3,15 @@
 declare(strict_types=1);
 
 use Agovena\Extensions\Mollie\MollieApi;
+use App\Agovena\Cart\CartService;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
+use App\Agovena\Catalog\GetStorefrontProduct;
+use App\Agovena\Catalog\ListStorefrontProducts;
 use App\Agovena\Extensions\ExtensionCategory;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionManifest;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -14,6 +19,8 @@ use App\Livewire\Admin\Extensions\Index as ExtensionsIndex;
 use App\Models\AgovenaExtension;
 use App\Models\AgovenaModule;
 use App\Models\ExtensionSetting;
+use App\Models\Product;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
@@ -43,6 +50,75 @@ test('module-bound extensions cannot be enabled without their parent module', fu
 
     expect(fn () => $extensions->install('pterodactyl'))
         ->toThrow(ValidationException::class, 'Install Module provisioning before installing Extension pterodactyl.');
+});
+
+test('disabling a parent module disables its extensions and preserves configured products', function (): void {
+    $modules = app(ModuleManager::class);
+    $extensions = app(ExtensionManager::class);
+
+    installAndEnableModule('provisioning');
+    installAndEnableExtension('pterodactyl');
+
+    $product = Product::factory()->active()->create(['name' => 'Game server']);
+    app(ProductCapabilityManager::class)->enable($product, 'provisionable', [
+        'provider_key' => 'pterodactyl',
+        'server_id' => null,
+        'provider_settings' => ['nest_id' => 1],
+    ]);
+    app(ExtensionSettingsRepository::class)->set('pterodactyl', 'panel_url', 'https://panel.example.test');
+
+    $modules->disable('provisioning');
+
+    expect($modules->isEnabled('provisioning'))->toBeFalse()
+        ->and($extensions->isEnabled('pterodactyl'))->toBeFalse()
+        ->and($product->refresh()->capability('provisionable'))->not->toBeNull()
+        ->and($product->capability('provisionable')?->runtimeConfig())->toMatchArray([
+            'provider_key' => 'pterodactyl',
+            'provider_settings' => ['nest_id' => 1],
+        ])
+        ->and(app(ExtensionSettingsRepository::class)->get('pterodactyl', 'panel_url'))->toBe('https://panel.example.test');
+});
+
+test('products using a disabled module capability cannot be exposed or added to the cart', function (): void {
+    installAndEnableModule('provisioning');
+    installAndEnableExtension('pterodactyl');
+
+    $product = Product::factory()->active()->create(['name' => 'Unavailable game server']);
+    app(ProductCapabilityManager::class)->enable($product, 'provisionable', [
+        'provider_key' => 'pterodactyl',
+    ]);
+
+    app(ModuleManager::class)->disable('provisioning');
+
+    expect(app(ListStorefrontProducts::class)->handle())->not->toContain($product)
+        ->and(fn () => app(GetStorefrontProduct::class)->handle($product->slug))
+        ->toThrow(ModelNotFoundException::class)
+        ->and(fn () => app(CartService::class)->add($product->id))
+        ->toThrow(ValidationException::class, 'This product is not available for purchase.');
+});
+
+test('disabling a provider extension invalidates existing product use without deleting its configuration', function (): void {
+    installAndEnableModule('provisioning');
+    installAndEnableExtension('pterodactyl');
+
+    $product = Product::factory()->active()->create(['name' => 'Provider-backed game server']);
+    app(ProductCapabilityManager::class)->enable($product, 'provisionable', [
+        'provider_key' => 'pterodactyl',
+        'provider_settings' => ['nest_id' => 1],
+    ]);
+    app(CartService::class)->add($product->id);
+
+    app(ExtensionManager::class)->disable('pterodactyl');
+
+    expect(app(ExtensionManager::class)->isEnabled('pterodactyl'))->toBeFalse()
+        ->and($product->refresh()->capability('provisionable'))->not->toBeNull()
+        ->and($product->capability('provisionable')?->runtimeConfig())->toMatchArray([
+            'provider_key' => 'pterodactyl',
+            'provider_settings' => ['nest_id' => 1],
+        ])
+        ->and(app(CartService::class)->lines())->toBe([])
+        ->and(fn () => app(GetStorefrontProduct::class)->handle($product->slug))
+        ->toThrow(ModelNotFoundException::class);
 });
 
 test('extension manager discovers mollie payment extension', function () {

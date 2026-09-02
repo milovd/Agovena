@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Agovena\Catalog;
 
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Collection;
 
 final class SuggestStorefrontProducts
 {
+    public function __construct(
+        private readonly ProductCapabilityRegistry $capabilities,
+    ) {}
+
     /** @return Collection<int, Product> */
     public function handle(string $query, int $limit = 3): Collection
     {
@@ -20,7 +25,7 @@ final class SuggestStorefrontProducts
 
         $limit = max(1, min($limit, 8));
 
-        return Product::query()
+        $queryBuilder = Product::query()
             ->active()
             ->with(['category', 'images'])
             ->where(function ($builder) use ($term): void {
@@ -28,7 +33,11 @@ final class SuggestStorefrontProducts
                     ->where('name', 'like', '%'.$term.'%')
                     ->orWhere('description', 'like', '%'.$term.'%');
             })
-            ->orderBy('name')
+            ->orderBy('name');
+
+        $this->capabilities->constrainToAvailable($queryBuilder);
+
+        return $queryBuilder
             ->limit($limit)
             ->get();
     }

@@ -85,6 +85,36 @@ final class ThemeManager
         return $this->all()[$id] ?? null;
     }
 
+    public function errorTheme(int $status): ?Theme
+    {
+        $candidates = [];
+
+        try {
+            $candidates[] = $this->active();
+        } catch (\Throwable) {
+            // The error renderer must remain available when theme settings are unavailable.
+        }
+
+        $default = $this->find('default');
+        if ($default !== null) {
+            $candidates[] = $default;
+        }
+
+        $seen = [];
+        foreach ($candidates as $theme) {
+            if (isset($seen[$theme->id])) {
+                continue;
+            }
+            $seen[$theme->id] = true;
+
+            if ($theme->hasErrorPage($status)) {
+                return $theme;
+            }
+        }
+
+        return null;
+    }
+
     public function themeFor(ThemeSurface $surface): Theme
     {
         $active = $this->active();

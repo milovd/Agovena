@@ -77,9 +77,14 @@ final class CartService
         $removed = [];
 
         foreach ($this->cart->lines() as $line) {
-            $product = Product::query()->with('currencyPrices')->find($line->productId);
+            $product = Product::query()->with(['currencyPrices', 'capabilities'])->find($line->productId);
 
-            if ($product === null || ! $product->isPurchasable() || ! $this->resolveProductPrice->isAvailable($product)) {
+            if (
+                $product === null
+                || ! $product->isPurchasable()
+                || ! $this->capabilities->productIsAvailable($product)
+                || ! $this->resolveProductPrice->isAvailable($product)
+            ) {
                 $this->cart->remove($line->lineKey);
                 $removed[] = $line->productId;
             }
@@ -100,9 +105,14 @@ final class CartService
         $priced = [];
 
         foreach ($this->cart->lines() as $line) {
-            $product = Product::query()->with(['images', 'currencyPrices'])->find($line->productId);
+            $product = Product::query()->with(['images', 'currencyPrices', 'capabilities'])->find($line->productId);
 
-            if ($product === null || ! $product->isPurchasable() || ! $this->resolveProductPrice->isAvailable($product)) {
+            if (
+                $product === null
+                || ! $product->isPurchasable()
+                || ! $this->capabilities->productIsAvailable($product)
+                || ! $this->resolveProductPrice->isAvailable($product)
+            ) {
                 continue;
             }
 
@@ -243,9 +253,9 @@ final class CartService
 
     private function requirePurchasable(int $productId): Product
     {
-        $product = Product::query()->with('currencyPrices')->find($productId);
+        $product = Product::query()->with(['currencyPrices', 'capabilities'])->find($productId);
 
-        if ($product === null || ! $product->isPurchasable()) {
+        if ($product === null || ! $product->isPurchasable() || ! $this->capabilities->productIsAvailable($product)) {
             throw ValidationException::withMessages([
                 'product' => __('storefront.errors.product_unavailable'),
             ]);

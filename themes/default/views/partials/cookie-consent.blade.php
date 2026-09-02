@@ -7,6 +7,7 @@
     $currentConsentDate = $hasConsent && isset($consent['date']) ? (string) $consent['date'] : null;
 @endphp
 
+@if ($showCookieBanner ?? true)
 <div
     class="store-cookie-consent"
     data-cookie-banner
@@ -54,6 +55,7 @@
         </p>
     </div>
 </div>
+@endif
 
 <div class="store-cookie-panel" data-cookie-panel hidden>
     <div

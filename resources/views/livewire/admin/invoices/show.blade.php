@@ -14,6 +14,11 @@
             <x-ag.back :href="route('admin.invoices.index')" :label="__('admin.invoices.title')" />
         </x-slot:back>
         <x-slot:actions>
+            @can('invoices.update')
+                <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.edit', $invoice) }}">
+                    {{ __('admin.invoices.edit_action') }}
+                </a>
+            @endcan
             <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.print', $invoice) }}">
                 {{ __('admin.invoices.print') }}
             </a>
@@ -204,13 +209,30 @@
                 </div>
             </section>
 
-            @if ($canVoid || $canCredit || $canRefund)
+            @if ($canVoid || $canCredit || $canRefund || $canDelete)
                 <section class="ag-section" aria-labelledby="invoice-actions-heading">
                     <header class="ag-section__header">
                         <h2 id="invoice-actions-heading" class="ag-section__title">{{ __('admin.invoices.actions') }}</h2>
                     </header>
                     <div class="ag-section__body">
                         <div class="ag-actions ag-actions--stack">
+                            @if ($canDelete)
+                                @if (! $confirmingDelete)
+                                    <button type="button" class="ag-btn ag-btn--danger-outline" wire:click="startDelete">
+                                        {{ __('admin.invoices.delete_action') }}
+                                    </button>
+                                @else
+                                    <div class="ag-confirm" role="alertdialog" aria-labelledby="confirm-delete-title" aria-modal="true">
+                                        <h4 id="confirm-delete-title">{{ __('admin.invoices.delete_confirm_title') }}</h4>
+                                        <p>{{ __('admin.invoices.delete_confirm_text') }}</p>
+                                        <div class="ag-confirm__actions">
+                                            <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteInvoice">{{ __('common.confirm') }}</button>
+                                            <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">{{ __('common.cancel') }}</button>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endif
+
                             @if ($canCredit)
                                 <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.credit', $invoice) }}">
                                     {{ __('admin.credit_notes.issue') }}

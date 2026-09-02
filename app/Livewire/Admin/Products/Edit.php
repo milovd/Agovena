@@ -440,10 +440,19 @@ final class Edit extends Component
 
         $this->product->load('capabilities');
 
+        $existingCapabilities = $this->product->capabilities
+            ->pluck('capability')
+            ->all();
         $desired = array_keys(array_filter($this->capabilityEnabled));
         $available = collect($registry->available())->keyBy(static fn ($d) => $d->key);
+        $unavailableExisting = array_values(array_diff($existingCapabilities, $available->keys()->all()));
+        $desired = array_values(array_unique(array_merge($desired, $unavailableExisting)));
 
-        if (in_array('provisionable', $desired, true) && $this->providerKey !== '') {
+        if (
+            in_array('provisionable', $desired, true)
+            && $available->has('provisionable')
+            && $this->providerKey !== ''
+        ) {
             $rules = $this->providerSettingRules();
             $rules['provisioningServerId'] = [
                 'required',
@@ -457,7 +466,7 @@ final class Edit extends Component
             $this->validateDomainProviderSelections();
         }
 
-        $desired = array_values(array_filter(
+        $managedDesired = array_values(array_filter(
             $desired,
             static function (string $key) use ($desired, $available): bool {
                 $definition = $available->get($key);
@@ -473,6 +482,7 @@ final class Edit extends Component
                 return true;
             },
         ));
+        $desired = array_values(array_unique(array_merge($managedDesired, $unavailableExisting)));
 
         // Enable required dependencies first (stable order by requirement depth).
         $ordered = $desired;

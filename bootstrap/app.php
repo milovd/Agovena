@@ -1,7 +1,9 @@
 <?php
 
 use App\Agovena\Api\ApiError;
+use App\Agovena\Backups\BackupSchedule;
 use App\Agovena\Installation\ApplicationSchemaStatus;
+use App\Agovena\Theme\ThemeErrorRenderer;
 use App\Http\Middleware\EnforceAbusePolicy;
 use App\Http\Middleware\EnforceApiIpAllowlist;
 use App\Http\Middleware\EnsureAgovenaInstalled;
@@ -57,9 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('agovena:prune-logs')
             ->daily()
             ->withoutOverlapping(120);
-        $schedule->command('agovena:backup')
-            ->dailyAt('02:30')
-            ->withoutOverlapping(120);
+        app(BackupSchedule::class)->register($schedule);
     })
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->statefulApi();
@@ -184,9 +184,13 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             if ($request->routeIs('admin.updates')) {
-                return response()->view('errors.503', status: 503);
+                return app(ThemeErrorRenderer::class)->renderStatus(503);
             }
 
             return new RedirectResponse(route('admin.updates'));
+        });
+
+        $exceptions->render(function (Throwable $e, Request $request) {
+            return app(ThemeErrorRenderer::class)->render($e, $request);
         });
     })->create();

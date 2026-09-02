@@ -15,7 +15,8 @@ final class BackupRestoreVerifier
         $disk = Storage::disk((string) config('agovena.backups.disk', 'local'));
         $directory = trim((string) config('agovena.backups.directory', 'backups'), '/');
         $path = ltrim(trim($relativePath), '/');
-        if ($path === '' || str_contains($path, '..') || ! str_starts_with($path, $directory.'/')) {
+        $prefix = $directory === '' ? '' : $directory.'/';
+        if ($path === '' || str_contains($path, '..') || ! str_starts_with($path, $prefix)) {
             return new BackupRestoreVerificationResult(false, 'artifact_outside_root');
         }
         if (! $disk->exists($path)) {

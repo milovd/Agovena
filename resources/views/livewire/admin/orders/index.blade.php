@@ -1,6 +1,14 @@
 <div class="admin-page">
     <x-ag.page-header :heading="__('admin.orders.title')" :lede="__('admin.orders.lede')" />
 
+    @if (session('status'))
+        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
+    @endif
+
+    @if (session('error'))
+        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
+    @endif
+
     <div class="ag-toolbar ag-toolbar--filters">
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">
@@ -86,14 +94,37 @@
                                 </span>
                             </td>
                             <td class="ag-table__actions">
-                                <a
-                                    class="ag-icon-btn"
-                                    href="{{ route('admin.orders.show', $order) }}"
-                                    title="{{ __('admin.orders.open') }}"
-                                    aria-label="{{ __('admin.orders.open_aria', ['number' => $order->number]) }}"
-                                >
-                                    <x-ag.icon name="external-link" :size="16" />
-                                </a>
+                                <div class="ag-row-actions">
+                                    @can('orders.update')
+                                        <a
+                                            class="ag-icon-btn"
+                                            href="{{ route('admin.orders.edit', $order) }}"
+                                            title="{{ __('admin.orders.actions.edit') }}"
+                                            aria-label="{{ __('admin.orders.actions.edit_aria', ['number' => $order->number]) }}"
+                                        >
+                                            <x-ag.icon name="pencil" :size="16" />
+                                        </a>
+                                    @endcan
+                                    <a
+                                        class="ag-icon-btn"
+                                        href="{{ route('admin.orders.show', $order) }}"
+                                        title="{{ __('admin.orders.open') }}"
+                                        aria-label="{{ __('admin.orders.open_aria', ['number' => $order->number]) }}"
+                                    >
+                                        <x-ag.icon name="external-link" :size="16" />
+                                    </a>
+                                    @can('orders.delete')
+                                        <button
+                                            type="button"
+                                            class="ag-icon-btn ag-icon-btn--danger"
+                                            wire:click="confirmDelete({{ $order->id }})"
+                                            title="{{ __('admin.orders.actions.delete') }}"
+                                            aria-label="{{ __('admin.orders.actions.delete_aria', ['number' => $order->number]) }}"
+                                        >
+                                            <x-ag.icon name="trash" :size="16" />
+                                        </button>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -102,4 +133,20 @@
         </div>
         <div class="ag-pagination">{{ $orders->links() }}</div>
     @endif
+
+    @if ($confirmingOrder)
+        <div class="ag-modal" role="dialog" aria-modal="true" aria-labelledby="delete-order-title">
+            <div class="ag-modal__backdrop" wire:click="cancelDelete"></div>
+            <div class="ag-modal__panel">
+                <h2 id="delete-order-title" class="ag-modal__title">{{ __('admin.orders.delete.title', ['number' => $confirmingOrder->number]) }}</h2>
+                <p class="ag-modal__text">{{ __('admin.orders.delete.text') }}</p>
+                <div class="ag-modal__actions">
+                    <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteOrder">{{ __('admin.orders.actions.delete') }}</button>
+                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">{{ __('common.cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

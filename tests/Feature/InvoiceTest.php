@@ -2,15 +2,19 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
+use App\Agovena\Invoices\DeleteInvoice;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\CreditNoteStatus;
+use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
 use App\Enums\ProductOptionType;
+use App\Livewire\Admin\Invoices\Edit as AdminInvoiceEdit;
 use App\Livewire\Admin\Invoices\Index as AdminInvoicesIndex;
 use App\Livewire\Admin\Invoices\Show as AdminInvoiceShow;
 use App\Livewire\Customer\Account\CreditNoteShow;
@@ -18,9 +22,11 @@ use App\Livewire\Customer\Account\InvoiceShow;
 use App\Models\CreditNote;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -169,14 +175,196 @@ test('owner can open invoices admin', function () {
     Livewire::actingAs($staff)
         ->test(AdminInvoicesIndex::class)
         ->assertOk()
-        ->assertSee(__('admin.invoices.title'));
+        ->assertSee(__('admin.invoices.title'))
+        ->assertSee(route('admin.invoices.edit', $invoice), false)
+        ->assertSee('confirmDelete('.$invoice->id.')', false);
 
     Livewire::actingAs($staff)
         ->test(AdminInvoiceShow::class, ['invoice' => $invoice])
         ->assertOk()
+        ->assertSee(__('admin.invoices.edit_action'), false)
+        ->assertSee(__('admin.invoices.delete_action'), false)
         ->assertSee(__('admin.invoices.print'))
         ->assertSee(__('admin.invoices.download_pdf'))
         ->assertDontSee('window.print()', false);
+});
+
+test('staff can edit invoice administrative details without changing financial lines', function () {
+    $staff = $this->createStaff([], ['invoices.view', 'invoices.update']);
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-EDIT-00001',
+        'status' => InvoiceStatus::Issued,
+        'customer_name' => 'Old name',
+        'customer_email' => 'old@example.test',
+        'billing_name' => 'Old name',
+        'billing_line1' => 'Old street 1',
+        'billing_city' => 'Oldtown',
+        'billing_postal_code' => '1000 AA',
+        'billing_country' => 'NL',
+        'merchant_name' => 'Old merchant',
+        'issued_at' => '2026-09-01',
+        'due_at' => '2026-09-30',
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+    $item = InvoiceItem::query()->create([
+        'invoice_id' => $invoice->id,
+        'kind' => InvoiceItemKind::Product,
+        'label' => 'Service',
+        'quantity' => 1,
+        'unit_amount' => 1000,
+        'line_total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+
+    $this->actingAs($staff)
+        ->get(route('admin.invoices.edit', $invoice))
+        ->assertOk()
+        ->assertSee(__('admin.invoices.edit_title', ['number' => $invoice->number]), false)
+        ->assertSee('class="admin-breadcrumbs"', false)
+        ->assertSee('class="ag-back"', false)
+        ->assertSee('href="'.route('admin.invoices.show', $invoice).'"', false);
+
+    Livewire::actingAs($staff)
+        ->test(AdminInvoiceEdit::class, ['invoice' => $invoice])
+        ->set('customerName', 'New name')
+        ->set('customerEmail', 'new@example.test')
+        ->set('billingLine1', 'New street 2')
+        ->set('billingCity', 'Newtown')
+        ->set('billingCountry', 'BE')
+        ->set('merchantName', 'New merchant')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSee(__('admin.invoices.updated'), false);
+
+    expect($invoice->fresh())
+        ->customer_name->toBe('New name')
+        ->customer_email->toBe('new@example.test')
+        ->billing_line1->toBe('New street 2')
+        ->billing_city->toBe('Newtown')
+        ->billing_country->toBe('BE')
+        ->merchant_name->toBe('New merchant')
+        ->total_amount->toBe(1000)
+        ->and($item->fresh()->line_total_amount)->toBe(1000);
+});
+
+test('staff without invoice update permission cannot edit an invoice', function () {
+    $staff = $this->createStaff([], ['invoices.view']);
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-EDIT-00002',
+        'status' => InvoiceStatus::Issued,
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(AdminInvoiceEdit::class, ['invoice' => $invoice])
+        ->assertForbidden();
+});
+
+test('deleting an unpaid invoice requires recent password and removes its line items', function () {
+    $staff = $this->createStaff([], ['invoices.view', 'invoices.delete']);
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-DELETE-00001',
+        'status' => InvoiceStatus::Issued,
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+    $item = InvoiceItem::query()->create([
+        'invoice_id' => $invoice->id,
+        'kind' => InvoiceItemKind::Product,
+        'label' => 'Service',
+        'quantity' => 1,
+        'unit_amount' => 1000,
+        'line_total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(AdminInvoicesIndex::class)
+        ->call('confirmDelete', $invoice->id)
+        ->call('deleteInvoice')
+        ->assertSet('showingPasswordConfirmation', true);
+
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(AdminInvoicesIndex::class)
+        ->call('confirmDelete', $invoice->id)
+        ->call('deleteInvoice')
+        ->assertSet('showingPasswordConfirmation', false);
+
+    expect(Invoice::query()->whereKey($invoice->id)->exists())->toBeFalse()
+        ->and(InvoiceItem::query()->whereKey($item->id)->exists())->toBeFalse();
+});
+
+test('paid invoices cannot be deleted', function () {
+    $staff = $this->createStaff([], ['invoices.delete']);
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-DELETE-00002',
+        'status' => InvoiceStatus::Paid,
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+        'issued_at' => now()->toDateString(),
+        'paid_at' => now(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+
+    expect(fn () => app(DeleteInvoice::class)->handle($invoice, $staff))
+        ->toThrow(ValidationException::class);
+
+    expect(Invoice::query()->whereKey($invoice->id)->exists())->toBeTrue();
+});
+
+test('invoices with credit notes cannot be deleted', function () {
+    $staff = $this->createStaff([], ['invoices.delete']);
+    $invoice = Invoice::query()->create([
+        'number' => 'INV-DELETE-00003',
+        'status' => InvoiceStatus::Issued,
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+        'issued_at' => now()->toDateString(),
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+    CreditNote::query()->create([
+        'number' => 'CN-DELETE-00001',
+        'status' => CreditNoteStatus::Issued,
+        'invoice_id' => $invoice->id,
+        'customer_name' => 'Invoice customer',
+        'customer_email' => 'invoice@example.test',
+        'issued_at' => now()->toDateString(),
+        'reason' => 'Correction',
+        'subtotal_amount' => 1000,
+        'tax_amount' => 0,
+        'total_amount' => 1000,
+        'currency' => 'EUR',
+    ]);
+
+    expect(fn () => app(DeleteInvoice::class)->handle($invoice, $staff))
+        ->toThrow(ValidationException::class);
+
+    expect(Invoice::query()->whereKey($invoice->id)->exists())->toBeTrue();
 });
 
 test('invoice snapshots seller identity product options and stays immutable', function () {

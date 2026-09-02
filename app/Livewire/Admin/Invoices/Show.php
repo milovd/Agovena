@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Invoices;
 
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Invoices\DeleteInvoice;
 use App\Agovena\Invoices\VoidInvoice;
 use App\Agovena\Payments\RecordRefund;
 use App\Livewire\Concerns\RequiresRecentPassword;
@@ -33,10 +34,39 @@ final class Show extends Component
 
     public bool $confirmingRefund = false;
 
+    public bool $confirmingDelete = false;
+
     public function mount(Invoice $invoice): void
     {
         $this->authorize('invoices.view');
         $this->refreshInvoice($invoice);
+    }
+
+    public function startDelete(): void
+    {
+        $this->authorize('invoices.delete');
+        $this->confirmingDelete = true;
+    }
+
+    public function cancelDelete(): void
+    {
+        $this->confirmingDelete = false;
+    }
+
+    public function deleteInvoice(DeleteInvoice $delete): void
+    {
+        $this->authorize('invoices.delete');
+
+        if (! $this->requireRecentPassword('deleteInvoice')) {
+            return;
+        }
+
+        /** @var User $staff */
+        $staff = Auth::user();
+        $delete->handle($this->invoice, $staff);
+
+        session()->flash('status', __('admin.invoices.deleted'));
+        $this->redirect(route('admin.invoices.index'), navigate: true);
     }
 
     public function startVoid(): void
@@ -128,6 +158,7 @@ final class Show extends Component
             'canRefund' => $user?->can('payments.refund') === true
                 && $payment !== null
                 && $payment->remainingRefundable() > 0,
+            'canDelete' => $user?->can('invoices.delete') === true,
             'payment' => $payment,
         ])->layout('layouts.admin', [
             'title' => __('admin.invoices.show_title', ['number' => $this->invoice->number]),

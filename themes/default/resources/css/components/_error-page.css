@@ -1,0 +1,207 @@
+.store-error-main {
+  display: grid;
+  min-height: clamp(29rem, calc(100svh - 14rem), 44rem);
+  align-items: center;
+  padding-top: clamp(2rem, 4vh, 4rem);
+  padding-bottom: clamp(2rem, 4vh, 4rem);
+}
+
+.store-error {
+  display: flex;
+  width: 100%;
+  max-width: 64rem;
+  margin: 0 auto;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.store-error__title {
+  position: relative;
+  z-index: 2;
+  max-width: 24ch;
+  margin: 0;
+  color: var(--theme-color-ink);
+  font-size: clamp(2rem, 3.25vw, 3.5rem);
+  letter-spacing: -0.055em;
+  line-height: 1.04;
+}
+
+.store-error[data-error-status="404"] .store-error__title {
+  max-width: none;
+}
+
+@media (min-width: 761px) {
+  .store-error[data-error-status="404"] .store-error__title {
+    font-size: clamp(2rem, 3vw, 3.25rem);
+    white-space: nowrap;
+  }
+}
+
+.store-error__lede {
+  position: relative;
+  z-index: 2;
+  max-width: 38rem;
+  margin: var(--theme-space-4) 0 0;
+  color: var(--theme-color-text-muted);
+  font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+  line-height: 1.55;
+}
+
+.store-error__description {
+  position: relative;
+  z-index: 2;
+  max-width: 38rem;
+  margin: var(--theme-space-4) 0 0;
+  color: var(--theme-color-text-muted);
+  font-size: clamp(0.9rem, 1.25vw, 1rem);
+  line-height: 1.5;
+}
+
+.store-error__description + .store-error__lede {
+  margin-top: var(--theme-space-1);
+}
+
+.store-error__actions {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--theme-space-3);
+  margin-top: var(--theme-space-4);
+}
+
+.store-error__art {
+  container-type: inline-size;
+  position: relative;
+  width: min(100%, 35rem);
+  aspect-ratio: 620 / 320;
+  margin-top: clamp(1.5rem, 3vh, 2.5rem);
+}
+
+.store-error__number {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  color: color-mix(in srgb, var(--theme-color-accent) 12%, transparent);
+  font-size: clamp(5rem, 40cqw, 18rem);
+  font-weight: 800;
+  letter-spacing: -0.13em;
+  line-height: 0.7;
+  opacity: 1;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--theme-color-accent) 72%, transparent);
+}
+
+.store-error__illustration {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.store-error__illustration-shadow {
+  fill: var(--theme-color-border-strong);
+  opacity: 0.55;
+}
+
+.store-error__route {
+  stroke: var(--theme-color-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-dasharray: 9 12;
+  opacity: 0.65;
+}
+
+.store-error__route-arrow {
+  stroke: var(--theme-color-accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.65;
+}
+
+.store-error__route-stop {
+  fill: var(--theme-color-surface);
+  stroke: var(--theme-color-accent);
+  stroke-width: 4;
+}
+
+.store-error__parcel path:not(.store-error__parcel-tape):not(.store-error__parcel-mark) {
+  fill: var(--theme-color-surface);
+  stroke: var(--theme-color-text);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.store-error__parcel-tape {
+  fill: var(--theme-color-accent-soft);
+  stroke: var(--theme-color-accent);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.store-error__parcel-mark {
+  stroke: var(--theme-color-accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.store-error__bag path:not(.store-error__bag-mark):not(.store-error__bag-handle) {
+  fill: var(--theme-color-accent-soft);
+  stroke: var(--theme-color-accent);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.store-error__bag-mark,
+.store-error__bag-handle {
+  stroke: var(--theme-color-accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.store-error__pin path {
+  fill: var(--theme-color-accent);
+  stroke: var(--theme-color-surface);
+  stroke-width: 3;
+}
+
+.store-error__pin circle {
+  fill: var(--theme-color-surface);
+}
+
+@media (max-width: 760px) {
+  .store-error-main {
+    min-height: auto;
+  }
+
+  .store-error__title {
+    max-width: 14ch;
+    white-space: normal;
+  }
+
+  .store-error__art {
+    width: min(100%, 26rem);
+    margin-top: var(--theme-space-6);
+  }
+
+  .store-error__number {
+    font-size: clamp(5rem, 40cqw, 9.5rem);
+    -webkit-text-stroke-width: 1px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .store-error__illustration {
+    transform: none;
+  }
+}

@@ -219,7 +219,6 @@ test('api token revocation reauthorizes after permission removal during password
     $token = $staff->createToken('late-revoke')->accessToken;
     $this->actingAs($staff);
     $component = new ApiTokens;
-    $component->mount(app(SettingsRepository::class), app(ApiIpAllowlist::class));
     $component->revokeToken($token->id, app(AuditLogger::class));
 
     expect($component->showingPasswordConfirmation)->toBeTrue();
@@ -326,4 +325,34 @@ test('database backups screen rechecks view permission during livewire refresh',
     app(PermissionRegistrar::class)->forgetCachedPermissions();
 
     $component->call('$refresh')->assertForbidden();
+});
+
+test('database backups screen saves an interval and protects artifact actions', function () {
+    $staff = $this->createStaff();
+
+    Storage::fake('local');
+    config()->set('agovena.backups.disk', 'local');
+    config()->set('agovena.backups.directory', 'backups');
+    Storage::disk('local')->put('backups/database-sqlite-test.enc', 'encrypted');
+
+    Livewire::actingAs($staff)
+        ->test(Backups::class)
+        ->assertSee(__('admin.backups.interval_label'), false)
+        ->assertSee(__('admin.backups.delete'), false)
+        ->assertSee(__('admin.backups.restore'), false)
+        ->set('backupInterval', 'hourly')
+        ->call('saveSchedule')
+        ->assertHasNoErrors()
+        ->assertSee(__('admin.backups.schedule_saved'), false)
+        ->call('restoreBackup', 'backups/database-sqlite-test.enc')
+        ->assertSet('showingPasswordConfirmation', true)
+        ->call('cancelPasswordConfirmation')
+        ->call('deleteBackup', 'backups/database-sqlite-test.enc')
+        ->assertSet('showingPasswordConfirmation', true)
+        ->set('recentPassword', 'password')
+        ->call('confirmRecentPassword')
+        ->assertSet('showingPasswordConfirmation', false);
+
+    expect(app(SettingsRepository::class)->get('backups', 'interval'))->toBe('hourly')
+        ->and(Storage::disk('local')->exists('backups/database-sqlite-test.enc'))->toBeFalse();
 });

@@ -19,6 +19,7 @@ use App\Notifications\RefundProcessedNotification;
 use App\Notifications\SubscriptionCancelledNotification;
 use App\Notifications\TicketRepliedNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Mail;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -248,5 +249,14 @@ test('scheduler registers heartbeat renewals provisioning and unpaid cancel', fu
         ->expectsOutputToContain('sync-provisioning')
         ->expectsOutputToContain('cancel-stale-unpaid-orders')
         ->expectsOutputToContain('prune-logs')
+        ->assertSuccessful();
+});
+
+test('scheduler uses the configured backup interval', function () {
+    Cache::forget('agovena.settings.backups.interval');
+    config()->set('agovena.backups.interval', 'hourly');
+
+    $this->artisan('schedule:list')
+        ->expectsOutputToContain('0 * * * *  php artisan agovena:backup')
         ->assertSuccessful();
 });

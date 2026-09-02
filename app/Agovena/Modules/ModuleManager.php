@@ -8,6 +8,7 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\CustomerAccountOverview;
+use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Packages\PackageAutoload;
@@ -16,6 +17,7 @@ use App\Models\AgovenaModule;
 use Composer\Semver\Semver;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
@@ -94,6 +96,14 @@ final class ModuleManager
                 continue;
             }
 
+            try {
+                $this->assertDependencies($manifest, requireEnabled: true);
+            } catch (ValidationException) {
+                $this->disablePersisted($manifest->id);
+
+                continue;
+            }
+
             $this->bootManifest($manifest);
         }
     }
@@ -152,11 +162,24 @@ final class ModuleManager
     public function disable(string $moduleId): AgovenaModule
     {
         $row = AgovenaModule::query()->where('module_id', $moduleId)->firstOrFail();
-        $row->enabled = false;
-        $row->disabled_at = now();
-        $row->save();
+        $moduleIds = $this->dependentModuleIds($moduleId);
+        $disabledAt = now();
 
-        return $row;
+        DB::transaction(function () use ($moduleIds, $disabledAt): void {
+            AgovenaModule::query()
+                ->whereIn('module_id', $moduleIds)
+                ->where('enabled', true)
+                ->update([
+                    'enabled' => false,
+                    'disabled_at' => $disabledAt,
+                    'updated_at' => $disabledAt,
+                ]);
+
+            $this->app->make(ExtensionManager::class)
+                ->disableForModules($moduleIds, $disabledAt);
+        });
+
+        return $row->fresh() ?? $row;
     }
 
     /**
@@ -307,6 +330,46 @@ final class ModuleManager
                 ]);
             }
         }
+    }
+
+    /**
+     * @return list<string>
+     */
+    private function dependentModuleIds(string $moduleId): array
+    {
+        $ids = [$moduleId];
+
+        do {
+            $changed = false;
+            foreach ($this->discover() as $manifest) {
+                if (in_array($manifest->id, $ids, true)) {
+                    continue;
+                }
+
+                if (array_intersect($manifest->dependencies, $ids) === []) {
+                    continue;
+                }
+
+                $ids[] = $manifest->id;
+                $changed = true;
+            }
+        } while ($changed);
+
+        return $ids;
+    }
+
+    private function disablePersisted(string $moduleId): void
+    {
+        $now = now();
+
+        AgovenaModule::query()
+            ->where('module_id', $moduleId)
+            ->where('enabled', true)
+            ->update([
+                'enabled' => false,
+                'disabled_at' => $now,
+                'updated_at' => $now,
+            ]);
     }
 
     private function requireManifest(string $moduleId): ModuleManifest

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Catalog;
 
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Models\Product;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +12,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 final class ListStorefrontProducts
 {
+    public function __construct(
+        private readonly ProductCapabilityRegistry $capabilities,
+    ) {}
+
     /**
      * @param  list<int>|null  $categoryIds
      * @return Collection<int, Product>
@@ -68,6 +73,7 @@ final class ListStorefrontProducts
         $query = Product::query()
             ->active()
             ->with(['category', 'images', 'currencyPrices']);
+        $this->capabilities->constrainToAvailable($query);
 
         if ($categoryIds !== null) {
             $query->whereIn('category_id', $categoryIds);

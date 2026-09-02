@@ -30,6 +30,18 @@ final class Theme
         return "theme::{$name}";
     }
 
+    public function errorView(int $status): string
+    {
+        return 'errors.'.$status;
+    }
+
+    public function hasErrorPage(int $status): bool
+    {
+        return is_file(
+            $this->viewsPath.DIRECTORY_SEPARATOR.'errors'.DIRECTORY_SEPARATOR.$status.'.blade.php',
+        );
+    }
+
     public function provides(ThemeSurface|string $surface): bool
     {
         $value = $surface instanceof ThemeSurface ? $surface->value : $surface;

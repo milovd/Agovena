@@ -147,7 +147,7 @@ foreach (moduleBoundExtensions() as $label => $case) {
             ->and($registry->get($case['registryKey']))->not->toBeNull();
     });
 
-    test("{$label} is not booted after parent module is disabled and runtime rebuilds", function () use ($case): void {
+    test("{$label} is disabled after parent module is disabled and runtime rebuilds", function () use ($case): void {
         $modules = app(ModuleManager::class);
         $extensions = app(ExtensionManager::class);
         installAndEnableModule($case['module']);
@@ -159,7 +159,7 @@ foreach (moduleBoundExtensions() as $label => $case) {
         $modules->disable($case['module']);
         $extensions->rebuildRuntime();
 
-        expect($extensions->isEnabled($case['extension']))->toBeTrue()
+        expect($extensions->isEnabled($case['extension']))->toBeFalse()
             ->and($modules->isEnabled($case['module']))->toBeFalse()
             ->and($registry->get($case['registryKey']))->toBeNull();
     });
@@ -176,7 +176,7 @@ foreach (moduleBoundExtensions() as $label => $case) {
         $extensions->refresh();
         $extensions->bootEnabled();
 
-        expect($extensions->isEnabled($case['extension']))->toBeTrue()
+        expect($extensions->isEnabled($case['extension']))->toBeFalse()
             ->and($registry->get($case['registryKey']))->toBeNull();
     });
 }

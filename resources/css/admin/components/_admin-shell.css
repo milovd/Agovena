@@ -557,13 +557,19 @@ body {
   max-width: none;
 }
 
+.admin-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-section);
+}
+
 .admin-page__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--ag-space-4);
   flex-wrap: wrap;
-  margin-bottom: var(--ag-space-6);
+  margin-bottom: 0;
 }
 
 .admin-page__heading {

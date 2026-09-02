@@ -8,4 +8,5 @@
 @import './components/_store.css';
 @import './components/_checkout.css';
 @import './components/_consent.css';
+@import './components/_error-page.css';
 @import './utilities/_a11y.css';

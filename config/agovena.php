@@ -138,9 +138,11 @@ return [
     'backups' => [
         'disk' => env('AGOVENA_BACKUP_DISK', 'local'),
         'directory' => env('AGOVENA_BACKUP_DIRECTORY', 'backups'),
+        'interval' => env('AGOVENA_BACKUP_INTERVAL', 'daily'),
         'retention_days' => (int) env('AGOVENA_BACKUP_RETENTION_DAYS', 30),
         'retention_count' => (int) env('AGOVENA_BACKUP_RETENTION_COUNT', 10),
         'mysql_dump_binary' => env('AGOVENA_MYSQLDUMP_BINARY', 'mysqldump'),
+        'mysql_restore_binary' => env('AGOVENA_MYSQL_BINARY', 'mysql'),
         'alert_email' => env('AGOVENA_BACKUP_ALERT_EMAIL'),
     ],
 

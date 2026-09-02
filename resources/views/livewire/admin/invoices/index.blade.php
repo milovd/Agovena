@@ -19,6 +19,14 @@
         </div>
     </div>
 
+    @if (session('status'))
+        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
+    @endif
+
+    @if (session('error'))
+        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
+    @endif
+
     @if ($invoices->isEmpty())
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ __('admin.invoices.empty.title') }}</p>
@@ -64,14 +72,37 @@
                                 </span>
                             </td>
                             <td class="ag-table__actions">
-                                <a
-                                    class="ag-icon-btn"
-                                    href="{{ route('admin.invoices.pdf', $invoice) }}"
-                                    title="{{ __('admin.invoices.download_pdf') }}"
-                                    aria-label="{{ __('admin.invoices.download_pdf') }}"
-                                >
-                                    <x-ag.icon name="download" :size="16" />
-                                </a>
+                                <div class="ag-row-actions">
+                                    @can('invoices.update')
+                                        <a
+                                            class="ag-icon-btn"
+                                            href="{{ route('admin.invoices.edit', $invoice) }}"
+                                            title="{{ __('admin.invoices.edit_action') }}"
+                                            aria-label="{{ __('admin.invoices.edit_action') }} {{ $invoice->number }}"
+                                        >
+                                            <x-ag.icon name="pencil" :size="16" />
+                                        </a>
+                                    @endcan
+                                    <a
+                                        class="ag-icon-btn"
+                                        href="{{ route('admin.invoices.pdf', $invoice) }}"
+                                        title="{{ __('admin.invoices.download_pdf') }}"
+                                        aria-label="{{ __('admin.invoices.download_pdf') }}"
+                                    >
+                                        <x-ag.icon name="download" :size="16" />
+                                    </a>
+                                    @can('invoices.delete')
+                                        <button
+                                            type="button"
+                                            class="ag-icon-btn ag-icon-btn--danger"
+                                            wire:click="confirmDelete({{ $invoice->id }})"
+                                            title="{{ __('admin.invoices.delete_action') }}"
+                                            aria-label="{{ __('admin.invoices.delete_action') }} {{ $invoice->number }}"
+                                        >
+                                            <x-ag.icon name="trash" :size="16" />
+                                        </button>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -80,4 +111,23 @@
         </div>
         <div class="ag-pagination">{{ $invoices->links() }}</div>
     @endif
+
+    @if ($confirmingInvoice)
+        <div class="ag-modal" role="dialog" aria-modal="true" aria-labelledby="delete-invoice-title">
+            <div class="ag-modal__backdrop" wire:click="cancelDelete"></div>
+            <div class="ag-modal__panel">
+                <h3 id="delete-invoice-title" class="ag-modal__title">{{ __('admin.invoices.delete_confirm_title') }}</h3>
+                <p class="ag-modal__text">
+                    {{ __('admin.invoices.delete_confirm_text') }}
+                    <br><strong>{{ $confirmingInvoice->number }}</strong>
+                </p>
+                <div class="ag-modal__actions">
+                    <button type="button" class="ag-btn ag-btn--danger" wire:click="deleteInvoice">{{ __('common.confirm') }}</button>
+                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelDelete">{{ __('common.cancel') }}</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    @include('livewire.admin.partials.confirm-password-modal')
 </div>

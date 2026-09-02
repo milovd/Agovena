@@ -102,8 +102,11 @@ final class ExtensionManager
             }
 
             try {
+                $this->assertDependencies($manifest, requireEnabled: true);
                 $this->assertModuleDependencies($manifest, requireEnabled: true);
             } catch (ValidationException) {
+                $this->disablePersisted($manifest->id);
+
                 continue;
             }
 
@@ -168,13 +171,57 @@ final class ExtensionManager
     public function disable(string $extensionId): AgovenaExtension
     {
         $row = AgovenaExtension::query()->where('extension_id', $extensionId)->firstOrFail();
-        $row->enabled = false;
-        $row->disabled_at = now();
-        $row->save();
+        $extensionIds = $this->dependentExtensionIds([$extensionId]);
+        $disabledAt = now();
+
+        AgovenaExtension::query()
+            ->whereIn('extension_id', $extensionIds)
+            ->where('enabled', true)
+            ->update([
+                'enabled' => false,
+                'disabled_at' => $disabledAt,
+                'updated_at' => $disabledAt,
+            ]);
 
         $this->rebuildRuntime();
 
-        return $row;
+        return $row->fresh() ?? $row;
+    }
+
+    /**
+     * Disable enabled extensions that depend on one of the given modules,
+     * including extensions that transitively depend on those extensions.
+     *
+     * @param  list<string>  $moduleIds
+     */
+    public function disableForModules(array $moduleIds, ?\DateTimeInterface $disabledAt = null): void
+    {
+        $extensionIds = [];
+        foreach ($this->discover() as $manifest) {
+            if (array_intersect($manifest->moduleDependencies, $moduleIds) !== []) {
+                $extensionIds[] = $manifest->id;
+            }
+        }
+
+        if ($extensionIds === []) {
+            $this->rebuildRuntime();
+
+            return;
+        }
+
+        $extensionIds = $this->dependentExtensionIds($extensionIds);
+        $disabledAt ??= now();
+
+        AgovenaExtension::query()
+            ->whereIn('extension_id', $extensionIds)
+            ->where('enabled', true)
+            ->update([
+                'enabled' => false,
+                'disabled_at' => $disabledAt,
+                'updated_at' => $disabledAt,
+            ]);
+
+        $this->rebuildRuntime();
     }
 
     /**
@@ -431,6 +478,47 @@ final class ExtensionManager
                 ]);
             }
         }
+    }
+
+    /**
+     * @param  list<string>  $extensionIds
+     * @return list<string>
+     */
+    private function dependentExtensionIds(array $extensionIds): array
+    {
+        $ids = array_values(array_unique($extensionIds));
+
+        do {
+            $changed = false;
+            foreach ($this->discover() as $manifest) {
+                if (in_array($manifest->id, $ids, true)) {
+                    continue;
+                }
+
+                if (array_intersect($manifest->dependencies, $ids) === []) {
+                    continue;
+                }
+
+                $ids[] = $manifest->id;
+                $changed = true;
+            }
+        } while ($changed);
+
+        return $ids;
+    }
+
+    private function disablePersisted(string $extensionId): void
+    {
+        $now = now();
+
+        AgovenaExtension::query()
+            ->where('extension_id', $extensionId)
+            ->where('enabled', true)
+            ->update([
+                'enabled' => false,
+                'disabled_at' => $now,
+                'updated_at' => $now,
+            ]);
     }
 
     private function requireManifest(string $extensionId): ExtensionManifest

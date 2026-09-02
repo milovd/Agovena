@@ -6,6 +6,7 @@ namespace App\Agovena\Backups;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use RuntimeException;
@@ -13,6 +14,10 @@ use Symfony\Component\Process\Process;
 
 final class BackupManager implements DatabaseBackupManager
 {
+    public function __construct(
+        private readonly BackupRestoreVerifier $verifier,
+    ) {}
+
     public function backupSqlite(string $source): BackupRunResult
     {
         if (! is_file($source) || ! is_readable($source)) {
@@ -47,6 +52,218 @@ final class BackupManager implements DatabaseBackupManager
         }
 
         return new BackupRunResult(false, null, errorCode: 'unsupported_driver');
+    }
+
+    public function deleteBackup(string $relativePath): BackupActionResult
+    {
+        $path = $this->resolveArtifactPath($relativePath);
+        if ($path === null) {
+            return new BackupActionResult(false, 'artifact_outside_root');
+        }
+
+        try {
+            $disk = $this->backupDisk();
+            if (! $disk->exists($path)) {
+                return new BackupActionResult(false, 'artifact_missing');
+            }
+
+            if (! $disk->delete($path) || $disk->exists($path)) {
+                return new BackupActionResult(false, 'delete_failed');
+            }
+
+            return new BackupActionResult(true);
+        } catch (\Throwable) {
+            return new BackupActionResult(false, 'delete_failed');
+        }
+    }
+
+    public function restoreBackup(string $relativePath): BackupActionResult
+    {
+        $path = $this->resolveArtifactPath($relativePath);
+        if ($path === null) {
+            return new BackupActionResult(false, 'artifact_outside_root');
+        }
+
+        $artifactDriver = $this->artifactDriver($path);
+        $connectionName = (string) config('database.default');
+        $connection = (array) config('database.connections.'.$connectionName, []);
+        $configuredDriver = (string) ($connection['driver'] ?? '');
+        $currentDriver = $configuredDriver === 'mariadb' ? 'mysql' : $configuredDriver;
+
+        if ($artifactDriver === null || $artifactDriver !== $currentDriver) {
+            return new BackupActionResult(false, 'driver_mismatch');
+        }
+
+        $verification = $this->verifier->verify($path);
+        if (! $verification->valid) {
+            return new BackupActionResult(false, $verification->errorCode ?? 'verification_failed');
+        }
+
+        try {
+            $payload = $this->decryptArtifact($path);
+        } catch (\Throwable) {
+            return new BackupActionResult(false, 'payload_unreadable');
+        }
+
+        return $artifactDriver === 'sqlite'
+            ? $this->restoreSqlite($payload, $connectionName, $connection)
+            : $this->restoreMysql($payload, $connection);
+    }
+
+    private function backupDisk(): Filesystem
+    {
+        return Storage::disk((string) config('agovena.backups.disk', 'local'));
+    }
+
+    private function resolveArtifactPath(string $relativePath): ?string
+    {
+        $directory = trim((string) config('agovena.backups.directory', 'backups'), '/');
+        $path = ltrim(trim($relativePath), '/');
+        $prefix = $directory === '' ? '' : $directory.'/';
+
+        if ($path === '' || str_contains($path, '..') || ! Str::startsWith($path, $prefix)) {
+            return null;
+        }
+
+        $filename = basename($path);
+        if ($path !== $prefix.$filename || preg_match('/^database-(sqlite|mysql)-[A-Za-z0-9_-]+\.enc$/', $filename) !== 1) {
+            return null;
+        }
+
+        return $path;
+    }
+
+    private function artifactDriver(string $path): ?string
+    {
+        if (preg_match('/^database-(sqlite|mysql)-/', basename($path), $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[1];
+    }
+
+    private function decryptArtifact(string $path): string
+    {
+        $encrypted = $this->backupDisk()->get($path);
+        $compressed = Crypt::decrypt($encrypted);
+        $payload = gzuncompress($compressed);
+
+        if (! is_string($payload) || $payload === '') {
+            throw new RuntimeException('Backup payload is invalid.');
+        }
+
+        return $payload;
+    }
+
+    /** @param array<string, mixed> $connection */
+    private function restoreSqlite(string $payload, string $connectionName, array $connection): BackupActionResult
+    {
+        $databasePath = (string) ($connection['database'] ?? '');
+        if ($databasePath === '' || $databasePath === ':memory:') {
+            return new BackupActionResult(false, 'database_path_unavailable');
+        }
+
+        if (! Str::startsWith($databasePath, DIRECTORY_SEPARATOR) && ! preg_match('/^[A-Za-z]:[\\\\\/]/', $databasePath)) {
+            $databasePath = base_path($databasePath);
+        }
+
+        $directory = dirname($databasePath);
+        if (! is_dir($directory) && ! mkdir($directory, 0700, true) && ! is_dir($directory)) {
+            return new BackupActionResult(false, 'database_path_unavailable');
+        }
+
+        $temporaryPath = $directory.DIRECTORY_SEPARATOR.'.agovena-restore-'.Str::lower(Str::random(24)).'.sqlite';
+        $previousPath = $directory.DIRECTORY_SEPARATOR.'.agovena-previous-'.Str::lower(Str::random(24)).'.sqlite';
+        $previousMoved = false;
+        $newInstalled = false;
+
+        try {
+            if (file_put_contents($temporaryPath, $payload, LOCK_EX) !== strlen($payload)) {
+                return new BackupActionResult(false, 'restore_failed');
+            }
+
+            DB::purge($connectionName);
+            if (! $this->removeSqliteSidecars($databasePath)) {
+                return new BackupActionResult(false, 'restore_failed');
+            }
+
+            if (is_file($databasePath)) {
+                if (! rename($databasePath, $previousPath)) {
+                    return new BackupActionResult(false, 'restore_failed');
+                }
+                $previousMoved = true;
+            }
+
+            if (! rename($temporaryPath, $databasePath)) {
+                return new BackupActionResult(false, 'restore_failed');
+            }
+            $newInstalled = true;
+
+            if ($previousMoved && is_file($previousPath) && ! unlink($previousPath)) {
+                return new BackupActionResult(false, 'restore_cleanup_failed');
+            }
+
+            return new BackupActionResult(true);
+        } catch (\Throwable) {
+            return new BackupActionResult(false, 'restore_failed');
+        } finally {
+            if (! $newInstalled && $previousMoved && is_file($previousPath) && ! is_file($databasePath)) {
+                @rename($previousPath, $databasePath);
+            }
+            try {
+                $this->removeTemporaryFile($temporaryPath);
+            } catch (\Throwable) {
+                // Temporary restore data must not leak into the application storage.
+            }
+            try {
+                $this->removeTemporaryFile($previousPath);
+            } catch (\Throwable) {
+                // A failed cleanup is reported by the action result when possible.
+            }
+        }
+    }
+
+    private function removeSqliteSidecars(string $databasePath): bool
+    {
+        foreach ([$databasePath.'-wal', $databasePath.'-shm'] as $sidecarPath) {
+            if (is_file($sidecarPath) && ! unlink($sidecarPath)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /** @param array<string, mixed> $connection */
+    private function restoreMysql(string $payload, array $connection): BackupActionResult
+    {
+        $temporaryDirectory = storage_path('framework/private');
+        $credentialsPath = $temporaryDirectory.'/restore-'.Str::lower(Str::random(24)).'.cnf';
+
+        try {
+            if (! $this->ensurePrivateDirectory($temporaryDirectory) || ! $this->writeMysqlCredentialsFile($credentialsPath, $connection)) {
+                return new BackupActionResult(false, 'temporary_storage_failed');
+            }
+
+            $process = new Process([
+                (string) config('agovena.backups.mysql_restore_binary', 'mysql'),
+                '--defaults-extra-file='.$credentialsPath,
+                (string) ($connection['database'] ?? ''),
+            ], base_path(), [], $payload, 300);
+            $process->run();
+
+            return $process->isSuccessful()
+                ? new BackupActionResult(true)
+                : new BackupActionResult(false, 'restore_failed');
+        } catch (\Throwable) {
+            return new BackupActionResult(false, 'restore_failed');
+        } finally {
+            try {
+                $this->removeTemporaryFile($credentialsPath);
+            } catch (\Throwable) {
+                // Do not expose credentials or cleanup details to the admin UI.
+            }
+        }
     }
 
     /** @param array<string, mixed> $connection */
@@ -207,7 +424,7 @@ final class BackupManager implements DatabaseBackupManager
         $diskName = (string) config('agovena.backups.disk', 'local');
         $directory = trim((string) config('agovena.backups.directory', 'backups'), '/');
         $disk = Storage::disk($diskName);
-        $path = $directory.'/database-'.$driver.'-'.now()->format('YmdHis').'-'.Str::lower(Str::random(12)).'.enc';
+        $path = ($directory === '' ? '' : $directory.'/').'database-'.$driver.'-'.now()->format('YmdHis').'-'.Str::lower(Str::random(12)).'.enc';
         $compressed = gzcompress($contents, 9);
         if ($compressed === false) {
             return new BackupRunResult(false, null, errorCode: 'compression_failed');
