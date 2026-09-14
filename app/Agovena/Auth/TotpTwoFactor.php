@@ -9,6 +9,7 @@ use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use PragmaRX\Google2FA\Google2FA;
@@ -57,8 +58,14 @@ final class TotpTwoFactor
 
         try {
             $verified = $this->google2fa->verifyKey($secret, $code, self::VERIFY_WINDOW);
+            if ($verified !== true && (! is_int($verified) || $verified <= 0)) {
+                return false;
+            }
 
-            return $verified === true || (is_int($verified) && $verified > 0);
+            // A valid TOTP code may only be accepted once during its lifetime.
+            $replayKey = 'agovena:totp:replay:'.hash('sha256', $secret.'|'.$code);
+
+            return Cache::add($replayKey, true, now()->addSeconds(90));
         } catch (Throwable) {
             return false;
         }

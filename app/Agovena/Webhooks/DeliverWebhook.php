@@ -7,6 +7,7 @@ namespace App\Agovena\Webhooks;
 use App\Models\WebhookDelivery;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -24,12 +25,15 @@ final class DeliverWebhook implements ShouldQueue
 
     public function __construct(public int $deliveryId) {}
 
+    private string $leaseToken = '';
+
     public function handle(): void
     {
+        $this->leaseToken = bin2hex(random_bytes(32));
         $claimed = WebhookDelivery::query()
             ->whereKey($this->deliveryId)
             ->whereIn('status', ['queued', 'retrying'])
-            ->update(['status' => 'in_progress']);
+            ->update(['status' => 'in_progress', 'lease_token' => $this->leaseToken, 'lease_expires_at' => now()->addMinutes(15)]);
         if ($claimed !== 1) {
             return;
         }
@@ -42,7 +46,7 @@ final class DeliverWebhook implements ShouldQueue
         }
 
         if (! $endpoint->active) {
-            $delivery->update(['status' => 'skipped']);
+            $this->ownedQuery()->update(['status' => 'skipped', 'lease_token' => null, 'lease_expires_at' => null]);
 
             return;
         }
@@ -94,13 +98,15 @@ final class DeliverWebhook implements ShouldQueue
         }
 
         if ($response->successful()) {
-            $delivery->update([
+            $this->ownedQuery()->update([
                 'status' => 'delivered',
                 'response_status' => $response->status(),
                 'response_body' => null,
                 'last_error' => null,
                 'next_attempt_at' => null,
                 'delivered_at' => now(),
+                'lease_token' => null,
+                'lease_expires_at' => null,
             ]);
             $endpoint->update(['failure_count' => 0, 'last_delivered_at' => now()]);
 
@@ -124,12 +130,14 @@ final class DeliverWebhook implements ShouldQueue
 
     public function failed(Throwable $exception): void
     {
-        WebhookDelivery::query()->whereKey($this->deliveryId)->update([
+        $this->ownedQuery()->update([
             'status' => 'dead_letter',
             'failure_code' => 'retry_exhausted',
             'failed_at' => now(),
             'dead_lettered_at' => now(),
             'last_error' => 'Webhook delivery exhausted retries.',
+            'lease_token' => null,
+            'lease_expires_at' => null,
         ]);
     }
 
@@ -144,7 +152,7 @@ final class DeliverWebhook implements ShouldQueue
         $attempt = (int) $delivery->attempt_count;
         $exhausted = ! $retryable || $attempt >= $this->tries;
 
-        $delivery->update([
+        $this->ownedQuery()->update([
             'status' => $exhausted ? 'dead_letter' : 'retrying',
             'response_status' => $response?->status(),
             'response_body' => null,
@@ -153,9 +161,19 @@ final class DeliverWebhook implements ShouldQueue
             'failed_at' => $exhausted ? now() : null,
             'dead_lettered_at' => $exhausted ? now() : null,
             'next_attempt_at' => $exhausted ? null : now()->addSeconds($this->backoff[min($attempt - 1, count($this->backoff) - 1)]),
+            'lease_token' => null,
+            'lease_expires_at' => null,
         ]);
 
         $endpoint?->increment('failure_count');
         $endpoint?->update(['last_failure_at' => now()]);
+    }
+
+    private function ownedQuery(): Builder
+    {
+        return WebhookDelivery::query()
+            ->whereKey($this->deliveryId)
+            ->where('lease_token', $this->leaseToken)
+            ->where('lease_expires_at', '>', now());
     }
 }

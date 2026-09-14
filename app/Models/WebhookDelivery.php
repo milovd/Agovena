@@ -24,6 +24,8 @@ class WebhookDelivery extends Model
         'failed_at',
         'dead_lettered_at',
         'delivered_at',
+        'lease_token',
+        'lease_expires_at',
     ];
 
     protected function casts(): array
@@ -34,6 +36,7 @@ class WebhookDelivery extends Model
             'failed_at' => 'datetime',
             'dead_lettered_at' => 'datetime',
             'delivered_at' => 'datetime',
+            'lease_expires_at' => 'datetime',
         ];
     }
 
