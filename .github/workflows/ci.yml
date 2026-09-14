@@ -21,7 +21,7 @@ jobs:
         with:
           repository: milovd/optional-packages
           path: optional-packages
-          ref: main
+          ref: f097f9f0f299012cc2476f778785061a5e76b7e1
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -97,7 +97,7 @@ jobs:
         with:
           repository: milovd/optional-packages
           path: optional-packages
-          ref: main
+          ref: f097f9f0f299012cc2476f778785061a5e76b7e1
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -171,7 +171,7 @@ jobs:
         with:
           repository: milovd/optional-packages
           path: optional-packages
-          ref: main
+          ref: f097f9f0f299012cc2476f778785061a5e76b7e1
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -283,7 +283,7 @@ jobs:
         with:
           repository: milovd/optional-packages
           path: optional-packages
-          ref: main
+          ref: f097f9f0f299012cc2476f778785061a5e76b7e1
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
