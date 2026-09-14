@@ -4,7 +4,9 @@ This file is the working release matrix for the first public Agovena release. It
 
 ## Release verdict
 
-**Not ready for v0.0.1.** The current runtime baseline has a green targeted local matrix and the public GitHub Actions `main` badge was passing before the latest backup-safety follow-up on `84d2f9f`. The commit-specific Actions API was temporarily rate-limited during verification, so individual job details for the latest code are not reproduced here. Provider sandbox, deployment, live receiver, full security sign-off, human UI and legal gates remain open. No release tag or GitHub Release has been created.
+**Current status: ready for manual release control, not released.** The current local worktree contains the release hardening and release-documentation changes listed below, plus pre-existing local workflow and lease changes. No tag, GitHub Release, push, or deployment has been created from this task. The application default remains `optional-packages` at `main` by deliberate product choice. An explicitly supplied 40-character commit SHA is still checked against the resolved checkout `HEAD`; `main` is not described as immutable.
+
+The remaining release gates are human, provider, deployment, browser, legal, or current-CI verification gates. They are not being treated as reasons to stop code completion. Provider adapters remain `production_ready: false` until real sandbox or production evidence exists.
 
 
 - `implemented`: present in the current repositories and covered by relevant automated tests.
@@ -161,6 +163,18 @@ Still required before a release tag:
 - authenticated Admin desktop browser review of the Domain extension catalog and product Automation surface: passed; full human responsive/keyboard review remains open;
 - live external webhook receiver acceptance;
 - final legal/privacy sign-off and third-party attribution review; dependency license metadata is present in `composer.lock` for 155 packages and npm production packages report SPDX licenses, but legal approval of upstream data terms is still an operator responsibility;
+
+## Security and integrity follow-up
+
+- **Tebex replay/idempotency:** code-side complete for the current integration. Tebex event IDs are stored under the existing unique `(gateway_id, external_event_id)` constraint, duplicate delivery is idempotent, and Tebex ledger rows are retention-exempt. Cleanup of ordinary webhook rows cannot remove them. Automated duplicate and retention tests cover this behavior.
+- **Tebex freshness:** no freshness window is claimed. The current Tebex integration has no verified signed timestamp contract. This remains a provider-contract limitation, not an invented code behavior.
+- **Package integrity:** explicit immutable SHA refs are fetched and checked against the resolved Git `HEAD`. Digest checks exist for materialized package trees during lifecycle rollback verification. The default `main` flow remains supported. Git commit/tag signing and trusted-key verification are not enabled because the current installation flow has no trusted key registry or signing policy.
+- **Authorization:** all concrete Admin Livewire components, except the auth-only logout component, are structurally required to contain a server-side authorization call. Runtime regression coverage includes privileged roles, limited staff, customers, unauthenticated users and cross-owner access in the reviewed surfaces. This is ongoing enforcement, not a permanent proof for future third-party code.
+- **Provider readiness:** first-party provider manifests remain `production_ready: false`. Mocks prove Agovena contract behavior only; sandbox and production claims require operator evidence.
+
+## Current manual and external gates
+
+The release candidate still needs authenticated browser review, real payment/provider sandbox flows, real receiver delivery, MariaDB deployment and upgrade rehearsal, production backup/restore including storage, secret-manager and CI-secret review, upload malware scanning, and legal/privacy acceptance. These are classified as manual or external verification gates, not unresolved local code stubs.
 
 ## Explicitly deferred after v0.0.1
 

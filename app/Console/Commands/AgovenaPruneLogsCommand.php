@@ -38,6 +38,7 @@ final class AgovenaPruneLogsCommand extends Command
         if (Schema::hasTable('payment_webhook_events')) {
             $webhooks = DB::table('payment_webhook_events')
                 ->whereIn('processing_status', ['processed', 'ignored', 'duplicate'])
+                ->where('retention_exempt', false)
                 ->where('created_at', '<', now()->subDays($webhookDays))
                 ->delete();
         }

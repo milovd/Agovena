@@ -16,6 +16,7 @@ use App\Agovena\Payments\StartOrderPayment;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
+use App\Models\PaymentWebhookEvent;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Tests\Support\FakePaddleApi;
@@ -176,6 +177,40 @@ test('tebex completed webhook with mismatched amount is ignored', function (): v
 
     expect($payment->fresh()->status)->not->toBe(PaymentStatus::Paid)
         ->and($attempt->fresh()->status)->not->toBe(PaymentAttemptStatus::Succeeded);
+});
+
+test('duplicate Tebex webhooks are idempotent and retain their replay ledger entry', function (): void {
+    enableSecurityTebex();
+    $payment = placeSecurityOrder('tebex:tebex', 2);
+    $attempt = app(StartOrderPayment::class)->handle($payment->order, 'tebex:tebex', 'https://example.test/return', 'https://example.test/cancel', 'tebex-duplicate');
+    $body = json_encode([
+        'id' => 'evt_tebex_duplicate',
+        'type' => 'payment.completed',
+        'subject' => [
+            'transaction_id' => $attempt->external_id,
+            'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
+            'products' => [['id' => 12345, 'quantity' => 1]],
+            'custom' => ['order_id' => (string) $payment->order_id, 'payment_id' => (string) $payment->id],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $signature = hash_hmac('sha256', hash('sha256', $body), '[REDACTED]');
+    $request = fn (): Request => Request::create(
+        '/webhooks/payments/tebex',
+        'POST',
+        [],
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_X-SIGNATURE' => $signature],
+        $body,
+    );
+
+    $first = app(HandlePaymentWebhook::class)->handle('tebex', $request());
+    $second = app(HandlePaymentWebhook::class)->handle('tebex', $request());
+
+    expect($first->duplicate)->toBeFalse()
+        ->and($second->duplicate)->toBeTrue()
+        ->and(PaymentWebhookEvent::query()->where('gateway_id', 'tebex')->where('external_event_id', 'evt_tebex_duplicate')->count())->toBe(1)
+        ->and(PaymentWebhookEvent::query()->where('external_event_id', 'evt_tebex_duplicate')->value('retention_exempt'))->toBeTrue();
 });
 
 test('paddle and tebex reject partial refunds at the capability boundary', function (): void {

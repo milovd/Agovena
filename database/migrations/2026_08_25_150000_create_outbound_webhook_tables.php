@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('event_type', 120);
             $table->json('payload');
             $table->string('status', 32)->default('pending');
+
             $table->unsignedInteger('attempt_count')->default(0);
             $table->unsignedSmallInteger('response_status')->nullable();
             $table->text('response_body')->nullable();
@@ -39,6 +40,7 @@ return new class extends Migration
             $table->timestamp('delivered_at')->nullable();
             $table->timestamps();
             $table->index(['status', 'next_attempt_at']);
+
             $table->index(['webhook_endpoint_id', 'created_at']);
         });
     }

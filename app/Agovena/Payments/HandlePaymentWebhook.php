@@ -231,6 +231,7 @@ final class HandlePaymentWebhook
                 'external_payment_id' => $externalPaymentId,
                 'status' => $status,
                 'processing_status' => 'received',
+                'retention_exempt' => $gatewayId === 'tebex',
                 'payload' => $this->redact($raw),
             ]);
         } catch (UniqueConstraintViolationException $e) {

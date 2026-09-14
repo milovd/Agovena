@@ -46,6 +46,7 @@ Application version source: `config('agovena.version')` → currently `0.0.1`.
 - Safe section editor normalization for allowed section types, escaped text, safe links, local media paths and bounded lists
 - OAuth state/nonce storage and provider metadata for Google and Discord with internal redirect validation
 - Fail-closed Turnstile and reCAPTCHA challenge verification adapters
+- Tebex webhook event ledger retention exemption and duplicate-delivery regression coverage
 - Public robots.txt and sitemap.xml routes with private-path exclusions
 - Advanced audit log UI and core services with actor/context capture, redaction, integrity metadata, filtering, export, retention pruning, and feature coverage
 

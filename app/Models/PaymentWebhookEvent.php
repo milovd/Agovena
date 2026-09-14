@@ -17,6 +17,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $external_payment_id
  * @property string $status
  * @property string $processing_status
+ * @property bool $retention_exempt
  * @property array<string, mixed>|null $payload
  * @property Carbon|null $processed_at
  */
@@ -26,6 +27,7 @@ use Illuminate\Support\Carbon;
     'external_payment_id',
     'status',
     'processing_status',
+    'retention_exempt',
     'payload',
     'processed_at',
 ])]
@@ -37,6 +39,7 @@ class PaymentWebhookEvent extends Model
     {
         return [
             'payload' => 'array',
+            'retention_exempt' => 'boolean',
             'processed_at' => 'datetime',
         ];
     }
