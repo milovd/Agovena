@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Webhooks;
 
+use App\Agovena\Security\SensitiveDataRedactor;
 use App\Models\WebhookDelivery;
 use App\Models\WebhookEndpoint;
 use Illuminate\Support\Str;
@@ -30,7 +31,7 @@ final class WebhookEventPublisher
                         'id' => (string) Str::uuid(),
                         'type' => $eventType,
                         'created_at' => now()->toIso8601String(),
-                        'data' => $data,
+                        'data' => SensitiveDataRedactor::redact($data),
                     ],
                     'status' => 'queued',
                 ]);

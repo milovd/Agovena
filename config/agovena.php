@@ -156,6 +156,7 @@ return [
         'email_logs_days' => (int) env('AGOVENA_EMAIL_LOG_RETENTION', 90),
         'audit_logs_days' => (int) env('AGOVENA_AUDIT_LOG_RETENTION', 365),
         'webhook_events_days' => (int) env('AGOVENA_WEBHOOK_EVENT_RETENTION', 90),
+        'outbound_webhook_deliveries_days' => (int) env('AGOVENA_OUTBOUND_WEBHOOK_RETENTION', 90),
         'consent_events_days' => (int) env('AGOVENA_CONSENT_EVENT_RETENTION', 365),
     ],
 ];

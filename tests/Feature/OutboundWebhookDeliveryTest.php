@@ -146,3 +146,32 @@ it('records a retryable delivery failure without exposing the endpoint secret', 
         ->and($delivery->attempt_count)->toBe(1)
         ->and($delivery->last_error)->not->toContain('[REDACTED]');
 });
+
+it('redacts sensitive outbound payload fields and does not persist receiver bodies', function (): void {
+    Queue::fake();
+    Http::fake([
+        'https://example.com/*' => Http::response(['token' => 'receiver-token'], 202),
+    ]);
+
+    WebhookEndpoint::query()->create([
+        'name' => 'Sensitive test',
+        'url' => 'https://example.com/sensitive',
+        'secret' => '[REDACTED]',
+        'events' => ['order.created'],
+        'active' => true,
+    ]);
+
+    app(WebhookEventPublisher::class)->publish('order.created', [
+        'order_id' => 10,
+        'customer_email' => 'customer@example.com',
+        'access_token' => 'outbound-token',
+    ]);
+
+    $delivery = WebhookDelivery::query()->firstOrFail();
+    expect($delivery->payload['data']['customer_email'])->toBe('customer@example.com')
+        ->and($delivery->payload['data']['access_token'])->toBe('[REDACTED]');
+
+    (new DeliverWebhook($delivery->id))->handle();
+
+    expect($delivery->fresh()->response_body)->toBeNull();
+});

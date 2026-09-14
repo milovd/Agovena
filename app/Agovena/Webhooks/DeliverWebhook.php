@@ -97,7 +97,7 @@ final class DeliverWebhook implements ShouldQueue
             $delivery->update([
                 'status' => 'delivered',
                 'response_status' => $response->status(),
-                'response_body' => $this->truncate($response),
+                'response_body' => null,
                 'last_error' => null,
                 'next_attempt_at' => null,
                 'delivered_at' => now(),
@@ -147,7 +147,7 @@ final class DeliverWebhook implements ShouldQueue
         $delivery->update([
             'status' => $exhausted ? 'dead_letter' : 'retrying',
             'response_status' => $response?->status(),
-            'response_body' => $response === null ? null : $this->truncate($response),
+            'response_body' => null,
             'failure_code' => $failureCode,
             'last_error' => $error,
             'failed_at' => $exhausted ? now() : null,
@@ -157,10 +157,5 @@ final class DeliverWebhook implements ShouldQueue
 
         $endpoint?->increment('failure_count');
         $endpoint?->update(['last_failure_at' => now()]);
-    }
-
-    private function truncate(Response $response): string
-    {
-        return mb_substr($response->body(), 0, 2000);
     }
 }

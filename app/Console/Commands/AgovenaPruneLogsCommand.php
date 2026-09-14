@@ -20,11 +20,13 @@ final class AgovenaPruneLogsCommand extends Command
         $emailDays = max(1, (int) config('agovena.retention.email_logs_days', 90));
         $auditDays = max(1, (int) config('agovena.retention.audit_logs_days', 365));
         $webhookDays = max(1, (int) config('agovena.retention.webhook_events_days', 90));
+        $outboundWebhookDays = max(1, (int) config('agovena.retention.outbound_webhook_deliveries_days', 90));
         $consentDays = max(1, (int) config('agovena.retention.consent_events_days', 365));
 
         $email = 0;
         $audit = 0;
         $webhooks = 0;
+        $outboundWebhooks = 0;
         $consents = 0;
 
         if (Schema::hasTable('email_logs')) {
@@ -44,12 +46,18 @@ final class AgovenaPruneLogsCommand extends Command
                 ->where('created_at', '<', now()->subDays($consentDays))
                 ->delete();
         }
+        if (Schema::hasTable('webhook_deliveries')) {
+            $outboundWebhooks = DB::table('webhook_deliveries')
+                ->whereIn('status', ['delivered', 'skipped', 'dead_letter'])
+                ->where('created_at', '<', now()->subDays($outboundWebhookDays))
+                ->delete();
+        }
 
-        $total = $email + $audit + $webhooks + $consents;
+        $total = $email + $audit + $webhooks + $outboundWebhooks + $consents;
         app(CronStatisticsRecorder::class)->recordRun('prune-logs', [
             'logs_pruned' => $total,
         ]);
-        $this->info("Pruned email_logs={$email} audit_logs={$audit} payment_webhook_events={$webhooks} consent_events={$consents}");
+        $this->info("Pruned email_logs={$email} audit_logs={$audit} payment_webhook_events={$webhooks} webhook_deliveries={$outboundWebhooks} consent_events={$consents}");
 
         return self::SUCCESS;
     }

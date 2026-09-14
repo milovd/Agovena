@@ -48,6 +48,9 @@ final class HandlePaymentWebhook
         if ($externalEventId === '') {
             $externalEventId = null;
         }
+        if ($externalEventId === null) {
+            $externalEventId = $this->deriveReplayKey($gatewayId, $payload->raw);
+        }
 
         $event = $this->findOrCreateEvent($gatewayId, $externalEventId, $payload->externalPaymentId, $payload->status->value, $payload->raw);
 
@@ -245,6 +248,17 @@ final class HandlePaymentWebhook
 
             return $existing;
         }
+    }
+
+    /**
+     * Some providers do not expose an event identifier. Persist a stable key
+     * for the signed payload so retries remain idempotent after ingestion.
+     *
+     * @param  array<string, mixed>  $raw
+     */
+    private function deriveReplayKey(string $gatewayId, array $raw): string
+    {
+        return 'derived_'.hash('sha256', $gatewayId.'|'.json_encode($raw, JSON_THROW_ON_ERROR));
     }
 
     /**

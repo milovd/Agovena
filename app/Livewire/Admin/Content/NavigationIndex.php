@@ -27,6 +27,7 @@ final class NavigationIndex extends Component
 
     public function mount(): void
     {
+        $this->authorize('navigation.view');
         $this->ensureMenus();
     }
 
