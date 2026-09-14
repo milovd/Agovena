@@ -72,7 +72,7 @@ return [
             'repository' => env('AGOVENA_PACKAGES_MONOREPO_URL', 'https://github.com/milovd/optional-packages'),
             // Pin the release baseline. Operators can explicitly select a reviewed
             // immutable ref when updating the optional-packages repository.
-            'default_ref' => env('AGOVENA_PACKAGES_MONOREPO_REF', 'ca5a5b3116473f62108d6cf519b5ca07d8ec10cf'),
+            'default_ref' => env('AGOVENA_PACKAGES_MONOREPO_REF', 'e115dde103849a042bc539ab42aa20b7919304d6'),
             'packages' => [
                 'inventory' => ['kind' => 'module', 'path' => 'modules/inventory'],
                 'shipping' => ['kind' => 'module', 'path' => 'modules/shipping'],
