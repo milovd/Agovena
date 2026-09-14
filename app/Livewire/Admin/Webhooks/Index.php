@@ -170,6 +170,8 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, WebhookEventCatalog $catalog)
     {
+        $this->authorize('webhooks.view');
+
         return view('livewire.admin.webhooks.index', [
             'endpoints' => WebhookEndpoint::query()->withCount('deliveries')->latest('id')->get(),
             'deliveries' => WebhookDelivery::query()->with('endpoint')->latest('id')->limit(50)->get(),

@@ -38,7 +38,7 @@ services:
       DB_PORT: 3306
       DB_DATABASE: agovena
       DB_USERNAME: agovena
-      DB_PASSWORD: secret
+      DB_PASSWORD: ${AGOVENA_DB_PASSWORD:?Set AGOVENA_DB_PASSWORD in the deployment environment}
       REDIS_HOST: redis
       QUEUE_CONNECTION: redis
       CACHE_STORE: redis
@@ -68,7 +68,7 @@ services:
       DB_HOST: mariadb
       DB_DATABASE: agovena
       DB_USERNAME: agovena
-      DB_PASSWORD: secret
+      DB_PASSWORD: ${AGOVENA_DB_PASSWORD:?Set AGOVENA_DB_PASSWORD in the deployment environment}
       REDIS_HOST: redis
       QUEUE_CONNECTION: redis
       CACHE_STORE: redis
@@ -93,7 +93,7 @@ services:
       DB_HOST: mariadb
       DB_DATABASE: agovena
       DB_USERNAME: agovena
-      DB_PASSWORD: secret
+      DB_PASSWORD: ${AGOVENA_DB_PASSWORD:?Set AGOVENA_DB_PASSWORD in the deployment environment}
       REDIS_HOST: redis
       QUEUE_CONNECTION: redis
       CACHE_STORE: redis
@@ -109,8 +109,8 @@ services:
     environment:
       MYSQL_DATABASE: agovena
       MYSQL_USER: agovena
-      MYSQL_PASSWORD: secret
-      MYSQL_ROOT_PASSWORD: rootsecret
+      MYSQL_PASSWORD: ${AGOVENA_DB_PASSWORD:?Set AGOVENA_DB_PASSWORD in the deployment environment}
+      MYSQL_ROOT_PASSWORD: ${AGOVENA_DB_ROOT_PASSWORD:?Set AGOVENA_DB_ROOT_PASSWORD in the deployment environment}
     volumes:
       - agovena-mariadb:/var/lib/mysql
     healthcheck:

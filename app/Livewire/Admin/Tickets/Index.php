@@ -32,6 +32,8 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('tickets.view');
+
         return view('livewire.admin.tickets.index', [
             'tickets' => Ticket::query()
                 ->with(['customer', 'assignee'])

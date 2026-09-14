@@ -47,6 +47,7 @@ final class Dashboard extends Component
 
     public function render(AdminRegistrar $admin, GettingStartedChecklist $gettingStarted, DashboardMetrics $metrics)
     {
+        $this->authorize('dashboard.view');
         $this->normalizeChartState();
         $data = $metrics->build($this->chartRange);
 

@@ -23,6 +23,8 @@ final class Show extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('audit.view');
+
         return view('livewire.admin.audit.show', [
             'auditLog' => $this->auditLog,
         ])->layout('layouts.admin', [

@@ -84,6 +84,7 @@ final class Show extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('tickets.view');
         $this->ticket->load(['customer', 'assignee', 'messages.attachments']);
 
         return view('livewire.admin.tickets.show', [

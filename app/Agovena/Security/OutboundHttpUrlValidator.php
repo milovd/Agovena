@@ -43,6 +43,32 @@ final class OutboundHttpUrlValidator
         }
     }
 
+    public function resolvePublicIp(string $url): string
+    {
+        $validated = $this->validate($url);
+        $host = strtolower((string) parse_url($validated, PHP_URL_HOST));
+
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            return $host;
+        }
+
+        $addresses = array_merge(
+            gethostbynamel($host) ?: [],
+            array_map(
+                static fn (array $record): string => (string) ($record['ipv6'] ?? ''),
+                function_exists('dns_get_record') ? (dns_get_record($host, DNS_AAAA) ?: []) : [],
+            ),
+        );
+
+        foreach ($addresses as $address) {
+            if ($address !== '' && filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                return $address;
+            }
+        }
+
+        $this->reject();
+    }
+
     private function assertPublicAddress(string $host): void
     {
         if (str_contains($host, ':') || filter_var($host, FILTER_VALIDATE_IP) !== false) {

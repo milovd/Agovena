@@ -247,6 +247,8 @@ final class Create extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('products.create');
+
         return view('livewire.admin.products.form', [
             'categories' => Category::query()->orderBy('name')->get(),
             'currencies' => Currency::query()->where('is_active', true)->orderBy('code')->get(['code', 'name']),

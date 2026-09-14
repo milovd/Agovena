@@ -54,6 +54,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, NotificationTemplateCatalog $catalog)
     {
+        $this->authorize('notifications.view');
         $definitions = $catalog->all();
         $templates = NotificationTemplate::query()
             ->whereIn('key', array_map(static fn ($definition): string => $definition->key, $definitions))

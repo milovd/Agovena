@@ -8,6 +8,7 @@ use App\Agovena\Auth\TotpTwoFactor;
 use App\Agovena\Theme\ThemeManager;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -119,17 +120,27 @@ final class TwoFactorChallenge extends Component
 
     private function consumeRecovery(TotpTwoFactor $totp, User $user): bool
     {
-        $remaining = $totp->consumeRecoveryCode(
-            is_array($user->two_factor_recovery_codes) ? $user->two_factor_recovery_codes : null,
-            $this->recovery_code,
-        );
-        if ($remaining === null) {
-            return false;
-        }
+        $consumed = false;
 
-        $user->forceFill(['two_factor_recovery_codes' => $remaining])->save();
+        DB::transaction(function () use ($totp, $user, &$consumed): void {
+            $lockedUser = User::query()->lockForUpdate()->find($user->id);
+            if (! $lockedUser instanceof User) {
+                return;
+            }
 
-        return true;
+            $remaining = $totp->consumeRecoveryCode(
+                is_array($lockedUser->two_factor_recovery_codes) ? $lockedUser->two_factor_recovery_codes : null,
+                $this->recovery_code,
+            );
+            if ($remaining === null) {
+                return;
+            }
+
+            $lockedUser->forceFill(['two_factor_recovery_codes' => $remaining])->save();
+            $consumed = true;
+        });
+
+        return $consumed;
     }
 
     private function destination(User $user, string $intended): string

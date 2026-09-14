@@ -148,6 +148,7 @@ final class Show extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('orders.view');
         /** @var InMemoryAdminRegistrar $admin */
         $user = Auth::user();
         $canRecord = $user?->can('payments.record') === true

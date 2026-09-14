@@ -149,6 +149,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, TaxRateResolver $resolver, AutomaticTaxRateProvider $rates)
     {
+        $this->authorize('taxes.view');
         $filter = strtoupper(trim($this->filter));
         $merchantRates = $resolver->merchantRates()
             ->when($filter !== '', fn ($rows) => $rows->filter(

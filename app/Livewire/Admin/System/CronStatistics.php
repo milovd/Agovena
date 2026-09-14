@@ -22,6 +22,8 @@ final class CronStatistics extends Component
 
     public function render(AdminRegistrar $admin, CronStatisticsService $statistics)
     {
+        $this->authorize('settings.view');
+
         return view('livewire.admin.system.cron-statistics', $statistics->viewData($this->range))
             ->layout('layouts.admin', [
                 'title' => __('admin.cron_statistics.title'),

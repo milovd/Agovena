@@ -41,6 +41,7 @@ final class FailedJobs extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('jobs.view');
         $jobs = DB::table('failed_jobs')->orderByDesc('id')->paginate(20);
         $jobs->getCollection()->transform(function (object $job): object {
             $job->exception_preview = $this->preview((string) $job->exception);

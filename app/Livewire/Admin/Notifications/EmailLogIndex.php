@@ -22,6 +22,8 @@ final class EmailLogIndex extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('notifications.view');
+
         return view('livewire.admin.notifications.email-log', [
             'logs' => EmailLog::query()->latest('id')->paginate(30),
         ])->layout('layouts.admin', [

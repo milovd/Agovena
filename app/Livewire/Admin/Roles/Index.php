@@ -146,6 +146,8 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('roles.view');
+
         return view('livewire.admin.roles.index', [
             'roles' => Role::query()
                 ->where('guard_name', User::GUARD)

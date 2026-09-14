@@ -170,6 +170,8 @@ final class Edit extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('orders.update');
+
         return view('livewire.admin.orders.edit')->layout('layouts.admin', [
             'title' => __('admin.orders.edit_title', ['number' => $this->order->number]),
             'navigation' => $admin->navigationItems(),

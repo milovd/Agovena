@@ -46,9 +46,10 @@ final class Login extends Component
         ]);
 
         $key = 'login:'.mb_strtolower($credentials['email']).'|'.request()->ip();
+        $accountKey = 'login-account:'.mb_strtolower($credentials['email']);
 
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            $seconds = RateLimiter::availableIn($key);
+        if (RateLimiter::tooManyAttempts($key, 5) || RateLimiter::tooManyAttempts($accountKey, 10)) {
+            $seconds = max(RateLimiter::availableIn($key), RateLimiter::availableIn($accountKey));
 
             throw ValidationException::withMessages([
                 'email' => __('customer.auth.throttle', ['seconds' => $seconds]),
@@ -60,6 +61,7 @@ final class Login extends Component
             $credentials['remember'],
         )) {
             RateLimiter::hit($key, 60);
+            RateLimiter::hit($accountKey, 600);
 
             throw ValidationException::withMessages([
                 'email' => __('customer.auth.failed'),
@@ -67,6 +69,7 @@ final class Login extends Component
         }
 
         RateLimiter::clear($key);
+        RateLimiter::clear($accountKey);
         app(ConfirmsRecentPassword::class)->forget();
         session()->regenerate();
 

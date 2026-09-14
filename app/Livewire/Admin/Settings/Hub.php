@@ -140,6 +140,7 @@ final class Hub extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('settings.view');
         $groups = $this->accessibleGroups($admin);
         $active = $groups->firstWhere('id', $this->tab);
 

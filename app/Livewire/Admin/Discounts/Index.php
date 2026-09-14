@@ -117,6 +117,8 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('discounts.view');
+
         return view('livewire.admin.discounts.index', [
             'discounts' => DiscountCode::query()->withCount('redemptions')->orderBy('code')->paginate(20),
         ])->layout('layouts.admin', [

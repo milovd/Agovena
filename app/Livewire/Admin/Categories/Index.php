@@ -202,6 +202,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('categories.view');
         $query = Category::query()->with('parent')->withCount('products');
 
         if ($this->search !== '') {

@@ -136,6 +136,7 @@ final class Templates extends Component
 
     public function render(AdminRegistrar $admin, NotificationTemplateCatalog $catalog)
     {
+        $this->authorize('notifications.view');
         $definition = $catalog->find($this->selected);
 
         return view('livewire.admin.notifications.form', [

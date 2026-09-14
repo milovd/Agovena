@@ -127,6 +127,8 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, AdminRoleAssignmentPolicy $rolePolicy)
     {
+        $this->authorize('customers.view');
+
         return view('livewire.admin.customers.index', [
             'customers' => Customer::query()
                 ->with(['user.roles', 'creditAccount'])

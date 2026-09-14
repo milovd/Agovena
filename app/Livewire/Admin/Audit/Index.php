@@ -90,6 +90,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, AuditLogQuery $auditQuery)
     {
+        $this->authorize('audit.view');
         $logs = $auditQuery->build($this->exportFilters())->paginate(25);
 
         return view('livewire.admin.audit.index', [

@@ -62,6 +62,8 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('plan-changes.view');
+
         return view('livewire.admin.plan-changes.index', [
             'products' => Product::query()->active()->with('capabilities')->orderBy('name')->get(),
             'changes' => ProductPlanChange::query()

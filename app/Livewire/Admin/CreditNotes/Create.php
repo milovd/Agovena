@@ -74,6 +74,7 @@ final class Create extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('invoices.credit');
         $this->invoice->loadMissing('items');
 
         return view('livewire.admin.credit-notes.create', [

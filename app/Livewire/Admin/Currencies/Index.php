@@ -158,6 +158,8 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, SettingsRepository $settings)
     {
+        $this->authorize('currencies.view');
+
         return view('livewire.admin.currencies.index', [
             'currencies' => Currency::query()->orderBy('code')->paginate(20),
             'baseCurrency' => (string) $settings->get('general', 'base_currency', 'EUR'),

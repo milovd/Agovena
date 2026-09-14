@@ -12,6 +12,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -28,8 +29,17 @@ final class TokenController
             'abilities.*' => ['string', Rule::in(ApiTokenAbilities::keys())],
         ]);
 
-        $user = User::query()->where('email', $data['email'])->first();
+        $email = mb_strtolower($data['email']);
+        $rateKey = 'api-token-account:'.$email;
+        if (RateLimiter::tooManyAttempts($rateKey, 10)) {
+            throw ValidationException::withMessages([
+                'email' => [__('api.auth.invalid')],
+            ]);
+        }
+
+        $user = User::query()->where('email', $email)->first();
         if ($user === null || ! Hash::check($data['password'], (string) $user->password)) {
+            RateLimiter::hit($rateKey, 600);
             throw ValidationException::withMessages([
                 'email' => [__('api.auth.invalid')],
             ]);

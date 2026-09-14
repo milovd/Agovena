@@ -23,6 +23,8 @@ final class Show extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('invoices.view');
+
         return view('livewire.admin.credit-notes.show', [
             'creditNote' => $this->creditNote,
         ])->layout('layouts.admin', [

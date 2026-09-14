@@ -24,6 +24,8 @@ final class EditGroup extends Component
 
     public function render()
     {
+        $this->authorize('settings.view');
+
         return view('livewire.admin.settings.edit-group');
     }
 }

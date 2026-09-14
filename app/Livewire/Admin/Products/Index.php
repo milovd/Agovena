@@ -106,6 +106,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, DeleteProduct $delete)
     {
+        $this->authorize('products.view');
         $query = Product::query()->with('category');
 
         if ($this->search !== '') {

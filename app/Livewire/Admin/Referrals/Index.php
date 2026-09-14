@@ -168,6 +168,8 @@ final class Index extends Component
 
     public function render(ReferralService $referrals)
     {
+        $this->authorize('referrals.view');
+
         return view('livewire.admin.referrals.index', [
             'attributions' => ReferralAttribution::query()
                 ->with(['code', 'order', 'referrer', 'referred'])

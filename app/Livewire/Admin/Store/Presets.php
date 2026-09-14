@@ -40,6 +40,7 @@ final class Presets extends Component
 
     public function render(AdminRegistrar $admin, StorePresetCatalog $catalog, ModuleManager $modules)
     {
+        $this->authorize('modules.manage');
         $rows = [];
         foreach ($catalog->all() as $preset) {
             $moduleLabels = [];

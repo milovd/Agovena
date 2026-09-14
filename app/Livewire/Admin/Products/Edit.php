@@ -752,6 +752,7 @@ final class Edit extends Component
 
     public function render(AdminRegistrar $admin, DeleteProduct $delete, ProductCapabilityRegistry $capabilities)
     {
+        $this->authorize('products.update');
         $provisioners = collect(app(ProvisionerRegistry::class)->all())
             ->map(static fn ($provisioner): array => [
                 'id' => $provisioner->id(),

@@ -29,7 +29,7 @@ final class TotpTwoFactor
     public const SESSION_VERIFIED_USER = 'auth.two_factor.verified_user_id';
 
     /** Number of 30-second steps accepted on either side of now. */
-    private const VERIFY_WINDOW = 8;
+    private const VERIFY_WINDOW = 1;
 
     public function __construct(private readonly Google2FA $google2fa) {}
 

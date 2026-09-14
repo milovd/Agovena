@@ -189,6 +189,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, PackageCatalog $catalog)
     {
+        $this->authorize('extensions.view');
         $groups = $this->orderGroups($this->groupExtensions($catalog->extensions()));
 
         return view('livewire.admin.extensions.index', [

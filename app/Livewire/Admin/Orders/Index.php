@@ -95,6 +95,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('orders.view');
         $query = Order::query()->with('payment');
 
         if ($this->search !== '') {

@@ -148,6 +148,7 @@ final class Show extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('invoices.view');
         $user = Auth::user();
         $payment = $this->invoice->order?->payment;
 

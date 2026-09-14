@@ -21,6 +21,7 @@ final class Updates extends Component
 
     public function render(AdminRegistrar $admin, ApplicationSchemaStatus $schema, SystemOperationsStatus $operations)
     {
+        $this->authorize('settings.view');
         $schema->refresh();
 
         return view('livewire.admin.system.updates', $operations->viewData())->layout('layouts.admin', [

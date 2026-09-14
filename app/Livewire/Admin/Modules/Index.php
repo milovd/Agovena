@@ -223,6 +223,7 @@ final class Index extends Component
 
     public function render(AdminRegistrar $admin, PackageCatalog $catalog, StorePresetCatalog $presets, ModuleManager $modules)
     {
+        $this->authorize('modules.view');
         $groups = $this->orderGroups($this->groupModules($catalog->modules()));
         $catalogById = $this->catalogModulesById($catalog);
 

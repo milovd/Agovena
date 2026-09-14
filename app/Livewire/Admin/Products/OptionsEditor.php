@@ -169,6 +169,7 @@ final class OptionsEditor extends Component
 
     public function render()
     {
+        $this->authorize('products.update');
         $product = Product::query()->findOrFail($this->productId);
 
         return view('livewire.admin.products.options-editor', [
