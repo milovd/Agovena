@@ -53,6 +53,7 @@ echo "==> Staging application tree into $STAGING ..."
 tar -C "$ROOT" \
   --exclude='./.git' \
   --exclude='./.github' \
+  --exclude='./optional-packages' \
   --exclude='./.cursor' \
   --exclude='./.hermes' \
   --exclude='./docs' \

@@ -33,6 +33,7 @@ for bad in \
   "$ROOT/.env" \
   "$ROOT/.hermes" \
   "$ROOT/.git" \
+  "$ROOT/optional-packages" \
   "$ROOT/node_modules" \
   "$ROOT/tests" \
   "$ROOT/e2e" \
