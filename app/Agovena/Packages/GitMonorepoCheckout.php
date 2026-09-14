@@ -19,6 +19,7 @@ final class GitMonorepoCheckout implements MonorepoCheckout
         $subdirectory = $this->packageMap->assertSubdirectory($subdirectory);
         $checkoutRoot = $this->checkoutRoot($repositoryUrl);
         $this->ensureCheckout($checkoutRoot, $repositoryUrl, $ref);
+        $this->verifyResolvedRef($checkoutRoot, $ref);
 
         $packagePath = $checkoutRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $subdirectory);
         $resolved = realpath($packagePath);
@@ -88,6 +89,24 @@ final class GitMonorepoCheckout implements MonorepoCheckout
         }
 
         return $this->normalizeRemoteUrl(trim($process->getOutput())) === $this->normalizeRemoteUrl($repositoryUrl);
+    }
+
+    private function verifyResolvedRef(string $checkoutRoot, string $requestedRef): void
+    {
+        if (! $this->isImmutableCommit($requestedRef)) {
+            return;
+        }
+
+        $process = new Process(['git', '-c', 'core.longpaths=true', 'rev-parse', 'HEAD'], $checkoutRoot, timeout: 30.0);
+        $process->run();
+        $resolved = trim($process->getOutput());
+        if (! $process->isSuccessful() || ! hash_equals(strtolower(trim($requestedRef)), strtolower($resolved))) {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.monorepo_checkout_failed', [
+                    'error' => 'Checked-out package commit did not match the requested immutable ref.',
+                ]),
+            ]);
+        }
     }
 
     private function normalizeRemoteUrl(string $url): string
