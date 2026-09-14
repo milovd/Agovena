@@ -57,15 +57,19 @@ final class GitMonorepoCheckout implements MonorepoCheckout
                 File::deleteDirectory($checkoutRoot);
             }
 
-            $this->run([
-                'clone',
-                '--depth',
-                '1',
-                '--branch',
-                $ref,
-                $repositoryUrl,
-                $checkoutRoot,
-            ], dirname($checkoutRoot));
+            $arguments = ['clone', '--depth', '1'];
+            if (! $this->isImmutableCommit($ref)) {
+                $arguments[] = '--branch';
+                $arguments[] = $ref;
+            }
+            $arguments[] = $repositoryUrl;
+            $arguments[] = $checkoutRoot;
+            $this->run($arguments, dirname($checkoutRoot));
+
+            if ($this->isImmutableCommit($ref)) {
+                $this->run(['fetch', '--depth', '1', 'origin', $ref], $checkoutRoot);
+                $this->run(['checkout', '--force', 'FETCH_HEAD'], $checkoutRoot);
+            }
 
             return;
         }
@@ -94,6 +98,11 @@ final class GitMonorepoCheckout implements MonorepoCheckout
         }
 
         return $url;
+    }
+
+    private function isImmutableCommit(string $ref): bool
+    {
+        return preg_match('/\A[0-9a-f]{40}\z/i', trim($ref)) === 1;
     }
 
     /**
