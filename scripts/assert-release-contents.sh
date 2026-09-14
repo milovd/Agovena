@@ -59,4 +59,9 @@ if [[ -n "${review_hits}" ]]; then
   fail "browser-review must not ship"
 fi
 
+git_hits="$(find "$ROOT" -type d -name '.git' -print 2>/dev/null || true)"
+if [[ -n "${git_hits}" ]]; then
+  fail "nested Git metadata must not ship"
+fi
+
 echo "Release contents OK: $ROOT"
