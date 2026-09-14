@@ -10,6 +10,7 @@ use App\Agovena\Checkout\CartRequirementComposer;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Payments\AvailablePaymentMethods;
+use App\Agovena\Payments\PaymentRedirectUrlValidator;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Http\Resources\Api\V1\OrderResource;
 use App\Models\Order;
@@ -77,7 +78,7 @@ final class CheckoutController
         return new OrderResource($order->load(['items', 'payment', 'invoices', 'creditNotes']));
     }
 
-    public function pay(Request $request, Order $order, StartOrderPayment $start): JsonResponse
+    public function pay(Request $request, Order $order, StartOrderPayment $start, PaymentRedirectUrlValidator $redirectUrls): JsonResponse
     {
         $this->assertOwned($order);
         if (! $request->has('idempotency_key') && $request->headers->has('Idempotency-Key')) {
@@ -90,6 +91,9 @@ final class CheckoutController
             'cancel_url' => ['required', 'url', 'max:500'],
             'idempotency_key' => ['nullable', 'string', 'max:64'],
         ]);
+
+        $data['return_url'] = $redirectUrls->validate($data['return_url']);
+        $data['cancel_url'] = $redirectUrls->validate($data['cancel_url']);
 
         try {
             $attempt = $start->handle(

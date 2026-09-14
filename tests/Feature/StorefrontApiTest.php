@@ -166,6 +166,7 @@ test('api cart persists across requests with the cart token header', function ()
 });
 
 test('api payment forwards the caller idempotency key to the payment attempt', function () {
+    config()->set('agovena.payments.return_url_origins', ['https://example.test']);
     $customer = Customer::factory()->create();
     $order = Order::factory()->create([
         'customer_id' => $customer->id,
@@ -190,4 +191,23 @@ test('api payment forwards the caller idempotency key to the payment attempt', f
 
     expect(PaymentAttempt::query()->where('payment_id', $payment->id)->value('idempotency_key'))
         ->toBe('api-attempt-key-1');
+});
+
+test('api payment rejects an untrusted redirect origin', function () {
+    config()->set('agovena.payments.return_url_origins', ['https://example.test']);
+    $customer = Customer::factory()->create();
+    $order = Order::factory()->create([
+        'customer_id' => $customer->id,
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+    ]);
+    Payment::factory()->create(['order_id' => $order->id, 'method' => 'fake-webhook', 'amount' => 1000]);
+    app(PaymentGatewayRegistry::class)->register(new FakeWebhookGateway);
+    Sanctum::actingAs($customer->user);
+
+    $this->postJson('/api/v1/orders/'.$order->id.'/pay', [
+        'gateway' => 'fake-webhook',
+        'return_url' => 'https://evil.example.test/return',
+        'cancel_url' => 'https://example.test/cancel',
+    ])->assertStatus(422);
 });

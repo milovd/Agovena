@@ -36,6 +36,10 @@ return [
             ? filter_var(env('AGOVENA_DEV_INSTANT_PAY'), FILTER_VALIDATE_BOOLEAN)
             : (env('APP_ENV') === 'local' && filter_var(env('APP_DEBUG', false), FILTER_VALIDATE_BOOLEAN)),
         'pending_attempt_stale_seconds' => (int) env('AGOVENA_PENDING_ATTEMPT_STALE_SECONDS', 900),
+        'return_url_origins' => array_values(array_filter(array_map(
+            static fn (string $origin): string => rtrim(strtolower(trim($origin)), '/'),
+            explode(',', (string) env('AGOVENA_PAYMENT_RETURN_ORIGINS', env('APP_URL', 'http://localhost'))),
+        ))),
     ],
 
     /*
@@ -66,7 +70,9 @@ return [
          */
         'monorepo' => [
             'repository' => env('AGOVENA_PACKAGES_MONOREPO_URL', 'https://github.com/milovd/optional-packages'),
-            'default_ref' => env('AGOVENA_PACKAGES_MONOREPO_REF', 'main'),
+            // Pin the release baseline. Operators can explicitly select a reviewed
+            // immutable ref when updating the optional-packages repository.
+            'default_ref' => env('AGOVENA_PACKAGES_MONOREPO_REF', 'b74f73bc920012f420a28755d8edc694185055d7'),
             'packages' => [
                 'inventory' => ['kind' => 'module', 'path' => 'modules/inventory'],
                 'shipping' => ['kind' => 'module', 'path' => 'modules/shipping'],
