@@ -16,9 +16,21 @@ export async function chooseEssentialCookies(page: Page): Promise<void> {
     }
 }
 
+export async function closeHeaderOverlays(page: Page): Promise<void> {
+    await page.keyboard.press('Escape');
+
+    const regionMenu = page.locator('.store-header__region-menu');
+    if (await regionMenu.count() && await regionMenu.isVisible()) {
+        await page.getByRole('button', { name: 'Region' }).click();
+    }
+
+    await expect(regionMenu).toBeHidden();
+}
+
 export async function addProductToCart(page: Page, slug: string, options: Record<string, string> = {}): Promise<void> {
     await page.goto(`/products/${slug}`);
     await chooseEssentialCookies(page);
+    await closeHeaderOverlays(page);
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeEnabled();
 
     for (const value of Object.values(options)) {
