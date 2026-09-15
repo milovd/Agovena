@@ -18,7 +18,7 @@
         @endphp
         <section
             class="ag-checklist"
-            x-data="{ open: false }"
+            x-data="agDisclosure"
             :class="{ 'ag-checklist--open': open }"
             aria-labelledby="getting-started-heading"
         >
@@ -26,7 +26,7 @@
                 <button
                     type="button"
                     class="ag-checklist__toggle"
-                    @click="open = !open"
+                    @click="toggle()"
                     :aria-expanded="open.toString()"
                     aria-controls="getting-started-items"
                     :aria-label="open ? @js(__('admin.dashboard.getting_started.collapse')) : @js(__('admin.dashboard.getting_started.expand'))"
@@ -90,7 +90,8 @@
                 class="ag-chart-card"
                 wire:key="dashboard-chart-{{ $chartRange }}-{{ $chartType }}"
                 aria-labelledby="dashboard-chart-title"
-                x-data="agChart(@js([
+                x-data="agChart"
+                data-chart-config="{{ e(json_encode([
                     'type' => $chartType,
                     'showLegend' => true,
                     'dualAxis' => true,
@@ -136,7 +137,7 @@
                             'pointHoverBackgroundColor' => 'var(--ag-color-chart-4)',
                         ],
                     ],
-                ]))"
+                ])) }}"
             >
                 <header class="ag-chart-card__header">
                     <div>

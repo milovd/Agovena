@@ -27,16 +27,16 @@
                 <button
                     type="button"
                     class="ag-btn ag-btn--ghost ag-btn--sm"
-                    x-data
-                    @click="if (confirm(@js($uninstallConfirm))) { $wire.uninstallPackage('{{ $manifest->id }}') }"
+                    wire:confirm="{{ $uninstallConfirm }}"
+                    wire:click="uninstallPackage('{{ $manifest->id }}')"
                 >{{ __('admin.packages.actions.uninstall') }}</button>
             @elseif ($row['installed'] && $row['compatible'])
                 <button type="button" class="ag-btn ag-btn--primary ag-btn--sm" wire:click="enable('{{ $manifest->id }}')">{{ __('admin.modules.actions.enable') }}</button>
                 <button
                     type="button"
                     class="ag-btn ag-btn--ghost ag-btn--sm"
-                    x-data
-                    @click="if (confirm(@js($uninstallConfirm))) { $wire.uninstallPackage('{{ $manifest->id }}') }"
+                    wire:confirm="{{ $uninstallConfirm }}"
+                    wire:click="uninstallPackage('{{ $manifest->id }}')"
                 >{{ __('admin.packages.actions.uninstall') }}</button>
             @endif
         @endcan

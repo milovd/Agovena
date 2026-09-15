@@ -15,19 +15,10 @@
         'admin-nav__item--branch' => $node->hasChildren(),
     ])
     @if ($node->hasChildren())
-        x-data="{
-            open: {{ $openByDefault ? 'true' : 'false' }},
-            init() {
-                const key = 'agovena.admin.nav.item.v5.{{ $item->id }}';
-                const stored = localStorage.getItem(key);
-                if ({{ $node->isActive() ? 'true' : 'false' }}) {
-                    this.open = true;
-                } else if (stored === '0') {
-                    this.open = false;
-                }
-                this.$watch('open', (value) => localStorage.setItem(key, value ? '1' : '0'));
-            }
-        }"
+        x-data="agAdminNavGroup"
+        data-nav-key="agovena.admin.nav.item.v5.{{ $item->id }}"
+        data-open="{{ $openByDefault ? 'true' : 'false' }}"
+        data-active="{{ $node->isActive() ? 'true' : 'false' }}"
         :class="{ 'admin-nav__item--open': open }"
     @endif
 >
@@ -50,7 +41,7 @@
             <button
                 type="button"
                 class="admin-nav__toggle"
-                @click="open = !open"
+                @click="toggle()"
                 :aria-expanded="open.toString()"
                 aria-controls="nav-branch-{{ $item->id }}"
             >

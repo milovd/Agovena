@@ -22,10 +22,10 @@
                 @if ($row['lifecycle']->value === 'update_available')
                     <button type="button" class="ag-btn ag-btn--primary ag-btn--sm" wire:click="updatePackage('{{ $manifest->id }}')" wire:key="mod-update-{{ $manifest->id }}">{{ __('admin.packages.actions.update') }}</button>
                 @endif
-                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:key="mod-uninstall-{{ $manifest->id }}" x-data @click="if (confirm(@js(__('admin.packages.uninstall_confirm')))) { $wire.uninstallPackage('{{ $manifest->id }}') }">{{ __('admin.packages.actions.uninstall') }}</button>
+                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:key="mod-uninstall-{{ $manifest->id }}" wire:confirm="{{ __('admin.packages.uninstall_confirm') }}" wire:click="uninstallPackage('{{ $manifest->id }}')">{{ __('admin.packages.actions.uninstall') }}</button>
             @elseif ($row['installed'] && $row['compatible'])
                 <button type="button" class="ag-btn ag-btn--primary ag-btn--sm" wire:click="enable('{{ $manifest->id }}')" wire:key="mod-enable-{{ $manifest->id }}">{{ __('admin.modules.actions.enable') }}</button>
-                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:key="mod-uninstall-off-{{ $manifest->id }}" x-data @click="if (confirm(@js(__('admin.packages.uninstall_confirm')))) { $wire.uninstallPackage('{{ $manifest->id }}') }">{{ __('admin.packages.actions.uninstall') }}</button>
+                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:key="mod-uninstall-off-{{ $manifest->id }}" wire:confirm="{{ __('admin.packages.uninstall_confirm') }}" wire:click="uninstallPackage('{{ $manifest->id }}')">{{ __('admin.packages.actions.uninstall') }}</button>
             @endif
             @if ($row['can_purge'])
                 <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="purgePackage('{{ $manifest->id }}')" wire:confirm="{{ __('admin.packages.purge_confirm') }}" wire:key="mod-purge-{{ $manifest->id }}">{{ __('admin.packages.actions.purge') }}</button>

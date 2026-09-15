@@ -42,13 +42,14 @@
 
         <div
             class="store-account__group"
-            x-data="{ open: true }"
+            x-data="storefrontAccountNav"
+            data-open="true"
             :class="{ 'is-open': open }"
         >
             <button
                 type="button"
                 class="store-account__group-toggle {{ $purchasesActive ? 'is-active' : '' }}"
-                @click="open = !open"
+                @click="toggle()"
                 :aria-expanded="open.toString()"
                 aria-controls="account-nav-purchases"
             >
@@ -94,13 +95,14 @@
         @if ($servicesNav->isNotEmpty())
             <div
                 class="store-account__group"
-                x-data="{ open: true }"
+                x-data="storefrontAccountNav"
+                data-open="true"
                 :class="{ 'is-open': open }"
             >
                 <button
                     type="button"
                     class="store-account__group-toggle {{ $servicesActive ? 'is-active' : '' }}"
-                    @click="open = !open"
+                    @click="toggle()"
                     :aria-expanded="open.toString()"
                     aria-controls="account-nav-services"
                 >
@@ -146,13 +148,14 @@
 
         <div
             class="store-account__group"
-            x-data="{ open: {{ $accountActive ? 'true' : 'false' }} }"
+            x-data="storefrontAccountNav"
+            data-open="{{ $accountActive ? 'true' : 'false' }}"
             :class="{ 'is-open': open }"
         >
             <button
                 type="button"
                 class="store-account__group-toggle {{ $accountActive ? 'is-active' : '' }}"
-                @click="open = !open"
+                @click="toggle()"
                 :aria-expanded="open.toString()"
                 aria-controls="account-nav-account"
             >

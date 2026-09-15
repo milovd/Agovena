@@ -32,77 +32,8 @@
         <div
             class="store-product__gallery"
             @if (count($galleryUrls) > 0)
-                x-data="{
-                    images: {{ \Illuminate\Support\Js::from($galleryUrls) }},
-                    index: 0,
-                    thumbsOverflow: false,
-                    canScrollLeft: false,
-                    canScrollRight: false,
-                    select(i) {
-                        this.index = i;
-                        this.$nextTick(() => {
-                            const thumb = this.$refs.track?.querySelector('[data-index=\'' + this.index + '\']');
-                            thumb?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
-                            this.updateScrollState();
-                        });
-                    },
-                    scrollThumbs(dir) {
-                        const track = this.$refs.track;
-                        if (! track) return;
-                        const styles = getComputedStyle(track);
-                        const gap = parseFloat(styles.columnGap || styles.gap) || 12;
-                        const size = parseFloat(styles.getPropertyValue('--thumb-size')) || 72;
-                        const step = Math.max(size + gap, track.clientWidth * 0.85);
-                        track.scrollBy({ left: dir * step, behavior: 'smooth' });
-                    },
-                    layoutThumbs() {
-                        const track = this.$refs.track;
-                        if (! track) return;
-                        const styles = getComputedStyle(track);
-                        const gap = parseFloat(styles.columnGap || styles.gap) || 12;
-                        const pad = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
-                        const inner = Math.max(0, track.clientWidth - pad);
-                        const count = track.children.length;
-                        const minSize = 64;
-                        const slots = Math.max(1, Math.floor((inner + gap) / (minSize + gap)));
-
-                        if (count > slots && inner > 0) {
-                            const size = (inner - ((slots - 1) * gap)) / slots;
-                            track.style.setProperty('--thumb-size', size + 'px');
-                            track.classList.add('is-fill');
-                        } else {
-                            track.style.removeProperty('--thumb-size');
-                            track.classList.remove('is-fill');
-                        }
-
-                        this.updateScrollState();
-                    },
-                    updateScrollState() {
-                        const track = this.$refs.track;
-                        if (! track) {
-                            this.thumbsOverflow = false;
-                            this.canScrollLeft = false;
-                            this.canScrollRight = false;
-                            return;
-                        }
-                        const max = track.scrollWidth - track.clientWidth;
-                        this.thumbsOverflow = max > 4;
-                        this.canScrollLeft = this.thumbsOverflow && track.scrollLeft > 4;
-                        this.canScrollRight = this.thumbsOverflow && track.scrollLeft < max - 4;
-                    },
-                    init() {
-                        this.$nextTick(() => {
-                            this.layoutThumbs();
-                            const track = this.$refs.track;
-                            if (! track) return;
-                            track.addEventListener('scroll', () => this.updateScrollState(), { passive: true });
-                            window.addEventListener('resize', () => this.layoutThumbs());
-                            if (typeof ResizeObserver !== 'undefined') {
-                                new ResizeObserver(() => this.layoutThumbs()).observe(track);
-                            }
-                        });
-                    }
-                }"
+                x-data="storefrontProductGallery"
+                data-images="{{ e(json_encode($galleryUrls)) }}"
             @endif
         >
             <div class="store-product__media">
@@ -268,15 +199,9 @@
     <section
         class="store-product-panels"
         id="product-tabs"
-        x-data="{
-            tab: (window.location.hash === '#reviews' && {{ $reviewsOn ? 'true' : 'false' }}) ? 'reviews' : '{{ $defaultTab }}',
-            openReviews() {
-                if (! {{ $reviewsOn ? 'true' : 'false' }}) return;
-                this.tab = 'reviews';
-                history.replaceState(null, '', '#reviews');
-                this.$nextTick(() => this.$refs.reviews?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-            }
-        }"
+        x-data="storefrontProductPanels"
+        data-reviews-on="{{ $reviewsOn ? 'true' : 'false' }}"
+        data-default-tab="{{ $defaultTab }}"
         @open-reviews.window="openReviews()"
         @open-reviews="openReviews()"
     >
@@ -289,7 +214,7 @@
                     id="tab-details"
                     :aria-selected="(tab === 'details').toString()"
                     :class="{ 'is-active': tab === 'details' }"
-                    @click="tab = 'details'; history.replaceState(null, '', '#details')"
+                    @click="selectTab('details')"
                 >{{ __('storefront.product.tab_details') }}</button>
                 <button
                     type="button"

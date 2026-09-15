@@ -148,14 +148,14 @@
 
                                     <div
                                         class="ag-menu"
-                                        x-data="{ open: false }"
-                                        @keydown.escape.window="open = false"
-                                        @click.outside="open = false"
+                                        x-data="agDisclosure"
+                                        @keydown.escape.window="close()"
+                                        @click.outside="close()"
                                     >
                                         <button
                                             type="button"
                                             class="ag-icon-btn"
-                                            @click="open = !open"
+                                            @click="toggle()"
                                             :aria-expanded="open.toString()"
                                             aria-haspopup="menu"
                                             title="{{ __('admin.products.actions.more') }}"

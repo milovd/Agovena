@@ -19,22 +19,6 @@
                 document.documentElement.setAttribute('data-theme', 'light');
             }
         })();
-
-        window.agovenaAdminShell = function () {
-            return {
-                navOpen: false,
-                theme: document.documentElement.getAttribute('data-theme') || 'light',
-                applyTheme: function (next) {
-                    this.theme = next === 'dark' ? 'dark' : 'light';
-                    document.documentElement.setAttribute('data-theme', this.theme);
-                    localStorage.setItem('agovena.theme', this.theme);
-                    window.dispatchEvent(new CustomEvent('agovena-theme-changed', { detail: { theme: this.theme } }));
-                },
-                toggleTheme: function () {
-                    this.applyTheme(this.theme === 'dark' ? 'light' : 'dark');
-                }
-            };
-        };
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -53,7 +37,7 @@
     @vite($adminAssets)
     @livewireStyles
 </head>
-<body class="admin-app" x-data="agovenaAdminShell()" @keydown.escape.window="navOpen = false">
+<body class="admin-app" x-data="agAdminShell" @keydown.escape.window="closeNav()">
     <a class="admin-skip-link" href="#main">{{ __('admin.skip_to_content') }}</a>
 
     <div
@@ -61,7 +45,7 @@
         :class="{ 'admin-shell--nav-open': navOpen }"
         wire:loading.class="admin-shell--loading"
     >
-        <div class="admin-shell__backdrop" x-show="navOpen" x-cloak @click="navOpen = false"></div>
+        <div class="admin-shell__backdrop" x-show="navOpen" x-cloak @click="closeNav()"></div>
 
         <aside class="admin-sidebar" id="admin-sidebar" aria-label="{{ __('admin.sidebar_aria') }}">
             <div class="admin-sidebar__brand">
@@ -75,7 +59,7 @@
                 <button
                     type="button"
                     class="admin-sidebar__close"
-                    @click="navOpen = false"
+                    @click="closeNav()"
                     aria-controls="admin-sidebar"
                 >
                     <x-ag.icon name="x" :size="20" />
@@ -147,9 +131,9 @@
                     </button>
                     <div
                         class="ag-dropdown admin-account-dropdown"
-                        x-data="{ open: false }"
-                        @keydown.escape.window="open = false"
-                        @click.outside="open = false"
+                        x-data="agAdminAccount"
+                        @keydown.escape.window="close()"
+                        @click.outside="close()"
                     >
                         @php
                             $accountName = auth()->user()?->name ?? __('admin.account');
@@ -166,7 +150,7 @@
                         <button
                             type="button"
                             class="admin-account-trigger"
-                            @click="open = !open"
+                            @click="toggle()"
                             :aria-expanded="open.toString()"
                             aria-haspopup="menu"
                             aria-label="{{ __('admin.account_menu') }}"
@@ -179,7 +163,7 @@
                             x-show="open"
                             x-cloak
                             role="menu"
-                            @keydown.escape.stop="open = false"
+                            @keydown.escape.stop="close()"
                         >
                             <div class="admin-account-menu__identity">
                                 <span class="admin-account-menu__avatar" aria-hidden="true">{{ $accountInitials }}</span>
@@ -214,7 +198,7 @@
                     <button
                         type="button"
                         class="admin-topbar__menu ag-btn ag-btn--ghost"
-                        @click="navOpen = !navOpen"
+                        @click="toggleNav()"
                         :aria-expanded="navOpen.toString()"
                         aria-controls="admin-sidebar"
                     >

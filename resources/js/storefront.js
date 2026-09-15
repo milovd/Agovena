@@ -1,6 +1,49 @@
 document.addEventListener('alpine:init', () => {
+    window.Alpine.data('storefrontHero', () => ({
+        init() {
+            requestAnimationFrame(() => {
+                this.$root.classList.add('is-ready');
+            });
+        },
+    }));
+
+    window.Alpine.data('storefrontFileUpload', () => ({
+        fileLabel: '',
+        onChange(event) {
+            const input = event.target;
+            if (!(input instanceof HTMLInputElement) || input.type !== 'file') return;
+            const files = input.files;
+            if (!files || files.length === 0) {
+                this.fileLabel = '';
+                return;
+            }
+            this.fileLabel = files.length === 1
+                ? files[0].name
+                : this.$root.dataset.filesSelectedLabel.replace(':count', String(files.length));
+        },
+    }));
+
+    window.Alpine.data('storefrontCheckoutSummary', () => ({
+        open: false,
+        toggle() {
+            this.open = !this.open;
+        },
+    }));
+
+    window.Alpine.data('storefrontReferral', () => ({
+        copied: false,
+        async copy() {
+            await navigator.clipboard.writeText(this.$refs.link.value);
+            this.copied = true;
+            window.setTimeout(() => { this.copied = false; }, 2000);
+        },
+    }));
+
     window.Alpine.data('storefrontDisclosure', () => ({
         open: false,
+        init() {
+            this.open = this.$root.dataset.open === 'true';
+        },
         toggle() {
             this.open = !this.open;
         },
@@ -169,6 +212,208 @@ document.addEventListener('alpine:init', () => {
             this.suggestItems = [];
             this.suggestOpen = false;
             this.suggestLoading = false;
+        },
+    }));
+    window.Alpine.data('storefrontProductGallery', () => ({
+        images: [],
+        index: 0,
+        thumbsOverflow: false,
+        canScrollLeft: false,
+        canScrollRight: false,
+        select(index) {
+            this.index = index;
+            this.$nextTick(() => {
+                const thumb = this.$refs.track?.querySelector(`[data-index='${this.index}']`);
+                thumb?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
+                this.updateScrollState();
+            });
+        },
+        scrollThumbs(direction) {
+            const track = this.$refs.track;
+            if (!track) return;
+            const styles = getComputedStyle(track);
+            const gap = parseFloat(styles.columnGap || styles.gap) || 12;
+            const size = parseFloat(styles.getPropertyValue('--thumb-size')) || 72;
+            const step = Math.max(size + gap, track.clientWidth * 0.85);
+            track.scrollBy({ left: direction * step, behavior: 'smooth' });
+        },
+        layoutThumbs() {
+            const track = this.$refs.track;
+            if (!track) return;
+            const styles = getComputedStyle(track);
+            const gap = parseFloat(styles.columnGap || styles.gap) || 12;
+            const pad = (parseFloat(styles.paddingLeft) || 0) + (parseFloat(styles.paddingRight) || 0);
+            const inner = Math.max(0, track.clientWidth - pad);
+            const count = track.children.length;
+            const slots = Math.max(1, Math.floor((inner + gap) / (64 + gap)));
+            if (count > slots && inner > 0) {
+                const size = (inner - ((slots - 1) * gap)) / slots;
+                track.style.setProperty('--thumb-size', `${size}px`);
+                track.classList.add('is-fill');
+            } else {
+                track.style.removeProperty('--thumb-size');
+                track.classList.remove('is-fill');
+            }
+            this.updateScrollState();
+        },
+        updateScrollState() {
+            const track = this.$refs.track;
+            if (!track) {
+                this.thumbsOverflow = false;
+                this.canScrollLeft = false;
+                this.canScrollRight = false;
+                return;
+            }
+            const max = track.scrollWidth - track.clientWidth;
+            this.thumbsOverflow = max > 4;
+            this.canScrollLeft = this.thumbsOverflow && track.scrollLeft > 4;
+            this.canScrollRight = this.thumbsOverflow && track.scrollLeft < max - 4;
+        },
+        init() {
+            this.images = JSON.parse(this.$root.dataset.images || '[]');
+            this.$nextTick(() => {
+                this.layoutThumbs();
+                const track = this.$refs.track;
+                if (!track) return;
+                track.addEventListener('scroll', () => this.updateScrollState(), { passive: true });
+                window.addEventListener('resize', () => this.layoutThumbs());
+                if (typeof ResizeObserver !== 'undefined') {
+                    new ResizeObserver(() => this.layoutThumbs()).observe(track);
+                }
+            });
+        },
+    }));
+
+    window.Alpine.data('storefrontProductPanels', () => ({
+        tab: 'details',
+        reviewsOn: false,
+        init() {
+            this.reviewsOn = this.$root.dataset.reviewsOn === 'true';
+            this.tab = window.location.hash === '#reviews' && this.reviewsOn
+                ? 'reviews'
+                : this.$root.dataset.defaultTab;
+        },
+        openReviews() {
+            if (!this.reviewsOn) return;
+            this.tab = 'reviews';
+            history.replaceState(null, '', '#reviews');
+            this.$nextTick(() => this.$refs.reviews?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+        },
+        selectTab(tab) {
+            this.tab = tab;
+            history.replaceState(null, '', `#${tab}`);
+        },
+    }));
+
+    window.Alpine.data('storefrontPushInstaller', () => ({
+        configured: false,
+        configUrl: '',
+        subscribeUrl: '',
+        unsubscribeUrl: '',
+        messages: {},
+        supported: false,
+        subscribed: false,
+        busy: false,
+        status: '',
+        registration: null,
+        init() {
+            this.configured = this.$root.dataset.configured === 'true';
+            this.configUrl = this.$root.dataset.configUrl || '';
+            this.subscribeUrl = this.$root.dataset.subscribeUrl || '';
+            this.unsubscribeUrl = this.$root.dataset.unsubscribeUrl || '';
+            this.messages = JSON.parse(this.$root.dataset.messages || '{}');
+            this.supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+            if (!this.supported) {
+                this.status = this.messages.unsupported;
+                return;
+            }
+            if (!this.configured) this.status = this.messages.notConfigured;
+            this.register();
+        },
+        async register() {
+            try {
+                this.registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                const subscription = await this.registration.pushManager.getSubscription();
+                this.subscribed = Boolean(subscription);
+            } catch {
+                this.status = this.messages.failed;
+            }
+        },
+        async install() {
+            if (!this.supported || !this.configured) return;
+            this.busy = true;
+            try {
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    this.status = this.messages.permissionDenied;
+                    return;
+                }
+                const configResponse = await fetch(this.configUrl, { headers: { Accept: 'application/json' } });
+                const config = await configResponse.json();
+                if (!config.configured || !config.publicKey) {
+                    this.configured = false;
+                    this.status = this.messages.notConfigured;
+                    return;
+                }
+                const subscription = await this.registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: this.decodeKey(config.publicKey),
+                });
+                const response = await fetch(this.subscribeUrl, {
+                    method: 'POST',
+                    headers: this.headers(),
+                    body: JSON.stringify(subscription.toJSON()),
+                });
+                if (!response.ok) throw new Error('subscription_failed');
+                this.subscribed = true;
+                this.status = this.messages.installed;
+            } catch {
+                this.status = this.messages.failed;
+            } finally {
+                this.busy = false;
+            }
+        },
+        async remove() {
+            this.busy = true;
+            try {
+                const subscription = await this.registration?.pushManager.getSubscription();
+                if (subscription) {
+                    await fetch(this.unsubscribeUrl, {
+                        method: 'DELETE',
+                        headers: this.headers(),
+                        body: JSON.stringify({ endpoint: subscription.endpoint }),
+                    });
+                    await subscription.unsubscribe();
+                }
+                this.subscribed = false;
+                this.status = this.messages.removed;
+            } catch {
+                this.status = this.messages.failed;
+            } finally {
+                this.busy = false;
+            }
+        },
+        headers() {
+            return {
+                Accept: 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            };
+        },
+        decodeKey(value) {
+            const padding = '='.repeat((4 - (value.length % 4)) % 4);
+            const normalized = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+            const raw = window.atob(normalized);
+            return Uint8Array.from(raw, (character) => character.charCodeAt(0));
+        },
+    }));
+    window.Alpine.data('storefrontAccountNav', () => ({
+        open: false,
+        init() {
+            this.open = this.$root.dataset.open === 'true';
+        },
+        toggle() {
+            this.open = !this.open;
         },
     }));
 });

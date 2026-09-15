@@ -18,14 +18,9 @@
 
 <div
     class="store-file-upload {{ $disabled ? 'is-disabled' : '' }}"
-    x-data="{ fileLabel: '' }"
-    @change="
-        const input = $event.target;
-        if (!(input instanceof HTMLInputElement) || input.type !== 'file') return;
-        const files = input.files;
-        if (!files || files.length === 0) { fileLabel = ''; return; }
-        fileLabel = files.length === 1 ? files[0].name : @js(__('common.files_selected', ['count' => ':count'])).replace(':count', String(files.length));
-    "
+    data-files-selected-label="{{ __('common.files_selected', ['count' => ':count']) }}"
+    x-data="storefrontFileUpload"
+    @change="onChange($event)"
 >
     @if ($label)
         <label class="store-label" for="{{ $id }}">{{ $label }}</label>

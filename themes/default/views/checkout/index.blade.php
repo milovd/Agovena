@@ -320,13 +320,13 @@
         <aside
             class="store-summary store-checkout__aside"
             aria-label="{{ __('storefront.cart.summary_aria') }}"
-            x-data="{ open: false }"
+            x-data="storefrontCheckoutSummary"
             :class="{ 'is-open': open }"
         >
             <button
                 type="button"
                 class="store-checkout__summary-toggle"
-                @click="open = !open"
+                @click="toggle()"
                 :aria-expanded="open.toString()"
             >
                 <span>{{ __('storefront.checkout.order_summary') }}</span>

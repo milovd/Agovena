@@ -28,11 +28,11 @@
 <div class="store-account-menu__divider" role="separator"></div>
 
 <div class="store-account-menu__section" role="none">
-    <a class="store-account-menu__item" role="menuitem" href="{{ route('customer.account') }}" @click="open = false">
+    <a class="store-account-menu__item" role="menuitem" href="{{ route('customer.account') }}" @click="close()">
         @include('theme::partials.icon', ['name' => 'layout-dashboard', 'size' => 18])
         <span>{{ __('storefront.nav.dashboard') }}</span>
     </a>
-    <a class="store-account-menu__item" role="menuitem" href="{{ route('customer.profile') }}" @click="open = false">
+    <a class="store-account-menu__item" role="menuitem" href="{{ route('customer.profile') }}" @click="close()">
         @include('theme::partials.icon', ['name' => 'user', 'size' => 18])
         <span>{{ __('storefront.nav.account') }}</span>
     </a>
@@ -40,7 +40,7 @@
         class="store-account-menu__item store-account-menu__item--notifications"
         role="menuitem"
         href="{{ route('customer.notifications') }}"
-        @click="open = false"
+        @click="close()"
         aria-label="{{ __('customer.notifications.title') }}{{ $notificationUnreadCount > 0 ? ', '.trans_choice('customer.notifications.unread_count', $notificationUnreadCount, ['count' => $notificationUnreadCount]) : '' }}"
     >
         @include('theme::partials.icon', ['name' => 'bell', 'size' => 18, 'class' => 'store-icon store-account-menu__notification-icon'])
@@ -56,7 +56,7 @@
 @if ($canOpenAdmin)
     <div class="store-account-menu__divider" role="separator"></div>
     <div class="store-account-menu__section" role="none">
-        <a class="store-account-menu__item store-account-menu__item--admin" role="menuitem" href="{{ route('admin.dashboard') }}" @click="open = false">
+        <a class="store-account-menu__item store-account-menu__item--admin" role="menuitem" href="{{ route('admin.dashboard') }}" @click="close()">
             @include('theme::partials.icon', ['name' => 'settings', 'size' => 18])
             <span>{{ __('storefront.nav.admin') }}</span>
         </a>
@@ -66,7 +66,7 @@
 <div class="store-account-menu__divider" role="separator"></div>
 
 <div class="store-account-menu__section" role="none">
-    <form method="POST" action="{{ route('customer.logout') }}" class="store-account-menu__logout-form" @submit="open = false">
+    <form method="POST" action="{{ route('customer.logout') }}" class="store-account-menu__logout-form" @submit="close()">
         @csrf
         <button type="submit" class="store-account-menu__item store-account-menu__item--danger" role="menuitem">
             @include('theme::partials.icon', ['name' => 'log-out', 'size' => 18])

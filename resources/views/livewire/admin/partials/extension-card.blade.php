@@ -54,8 +54,8 @@
                     type="button"
                     class="ag-btn ag-btn--ghost ag-btn--sm"
                     wire:key="ext-uninstall-{{ $manifest->id }}"
-                    x-data
-                    @click="if (confirm(@js(__('admin.packages.uninstall_confirm')))) { $wire.uninstallPackage('{{ $manifest->id }}') }"
+                    wire:confirm="{{ __('admin.packages.uninstall_confirm') }}"
+                    wire:click="uninstallPackage('{{ $manifest->id }}')"
                 >
                     {{ __('admin.packages.actions.uninstall') }}
                 </button>
@@ -67,8 +67,8 @@
                     type="button"
                     class="ag-btn ag-btn--ghost ag-btn--sm"
                     wire:key="ext-uninstall-disabled-{{ $manifest->id }}"
-                    x-data
-                    @click="if (confirm(@js(__('admin.packages.uninstall_confirm')))) { $wire.uninstallPackage('{{ $manifest->id }}') }"
+                    wire:confirm="{{ __('admin.packages.uninstall_confirm') }}"
+                    wire:click="uninstallPackage('{{ $manifest->id }}')"
                 >
                     {{ __('admin.packages.actions.uninstall') }}
                 </button>

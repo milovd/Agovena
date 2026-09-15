@@ -1,4 +1,4 @@
-<div class="admin-page admin-page--form" x-data="{ activeTab: 'details' }">
+<div class="admin-page admin-page--form" x-data="agProductTabs">
     <x-ag.page-header
         :heading="$mode === 'create' ? __('admin.products.form.create_title') : __('admin.products.form.edit_title')"
         :lede="$mode === 'create' ? __('admin.products.form.create_lede') : __('admin.products.form.edit_lede')"
@@ -56,17 +56,17 @@
                 role="tab"
                 :aria-selected="(activeTab === '{{ $tab }}').toString()"
                 aria-controls="product-tab-{{ $tab }}"
-                @click="activeTab = '{{ $tab }}'"
+                @click="selectTab('{{ $tab }}')"
             >{{ __('admin.products.tabs.'.$tab) }}</button>
         @endforeach
         @if ($mode === 'edit')
-            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'media' }" role="tab" :aria-selected="(activeTab === 'media').toString()" aria-controls="product-tab-media" @click="activeTab = 'media'">{{ __('admin.products.tabs.media') }}</button>
+            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'media' }" role="tab" :aria-selected="(activeTab === 'media').toString()" aria-controls="product-tab-media" @click="selectTab('media')">{{ __('admin.products.tabs.media') }}</button>
         @endif
         @if ($availableCapabilityKeys !== [])
-            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'automation' }" role="tab" :aria-selected="(activeTab === 'automation').toString()" aria-controls="product-tab-automation" @click="activeTab = 'automation'">{{ __('admin.products.tabs.automation') }}</button>
+            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'automation' }" role="tab" :aria-selected="(activeTab === 'automation').toString()" aria-controls="product-tab-automation" @click="selectTab('automation')">{{ __('admin.products.tabs.automation') }}</button>
         @endif
         @if ($mode === 'edit')
-            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'options' }" role="tab" :aria-selected="(activeTab === 'options').toString()" aria-controls="product-tab-options" @click="activeTab = 'options'">{{ __('admin.products.tabs.options') }}</button>
+            <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'options' }" role="tab" :aria-selected="(activeTab === 'options').toString()" aria-controls="product-tab-options" @click="selectTab('options')">{{ __('admin.products.tabs.options') }}</button>
             @foreach ($productTabs ?? [] as $productTab)
                 <button
                     type="button"
@@ -75,7 +75,7 @@
                     role="tab"
                     :aria-selected="(activeTab === '{{ $productTab->id }}').toString()"
                     aria-controls="product-tab-{{ $productTab->id }}"
-                    @click="activeTab = '{{ $productTab->id }}'"
+                    @click="selectTab('{{ $productTab->id }}')"
                 >{{ __($productTab->label) }}</button>
             @endforeach
         @endif
@@ -344,14 +344,14 @@
                                     </div>
                                     <div
                                         class="ag-menu"
-                                        x-data="{ open: false }"
-                                        @keydown.escape.window="open = false"
-                                        @click.outside="open = false"
+                                        x-data="agDisclosure"
+                                        @keydown.escape.window="close()"
+                                        @click.outside="close()"
                                     >
                                         <button
                                             type="button"
                                             class="ag-icon-btn"
-                                            @click="open = !open"
+                                            @click="toggle()"
                                             :aria-expanded="open.toString()"
                                             aria-haspopup="menu"
                                             title="{{ __('admin.products.form.photo_actions') }}"

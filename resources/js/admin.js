@@ -45,8 +45,13 @@ document.addEventListener('alpine:init', () => {
         chart: null,
         themeListener: null,
         init() {
-            if (! this.$refs.canvas) {
+            if (!this.$refs.canvas) {
                 return;
+            }
+
+            if (!config) {
+                const configScript = this.$root.querySelector('[data-chart-config]');
+                config = configScript ? JSON.parse(configScript.textContent || '{}') : {};
             }
 
             this.renderChart();
@@ -227,6 +232,85 @@ document.addEventListener('alpine:init', () => {
             }
             this.chart?.destroy();
             this.chart = null;
+        },
+    }));
+
+    Alpine.data('agAdminNavGroup', () => ({
+        open: false,
+        init() {
+            this.open = this.$root.dataset.open === 'true';
+            const key = this.$root.dataset.navKey;
+            const active = this.$root.dataset.active === 'true';
+            const stored = key ? localStorage.getItem(key) : null;
+            if (active) this.open = true;
+            else if (stored === '0') this.open = false;
+            if (key) this.$watch('open', (value) => localStorage.setItem(key, value ? '1' : '0'));
+        },
+        toggle() {
+            this.open = !this.open;
+        },
+    }));
+
+    Alpine.data('agAdminShell', () => ({
+        navOpen: false,
+        theme: document.documentElement.getAttribute('data-theme') || 'light',
+        applyTheme(next) {
+            this.theme = next === 'dark' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', this.theme);
+            localStorage.setItem('agovena.theme', this.theme);
+            window.dispatchEvent(new CustomEvent('agovena-theme-changed', { detail: { theme: this.theme } }));
+        },
+        toggleTheme() {
+            this.applyTheme(this.theme === 'dark' ? 'light' : 'dark');
+        },
+        toggleNav() {
+            this.navOpen = !this.navOpen;
+        },
+        closeNav() {
+            this.navOpen = false;
+        },
+    }));
+
+    Alpine.data('agAdminAccount', () => ({
+        open: false,
+        toggle() {
+            this.open = !this.open;
+        },
+        close() {
+            this.open = false;
+        },
+    }));
+
+    Alpine.data('agDisclosure', () => ({
+        open: false,
+        toggle() {
+            this.open = !this.open;
+        },
+        close() {
+            this.open = false;
+        },
+    }));
+
+    Alpine.data('agProductTabs', () => ({
+        activeTab: 'details',
+        selectTab(tab) {
+            this.activeTab = tab;
+        },
+    }));
+
+    Alpine.data('agFileUpload', () => ({
+        fileLabel: '',
+        onChange(event) {
+            const input = event.target;
+            if (!(input instanceof HTMLInputElement) || input.type !== 'file') return;
+            const files = input.files;
+            if (!files || files.length === 0) {
+                this.fileLabel = '';
+                return;
+            }
+            this.fileLabel = files.length === 1
+                ? files[0].name
+                : this.$root.dataset.filesSelectedLabel.replace(':count', String(files.length));
         },
     }));
 });

@@ -18,9 +18,7 @@
 <section
     class="store-hero"
     aria-labelledby="hero-heading"
-    x-data="{ ready: false }"
-    x-init="requestAnimationFrame(() => ready = true)"
-    :class="{ 'is-ready': ready }"
+    x-data="storefrontHero"
 >
     <div class="store-hero__stage">
         <div class="store-hero__copy">

@@ -26,14 +26,9 @@
 
 <div
     class="ag-file-upload {{ $disabled ? 'is-disabled' : '' }}"
-    x-data="{ fileLabel: '' }"
-    @change="
-        const input = $event.target;
-        if (!(input instanceof HTMLInputElement) || input.type !== 'file') return;
-        const files = input.files;
-        if (!files || files.length === 0) { fileLabel = ''; return; }
-        fileLabel = files.length === 1 ? files[0].name : @js(__('common.files_selected', ['count' => ':count'])).replace(':count', String(files.length));
-    "
+    data-files-selected-label="{{ __('common.files_selected', ['count' => ':count']) }}"
+    x-data="agFileUpload"
+    @change="onChange($event)"
 >
     @if ($label)
         <label class="ag-field__label" for="{{ $id }}">{{ $label }}</label>

@@ -7,7 +7,7 @@
         <article
             class="ag-setup-board__item ag-setup-board__item--installed"
             wire:key="installed-preset-{{ $preset->id }}"
-            x-data="{ open: false }"
+            x-data="agDisclosure"
             x-bind:class="open ? 'is-open' : ''"
         >
             <div class="ag-setup-board__header">
@@ -31,7 +31,7 @@
                         <button
                             type="button"
                             class="ag-setup-board__expand"
-                            @click="open = ! open"
+                            @click="toggle()"
                             :aria-expanded="open.toString()"
                         >
                             <span>{{ __('admin.modules.view_modules', ['count' => $moduleCount]) }}</span>
@@ -54,8 +54,8 @@
                         <button
                             type="button"
                             class="ag-btn ag-btn--ghost ag-btn--sm"
-                            x-data
-                            @click="if (confirm(@js($row['uninstallConfirm']))) { $wire.uninstallPreset('{{ $preset->id }}') }"
+                            wire:confirm="{{ $row['uninstallConfirm'] }}"
+                            wire:click="uninstallPreset('{{ $preset->id }}')"
                             wire:loading.attr="disabled"
                             wire:target="uninstallPreset"
                         >{{ __('admin.modules.uninstall_setup') }}</button>
@@ -97,8 +97,8 @@
                             <button
                                 type="button"
                                 class="ag-btn ag-btn--ghost ag-btn--sm"
-                                x-data
-                                @click="if (confirm(@js($customUninstallConfirm))) { $wire.uninstallPreset('custom') }"
+                                wire:confirm="{{ $customUninstallConfirm }}"
+                                wire:click="uninstallPreset('custom')"
                                 wire:loading.attr="disabled"
                                 wire:target="uninstallPreset"
                             >{{ __('admin.modules.uninstall_setup') }}</button>

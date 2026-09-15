@@ -22,7 +22,7 @@
                 <article
                     class="ag-setup-board__item"
                     wire:key="module-preset-{{ $preset->id }}"
-                    x-data="{ open: false }"
+                    x-data="agDisclosure"
                     x-bind:class="open ? 'is-open' : ''"
                 >
                     <div class="ag-setup-board__header">
@@ -40,7 +40,7 @@
                                 <button
                                     type="button"
                                     class="ag-setup-board__expand"
-                                    @click="open = ! open"
+                                    @click="toggle()"
                                     :aria-expanded="open.toString()"
                                 >
                                     <span>{{ __('admin.modules.view_modules', ['count' => $moduleCount]) }}</span>
@@ -85,7 +85,7 @@
                 <article
                     class="ag-setup-board__item ag-setup-board__item--custom-available"
                     wire:key="module-preset-custom-available"
-                    x-data="{ open: false }"
+                    x-data="agDisclosure"
                     x-bind:class="open ? 'is-open' : ''"
                 >
                     <div class="ag-setup-board__header">
@@ -103,7 +103,7 @@
                                 <button
                                     type="button"
                                     class="ag-setup-board__expand"
-                                    @click="open = ! open"
+                                    @click="toggle()"
                                     :aria-expanded="open.toString()"
                                 >
                                     <span>{{ __('admin.modules.view_modules', ['count' => $customModuleCount]) }}</span>

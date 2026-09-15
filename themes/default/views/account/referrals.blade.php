@@ -42,7 +42,7 @@
         </section>
 
         @if ($referralLink !== null || $referralsEnabled)
-            <section class="store-referral-link" x-data="{ copied: false }" aria-labelledby="referral-link-heading">
+            <section class="store-referral-link" x-data="storefrontReferral" aria-labelledby="referral-link-heading">
                 @if ($referralLink !== null)
                     <div class="store-referral-link__copy">
                         <p class="store-account-panel__eyebrow">{{ __('customer.referrals.share_eyebrow') }}</p>
@@ -55,7 +55,7 @@
                         <button
                             type="button"
                             class="store-btn store-btn--secondary"
-                            @click="navigator.clipboard.writeText($refs.link.value).then(() => { copied = true; setTimeout(() => copied = false, 1800) })"
+                            @click="copy()"
                             :aria-label="copied ? '{{ __('customer.referrals.copied') }}' : '{{ __('customer.referrals.copy_link') }}'"
                         >
                             <x-ag.icon name="file-text" :size="16" aria-hidden="true" />

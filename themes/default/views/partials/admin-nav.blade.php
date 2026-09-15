@@ -23,19 +23,10 @@
     <div
         class="admin-nav__section"
         @if (! $isOverview)
-            x-data="{
-                open: true,
-                init() {
-                    const key = 'agovena.admin.nav.v6.{{ $groupSlug }}';
-                    const stored = localStorage.getItem(key);
-                    if ({{ $groupHasActive ? 'true' : 'false' }}) {
-                        this.open = true;
-                    } else if (stored === '0') {
-                        this.open = false;
-                    }
-                    this.$watch('open', (value) => localStorage.setItem(key, value ? '1' : '0'));
-                }
-            }"
+            x-data="agAdminNavGroup"
+            data-nav-key="agovena.admin.nav.v6.{{ $groupSlug }}"
+            data-open="true"
+            data-active="{{ $groupHasActive ? 'true' : 'false' }}"
             :class="{ 'admin-nav__section--collapsed': !open }"
         @endif
     >
@@ -46,7 +37,7 @@
                 type="button"
                 class="admin-nav__group"
                 id="nav-group-{{ $groupSlug }}"
-                @click="open = !open"
+                @click="toggle()"
                 :aria-expanded="open.toString()"
                 aria-controls="nav-group-panel-{{ $groupSlug }}"
             >

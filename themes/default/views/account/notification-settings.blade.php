@@ -24,21 +24,19 @@
             </div>
             <div
                 class="store-notification-push__controls"
-                x-data="notificationPushInstaller({
-                    configured: @js($pushConfigured),
-                    configUrl: @js(route('customer.notifications.push-config')),
-                    subscribeUrl: @js(route('customer.notifications.push-subscription')),
-                    unsubscribeUrl: @js(route('customer.notifications.push-subscription')),
-                    messages: {
-                        unsupported: @js(__('customer.notifications.push_unsupported')),
-                        notConfigured: @js(__('customer.notifications.push_not_configured')),
-                        permissionDenied: @js(__('customer.notifications.push_permission_denied')),
-                        installed: @js(__('customer.notifications.push_installed')),
-                        removed: @js(__('customer.notifications.push_removed')),
-                        failed: @js(__('customer.notifications.push_failed')),
-                    },
-                })"
-                x-init="init()"
+                x-data="storefrontPushInstaller"
+                data-configured="{{ $pushConfigured ? 'true' : 'false' }}"
+                data-config-url="{{ e(route('customer.notifications.push-config')) }}"
+                data-subscribe-url="{{ e(route('customer.notifications.push-subscription')) }}"
+                data-unsubscribe-url="{{ e(route('customer.notifications.push-subscription')) }}"
+                data-messages="{{ e(json_encode([
+                    'unsupported' => __('customer.notifications.push_unsupported'),
+                    'notConfigured' => __('customer.notifications.push_not_configured'),
+                    'permissionDenied' => __('customer.notifications.push_permission_denied'),
+                    'installed' => __('customer.notifications.push_installed'),
+                    'removed' => __('customer.notifications.push_removed'),
+                    'failed' => __('customer.notifications.push_failed'),
+                ])) }}"
             >
                 <p class="store-notification-push__status" role="status" x-text="status"></p>
                 <button
@@ -117,116 +115,3 @@
         </form>
     </section>
 </div>
-
-@push('scripts')
-<script>
-    function notificationPushInstaller(options) {
-        return {
-            configured: options.configured,
-            configUrl: options.configUrl,
-            subscribeUrl: options.subscribeUrl,
-            unsubscribeUrl: options.unsubscribeUrl,
-            messages: options.messages,
-            supported: false,
-            subscribed: false,
-            busy: false,
-            status: '',
-            registration: null,
-            async init() {
-                this.supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-                if (!this.supported) {
-                    this.status = this.messages.unsupported;
-                    return;
-                }
-
-                if (!this.configured) {
-                    this.status = this.messages.notConfigured;
-                }
-
-                try {
-                    this.registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
-                    const subscription = await this.registration.pushManager.getSubscription();
-                    this.subscribed = Boolean(subscription);
-                } catch (error) {
-                    this.status = this.messages.failed;
-                }
-            },
-            async install() {
-                if (!this.supported || !this.configured) {
-                    return;
-                }
-
-                this.busy = true;
-                try {
-                    const permission = await Notification.requestPermission();
-                    if (permission !== 'granted') {
-                        this.status = this.messages.permissionDenied;
-                        return;
-                    }
-
-                    const configResponse = await fetch(this.configUrl, { headers: { Accept: 'application/json' } });
-                    const config = await configResponse.json();
-                    if (!config.configured || !config.publicKey) {
-                        this.configured = false;
-                        this.status = this.messages.notConfigured;
-                        return;
-                    }
-
-                    const subscription = await this.registration.pushManager.subscribe({
-                        userVisibleOnly: true,
-                        applicationServerKey: this.decodeKey(config.publicKey),
-                    });
-                    const response = await fetch(this.subscribeUrl, {
-                        method: 'POST',
-                        headers: this.headers(),
-                        body: JSON.stringify(subscription.toJSON()),
-                    });
-                    if (!response.ok) {
-                        throw new Error('subscription_failed');
-                    }
-
-                    this.subscribed = true;
-                    this.status = this.messages.installed;
-                } catch (error) {
-                    this.status = this.messages.failed;
-                } finally {
-                    this.busy = false;
-                }
-            },
-            async remove() {
-                this.busy = true;
-                try {
-                    const subscription = await this.registration?.pushManager.getSubscription();
-                    if (subscription) {
-                        await fetch(this.unsubscribeUrl, {
-                            method: 'DELETE',
-                            headers: this.headers(),
-                            body: JSON.stringify({ endpoint: subscription.endpoint }),
-                        });
-                        await subscription.unsubscribe();
-                    }
-                    this.subscribed = false;
-                    this.status = this.messages.removed;
-                } catch (error) {
-                    this.status = this.messages.failed;
-                } finally {
-                    this.busy = false;
-                }
-            },
-            headers() {
-                return {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                };
-            },
-            decodeKey(value) {
-                const padding = '='.repeat((4 - (value.length % 4)) % 4);
-                const normalized = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
-                const raw = window.atob(normalized);
-                return Uint8Array.from(raw, (character) => character.charCodeAt(0));
-            },
-        };
-    }
-</script>
-@endpush
