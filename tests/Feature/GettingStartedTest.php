@@ -18,7 +18,7 @@ test('dashboard shows a dismissible getting started checklist', function () {
         ->test(Dashboard::class)
         ->assertSee(__('admin.dashboard.getting_started.title'))
         ->assertSee('ag-checklist__toggle', false)
-        ->assertSee('x-data="{ open: false }"', false)
+        ->assertSee('x-data="agDisclosure"', false)
         ->assertSee('width="20"', false)
         ->assertSee(__('admin.dashboard.getting_started.product'))
         ->call('dismissGettingStarted')

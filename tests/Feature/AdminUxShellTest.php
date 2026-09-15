@@ -242,7 +242,8 @@ test('admin navigation groups are collapsible and fulfillment icons are distinct
         ->getContent();
 
     expect($html)->toContain('agovena.admin.nav.v6.')
-        ->and($html)->toContain('open: true');
+        ->and($html)->toContain('x-data="agAdminNavGroup"')
+        ->and($html)->toContain('data-open="true"');
 });
 
 test('admin product pagination uses sized icons not unbounded svg chevrons', function () {
