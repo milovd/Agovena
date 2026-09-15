@@ -19,9 +19,9 @@ export async function chooseEssentialCookies(page: Page): Promise<void> {
 export async function closeHeaderOverlays(page: Page): Promise<void> {
     await page.keyboard.press('Escape');
 
-    const regionMenu = page.locator('.store-header__region-menu');
+    const regionMenu = page.locator('.store-header__region-menu').first();
     if (await regionMenu.count() && await regionMenu.isVisible()) {
-        await page.getByRole('button', { name: 'Region' }).click();
+        await page.getByRole('button', { name: 'Region' }).first().click();
     }
 
     await expect(regionMenu).toBeHidden();
