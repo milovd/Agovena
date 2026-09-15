@@ -37,7 +37,7 @@ The remaining release gates are human, provider, deployment, browser, legal, or 
 |---|---|---|
 | Core catalog, cart, checkout, orders, invoices | implemented | Feature coverage exists in the application suite. |
 | Refunds, credit notes, payment attempts, fee snapshots and webhook contracts | implemented | Automated idempotency, signature, fee pass-through and invoice snapshot tests exist. |
-| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. All 17 optional extension manifests now declare `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven. Live provider failure review remains a release gate; the MariaDB multi-process matrix is green in CI. |
+| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. All 17 optional extension manifests now declare `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven. Live provider failure review remains a release gate; the MariaDB multi-process matrix remains an open CI verification gate. |
 | Subscriptions and recurring renewal seams | partial | Automated lifecycle coverage and subscription import coverage exist; provider-specific recurring behavior remains capability-bound. |
 | Account security, TOTP, recovery and sessions | implemented | Customer security flows and automated coverage exist. |
 | Audit logging | implemented | Capture, redaction, integrity metadata, filters, export and retention command paths are covered. |
@@ -68,7 +68,7 @@ Transfers, contact updates, renewals, supported-TLD policy, billing-profile setu
 
 ### Import and migration tooling
 
-`partial`: the generic migration framework and complete core entity matrix are now implemented and covered by automated tests. It provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, source-isolated dependency references, source/entity/external-identity reservations, duplicate detection, reconciled invoice and payment totals, refund-ledger import, fail-closed rollback and auditable import rows. Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance writes are covered. Source-specific fixtures, independent post-fix review and provider acceptance remain external verification work; the MariaDB multi-process matrix is green in CI.
+`partial`: the generic migration framework and complete core entity matrix are now implemented and covered by automated tests. It provides source aliases for the four supported source profiles plus CSV/custom mapping, dry-run, validation, source-isolated dependency references, source/entity/external-identity reservations, duplicate detection, reconciled invoice and payment totals, refund-ledger import, fail-closed rollback and auditable import rows. Customer, product, order, invoice, payment/transaction, discount, product media and module-gated subscription/service-instance writes are covered. Source-specific fixtures, independent post-fix review and provider acceptance remain external verification work; the MariaDB multi-process matrix remains an open CI verification gate.
 
 Still required for the complete roadmap matrix:
 
