@@ -1,3 +1,178 @@
+document.addEventListener('alpine:init', () => {
+    window.Alpine.data('storefrontDisclosure', () => ({
+        open: false,
+        toggle() {
+            this.open = !this.open;
+        },
+        close() {
+            this.open = false;
+        },
+        closeAndFocus() {
+            this.open = false;
+            this.$refs.trigger?.focus();
+        },
+        toggleAndFocusMenu() {
+            this.open = !this.open;
+            if (this.open) {
+                this.$nextTick(() => this.$refs.menu?.querySelector('[role="menuitem"]')?.focus());
+            }
+        },
+    }));
+
+    window.Alpine.data('storefrontTheme', () => ({
+        theme: 'light',
+        init() {
+            const fallback = this.$root.dataset.defaultTheme || 'system';
+            const saved = localStorage.getItem('agovena.theme') || fallback;
+            this.apply(saved === 'system'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : saved);
+        },
+        apply(next) {
+            this.theme = next === 'dark' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', this.theme);
+            localStorage.setItem('agovena.theme', this.theme);
+        },
+        toggle() {
+            this.apply(this.theme === 'dark' ? 'light' : 'dark');
+        },
+    }));
+
+    window.Alpine.data('storefrontHeader', () => ({
+        navOpen: false,
+        drawerTop: 0,
+        drawerObserver: null,
+        drawerFrame: null,
+        catsOpen: false,
+        mobileCatsOpen: false,
+        mobileCategoryOpen: null,
+        mobileAccountOpen: false,
+        activeCat: null,
+        suggestOpen: false,
+        suggestLoading: false,
+        suggestItems: [],
+        suggestQuery: '',
+        suggestUrl: '',
+        suggestTimer: null,
+        labels: { searching: '', noMatches: '', viewAll: '' },
+        init() {
+            const root = this.$root;
+            this.suggestQuery = root.dataset.suggestQuery || '';
+            this.suggestUrl = root.dataset.suggestUrl || '';
+            this.labels = {
+                searching: root.dataset.searchingLabel || '',
+                noMatches: root.dataset.noMatchesLabel || '',
+                viewAll: root.dataset.viewAllLabel || '',
+            };
+
+            const refresh = () => this.updateDrawerTop();
+            refresh();
+            requestAnimationFrame(refresh);
+            window.setTimeout(refresh, 200);
+            if ('ResizeObserver' in window) {
+                this.drawerObserver = new ResizeObserver(refresh);
+                document.querySelectorAll('.store-usp, .store-header, .store-discover').forEach((element) => {
+                    this.drawerObserver.observe(element);
+                });
+            }
+        },
+        updateDrawerTop() {
+            const chromeParts = [
+                document.querySelector('.store-usp'),
+                document.querySelector('.store-header'),
+                document.querySelector('.store-discover'),
+            ].filter(Boolean);
+            const bottom = chromeParts.reduce(
+                (currentBottom, element) => Math.max(currentBottom, element.getBoundingClientRect().bottom),
+                0,
+            );
+            this.drawerTop = Math.max(0, Math.round(bottom));
+        },
+        scheduleDrawerTopRefresh() {
+            if (this.drawerFrame !== null) return;
+            this.drawerFrame = requestAnimationFrame(() => {
+                this.drawerFrame = null;
+                this.updateDrawerTop();
+            });
+        },
+        syncDrawerLock() {
+            document.body.classList.toggle('store-drawer-open', this.navOpen);
+        },
+        toggleNav() {
+            this.updateDrawerTop();
+            if (this.navOpen) {
+                this.mobileCatsOpen = false;
+                this.mobileCategoryOpen = null;
+                this.mobileAccountOpen = false;
+            }
+            this.navOpen = !this.navOpen;
+        },
+        closeAll() {
+            this.navOpen = false;
+            this.catsOpen = false;
+            this.mobileCatsOpen = false;
+            this.mobileCategoryOpen = null;
+            this.mobileAccountOpen = false;
+            this.suggestOpen = false;
+        },
+        closeDrawer() {
+            this.navOpen = false;
+            this.mobileCatsOpen = false;
+            this.mobileCategoryOpen = null;
+            this.mobileAccountOpen = false;
+            this.closeSuggest();
+        },
+        toggleMobileCategories() {
+            this.mobileCatsOpen = !this.mobileCatsOpen;
+            if (!this.mobileCatsOpen) this.mobileCategoryOpen = null;
+        },
+        toggleMobileCategory(id) {
+            this.mobileCategoryOpen = this.mobileCategoryOpen === id ? null : id;
+        },
+        toggleMobileAccount() {
+            this.mobileAccountOpen = !this.mobileAccountOpen;
+        },
+        closeDrawerOnNavigate() {
+            this.navOpen = false;
+        },
+        async runSuggest() {
+            const query = this.suggestQuery.trim();
+            if (query.length < 2) {
+                this.suggestItems = [];
+                this.suggestOpen = false;
+                return;
+            }
+            this.suggestLoading = true;
+            try {
+                const response = await fetch(`${this.suggestUrl}?q=${encodeURIComponent(query)}`, {
+                    headers: { Accept: 'application/json' },
+                });
+                const data = await response.json();
+                this.suggestItems = data.items || [];
+                this.suggestOpen = true;
+            } catch {
+                this.suggestItems = [];
+                this.suggestOpen = false;
+            } finally {
+                this.suggestLoading = false;
+            }
+        },
+        onSuggestInput() {
+            clearTimeout(this.suggestTimer);
+            this.suggestTimer = setTimeout(() => this.runSuggest(), 180);
+        },
+        closeSuggest() {
+            this.suggestOpen = false;
+        },
+        clearSuggest() {
+            this.suggestQuery = '';
+            this.suggestItems = [];
+            this.suggestOpen = false;
+            this.suggestLoading = false;
+        },
+    }));
+});
+
 const banner = document.querySelector('[data-cookie-banner]');
 const bannerDialog = document.querySelector('[data-cookie-banner-dialog]');
 const panel = document.querySelector('[data-cookie-panel]');

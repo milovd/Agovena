@@ -63,109 +63,23 @@
 
 <header
     class="store-chrome"
-    x-data="{
-        navOpen: false,
-        drawerTop: 0,
-        drawerObserver: null,
-        drawerFrame: null,
-        catsOpen: false,
-        mobileCatsOpen: false,
-        mobileCategoryOpen: null,
-        mobileAccountOpen: false,
-        activeCat: null,
-        suggestOpen: false,
-        suggestLoading: false,
-        suggestItems: [],
-        suggestQuery: @js(request('q', '')),
-        suggestUrl: @js($suggestUrl),
-        suggestTimer: null,
-        labels: {
-            searching: @js(__('storefront.search.searching')),
-            noMatches: @js(__('storefront.search.no_matches')),
-            viewAll: @js(__('storefront.search.view_all')),
-        },
-        updateDrawerTop() {
-            const chromeParts = [
-                document.querySelector('.store-usp'),
-                document.querySelector('.store-header'),
-                document.querySelector('.store-discover'),
-            ].filter(Boolean);
-            const bottom = chromeParts.reduce(
-                (currentBottom, element) => Math.max(currentBottom, element.getBoundingClientRect().bottom),
-                0,
-            );
-            this.drawerTop = Math.max(0, Math.round(bottom));
-        },
-        scheduleDrawerTopRefresh() {
-            if (this.drawerFrame !== null) {
-                return;
-            }
-            this.drawerFrame = requestAnimationFrame(() => {
-                this.drawerFrame = null;
-                this.updateDrawerTop();
-            });
-        },
-        init() {
-            this.$nextTick(() => {
-                const refresh = () => this.updateDrawerTop();
-                refresh();
-                requestAnimationFrame(refresh);
-                window.setTimeout(refresh, 200);
-                if ('ResizeObserver' in window) {
-                    this.drawerObserver = new ResizeObserver(refresh);
-                    document.querySelectorAll('.store-usp, .store-header, .store-discover').forEach((element) => {
-                        this.drawerObserver.observe(element);
-                    });
-                }
-            });
-        },
-        async runSuggest() {
-            const q = (this.suggestQuery || '').trim();
-            if (q.length < 2) {
-                this.suggestItems = [];
-                this.suggestOpen = false;
-                return;
-            }
-            this.suggestLoading = true;
-            try {
-                const res = await fetch(this.suggestUrl + '?q=' + encodeURIComponent(q), {
-                    headers: { 'Accept': 'application/json' },
-                });
-                const data = await res.json();
-                this.suggestItems = data.items || [];
-                this.suggestOpen = true;
-            } catch (e) {
-                this.suggestItems = [];
-                this.suggestOpen = false;
-            } finally {
-                this.suggestLoading = false;
-            }
-        },
-        onSuggestInput() {
-            clearTimeout(this.suggestTimer);
-            this.suggestTimer = setTimeout(() => this.runSuggest(), 180);
-        },
-        closeSuggest() {
-            this.suggestOpen = false;
-        },
-        clearSuggest() {
-            this.suggestQuery = '';
-            this.suggestItems = [];
-            this.suggestOpen = false;
-            this.suggestLoading = false;
-        }
-    }"
-    @keydown.escape.window="navOpen = false; catsOpen = false; mobileCatsOpen = false; mobileCategoryOpen = null; mobileAccountOpen = false; suggestOpen = false"
+    data-suggest-url="{{ $suggestUrl }}"
+    data-suggest-query="{{ request('q', '') }}"
+    data-searching-label="{{ __('storefront.search.searching') }}"
+    data-no-matches-label="{{ __('storefront.search.no_matches') }}"
+    data-view-all-label="{{ __('storefront.search.view_all') }}"
+    x-data="storefrontHeader"
+    @keydown.escape.window="closeAll()"
     @resize.window="scheduleDrawerTopRefresh()"
     @scroll.window.passive="scheduleDrawerTopRefresh()"
-    x-effect="document.body.classList.toggle('store-drawer-open', navOpen)"
+    x-effect="syncDrawerLock()"
 >
     <div class="store-header">
         <div class="store-header__inner">
             <button
                 type="button"
                 class="store-header__menu"
-                @click="updateDrawerTop(); if (navOpen) { mobileCatsOpen = false; mobileCategoryOpen = null; mobileAccountOpen = false; } navOpen = !navOpen"
+                @click="toggleNav()"
                 :aria-expanded="navOpen.toString()"
                 x-bind:aria-label='navOpen ? {!! e(json_encode(__('storefront.close'))) !!} : {!! e(json_encode(__('storefront.menu'))) !!}'
                 aria-controls="store-mobile-nav"
@@ -363,18 +277,18 @@
                         @endphp
                         <div
                             class="store-header__account"
-                            x-data="{ open: false }"
-                            @keydown.escape.window="if (open) { open = false; $refs.accountTrigger?.focus() }"
-                            @click.outside="open = false"
+                            x-data="storefrontDisclosure"
+                            @keydown.escape.window="closeAndFocus()"
+                            @click.outside="close()"
                         >
                             <button
                                 type="button"
-                                x-ref="accountTrigger"
+                                x-ref="trigger"
                                 class="store-header__utility store-header__account-trigger"
                                 id="store-account-menu-button"
-                                @click="open = !open; if (open) { $nextTick(() => $refs.accountMenu?.querySelector('[role=menuitem]')?.focus()) }"
-                                @keydown.enter.prevent="open = !open; if (open) { $nextTick(() => $refs.accountMenu?.querySelector('[role=menuitem]')?.focus()) }"
-                                @keydown.space.prevent="open = !open; if (open) { $nextTick(() => $refs.accountMenu?.querySelector('[role=menuitem]')?.focus()) }"
+                                @click="toggleAndFocusMenu()"
+                                @keydown.enter.prevent="toggleAndFocusMenu()"
+                                @keydown.space.prevent="toggleAndFocusMenu()"
                                 :aria-expanded="open.toString()"
                                 :class="{ 'is-open': open }"
                                 aria-haspopup="menu"
@@ -389,7 +303,7 @@
                             </button>
                             <div
                                 id="store-account-menu"
-                                x-ref="accountMenu"
+                                x-ref="menu"
                                 class="store-header__account-menu store-account-menu"
                                 style="left: unset; right: 0;"
                                 x-show="open"
@@ -402,7 +316,7 @@
                                 x-transition:leave-end="store-account-menu-leave-end"
                                 role="menu"
                                 aria-labelledby="store-account-menu-button"
-                                @keydown.escape.stop="open = false; $refs.accountTrigger?.focus()"
+                                @keydown.escape.stop="closeAndFocus()"
                             >
                                 @include('theme::partials.account-menu', [
                                     'accountUser' => $accountUser,
@@ -515,7 +429,7 @@
         aria-modal="true"
         aria-label="{{ __('storefront.menu') }}"
     >
-        <div class="store-drawer__backdrop" @click="navOpen = false; mobileCatsOpen = false; mobileCategoryOpen = null; mobileAccountOpen = false; closeSuggest()"></div>
+        <div class="store-drawer__backdrop" @click="closeDrawer()"></div>
         <div
             class="store-drawer__panel"
             x-transition:enter="store-drawer__panel--enter"
@@ -538,7 +452,7 @@
                         <button
                             type="button"
                             class="store-nav__link store-nav__link--btn store-drawer__primary-link"
-                            @click="mobileCatsOpen = !mobileCatsOpen; if (!mobileCatsOpen) mobileCategoryOpen = null"
+                            @click="toggleMobileCategories()"
                             :aria-expanded="mobileCatsOpen.toString()"
                             aria-controls="store-mobile-categories"
                         >
@@ -559,11 +473,11 @@
                             role="region"
                             aria-label="{{ __('storefront.nav.categories') }}"
                         >
-                            <a class="store-drawer__category-all" href="{{ route('storefront.categories') }}" @click="navOpen = false">{{ __('storefront.nav.all_categories') }}</a>
+                            <a class="store-drawer__category-all" href="{{ route('storefront.categories') }}" @click="closeDrawerOnNavigate">{{ __('storefront.nav.all_categories') }}</a>
                             @foreach ($discoveryCategories as $category)
                                 <div class="store-drawer__category-group">
                                     <div class="store-drawer__category-row" :class="{ 'is-open': mobileCategoryOpen === {{ $category->id }} }">
-                                        <a class="store-drawer__category-root" href="{{ route('storefront.category', $category->slug) }}" @click="navOpen = false">
+                                        <a class="store-drawer__category-root" href="{{ route('storefront.category', $category->slug) }}" @click="closeDrawerOnNavigate">
                                             <span class="store-cats__thumb" aria-hidden="true">
                                                 @php $categoryImageUrl = \App\Agovena\Media\PublicMedia::url($category->image_path); @endphp
                                                 @if ($categoryImageUrl)
@@ -576,7 +490,7 @@
                                             <button
                                                 type="button"
                                                 class="store-drawer__category-toggle"
-                                                @click="mobileCategoryOpen = mobileCategoryOpen === {{ $category->id }} ? null : {{ $category->id }}"
+                                                @click="toggleMobileCategory({{ $category->id }})"
                                                 :aria-expanded="(mobileCategoryOpen === {{ $category->id }}).toString()"
                                                 aria-controls="store-mobile-category-{{ $category->id }}"
                                                 aria-label="{{ __('storefront.nav.categories') }}: {{ $category->name }}"
@@ -602,7 +516,7 @@
                                             aria-label="{{ $category->name }}"
                                         >
                                             @foreach ($category->children as $child)
-                                                <a href="{{ route('storefront.category', $child->slug) }}" @click="navOpen = false">{{ $child->name }}</a>
+                                                <a href="{{ route('storefront.category', $child->slug) }}" @click="closeDrawerOnNavigate">{{ $child->name }}</a>
                                             @endforeach
                                         </div>
                                     @endif
@@ -613,7 +527,7 @@
                 @endif
                 @foreach ($themeMainNav ?? [] as $item)
                     @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
-                        <a class="store-nav__link store-drawer__primary-link" href="{{ $item['url'] }}" @click="navOpen = false">{{ $item['label'] }}</a>
+                        <a class="store-nav__link store-drawer__primary-link" href="{{ $item['url'] }}" @click="closeDrawerOnNavigate">{{ $item['label'] }}</a>
                     @endif
                 @endforeach
                 @if ($showAccount)
@@ -629,7 +543,7 @@
                             <button
                                 type="button"
                                 class="store-nav__link store-nav__link--btn store-drawer__primary-link store-drawer__account-toggle"
-                                @click="mobileAccountOpen = !mobileAccountOpen"
+                                @click="toggleMobileAccount()"
                                 :aria-expanded="mobileAccountOpen.toString()"
                                 aria-controls="store-mobile-account"
                                 aria-haspopup="true"
@@ -655,12 +569,12 @@
                                 role="region"
                                 aria-label="{{ __('storefront.nav.account') }}"
                             >
-                                <a class="store-drawer__link" href="{{ route('customer.account') }}" @click="navOpen = false">
+                                <a class="store-drawer__link" href="{{ route('customer.account') }}" @click="closeDrawerOnNavigate">
                                     <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'layout-dashboard', 'size' => 18])</span>
                                     <span class="store-drawer__link-text">{{ __('storefront.nav.dashboard') }}</span>
                                     <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
                                 </a>
-                                <a class="store-drawer__link" href="{{ route('customer.profile') }}" @click="navOpen = false">
+                                <a class="store-drawer__link" href="{{ route('customer.profile') }}" @click="closeDrawerOnNavigate">
                                     <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'user', 'size' => 18])</span>
                                     <span class="store-drawer__link-text">{{ __('storefront.nav.account') }}</span>
                                     <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
@@ -668,7 +582,7 @@
                                 <a
                                     class="store-drawer__link store-drawer__link--notifications"
                                     href="{{ route('customer.notifications') }}"
-                                    @click="navOpen = false"
+                                    @click="closeDrawerOnNavigate"
                                     aria-label="{{ __('customer.notifications.title') }}{{ ($notificationUnreadCount ?? 0) > 0 ? ', '.trans_choice('customer.notifications.unread_count', $notificationUnreadCount, ['count' => $notificationUnreadCount]) : '' }}"
                                 >
                                     <span class="store-drawer__link-icon store-drawer__notification-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'bell', 'size' => 18])</span>
@@ -679,7 +593,7 @@
                                     <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
                                 </a>
                                 @if ($drawerCanAdmin)
-                                    <a class="store-drawer__link" href="{{ route('admin.dashboard') }}" @click="navOpen = false">
+                                    <a class="store-drawer__link" href="{{ route('admin.dashboard') }}" @click="closeDrawerOnNavigate">
                                         <span class="store-drawer__link-icon" aria-hidden="true">@include('theme::partials.icon', ['name' => 'settings', 'size' => 18])</span>
                                         <span class="store-drawer__link-text">{{ __('storefront.nav.admin') }}</span>
                                         <span class="store-drawer__link-arrow" aria-hidden="true">@include('theme::partials.icon', ['name' => 'chevron-right', 'size' => 16])</span>
@@ -696,8 +610,8 @@
                         </div>
                     @else
                         <div class="store-drawer__auth">
-                            <a class="store-btn store-btn--ghost store-drawer__auth-login" href="{{ route('login') }}" @click="navOpen = false">{{ __('storefront.nav.login') }}</a>
-                            <a class="store-btn store-btn--primary store-drawer__auth-register" href="{{ route('register') }}" @click="navOpen = false">{{ __('storefront.nav.register') }}</a>
+                            <a class="store-btn store-btn--ghost store-drawer__auth-login" href="{{ route('login') }}" @click="closeDrawerOnNavigate">{{ __('storefront.nav.login') }}</a>
+                            <a class="store-btn store-btn--primary store-drawer__auth-register" href="{{ route('register') }}" @click="closeDrawerOnNavigate">{{ __('storefront.nav.register') }}</a>
                         </div>
                     @endauth
                 @endif

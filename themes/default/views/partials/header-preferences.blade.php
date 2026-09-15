@@ -17,15 +17,15 @@
     @if ($showRegion)
         <div
             class="store-header__region"
-            x-data="{ open: false }"
-            @keydown.escape.window="if (open) { open = false; $refs.regionTrigger?.focus() }"
-            @click.outside="open = false"
+            x-data="storefrontDisclosure"
+            @keydown.escape.window="closeAndFocus()"
+            @click.outside="close()"
         >
             <button
                 type="button"
-                x-ref="regionTrigger"
+                x-ref="trigger"
                 class="store-header__region-trigger"
-                @click="open = !open"
+                @click="toggle()"
                 :aria-expanded="open.toString()"
                 :class="{ 'is-open': open }"
                 aria-haspopup="dialog"
@@ -113,21 +113,8 @@
 
     <div
         class="store-header__theme"
-        x-data="{
-            theme: (localStorage.getItem('agovena.theme') || @js(app(\App\Agovena\Theme\ThemeManager::class)->config()->string('appearance.default_color_mode', 'system'))),
-            init() {
-                if (this.theme !== 'dark' && this.theme !== 'light') {
-                    this.theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                }
-                this.apply(this.theme);
-            },
-            apply(next) {
-                this.theme = next === 'dark' ? 'dark' : 'light';
-                document.documentElement.setAttribute('data-theme', this.theme);
-                localStorage.setItem('agovena.theme', this.theme);
-            },
-            toggle() { this.apply(this.theme === 'dark' ? 'light' : 'dark'); }
-        }"
+        data-default-theme="{{ app(\App\Agovena\Theme\ThemeManager::class)->config()->string('appearance.default_color_mode', 'system') }}"
+        x-data="storefrontTheme"
     >
         <button
             type="button"

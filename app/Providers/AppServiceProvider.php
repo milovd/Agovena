@@ -21,6 +21,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        config(['livewire.csp_safe' => true]);
+
         // WinGet/XAMPP PHP often ships without curl.cainfo; Composer's Mozilla
         // CA bundle keeps outbound HTTPS (Frankfurter, vatnode, etc.) verifiable.
         if (! $this->app->runningUnitTests()) {
