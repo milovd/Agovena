@@ -21,7 +21,7 @@ export async function closeHeaderOverlays(page: Page): Promise<void> {
 
     const regionMenu = page.locator('.store-header__region-menu').first();
     if (await regionMenu.count() && await regionMenu.isVisible()) {
-        await page.getByRole('button', { name: 'Region' }).first().click();
+        await page.getByRole('button', { name: 'Language and currency' }).first().click();
     }
 
     await expect(regionMenu).toBeHidden();
