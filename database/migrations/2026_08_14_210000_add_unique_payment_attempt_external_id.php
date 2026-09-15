@@ -25,7 +25,9 @@ return new class extends Migration
             ->pluck('later.id');
 
         if ($duplicates->isNotEmpty()) {
-            DB::table('payment_attempts')->whereIn('id', $duplicates)->delete();
+            throw new RuntimeException(
+                'Cannot add payment attempt uniqueness constraint while duplicate gateway/external IDs exist. Resolve duplicates before upgrading.',
+            );
         }
 
         Schema::table('payment_attempts', function (Blueprint $table): void {

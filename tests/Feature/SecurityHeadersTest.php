@@ -13,6 +13,7 @@ test('web responses include production security headers', function () {
         ->and($csp)->toContain("default-src 'self'")
         ->and($csp)->toContain("form-action 'self'")
         ->and($csp)->toContain("frame-ancestors 'none'")
+        ->and($csp)->not->toContain("'unsafe-eval'")
         ->and($csp)->not->toContain('upgrade-insecure-requests');
 });
 

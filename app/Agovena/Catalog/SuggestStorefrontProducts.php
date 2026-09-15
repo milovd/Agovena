@@ -27,7 +27,7 @@ final class SuggestStorefrontProducts
 
         $queryBuilder = Product::query()
             ->active()
-            ->with(['category', 'images'])
+            ->with(['category', 'images', 'capabilities', 'purchaseOptions.choices'])
             ->where(function ($builder) use ($term): void {
                 $builder
                     ->where('name', 'like', '%'.$term.'%')

@@ -173,7 +173,7 @@ final class Index extends Component
         $this->authorize('webhooks.view');
 
         return view('livewire.admin.webhooks.index', [
-            'endpoints' => WebhookEndpoint::query()->withCount('deliveries')->latest('id')->get(),
+            'endpoints' => WebhookEndpoint::query()->withCount('deliveries')->latest('id')->limit(100)->get(),
             'deliveries' => WebhookDelivery::query()->with('endpoint')->latest('id')->limit(50)->get(),
             'eventCatalog' => $catalog->all(),
         ])->layout('layouts.admin', [

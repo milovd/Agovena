@@ -29,7 +29,10 @@ final class DeliverPendingWebhooksCommand extends Command
                         ->where('created_at', '<=', now()->subMinute());
                 })->orWhere(function ($stale): void {
                     $stale->where('status', 'in_progress')
-                        ->where('updated_at', '<=', now()->subMinutes(10));
+                        ->where(function ($lease): void {
+                            $lease->whereNull('lease_expires_at')
+                                ->orWhere('lease_expires_at', '<=', now());
+                        });
                 });
             })
             ->whereHas('endpoint', fn ($query) => $query->where('active', true))
@@ -39,10 +42,21 @@ final class DeliverPendingWebhooksCommand extends Command
 
         foreach ($deliveries as $delivery) {
             if ($delivery->status === 'in_progress') {
-                $delivery->update([
-                    'status' => 'retrying',
-                    'next_attempt_at' => now(),
-                ]);
+                $reclaimed = WebhookDelivery::query()
+                    ->whereKey($delivery->id)
+                    ->where('status', 'in_progress')
+                    ->where(function ($lease): void {
+                        $lease->whereNull('lease_expires_at')
+                            ->orWhere('lease_expires_at', '<=', now());
+                    })
+                    ->update([
+                        'status' => 'retrying',
+                        'next_attempt_at' => now(),
+                    ]);
+
+                if ($reclaimed !== 1) {
+                    continue;
+                }
             }
             DeliverWebhook::dispatch($delivery->id);
         }

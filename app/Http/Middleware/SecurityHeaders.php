@@ -43,7 +43,7 @@ final class SecurityHeaders
             return $override;
         }
 
-        $script = "'self' 'unsafe-inline' 'unsafe-eval'";
+        $script = "'self' 'unsafe-inline'";
         $style = "'self' 'unsafe-inline' https://fonts.googleapis.com";
         $font = "'self' https://fonts.gstatic.com data:";
         $img = "'self' data: blob: https:";

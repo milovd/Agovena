@@ -44,6 +44,17 @@ it('queues due retries and recovers stale deliveries without sending future retr
         'attempt_count' => 1,
         'next_attempt_at' => now()->addMinute(),
     ]);
+    $leased = WebhookDelivery::query()->create([
+        'delivery_id' => 'delivery-leased',
+        'webhook_endpoint_id' => $endpoint->id,
+        'event_type' => 'order.created',
+        'payload' => ['type' => 'order.created'],
+        'status' => 'in_progress',
+        'attempt_count' => 1,
+        'updated_at' => now()->subMinutes(11),
+        'lease_token' => 'worker-still-running',
+        'lease_expires_at' => now()->addMinutes(4),
+    ]);
 
     expect(Artisan::call('agovena:deliver-webhooks', ['--limit' => 10]))->toBe(0);
 
@@ -52,5 +63,6 @@ it('queues due retries and recovers stale deliveries without sending future retr
         ->and($stale->fresh()->status)->toBe('retrying')
         ->and($stale->fresh()->next_attempt_at)->not->toBeNull()
         ->and($future->fresh()->status)->toBe('retrying')
-        ->and($future->fresh()->next_attempt_at->isFuture())->toBeTrue();
+        ->and($future->fresh()->next_attempt_at->isFuture())->toBeTrue()
+        ->and($leased->fresh()->status)->toBe('in_progress');
 });
