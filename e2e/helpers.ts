@@ -19,12 +19,12 @@ export async function chooseEssentialCookies(page: Page): Promise<void> {
 export async function closeHeaderOverlays(page: Page): Promise<void> {
     await page.keyboard.press('Escape');
 
-    const regionMenu = page.locator('.store-header__region-menu').first();
-    if (await regionMenu.count() && await regionMenu.isVisible()) {
-        await page.getByRole('button', { name: 'Language and currency' }).first().click();
+    const regionMenu = page.locator('.store-header__region-menu:visible');
+    if (await regionMenu.count()) {
+        await page.locator('.store-header__region-trigger:visible').click();
     }
 
-    await expect(regionMenu).toBeHidden();
+    await expect(page.locator('.store-header__region-menu:visible')).toHaveCount(0);
 }
 
 export async function addProductToCart(page: Page, slug: string, options: Record<string, string> = {}): Promise<void> {
