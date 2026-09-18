@@ -14,65 +14,30 @@
   min-height: 100vh;
   font-family: var(--ag-font-sans);
   color: var(--ag-color-text);
-  background: var(--ag-color-bg);
+  background: #f3f3f2;
 }
 
 .install-shell {
-  width: min(52rem, calc(100% - 2rem));
+  width: min(44rem, calc(100% - 2rem));
   margin: 0 auto;
-  padding: clamp(1.5rem, 4vw, 3rem) 0 clamp(1.25rem, 3vw, 2rem);
+  padding: clamp(1.5rem, 4vw, 3rem) 0;
   display: grid;
-  gap: var(--ag-space-6);
-  min-height: 100vh;
-  align-content: start;
-}
-
-.install-shell__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--ag-space-3);
-  padding-bottom: var(--ag-space-5);
-  border-bottom: 1px solid var(--ag-color-border);
-}
-
-.install-shell__logo {
-  width: 2.75rem;
-  height: 2.75rem;
-}
-
-.install-shell__product {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.install-shell__tagline {
-  margin: 0.1rem 0 0;
-  color: var(--ag-color-text-muted);
-  font-size: 0.8125rem;
+  min-height: 100svh;
+  align-content: center;
 }
 
 .install-shell__main {
   min-width: 0;
 }
 
-.install-shell__footer {
-  margin-top: auto;
-  color: var(--ag-color-text-muted);
-  font-size: 0.8125rem;
-  text-align: center;
-}
-
 .install-wizard {
   display: grid;
-  gap: var(--ag-space-5);
 }
 
 .install-progress {
   display: grid;
   gap: var(--ag-space-3);
-  padding: 0 0 var(--ag-space-3);
+  padding: 0 var(--ag-space-6) var(--ag-space-4);
   border-bottom: 1px solid var(--ag-color-border);
 }
 
@@ -158,11 +123,45 @@
 }
 
 .install-panel {
+  overflow: hidden;
+  padding: 0;
   background: var(--ag-color-surface);
   border: 1px solid var(--ag-color-border);
-  border-radius: var(--ag-radius-lg);
-  box-shadow: var(--ag-shadow-md);
-  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border-radius: 0.375rem;
+  box-shadow: 0 12px 28px rgb(15 23 42 / 0.08);
+}
+
+.install-panel__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  padding: var(--ag-space-5) var(--ag-space-6) var(--ag-space-4);
+}
+
+.install-panel__logo {
+  width: 2.35rem;
+  height: 2.35rem;
+}
+
+.install-panel__brand-copy {
+  min-width: 0;
+}
+
+.install-panel__product {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.install-panel__tagline {
+  margin: 0.15rem 0 0;
+  color: var(--ag-color-text-muted);
+  font-size: 0.75rem;
+}
+
+.install-panel__body {
+  padding: clamp(1.5rem, 4vw, 2.25rem);
 }
 
 .install-panel__title {
@@ -247,7 +246,6 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-top: 1px solid var(--ag-color-border);
-  border-bottom: 1px solid var(--ag-color-border);
 }
 
 .install-welcome__plan-item {
@@ -346,8 +344,9 @@
 .install-warnings {
   margin: 0 0 var(--ag-space-3);
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--ag-color-warning) 38%, var(--ag-color-border));
-  border-radius: var(--ag-radius-md);
+  border: 0;
+  border-left: 3px solid var(--ag-color-warning);
+  border-radius: 0 var(--ag-radius-md) var(--ag-radius-md) 0;
   background: color-mix(in srgb, var(--ag-color-warning) 11%, var(--ag-color-surface));
 }
 
@@ -393,7 +392,7 @@
 }
 
 .install-warnings[open] > summary {
-  border-bottom: 1px solid color-mix(in srgb, var(--ag-color-warning) 30%, var(--ag-color-border));
+  border-bottom: 0;
 }
 
 .install-warnings .install-checks--compact {

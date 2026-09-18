@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'title' => 'Install Agovena',
     'brand_alt' => 'Agovena',
-    'tagline' => 'Self-hosted commerce setup',
+    'tagline' => 'Installer',
     'footer' => 'Agovena installer. Configure your store once, then manage it in Admin.',
     'progress_aria' => 'Installation progress',
     'progress_status' => 'Step :current of :total',
