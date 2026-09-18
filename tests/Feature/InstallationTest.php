@@ -37,7 +37,7 @@ test('installer welcome is available when not installed', function () {
         ->assertOk()
         ->assertSee(__('installer.welcome.heading'), false)
         ->assertSee(__('installer.welcome.overview_title'), false)
-        ->assertSee(__('installer.welcome.ready_title'), false)
+        ->assertDontSee('install-status--ready', false)
         ->assertSee('wire:submit="next"', false)
         ->assertSee(__('installer.steps.welcome'), false)
         ->assertSee(__('installer.steps.owner'), false)
@@ -81,7 +81,7 @@ test('admin redirects to installer when not installed', function () {
 test('web installation creates owner settings currency theme and lock', function () {
     Livewire::test(Wizard::class)
         ->assertSet('step', 'welcome')
-        ->assertSee(__('installer.welcome.ready_title'), false)
+        ->assertSee(__('installer.welcome.overview_title'), false)
         ->call('next')
         ->assertSet('step', 'owner')
         ->set('ownerName', 'Store Owner')
@@ -332,7 +332,8 @@ test('healthy requirements stay concise in the installer while warnings do not b
     expect($requirements->ready())->toBeTrue();
 
     $component = Livewire::test(Wizard::class);
-    $component->assertSee(__('installer.welcome.ready_title'), false)
+    $component->assertSee(__('installer.welcome.overview_title'), false)
+        ->assertDontSee('install-status--ready', false)
         ->assertDontSee(__('installer.checks.ext_mbstring'), false);
 
     $warnings = array_values(array_filter(
@@ -341,7 +342,7 @@ test('healthy requirements stay concise in the installer while warnings do not b
     ));
 
     if ($warnings !== []) {
-        $component->assertSee(__('installer.welcome.warnings_summary', ['count' => count($warnings)]), false);
+        $component->assertSee(trans_choice('installer.welcome.warnings_summary', count($warnings), ['count' => count($warnings)]), false);
     }
 
     $component->call('next')->assertSet('step', 'owner');
@@ -363,7 +364,7 @@ test('blocking requirement failure is surfaced and blocks continue', function ()
         ->assertSee(__('installer.welcome.blocked_title'), false)
         ->assertSee(__('installer.checks.database'), false)
         ->assertSee('connection refused', false)
-        ->assertDontSee(__('installer.welcome.ready_title'), false)
+        ->assertDontSee('install-status--ready', false)
         ->call('next')
         ->assertHasErrors('welcome')
         ->assertSet('step', 'welcome');

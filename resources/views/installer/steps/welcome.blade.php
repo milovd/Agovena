@@ -13,40 +13,23 @@
 
     <section class="install-welcome__overview" aria-labelledby="install-overview-heading">
         <h2 id="install-overview-heading" class="install-section-title">{{ __('installer.welcome.overview_title') }}</h2>
-        <div class="install-welcome__cards">
-            <article class="install-welcome__card">
-                <span class="install-welcome__card-number" aria-hidden="true">01</span>
-                <div>
-                    <h3>{{ __('installer.welcome.account_title') }}</h3>
-                    <p>{{ __('installer.welcome.account_text') }}</p>
-                </div>
-            </article>
-            <article class="install-welcome__card">
-                <span class="install-welcome__card-number" aria-hidden="true">02</span>
-                <div>
-                    <h3>{{ __('installer.welcome.store_title') }}</h3>
-                    <p>{{ __('installer.welcome.store_text') }}</p>
-                </div>
-            </article>
-            <article class="install-welcome__card">
-                <span class="install-welcome__card-number" aria-hidden="true">03</span>
-                <div>
-                    <h3>{{ __('installer.welcome.appearance_title') }}</h3>
-                    <p>{{ __('installer.welcome.appearance_text') }}</p>
-                </div>
-            </article>
-        </div>
+        <ul class="install-welcome__plan" role="list">
+            <li class="install-welcome__plan-item">
+                <h3>{{ __('installer.welcome.account_title') }}</h3>
+                <p>{{ __('installer.welcome.account_text') }}</p>
+            </li>
+            <li class="install-welcome__plan-item">
+                <h3>{{ __('installer.welcome.store_title') }}</h3>
+                <p>{{ __('installer.welcome.store_text') }}</p>
+            </li>
+            <li class="install-welcome__plan-item">
+                <h3>{{ __('installer.welcome.appearance_title') }}</h3>
+                <p>{{ __('installer.welcome.appearance_text') }}</p>
+            </li>
+        </ul>
     </section>
 
-    @if ($ready)
-        <div class="install-status install-status--ready" role="status">
-            <span class="install-status__icon" aria-hidden="true">✓</span>
-            <div>
-                <p class="install-status__title">{{ __('installer.welcome.ready_title') }}</p>
-                <p class="install-status__text">{{ __('installer.welcome.ready_text') }}</p>
-            </div>
-        </div>
-    @else
+    @if (! $ready)
         <div class="install-status install-status--blocked" role="alert">
             <span class="install-status__icon" aria-hidden="true">!</span>
             <div>
@@ -73,7 +56,7 @@
     @if ($warnings !== [])
         <details class="install-warnings">
             <summary>
-                <span class="install-warnings__label">{{ __('installer.welcome.warnings_summary', ['count' => count($warnings)]) }}</span>
+                <span class="install-warnings__label">{{ trans_choice('installer.welcome.warnings_summary', count($warnings), ['count' => count($warnings)]) }}</span>
                 <span class="install-warnings__chevron" aria-hidden="true">
                     <x-ag.icon name="chevron-down" :size="16" />
                 </span>
@@ -104,11 +87,6 @@
             </ul>
         </details>
     @endif
-
-    <details class="install-technical">
-        <summary>{{ __('installer.welcome.technical_summary') }}</summary>
-        <p>{{ __('installer.welcome.doctor_hint') }}</p>
-    </details>
 
     <form wire:submit="next" class="install-welcome__actions">
         @error('welcome')
