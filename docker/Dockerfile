@@ -1,3 +1,14 @@
+FROM node:22-bookworm-slim AS assets
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --ignore-scripts
+
+COPY . .
+RUN npm run build
+
+
 FROM php:8.3-cli-bookworm
 
 RUN apt-get update \
@@ -11,6 +22,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 COPY . .
+COPY --from=assets /app/public/build public/build
 
 RUN composer install --no-interaction --prefer-dist --no-dev \
     && mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
