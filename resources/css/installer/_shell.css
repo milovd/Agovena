@@ -237,7 +237,7 @@
   background: linear-gradient(
     var(--ag-color-border-strong),
     var(--ag-color-border-strong)
-  ) center 0.925rem / calc(100% - 3 * var(--install-marker-size)) 1px no-repeat;
+  ) center 0.925rem / calc(100% - 2 * var(--install-marker-size)) 1px no-repeat;
 }
 
 .install-progress__item {
@@ -253,33 +253,33 @@
 }
 
 .install-progress__item:nth-child(1) {
-  left: calc(var(--install-marker-size) / 2);
+  left: 0;
   justify-items: start;
   text-align: left;
 }
 
 .install-progress__item:nth-child(2) {
-  left: calc(var(--install-marker-size) / 2 + (100% - 2 * var(--install-marker-size)) / 6);
+  left: calc((100% - var(--install-marker-size)) / 6);
 }
 
 .install-progress__item:nth-child(3) {
-  left: calc(var(--install-marker-size) / 2 + (100% - 2 * var(--install-marker-size)) / 3);
+  left: calc((100% - var(--install-marker-size)) / 3);
 }
 
 .install-progress__item:nth-child(4) {
-  left: calc(var(--install-marker-size) / 2 + (100% - 2 * var(--install-marker-size)) / 2);
+  left: calc((100% - var(--install-marker-size)) / 2);
 }
 
 .install-progress__item:nth-child(5) {
-  left: calc(var(--install-marker-size) / 2 + (100% - 2 * var(--install-marker-size)) * 2 / 3);
+  left: calc((100% - var(--install-marker-size)) * 2 / 3);
 }
 
 .install-progress__item:nth-child(6) {
-  left: calc(var(--install-marker-size) / 2 + (100% - 2 * var(--install-marker-size)) * 5 / 6);
+  left: calc((100% - var(--install-marker-size)) * 5 / 6);
 }
 
 .install-progress__item:nth-child(7) {
-  right: calc(var(--install-marker-size) / 2);
+  right: 0;
   justify-items: end;
   text-align: right;
 }
