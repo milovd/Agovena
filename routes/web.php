@@ -116,6 +116,7 @@ Route::get('/r/{code}', ReferralVisitController::class)
 
 Route::get('/cookies', CookiePolicy::class)->name('privacy.cookies');
 Route::get('/', CatalogIndex::class)->name('storefront.home');
+Route::post('/install/preferences/locale', [PreferencesController::class, 'installerLocale'])->name('installer.preferences.locale');
 Route::post('/preferences/locale', [PreferencesController::class, 'locale'])->name('storefront.preferences.locale');
 Route::post('/preferences/currency', [PreferencesController::class, 'currency'])->name('storefront.preferences.currency');
 Route::get('/search/suggest', SearchSuggestController::class)

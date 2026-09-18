@@ -26,6 +26,19 @@ final class PreferencesController
         return back();
     }
 
+    public function installerLocale(Request $request, StorefrontPreferences $preferences): RedirectResponse
+    {
+        $locale = (string) $request->validate([
+            'locale' => ['required', 'string', 'max:12'],
+        ])['locale'];
+
+        if (! $preferences->isAvailableLocale($locale)) {
+            abort(422);
+        }
+
+        return back()->withCookie(cookie('installer_locale', $locale, 60 * 24 * 30));
+    }
+
     public function currency(
         Request $request,
         StorefrontPreferences $preferences,

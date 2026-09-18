@@ -14,7 +14,39 @@
   min-height: 100vh;
   font-family: var(--ag-font-sans);
   color: var(--ag-color-text);
-  background: #f7f8fa;
+  background: var(--ag-color-bg);
+}
+
+[data-theme="dark"] .install-app {
+  --ag-color-bg: #0b1220;
+  --ag-color-surface: #111827;
+  --ag-color-surface-muted: #1f2937;
+  --ag-color-border: #334155;
+  --ag-color-border-strong: #475569;
+  --ag-color-text: #e5edf8;
+  --ag-color-text-muted: #9fb0c7;
+  --ag-color-primary: #6ea8ff;
+  --ag-color-primary-hover: #8ab8ff;
+  --ag-color-primary-soft: rgb(110 168 255 / 0.16);
+  --ag-focus-ring: 0 0 0 3px rgb(110 168 255 / 0.35);
+  --ag-shadow-md: 0 8px 24px rgb(0 0 0 / 0.3);
+}
+
+[data-theme="dark"] .install-warnings {
+  background: #3a2a17;
+}
+
+[data-theme="dark"] .install-status--blocked {
+  background: rgb(127 29 29 / 0.28);
+}
+
+[data-theme="dark"] .install-welcome__hero {
+  color: #0f172a;
+}
+
+[data-theme="dark"] .install-welcome__hero .install-eyebrow,
+[data-theme="dark"] .install-welcome__hero .install-panel__lede {
+  color: #334155;
 }
 
 .install-shell {
@@ -26,9 +58,130 @@
   align-content: start;
 }
 
+.install-shell__topbar {
+  display: flex;
+  justify-content: flex-end;
+  min-height: 2.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.install-shell__preferences {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.install-control {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  gap: 0.4rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ag-radius-md);
+  background: transparent;
+  color: var(--ag-color-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 650;
+  line-height: 1;
+  cursor: pointer;
+  transition: color var(--ag-transition), background var(--ag-transition);
+}
+
+.install-control:hover,
+.install-control:focus-visible,
+.install-locale[open] > .install-control {
+  color: var(--ag-color-primary);
+  background: var(--ag-color-primary-soft);
+}
+
+.install-control:focus-visible {
+  outline: 2px solid var(--ag-color-primary);
+  outline-offset: 2px;
+}
+
+.install-locale {
+  position: relative;
+}
+
+.install-locale > summary {
+  list-style: none;
+}
+
+.install-locale > summary::-webkit-details-marker {
+  display: none;
+}
+
+.install-locale__trigger {
+  width: auto;
+  min-width: 4.1rem;
+  padding: 0 0.55rem 0 0.45rem;
+}
+
+.install-locale__flag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
+.install-locale__menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 10rem;
+  padding: 0.35rem;
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+  box-shadow: var(--ag-shadow-md);
+}
+
+.install-locale__option {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 0.6rem;
+  padding: 0.6rem 0.65rem;
+  border: 0;
+  border-radius: var(--ag-radius-sm);
+  background: transparent;
+  color: var(--ag-color-text);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.install-locale__option:hover,
+.install-locale__option:focus-visible,
+.install-locale__option.is-active {
+  background: var(--ag-color-primary-soft);
+  color: var(--ag-color-primary);
+}
+
+.install-locale__option:focus-visible {
+  outline: 2px solid var(--ag-color-primary);
+  outline-offset: -2px;
+}
+
+.install-theme,
+.install-theme__toggle,
+.install-theme__toggle [data-installer-theme-icon] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
+
 .install-shell__main {
   min-width: 0;
 }
+
 
 .install-wizard {
   display: grid;

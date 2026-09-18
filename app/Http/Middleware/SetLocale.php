@@ -19,9 +19,16 @@ final class SetLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $request->is('admin', 'admin/*', 'install', 'install/*')
-            ? $this->preferences->siteLocale()
-            : $this->preferences->locale();
+        if ($request->is('admin', 'admin/*')) {
+            $locale = $this->preferences->siteLocale();
+        } elseif ($request->is('install', 'install/*')) {
+            $installerLocale = $request->cookie('installer_locale');
+            $locale = is_string($installerLocale) && $this->preferences->isAvailableLocale($installerLocale)
+                ? $installerLocale
+                : $this->preferences->locale();
+        } else {
+            $locale = $this->preferences->locale();
+        }
 
         App::setLocale($locale);
 
