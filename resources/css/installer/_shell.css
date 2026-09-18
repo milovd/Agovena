@@ -31,6 +31,8 @@
   display: flex;
   align-items: center;
   gap: var(--ag-space-3);
+  padding-bottom: var(--ag-space-5);
+  border-bottom: 1px solid var(--ag-color-border);
 }
 
 .install-shell__logo {
@@ -40,7 +42,7 @@
 
 .install-shell__product {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -48,7 +50,7 @@
 .install-shell__tagline {
   margin: 0.1rem 0 0;
   color: var(--ag-color-text-muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .install-shell__main {
@@ -148,9 +150,11 @@
 }
 
 .install-progress__status {
+  justify-self: end;
   margin: 0;
   color: var(--ag-color-text-muted);
   font-size: 0.8125rem;
+  text-align: right;
 }
 
 .install-panel {
@@ -256,6 +260,19 @@
   border-left: 1px solid var(--ag-color-border);
 }
 
+.install-welcome__plan-number {
+  display: block;
+  width: fit-content;
+  margin-bottom: var(--ag-space-3);
+  padding-top: var(--ag-space-2);
+  border-top: 2px solid var(--ag-color-primary);
+  color: var(--ag-color-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
 .install-welcome__plan-item h3 {
   margin: 0;
   font-size: 0.875rem;
@@ -328,10 +345,9 @@
 
 .install-warnings {
   margin: 0 0 var(--ag-space-3);
-  border: 1px solid var(--ag-color-border);
-  border-radius: var(--ag-radius-md);
-  background: #fff;
-  padding: var(--ag-space-3) var(--ag-space-4);
+  border-top: 1px solid rgb(180 83 9 / 0.45);
+  border-bottom: 1px solid var(--ag-color-border);
+  padding: var(--ag-space-3) 0;
 }
 
 .install-warnings > summary {
@@ -365,6 +381,14 @@
 
 .install-warnings[open] > summary {
   margin-bottom: var(--ag-space-3);
+}
+
+.install-warnings .install-checks__item {
+  padding: var(--ag-space-3) 0 0;
+  border: 0;
+  border-top: 1px solid var(--ag-color-border);
+  border-radius: 0;
+  background: transparent;
 }
 
 .install-warnings__technical {
@@ -623,6 +647,10 @@
 
   .install-welcome__plan-item {
     padding: var(--ag-space-4) 0;
+  }
+
+  .install-welcome__plan-number {
+    margin-bottom: var(--ag-space-2);
   }
 
   .install-welcome__plan-item + .install-welcome__plan-item {

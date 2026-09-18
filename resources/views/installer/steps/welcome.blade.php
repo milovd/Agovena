@@ -15,14 +15,17 @@
         <h2 id="install-overview-heading" class="install-section-title">{{ __('installer.welcome.overview_title') }}</h2>
         <ul class="install-welcome__plan" role="list">
             <li class="install-welcome__plan-item">
+                <span class="install-welcome__plan-number" aria-hidden="true">01</span>
                 <h3>{{ __('installer.welcome.account_title') }}</h3>
                 <p>{{ __('installer.welcome.account_text') }}</p>
             </li>
             <li class="install-welcome__plan-item">
+                <span class="install-welcome__plan-number" aria-hidden="true">02</span>
                 <h3>{{ __('installer.welcome.store_title') }}</h3>
                 <p>{{ __('installer.welcome.store_text') }}</p>
             </li>
             <li class="install-welcome__plan-item">
+                <span class="install-welcome__plan-number" aria-hidden="true">03</span>
                 <h3>{{ __('installer.welcome.appearance_title') }}</h3>
                 <p>{{ __('installer.welcome.appearance_text') }}</p>
             </li>
