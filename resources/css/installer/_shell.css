@@ -239,6 +239,13 @@
   margin-bottom: 0;
 }
 
+.install-welcome__hero > .install-eyebrow,
+.install-welcome__hero > .install-panel__title,
+.install-welcome__hero > .install-panel__lede {
+  width: 100%;
+  max-width: 46rem;
+}
+
 .install-eyebrow {
   margin: 0 0 var(--ag-space-2);
   color: var(--ag-color-text-muted);
@@ -255,6 +262,7 @@
 }
 
 .install-welcome__overview {
+  width: min(100%, 46rem);
   margin: 0;
   margin-top: clamp(2rem, 4vw, 3.5rem);
 }
@@ -782,6 +790,9 @@
   }
 
   .install-welcome__overview {
+    width: calc(100% - (2 * var(--ag-space-5)) - 2px);
+    margin-right: calc(var(--ag-space-5) + 1px);
+    margin-left: calc(var(--ag-space-5) + 1px);
     margin-top: 0;
   }
 
