@@ -219,6 +219,7 @@
   isolation: isolate;
   max-width: none;
   margin: 0;
+  width: calc(100% - var(--install-step-end-inset));
   padding: clamp(2rem, 5vw, 4rem);
   padding-left: clamp(1.5rem, 3vw, 2rem);
   overflow: hidden;
@@ -231,6 +232,7 @@
 }
 
 .install-welcome {
+  --install-step-end-inset: calc((100% / 7 - 1.85rem) / 2);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   align-items: start;
@@ -263,9 +265,8 @@
 }
 
 .install-welcome__overview {
-  width: calc(100% - (clamp(1.5rem, 3vw, 2rem) + 1px));
+  width: calc(100% - var(--install-step-end-inset));
   margin: 0;
-  margin-left: calc(clamp(1.5rem, 3vw, 2rem) + 1px);
   margin-top: clamp(2rem, 4vw, 3.5rem);
 }
 
@@ -318,6 +319,7 @@
 
 .install-welcome__actions {
   grid-column: 1 / -1;
+  width: calc(100% - var(--install-step-end-inset));
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -334,10 +336,13 @@
 
 .install-welcome > .install-warnings {
   grid-column: 1 / -1;
+  justify-self: start;
+  width: calc(100% - var(--install-step-end-inset));
 }
 
 .install-status {
   grid-column: 1 / -1;
+  width: calc(100% - var(--install-step-end-inset));
   display: grid;
   grid-template-columns: auto 1fr;
   gap: var(--ag-space-3);
@@ -539,6 +544,7 @@
 
 .install-checks {
   grid-column: 1 / -1;
+  width: calc(100% - var(--install-step-end-inset));
   list-style: none;
   margin: 0 0 var(--ag-space-3);
   padding: 0;
@@ -772,6 +778,7 @@
   }
 
   .install-welcome {
+    --install-step-end-inset: 0px;
     grid-template-columns: 1fr;
     row-gap: var(--ag-space-8);
   }
@@ -788,8 +795,8 @@
   }
 
   .install-welcome__overview {
-    width: calc(100% - (var(--ag-space-4) + 1px));
-    margin-left: calc(var(--ag-space-4) + 1px);
+    width: 100%;
+    margin-left: 0;
     margin-top: 0;
   }
 
