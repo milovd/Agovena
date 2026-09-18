@@ -164,7 +164,7 @@
 }
 
 .install-panel__body {
-  padding: clamp(2.5rem, 6vw, 5rem) 0 0;
+  padding: clamp(1.5rem, 3vw, 2.5rem) 0 0;
 }
 
 .install-panel__title {
@@ -262,8 +262,9 @@
 }
 
 .install-welcome__overview {
-  width: 100%;
+  width: calc(100% - (clamp(2rem, 5vw, 4rem) + 1px));
   margin: 0;
+  margin-left: calc(clamp(2rem, 5vw, 4rem) + 1px);
   margin-top: clamp(2rem, 4vw, 3.5rem);
 }
 
@@ -771,7 +772,7 @@
   }
 
   .install-panel__body {
-    padding-top: var(--ag-space-8);
+    padding-top: var(--ag-space-5);
   }
 
   .install-welcome {
@@ -790,7 +791,8 @@
   }
 
   .install-welcome__overview {
-    width: 100%;
+    width: calc(100% - (var(--ag-space-5) + 1px));
+    margin-left: calc(var(--ag-space-5) + 1px);
     margin-top: 0;
   }
 
