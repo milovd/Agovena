@@ -139,11 +139,18 @@
             <form wire:submit="addToCart" class="store-product__form">
                 @include('theme::partials.product-options')
                 <div class="store-product__buy">
-                    <div class="store-qty" role="group" aria-label="{{ __('storefront.product.quantity') }}">
+                    <div
+                        class="store-qty"
+                        role="group"
+                        aria-label="{{ __('storefront.product.quantity') }}"
+                        x-data="storefrontQuantity"
+                        data-min="1"
+                        data-max="99"
+                    >
                         <label class="visually-hidden" for="quantity">{{ __('storefront.product.quantity') }}</label>
-                        <button type="button" class="store-qty__btn" wire:click="decrementQuantity" aria-label="{{ __('storefront.product.decrease') }}">−</button>
-                        <input id="quantity" class="store-qty__input" type="number" min="1" max="99" value="{{ $quantity }}" wire:model="quantity">
-                        <button type="button" class="store-qty__btn" wire:click="incrementQuantity" aria-label="{{ __('storefront.product.increase') }}">+</button>
+                        <button type="button" class="store-qty__btn" @click="decrement()" aria-label="{{ __('storefront.product.decrease') }}">−</button>
+                        <input id="quantity" class="store-qty__input" type="number" min="1" max="99" value="{{ $quantity }}" wire:model="quantity" x-ref="input" @change="normalize()">
+                        <button type="button" class="store-qty__btn" @click="increment()" aria-label="{{ __('storefront.product.increase') }}">+</button>
                     </div>
                 </div>
 

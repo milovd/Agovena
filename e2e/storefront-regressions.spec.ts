@@ -48,3 +48,30 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
     await expect(thumbnails.nth(1)).toHaveAttribute('aria-current', 'true');
     expect(pageErrors).toEqual([]);
 });
+
+test('quantity stepper updates locally without a Livewire roundtrip per click', async ({ page }) => {
+    const livewireRequests: string[] = [];
+    page.on('request', request => {
+        if (request.method() !== 'GET' && request.url().includes('/livewire/update')) {
+            livewireRequests.push(request.url());
+        }
+    });
+
+    await page.goto('/products/e2e-physical');
+    await chooseEssentialCookies(page);
+
+    const quantity = page.locator('#quantity');
+    const increase = page.getByRole('button', { name: 'Increase quantity' });
+    await expect(quantity).toHaveValue('1');
+
+    await increase.click();
+    await increase.click();
+    await increase.click();
+
+    await expect(quantity).toHaveValue('4');
+    expect(livewireRequests).toEqual([]);
+
+    await page.getByRole('button', { name: 'Add to cart' }).click();
+    await expect(page).toHaveURL(/\/cart$/);
+    await expect(page.locator('.store-qty__input')).toHaveValue('4');
+});

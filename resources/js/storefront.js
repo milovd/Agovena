@@ -30,6 +30,37 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    window.Alpine.data('storefrontQuantity', () => ({
+        min: 1,
+        max: 99,
+        init() {
+            this.min = Number(this.$root.dataset.min || 1);
+            this.max = Number(this.$root.dataset.max || 99);
+        },
+        increment() {
+            this.setValue(this.readValue() + 1);
+        },
+        decrement() {
+            this.setValue(this.readValue() - 1);
+        },
+        normalize() {
+            this.setValue(this.readValue());
+        },
+        readValue() {
+            const value = Number(this.$refs.input?.value);
+
+            return Number.isFinite(value) ? value : this.min;
+        },
+        setValue(rawValue) {
+            const input = this.$refs.input;
+            if (!input) return;
+
+            const value = Math.min(this.max, Math.max(this.min, Math.trunc(Number(rawValue))));
+            input.value = String(value);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        },
+    }));
+
     window.Alpine.data('storefrontReferral', () => ({
         copied: false,
         async copy() {
