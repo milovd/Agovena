@@ -481,33 +481,11 @@
   border-top: 1px solid var(--ag-color-border);
 }
 
-.install-welcome__continue {
-  min-width: 9.5rem;
-  min-height: 3.25rem;
-  padding: 0.75rem 1.2rem;
-  border-radius: 0.75rem;
-  gap: 0.7rem;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  box-shadow: 0 5px 14px rgb(21 94 239 / 0.22);
-}
-
-.install-welcome__continue svg {
-  transition: transform var(--ag-transition);
-}
-
-.install-welcome__continue:hover:not(:disabled):not(.is-disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgb(21 94 239 / 0.28);
-}
-
-.install-welcome__continue:hover:not(:disabled):not(.is-disabled) svg {
-  transform: translateX(2px);
-}
-
-.install-welcome__continue:active:not(:disabled):not(.is-disabled) {
-  transform: translateY(0);
+.install-welcome__hero .install-welcome__actions {
+  width: auto;
+  margin-top: var(--ag-space-5);
+  padding-top: 0;
+  border-top: 0;
 }
 
 .install-welcome__actions .ag-field__error {
@@ -519,6 +497,8 @@
   grid-column: 1 / -1;
   justify-self: start;
   width: calc(100% - var(--install-step-end-inset));
+  margin-top: 0;
+  margin-bottom: var(--ag-space-4);
 }
 
 .install-status {
@@ -961,7 +941,7 @@
   .install-welcome {
     --install-step-end-inset: 0px;
     grid-template-columns: 1fr;
-    row-gap: var(--ag-space-8);
+    row-gap: var(--ag-space-4);
   }
 
   .install-welcome__hero {
@@ -974,11 +954,16 @@
     background-repeat: no-repeat;
   }
 
+  .install-welcome > .install-warnings {
+    margin-bottom: 0;
+  }
+
   .install-welcome__overview {
     width: 100%;
     margin-left: 0;
     margin-top: 0;
   }
+
 
   .install-welcome__plan {
     grid-template-columns: 1fr;
