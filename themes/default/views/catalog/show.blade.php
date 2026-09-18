@@ -129,13 +129,13 @@
                 <p class="store-product__lede">{{ $lede }}</p>
             @endif
 
-            @if ($priceAvailable && $configuredPrice)
+            @if ($priceAvailable && $configuredPrice && ! $isOutOfStock)
                 <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
             @else
                 <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
             @endif
 
-            @if ($priceAvailable)
+            @if ($priceAvailable && ! $isOutOfStock)
             <form wire:submit="addToCart" class="store-product__form">
                 @include('theme::partials.product-options')
                 <div class="store-product__buy">
@@ -167,6 +167,22 @@
                 @error('quantity') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
                 @error('product') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
             </form>
+            @endif
+
+            @if ($isOutOfStock)
+                <section class="store-product__back-in-stock" aria-labelledby="back-in-stock-heading">
+                    <h2 id="back-in-stock-heading">{{ __('storefront.product.back_in_stock_title') }}</h2>
+                    <p>{{ __('storefront.product.back_in_stock_text') }}</p>
+                    <form wire:submit="subscribeToBackInStock" class="store-product__back-in-stock-form">
+                        <label class="visually-hidden" for="backInStockEmail">{{ __('storefront.product.back_in_stock_email') }}</label>
+                        <input id="backInStockEmail" type="email" wire:model="backInStockEmail" autocomplete="email" required placeholder="{{ __('storefront.product.back_in_stock_email') }}">
+                        <button type="submit" class="store-btn store-btn--outline">{{ __('storefront.product.back_in_stock_action') }}</button>
+                    </form>
+                    @error('backInStockEmail') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                    @if ($backInStockMessage !== '')
+                        <p class="store-field__success" role="status">{{ $backInStockMessage }}</p>
+                    @endif
+                </section>
             @endif
 
             <div class="store-product__perks" role="list">

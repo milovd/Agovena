@@ -89,6 +89,11 @@ return [
         'line' => 'Sleutels of codes voor bestelling :number staan klaar in je account.',
         'action' => 'Digitale levering bekijken',
     ],
+    'back_in_stock' => [
+        'subject' => ':name is weer beschikbaar',
+        'line' => ':name is weer op voorraad. We hebben dit voor je bewaard.',
+        'action' => 'Product bekijken',
+    ],
     'event_ticket_issued' => [
         'subject' => 'Je tickets voor bestelling :number',
         'line' => 'Evenementtickets voor bestelling :number zijn nu beschikbaar.',

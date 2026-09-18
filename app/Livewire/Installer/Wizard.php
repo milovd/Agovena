@@ -17,6 +17,7 @@ use Illuminate\Validation\Rules\Password;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
+use Throwable;
 
 final class Wizard extends Component
 {
@@ -156,13 +157,14 @@ final class Wizard extends Component
                 presetIds: $this->presetIds,
             ));
         } catch (InstallationException $e) {
-            if ($logoPath !== null) {
-                Storage::disk('public')->delete($logoPath);
-            }
-            if ($faviconPath !== null && $faviconPath !== $logoPath) {
-                Storage::disk('public')->delete($faviconPath);
-            }
+            $this->cleanupBrandingFiles($logoPath, $faviconPath);
             $this->installError = $e->getMessage();
+
+            return;
+        } catch (Throwable $e) {
+            $this->cleanupBrandingFiles($logoPath, $faviconPath);
+            report($e);
+            $this->installError = __('installer.errors.unexpected');
 
             return;
         }
@@ -172,6 +174,17 @@ final class Wizard extends Component
         $this->logo = null;
         $this->favicon = null;
         $this->step = 'complete';
+    }
+
+    private function cleanupBrandingFiles(?string $logoPath, ?string $faviconPath): void
+    {
+        if ($logoPath !== null) {
+            Storage::disk('public')->delete($logoPath);
+        }
+
+        if ($faviconPath !== null && $faviconPath !== $logoPath) {
+            Storage::disk('public')->delete($faviconPath);
+        }
     }
 
     public function render(InstallationRequirements $requirements, ThemeManager $themes, StorePresetCatalog $catalog)

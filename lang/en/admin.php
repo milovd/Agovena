@@ -2296,6 +2296,7 @@ return [
         'reset' => 'Restore defaults',
         'saved' => 'Notification template saved.',
         'keys' => [
+            'back_in_stock' => 'Back in stock',
             'order_placed' => 'Order placed',
             'payment_recorded' => 'Payment recorded',
             'invoice_issued' => 'Invoice issued',

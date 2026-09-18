@@ -120,7 +120,8 @@ return [
     ],
 
     'errors' => [
-        'requirements' => 'Los de mislukte verplichte controles op voordat je doorgaat.',
+        'requirements' => 'Los de mislukte vereiste controles op voordat je verdergaat.',
+        'unexpected' => 'De installatie kon niet worden voltooid. Controleer het applicatielogboek en probeer opnieuw.',
     ],
 
     'checks' => [

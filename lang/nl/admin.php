@@ -2297,6 +2297,7 @@ return [
         'reset' => 'Standaard herstellen',
         'saved' => 'Meldingssjabloon opgeslagen.',
         'keys' => [
+            'back_in_stock' => 'Weer op voorraad',
             'order_placed' => 'Bestelling geplaatst',
             'payment_recorded' => 'Betaling verwerkt',
             'invoice_issued' => 'Factuur uitgegeven',

@@ -89,6 +89,11 @@ return [
         'line' => 'Keys or codes for order :number are now available in your account.',
         'action' => 'View digital delivery',
     ],
+    'back_in_stock' => [
+        'subject' => ':name is back in stock',
+        'line' => ':name is available again. We saved this update for you.',
+        'action' => 'View product',
+    ],
     'event_ticket_issued' => [
         'subject' => 'Your tickets for order :number',
         'line' => 'Event tickets for order :number are now available.',

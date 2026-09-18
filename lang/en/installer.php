@@ -121,6 +121,7 @@ return [
 
     'errors' => [
         'requirements' => 'Fix the failed required checks before continuing.',
+        'unexpected' => 'The installation could not be completed. Check the application log and try again.',
     ],
 
     'checks' => [

@@ -98,6 +98,11 @@ final class NotificationTemplateCatalog
                 placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],
             ),
             new NotificationTemplateDefinition(
+                key: 'back_in_stock',
+                label: 'admin.notifications.keys.back_in_stock',
+                placeholders: ['name', 'action_url', 'action_label'],
+            ),
+            new NotificationTemplateDefinition(
                 key: 'event_ticket_issued',
                 label: 'admin.notifications.keys.event_ticket_issued',
                 placeholders: ['name', 'number', 'detail', 'action_url', 'action_label'],

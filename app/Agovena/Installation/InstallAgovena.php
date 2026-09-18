@@ -74,6 +74,9 @@ final class InstallAgovena
 
                 $this->themes->activate($request->themeId);
 
+                // Presets are part of installation. Do not publish the install lock
+                // before their module lifecycle work has completed successfully.
+                $this->presets->handle($request->presetIds);
                 $this->state->markInstalled();
 
                 return $owner;
@@ -82,10 +85,6 @@ final class InstallAgovena
             throw $e;
         } catch (Throwable $e) {
             throw $e;
-        }
-
-        if ($request->presetIds !== []) {
-            $this->presets->handle($request->presetIds);
         }
 
         return $owner;
