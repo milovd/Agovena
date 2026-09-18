@@ -214,37 +214,24 @@
 }
 
 .install-welcome__hero {
-  max-width: 46rem;
+  position: relative;
+  isolation: isolate;
+  max-width: none;
   margin: 0;
+  padding: clamp(2rem, 5vw, 4rem);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ag-color-primary) 16%, var(--ag-color-border));
+  border-radius: var(--ag-radius-lg);
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--ag-color-surface) 96%, transparent) 0%, color-mix(in srgb, var(--ag-color-surface) 86%, transparent) 56%, color-mix(in srgb, var(--ag-color-surface) 34%, transparent) 100%),
+    url('/vendor/agovena/installer-illustration.png') right center / auto 100% no-repeat,
+    color-mix(in srgb, var(--ag-color-primary) 7%, var(--ag-color-surface));
 }
 
 .install-welcome {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(20rem, 0.9fr);
-  column-gap: clamp(3rem, 8vw, 8rem);
+  grid-template-columns: minmax(0, 1fr);
   align-items: start;
-}
-
-.install-welcome__visual {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.install-welcome__visual-frame {
-  display: grid;
-  width: min(100%, 18rem);
-  aspect-ratio: 1;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, var(--ag-color-primary) 20%, var(--ag-color-border));
-  border-radius: var(--ag-radius-lg);
-  background: color-mix(in srgb, var(--ag-color-primary) 7%, var(--ag-color-surface));
-}
-
-.install-welcome__visual-image {
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  object-fit: cover;
 }
 
 .install-welcome__hero .install-panel__lede {
@@ -267,17 +254,15 @@
 }
 
 .install-welcome__overview {
-  grid-column: 1 / -1;
   margin: 0;
-  margin-top: clamp(2.5rem, 6vw, 5rem);
+  margin-top: clamp(2rem, 4vw, 3.5rem);
 }
 
 .install-welcome__plan {
   list-style: none;
   margin: 0;
-  padding: var(--ag-space-4) 0;
+  padding: 0;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   border-top: 1px solid var(--ag-color-border);
 }
@@ -287,12 +272,11 @@
   display: grid;
   grid-template-columns: auto 1fr;
   column-gap: var(--ag-space-3);
-  padding: var(--ag-space-4) var(--ag-space-5) var(--ag-space-4) 0;
+  padding: var(--ag-space-4) 0;
 }
 
 .install-welcome__plan-item + .install-welcome__plan-item {
-  padding-left: var(--ag-space-5);
-  border-left: 1px solid var(--ag-color-border);
+  border-top: 1px solid var(--ag-color-border);
 }
 
 .install-welcome__plan-icon {
@@ -737,12 +721,14 @@
     row-gap: var(--ag-space-8);
   }
 
-  .install-welcome__visual {
-    justify-content: flex-start;
-  }
-
-  .install-welcome__visual-frame {
-    width: min(100%, 12rem);
+  .install-welcome__hero {
+    padding: var(--ag-space-8) var(--ag-space-5);
+    background-image:
+      linear-gradient(90deg, color-mix(in srgb, var(--ag-color-surface) 100%, transparent) 0%, color-mix(in srgb, var(--ag-color-surface) 98%, transparent) 64%, color-mix(in srgb, var(--ag-color-surface) 72%, transparent) 100%),
+      url('/vendor/agovena/installer-illustration.png');
+    background-position: 0 0, right bottom;
+    background-size: auto, 9rem auto;
+    background-repeat: no-repeat;
   }
 
   .install-welcome__overview {
@@ -750,7 +736,6 @@
   }
 
   .install-welcome__plan {
-    grid-template-columns: 1fr;
     padding: 0;
   }
 

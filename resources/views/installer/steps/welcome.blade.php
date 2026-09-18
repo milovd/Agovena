@@ -11,12 +11,6 @@
         <p class="install-panel__lede">{{ __('installer.welcome.lede') }}</p>
     </div>
 
-    <div class="install-welcome__visual" aria-hidden="true">
-        <div class="install-welcome__visual-frame">
-            <img src="/vendor/agovena/installer-illustration.png" alt="" class="install-welcome__visual-image" width="1024" height="1024" decoding="async">
-        </div>
-    </div>
-
     <section class="install-welcome__overview" aria-labelledby="install-overview-heading">
         <h2 id="install-overview-heading" class="install-section-title">{{ __('installer.welcome.overview_title') }}</h2>
         <ul class="install-welcome__plan" role="list">

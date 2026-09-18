@@ -37,8 +37,6 @@ test('installer welcome is available when not installed', function () {
         ->assertOk()
         ->assertSee(__('installer.welcome.heading'), false)
         ->assertSee(__('installer.welcome.overview_title'), false)
-        ->assertSee('install-welcome__visual', false)
-        ->assertSee('/vendor/agovena/installer-illustration.png', false)
         ->assertSee('install-welcome__plan-icon', false)
         ->assertDontSee('install-welcome__plan-number', false)
         ->assertSee('install-panel__brand', false)
