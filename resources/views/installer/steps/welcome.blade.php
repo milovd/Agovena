@@ -143,7 +143,7 @@
             wire:target="next"
             @disabled(! $ready)
         >
-            <span>{{ __('installer.actions.continue') }}</span>
+            <span>{{ __('installer.welcome.get_started') }}</span>
             <x-ag.icon name="chevron-right" :size="16" aria-hidden="true" />
         </button>
     </form>

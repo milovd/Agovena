@@ -50,6 +50,7 @@ return [
     'welcome' => [
         'eyebrow' => 'Agovena installer',
         'heading' => 'Set up your Agovena store',
+        'get_started' => 'Get started',
         'lede' => 'Start with the essentials for your store. You can refine everything else later in Admin.',
         'overview_title' => 'This setup covers',
         'account_title' => 'Admin access',

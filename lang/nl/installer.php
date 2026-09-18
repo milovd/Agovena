@@ -50,6 +50,7 @@ return [
     'welcome' => [
         'eyebrow' => 'Agovena-installatie',
         'heading' => 'Je Agovena-winkel klaarzetten',
+        'get_started' => 'Aan de slag',
         'lede' => 'Start met de basis van je winkel. De rest kun je later aanpassen in Admin.',
         'overview_title' => 'Deze installatie bevat',
         'account_title' => 'Admin-toegang',
