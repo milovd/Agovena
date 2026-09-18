@@ -16,8 +16,10 @@ use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\ProductOptionType;
 use App\Enums\ProductStatus;
+use App\Models\Category;
 use App\Models\DiscountCode;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
 use Illuminate\Contracts\Console\Kernel;
@@ -78,6 +80,17 @@ DiscountCode::query()->updateOrCreate(
 
 $capabilities = $app->make(ProductCapabilityManager::class);
 
+$e2eCategory = Category::query()->updateOrCreate(
+    ['slug' => 'e2e-products'],
+    [
+        'name' => 'E2E Products',
+        'description' => 'Products used by browser regression tests.',
+        'image_path' => 'demo/category-accessories.jpg',
+        'is_active' => true,
+        'parent_id' => null,
+    ],
+);
+
 if (! ShippingMethod::query()->where('code', 'e2e-standard')->exists()) {
     ShippingMethod::query()->create([
         'name' => 'Standard delivery',
@@ -126,6 +139,16 @@ DigitalAsset::query()->updateOrCreate(
 );
 
 $physical = e2eProduct('e2e-physical', 'E2E Desk lamp', 2500);
+$physical->forceFill([
+    'category_id' => $e2eCategory->id,
+    'image_path' => 'demo/iphone-15.jpg',
+])->save();
+foreach (['demo/iphone-15.jpg', 'demo/iphone-15-2.jpg', 'demo/iphone-15-3.jpg'] as $sort => $path) {
+    ProductImage::query()->updateOrCreate(
+        ['product_id' => $physical->id, 'path' => $path],
+        ['sort' => $sort],
+    );
+}
 $capabilities->enable($physical, 'physical');
 $capabilities->enable($physical, 'shippable', ['weight_grams' => 800]);
 

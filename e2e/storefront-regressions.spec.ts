@@ -26,7 +26,7 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
 
-    await page.goto('/products/iphone-15');
+    await page.goto('/products/e2e-physical');
     await chooseEssentialCookies(page);
 
     const quantity = page.locator('#quantity');
