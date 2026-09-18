@@ -59,6 +59,9 @@
     @if ($warnings !== [])
         <details class="install-warnings">
             <summary>
+                <span class="install-warnings__icon" aria-hidden="true">
+                    <x-ag.icon name="circle-alert" :size="17" />
+                </span>
                 <span class="install-warnings__label">{{ trans_choice('installer.welcome.warnings_summary', count($warnings), ['count' => count($warnings)]) }}</span>
                 <span class="install-warnings__chevron" aria-hidden="true">
                     <x-ag.icon name="chevron-down" :size="16" />
@@ -67,7 +70,9 @@
             <ul class="install-checks install-checks--compact" role="list">
                 @foreach ($warnings as $check)
                     <li class="install-checks__item is-warn">
-                        <span class="install-checks__status" aria-hidden="true">!</span>
+                        <span class="install-checks__status" aria-hidden="true">
+                            <x-ag.icon name="circle-alert" :size="15" />
+                        </span>
                         <div>
                             <p class="install-checks__label">{{ __($check->label) }}</p>
                             @if ($check->detail)

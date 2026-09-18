@@ -342,7 +342,9 @@ test('healthy requirements stay concise in the installer while warnings do not b
     ));
 
     if ($warnings !== []) {
-        $component->assertSee(trans_choice('installer.welcome.warnings_summary', count($warnings), ['count' => count($warnings)]), false);
+        $component
+            ->assertSee(trans_choice('installer.welcome.warnings_summary', count($warnings), ['count' => count($warnings)]), false)
+            ->assertSee('install-warnings__icon', false);
     }
 
     $component->call('next')->assertSet('step', 'owner');

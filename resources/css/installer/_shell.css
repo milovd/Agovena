@@ -345,9 +345,10 @@
 
 .install-warnings {
   margin: 0 0 var(--ag-space-3);
-  border-top: 1px solid rgb(180 83 9 / 0.45);
-  border-bottom: 1px solid var(--ag-color-border);
-  padding: var(--ag-space-3) 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ag-color-warning) 38%, var(--ag-color-border));
+  border-radius: var(--ag-radius-md);
+  background: color-mix(in srgb, var(--ag-color-warning) 11%, var(--ag-color-surface));
 }
 
 .install-warnings > summary {
@@ -356,9 +357,10 @@
   display: flex;
   align-items: center;
   gap: var(--ag-space-3);
-  font-weight: 600;
+  padding: var(--ag-space-3) var(--ag-space-4);
+  font-weight: 700;
   font-size: 0.875rem;
-  color: #b45309;
+  color: var(--ag-color-text);
 }
 
 .install-warnings > summary::-webkit-details-marker {
@@ -369,9 +371,20 @@
   flex: 1;
 }
 
+.install-warnings__icon {
+  display: grid;
+  flex: 0 0 1.75rem;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--ag-color-warning);
+  color: #fff;
+}
+
 .install-warnings__chevron {
   display: inline-flex;
-  color: currentColor;
+  color: var(--ag-color-warning);
   transition: transform var(--ag-transition);
 }
 
@@ -380,15 +393,24 @@
 }
 
 .install-warnings[open] > summary {
-  margin-bottom: var(--ag-space-3);
+  border-bottom: 1px solid color-mix(in srgb, var(--ag-color-warning) 30%, var(--ag-color-border));
+}
+
+.install-warnings .install-checks--compact {
+  margin: 0;
+  padding: 0 var(--ag-space-4) var(--ag-space-4);
 }
 
 .install-warnings .install-checks__item {
-  padding: var(--ag-space-3) 0 0;
+  padding: var(--ag-space-4) 0 0;
   border: 0;
-  border-top: 1px solid var(--ag-color-border);
   border-radius: 0;
   background: transparent;
+}
+
+.install-warnings .install-checks__item + .install-checks__item {
+  margin-top: var(--ag-space-3);
+  border-top: 1px solid color-mix(in srgb, var(--ag-color-warning) 24%, var(--ag-color-border));
 }
 
 .install-warnings__technical {
@@ -460,7 +482,9 @@
 }
 
 .install-checks__item.is-warn .install-checks__status {
-  color: #b45309;
+  border-color: var(--ag-color-warning);
+  background: var(--ag-color-warning);
+  color: #fff;
 }
 
 .install-checks__label {
