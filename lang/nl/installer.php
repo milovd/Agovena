@@ -60,6 +60,7 @@ return [
         'appearance_text' => 'Voeg optionele branding toe en bevestig het startthema.',
         'blocked_title' => 'Een paar dingen vragen aandacht',
         'blocked_text' => 'Los de vereiste punten hieronder op en vernieuw daarna deze pagina.',
+        'warnings_label' => 'Optionele controle',
         'warnings_summary' => '{1} Eén optionele waarschuwing|[2,*] :count optionele waarschuwingen',
         'technical_details' => 'Technische details',
     ],

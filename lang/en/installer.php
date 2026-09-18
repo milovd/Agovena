@@ -60,6 +60,7 @@ return [
         'appearance_text' => 'Add optional branding and confirm the starting theme.',
         'blocked_title' => 'A few things need attention',
         'blocked_text' => 'Fix the required items below, then refresh this page to continue.',
+        'warnings_label' => 'Optional check',
         'warnings_summary' => '{1} One optional warning|[2,*] :count optional warnings',
         'technical_details' => 'Technical details',
     ],

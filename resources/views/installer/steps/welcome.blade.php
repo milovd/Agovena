@@ -11,23 +11,35 @@
         <p class="install-panel__lede">{{ __('installer.welcome.lede') }}</p>
     </div>
 
+    <div class="install-welcome__visual" aria-hidden="true">
+        <div class="install-welcome__visual-frame">
+            <img src="/vendor/agovena/installer-illustration.png" alt="" class="install-welcome__visual-image" width="1024" height="1024" decoding="async">
+        </div>
+    </div>
+
     <section class="install-welcome__overview" aria-labelledby="install-overview-heading">
         <h2 id="install-overview-heading" class="install-section-title">{{ __('installer.welcome.overview_title') }}</h2>
         <ul class="install-welcome__plan" role="list">
             <li class="install-welcome__plan-item">
-                <span class="install-welcome__plan-number" aria-hidden="true">01</span>
-                <h3>{{ __('installer.welcome.account_title') }}</h3>
-                <p>{{ __('installer.welcome.account_text') }}</p>
+                <span class="install-welcome__plan-icon" aria-hidden="true"><x-ag.icon name="user" :size="18" /></span>
+                <div>
+                    <h3>{{ __('installer.welcome.account_title') }}</h3>
+                    <p>{{ __('installer.welcome.account_text') }}</p>
+                </div>
             </li>
             <li class="install-welcome__plan-item">
-                <span class="install-welcome__plan-number" aria-hidden="true">02</span>
-                <h3>{{ __('installer.welcome.store_title') }}</h3>
-                <p>{{ __('installer.welcome.store_text') }}</p>
+                <span class="install-welcome__plan-icon" aria-hidden="true"><x-ag.icon name="store" :size="18" /></span>
+                <div>
+                    <h3>{{ __('installer.welcome.store_title') }}</h3>
+                    <p>{{ __('installer.welcome.store_text') }}</p>
+                </div>
             </li>
             <li class="install-welcome__plan-item">
-                <span class="install-welcome__plan-number" aria-hidden="true">03</span>
-                <h3>{{ __('installer.welcome.appearance_title') }}</h3>
-                <p>{{ __('installer.welcome.appearance_text') }}</p>
+                <span class="install-welcome__plan-icon" aria-hidden="true"><x-ag.icon name="layout-template" :size="18" /></span>
+                <div>
+                    <h3>{{ __('installer.welcome.appearance_title') }}</h3>
+                    <p>{{ __('installer.welcome.appearance_text') }}</p>
+                </div>
             </li>
         </ul>
     </section>
@@ -62,7 +74,10 @@
                 <span class="install-warnings__icon" aria-hidden="true">
                     <x-ag.icon name="circle-alert" :size="17" />
                 </span>
-                <span class="install-warnings__label">{{ trans_choice('installer.welcome.warnings_summary', count($warnings), ['count' => count($warnings)]) }}</span>
+                <span class="install-warnings__copy">
+                    <span class="install-warnings__eyebrow">{{ __('installer.welcome.warnings_label') }}</span>
+                    <span class="install-warnings__label">{{ trans_choice('installer.welcome.warnings_summary', count($warnings), ['count' => count($warnings)]) }}</span>
+                </span>
                 <span class="install-warnings__chevron" aria-hidden="true">
                     <x-ag.icon name="chevron-down" :size="16" />
                 </span>

@@ -44,7 +44,7 @@
 .install-progress__list {
   list-style: none;
   margin: 0;
-  padding: var(--ag-space-1) var(--ag-space-1) var(--ag-space-2);
+  padding: var(--ag-space-1) 0 var(--ag-space-2);
   display: flex;
   align-items: flex-start;
   gap: 0;
@@ -115,11 +115,17 @@
 }
 
 .install-progress__status {
-  justify-self: end;
+  order: -1;
+  justify-self: start;
   margin: 0;
   color: var(--ag-color-text-muted);
   font-size: 0.8125rem;
   text-align: right;
+}
+
+.install-progress__item:first-child {
+  justify-items: start;
+  text-align: left;
 }
 
 .install-panel {
@@ -219,6 +225,28 @@
   align-items: start;
 }
 
+.install-welcome__visual {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.install-welcome__visual-frame {
+  display: grid;
+  width: min(100%, 18rem);
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--ag-color-primary) 20%, var(--ag-color-border));
+  border-radius: var(--ag-radius-lg);
+  background: color-mix(in srgb, var(--ag-color-primary) 7%, var(--ag-color-surface));
+}
+
+.install-welcome__visual-image {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
 .install-welcome__hero .install-panel__lede {
   margin-bottom: 0;
 }
@@ -239,7 +267,9 @@
 }
 
 .install-welcome__overview {
+  grid-column: 1 / -1;
   margin: 0;
+  margin-top: clamp(2.5rem, 6vw, 5rem);
 }
 
 .install-welcome__plan {
@@ -247,6 +277,7 @@
   margin: 0;
   padding: var(--ag-space-4) 0;
   display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
   border-top: 1px solid var(--ag-color-border);
 }
@@ -254,25 +285,26 @@
 .install-welcome__plan-item {
   min-width: 0;
   display: grid;
-  grid-template-columns: 2rem 1fr;
+  grid-template-columns: auto 1fr;
   column-gap: var(--ag-space-3);
-  padding: var(--ag-space-4) 0;
+  padding: var(--ag-space-4) var(--ag-space-5) var(--ag-space-4) 0;
 }
 
 .install-welcome__plan-item + .install-welcome__plan-item {
-  border-top: 1px solid var(--ag-color-border);
+  padding-left: var(--ag-space-5);
+  border-left: 1px solid var(--ag-color-border);
 }
 
-.install-welcome__plan-number {
-  grid-row: span 2;
+.install-welcome__plan-icon {
   display: flex;
   align-items: baseline;
-  padding-top: 0.05rem;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding-top: 0.45rem;
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-primary-soft);
   color: var(--ag-color-primary);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1;
 }
 
 .install-welcome__plan-item h3 {
@@ -352,24 +384,24 @@
 }
 
 .install-warnings {
-  width: min(100%, 52rem);
+  width: 100%;
+  max-width: none;
   justify-self: center;
   margin: var(--ag-space-6) 0 0;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--ag-color-warning) 32%, var(--ag-color-border));
-  border-radius: var(--ag-radius-md);
-  background: color-mix(in srgb, var(--ag-color-warning) 11%, var(--ag-color-surface));
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-lg);
+  background: var(--ag-color-surface);
 }
 
 .install-warnings > summary {
   cursor: pointer;
   list-style: none;
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--ag-space-3);
-  padding: var(--ag-space-3) var(--ag-space-4);
-  font-weight: 700;
-  font-size: 0.875rem;
+  padding: var(--ag-space-4) var(--ag-space-5);
   color: var(--ag-color-text);
 }
 
@@ -378,23 +410,38 @@
 }
 
 .install-warnings__label {
-  flex: 1;
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.install-warnings__copy {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.install-warnings__eyebrow {
+  color: var(--ag-color-warning);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .install-warnings__icon {
   display: grid;
-  flex: 0 0 1.75rem;
   place-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 999px;
-  background: var(--ag-color-warning);
-  color: #fff;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-warning-soft);
+  color: var(--ag-color-warning);
 }
 
 .install-warnings__chevron {
   display: inline-flex;
-  color: var(--ag-color-warning);
+  color: var(--ag-color-text-muted);
   transition: transform var(--ag-transition);
 }
 
@@ -403,12 +450,12 @@
 }
 
 .install-warnings[open] > summary {
-  border-bottom: 0;
+  border-bottom: 1px solid var(--ag-color-border);
 }
 
 .install-warnings .install-checks--compact {
   margin: 0;
-  padding: 0 var(--ag-space-4) var(--ag-space-4);
+  padding: 0 var(--ag-space-5) var(--ag-space-5) 5.25rem;
 }
 
 .install-warnings .install-checks__item {
@@ -690,7 +737,20 @@
     row-gap: var(--ag-space-8);
   }
 
+  .install-welcome__visual {
+    justify-content: flex-start;
+  }
+
+  .install-welcome__visual-frame {
+    width: min(100%, 12rem);
+  }
+
+  .install-welcome__overview {
+    margin-top: 0;
+  }
+
   .install-welcome__plan {
+    grid-template-columns: 1fr;
     padding: 0;
   }
 
@@ -698,11 +758,13 @@
     padding: var(--ag-space-4) 0;
   }
 
-  .install-welcome__plan-number {
-    padding-top: 0.05rem;
+  .install-welcome__plan-item + .install-welcome__plan-item {
+    padding-left: 0;
+    border-top: 1px solid var(--ag-color-border);
+    border-left: 0;
   }
 
-  .install-welcome__plan-item + .install-welcome__plan-item {
-    border-top: 1px solid var(--ag-color-border);
+  .install-warnings .install-checks--compact {
+    padding-left: var(--ag-space-5);
   }
 }
