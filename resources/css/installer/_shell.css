@@ -386,14 +386,14 @@
 }
 
 .install-warnings {
-  width: 100%;
+  width: calc(100% - var(--install-step-end-inset));
   max-width: none;
-  justify-self: center;
+  justify-self: start;
   margin: var(--ag-space-6) 0 0;
   overflow: hidden;
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid color-mix(in srgb, var(--ag-color-warning) 38%, var(--ag-color-border));
   border-radius: var(--ag-radius-lg);
-  background: var(--ag-color-surface);
+  background: color-mix(in srgb, var(--ag-color-warning) 12%, var(--ag-color-surface));
 }
 
 .install-warnings > summary {
@@ -403,7 +403,7 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--ag-space-3);
-  padding: var(--ag-space-4) var(--ag-space-5);
+  padding: var(--ag-space-4) 0;
   color: var(--ag-color-text);
 }
 
