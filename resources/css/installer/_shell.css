@@ -291,6 +291,14 @@
   color: #fff;
 }
 
+.install-progress__label-full {
+  display: inline;
+}
+
+.install-progress__label-compact {
+  display: none;
+}
+
 .install-progress__label {
   display: block;
   white-space: nowrap;
@@ -414,7 +422,7 @@
   max-width: none;
   margin: 0;
   width: calc(100% - var(--install-step-end-inset));
-  padding: clamp(2rem, 5vw, 4rem);
+  padding: clamp(1.5rem, 3.5vw, 3rem);
   padding-left: clamp(1.5rem, 3vw, 2rem);
   overflow: hidden;
   border: 0;
@@ -460,13 +468,13 @@
 .install-welcome__overview {
   width: calc(100% - var(--install-step-end-inset));
   margin: 0;
-  margin-top: clamp(2rem, 4vw, 3.5rem);
+  margin-top: clamp(1.25rem, 2.5vw, 2rem);
 }
 
 .install-welcome__plan {
   list-style: none;
   margin: 0;
-  padding: var(--ag-space-4) 0;
+  padding: 0.75rem 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
@@ -981,6 +989,14 @@
     padding-top: 0.25rem;
   }
 
+  .install-progress__label-full {
+    display: none;
+  }
+
+  .install-progress__label-compact {
+    display: inline;
+  }
+
   .install-progress__item {
     min-width: 0;
     font-size: 0.625rem;
@@ -1004,7 +1020,7 @@
   }
 
   .install-welcome__hero {
-    padding: var(--ag-space-8) var(--ag-space-5);
+    padding: var(--ag-space-6) var(--ag-space-5);
     padding-left: var(--ag-space-4);
     background-image:
       url('/vendor/agovena/installer-illustration.png');

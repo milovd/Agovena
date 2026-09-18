@@ -11,7 +11,7 @@ return [
     'progress_status' => 'Step :current of :total',
 
     'steps' => [
-        'welcome' => 'Readiness',
+        'welcome' => 'Getting started',
         'owner' => 'Account',
         'store' => 'Store',
         'catalog' => 'Selling',
@@ -51,6 +51,7 @@ return [
         'eyebrow' => 'Agovena installer',
         'heading' => 'Set up your Agovena store',
         'start_setup' => 'Start setup',
+        'step_short' => 'Start',
         'lede' => 'Start with the essentials for your store. You can refine everything else later in Admin.',
         'overview_title' => 'This setup covers',
         'account_title' => 'Admin access',

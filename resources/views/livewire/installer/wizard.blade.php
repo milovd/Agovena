@@ -17,7 +17,17 @@
                     @foreach ($progressSteps as $index => $key)
                         <li class="install-progress__item @if ($index < $stepIndex) is-done @elseif ($index === $stepIndex) is-current @endif">
                             <span class="install-progress__index" aria-hidden="true">{{ $index + 1 }}</span>
-                            <span class="install-progress__label">{{ __('installer.steps.'.$key) }}</span>
+                            <span
+                                class="install-progress__label"
+                                @if ($key === 'welcome') aria-label="{{ __('installer.steps.'.$key) }}" @endif
+                            >
+                                @if ($key === 'welcome')
+                                    <span class="install-progress__label-full">{{ __('installer.steps.'.$key) }}</span>
+                                    <span class="install-progress__label-compact" aria-hidden="true">{{ __('installer.welcome.step_short') }}</span>
+                                @else
+                                    {{ __('installer.steps.'.$key) }}
+                                @endif
+                            </span>
                         </li>
                     @endforeach
                 </ol>

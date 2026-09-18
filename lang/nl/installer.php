@@ -11,7 +11,7 @@ return [
     'progress_status' => 'Stap :current van :total',
 
     'steps' => [
-        'welcome' => 'Startcontrole',
+        'welcome' => 'Aan de slag',
         'owner' => 'Account',
         'store' => 'Winkel',
         'catalog' => 'Aanbod',
@@ -51,6 +51,7 @@ return [
         'eyebrow' => 'Agovena-installatie',
         'heading' => 'Je Agovena-winkel klaarzetten',
         'start_setup' => 'Setup starten',
+        'step_short' => 'Start',
         'lede' => 'Start met de basis van je winkel. De rest kun je later aanpassen in Admin.',
         'overview_title' => 'Deze installatie bevat',
         'account_title' => 'Admin-toegang',
