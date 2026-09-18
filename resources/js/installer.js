@@ -22,12 +22,18 @@ const copyInstallerCommand = async (button) => {
             fallback.remove();
         }
 
-        button.textContent = button.dataset.copiedLabel || button.textContent;
+        button.dataset.copied = 'true';
+        button.setAttribute('aria-label', button.dataset.copiedLabel || button.getAttribute('aria-label') || 'Copied');
+        button.setAttribute('title', button.dataset.copiedLabel || button.getAttribute('title') || 'Copied');
         window.setTimeout(() => {
-            button.textContent = button.dataset.copyLabel || button.textContent;
+            button.dataset.copied = 'false';
+            button.setAttribute('aria-label', button.dataset.copyLabel || button.getAttribute('aria-label') || 'Copy');
+            button.setAttribute('title', button.dataset.copyLabel || button.getAttribute('title') || 'Copy');
         }, 2000);
     } catch {
-        button.textContent = button.dataset.copyLabel || button.textContent;
+        button.dataset.copied = 'false';
+        button.setAttribute('aria-label', button.dataset.copyLabel || button.getAttribute('aria-label') || 'Copy');
+        button.setAttribute('title', button.dataset.copyLabel || button.getAttribute('title') || 'Copy');
     }
 };
 

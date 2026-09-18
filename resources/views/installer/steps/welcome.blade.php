@@ -103,19 +103,25 @@
                                             <x-ag.icon name="chevron-down" :size="14" />
                                         </span>
                                     </summary>
-                                    <p class="install-checks__detail">{{ $check->technicalDetail }}</p>
-                                    @if ($check->id === 'storage_link')
-                                        <div class="install-command" data-install-command>
-                                            <pre><code>php artisan storage:link</code></pre>
-                                            <button
-                                                type="button"
-                                                class="install-command__copy"
-                                                data-installer-copy
-                                                data-copy-label="{{ __('installer.welcome.copy_command') }}"
-                                                data-copied-label="{{ __('installer.welcome.copied_command') }}"
-                                            >{{ __('installer.welcome.copy_command') }}</button>
-                                        </div>
-                                    @endif
+                                    <p class="install-checks__detail">
+                                        {{ $check->technicalDetail }}
+                                        @if ($check->id === 'storage_link')
+                                            <span class="install-command" data-install-command>
+                                                <code>php artisan storage:link</code>
+                                                <button
+                                                    type="button"
+                                                    class="install-command__copy"
+                                                    data-installer-copy
+                                                    data-copy-label="{{ __('installer.welcome.copy_command') }}"
+                                                    data-copied-label="{{ __('installer.welcome.copied_command') }}"
+                                                    aria-label="{{ __('installer.welcome.copy_command') }}"
+                                                    title="{{ __('installer.welcome.copy_command') }}"
+                                                >
+                                                    <x-ag.icon name="copy" :size="15" />
+                                                </button>
+                                            </span>
+                                        @endif
+                                    </p>
                                 </details>
                             @endif
                         </div>
