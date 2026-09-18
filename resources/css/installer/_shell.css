@@ -226,9 +226,8 @@
   border: 0;
   border-radius: var(--ag-radius-lg);
   background:
-    linear-gradient(90deg, rgb(216 230 255 / 0.98) 0%, rgb(216 230 255 / 0.82) 54%, rgb(216 230 255 / 0.18) 100%),
     url('/vendor/agovena/installer-illustration.png') right center / auto 100% no-repeat,
-    #d8e6ff;
+    rgb(205 223 252);
 }
 
 .install-welcome {
