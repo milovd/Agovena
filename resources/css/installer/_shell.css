@@ -38,7 +38,6 @@
   display: grid;
   gap: var(--ag-space-3);
   padding: 0 0 var(--ag-space-4);
-  border-bottom: 1px solid var(--ag-color-border);
 }
 
 .install-progress__list {
@@ -137,7 +136,6 @@
   align-items: center;
   gap: var(--ag-space-3);
   padding: 0 0 var(--ag-space-5);
-  border-bottom: 1px solid var(--ag-color-border);
 }
 
 .install-panel__logo {
@@ -482,6 +480,53 @@
 
 .install-warnings__technical[open] > summary .install-warnings__technical-chevron {
   transform: rotate(180deg);
+}
+
+.install-command {
+  display: flex;
+  align-items: stretch;
+  gap: var(--ag-space-2);
+  margin-top: var(--ag-space-3);
+}
+
+.install-command pre {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  padding: var(--ag-space-3) var(--ag-space-4);
+  overflow-x: auto;
+  border: 1px solid var(--ag-color-border-strong);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-text);
+  color: var(--ag-color-surface);
+}
+
+.install-command code {
+  font: 0.8125rem/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: nowrap;
+}
+
+.install-command__copy {
+  flex: 0 0 auto;
+  align-self: stretch;
+  padding: 0 var(--ag-space-3);
+  border: 1px solid var(--ag-color-border-strong);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+  color: var(--ag-color-text);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.install-command__copy:hover {
+  border-color: var(--ag-color-primary);
+  color: var(--ag-color-primary);
+}
+
+.install-command__copy:focus-visible {
+  outline: 2px solid var(--ag-color-primary);
+  outline-offset: 2px;
 }
 
 .install-checks {

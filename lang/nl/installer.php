@@ -63,6 +63,8 @@ return [
         'warnings_label' => 'Optionele controle',
         'warnings_summary' => '{1} Eén optionele waarschuwing|[2,*] :count optionele waarschuwingen',
         'technical_details' => 'Technische details',
+        'copy_command' => 'Kopiëren',
+        'copied_command' => 'Gekopieerd',
     ],
 
     'owner' => [
@@ -136,7 +138,7 @@ return [
         'migrations' => 'Applicatieschema is actueel',
         'storage_link' => 'Geüploade afbeeldingen worden mogelijk niet getoond',
         'storage_link_message' => 'Winkellogo’s en andere openbare afbeeldingen verschijnen mogelijk niet totdat openbare bestanden op deze server beschikbaar zijn.',
-        'storage_link_technical' => 'Kon de public/storage-koppeling naar storage/app/public niet maken. Voer op de server uit: php artisan storage:link',
+        'storage_link_technical' => 'Kon de public/storage-koppeling naar storage/app/public niet maken.',
         'themes' => 'Thema-beschikbaarheid',
         'extensions_table' => 'Extensietabel',
         'tax_rates_table' => 'Btw-tarieventabel',

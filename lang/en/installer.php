@@ -63,6 +63,8 @@ return [
         'warnings_label' => 'Optional check',
         'warnings_summary' => '{1} One optional warning|[2,*] :count optional warnings',
         'technical_details' => 'Technical details',
+        'copy_command' => 'Copy',
+        'copied_command' => 'Copied',
     ],
 
     'owner' => [
@@ -136,7 +138,7 @@ return [
         'migrations' => 'Application schema is current',
         'storage_link' => 'Uploaded images may not display',
         'storage_link_message' => 'Store logos and other public images may not appear until public file access is available on this server.',
-        'storage_link_technical' => 'Could not create the public/storage link to storage/app/public. On the server, run: php artisan storage:link',
+        'storage_link_technical' => 'Could not create the public/storage link to storage/app/public.',
         'themes' => 'Theme availability',
         'extensions_table' => 'Extensions table',
         'tax_rates_table' => 'Tax rates table',

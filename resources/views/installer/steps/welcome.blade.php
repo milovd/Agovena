@@ -104,6 +104,18 @@
                                         </span>
                                     </summary>
                                     <p class="install-checks__detail">{{ $check->technicalDetail }}</p>
+                                    @if ($check->id === 'storage_link')
+                                        <div class="install-command" data-install-command>
+                                            <pre><code>php artisan storage:link</code></pre>
+                                            <button
+                                                type="button"
+                                                class="install-command__copy"
+                                                data-installer-copy
+                                                data-copy-label="{{ __('installer.welcome.copy_command') }}"
+                                                data-copied-label="{{ __('installer.welcome.copied_command') }}"
+                                            >{{ __('installer.welcome.copy_command') }}</button>
+                                        </div>
+                                    @endif
                                 </details>
                             @endif
                         </div>

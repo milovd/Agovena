@@ -351,6 +351,13 @@ test('healthy requirements stay concise in the installer while warnings do not b
             ->assertSee(trans_choice('installer.welcome.warnings_summary', count($warnings), ['count' => count($warnings)]), false)
             ->assertSee('install-warnings__icon', false)
             ->assertSee('install-checks__status--context', false);
+
+        if (array_filter($warnings, static fn (RequirementCheck $check): bool => $check->id === 'storage_link') !== []) {
+            $component
+                ->assertSee('install-command', false)
+                ->assertSee('php artisan storage:link', false)
+                ->assertSee('data-installer-copy', false);
+        }
     }
 
     $component->call('next')->assertSet('step', 'owner');
