@@ -66,7 +66,7 @@
         <details class="install-warnings">
             <summary>
                 <span class="install-warnings__icon" aria-hidden="true">
-                    <x-ag.icon name="circle-alert" :size="17" />
+                    <x-ag.icon name="circle-alert" :size="20" />
                 </span>
                 <span class="install-warnings__copy">
                     <span class="install-warnings__eyebrow">{{ __('installer.welcome.warnings_label') }}</span>

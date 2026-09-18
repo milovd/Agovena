@@ -403,7 +403,7 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: var(--ag-space-3);
-  padding: var(--ag-space-4) var(--ag-space-4) var(--ag-space-4) 0;
+  padding: var(--ag-space-4);
   color: var(--ag-color-text);
 }
 
@@ -434,8 +434,8 @@
 .install-warnings__icon {
   display: grid;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 0;
   background: transparent;
   color: var(--ag-color-warning);
