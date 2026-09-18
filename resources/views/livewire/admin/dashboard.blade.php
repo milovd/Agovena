@@ -91,7 +91,7 @@
                 wire:key="dashboard-chart-{{ $chartRange }}-{{ $chartType }}"
                 aria-labelledby="dashboard-chart-title"
                 x-data="agChart"
-                data-chart-config="{{ e(json_encode([
+                data-chart-config="{{ json_encode([
                     'type' => $chartType,
                     'showLegend' => true,
                     'dualAxis' => true,
@@ -137,7 +137,7 @@
                             'pointHoverBackgroundColor' => 'var(--ag-color-chart-4)',
                         ],
                     ],
-                ])) }}"
+                ]) }}"
             >
                 <header class="ag-chart-card__header">
                     <div>

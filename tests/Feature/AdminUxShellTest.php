@@ -115,6 +115,17 @@ test('dashboard chart renders filled revenue bars and selected line markers', fu
         ->and($script)->toContain('pointHitRadius');
 });
 
+test('admin charts read their config from the chart root without double escaping', function () {
+    $staff = $this->createStaff();
+    $html = Livewire::actingAs($staff)->test(Dashboard::class)->html();
+    $script = file_get_contents(resource_path('js/admin.js'));
+
+    expect($html)->toContain('data-chart-config="{&quot;type&quot;')
+        ->and($html)->not->toContain('&amp;quot;')
+        ->and($script)->toContain("this.\$root.matches('[data-chart-config]')")
+        ->and($script)->toContain('configElement?.dataset.chartConfig');
+});
+
 test('dashboard shows prioritized support tickets and current active users', function () {
     $staff = $this->createStaff();
     $customer = Customer::factory()->create();

@@ -50,8 +50,16 @@ document.addEventListener('alpine:init', () => {
             }
 
             if (!config) {
-                const configScript = this.$root.querySelector('[data-chart-config]');
-                config = configScript ? JSON.parse(configScript.textContent || '{}') : {};
+                const configElement = this.$root.matches('[data-chart-config]')
+                    ? this.$root
+                    : this.$root.querySelector('[data-chart-config]');
+                const rawConfig = configElement?.dataset.chartConfig;
+
+                try {
+                    config = rawConfig ? JSON.parse(rawConfig) : {};
+                } catch {
+                    config = {};
+                }
             }
 
             this.renderChart();

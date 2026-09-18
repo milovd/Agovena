@@ -27,12 +27,12 @@
         aria-labelledby="cron-chart-title"
         wire:key="cron-chart-{{ $range }}"
         x-data="agChart"
-        data-chart-config="{{ e(json_encode([
+        data-chart-config="{{ json_encode([
             'type' => 'line',
             'labels' => $chart['labels'],
             'datasets' => $chart['datasets'],
             'showLegend' => true,
-            ])) }}"
+            ]) }}"
     >
         <header class="ag-chart-card__header">
             <div>
