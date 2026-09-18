@@ -218,6 +218,7 @@
 }
 
 .install-progress {
+  width: calc(100% - var(--install-step-end-inset));
   display: grid;
   gap: 0.25rem;
   padding: 0 0 0.25rem;
