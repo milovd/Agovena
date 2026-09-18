@@ -36,9 +36,29 @@
   background: #3a2a17;
 }
 
+[data-theme="dark"] .install-progress__index {
+  border-color: #405675;
+  background: #17263d;
+  color: #dce9f8;
+}
+
+[data-theme="dark"] .install-progress__item.is-current .install-progress__index {
+  border-color: #9ac3ff;
+  background: #2563c7;
+  color: #fff;
+  box-shadow: 0 0 0 3px rgb(110 168 255 / 0.28);
+}
+
+[data-theme="dark"] .install-progress__item.is-done .install-progress__index {
+  border-color: #73d6b2;
+  background: #087f61;
+  color: #fff;
+}
+
 [data-theme="dark"] .install-status--blocked {
   background: rgb(127 29 29 / 0.28);
 }
+
 
 [data-theme="dark"] .install-welcome__hero {
   color: #eef5ff;
@@ -450,7 +470,6 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0;
-  border-top: 1px solid var(--ag-color-border);
 }
 
 .install-welcome__plan-item {
@@ -463,7 +482,6 @@
 
 .install-welcome__plan-item + .install-welcome__plan-item {
   padding-left: var(--ag-space-5);
-  border-left: 1px solid var(--ag-color-border);
 }
 
 .install-welcome__plan-icon {
@@ -1001,8 +1019,6 @@
 
   .install-welcome__plan-item + .install-welcome__plan-item {
     padding-left: 0;
-    border-top: 1px solid var(--ag-color-border);
-    border-left: 0;
   }
 
   .install-warnings .install-checks--compact {
