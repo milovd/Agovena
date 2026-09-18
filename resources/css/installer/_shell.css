@@ -145,6 +145,9 @@
 
 .install-panel__brand-copy {
   min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
 }
 
 .install-panel__product {
@@ -155,7 +158,7 @@
 }
 
 .install-panel__tagline {
-  margin: 0.15rem 0 0;
+  margin: 0;
   color: var(--ag-color-text-muted);
   font-size: 0.75rem;
 }
