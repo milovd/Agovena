@@ -64,6 +64,7 @@
 <header
     class="store-chrome"
     data-suggest-url="{{ $suggestUrl }}"
+    data-search-base-url="{{ route('storefront.home') }}"
     data-suggest-query="{{ request('q', '') }}"
     data-searching-label="{{ __('storefront.search.searching') }}"
     data-no-matches-label="{{ __('storefront.search.no_matches') }}"
@@ -105,10 +106,10 @@
                 @if ($categoriesOn && $discoveryCategories->isNotEmpty())
                     <div
                         class="store-cats"
-                        @mouseenter="catsOpen = true"
-                        @mouseleave="catsOpen = false; activeCat = null"
-                        @focusin="catsOpen = true"
-                        @click.outside="catsOpen = false; activeCat = null"
+                        @mouseenter="openCategories()"
+                        @mouseleave="closeCategories()"
+                        @focusin="openCategories()"
+                        @click.outside="closeCategories()"
                     >
                         <a
                             href="{{ route('storefront.categories') }}"
@@ -133,8 +134,8 @@
                             <ul class="store-cats__roots" role="list">
                                 @foreach ($discoveryCategories as $category)
                                     <li
-                                        @mouseenter="activeCat = {{ $category->id }}"
-                                        :class="{ 'is-active': activeCat === {{ $category->id }} || (activeCat === null && {{ $loop->first ? 'true' : 'false' }}) }"
+                                        @mouseenter="setActiveCategory({{ $category->id }})"
+                                        :class="categoryClass({{ $category->id }}, {{ $loop->first ? 'true' : 'false' }})"
                                     >
                                         <a class="store-cats__root" href="{{ route('storefront.category', $category->slug) }}">
                                             <span class="store-cats__thumb" aria-hidden="true">
@@ -155,7 +156,7 @@
                                 @foreach ($discoveryCategories as $category)
                                     <div
                                         class="store-cats__subpane"
-                                        x-show="activeCat === {{ $category->id }} || (activeCat === null && {{ $loop->first ? 'true' : 'false' }})"
+                                        x-show="isCategoryActive({{ $category->id }}, {{ $loop->first ? 'true' : 'false' }})"
                                         x-cloak
                                     >
                                         <p class="store-cats__subhead">{{ $category->name }}</p>
@@ -251,7 +252,7 @@
                         </template>
                         <a
                             class="store-search-suggest__all"
-                            :href="'{{ route('storefront.home') }}?q=' + encodeURIComponent((suggestQuery || '').trim())"
+                            :href="searchResultsUrl()"
                             x-show="(suggestQuery || '').trim().length >= 2"
                             x-text="labels.viewAll"
                         ></a>
@@ -400,7 +401,7 @@
                         </template>
                         <a
                             class="store-search-suggest__all"
-                            :href="'{{ route('storefront.home') }}?q=' + encodeURIComponent((suggestQuery || '').trim())"
+                            :href="searchResultsUrl()"
                             x-show="(suggestQuery || '').trim().length >= 2"
                             x-text="labels.viewAll"
                         ></a>

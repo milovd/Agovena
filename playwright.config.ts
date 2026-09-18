@@ -22,7 +22,7 @@ export default defineConfig({
     projects: [
         {
             name: 'chromium-ci',
-            testMatch: /images\.spec|cart\.spec|digital-checkout\.spec|responsive\.spec/,
+            testMatch: /images\.spec|cart\.spec|digital-checkout\.spec|responsive\.spec|storefront-regressions\.spec/,
             use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
         },
         {

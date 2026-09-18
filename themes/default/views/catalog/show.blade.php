@@ -33,13 +33,13 @@
             class="store-product__gallery"
             @if (count($galleryUrls) > 0)
                 x-data="storefrontProductGallery"
-                data-images="{{ e(json_encode($galleryUrls)) }}"
+                data-images="{{ json_encode($galleryUrls) }}"
             @endif
         >
             <div class="store-product__media">
                 @if (count($galleryUrls) > 0)
                     <img
-                        :src="images[index]"
+                        :src="currentImage()"
                         src="{{ $galleryUrls[0] }}"
                         alt="{{ $product->name }}"
                     >
@@ -55,9 +55,9 @@
                         class="store-product__thumbs-arrow store-product__thumbs-arrow--prev"
                         x-show="thumbsOverflow"
                         x-cloak
-                        :class="{ 'is-disabled': ! canScrollLeft }"
-                        :disabled="! canScrollLeft"
-                        :aria-hidden="(! canScrollLeft).toString()"
+                        :class="arrowClass(canScrollLeft)"
+                        :disabled="arrowDisabled(canScrollLeft)"
+                        :aria-hidden="arrowAriaHidden(canScrollLeft)"
                         @click="scrollThumbs(-1)"
                         aria-label="{{ __('storefront.product.gallery_prev') }}"
                     >
@@ -71,9 +71,9 @@
                                     type="button"
                                     class="store-product__thumb{{ $i === 0 ? ' is-active' : '' }}"
                                     data-index="{{ $i }}"
-                                    :class="{ 'is-active': index === {{ $i }} }"
+                                    :class="thumbClass({{ $i }})"
                                     @click="select({{ $i }})"
-                                    :aria-current="index === {{ $i }} ? 'true' : 'false'"
+                                    :aria-current="thumbAriaCurrent({{ $i }})"
                                     aria-label="{{ __('storefront.product.show_image', ['number' => $i + 1]) }}"
                                 >
                                     <img src="{{ $url }}" alt="" loading="lazy">
@@ -87,9 +87,9 @@
                         class="store-product__thumbs-arrow store-product__thumbs-arrow--next"
                         x-show="thumbsOverflow"
                         x-cloak
-                        :class="{ 'is-disabled': ! canScrollRight }"
-                        :disabled="! canScrollRight"
-                        :aria-hidden="(! canScrollRight).toString()"
+                        :class="arrowClass(canScrollRight)"
+                        :disabled="arrowDisabled(canScrollRight)"
+                        :aria-hidden="arrowAriaHidden(canScrollRight)"
                         @click="scrollThumbs(1)"
                         aria-label="{{ __('storefront.product.gallery_next') }}"
                     >
@@ -142,7 +142,7 @@
                     <div class="store-qty" role="group" aria-label="{{ __('storefront.product.quantity') }}">
                         <label class="visually-hidden" for="quantity">{{ __('storefront.product.quantity') }}</label>
                         <button type="button" class="store-qty__btn" wire:click="decrementQuantity" aria-label="{{ __('storefront.product.decrease') }}">−</button>
-                        <input id="quantity" class="store-qty__input" type="number" min="1" max="99" wire:model="quantity">
+                        <input id="quantity" class="store-qty__input" type="number" min="1" max="99" value="{{ $quantity }}" wire:model="quantity">
                         <button type="button" class="store-qty__btn" wire:click="incrementQuantity" aria-label="{{ __('storefront.product.increase') }}">+</button>
                     </div>
                 </div>

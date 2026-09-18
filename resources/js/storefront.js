@@ -96,12 +96,14 @@ document.addEventListener('alpine:init', () => {
         suggestItems: [],
         suggestQuery: '',
         suggestUrl: '',
+        searchBaseUrl: '',
         suggestTimer: null,
         labels: { searching: '', noMatches: '', viewAll: '' },
         init() {
             const root = this.$root;
             this.suggestQuery = root.dataset.suggestQuery || '';
             this.suggestUrl = root.dataset.suggestUrl || '';
+            this.searchBaseUrl = root.dataset.searchBaseUrl || '';
             this.labels = {
                 searching: root.dataset.searchingLabel || '',
                 noMatches: root.dataset.noMatchesLabel || '',
@@ -158,6 +160,22 @@ document.addEventListener('alpine:init', () => {
             this.mobileAccountOpen = false;
             this.suggestOpen = false;
         },
+        openCategories() {
+            this.catsOpen = true;
+        },
+        closeCategories() {
+            this.catsOpen = false;
+            this.activeCat = null;
+        },
+        setActiveCategory(categoryId) {
+            this.activeCat = categoryId;
+        },
+        isCategoryActive(categoryId, isFirst) {
+            return this.activeCat === categoryId || (this.activeCat === null && isFirst);
+        },
+        categoryClass(categoryId, isFirst) {
+            return { 'is-active': this.isCategoryActive(categoryId, isFirst) };
+        },
         closeDrawer() {
             this.navOpen = false;
             this.mobileCatsOpen = false;
@@ -207,6 +225,11 @@ document.addEventListener('alpine:init', () => {
         closeSuggest() {
             this.suggestOpen = false;
         },
+        searchResultsUrl() {
+            const query = this.suggestQuery.trim();
+
+            return `${this.searchBaseUrl}?q=${encodeURIComponent(query)}`;
+        },
         clearSuggest() {
             this.suggestQuery = '';
             this.suggestItems = [];
@@ -227,6 +250,24 @@ document.addEventListener('alpine:init', () => {
                 thumb?.scrollIntoView({ inline: 'nearest', block: 'nearest', behavior: 'smooth' });
                 this.updateScrollState();
             });
+        },
+        currentImage() {
+            return this.images[this.index] || this.images[0] || '';
+        },
+        thumbClass(index) {
+            return { 'is-active': this.index === index };
+        },
+        thumbAriaCurrent(index) {
+            return this.index === index ? 'true' : 'false';
+        },
+        arrowClass(canScroll) {
+            return { 'is-disabled': !canScroll };
+        },
+        arrowDisabled(canScroll) {
+            return !canScroll;
+        },
+        arrowAriaHidden(canScroll) {
+            return (!canScroll).toString();
         },
         scrollThumbs(direction) {
             const track = this.$refs.track;
