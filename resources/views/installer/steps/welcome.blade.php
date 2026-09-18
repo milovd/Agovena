@@ -138,12 +138,13 @@
 
         <button
             type="submit"
-            class="ag-btn ag-btn--primary"
+            class="ag-btn ag-btn--primary install-welcome__continue"
             wire:loading.attr="disabled"
             wire:target="next"
             @disabled(! $ready)
         >
-            {{ __('installer.actions.continue') }}
+            <span>{{ __('installer.actions.continue') }}</span>
+            <x-ag.icon name="chevron-right" :size="16" aria-hidden="true" />
         </button>
     </form>
 </div>

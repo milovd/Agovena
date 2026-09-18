@@ -328,6 +328,25 @@
   border-top: 1px solid var(--ag-color-border);
 }
 
+.install-welcome__continue {
+  min-height: 2.75rem;
+  padding: 0.65rem 1.05rem;
+  border-radius: 0.65rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  box-shadow: 0 4px 10px rgb(21 94 239 / 0.2);
+}
+
+.install-welcome__continue:hover:not(:disabled):not(.is-disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgb(21 94 239 / 0.26);
+}
+
+.install-welcome__continue:active:not(:disabled):not(.is-disabled) {
+  transform: translateY(0);
+}
+
 .install-welcome__actions .ag-field__error {
   flex: 1 1 100%;
   margin: 0;
