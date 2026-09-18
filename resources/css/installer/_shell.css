@@ -989,6 +989,11 @@
     padding-top: 0.25rem;
   }
 
+  .install-progress__list {
+    width: calc(100% + 1rem);
+    margin-inline: -0.5rem;
+  }
+
   .install-progress__label-full {
     display: none;
   }
