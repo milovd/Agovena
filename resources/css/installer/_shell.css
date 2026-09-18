@@ -224,46 +224,80 @@
 }
 
 .install-progress__list {
+  --install-marker-size: 1.85rem;
+  position: relative;
   list-style: none;
+  height: 4rem;
   margin: 0;
-  padding: var(--ag-space-1) 0 var(--ag-space-2);
-  display: flex;
-  align-items: flex-start;
-  gap: 0;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  padding: 0;
+  display: block;
+  overflow: visible;
+  scrollbar-width: none;
+  background: linear-gradient(
+    var(--ag-color-border-strong),
+    var(--ag-color-border-strong)
+  ) center 0.925rem / calc(100% - var(--install-marker-size)) 1px no-repeat;
 }
 
 .install-progress__item {
-  position: relative;
-  display: grid;
-  flex: 1 0 0;
-  min-width: 4.65rem;
-  gap: 0.45rem;
+  position: absolute;
+  top: 0;
+  display: block;
+  width: var(--install-marker-size);
+  height: 4rem;
   justify-items: center;
   text-align: center;
   color: var(--ag-color-text-muted);
   font-size: 0.75rem;
 }
 
-.install-progress__item:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  z-index: 0;
-  top: 0.875rem;
-  left: calc(50% + 0.95rem);
-  right: calc(-50% + 0.95rem);
-  height: 1px;
-  background: var(--ag-color-border-strong);
+.install-progress__item:nth-child(1) {
+  left: 0;
+  justify-items: start;
+  text-align: left;
 }
 
-.install-progress__item.is-done:not(:last-child)::after {
-  background: var(--ag-color-success);
+.install-progress__item:nth-child(2) {
+  left: calc(var(--install-marker-size) / 2 + (100% - var(--install-marker-size)) / 6);
+  transform: translateX(-50%);
+}
+
+.install-progress__item:nth-child(3) {
+  left: calc(var(--install-marker-size) / 2 + (100% - var(--install-marker-size)) / 3);
+  transform: translateX(-50%);
+}
+
+.install-progress__item:nth-child(4) {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.install-progress__item:nth-child(5) {
+  left: calc(50% + (100% - var(--install-marker-size)) / 6);
+  transform: translateX(-50%);
+}
+
+.install-progress__item:nth-child(6) {
+  left: calc(100% - var(--install-marker-size) / 2 - (100% - var(--install-marker-size)) / 6);
+  transform: translateX(-50%);
+}
+
+.install-progress__item:nth-child(7) {
+  right: 0;
+  justify-items: end;
+  text-align: right;
+}
+
+.install-progress__item:not(:last-child)::after {
+  display: none;
 }
 
 .install-progress__index {
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
   display: grid;
-  position: relative;
   z-index: 1;
   place-items: center;
   width: 1.85rem;
@@ -300,8 +334,23 @@
 }
 
 .install-progress__label {
+  position: absolute;
+  top: 2.3rem;
+  left: 50%;
   display: block;
   white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.install-progress__item:nth-child(1) .install-progress__label {
+  left: 0;
+  transform: none;
+}
+
+.install-progress__item:nth-child(7) .install-progress__label {
+  left: auto;
+  right: 0;
+  transform: none;
 }
 
 .install-progress__status {
@@ -311,11 +360,6 @@
   color: var(--ag-color-text-muted);
   font-size: 0.8125rem;
   text-align: left;
-}
-
-.install-progress__item:first-child {
-  justify-items: center;
-  text-align: center;
 }
 
 .install-panel {
@@ -990,8 +1034,7 @@
   }
 
   .install-progress__list {
-    width: calc(100% + 1rem);
-    margin-inline: -0.5rem;
+    --install-marker-size: 1.7rem;
   }
 
   .install-progress__label-full {
@@ -1010,12 +1053,6 @@
   .install-progress__index {
     width: 1.7rem;
     height: 1.7rem;
-  }
-
-  .install-progress__item:not(:last-child)::after {
-    top: 0.8rem;
-    left: calc(50% + 0.85rem);
-    right: calc(-50% + 0.85rem);
   }
 
   .install-welcome {
