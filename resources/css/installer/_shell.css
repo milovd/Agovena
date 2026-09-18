@@ -314,8 +314,8 @@
 }
 
 .install-progress__item:first-child {
-  justify-items: start;
-  text-align: left;
+  justify-items: center;
+  text-align: center;
 }
 
 .install-panel {
