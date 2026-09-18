@@ -69,10 +69,18 @@
             </summary>
             <ul class="install-checks install-checks--compact" role="list">
                 @foreach ($warnings as $check)
+                    @php
+                        $warningIcon = match ($check->id) {
+                            'storage_link' => 'image',
+                            default => null,
+                        };
+                    @endphp
                     <li class="install-checks__item is-warn">
-                        <span class="install-checks__status" aria-hidden="true">
-                            <x-ag.icon name="circle-alert" :size="15" />
-                        </span>
+                        @if ($warningIcon)
+                            <span class="install-checks__status install-checks__status--context" aria-hidden="true">
+                                <x-ag.icon :name="$warningIcon" :size="17" />
+                            </span>
+                        @endif
                         <div>
                             <p class="install-checks__label">{{ __($check->label) }}</p>
                             @if ($check->detail)
