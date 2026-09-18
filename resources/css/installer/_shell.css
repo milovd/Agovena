@@ -41,12 +41,18 @@
 }
 
 [data-theme="dark"] .install-welcome__hero {
-  color: #0f172a;
+  color: #eef5ff;
+  background-image:
+    linear-gradient(rgb(14 43 82 / 0.56), rgb(14 43 82 / 0.56)),
+    url('/vendor/agovena/installer-illustration.png');
+  background-position: 0 0, right center;
+  background-size: auto, auto 100%;
+  background-repeat: no-repeat, no-repeat;
 }
 
 [data-theme="dark"] .install-welcome__hero .install-eyebrow,
 [data-theme="dark"] .install-welcome__hero .install-panel__lede {
-  color: #334155;
+  color: #d6e3f7;
 }
 
 .install-shell {
@@ -169,7 +175,7 @@
   outline-offset: -2px;
 }
 
-.install-theme,
+.install-preferences__theme,
 .install-theme__toggle,
 .install-theme__toggle [data-installer-theme-icon] {
   display: inline-flex;
@@ -285,6 +291,7 @@
 }
 
 .install-panel {
+  --install-step-end-inset: calc((100% / 7 - 1.85rem) / 2);
   min-width: 0;
 }
 
@@ -292,6 +299,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: calc(100% - var(--install-step-end-inset));
   gap: var(--ag-space-3);
   padding: 0 0 var(--ag-space-5);
 }
@@ -945,6 +953,10 @@
   .install-shell {
     width: min(100% - 2rem, 52rem);
     padding-top: 1rem;
+  }
+
+  .install-panel {
+    --install-step-end-inset: 0px;
   }
 
   .install-panel__body {

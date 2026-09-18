@@ -23,7 +23,7 @@
             @endforeach
         </div>
     </details>
-    <div class="install-theme" data-default-theme="system">
+    <div class="install-preferences__theme" data-default-theme="system">
         <button
             type="button"
             class="install-control install-theme__toggle"
