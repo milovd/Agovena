@@ -178,6 +178,10 @@
   line-height: 0;
 }
 
+.install-theme__toggle [hidden] {
+  display: none;
+}
+
 .install-shell__main {
   min-width: 0;
 }
@@ -287,14 +291,23 @@
 .install-panel__brand {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--ag-space-3);
   padding: 0 0 var(--ag-space-5);
+}
+
+.install-panel__brand-identity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
 }
 
 .install-panel__logo {
   width: 2.35rem;
   height: 2.35rem;
 }
+
 
 .install-panel__brand-copy {
   min-width: 0;

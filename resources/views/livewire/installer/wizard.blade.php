@@ -1,11 +1,14 @@
 <div class="install-wizard">
     <section class="install-panel" aria-labelledby="install-step-heading">
         <header class="install-panel__brand">
-            <x-ag.logo class="install-panel__logo" :alt="__('installer.brand_alt')" />
-            <div class="install-panel__brand-copy">
-                <p class="install-panel__product">Agovena</p>
-                <p class="install-panel__tagline">{{ __('installer.tagline') }}</p>
+            <div class="install-panel__brand-identity">
+                <x-ag.logo class="install-panel__logo" :alt="__('installer.brand_alt')" />
+                <div class="install-panel__brand-copy">
+                    <p class="install-panel__product">Agovena</p>
+                    <p class="install-panel__tagline">{{ __('installer.tagline') }}</p>
+                </div>
             </div>
+            @include('installer.partials.preferences')
         </header>
 
         @if ($step !== 'complete')
