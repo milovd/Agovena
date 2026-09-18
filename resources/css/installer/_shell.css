@@ -78,7 +78,7 @@
 .install-shell {
   width: min(72rem, calc(100% - 4rem));
   margin: 0 auto;
-  padding: clamp(1rem, 3vw, 2rem) 0 clamp(1.5rem, 5vw, 4rem);
+  padding: clamp(0.75rem, 2.25vw, 1.5rem) 0 clamp(1.5rem, 5vw, 4rem);
   display: grid;
   min-height: 100svh;
   align-content: start;
@@ -1018,7 +1018,7 @@
 @media (max-width: 639px) {
   .install-shell {
     width: min(100% - 2rem, 52rem);
-    padding-top: 1rem;
+    padding-top: 0.75rem;
   }
 
   .install-panel {
