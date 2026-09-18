@@ -30,4 +30,4 @@ RUN composer install --no-interaction --prefer-dist --no-dev \
 
 EXPOSE 80
 
-CMD ["php", "-S", "0.0.0.0:80", "-t", "public"]
+CMD ["php", "-S", "0.0.0.0:80", "-t", "public", "public/index.php"]

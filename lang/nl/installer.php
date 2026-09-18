@@ -11,8 +11,8 @@ return [
     'progress_status' => 'Stap :current van :total',
 
     'steps' => [
-        'welcome' => 'Welkom',
-        'owner' => 'Eigenaar',
+        'welcome' => 'Startcontrole',
+        'owner' => 'Account',
         'store' => 'Winkel',
         'catalog' => 'Aanbod',
         'regional' => 'Regio',
@@ -48,14 +48,23 @@ return [
     ],
 
     'welcome' => [
-        'heading' => 'Welkom bij Agovena',
-        'lede' => 'Laten we je winkel klaarzetten.',
+        'eyebrow' => 'Agovena setup',
+        'heading' => 'Je Agovena-winkel klaarzetten',
+        'lede' => 'Een korte setup voor Admin-toegang, winkelgegevens en de basis van je storefront. Je kunt alles later aanpassen in Admin.',
+        'overview_title' => 'Wat je hier instelt',
+        'account_title' => 'Admin-toegang',
+        'account_text' => 'Maak het eigenaarsaccount aan waarmee je Agovena beheert.',
+        'store_title' => 'Winkelbasis',
+        'store_text' => 'Kies je winkelnaam, aanbod en regionale standaardinstellingen.',
+        'appearance_title' => 'Storefront',
+        'appearance_text' => 'Voeg optionele branding toe en bevestig het startthema.',
         'ready_title' => 'Je server is klaar voor Agovena',
         'ready_text' => 'De vereiste systeemcontroles zijn geslaagd. Ga verder om je eigenaarsaccount en winkel aan te maken.',
         'blocked_title' => 'Je server heeft aandacht nodig',
         'blocked_text' => 'Los de onderstaande problemen op en vernieuw daarna deze pagina.',
         'warnings_summary' => ':count optionele waarschuwing(en)',
         'technical_details' => 'Technische details',
+        'technical_summary' => 'Volledige technische checklist nodig?',
         'doctor_hint' => 'Voor de volledige technische checklist: php artisan agovena:doctor.',
     ],
 

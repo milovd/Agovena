@@ -6,9 +6,37 @@
 
 <div class="install-welcome">
     <div class="install-welcome__hero">
+        <p class="install-eyebrow">{{ __('installer.welcome.eyebrow') }}</p>
         <h1 id="install-step-heading" class="install-panel__title">{{ __('installer.welcome.heading') }}</h1>
         <p class="install-panel__lede">{{ __('installer.welcome.lede') }}</p>
     </div>
+
+    <section class="install-welcome__overview" aria-labelledby="install-overview-heading">
+        <h2 id="install-overview-heading" class="install-section-title">{{ __('installer.welcome.overview_title') }}</h2>
+        <div class="install-welcome__cards">
+            <article class="install-welcome__card">
+                <span class="install-welcome__card-number" aria-hidden="true">01</span>
+                <div>
+                    <h3>{{ __('installer.welcome.account_title') }}</h3>
+                    <p>{{ __('installer.welcome.account_text') }}</p>
+                </div>
+            </article>
+            <article class="install-welcome__card">
+                <span class="install-welcome__card-number" aria-hidden="true">02</span>
+                <div>
+                    <h3>{{ __('installer.welcome.store_title') }}</h3>
+                    <p>{{ __('installer.welcome.store_text') }}</p>
+                </div>
+            </article>
+            <article class="install-welcome__card">
+                <span class="install-welcome__card-number" aria-hidden="true">03</span>
+                <div>
+                    <h3>{{ __('installer.welcome.appearance_title') }}</h3>
+                    <p>{{ __('installer.welcome.appearance_text') }}</p>
+                </div>
+            </article>
+        </div>
+    </section>
 
     @if ($ready)
         <div class="install-status install-status--ready" role="status">
@@ -77,20 +105,24 @@
         </details>
     @endif
 
-    <p class="install-welcome__doctor">{{ __('installer.welcome.doctor_hint') }}</p>
+    <details class="install-technical">
+        <summary>{{ __('installer.welcome.technical_summary') }}</summary>
+        <p>{{ __('installer.welcome.doctor_hint') }}</p>
+    </details>
 
-    @error('welcome')
-        <p class="ag-field__error" role="alert">{{ $message }}</p>
-    @enderror
+    <form wire:submit="next" class="install-welcome__actions">
+        @error('welcome')
+            <p class="ag-field__error" role="alert">{{ $message }}</p>
+        @enderror
 
-    <div class="install-panel__actions">
         <button
-            type="button"
+            type="submit"
             class="ag-btn ag-btn--primary"
-            wire:click="next"
+            wire:loading.attr="disabled"
+            wire:target="next"
             @disabled(! $ready)
         >
             {{ __('installer.actions.continue') }}
         </button>
-    </div>
+    </form>
 </div>
