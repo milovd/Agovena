@@ -263,9 +263,9 @@
 }
 
 .install-welcome__overview {
-  width: calc(100% - (clamp(2rem, 5vw, 4rem) + 1px));
+  width: calc(100% - (clamp(1.5rem, 3vw, 2rem) + 1px));
   margin: 0;
-  margin-left: calc(clamp(2rem, 5vw, 4rem) + 1px);
+  margin-left: calc(clamp(1.5rem, 3vw, 2rem) + 1px);
   margin-top: clamp(2rem, 4vw, 3.5rem);
 }
 
@@ -788,8 +788,8 @@
   }
 
   .install-welcome__overview {
-    width: calc(100% - (var(--ag-space-5) + 1px));
-    margin-left: calc(var(--ag-space-5) + 1px);
+    width: calc(100% - (var(--ag-space-4) + 1px));
+    margin-left: calc(var(--ag-space-4) + 1px);
     margin-top: 0;
   }
 
