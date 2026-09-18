@@ -981,6 +981,22 @@
     padding-top: 0.25rem;
   }
 
+  .install-progress__item {
+    min-width: 0;
+    font-size: 0.625rem;
+  }
+
+  .install-progress__index {
+    width: 1.7rem;
+    height: 1.7rem;
+  }
+
+  .install-progress__item:not(:last-child)::after {
+    top: 0.8rem;
+    left: calc(50% + 0.85rem);
+    right: calc(-50% + 0.85rem);
+  }
+
   .install-welcome {
     --install-step-end-inset: 0px;
     grid-template-columns: 1fr;
