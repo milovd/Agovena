@@ -80,12 +80,22 @@ DiscountCode::query()->updateOrCreate(
 
 $capabilities = $app->make(ProductCapabilityManager::class);
 
+$fixtureImage = file_get_contents(public_path('vendor/agovena/logo.png'));
+if ($fixtureImage === false) {
+    throw new RuntimeException('E2E fixture image is missing.');
+}
+
+$galleryPaths = ['e2e/gallery-1.png', 'e2e/gallery-2.png', 'e2e/gallery-3.png'];
+foreach ($galleryPaths as $path) {
+    Storage::disk('public')->put($path, $fixtureImage);
+}
+
 $e2eCategory = Category::query()->updateOrCreate(
     ['slug' => 'e2e-products'],
     [
         'name' => 'E2E Products',
         'description' => 'Products used by browser regression tests.',
-        'image_path' => 'demo/category-accessories.jpg',
+        'image_path' => $galleryPaths[0],
         'is_active' => true,
         'parent_id' => null,
     ],
@@ -141,9 +151,10 @@ DigitalAsset::query()->updateOrCreate(
 $physical = e2eProduct('e2e-physical', 'E2E Desk lamp', 2500);
 $physical->forceFill([
     'category_id' => $e2eCategory->id,
-    'image_path' => 'demo/iphone-15.jpg',
+    'image_path' => $galleryPaths[0],
 ])->save();
-foreach (['demo/iphone-15.jpg', 'demo/iphone-15-2.jpg', 'demo/iphone-15-3.jpg'] as $sort => $path) {
+ProductImage::query()->where('product_id', $physical->id)->delete();
+foreach ($galleryPaths as $sort => $path) {
     ProductImage::query()->updateOrCreate(
         ['product_id' => $physical->id, 'path' => $path],
         ['sort' => $sort],

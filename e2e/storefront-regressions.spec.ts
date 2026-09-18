@@ -41,10 +41,10 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
     const thumbnails = page.locator('.store-product__thumb');
     await expect(thumbnails).toHaveCount(3);
     const mainImage = page.locator('.store-product__media img');
-    await expect(mainImage).toHaveAttribute('src', /iphone-15\.jpg$/);
+    await expect(mainImage).toHaveAttribute('src', /gallery-1\.png$/);
 
     await thumbnails.nth(1).click();
-    await expect(mainImage).toHaveAttribute('src', /iphone-15-2\.jpg$/);
+    await expect(mainImage).toHaveAttribute('src', /gallery-2\.png$/);
     await expect(thumbnails.nth(1)).toHaveAttribute('aria-current', 'true');
     expect(pageErrors).toEqual([]);
 });
