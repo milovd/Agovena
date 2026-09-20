@@ -7,8 +7,8 @@ $relativePath = ltrim(str_replace('\\', '/', $requestPath), '/');
 
 if (
     $relativePath !== ''
-    && !str_contains($relativePath, "\0")
-    && !preg_match('#(?:^|/)\.\.(?:/|$)#', $relativePath)
+    && ! str_contains($relativePath, "\0")
+    && ! preg_match('#(?:^|/)\.\.(?:/|$)#', $relativePath)
     && is_file($publicRoot.'/'.str_replace('/', DIRECTORY_SEPARATOR, $relativePath))
 ) {
     return false;
