@@ -278,7 +278,7 @@ test('stripe exposes a credit card label and complete local icon fallbacks', fun
     }
 
     expect(file_get_contents(base_path('public/images/payment-methods/creditcard.svg')))
-        ->toContain('viewBox="0 0 24 16"');
+        ->toContain('viewBox="0 0 32 22"');
 });
 
 test('stripe payment methods are filtered by the billing country', function () {
