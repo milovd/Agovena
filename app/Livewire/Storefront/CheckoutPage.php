@@ -29,6 +29,7 @@ use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\CheckoutPaymentSelection;
 use App\Agovena\Payments\Contracts\ChargesRecurringPayments;
+use App\Agovena\Payments\Contracts\ManagesProviderSubscriptions;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Referrals\ReferralService;
@@ -368,7 +369,8 @@ final class CheckoutPage extends Component
             $rules['renewal_mode'] = ['required', Rule::in(['manual', 'automatic'])];
             if ($this->renewal_mode === 'automatic'
                 && ! $usingBalance
-                && ! ($gateways->get($this->payment_method) instanceof ChargesRecurringPayments)) {
+                && ! ($gateways->get($this->payment_method) instanceof ChargesRecurringPayments)
+                && ! ($gateways->get($this->payment_method) instanceof ManagesProviderSubscriptions)) {
                 $this->addError('renewal_mode', __('storefront.errors.automatic_renewal_unavailable'));
 
                 return;

@@ -6,6 +6,7 @@ use Agovena\Extensions\Paddle\PaddleApi;
 use Agovena\Extensions\Paddle\PaddlePaymentGateway;
 use Agovena\Extensions\Tebex\TebexApi;
 use App\Agovena\Cart\CartService;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
@@ -15,6 +16,8 @@ use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\PaymentInitiation;
 use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Payments\StartOrderPayment;
+use App\Agovena\Recurring\Models\Subscription;
+use App\Agovena\Recurring\SubscriptionService;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
@@ -144,6 +147,146 @@ test('paddle status synchronization completes a local checkout without a webhook
 
     expect($updated->status)->toBe(PaymentStatus::Paid)
         ->and($api->transactionCalls)->toBe(1);
+});
+
+test('paddle creates a recurring inline price for automatic subscriptions', function (): void {
+    enableFirstPartyModules(['subscriptions']);
+    $api = enableFirstPartyPaddle();
+    $api->transaction['subscription_id'] = 'sub_test';
+    $api->transaction['available_payment_methods'] = ['card', 'ideal'];
+    $product = Product::factory()->active()->create(['price_amount' => 2500]);
+    app(ProductCapabilityManager::class)->enable($product, 'subscribable', [
+        'interval' => 'month',
+        'interval_count' => 1,
+        'trial_days' => 0,
+    ]);
+    app(CartService::class)->add($product->id, 1);
+
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => 'Recurring Buyer',
+        'customer_email' => 'recurring@example.test',
+        'payment_method' => 'paddle:paddle',
+        'billing' => AddressData::fromArray([
+            'name' => 'Recurring Buyer',
+            'line1' => 'Street 1',
+            'city' => 'Amsterdam',
+            'postal_code' => '1000 AA',
+            'country' => 'NL',
+        ]),
+        'custom_properties' => ['_agovena_renewal_mode' => 'automatic'],
+    ]);
+    $payment = $order->payment()->firstOrFail();
+    $attempt = app(StartOrderPayment::class)->handle($order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-recurring-1');
+
+    expect($api->transactionPayload['items'][0]['price']['billing_cycle'] ?? null)->toBe([
+        'interval' => 'month',
+        'frequency' => 1,
+    ])
+        ->and($attempt->response_meta['provider_subscription_id'] ?? null)->toBe('sub_test')
+        ->and($attempt->response_meta['available_payment_methods'] ?? null)->toBe(['card', 'ideal'])
+        ->and(app(PaddlePaymentGateway::class)->availablePaymentMethods($payment->fresh()))->toBe(['card', 'ideal'])
+        ->and($payment->fresh()->order_id)->toBe($order->id);
+});
+
+test('paddle subscription events synchronize the Core subscription projection', function (): void {
+    enableFirstPartyModules(['subscriptions']);
+    $api = enableFirstPartyPaddle();
+    $api->transaction['subscription_id'] = 'sub_test';
+    $product = Product::factory()->active()->create(['price_amount' => 2500]);
+    app(ProductCapabilityManager::class)->enable($product, 'subscribable', [
+        'interval' => 'month',
+        'interval_count' => 1,
+        'trial_days' => 0,
+    ]);
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => 'Subscription Buyer',
+        'customer_email' => 'subscription@example.test',
+        'payment_method' => 'paddle:paddle',
+        'billing' => AddressData::fromArray([
+            'name' => 'Subscription Buyer',
+            'line1' => 'Street 1',
+            'city' => 'Amsterdam',
+            'postal_code' => '1000 AA',
+            'country' => 'NL',
+        ]),
+        'custom_properties' => ['_agovena_renewal_mode' => 'automatic'],
+    ]);
+    $payment = $order->payment()->firstOrFail();
+    app(StartOrderPayment::class)->handle($order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-subscription-webhook-1');
+    $body = json_encode([
+        'event_id' => 'evt_paddle_subscription_paid',
+        'event_type' => 'transaction.paid',
+        'data' => [
+            'id' => 'txn_test',
+            'status' => 'paid',
+            'subscription_id' => 'sub_test',
+            'currency_code' => 'EUR',
+            'details' => [
+                'totals' => ['grand_total' => '2500'],
+                'line_items' => [['quantity' => 1, 'totals' => ['total' => '2500']]],
+            ],
+            'custom_data' => ['order_id' => (string) $order->id, 'payment_id' => (string) $payment->id],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $timestamp = time();
+    $signature = hash_hmac('sha256', $timestamp.':'.$body, '[REDACTED]');
+    app(HandlePaymentWebhook::class)->handle('paddle', Request::create(
+        '/webhooks/payments/paddle',
+        'POST',
+        [],
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_PADDLE-SIGNATURE' => 'ts='.$timestamp.';h1='.$signature],
+        $body,
+    ));
+
+    $subscription = Subscription::query()->where('order_id', $order->id)->firstOrFail();
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($subscription->provider_reference)->toBe('sub_test');
+
+    $updateBody = json_encode([
+        'event_id' => 'evt_paddle_subscription_updated',
+        'event_type' => 'subscription.updated',
+        'data' => [
+            'id' => 'sub_test',
+            'status' => 'active',
+            'current_billing_period' => [
+                'starts_at' => '2026-10-01T00:00:00Z',
+                'ends_at' => '2026-11-01T00:00:00Z',
+            ],
+            'next_billed_at' => '2026-11-01T00:00:00Z',
+            'custom_data' => ['order_id' => (string) $order->id],
+            'scheduled_change' => null,
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $updateTimestamp = time();
+    $updateSignature = hash_hmac('sha256', $updateTimestamp.':'.$updateBody, '[REDACTED]');
+    app(HandlePaymentWebhook::class)->handle('paddle', Request::create(
+        '/webhooks/payments/paddle',
+        'POST',
+        [],
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_PADDLE-SIGNATURE' => 'ts='.$updateTimestamp.';h1='.$updateSignature],
+        $updateBody,
+    ));
+
+    expect($subscription->fresh()->current_period_end?->toISOString())->toBe('2026-11-01T00:00:00.000000Z')
+        ->and($subscription->fresh()->next_billing_at?->toISOString())->toBe('2026-11-01T00:00:00.000000Z');
+
+    app(SubscriptionService::class)->cancel($subscription->fresh(), atPeriodEnd: true);
+    expect($api->lastSubscriptionAction)->toMatchArray([
+        'action' => 'cancel',
+        'id' => 'sub_test',
+        'at_period_end' => true,
+    ]);
+
+    app(SubscriptionService::class)->resume($subscription->fresh());
+    expect($api->lastSubscriptionAction)->toMatchArray([
+        'action' => 'clear_scheduled_change',
+        'id' => 'sub_test',
+    ]);
 });
 
 test('tebex checkout creates a mapped package basket', function (): void {

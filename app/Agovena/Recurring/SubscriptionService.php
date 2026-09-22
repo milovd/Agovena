@@ -14,6 +14,8 @@ use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\ChargeRecurringPayment;
 use App\Agovena\Payments\CheckoutPaymentSelection;
 use App\Agovena\Payments\CompleteAccountBalancePayment;
+use App\Agovena\Payments\Contracts\ManagesProviderSubscriptions;
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RecurringChargeOutcome;
 use App\Agovena\Payments\RecurringChargeResult;
 use App\Agovena\PlanChanges\ApplyPlanChange;
@@ -47,6 +49,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 final class SubscriptionService implements ProcessesSubscriptionRenewals
 {
@@ -58,6 +61,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         private readonly ChargeRecurringPayment $chargeRecurring,
         private readonly CustomerCreditLedger $creditLedger,
         private readonly CompleteAccountBalancePayment $completeAccountBalancePayment,
+        private readonly PaymentGatewayRegistry $gateways,
         private readonly SettingsRepository $settings,
     ) {}
 
@@ -130,6 +134,12 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
                 if (Schema::hasColumn('subscriptions', 'renewal_mode')) {
                     $attributes['renewal_mode'] = $this->renewalModeFromOrder($order);
                 }
+                if (Schema::hasColumn('subscriptions', 'provider_reference')) {
+                    $providerReference = $this->providerReferenceFromOrder($order);
+                    if ($providerReference !== null) {
+                        $attributes['provider_reference'] = $providerReference;
+                    }
+                }
 
                 $subscription = Subscription::query()->create($attributes);
                 $this->linkServiceInstances((int) $subscription->id, $lockedItem->id);
@@ -146,6 +156,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
         }
 
         if ($atPeriodEnd && $subscription->status === SubscriptionStatus::Active) {
+            $this->cancelProviderSubscription($subscription, atPeriodEnd: true);
             $subscription->cancel_at_period_end = true;
             $subscription->cancelled_at = now();
             $subscription->save();
@@ -155,6 +166,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
             return $subscription->fresh() ?? $subscription;
         }
 
+        $this->cancelProviderSubscription($subscription, atPeriodEnd: false);
         $subscription->status = SubscriptionStatus::Cancelled;
         $subscription->cancel_at_period_end = false;
         $subscription->cancelled_at = now();
@@ -177,6 +189,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
             ]);
         }
 
+        $this->resumeProviderSubscription($subscription);
         $subscription->cancel_at_period_end = false;
         $subscription->cancelled_at = null;
         $subscription->save();
@@ -226,7 +239,8 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
             $subscriptions = Subscription::query()
                 ->whereIn('id', $ids)
                 ->with('product')
-                ->get();
+                ->get()
+                ->reject(fn (Subscription $subscription): bool => $this->providerManagesSubscription($subscription));
             $processedSubscriptionIds = [];
 
             foreach ($subscriptions->groupBy(fn (Subscription $subscription): string => $this->consolidationKey($subscription)) as $group) {
@@ -1128,6 +1142,91 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
                 'action_label' => __('notifications.subscription_renewal_paid.action'),
             ],
         );
+    }
+
+    private function providerReferenceFromOrder(Order $order): ?string
+    {
+        $payment = $order->payment;
+        if ($payment === null) {
+            return null;
+        }
+
+        $attempts = PaymentAttempt::query()
+            ->where('payment_id', $payment->id)
+            ->latest('id')
+            ->get();
+        foreach ($attempts as $attempt) {
+            $meta = is_array($attempt->response_meta) ? $attempt->response_meta : [];
+            foreach (['provider_subscription_id', 'paddle_subscription_id'] as $key) {
+                $reference = $meta[$key] ?? null;
+                if (is_string($reference) && trim($reference) !== '') {
+                    return trim($reference);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function providerManagesSubscription(Subscription $subscription): bool
+    {
+        $gateway = $this->gateways->get($this->gatewayIdFromSubscription($subscription));
+
+        return $gateway instanceof ManagesProviderSubscriptions
+            && $gateway->managesProviderSubscriptions()
+            && (string) ($subscription->renewal_mode ?? 'automatic') === 'automatic';
+    }
+
+    private function cancelProviderSubscription(Subscription $subscription, bool $atPeriodEnd): void
+    {
+        $gateway = $this->gateways->get($this->gatewayIdFromSubscription($subscription));
+        $reference = trim((string) ($subscription->provider_reference ?? ''));
+        if (! $gateway instanceof ManagesProviderSubscriptions || $reference === '') {
+            if ($gateway instanceof ManagesProviderSubscriptions
+                && $gateway->managesProviderSubscriptions()
+                && (string) ($subscription->renewal_mode ?? 'automatic') === 'automatic') {
+                throw ValidationException::withMessages([
+                    'subscription' => __('subscriptions::errors.cannot_cancel'),
+                ]);
+            }
+
+            return;
+        }
+
+        try {
+            $gateway->cancelProviderSubscription($reference, $atPeriodEnd);
+        } catch (Throwable $exception) {
+            report($exception);
+            throw ValidationException::withMessages([
+                'subscription' => __('subscriptions::errors.cannot_cancel'),
+            ]);
+        }
+    }
+
+    private function resumeProviderSubscription(Subscription $subscription): void
+    {
+        $gateway = $this->gateways->get($this->gatewayIdFromSubscription($subscription));
+        $reference = trim((string) ($subscription->provider_reference ?? ''));
+        if (! $gateway instanceof ManagesProviderSubscriptions || $reference === '') {
+            if ($gateway instanceof ManagesProviderSubscriptions
+                && $gateway->managesProviderSubscriptions()
+                && (string) ($subscription->renewal_mode ?? 'automatic') === 'automatic') {
+                throw ValidationException::withMessages([
+                    'subscription' => __('subscriptions::errors.cannot_resume'),
+                ]);
+            }
+
+            return;
+        }
+
+        try {
+            $gateway->resumeProviderSubscription($reference);
+        } catch (Throwable $exception) {
+            report($exception);
+            throw ValidationException::withMessages([
+                'subscription' => __('subscriptions::errors.cannot_resume'),
+            ]);
+        }
     }
 
     private function renewalModeFromOrder(Order $order): string

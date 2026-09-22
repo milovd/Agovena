@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Recurring;
 
+use App\Agovena\Payments\Contracts\ManagesProviderSubscriptions;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\ResolvesReusablePaymentAuthorizations;
 use App\Agovena\Recurring\Enums\RenewalStatus;
@@ -29,7 +30,11 @@ final class DescribesSubscriptionBilling
             (string) $subscription->customer_email,
         );
         $autoChargeEnabled = (bool) $this->settings->get('store', 'subscription_auto_charge', true);
-        $automatic = $autoChargeEnabled && $authorization->available;
+        $gateway = $this->gateways->get($gatewayId);
+        $providerManaged = $gateway instanceof ManagesProviderSubscriptions
+            && $gateway->managesProviderSubscriptions()
+            && (string) ($subscription->renewal_mode ?? 'automatic') === 'automatic';
+        $automatic = $providerManaged || ($autoChargeEnabled && $authorization->available);
         $renewals = $subscription->relationLoaded('renewals')
             ? $subscription->renewals
             : $subscription->renewals()->get();

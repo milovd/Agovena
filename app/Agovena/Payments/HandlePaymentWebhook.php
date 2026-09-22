@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
+use App\Agovena\Payments\Contracts\ManagesProviderSubscriptions;
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Contracts\ResolvesWebhookAttempts;
 use App\Agovena\Payments\Contracts\ValidatesWebhookPayload;
@@ -28,6 +29,7 @@ final class HandlePaymentWebhook
         private readonly PaymentGatewayRegistry $gateways,
         private readonly ApplyNormalizedPaymentStatus $applyStatus,
         private readonly PaymentLifecycleLock $lifecycleLock,
+        private readonly ApplyProviderSubscriptionEvent $applyProviderSubscriptionEvent,
     ) {}
 
     public function handle(string $gatewayId, Request $request): WebhookHandleResult
@@ -45,6 +47,13 @@ final class HandlePaymentWebhook
         }
 
         $payload = $gateway->parseWebhook($request);
+        $providerSubscriptionEvent = $gateway instanceof ManagesProviderSubscriptions
+            ? $gateway->providerSubscriptionEvent($payload)
+            : null;
+        if ($providerSubscriptionEvent !== null) {
+            $this->applyProviderSubscriptionEvent->handle($providerSubscriptionEvent);
+        }
+
         $externalEventId = $payload->externalEventId;
         if ($externalEventId === '') {
             $externalEventId = null;

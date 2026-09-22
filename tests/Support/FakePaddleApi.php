@@ -47,11 +47,74 @@ final class FakePaddleApi implements PaddleApi, PaddleConnectionChecker
         return array_merge($this->transaction, ['id' => $transactionId]);
     }
 
+    /** @var array<string, mixed> */
+    public array $subscription = [
+        'id' => 'sub_test',
+        'status' => 'active',
+    ];
+
+    public int $subscriptionCalls = 0;
+
+    public function getSubscription(string $subscriptionId): array
+    {
+        $this->subscriptionCalls++;
+
+        return array_merge($this->subscription, ['id' => $subscriptionId]);
+    }
+
+    public ?array $lastSubscriptionAction = null;
+
+    public function cancelSubscription(string $subscriptionId, bool $atPeriodEnd = true): array
+    {
+        $this->lastSubscriptionAction = [
+            'action' => 'cancel',
+            'id' => $subscriptionId,
+            'at_period_end' => $atPeriodEnd,
+        ];
+
+        return array_merge($this->subscription, ['id' => $subscriptionId, 'status' => $atPeriodEnd ? 'active' : 'canceled']);
+    }
+
+    public function clearScheduledSubscriptionChange(string $subscriptionId): array
+    {
+        $this->lastSubscriptionAction = [
+            'action' => 'clear_scheduled_change',
+            'id' => $subscriptionId,
+        ];
+
+        return array_merge($this->subscription, ['id' => $subscriptionId, 'status' => 'active']);
+    }
+
     /** @var array<string, mixed>|null */
     public ?array $adjustment = null;
 
-    public function createAdjustment(string $transactionId, string $reason, string $type = 'full', ?string $idempotencyKey = null): array
-    {
-        return $this->adjustment ?? ['id' => 'adj_test', 'transaction_id' => $transactionId, 'type' => $type, 'reason' => $reason];
+    /** @var array<string, mixed>|null */
+    public ?array $lastAdjustmentRequest = null;
+
+    /**
+     * @param  list<array{id: string, type: string, amount?: string}>|null  $items
+     */
+    public function createAdjustment(
+        string $transactionId,
+        string $reason,
+        string $type = 'full',
+        ?array $items = null,
+        ?string $idempotencyKey = null,
+    ): array {
+        $this->lastAdjustmentRequest = [
+            'transaction_id' => $transactionId,
+            'reason' => $reason,
+            'type' => $type,
+            'items' => $items,
+            'idempotency_key' => $idempotencyKey,
+        ];
+
+        return $this->adjustment ?? [
+            'id' => 'adj_test',
+            'transaction_id' => $transactionId,
+            'type' => $type,
+            'items' => $items,
+            'reason' => $reason,
+        ];
     }
 }

@@ -12,6 +12,7 @@ test('subscription auto-charge columns can be applied onto existing subscription
     installAndEnableModule('subscriptions');
 
     expect(Schema::hasColumn('subscriptions', 'payment_gateway'))->toBeTrue()
+        ->and(Schema::hasColumn('subscriptions', 'provider_reference'))->toBeTrue()
         ->and(Schema::hasColumn('subscription_renewals', 'charge_attempts'))->toBeTrue();
 
     $order = Order::factory()->create([
@@ -51,16 +52,20 @@ test('subscription auto-charge columns can be applied onto existing subscription
         ]);
     });
     Schema::table('subscriptions', function ($table): void {
-        $table->dropColumn('payment_gateway');
+        $table->dropIndex('subscriptions_provider_reference_index');
+        $table->dropColumn(['payment_gateway', 'provider_reference']);
     });
     DB::table('migrations')->where('migration', '2026_08_14_100000_add_subscription_auto_charge_columns')->delete();
+    DB::table('migrations')->where('migration', '2026_09_23_120000_add_provider_reference_to_subscriptions')->delete();
 
-    expect(Schema::hasColumn('subscriptions', 'payment_gateway'))->toBeFalse();
+    expect(Schema::hasColumn('subscriptions', 'payment_gateway'))->toBeFalse()
+        ->and(Schema::hasColumn('subscriptions', 'provider_reference'))->toBeFalse();
 
     Artisan::call('migrate');
     installAndEnableModule('subscriptions');
 
     expect(Schema::hasColumn('subscriptions', 'payment_gateway'))->toBeTrue()
+        ->and(Schema::hasColumn('subscriptions', 'provider_reference'))->toBeTrue()
         ->and(Schema::hasColumn('subscription_renewals', 'charge_attempts'))->toBeTrue()
         ->and(DB::table('subscriptions')->where('number', 'SUB-UPGRADE-1')->value('customer_email'))
         ->toBe('upgrade-sub@example.test')

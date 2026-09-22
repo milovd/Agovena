@@ -212,8 +212,11 @@ test('duplicate Tebex webhooks are idempotent and retain their replay ledger ent
         ->and(PaymentWebhookEvent::query()->where('external_event_id', 'evt_tebex_duplicate')->value('retention_exempt'))->toBeTrue();
 });
 
-test('paddle and tebex reject partial refunds at the capability boundary', function (): void {
+test('paddle supports partial adjustments while Tebex keeps its full-refund boundary', function (): void {
     $paddleApi = enableSecurityPaddle();
+    $paddleApi->transaction['details'] = [
+        'line_items' => [['id' => 'txnitm_test']],
+    ];
     $paddlePayment = placeSecurityOrder('paddle:paddle', 1);
     $paddleAttempt = app(StartOrderPayment::class)->handle($paddlePayment->order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-refund-start');
     $tebexApi = enableSecurityTebex();
@@ -223,9 +226,12 @@ test('paddle and tebex reject partial refunds at the capability boundary', funct
     $paddleResult = app(PaymentGatewayRegistry::class)->get('paddle')->refund(new RefundRequest($paddlePayment, 1, 'EUR'));
     $tebexResult = app(PaymentGatewayRegistry::class)->get('tebex')->refund(new RefundRequest($tebexPayment, 1, 'EUR'));
 
-    expect($paddleResult->success)->toBeFalse()
+    expect($paddleResult->success)->toBeTrue()
         ->and($tebexResult->success)->toBeFalse()
         ->and($paddleApi->transactionCalls)->toBe(1)
+        ->and($paddleApi->lastAdjustmentRequest['type'] ?? null)->toBe('partial')
+        ->and($paddleApi->lastAdjustmentRequest['items'][0]['item_id'] ?? null)->toBe('txnitm_test')
+        ->and($paddleApi->lastAdjustmentRequest['items'][0]['amount'] ?? null)->toBe('1')
         ->and($tebexApi->basketCalls)->toBe(1)
         ->and($paddleAttempt->external_id)->toBe('txn_test')
         ->and($tebexAttempt->external_id)->toBe('basket-ident');
