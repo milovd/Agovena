@@ -7,7 +7,7 @@ namespace App\Agovena\Subscriptions;
 use Carbon\CarbonImmutable;
 
 /**
- * Optional renewal processor. Bound by the Subscriptions Module when enabled.
+ * Core recurring renewal processor.
  */
 interface ProcessesSubscriptionRenewals
 {

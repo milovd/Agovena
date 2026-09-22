@@ -25,6 +25,7 @@ use Agovena\Modules\Provisioning\Support\ServerProviderException;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingDefinition;
@@ -509,13 +510,15 @@ test('checkout rejects a malformed server selection instead of using global sett
         ],
     ]);
     app(CartService::class)->add($product->id, 1);
+    app(CustomerCreditLedger::class)->credit($customer, 100000, 'Provisioning stock fixture');
 
     expect(fn () => app(PlaceOrder::class)->handle([
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => stockBilling(),
-        'payment_method' => 'development',
+        'apply_credit' => true,
+        'payment_method' => 'account_balance',
     ]))->toThrow(ValidationException::class)
         ->and(Order::query()->count())->toBe(0)
         ->and(CapacityReservation::query()->count())->toBe(0);
@@ -526,13 +529,15 @@ test('checkout fails closed when pterodactyl has no deployable capacity', functi
     $customer = Customer::factory()->create();
     $product = stockProduct();
     app(CartService::class)->add($product->id, 1);
+    app(CustomerCreditLedger::class)->credit($customer, 100000, 'Provisioning stock fixture');
 
     expect(fn () => app(PlaceOrder::class)->handle([
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => stockBilling(),
-        'payment_method' => 'development',
+        'apply_credit' => true,
+        'payment_method' => 'account_balance',
     ]))->toThrow(ValidationException::class)
         ->and(Order::query()->count())->toBe(0)
         ->and($api->capacityCalls)->toBe(1);
@@ -544,13 +549,15 @@ test('checkout fails closed when no single pterodactyl node fits the vector', fu
     $customer = Customer::factory()->create();
     $product = stockProduct();
     app(CartService::class)->add($product->id, 1);
+    app(CustomerCreditLedger::class)->credit($customer, 100000, 'Provisioning stock fixture');
 
     expect(fn () => app(PlaceOrder::class)->handle([
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => stockBilling(),
-        'payment_method' => 'development',
+        'apply_credit' => true,
+        'payment_method' => 'account_balance',
     ]))->toThrow(ValidationException::class)
         ->and(Order::query()->count())->toBe(0);
 });
@@ -613,6 +620,7 @@ test('expired checkout capacity reservations are released lazily', function () {
 
     $second = Customer::factory()->create();
     app(CartService::class)->add($product->id, 1);
+    app(CustomerCreditLedger::class)->credit($second, 100000, 'Provisioning stock fixture');
 
     expect(fn () => app(PlaceOrder::class)->handle([
         'customer_name' => $second->name,

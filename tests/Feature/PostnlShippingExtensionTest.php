@@ -5,11 +5,6 @@ declare(strict_types=1);
 use Agovena\Extensions\Postnl\PostnlApi;
 use Agovena\Extensions\Postnl\PostnlCarrier;
 use Agovena\Extensions\Postnl\PostnlShipment;
-use Agovena\Modules\Shipping\Enums\ShipmentStatus;
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Models\Shipment;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
-use Agovena\Modules\Shipping\ShipmentService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -21,6 +16,11 @@ use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ShipmentStatus;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Models\Shipment;
+use App\Agovena\Physical\Models\ShippingMethod;
+use App\Agovena\Physical\ShipmentService;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Enums\OrderStatus;
 use App\Models\Customer;
@@ -36,6 +36,7 @@ uses(CreatesStaff::class);
 
 function enablePostnl(?FakePostnlApi $api = null): FakePostnlApi
 {
+    require_once optionalExtensionRoot('shipping', 'postnl').DIRECTORY_SEPARATOR.'src'.DIRECTORY_SEPARATOR.'PostnlApi.php';
     $api ??= new FakePostnlApi;
     app()->instance(PostnlApi::class, $api);
     installAndEnableModule('shipping');

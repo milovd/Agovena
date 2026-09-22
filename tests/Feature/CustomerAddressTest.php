@@ -62,7 +62,7 @@ test('account sidebar nests purchases support and account groups with icons', fu
 });
 
 test('account sidebar nests services downloads under services when modules are enabled', function () {
-    installAndEnableModule('digital');
+    installAndEnableModule('downloads');
     installAndEnableModule('provisioning');
     app(SyncRegisteredPermissions::class)(force: true);
 
@@ -82,7 +82,7 @@ test('account sidebar nests services downloads under services when modules are e
         ->assertSee(__('provisioning::customer.nav'), false);
 });
 
-test('account sidebar nests returns under purchases when shipping module is enabled', function () {
+test('account sidebar nests returns under purchases when Core Physical Commerce is enabled', function () {
     installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
 
@@ -100,7 +100,7 @@ test('account sidebar nests returns under purchases when shipping module is enab
         ->assertSee(route('customer.returns'), false);
 });
 
-test('account sidebar nests subscriptions under account when module is enabled', function () {
+test('account sidebar nests subscriptions under account when Core Recurring is available', function () {
     installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
 

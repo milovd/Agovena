@@ -6,6 +6,7 @@ namespace App\Agovena\Operations;
 
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Settings\SettingsRepository;
+use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 
@@ -34,7 +35,7 @@ final class SchedulerHealth
 
     public function isRequired(): bool
     {
-        if ($this->modules->isEnabled('subscriptions') || $this->modules->isEnabled('provisioning')) {
+        if (app()->bound(ProcessesSubscriptionRenewals::class) || $this->modules->isEnabled('provisioning')) {
             return true;
         }
 

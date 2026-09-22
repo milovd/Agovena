@@ -336,7 +336,7 @@ final class OpenApiDocument
                 '/subscriptions' => [
                     'get' => [
                         'tags' => ['Commerce'],
-                        'summary' => 'Subscriptions (when the Subscriptions module is enabled)',
+                        'summary' => 'Subscriptions (when recurring capability is available)',
                         'security' => [['bearerAuth' => []]],
                         'x-required-ability' => 'subscriptions.read',
                         'responses' => [
@@ -348,7 +348,7 @@ final class OpenApiDocument
                 '/subscriptions/{subscription}' => [
                     'get' => [
                         'tags' => ['Commerce'],
-                        'summary' => 'Subscription detail (when the Subscriptions module is enabled)',
+                        'summary' => 'Subscription detail (when recurring capability is available)',
                         'security' => [['bearerAuth' => []]],
                         'x-required-ability' => 'subscriptions.read',
                         'responses' => ['200' => ['description' => 'Subscription'], '404' => ['description' => 'Capability unavailable']],

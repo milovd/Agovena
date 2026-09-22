@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Installation\ApplicationSchemaStatus;
-use App\Agovena\Modules\ModuleManager;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
@@ -16,21 +15,9 @@ function resetMollieSchema(): void
     DB::table('migrations')->where('migration', 'like', '%mollie%')->delete();
 }
 
-test('module install and enable run database migrations', function () {
-    expect(Schema::hasTable('subscriptions'))->toBeFalse();
-
-    $modules = app(ModuleManager::class);
-    $modules->install('subscriptions');
-    expect(Schema::hasTable('subscriptions'))->toBeTrue();
-
-    $modules->disable('subscriptions');
-    Schema::drop('subscription_renewals');
-    Schema::drop('subscriptions');
-    DB::table('migrations')->where('migration', 'like', '%subscription%')->delete();
-    expect(Schema::hasTable('subscriptions'))->toBeFalse();
-
-    $modules->enable('subscriptions');
-    expect(Schema::hasTable('subscriptions'))->toBeTrue();
+test('core recurring migrations are available without a module install cycle', function () {
+    expect(Schema::hasTable('subscriptions'))->toBeTrue()
+        ->and(Schema::hasTable('subscription_renewals'))->toBeTrue();
 });
 
 test('extension install and enable run database migrations', function () {

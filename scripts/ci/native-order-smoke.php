@@ -10,6 +10,7 @@ declare(strict_types=1);
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -39,10 +40,6 @@ if (! $modules->isInstalled('inventory')) {
 }
 $modules->enable('inventory');
 
-putenv('AGOVENA_DEV_INSTANT_PAY=true');
-$_ENV['AGOVENA_DEV_INSTANT_PAY'] = 'true';
-$_SERVER['AGOVENA_DEV_INSTANT_PAY'] = 'true';
-config(['agovena.payments.allow_development_instant_pay' => true]);
 app(SyncRegisteredPermissions::class)(force: true);
 
 $product = Product::query()->firstOrCreate(
@@ -72,6 +69,7 @@ $customer = Customer::query()->firstOrCreate(
         'user_id' => $user->id,
     ],
 );
+app(CustomerCreditLedger::class)->credit($customer, 3000, 'Native smoke fixture');
 
 $cart = app(CartService::class);
 $cart->clear();
@@ -81,7 +79,7 @@ $order = app(PlaceOrder::class)->handle([
     'customer_name' => $customer->name,
     'customer_email' => $customer->email,
     'customer_id' => $customer->id,
-    'payment_method' => 'development',
+    'payment_method' => 'account_balance',
     'billing' => AddressData::fromArray([
         'name' => $customer->name,
         'line1' => '1 Smoke Street',

@@ -15,15 +15,18 @@ final class FakeMollieApi implements MollieApi
     /** @var array<string, string> */
     public array $idempotency = [];
 
-    /** @var list<array{id: string, description: string}> */
+    /** @var list<array{id: string, description: string, icon: ?string}> */
     public array $methods = [
-        ['id' => 'ideal', 'description' => 'iDEAL'],
-        ['id' => 'bancontact', 'description' => 'Bancontact'],
-        ['id' => 'creditcard', 'description' => 'Card'],
-        ['id' => 'paypal', 'description' => 'PayPal'],
+        ['id' => 'ideal', 'description' => 'iDEAL', 'icon' => 'https://www.mollie.com/external/icons/payment-methods/ideal.svg'],
+        ['id' => 'bancontact', 'description' => 'Bancontact', 'icon' => 'https://www.mollie.com/external/icons/payment-methods/bancontact.svg'],
+        ['id' => 'creditcard', 'description' => 'Card', 'icon' => 'https://www.mollie.com/external/icons/payment-methods/creditcard.svg'],
+        ['id' => 'paypal', 'description' => 'PayPal', 'icon' => 'https://www.mollie.com/external/icons/payment-methods/paypal.svg'],
     ];
 
     public int $createCalls = 0;
+
+    /** @var array<string, mixed> */
+    public array $lastPayload = [];
 
     public int $refundCalls = 0;
 
@@ -51,6 +54,7 @@ final class FakeMollieApi implements MollieApi
 
     public function createPayment(array $payload, ?string $idempotencyKey = null): array
     {
+        $this->lastPayload = $payload;
         if ($this->timeout) {
             throw MollieProviderException::unknown('mollie::messages.health.unreachable');
         }

@@ -8,7 +8,7 @@ use App\Models\Order;
 
 /**
  * Generic order fulfillment presentation for Themes / customer portal.
- * Modules (Shipping) may provide shipment rows; Core stays provider-agnostic.
+ * Core physical commerce provides shipment rows; Core stays provider-agnostic.
  */
 interface OrderFulfillmentPresenter
 {

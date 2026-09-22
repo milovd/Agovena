@@ -10,9 +10,13 @@ test('storefront home renders catalog theme', function () {
     $this->get('/')->assertOk()->assertSee('Featured products', false);
 });
 
-test('installer redirects when already installed', function () {
+test('installer returns not found when already installed', function () {
     $this->get('/install')
-        ->assertRedirect(route('admin.dashboard'));
+        ->assertNotFound()
+        ->assertSee(__('errors.404.heading'), false)
+        ->assertSee(__('storefront.nav.deals'), false)
+        ->assertSee('store-chrome', false)
+        ->assertSee('store-footer', false);
 });
 
 test('admin registrar is bound', function () {

@@ -8,7 +8,6 @@ declare(strict_types=1);
 
 use Agovena\Modules\Events\EventService;
 use Agovena\Modules\Provisioning\Jobs\ProvisionServiceInstance;
-use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\Admin\AdminRoleAssignmentPolicy;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Imports\ImportAdapterRegistry;
@@ -16,6 +15,7 @@ use App\Agovena\Imports\ImportExecutor;
 use App\Agovena\Invoices\IssueCreditNote;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordRefund;
+use App\Agovena\Recurring\SubscriptionService;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\User;

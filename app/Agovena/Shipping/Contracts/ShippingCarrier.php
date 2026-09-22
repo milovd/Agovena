@@ -6,7 +6,7 @@ namespace App\Agovena\Shipping\Contracts;
 
 /**
  * Provider seam for shipping carrier Extensions.
- * Core and the Shipping Module must not hardcode carrier SDKs.
+ * Core and Extensions must not hardcode carrier SDKs.
  */
 interface ShippingCarrier
 {

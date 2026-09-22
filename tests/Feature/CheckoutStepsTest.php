@@ -2,17 +2,21 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\CheckoutStep;
+use App\Agovena\Credits\CustomerCreditLedger;
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Models\ShippingMethod;
 use App\Enums\ProductOptionType;
 use App\Livewire\Storefront\CheckoutPage;
+use App\Models\Customer;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
+use App\Models\User;
 use Livewire\Livewire;
 
 function checkoutEnableShipping(): void
@@ -58,6 +62,48 @@ test('checkout continues from details to payment for a digital cart', function (
         ->assertSet('step', CheckoutStep::Payment->value)
         ->assertSee(__('storefront.checkout.hosted_payment_note'))
         ->assertSee(__('storefront.checkout.place_order'));
+});
+
+test('checkout does not show an empty gateway warning when account balance is available as a standard method', function () {
+    app(PaymentGatewayRegistry::class)->clear();
+    $product = Product::factory()->active()->create(['price_amount' => 800]);
+    app(CartService::class)->add($product->id, 1);
+
+    Livewire::test(CheckoutPage::class)
+        ->set('customer_name', 'Ada Guest')
+        ->set('customer_email', 'ada@example.com')
+        ->set('billing_name', 'Ada Guest')
+        ->set('billing_line1', 'Keizersgracht 1')
+        ->set('billing_city', 'Amsterdam')
+        ->set('billing_postal_code', '1015 CJ')
+        ->set('billing_country', 'NL')
+        ->call('continueStep')
+        ->assertSee(__('storefront.checkout.pay_with_account_balance'))
+        ->assertDontSee(__('storefront.checkout.no_payment_methods'))
+        ->assertDontSee('value="account_balance" disabled');
+});
+
+test('checkout explains when account balance is insufficient', function () {
+    app(PaymentGatewayRegistry::class)->clear();
+    $user = User::factory()->create();
+    $customer = Customer::query()->where('user_id', $user->id)->firstOrFail();
+    $product = Product::factory()->active()->create(['price_amount' => 800]);
+    app(CustomerCreditLedger::class)->credit($customer, 500, 'Checkout test credit');
+    app(CartService::class)->add($product->id, 1);
+
+    Livewire::actingAs($user)
+        ->test(CheckoutPage::class)
+        ->set('step', CheckoutStep::Payment->value)
+        ->set('payment_method', 'account_balance')
+        ->set('customer_name', $customer->name)
+        ->set('customer_email', $customer->email)
+        ->set('billing_name', $customer->name)
+        ->set('billing_line1', 'Keizersgracht 1')
+        ->set('billing_city', 'Amsterdam')
+        ->set('billing_postal_code', '1015 CJ')
+        ->set('billing_country', 'NL')
+        ->call('placeOrder')
+        ->assertHasErrors(['payment_method' => __('storefront.errors.account_balance_insufficient')]);
 });
 
 test('physical checkout includes delivery and keeps totals on the server', function () {

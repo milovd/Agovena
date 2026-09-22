@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Operations\CronStatisticsRecorder;
 use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Console\Command;
@@ -15,10 +14,10 @@ final class ProcessSubscriptionRenewalsCommand extends Command
 
     protected $description = 'Create renewal orders for subscriptions that are due for billing';
 
-    public function handle(ModuleManager $modules): int
+    public function handle(): int
     {
-        if (! $modules->isEnabled('subscriptions') || ! $this->laravel->bound(ProcessesSubscriptionRenewals::class)) {
-            $this->comment('Subscriptions module is not enabled.');
+        if (! $this->laravel->bound(ProcessesSubscriptionRenewals::class)) {
+            $this->comment('Recurring capability is not available.');
 
             return self::SUCCESS;
         }

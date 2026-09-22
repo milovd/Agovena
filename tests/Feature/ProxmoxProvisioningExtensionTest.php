@@ -18,6 +18,7 @@ use Agovena\Modules\Provisioning\ServiceInstanceRuntimeSecretStore;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
+use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
@@ -98,15 +99,16 @@ function makeProxmoxProduct(array $settings = []): Product
 
 function payForProxmoxProduct(Product $product, ?Customer $customer = null): ServiceInstance
 {
-    config(['agovena.payments.allow_development_instant_pay' => true]);
     $customer ??= Customer::factory()->create();
     app(CartService::class)->add($product->id, 1);
+    app(CustomerCreditLedger::class)->credit($customer, 100000, 'Proxmox fixture');
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
         'billing' => proxmoxBilling(),
-        'payment_method' => 'development',
+        'apply_credit' => true,
+        'payment_method' => 'account_balance',
     ]);
 
     return ServiceInstance::query()->where('order_id', $order->id)->firstOrFail();

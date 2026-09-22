@@ -14,7 +14,6 @@ use App\Agovena\Money\Money;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\CheckoutPaymentSelection;
 use App\Agovena\Payments\CompleteAccountBalancePayment;
-use App\Agovena\Payments\CompleteDevelopmentPayment;
 use App\Agovena\Payments\PaymentFeePolicy;
 use App\Agovena\Referrals\ReferralService;
 use App\Agovena\Settings\SettingsRepository;
@@ -41,7 +40,7 @@ final class PlaceOrder
     public function __construct(
         private readonly CartService $cart,
         private readonly SettingsRepository $settings,
-        private readonly CompleteDevelopmentPayment $developmentPayment,
+
         private readonly CompleteAccountBalancePayment $accountBalancePayment,
         private readonly PaymentFeePolicy $paymentFees,
         private readonly ShippingQuoteResolver $shippingQuotes,
@@ -379,12 +378,6 @@ final class PlaceOrder
             return $order->fresh(['items', 'payment']) ?? $order;
         }
 
-        if ($paymentMethod === 'development') {
-            $this->developmentPayment->handle($order);
-
-            return $order->fresh(['items', 'payment']) ?? $order;
-        }
-
         return $order;
     }
 
@@ -400,8 +393,6 @@ final class PlaceOrder
 
         if ($payment->method === 'account_balance' || (int) $payment->amount === 0) {
             $this->accountBalancePayment->handle($order);
-        } elseif ($payment->method === 'development') {
-            $this->developmentPayment->handle($order);
         }
 
         return $order->fresh(['items', 'payment']) ?? $order;
@@ -467,17 +458,6 @@ final class PlaceOrder
 
         $selection = CheckoutPaymentSelection::parse($value);
         $gatewayId = $selection->gatewayId;
-
-        if ($gatewayId === 'development') {
-            $devAllowed = (bool) config('agovena.payments.allow_development_instant_pay');
-            if (! $devAllowed || app()->environment('production')) {
-                throw ValidationException::withMessages([
-                    'payment_method' => __('storefront.errors.development_payment_unavailable'),
-                ]);
-            }
-
-            return 'development';
-        }
 
         if ($gatewayId === 'account_balance') {
             throw ValidationException::withMessages([

@@ -21,6 +21,44 @@ test.describe('cart', () => {
         await expect(page.getByRole('link', { name: 'Continue shopping' })).toBeVisible();
     });
 
+    test('quantity stepper updates immediately while Livewire is processing', async ({ page }) => {
+        await addProductToCart(page, 'e2e-digital');
+        await page.goto('/cart');
+        await expect(page.locator('.store-qty__input')).toHaveValue('1');
+
+        await page.route('**/livewire/update', async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 750));
+            await route.continue();
+        });
+
+        await page.getByRole('button', { name: 'Increase quantity' }).click();
+        await expect(page.locator('.store-qty__input')).toHaveValue('2', { timeout: 300 });
+        await page.unroute('**/livewire/update');
+    });
+
+    test('quantity stepper preserves rapid clicks while Livewire is processing', async ({ page }) => {
+        await addProductToCart(page, 'e2e-digital');
+        await page.goto('/cart');
+        await expect(page.locator('.store-qty__input')).toHaveValue('1');
+
+        await page.route('**/livewire/update', async (route) => {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            await route.continue();
+        });
+
+        const increase = page.getByRole('button', { name: 'Increase quantity' });
+        const box = await increase.boundingBox();
+        expect(box).not.toBeNull();
+        for (let click = 0; click < 3; click++) {
+            await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+            await page.waitForTimeout(40);
+        }
+        await expect(page.locator('.store-qty__input')).toHaveValue('4');
+        await page.waitForTimeout(1200);
+        await expect(page.locator('.store-qty__input')).toHaveValue('4');
+        await page.unroute('**/livewire/update');
+    });
+
     test('checkout CTA opens checkout with storefront chrome', async ({ page }) => {
         await addProductToCart(page, 'e2e-digital');
         await page.goto('/cart');

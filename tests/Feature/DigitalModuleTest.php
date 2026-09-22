@@ -7,8 +7,6 @@ use Agovena\Modules\Digital\Http\Livewire\Admin\AssetsIndex;
 use Agovena\Modules\Digital\Http\Livewire\Customer\DownloadsIndex;
 use Agovena\Modules\Digital\Models\DigitalAsset;
 use Agovena\Modules\Digital\Models\DigitalEntitlement;
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
@@ -18,6 +16,8 @@ use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Models\ShippingMethod;
 use App\Models\Customer;
 use App\Models\Product;
 use Illuminate\Http\UploadedFile;
@@ -29,7 +29,7 @@ uses(CreatesStaff::class);
 
 function enableDigitalModule(): void
 {
-    installAndEnableModule('digital');
+    installAndEnableModule('downloads');
     app(SyncRegisteredPermissions::class)(force: true);
 }
 
@@ -233,9 +233,9 @@ test('digital module disable preserves assets and entitlements', function () {
 
     expect(DigitalEntitlement::query()->count())->toBe(1);
 
-    app(ModuleManager::class)->disable('digital');
+    app(ModuleManager::class)->disable('downloads');
 
-    expect(app(ModuleManager::class)->isEnabled('digital'))->toBeFalse()
+    expect(app(ModuleManager::class)->isEnabled('downloads'))->toBeFalse()
         ->and(DigitalAsset::query()->whereKey($asset->id)->exists())->toBeTrue()
         ->and(DigitalEntitlement::query()->count())->toBe(1);
 });

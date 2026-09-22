@@ -15,23 +15,23 @@ uses(CreatesStaff::class);
 test('store presets enable the union of modules without disabling others', function () {
     expect(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('digital-delivery'))->toBeFalse()
-        ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeFalse();
+        ->and(app(ModuleManager::class)->isEnabled('downloads'))->toBeFalse();
 
     $enabled = app(ApplyStorePresets::class)->handle(['physical', 'digital', 'downloadable']);
 
-    expect($enabled)->toContain('inventory', 'shipping', 'digital-delivery', 'digital', 'subscriptions')
-        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeTrue()
+    expect($enabled)->toContain('digital-delivery', 'downloads')
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse()
+        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('digital-delivery'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('downloads'))->toBeTrue()
         ->and(app(ApplyStorePresets::class)->selected())->toBe(['physical', 'digital', 'downloadable']);
 
     installAndEnableModule('subscriptions');
     app(ApplyStorePresets::class)->handle(['physical']);
 
-    expect(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue()
+    expect(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('digital-delivery'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('downloads'))->toBeTrue();
 });
 
 test('installing a preset additively keeps existing setups and skips already enabled modules', function () {
@@ -41,17 +41,17 @@ test('installing a preset additively keeps existing setups and skips already ena
     $apply = app(ApplyStorePresets::class);
     $apply->installPreset('physical', []);
     expect($apply->selected())->toBe(['physical'])
-        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse()
+        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeFalse();
 
     $enabled = $apply->installPreset('digital', ['physical']);
 
     expect($apply->selected())->toBe(['physical', 'digital'])
-        ->and($enabled)->toContain('digital-delivery', 'subscriptions')
-        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeTrue()
+        ->and($enabled)->toContain('digital-delivery')
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse()
+        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('digital-delivery'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeFalse();
 
     expect($apply->installPreset('digital', ['physical', 'digital']))->toBe([]);
 });
@@ -66,7 +66,7 @@ test('custom module install adds one module without replacing existing setups', 
     expect($apply->installCustomModule('events', ['physical'], []))->toBeTrue()
         ->and($apply->selected())->toContain('physical', 'custom')
         ->and($apply->selectedModules())->toBe(['events'])
-        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('events'))->toBeTrue();
 });
 
@@ -77,14 +77,14 @@ test('uninstalling a preset removes it from settings and disables exclusive modu
 
     expect($apply->selected())->toBe(['physical', 'digital'])
         ->and(app(ModuleManager::class)->isEnabled('digital-delivery'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeFalse();
 
     $disabled = $apply->uninstallPreset('digital', ['physical', 'digital']);
 
-    expect($disabled)->toBe(['digital-delivery', 'subscriptions'])
+    expect($disabled)->toBe(['digital-delivery'])
         ->and($apply->selected())->toBe(['physical'])
-        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse()
+        ->and(app(ModuleManager::class)->isEnabled('shipping'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('digital-delivery'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeFalse();
 });
@@ -98,8 +98,8 @@ test('uninstalling a preset keeps modules shared with other active setups', func
 
     expect($disabled)->toBe(['digital-delivery'])
         ->and($apply->selected())->toBe(['downloadable'])
-        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeFalse()
+        ->and(app(ModuleManager::class)->isEnabled('downloads'))->toBeTrue()
         ->and(app(ModuleManager::class)->isEnabled('digital-delivery'))->toBeFalse();
 });
 
@@ -116,7 +116,7 @@ test('uninstalling custom setup clears custom modules and disables unshared ones
         ->and($apply->selected())->toBe(['physical'])
         ->and($apply->selectedModules())->toBe([])
         ->and(app(ModuleManager::class)->isEnabled('events'))->toBeFalse()
-        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse();
 });
 
 test('custom preset enables no modules and core still works with zero modules', function () {
@@ -138,6 +138,6 @@ test('staff can apply store presets from admin', function () {
         ->assertHasNoErrors();
 
     expect(app(ModuleManager::class)->isEnabled('provisioning'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeTrue()
+        ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('domains'))->toBeTrue();
 });

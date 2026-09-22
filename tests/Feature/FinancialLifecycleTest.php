@@ -4,13 +4,9 @@ declare(strict_types=1);
 
 use Agovena\Modules\Digital\Models\DigitalAsset;
 use Agovena\Modules\Digital\Models\DigitalEntitlement;
-use Agovena\Modules\Inventory\InventoryService;
-use Agovena\Modules\Inventory\Models\InventoryStock;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Models\Shipment;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
-use Agovena\Modules\Subscriptions\Models\Subscription;
+use App\Agovena\Availability\InventoryService;
+use App\Agovena\Availability\Models\InventoryStock;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -20,6 +16,10 @@ use App\Agovena\Invoices\VoidInvoice;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Models\Shipment;
+use App\Agovena\Physical\Models\ShippingMethod;
+use App\Agovena\Recurring\Models\Subscription;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -205,7 +205,7 @@ test('unpaid invoice can be voided and cannot be paid afterward', function () {
 });
 
 test('refund does not silently destroy mixed module fulfillment state', function () {
-    installAndEnableModules(['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning']);
+    installAndEnableModules(['inventory', 'shipping', 'downloads', 'subscriptions', 'provisioning']);
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();

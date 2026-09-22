@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Subscriptions\Models\Subscription;
 use App\Agovena\Imports\ImportAdapterRegistry;
 use App\Agovena\Imports\ImportExecutor;
 use App\Agovena\Imports\ImportRollback;
+use App\Agovena\Recurring\Models\Subscription;
 use App\Models\ImportRow;
 use App\Models\Product;
 use App\Models\User;
@@ -71,8 +71,7 @@ it('fails closed when an import row is malformed', function (): void {
     unlink($path);
 });
 
-it('imports subscriptions only when its optional module is enabled', function (): void {
-    installAndEnableModules(['subscriptions']);
+it('imports subscriptions as a Core capability', function (): void {
     $executor = app(ImportExecutor::class);
 
     $customerPath = writeImportFixture("external_id,email,name\nC-4,subscription@example.test,Subscription Customer\n");

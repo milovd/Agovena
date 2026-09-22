@@ -251,6 +251,10 @@
   gap: var(--theme-space-3);
 }
 
+.store-checkout__methods + .store-field__error {
+  margin-top: var(--theme-space-2);
+}
+
 .store-choice--row {
   align-items: center;
 }
@@ -293,6 +297,19 @@
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
+}
+
+.store-choice__copy:has(.store-choice__icon) {
+  flex-direction: row;
+  align-items: center;
+  gap: var(--theme-space-2);
+}
+
+.store-choice__icon {
+  width: 2.25rem;
+  height: 1.5rem;
+  flex: 0 0 auto;
+  object-fit: contain;
 }
 
 .store-choice__price {

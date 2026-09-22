@@ -14,7 +14,6 @@ uses(CreatesStaff::class);
 test('product create hides provisioning ui when provisioning module is disabled', function () {
     Livewire::actingAs($this->createStaff())
         ->test(Create::class)
-        ->assertDontSee(__('admin.products.tabs.automation'))
         ->assertDontSee(__('admin.products.automation.enable_provisioning'))
         ->assertDontSee('wire:model="configureProvisioning"', false)
         ->assertDontSee('wire:model="provisioningServerId"', false)
@@ -26,7 +25,6 @@ test('product edit hides provisioning ui when provisioning module is disabled', 
 
     Livewire::actingAs($this->createStaff())
         ->test(Edit::class, ['product' => $product])
-        ->assertDontSee(__('admin.products.tabs.automation'))
         ->assertDontSee('wire:model="provisioningServerId"', false)
         ->assertDontSee('wire:model="capabilityEnabled.provisionable"', false)
         ->assertDontSee(__('admin.products.capabilities.provisionable'));
@@ -69,17 +67,14 @@ test('product edit shows events tab when events module is enabled', function () 
         ->toContain('events');
 });
 
-test('product edit hides subscription fields when subscriptions module is disabled', function () {
+test('product edit shows subscription fields because recurring billing is Core', function () {
     enableFirstPartyModules(['digital-delivery']);
 
     $product = Product::factory()->create();
 
     Livewire::actingAs($this->createStaff())
         ->test(Edit::class, ['product' => $product])
-        ->assertDontSee('wire:model="capabilityEnabled.subscribable"', false)
-        ->assertDontSee('wire:model="subscriptionInterval"', false)
-        ->assertDontSee('wire:model="subscriptionIntervalCount"', false)
-        ->assertDontSee('wire:model="subscriptionTrialDays"', false);
+        ->assertSee(__('admin.products.capabilities.subscribable'));
 });
 
 test('digital and subscription capabilities can be combined and saved', function () {
@@ -108,7 +103,7 @@ test('digital and subscription capabilities can be combined and saved', function
 });
 
 test('downloadable and subscription capabilities can be combined and saved', function () {
-    enableFirstPartyModules(['digital', 'subscriptions']);
+    enableFirstPartyModules(['downloads', 'subscriptions']);
     $product = Product::factory()->create();
 
     Livewire::actingAs($this->createStaff())

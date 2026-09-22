@@ -105,7 +105,7 @@ test('footer uses configured store name and logo', function () {
 });
 
 test('authenticated footer lists module account destinations when enabled', function () {
-    installAndEnableModule('digital');
+    installAndEnableModule('downloads');
     app(SyncRegisteredPermissions::class)(force: true);
 
     $user = User::factory()->create();

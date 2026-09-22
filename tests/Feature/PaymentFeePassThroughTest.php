@@ -13,7 +13,6 @@ use App\Models\Customer;
 use App\Models\Product;
 
 it('snapshots a configured gateway fee on the order and payment amount', function (): void {
-    config(['agovena.payments.allow_development_instant_pay' => false]);
     app(PaymentGatewayRegistry::class)->clear();
     app(PaymentGatewayRegistry::class)->register(app(ManualPaymentGateway::class));
     app(SettingsRepository::class)->set('payments', 'gateway_fee_rules', [

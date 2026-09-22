@@ -16,7 +16,7 @@ use App\Models\ProductOptionChoice;
 
 function enableCommerceModules(): void
 {
-    installAndEnableModules(['shipping', 'digital']);
+    installAndEnableModules(['shipping', 'downloads']);
     app(SyncRegisteredPermissions::class)(force: true);
 }
 

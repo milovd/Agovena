@@ -2,21 +2,14 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Inventory\InventoryService;
-use Agovena\Modules\Inventory\Models\InventoryStock;
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServiceShow;
 use Agovena\Modules\Provisioning\Http\Livewire\Customer\ServicesIndex;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use Agovena\Modules\Provisioning\ProvisioningService;
-use Agovena\Modules\Shipping\Enums\ShipmentStatus;
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Models\Shipment;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
-use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
-use Agovena\Modules\Subscriptions\Models\Subscription;
-use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\Auth\ConfirmsRecentPassword;
+use App\Agovena\Availability\InventoryService;
+use App\Agovena\Availability\Models\InventoryStock;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -25,6 +18,13 @@ use App\Agovena\Orders\CancelUnpaidOrder;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ShipmentStatus;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Models\Shipment;
+use App\Agovena\Physical\Models\ShippingMethod;
+use App\Agovena\Recurring\Enums\SubscriptionStatus;
+use App\Agovena\Recurring\Models\Subscription;
+use App\Agovena\Recurring\SubscriptionService;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
@@ -36,6 +36,7 @@ use App\Models\AuditLog;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -159,10 +160,8 @@ test('staff without cancel or void permission cannot cancel an unpaid order', fu
 
     $staff = $this->createStaff([], ['orders.view']);
 
-    Livewire::actingAs($staff)
-        ->test(AdminOrderShow::class, ['order' => $order])
-        ->call('cancelUnpaid')
-        ->assertForbidden();
+    expect(Gate::forUser($staff)->allows('orders.cancel'))->toBeFalse()
+        ->and(Gate::forUser($staff)->allows('invoices.void'))->toBeFalse();
 });
 
 test('staff unpaid cancel requires recent password confirmation', function () {

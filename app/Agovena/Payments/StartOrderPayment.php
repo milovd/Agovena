@@ -6,7 +6,6 @@ namespace App\Agovena\Payments;
 
 use App\Agovena\Invoices\AssertInvoiceCanBePaid;
 use App\Agovena\Payments\Contracts\PaymentGateway;
-use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
@@ -149,10 +148,6 @@ final class StartOrderPayment
     {
         $gateway = $this->gateways->get($gatewayId);
         if ($gateway === null) {
-            $gateway = $this->coreFallback($gatewayId);
-        }
-
-        if ($gateway === null) {
             throw ValidationException::withMessages([
                 'payment_method' => __('storefront.errors.payment_method_unavailable'),
             ]);
@@ -167,15 +162,5 @@ final class StartOrderPayment
 
         return $startedAt !== null
             && $startedAt->lte(now()->subSeconds(max(60, (int) config('agovena.payments.pending_attempt_stale_seconds', 900))));
-    }
-
-    private function coreFallback(string $gatewayId): ?PaymentGateway
-    {
-        return match ($gatewayId) {
-            'development' => (bool) config('agovena.payments.allow_development_instant_pay')
-                ? app(DevelopmentPaymentGateway::class)
-                : null,
-            default => null,
-        };
     }
 }

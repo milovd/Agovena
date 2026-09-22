@@ -28,13 +28,6 @@ return [
     ],
 
     'payments' => [
-        /*
-     * When true, checkout may offer a development-only instant payment method.
-     * Never enable in production. Defaults to true only for local+debug.
-     */
-        'allow_development_instant_pay' => env('AGOVENA_DEV_INSTANT_PAY') !== null
-            ? filter_var(env('AGOVENA_DEV_INSTANT_PAY'), FILTER_VALIDATE_BOOLEAN)
-            : (env('APP_ENV') === 'local' && filter_var(env('APP_DEBUG', false), FILTER_VALIDATE_BOOLEAN)),
         'pending_attempt_stale_seconds' => (int) env('AGOVENA_PENDING_ATTEMPT_STALE_SECONDS', 900),
         'return_url_origins' => array_values(array_filter(array_map(
             static fn (string $origin): string => rtrim(strtolower(trim($origin)), '/'),
@@ -73,11 +66,8 @@ return [
             // Use the latest optional-packages main branch by default. Operators can explicitly select an immutable ref for controlled releases.
             'default_ref' => env('AGOVENA_PACKAGES_MONOREPO_REF', 'main'),
             'packages' => [
-                'inventory' => ['kind' => 'module', 'path' => 'modules/inventory'],
-                'shipping' => ['kind' => 'module', 'path' => 'modules/shipping'],
-                'digital' => ['kind' => 'module', 'path' => 'modules/digital'],
+                'downloads' => ['kind' => 'module', 'path' => 'modules/downloads'],
                 'digital-delivery' => ['kind' => 'module', 'path' => 'modules/digital-delivery'],
-                'subscriptions' => ['kind' => 'module', 'path' => 'modules/subscriptions'],
                 'provisioning' => ['kind' => 'module', 'path' => 'modules/provisioning'],
                 'events' => ['kind' => 'module', 'path' => 'modules/events'],
                 'domains' => ['kind' => 'module', 'path' => 'modules/domains'],

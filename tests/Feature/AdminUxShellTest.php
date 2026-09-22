@@ -212,12 +212,12 @@ test('customer index shows identity and commerce columns', function () {
         ->assertSee(__('admin.customers.status_active'), false);
 });
 
-test('disabled modules do not leave dead fulfillment navigation', function () {
+test('core physical commerce keeps fulfillment navigation available', function () {
     expect(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse();
 
     $ids = collect(app(AdminRegistrar::class)->navigationItems())->pluck('id');
 
-    expect($ids)->not->toContain('inventory-stocks');
+    expect($ids)->toContain('inventory-stocks');
 });
 
 test('enabled subscriptions appear under operations navigation', function () {
@@ -232,7 +232,7 @@ test('enabled subscriptions appear under operations navigation', function () {
 });
 
 test('admin navigation groups are collapsible and fulfillment icons are distinct', function () {
-    installAndEnableModule('digital');
+    installAndEnableModule('downloads');
     installAndEnableModule('inventory');
     installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);

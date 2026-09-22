@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Agovena\Auth\ConfirmsRecentPassword;
+use App\Agovena\Auth\TotpTwoFactor;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Agovena\Invoices\LinkInvoiceToOrder;
 use App\Agovena\Invoices\UnlinkInvoiceFromOrder;
@@ -93,7 +94,7 @@ test('staff with update permission can open the order edit route', function () {
 });
 
 test('order detail keeps the important information in a compact address section', function () {
-    $staff = $this->createStaff([], ['orders.view']);
+    $staff = $this->createStaff();
     $order = Order::factory()->create([
         'billing_name' => 'Ada Guest',
         'billing_line1' => 'Market street 1',
@@ -175,7 +176,7 @@ test('financially relevant invoices cannot be unlinked from an order', function 
 });
 
 test('order and invoice detail pages expose the invoice relationship in both directions', function () {
-    $staff = $this->createStaff([], ['orders.view', 'invoices.view', 'invoices.manage']);
+    $staff = $this->createStaff();
     $order = Order::factory()->create([
         'customer_name' => 'Invoice customer',
         'customer_email' => 'invoice@example.test',
@@ -193,6 +194,12 @@ test('order and invoice detail pages expose the invoice relationship in both dir
     ];
     $first = Invoice::query()->create(['number' => 'INV-LINK-00006', ...$attributes]);
     $second = Invoice::query()->create(['number' => 'INV-LINK-00007', ...$attributes]);
+
+    expect($staff->can('orders.view'))->toBeTrue();
+    $this->withSession([
+        TotpTwoFactor::SESSION_VERIFIED_USER => $staff->id,
+        TotpTwoFactor::SESSION_PRIVILEGED_AT_LOGIN => true,
+    ]);
 
     $this->actingAs($staff)
         ->get(route('admin.orders.show', $order))

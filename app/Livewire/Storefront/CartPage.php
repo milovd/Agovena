@@ -41,6 +41,12 @@ final class CartPage extends Component
         $this->refreshQuantities($cart);
     }
 
+    public function setLineQuantity(string $lineKey, int $quantity, CartService $cart): void
+    {
+        $cart->update($lineKey, max(1, min(99, $quantity)));
+        $this->refreshQuantities($cart);
+    }
+
     public function updateLine(string $lineKey, CartService $cart): void
     {
         $qty = max(1, min(99, (int) ($this->quantities[$lineKey] ?? 1)));

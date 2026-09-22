@@ -43,19 +43,29 @@
                                 <p class="store-cart-line__unit">{{ \App\Support\MoneyFormatter::formatDisplay($line->unitPrice) }} {{ __('storefront.cart.each') }}</p>
                             </div>
                             <div class="store-cart-line__controls">
-                                <div class="store-qty" role="group" aria-label="{{ __('storefront.cart.quantity_for', ['name' => $line->label]) }}">
-                                    <button type="button" class="store-qty__btn" wire:click="decrementLine(@js($line->lineKey))" @disabled($line->quantity <= 1) aria-label="{{ __('storefront.product.decrease') }}">−</button>
+                                <div
+                                    class="store-qty"
+                                    role="group"
+                                    aria-label="{{ __('storefront.cart.quantity_for', ['name' => $line->label]) }}"
+                                    x-data="storefrontCartQuantity"
+                                    data-line-key="{{ $line->lineKey }}"
+                                    data-max="99"
+                                    wire:ignore
+                                >
+                                    <button type="button" class="store-qty__btn" @click="decrement()" :disabled="value <= min" aria-label="{{ __('storefront.product.decrease') }}">−</button>
                                     <input
                                         id="qty-{{ $line->lineKey }}"
                                         class="store-qty__input"
                                         type="number"
                                         min="1"
                                         max="99"
+                                        x-ref="input"
                                         wire:model.blur="quantities.{{ $line->lineKey }}"
                                         wire:change="updateLine(@js($line->lineKey))"
                                         aria-label="{{ __('storefront.cart.quantity_for', ['name' => $line->label]) }}"
+                                        @input="onInput()"
                                     >
-                                    <button type="button" class="store-qty__btn" wire:click="incrementLine(@js($line->lineKey))" @disabled($line->quantity >= 99) aria-label="{{ __('storefront.product.increase') }}">+</button>
+                                    <button type="button" class="store-qty__btn" @click="increment()" :disabled="value >= max" aria-label="{{ __('storefront.product.increase') }}">+</button>
                                 </div>
                                 <p class="store-cart-line__total">{{ \App\Support\MoneyFormatter::formatDisplay($line->lineTotal) }}</p>
                                 <button type="button" class="store-cart-line__remove" wire:click="removeLine(@js($line->lineKey))" aria-label="{{ __('storefront.cart.remove_item', ['name' => $line->label]) }}">

@@ -2,11 +2,6 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Subscriptions\Enums\RenewalStatus;
-use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
-use Agovena\Modules\Subscriptions\Models\Subscription;
-use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
-use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -17,6 +12,11 @@ use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\PlanChanges\RequestPlanChange;
+use App\Agovena\Recurring\Enums\RenewalStatus;
+use App\Agovena\Recurring\Enums\SubscriptionStatus;
+use App\Agovena\Recurring\Models\Subscription;
+use App\Agovena\Recurring\Models\SubscriptionRenewal;
+use App\Agovena\Recurring\SubscriptionService;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Models\Customer;

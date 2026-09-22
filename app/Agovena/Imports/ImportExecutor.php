@@ -158,9 +158,9 @@ final class ImportExecutor
     /** @return array{0: class-string, 1: int} */
     private function createSubscription(ImportCandidate $candidate): array
     {
-        $modelClass = 'Agovena\\Modules\\Subscriptions\\Models\\Subscription';
-        if (! $this->modules->isEnabled('subscriptions') || ! class_exists($modelClass)) {
-            throw new InvalidArgumentException('The subscriptions module must be enabled before importing subscriptions.');
+        $modelClass = 'App\\Agovena\\Recurring\\Models\\Subscription';
+        if (! class_exists($modelClass)) {
+            throw new InvalidArgumentException('The Core recurring capability must be available before importing subscriptions.');
         }
 
         $source = Str::before($candidate->externalId, ':');
@@ -542,9 +542,9 @@ final class ImportExecutor
             $subscriptionId = null;
             $subscriptionExternalId = trim((string) ($candidate->payload['subscription_external_id'] ?? ''));
             if ($subscriptionExternalId !== '') {
-                $subscriptionClass = 'Agovena\\Modules\\Subscriptions\\Models\\Subscription';
-                if (! $this->modules->isEnabled('subscriptions') || ! class_exists($subscriptionClass)) {
-                    throw new InvalidArgumentException('The subscriptions module must be enabled before mapping a service subscription.');
+                $subscriptionClass = 'App\\Agovena\\Recurring\\Models\\Subscription';
+                if (! class_exists($subscriptionClass)) {
+                    throw new InvalidArgumentException('The Core recurring capability must be available before mapping a service subscription.');
                 }
                 $subscriptionId = $this->findImportedRow($this->sourceKey($subscriptionExternalId, $source), $subscriptionClass, $source)->imported_model_id;
                 $subscription = $this->findImportedModel($subscriptionClass, (int) $subscriptionId);

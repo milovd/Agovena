@@ -62,17 +62,15 @@ final class GettingStartedChecklist
             ),
         ];
 
-        if ($this->modules->isEnabled('shipping')) {
-            $items[] = new GettingStartedItem(
-                id: 'shipping',
-                labelKey: 'admin.dashboard.getting_started.shipping',
-                href: Route::has('admin.shipping.methods')
-                    ? route('admin.shipping.methods')
-                    : route('admin.modules.index'),
-                done: $this->hasConfiguredShippingMethod(),
-                descriptionKey: 'admin.dashboard.getting_started.shipping_description',
-            );
-        }
+        $items[] = new GettingStartedItem(
+            id: 'shipping',
+            labelKey: 'admin.dashboard.getting_started.shipping',
+            href: Route::has('admin.shipping.methods')
+                ? route('admin.shipping.methods')
+                : route('admin.modules.index'),
+            done: $this->hasConfiguredShippingMethod(),
+            descriptionKey: 'admin.dashboard.getting_started.shipping_description',
+        );
 
         if ($this->modules->isEnabled('provisioning')) {
             $items[] = new GettingStartedItem(
@@ -87,7 +85,7 @@ final class GettingStartedChecklist
             );
         }
 
-        if ($this->modules->isEnabled('digital')) {
+        if ($this->modules->isEnabled('downloads')) {
             $items[] = new GettingStartedItem(
                 id: 'downloads',
                 labelKey: 'admin.dashboard.getting_started.downloads',

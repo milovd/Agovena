@@ -21,6 +21,18 @@ function optionalModuleRoot(?string $moduleId = null): string
         return $root;
     }
 
+    if ($moduleId !== null) {
+        $coreRoots = [
+            'inventory' => base_path('app/Agovena/Availability'),
+            'shipping' => base_path('app/Agovena/Physical'),
+            'subscriptions' => base_path('app/Agovena/Recurring'),
+        ];
+
+        if (isset($coreRoots[$moduleId])) {
+            return $coreRoots[$moduleId];
+        }
+    }
+
     return $root.DIRECTORY_SEPARATOR.$moduleId;
 }
 

@@ -10,7 +10,7 @@ use App\Models\Order;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Asks a ShippingCarrier to create a provider shipment. Modules must not call carrier APIs.
+ * Core capability code must not call carrier APIs.
  */
 final class DispatchCarrierShipment
 {

@@ -2,12 +2,6 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Shipping\Enums\ShipmentStatus;
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Models\Shipment;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
-use Agovena\Modules\Shipping\Models\ShippingZone;
-use Agovena\Modules\Shipping\ShipmentService;
 use App\Agovena\Cart\CartRepository;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
@@ -17,6 +11,12 @@ use App\Agovena\Customer\AddressData;
 use App\Agovena\Fulfillment\OrderFulfillmentPresenter;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ShipmentStatus;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Models\Shipment;
+use App\Agovena\Physical\Models\ShippingMethod;
+use App\Agovena\Physical\Models\ShippingZone;
+use App\Agovena\Physical\ShipmentService;
 use App\Livewire\Customer\Account\OrderShow;
 use App\Models\Customer;
 use App\Models\Product;
@@ -26,7 +26,7 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-function enableShippingModule(): void
+function enablePhysicalCapability(): void
 {
     installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
@@ -67,7 +67,7 @@ function seedFlatMethod(int $amount = 695, ?int $zoneId = null): ShippingMethod
 }
 
 test('physical cart requires shipping address and method', function () {
-    enableShippingModule();
+    enablePhysicalCapability();
     $method = seedFlatMethod();
     $product = makeShippableProduct();
 
@@ -97,7 +97,7 @@ test('physical cart requires shipping address and method', function () {
 });
 
 test('digital-only cart does not require shipping', function () {
-    enableShippingModule();
+    enablePhysicalCapability();
     $product = Product::factory()->active()->create(['price_amount' => 1500]);
     // no shippable capability
 
@@ -115,7 +115,7 @@ test('digital-only cart does not require shipping', function () {
 });
 
 test('shipping method calculation covers free flat price weight and zone', function () {
-    enableShippingModule();
+    enablePhysicalCapability();
     $zone = ShippingZone::query()->create([
         'name' => 'Benelux',
         'countries' => ['NL', 'BE'],
@@ -186,7 +186,7 @@ test('shipping method calculation covers free flat price weight and zone', funct
 });
 
 test('mixed cart only puts shippable items on shipment', function () {
-    enableShippingModule();
+    enablePhysicalCapability();
     $method = seedFlatMethod(500);
     $shippable = makeShippableProduct(['name' => 'Mug', 'price_amount' => 1000]);
     $digital = Product::factory()->active()->create(['name' => 'Ebook', 'price_amount' => 800]);
@@ -210,7 +210,7 @@ test('mixed cart only puts shippable items on shipment', function () {
 });
 
 test('mark shipped and tracking visible in customer portal', function () {
-    enableShippingModule();
+    enablePhysicalCapability();
     $method = seedFlatMethod();
     $product = makeShippableProduct();
     $customer = Customer::factory()->create();
@@ -247,8 +247,8 @@ test('mark shipped and tracking visible in customer portal', function () {
         ->assertSee('Generic Carrier');
 });
 
-test('shipping works when inventory module is not enabled', function () {
-    enableShippingModule();
+test('Core Physical Commerce works without optional modules', function () {
+    enablePhysicalCapability();
     expect(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse();
 
     $method = seedFlatMethod(300);
@@ -267,8 +267,8 @@ test('shipping works when inventory module is not enabled', function () {
         ->and(Shipment::query()->where('order_id', $order->id)->exists())->toBeTrue();
 });
 
-test('disabling shipping preserves shipment rows', function () {
-    enableShippingModule();
+test('core physical capability preserves shipment rows', function () {
+    enablePhysicalCapability();
     $method = seedFlatMethod();
     $product = makeShippableProduct();
     app(CartService::class)->add($product->id, 1);
@@ -282,17 +282,15 @@ test('disabling shipping preserves shipment rows', function () {
 
     expect(Shipment::query()->where('order_id', $order->id)->exists())->toBeTrue();
 
-    app(ModuleManager::class)->disable('shipping');
-
     expect(app(ModuleManager::class)->isEnabled('shipping'))->toBeFalse()
         ->and(Shipment::query()->where('order_id', $order->id)->exists())->toBeTrue()
         ->and(ShippingMethod::query()->count())->toBeGreaterThan(0);
 });
 
-test('requiresShipping ignores shippable rows when module capability is unregistered', function () {
+test('requiresShipping recognizes core shippable capability', function () {
     $product = Product::factory()->active()->create();
     $product->capabilities()->create(['capability' => 'shippable', 'config' => null]);
     app(CartRepository::class)->add($product->id, 1);
 
-    expect(app(CartService::class)->requiresShipping())->toBeFalse();
+    expect(app(CartService::class)->requiresShipping())->toBeTrue();
 });

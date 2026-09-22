@@ -4,11 +4,6 @@ declare(strict_types=1);
 
 use Agovena\Extensions\Mollie\MollieApi;
 use Agovena\Extensions\Mollie\MollieMandate;
-use Agovena\Modules\Subscriptions\Enums\RenewalStatus;
-use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
-use Agovena\Modules\Subscriptions\Models\Subscription;
-use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
-use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -17,6 +12,11 @@ use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Recurring\Enums\RenewalStatus;
+use App\Agovena\Recurring\Enums\SubscriptionStatus;
+use App\Agovena\Recurring\Models\Subscription;
+use App\Agovena\Recurring\Models\SubscriptionRenewal;
+use App\Agovena\Recurring\SubscriptionService;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
@@ -34,7 +34,6 @@ function enableAutoChargeModules(?FakeMollieApi $api = null): FakeMollieApi
 {
     $api ??= new FakeMollieApi;
     app()->instance(MollieApi::class, $api);
-    installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
     installAndEnableExtension('mollie');
     app(ExtensionSettingsRepository::class)->set('mollie', 'api_key', 'test_abcdefghijklmnopqrstuvwxyz123456', secret: true);
@@ -293,8 +292,8 @@ test('exhausted renewal retries stay payable and may schedule cancel at period e
         ->and($api->createCalls)->toBe($createsAfterExhaustion);
 });
 
-test('subscriptions module does not import mollie types', function () {
-    $root = optionalModuleRoot('subscriptions');
+test('Core recurring files do not import mollie types', function () {
+    $root = base_path('app/Agovena/Recurring');
     $iterator = new RecursiveIteratorIterator(
         new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS),
     );

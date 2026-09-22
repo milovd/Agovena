@@ -46,7 +46,7 @@ Core:
 
 Integratie:
 
-- `optional-packages/modules/subscriptions/src/SubscriptionService.php`
+- `app/Agovena/Recurring/ProcessesSubscriptionRenewals.php`
 
 Verificatie:
 

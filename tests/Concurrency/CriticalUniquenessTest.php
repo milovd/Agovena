@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Inventory\InventoryService;
-use Agovena\Modules\Subscriptions\Enums\RenewalStatus;
-use Agovena\Modules\Subscriptions\Enums\SubscriptionInterval;
-use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
-use Agovena\Modules\Subscriptions\Models\Subscription;
-use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
+use App\Agovena\Availability\InventoryService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Payments\RecordRefund;
+use App\Agovena\Recurring\Enums\RenewalStatus;
+use App\Agovena\Recurring\Enums\SubscriptionInterval;
+use App\Agovena\Recurring\Enums\SubscriptionStatus;
+use App\Agovena\Recurring\Models\Subscription;
+use App\Agovena\Recurring\Models\SubscriptionRenewal;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;

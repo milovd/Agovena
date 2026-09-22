@@ -30,7 +30,7 @@ final class StorePresetCatalog
                 id: 'downloadable',
                 labelKey: 'admin.store_presets.downloadable',
                 ledeKey: 'admin.store_presets.downloadable_lede',
-                moduleIds: ['digital', 'subscriptions'],
+                moduleIds: ['downloads', 'subscriptions'],
             ),
             new StorePreset(
                 id: 'hosting',

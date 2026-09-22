@@ -7,8 +7,8 @@ namespace App\Agovena\Checkout;
 use App\Agovena\Money\Money;
 
 /**
- * Generic checkout shipping quote. Modules (e.g. Shipping) provide real quotes;
- * Core never knows carrier providers.
+ * Generic checkout shipping quote. Core physical commerce provides real quotes;
+ * provider-specific behavior stays in Extensions.
  */
 final readonly class ShippingQuote
 {

@@ -213,7 +213,7 @@ final class CancelUnpaidOrder
 
         $targets = $openAttempts->isNotEmpty()
             ? $openAttempts
-            : (in_array($method, ['manual', 'development'], true) ? [] : [null]);
+            : ($method === 'manual' ? [] : [null]);
         $cancelledAttemptIds = [];
         $allCancelled = true;
 
@@ -229,7 +229,7 @@ final class CancelUnpaidOrder
 
             $gateway = $this->gateways->get($gatewayId);
             if (! $gateway instanceof CancelsPayments) {
-                if (in_array($method, ['manual', 'development'], true) && $gatewayId !== $method) {
+                if ($method === 'manual' && $gatewayId !== $method) {
                     continue;
                 }
 

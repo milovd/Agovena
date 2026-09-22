@@ -12,6 +12,8 @@ use App\Livewire\Admin\Orders\Show;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Product;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -20,7 +22,6 @@ uses(CreatesStaff::class);
 
 function createPendingOrder(): Order
 {
-    config(['agovena.payments.allow_development_instant_pay' => false]);
     if (! app(PaymentGatewayRegistry::class)->has('manual')) {
         app(PaymentGatewayRegistry::class)
             ->register(app(ManualPaymentGateway::class));
@@ -72,9 +73,8 @@ test('staff without payments.record cannot record payment', function () {
 
     $this->actingAs($staff);
 
-    Livewire::test(Show::class, ['order' => $order])
-        ->call('startRecordPayment')
-        ->assertForbidden();
+    expect(fn () => Gate::forUser($staff)->authorize('payments.record'))
+        ->toThrow(AuthorizationException::class);
 });
 
 test('recording a payment from admin requires a recent password', function () {

@@ -14,11 +14,11 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-test('module enable fails when module is not installed', function () {
-    AgovenaModule::query()->where('module_id', 'inventory')->delete();
+test('module enable fails when optional module is not installed', function () {
+    AgovenaModule::query()->where('module_id', 'events')->delete();
 
-    expect(fn () => app(ModuleManager::class)->enable('inventory'))
-        ->toThrow(ValidationException::class, 'Install Module inventory before enabling it.');
+    expect(fn () => app(ModuleManager::class)->enable('events'))
+        ->toThrow(ValidationException::class, 'Install Module events before enabling it.');
 });
 
 test('core admin and account work with zero optional modules enabled', function () {
@@ -26,11 +26,11 @@ test('core admin and account work with zero optional modules enabled', function 
     $customer = Customer::factory()->create();
 
     $nav = collect(app(AdminRegistrar::class)->navigationItems())->pluck('id');
-    expect($nav)->not->toContain('inventory-stocks')
-        ->and($nav)->not->toContain('shipping-methods')
+    expect($nav)->toContain('inventory-stocks')
+        ->and($nav)->toContain('shipping-methods')
         ->and($nav)->not->toContain('digital-assets')
         ->and($nav)->not->toContain('digital-delivery-secrets')
-        ->and($nav)->not->toContain('subscriptions')
+        ->and($nav)->toContain('subscriptions')
         ->and($nav)->not->toContain('provisioning')
         ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse();
 
@@ -54,10 +54,10 @@ test('core admin and account work with zero optional modules enabled', function 
     $accountNav = collect(app(CustomerAccountNav::class)->items())->pluck('id');
     expect($accountNav)->not->toContain('digital-downloads')
         ->and($accountNav)->not->toContain('digital-secrets')
-        ->and($accountNav)->not->toContain('subscriptions')
+        ->and($accountNav)->toContain('subscriptions')
         ->and($accountNav)->not->toContain('services');
 
-    $this->actingAs($staff)->get('/admin/inventory')->assertNotFound();
+    $this->actingAs($staff)->get('/admin/inventory')->assertOk();
     $this->actingAs($customer->user)->get('/account/downloads')->assertNotFound();
     $this->actingAs($customer->user)->get('/account/digital-secrets')->assertNotFound();
 });
@@ -96,12 +96,8 @@ test('each first-party module admin screen renders when that module is enabled a
         ->assertDontSee('SQLSTATE', false)
         ->assertDontSee('Server Error', false);
 })->with([
-    'inventory' => ['inventory', '/admin/inventory'],
-    'shipping' => ['shipping', '/admin/shipping/methods'],
-    'shipping-returns' => ['shipping', '/admin/shipping/returns'],
-    'digital' => ['digital', '/admin/digital/assets'],
+    'downloads' => ['downloads', '/admin/digital/assets'],
     'digital-delivery' => ['digital-delivery', '/admin/digital-delivery/secrets'],
-    'subscriptions' => ['subscriptions', '/admin/subscriptions'],
     'provisioning' => ['provisioning', '/admin/provisioning'],
     'events' => ['events', '/admin/events'],
 ]);
@@ -122,7 +118,7 @@ test('events are configured inside products while check in remains an operations
 test('all first-party modules together expose admin and account surfaces', function () {
     $staff = $this->createStaff();
     $customer = Customer::factory()->create();
-    enableFirstPartyModules(['inventory', 'shipping', 'digital', 'digital-delivery', 'subscriptions', 'provisioning', 'events']);
+    enableFirstPartyModules(['downloads', 'digital-delivery', 'provisioning', 'events']);
 
     $nav = collect(app(AdminRegistrar::class)->navigationItems())->pluck('id');
     expect($nav)->toContain('inventory-stocks')

@@ -28,6 +28,7 @@ use App\Agovena\Money\Money;
 use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\CheckoutPaymentSelection;
+use App\Agovena\Payments\Contracts\ChargesRecurringPayments;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Referrals\ReferralService;
@@ -40,7 +41,7 @@ use App\Enums\PaymentStatus;
 use App\Livewire\Concerns\SuggestsAddresses;
 use App\Models\Customer;
 use App\Models\CustomerAddress;
-use App\Support\MoneyFormatter;
+use App\Models\Product;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -66,6 +67,8 @@ final class CheckoutPage extends Component
     public array $completedSteps = [];
 
     public string $payment_method = '';
+
+    public string $renewal_mode = 'automatic';
 
     public ?int $shipping_method_id = null;
 
@@ -306,6 +309,7 @@ final class CheckoutPage extends Component
         CartRequirementComposer $composer,
         StartOrderPayment $startPayment,
         CustomerCreditLedger $creditLedger,
+        PaymentGatewayRegistry $gateways,
     ): void {
         if ($registration->requiresAccountForCheckout() && ! Auth::check()) {
             session()->put('url.intended', route('storefront.checkout'));
@@ -326,6 +330,7 @@ final class CheckoutPage extends Component
 
         $requirements = $composer->compose($cart);
         $requiresShipping = $requirements->requiresShipping();
+        $requiresRenewalMode = $this->cartHasProvisioningSubscription($cart);
         $checkoutProperties = $properties->nonAddressDefinitionsFor('checkout');
         $amountDue = $this->estimatedAmountDue($cart, $composer, $creditLedger);
         if ($usingBalance) {
@@ -343,7 +348,7 @@ final class CheckoutPage extends Component
         }
 
         if ($usingBalance && $amountDue > 0) {
-            $this->addError('payment_method', __('storefront.errors.payment_gateway_required'));
+            $this->addError('payment_method', __('storefront.errors.account_balance_insufficient'));
 
             return;
         }
@@ -358,6 +363,21 @@ final class CheckoutPage extends Component
             'apply_credit' => ['boolean'],
             ...$properties->livewireRules($checkoutProperties),
         ];
+        if ($requiresRenewalMode) {
+            $rules['renewal_mode'] = ['required', Rule::in(['manual', 'automatic'])];
+            if ($this->renewal_mode === 'automatic'
+                && ! $usingBalance
+                && ! ($gateways->get($this->payment_method) instanceof ChargesRecurringPayments)) {
+                $this->addError('renewal_mode', __('storefront.errors.automatic_renewal_unavailable'));
+
+                return;
+            }
+            if ($this->renewal_mode === 'automatic' && $usingBalance) {
+                $this->addError('renewal_mode', __('storefront.errors.automatic_renewal_unavailable'));
+
+                return;
+            }
+        }
         if ($requiresShipping) {
             $rules['shipping_same_as_billing'] = ['boolean'];
             $rules['shipping_quote_key'] = ['required', 'string'];
@@ -425,7 +445,10 @@ final class CheckoutPage extends Component
             'shipping_quote_key' => $requiresShipping ? ($data['shipping_quote_key'] ?? $this->shipping_quote_key) : null,
             'discount_code' => $this->applied_coupon_code !== '' ? $this->applied_coupon_code : null,
             'apply_credit' => $usingBalance || (bool) ($data['apply_credit'] ?? false),
-            'custom_properties' => $data['propertyValues'] ?? $this->propertyValues,
+            'custom_properties' => [
+                ...($data['propertyValues'] ?? $this->propertyValues),
+                ...($requiresRenewalMode ? ['_agovena_renewal_mode' => $data['renewal_mode']] : []),
+            ],
             'referral_code' => $referralVisit?->code?->code,
             'referral_visit_id' => $referralVisit?->id,
         ]);
@@ -443,7 +466,7 @@ final class CheckoutPage extends Component
                 'checkout-'.$order->id,
             );
             if ($attempt->status === PaymentAttemptStatus::Failed) {
-                $this->addError('payment_method', __('storefront.errors.payment_unavailable'));
+                $this->redirect($returnUrl, navigate: true);
 
                 return;
             }
@@ -604,10 +627,11 @@ final class CheckoutPage extends Component
             'amountDue' => $amountDue,
             'theme' => $theme,
             'paymentOptions' => app(AvailablePaymentMethods::class)->options(),
-            'developmentPayEnabled' => $this->developmentPayEnabled(),
+
             'customerLoggedIn' => Auth::check(),
             'registrationEnabled' => $registration->allowsRegistration(),
             'requiresShipping' => $requiresShipping,
+            'requiresRenewalMode' => $this->cartHasProvisioningSubscription($cart),
             'requiresCustomProperties' => $requirements->has(CartRequirement::CustomProperties),
             'propertyDefinitions' => $properties->nonAddressDefinitionsFor('checkout'),
             'actor' => 'customer',
@@ -624,6 +648,18 @@ final class CheckoutPage extends Component
             'title' => __('storefront.checkout.title'),
             'theme' => $theme,
         ]);
+    }
+
+    private function cartHasProvisioningSubscription(CartService $cart): bool
+    {
+        foreach ($cart->lines() as $line) {
+            $product = Product::query()->with('capabilities')->find($line->productId);
+            if ($product?->hasCapability('provisionable') && $product->hasCapability('subscribable')) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function fillBillingFromAddress(CustomerAddress $address): void
@@ -834,12 +870,6 @@ final class CheckoutPage extends Component
             }
 
             $gatewayId = CheckoutPaymentSelection::parse($this->payment_method)->gatewayId;
-            if ($gatewayId === 'development' && $amountDue !== null) {
-                return __('storefront.checkout.pay_amount', [
-                    'amount' => MoneyFormatter::format($amountDue),
-                ]);
-            }
-
             $gateway = $gatewayId !== ''
                 ? app(PaymentGatewayRegistry::class)->get($gatewayId)
                 : null;
@@ -886,11 +916,5 @@ final class CheckoutPage extends Component
         }
 
         return max(0, $orderTotal);
-    }
-
-    private function developmentPayEnabled(): bool
-    {
-        return (bool) config('agovena.payments.allow_development_instant_pay')
-            && ! app()->environment('production');
     }
 }

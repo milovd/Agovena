@@ -261,14 +261,12 @@
                             $balanceLabel = $balanceMoney !== null
                                 ? \App\Support\MoneyFormatter::format($balanceMoney)
                                 : '-';
-                            $canUseBalance = $customerLoggedIn && (int) ($creditBalance ?? 0) > 0;
                         @endphp
-                        <label class="store-choice store-choice--row {{ $canUseBalance ? '' : 'is-disabled' }}" wire:key="pay-account-balance">
+                        <label class="store-choice store-choice--row" wire:key="pay-account-balance">
                             <input
                                 type="radio"
                                 wire:model.live="payment_method"
                                 value="account_balance"
-                                @disabled(! $canUseBalance)
                             >
                             <span class="store-choice__copy">
                                 <strong>{{ __('storefront.checkout.pay_with_account_balance') }}</strong>
@@ -279,15 +277,35 @@
                             <label class="store-choice store-choice--row" wire:key="pay-{{ $option['id'] }}">
                                 <input type="radio" wire:model.live="payment_method" value="{{ $option['id'] }}">
                                 <span class="store-choice__copy">
+                                    @if (! empty($option['icon']))
+                                        <img class="store-choice__icon" src="{{ $option['icon'] }}" alt="" aria-hidden="true">
+                                    @endif
                                     <strong>{{ __($option['label']) }}</strong>
                                 </span>
                             </label>
                         @empty
-                            @if (! $canUseBalance)
-                                <p class="store-field__error" role="alert">{{ __('storefront.checkout.no_payment_methods') }}</p>
-                            @endif
                         @endforelse
                     </div>
+                    @if ($requiresRenewalMode)
+                        <fieldset class="store-checkout__renewal" aria-labelledby="renewal-mode-heading">
+                            <legend id="renewal-mode-heading" class="store-checkout__section-title">{{ __('storefront.checkout.renewal_mode') }}</legend>
+                            <label class="store-choice store-choice--row">
+                                <input type="radio" wire:model.live="renewal_mode" value="manual">
+                                <span class="store-choice__copy">
+                                    <strong>{{ __('storefront.checkout.renewal_manual') }}</strong>
+                                    <span class="store-choice__meta">{{ __('storefront.checkout.renewal_manual_help') }}</span>
+                                </span>
+                            </label>
+                            <label class="store-choice store-choice--row">
+                                <input type="radio" wire:model.live="renewal_mode" value="automatic">
+                                <span class="store-choice__copy">
+                                    <strong>{{ __('storefront.checkout.renewal_automatic') }}</strong>
+                                    <span class="store-choice__meta">{{ __('storefront.checkout.renewal_automatic_help') }}</span>
+                                </span>
+                            </label>
+                            @error('renewal_mode') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
+                        </fieldset>
+                    @endif
                     @error('payment_method') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
                     @if ($customerLoggedIn && $payment_method !== 'account_balance' && (int) ($creditBalance ?? 0) > 0)
                         <label class="store-check store-check--panel">
@@ -409,7 +427,13 @@
                         @endif
                         <div class="store-totals__total">
                             <dt>{{ __('storefront.checkout.total') }}</dt>
-                            <dd>{{ \App\Support\MoneyFormatter::format($due) }}</dd>
+                            <dd>
+                                @if ($due !== null)
+                                    {{ \App\Support\MoneyFormatter::format($due) }}
+                                @else
+                                    -
+                                @endif
+                            </dd>
                         </div>
                     </dl>
                 </div>

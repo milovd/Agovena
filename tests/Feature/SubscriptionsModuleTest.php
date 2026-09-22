@@ -2,22 +2,20 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Subscriptions\Enums\RenewalStatus;
-use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
-use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionShow as CustomerSubscriptionShow;
-use Agovena\Modules\Subscriptions\Http\Livewire\Customer\SubscriptionsIndex;
-use Agovena\Modules\Subscriptions\Models\Subscription;
-use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
-use Agovena\Modules\Subscriptions\SubscriptionService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Customer\CustomerAccountNav;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
-use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Recurring\Enums\RenewalStatus;
+use App\Agovena\Recurring\Enums\SubscriptionStatus;
+use App\Agovena\Recurring\Http\Livewire\Customer\SubscriptionShow as CustomerSubscriptionShow;
+use App\Agovena\Recurring\Http\Livewire\Customer\SubscriptionsIndex;
+use App\Agovena\Recurring\Models\Subscription;
+use App\Agovena\Recurring\Models\SubscriptionRenewal;
+use App\Agovena\Recurring\SubscriptionService;
 use App\Models\Customer;
 use App\Models\Product;
 use Livewire\Livewire;
@@ -25,10 +23,9 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-function enableSubscriptionsModule(): void
+function enableRecurringCapability(): void
 {
-    installAndEnableModule('subscriptions');
-    app(SyncRegisteredPermissions::class)(force: true);
+    // Recurring billing is a Core capability.
 }
 
 function billingForSubscription(): AddressData
@@ -54,10 +51,8 @@ function makeSubscribableProduct(array $config = [], array $attrs = []): Product
     return $product->fresh(['capabilities']);
 }
 
-test('subscriptions module registers capability and account nav', function () {
-    expect(app(ProductCapabilityRegistry::class)->has('subscribable'))->toBeFalse();
-
-    enableSubscriptionsModule();
+test('core registers recurring capability and account nav', function () {
+    enableRecurringCapability();
 
     expect(app(ProductCapabilityRegistry::class)->has('subscribable'))->toBeTrue()
         ->and(collect(app(CustomerAccountNav::class)->items())->pluck('id')->all())
@@ -65,7 +60,7 @@ test('subscriptions module registers capability and account nav', function () {
 });
 
 test('paid subscribable order creates an active subscription', function () {
-    enableSubscriptionsModule();
+    enableRecurringCapability();
     $customer = Customer::factory()->create();
     $product = makeSubscribableProduct(['interval' => 'month', 'interval_count' => 1]);
 
@@ -90,7 +85,7 @@ test('paid subscribable order creates an active subscription', function () {
 });
 
 test('customer portal lists subscriptions and can cancel at period end', function () {
-    enableSubscriptionsModule();
+    enableRecurringCapability();
     $customer = Customer::factory()->create();
     $product = makeSubscribableProduct();
 
@@ -116,7 +111,7 @@ test('customer portal lists subscriptions and can cancel at period end', functio
 });
 
 test('customer id ownership cannot be replaced by a matching legacy email', function () {
-    enableSubscriptionsModule();
+    enableRecurringCapability();
     $owner = Customer::factory()->create();
     $other = Customer::factory()->create();
     $product = makeSubscribableProduct();
@@ -144,7 +139,7 @@ test('customer id ownership cannot be replaced by a matching legacy email', func
 });
 
 test('customer can undo period-end cancellation from subscription detail', function () {
-    enableSubscriptionsModule();
+    enableRecurringCapability();
     $customer = Customer::factory()->create();
     $product = makeSubscribableProduct();
 
@@ -170,7 +165,7 @@ test('customer can undo period-end cancellation from subscription detail', funct
 });
 
 test('admin can create renewal order and payment advances period', function () {
-    enableSubscriptionsModule();
+    enableRecurringCapability();
     $customer = Customer::factory()->create();
     $product = makeSubscribableProduct();
 
@@ -202,8 +197,8 @@ test('admin can create renewal order and payment advances period', function () {
         ->and($subscription->current_period_end?->greaterThan($subscription->current_period_start))->toBeTrue();
 });
 
-test('subscriptions module disable preserves subscription rows', function () {
-    enableSubscriptionsModule();
+test('core recurring preserves subscription rows', function () {
+    enableRecurringCapability();
     $customer = Customer::factory()->create();
     $product = makeSubscribableProduct();
 
@@ -218,14 +213,11 @@ test('subscriptions module disable preserves subscription rows', function () {
 
     expect(Subscription::query()->count())->toBe(1);
 
-    app(ModuleManager::class)->disable('subscriptions');
-
-    expect(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeFalse()
-        ->and(Subscription::query()->count())->toBe(1);
+    expect(Subscription::query()->count())->toBe(1);
 });
 
 test('subscription-only cart does not require shipping', function () {
-    enableSubscriptionsModule();
+    enableRecurringCapability();
     $product = makeSubscribableProduct();
     app(CartService::class)->add($product->id, 1);
 

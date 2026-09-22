@@ -6,7 +6,6 @@ namespace App\Agovena\Payments;
 
 use App\Agovena\Audit\AuditLogger;
 use App\Agovena\Payments\Contracts\PaymentGateway;
-use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
@@ -270,7 +269,6 @@ final class RecordRefund
         $gateway = $this->gateways->get($payment->method)
             ?? match ($payment->method) {
                 'manual' => app(ManualPaymentGateway::class),
-                'development' => app(DevelopmentPaymentGateway::class),
                 default => null,
             };
 

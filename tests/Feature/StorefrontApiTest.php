@@ -83,12 +83,12 @@ test('token auth returns the secret once and scopes orders to the owner', functi
         ->assertNotFound();
 });
 
-test('capability api routes are absent until the module is enabled', function () {
+test('core subscription api is available while optional capability routes remain gated', function () {
     $customer = Customer::factory()->create();
     Sanctum::actingAs($customer->user);
 
     $this->getJson('/api/v1/event-tickets')->assertNotFound();
-    $this->getJson('/api/v1/subscriptions')->assertNotFound();
+    $this->getJson('/api/v1/subscriptions')->assertOk();
     $this->getJson('/api/v1/services')->assertNotFound();
     $this->getJson('/api/v1/downloads')->assertNotFound();
 });

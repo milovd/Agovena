@@ -24,7 +24,7 @@ $app->make(Kernel::class)->bootstrap();
 
 $profile = $argv[1] ?? 'smoke';
 $moduleKeys = $profile === 'e2e'
-    ? ['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', 'events']
+    ? ['inventory', 'shipping', 'downloads', 'subscriptions', 'provisioning', 'events']
     : ['inventory'];
 $extensionKeys = [];
 

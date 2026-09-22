@@ -10,6 +10,8 @@ use App\Agovena\Admin\InMemoryAdminRegistrar;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Admin\SettingsField;
 use App\Agovena\Admin\SettingsGroup;
+use App\Agovena\Availability\AvailabilityCapability;
+use App\Agovena\Availability\AvailabilityServiceProvider;
 use App\Agovena\Backups\BackupManager;
 use App\Agovena\Backups\DatabaseBackupManager;
 use App\Agovena\Cart\CartRepository;
@@ -41,6 +43,7 @@ use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Mail\ApplyMailSettings;
+use App\Agovena\Modules\ModuleContext;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Notifications\MinishlinkPushTransport;
@@ -52,7 +55,13 @@ use App\Agovena\Packages\MonorepoCheckout;
 use App\Agovena\Packages\PackageMigrationRunner;
 use App\Agovena\Packages\ProcessComposerRunner;
 use App\Agovena\Payments\PaymentGatewayRegistry;
+use App\Agovena\Physical\ModuleShippingQuoteResolver;
+use App\Agovena\Physical\PhysicalCapability;
+use App\Agovena\Physical\PhysicalServiceProvider;
+use App\Agovena\Physical\ShippingOrderFulfillmentPresenter;
 use App\Agovena\Provisioning\ProvisionerRegistry;
+use App\Agovena\Recurring\RecurringCapability;
+use App\Agovena\Recurring\RecurringServiceProvider;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Agovena\Storefront\StorefrontPreferences;
@@ -106,6 +115,9 @@ class AgovenaServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AdminRegistrar::class, InMemoryAdminRegistrar::class);
+        $this->app->register(AvailabilityServiceProvider::class);
+        $this->app->register(PhysicalServiceProvider::class);
+        $this->app->register(RecurringServiceProvider::class);
         $this->app->singleton(DatabaseBackupManager::class, BackupManager::class);
         $this->app->singleton(CustomerAccountNav::class);
         $this->app->singleton(CustomerAccountOverview::class);
@@ -126,6 +138,8 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ExtensionManager::class);
         $this->app->singleton(ShippingQuoteResolver::class, NullShippingQuoteResolver::class);
         $this->app->singleton(OrderFulfillmentPresenter::class, NullOrderFulfillmentPresenter::class);
+        $this->app->singleton(ShippingQuoteResolver::class, ModuleShippingQuoteResolver::class);
+        $this->app->singleton(OrderFulfillmentPresenter::class, ShippingOrderFulfillmentPresenter::class);
         $this->app->singleton(ThemeManager::class);
         $this->app->singleton(InvoiceDocumentView::class);
         $this->app->singleton(SettingsRepository::class);
@@ -217,6 +231,18 @@ class AgovenaServiceProvider extends ServiceProvider
         // Feature tests rebuild the schema after the application boots. Persistent
         // databases still contain the previous test's enabled packages at this
         // point; booting them here would bind real provider clients before fakes.
+        $context = new ModuleContext(
+            $this->app->make(AdminRegistrar::class),
+            $this->app->make(ProductCapabilityRegistry::class),
+            $this->app->make(CustomerAccountNav::class),
+            $this->app->make(CustomerAccountOverview::class),
+            $this->app->make('events'),
+            'core',
+        );
+        $this->app->make(AvailabilityCapability::class)->register($context);
+        $this->app->make(PhysicalCapability::class)->register($context);
+        $this->app->make(RecurringCapability::class)->register($context);
+
         if (! $this->app->runningUnitTests()) {
             $this->app->make(ModuleManager::class)->bootEnabled();
             $this->app->make(ExtensionManager::class)->bootEnabled();
@@ -229,14 +255,14 @@ class AgovenaServiceProvider extends ServiceProvider
         $adminTheme = $themes->themeFor(ThemeSurface::Admin);
         View::prependLocation($adminTheme->viewsPath);
 
-        View::composer(['layouts.admin', 'layouts.admin-guest', 'theme::layouts.admin', 'theme::layouts.admin-guest', 'theme::layouts.storefront', 'theme::layouts.checkout'], function ($view): void {
+        View::composer(['layouts.admin', 'layouts.admin-guest', 'theme::layouts.admin', 'theme::layouts.admin-guest', 'theme::layouts.storefront', 'theme::layouts.checkout', 'theme::layouts.error', 'layouts.error'], function ($view): void {
             $brand = $this->app->make(StorefrontBrand::class);
             $view->with('siteName', $brand->siteName());
             $view->with('brandingLogoUrl', $brand->logoUrl());
             $view->with('brandingFaviconUrl', $brand->faviconUrl());
         });
 
-        View::composer(['theme::layouts.storefront', 'theme::layouts.checkout'], function ($view): void {
+        View::composer(['theme::layouts.storefront', 'theme::layouts.checkout', 'theme::layouts.error', 'layouts.error'], function ($view): void {
             $cartCount = 0;
             try {
                 $cartCount = $this->app->make(CartService::class)->itemCount();
@@ -934,6 +960,15 @@ class AgovenaServiceProvider extends ServiceProvider
             default: 0,
             help: 'admin.settings.field_help.unpaid_order_cancel_after_days',
             sort: 29,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'subscription_invoice_lead_days',
+            label: 'admin.settings.fields.subscription_invoice_lead_days',
+            type: 'integer',
+            default: 7,
+            help: 'admin.settings.field_help.subscription_invoice_lead_days',
+            sort: 30,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',

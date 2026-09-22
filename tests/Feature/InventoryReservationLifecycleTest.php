@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Inventory\InventoryService;
-use Agovena\Modules\Inventory\Models\InventoryReservation;
+use App\Agovena\Availability\InventoryService;
+use App\Agovena\Availability\Models\InventoryReservation;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;

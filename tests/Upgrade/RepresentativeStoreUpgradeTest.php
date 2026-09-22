@@ -135,5 +135,5 @@ test('representative store survives upgrade from pre-custom-properties schema', 
         ->and(Payment::query()->whereKey($fingerprint['payment_id'])->value('amount'))->toBe($fingerprint['payment_amount'])
         ->and(Invoice::query()->whereKey($fingerprint['invoice_id'])->value('number'))->toBe($fingerprint['invoice_number'])
         ->and(Invoice::query()->whereKey($fingerprint['invoice_id'])->value('total_amount'))->toBe($fingerprint['invoice_total'])
-        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse();
 });

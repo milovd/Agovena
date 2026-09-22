@@ -158,7 +158,7 @@ final class ImportRollback
             throw new RuntimeException('Imported orders are not rollbackable because their numbered and fulfillment records are retained.');
         }
 
-        $subscriptionClass = 'Agovena\\Modules\\Subscriptions\\Models\\Subscription';
+        $subscriptionClass = 'App\\Agovena\\Recurring\\Models\\Subscription';
         if ($type === $subscriptionClass) {
             throw new RuntimeException('Imported subscriptions are not rollbackable because their service history must be retained.');
         }

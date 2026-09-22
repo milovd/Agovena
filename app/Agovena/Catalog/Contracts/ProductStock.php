@@ -7,7 +7,7 @@ namespace App\Agovena\Catalog\Contracts;
 use App\Models\Product;
 
 /**
- * Optional inventory persistence. Bound by the Inventory Module when enabled.
+ * Core Availability persistence contract. Bound by the Core availability provider.
  */
 interface ProductStock
 {

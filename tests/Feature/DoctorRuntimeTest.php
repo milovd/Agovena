@@ -17,6 +17,8 @@ test('doctor warns about failed jobs without failing required checks', function 
         'failed_at' => now(),
     ]);
 
+    Cache::put(SchedulerHealth::HEARTBEAT_KEY, now()->toIso8601String(), now()->addMinutes(5));
+
     $this->artisan('agovena:doctor')
         ->expectsOutputToContain(__('installer.checks.failed_jobs'))
         ->assertSuccessful();
@@ -44,11 +46,7 @@ test('doctor fails in production when the private disk would be publicly served'
     }
 });
 
-test('scheduler is required when provisioning is enabled', function () {
-    expect(app(SchedulerHealth::class)->isRequired())->toBeFalse();
-
-    installAndEnableModule('provisioning');
-
+test('scheduler is required for the Core recurring capability', function () {
     expect(app(SchedulerHealth::class)->isRequired())->toBeTrue()
         ->and(app(SchedulerHealth::class)->isStale())->toBeTrue();
 });

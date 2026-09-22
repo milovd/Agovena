@@ -18,6 +18,8 @@ require_once __DIR__.'/Support/OptionalPackages.php';
  */
 function installAndEnableModules(array $ids): void
 {
+    $legacyCoreIds = ['inventory', 'shipping', 'subscriptions'];
+    $ids = array_values(array_diff($ids, $legacyCoreIds));
     $modules = app(ModuleManager::class);
     foreach ($ids as $id) {
         if (! $modules->isInstalled($id)) {

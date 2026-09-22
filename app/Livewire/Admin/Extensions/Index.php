@@ -9,7 +9,9 @@ use App\Agovena\Extensions\ExtensionCategory;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Packages\PackageCatalog;
+use App\Agovena\Payments\Contracts\ConfiguresCheckoutMethods;
 use App\Agovena\Payments\HealthResult;
+use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Enums\PackageKind;
 use App\Livewire\Admin\Concerns\InstallsRemotePackages;
@@ -35,6 +37,12 @@ final class Index extends Component
 
     /** @var array<string, bool> */
     public array $secretConfigured = [];
+
+    /** @var list<array{id: string, label: string, icon: ?string}> */
+    public array $settingsMethodOptions = [];
+
+    /** @var list<string> */
+    public array $settingsMethodSelections = [];
 
     public function mount(): void
     {
@@ -83,7 +91,7 @@ final class Index extends Component
         }
     }
 
-    public function openSettings(string $extensionId, ExtensionManager $extensions, ExtensionSettingsRepository $settings): void
+    public function openSettings(string $extensionId, ExtensionManager $extensions, ExtensionSettingsRepository $settings, PaymentGatewayRegistry $gateways): void
     {
         $this->authorize('extensions.manage');
 
@@ -103,11 +111,27 @@ final class Index extends Component
         $this->settingsExtensionId = $extensionId;
         $this->settingsForm = [];
         $this->secretConfigured = [];
+        $this->settingsMethodOptions = [];
+        $this->settingsMethodSelections = [];
+        $gateway = $gateways->get($extensionId);
+        if ($gateway instanceof ConfiguresCheckoutMethods) {
+            $this->settingsMethodOptions = $gateway->configurableCheckoutMethods();
+        }
         foreach ($status['manifest']->settings as $definition) {
             $key = $definition['key'];
             $secret = (bool) ($definition['secret'] ?? false);
             $current = $settings->get($extensionId, $key, $definition['default'] ?? '');
             $this->secretConfigured[$key] = $secret && $settings->isConfigured($extensionId, $key);
+            if (($definition['type'] ?? 'string') === 'payment_methods') {
+                $saved = is_string($current) ? array_filter(array_map('trim', explode(',', $current))) : [];
+                $availableIds = array_column($this->settingsMethodOptions, 'id');
+                $this->settingsMethodSelections = $saved === []
+                    ? $availableIds
+                    : array_values(array_intersect($saved, $availableIds));
+                $this->settingsForm[$key] = '';
+
+                continue;
+            }
             $this->settingsForm[$key] = $secret ? '' : $current;
         }
     }
@@ -141,6 +165,16 @@ final class Index extends Component
             $value = $this->settingsForm[$key] ?? null;
             if ($secret && ($value === null || $value === '')) {
                 continue;
+            }
+            if (($definition['type'] ?? 'string') === 'payment_methods') {
+                $availableIds = array_column($this->settingsMethodOptions, 'id');
+                $selected = array_values(array_intersect($this->settingsMethodSelections, $availableIds));
+                if ($selected === []) {
+                    session()->flash('error', __('mollie::messages.settings.methods_required'));
+
+                    return;
+                }
+                $value = implode(',', array_values(array_unique($selected)));
             }
             $settings->set($this->settingsExtensionId, $key, $value, $secret);
         }

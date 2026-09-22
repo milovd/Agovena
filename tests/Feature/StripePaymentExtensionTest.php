@@ -5,10 +5,6 @@ declare(strict_types=1);
 use Agovena\Extensions\Stripe\StripeApi;
 use Agovena\Extensions\Stripe\StripePaymentAuthorization;
 use Agovena\Extensions\Stripe\StripePaymentGateway;
-use Agovena\Modules\Subscriptions\Enums\RenewalStatus;
-use Agovena\Modules\Subscriptions\Enums\SubscriptionStatus;
-use Agovena\Modules\Subscriptions\Models\Subscription;
-use Agovena\Modules\Subscriptions\Models\SubscriptionRenewal;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -17,13 +13,16 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
-use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\ReconcilePaymentStatus;
 use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Recurring\Enums\RenewalStatus;
+use App\Agovena\Recurring\Enums\SubscriptionStatus;
+use App\Agovena\Recurring\Models\Subscription;
+use App\Agovena\Recurring\Models\SubscriptionRenewal;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
@@ -468,17 +467,6 @@ test('stripe health check validates credentials without exposing the key', funct
         ->and($api->balanceCalls)->toBe(1);
 });
 
-test('development gateway is not offered at checkout alongside stripe', function () {
-    enableStripe();
-    config(['agovena.payments.allow_development_instant_pay' => true]);
-    app(PaymentGatewayRegistry::class)->register(app(DevelopmentPaymentGateway::class));
-
-    $ids = app(AvailablePaymentMethods::class)->ids();
-
-    expect($ids)->toContain('stripe')
-        ->and($ids)->not->toContain('development');
-});
-
 test('subscription renewal auto-charges through stripe without module knowing stripe types', function () {
     $api = enableStripe();
     installAndEnableModule('subscriptions');
@@ -530,7 +518,7 @@ test('subscription renewal auto-charges through stripe without module knowing st
         ->and($api->intentCalls)->toBe(1);
 
     $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator(optionalModuleRoot('subscriptions'), FilesystemIterator::SKIP_DOTS),
+        new RecursiveDirectoryIterator(base_path('app/Agovena/Recurring'), FilesystemIterator::SKIP_DOTS),
     );
     foreach ($iterator as $file) {
         if ($file->getExtension() !== 'php') {

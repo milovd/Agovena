@@ -85,7 +85,21 @@
                         @endphp
                         <div class="ag-field">
                             <label class="ag-field__label" for="ext-setting-{{ $key }}">{{ __($settingLabel) }}</label>
-                            @if ($settingType === 'boolean')
+                            @if ($settingType === 'payment_methods')
+                                <div class="ag-stack ag-stack--sm">
+                                    @forelse ($settingsMethodOptions as $method)
+                                        <label class="ag-check" wire:key="settings-method-{{ $method['id'] }}">
+                                            <input type="checkbox" value="{{ $method['id'] }}" wire:model.live="settingsMethodSelections">
+                                            @if ($method['icon'])
+                                                <img src="{{ $method['icon'] }}" alt="" width="24" height="24">
+                                            @endif
+                                            <span>{{ __($method['label']) }}</span>
+                                        </label>
+                                    @empty
+                                        <p class="ag-field__hint">{{ __('mollie::messages.settings.methods_unavailable') }}</p>
+                                    @endforelse
+                                </div>
+                            @elseif ($settingType === 'boolean')
                                 <label class="ag-check">
                                     <input id="ext-setting-{{ $key }}" type="checkbox" wire:model="settingsForm.{{ $key }}" value="1">
                                     <span>{{ __($settingLabel) }}</span>

@@ -7,7 +7,6 @@ use Agovena\Modules\Domains\DomainRegistrarRegistry;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Provisioning\ProvisionerRegistry;
-use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Models\AgovenaExtension;
 use Illuminate\Validation\ValidationException;
 
@@ -87,12 +86,6 @@ function moduleBoundExtensions(): array
             'module' => 'provisioning',
             'registry' => ProvisionerRegistry::class,
             'registryKey' => 'proxmox',
-        ],
-        'postnl' => [
-            'extension' => 'postnl',
-            'module' => 'shipping',
-            'registry' => ShippingCarrierRegistry::class,
-            'registryKey' => 'postnl',
         ],
     ];
 }
@@ -194,7 +187,7 @@ test('all discovered extensions with module_dependencies are covered by dependen
         expect($manifest->moduleDependencies)->toHaveCount(1);
     }
 
-    expect($withDeps)->toContain('pterodactyl', 'postnl')
+    expect($withDeps)->toContain('pterodactyl')
         ->and(collect($withDeps)->sort()->values()->all())
         ->toEqual(collect($covered)->sort()->values()->all());
 });

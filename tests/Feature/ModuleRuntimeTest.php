@@ -2,18 +2,15 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Inventory\InventoryService;
-use Agovena\Modules\Inventory\Models\InventoryStock;
 use App\Agovena\Admin\AdminRegistrar;
+use App\Agovena\Availability\InventoryService;
+use App\Agovena\Availability\Models\InventoryStock;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Modules\ModuleManager;
-use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Livewire\Admin\Modules\Index as ModulesIndex;
-use App\Models\AgovenaModule;
 use App\Models\Product;
 use App\Models\ProductCapability;
 use Illuminate\Validation\ValidationException;
@@ -22,30 +19,21 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-function enableInventoryModule(): ModuleManager
+function enableAvailabilityCapability(): void
 {
-    installAndEnableModule('inventory');
-    app(SyncRegisteredPermissions::class)(force: true);
-
-    return app(ModuleManager::class);
+    // Availability and physical commerce are Core capabilities.
 }
 
-test('module manager discovers inventory and enable boots capabilities', function () {
-    $modules = app(ModuleManager::class);
+test('core registers physical and availability capabilities without optional modules', function () {
+    enableAvailabilityCapability();
 
-    expect($modules->manifest('inventory'))->not->toBeNull()
-        ->and($modules->isEnabled('inventory'))->toBeFalse();
-
-    enableInventoryModule();
-
-    expect($modules->isEnabled('inventory'))->toBeTrue()
-        ->and(app(ProductCapabilityRegistry::class)->has('physical'))->toBeTrue()
-        ->and(app(ProductCapabilityRegistry::class)->has('inventory'))->toBeTrue()
-        ->and(AgovenaModule::query()->where('module_id', 'inventory')->where('enabled', true)->exists())->toBeTrue();
+    expect(app(ProductCapabilityRegistry::class)->has('physical'))->toBeTrue()
+        ->and(app(ProductCapabilityRegistry::class)->has('shippable'))->toBeTrue()
+        ->and(app(ProductCapabilityRegistry::class)->has('availability'))->toBeTrue();
 });
 
-test('enabled inventory navigation is grouped under fulfillment', function () {
-    enableInventoryModule();
+test('core physical navigation is grouped under fulfillment', function () {
+    enableAvailabilityCapability();
 
     $inventory = collect(app(AdminRegistrar::class)->navigationItems())
         ->firstWhere('id', 'inventory-stocks');
@@ -55,8 +43,8 @@ test('enabled inventory navigation is grouped under fulfillment', function () {
         ->and(__('admin.nav_groups.fulfillment'))->toBe('Stock & delivery');
 });
 
-test('module disable preserves inventory stock rows', function () {
-    enableInventoryModule();
+test('core availability preserves inventory stock rows', function () {
+    enableAvailabilityCapability();
 
     $product = Product::factory()->active()->create();
     app(ProductCapabilityManager::class)->enable($product, 'physical');
@@ -65,15 +53,12 @@ test('module disable preserves inventory stock rows', function () {
 
     expect(InventoryStock::query()->where('product_id', $product->id)->value('quantity'))->toBe(12);
 
-    app(ModuleManager::class)->disable('inventory');
-
-    expect(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse()
-        ->and(InventoryStock::query()->where('product_id', $product->id)->value('quantity'))->toBe(12)
+    expect(InventoryStock::query()->where('product_id', $product->id)->value('quantity'))->toBe(12)
         ->and(ProductCapability::query()->where('product_id', $product->id)->count())->toBe(2);
 });
 
-test('inventory capability stores stock outside products table and decrements on order', function () {
-    enableInventoryModule();
+test('Core Availability stores stock outside products table and decrements on order', function () {
+    enableAvailabilityCapability();
 
     $product = Product::factory()->active()->create(['price_amount' => 1000]);
     app(ProductCapabilityManager::class)->enable($product, 'physical');
@@ -99,8 +84,8 @@ test('inventory capability stores stock outside products table and decrements on
     expect(InventoryStock::query()->where('product_id', $product->id)->value('quantity'))->toBe(3);
 });
 
-test('placing order fails when inventory stock is insufficient', function () {
-    enableInventoryModule();
+test('placing order fails when Core Availability stock is insufficient', function () {
+    enableAvailabilityCapability();
 
     $product = Product::factory()->active()->create(['price_amount' => 1000]);
     app(ProductCapabilityManager::class)->enable($product, 'physical');
@@ -124,12 +109,12 @@ test('placing order fails when inventory stock is insufficient', function () {
     expect(InventoryStock::query()->where('product_id', $product->id)->value('quantity'))->toBe(1);
 });
 
-test('admin modules page lists inventory', function () {
+test('admin modules page does not list inventory as an optional module', function () {
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
         ->test(ModulesIndex::class)
         ->set('tab', 'available')
         ->assertOk()
-        ->assertSee('Inventory');
+        ->assertDontSee('Inventory');
 });

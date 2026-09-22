@@ -78,7 +78,6 @@ $pairs = [
   "CACHE_STORE" => "database",
   "SESSION_DRIVER" => "database",
   "MAIL_MAILER" => "log",
-  "AGOVENA_DEV_INSTANT_PAY" => "true",
 ];
 foreach ($pairs as $k => $v) {
   if (preg_match("/^".preg_quote($k, "/")."=.*/m", $env)) {

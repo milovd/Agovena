@@ -1,6 +1,5 @@
 <?php
 
-use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\Gateways\ManualPaymentGateway;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use Tests\Support\ProviderContracts\ProviderContractAssertions;
@@ -52,6 +51,5 @@ test('core checkout does not branch on payment extension identifiers', function 
 
 test('core payment gateways satisfy the provider contract kit', function () {
     ProviderContractAssertions::assertPaymentGateway(new ManualPaymentGateway);
-    ProviderContractAssertions::assertPaymentGateway(app(DevelopmentPaymentGateway::class));
     expect(app(PaymentGatewayRegistry::class))->toBeInstanceOf(PaymentGatewayRegistry::class);
 });

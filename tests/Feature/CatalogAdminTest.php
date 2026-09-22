@@ -45,7 +45,7 @@ test('product form uses task focused tabs instead of one long page', function ()
         ->assertSee('role="tablist"', false)
         ->assertSee(__('admin.products.tabs.details'))
         ->assertSee(__('admin.products.tabs.pricing'))
-        ->assertDontSee(__('admin.products.tabs.automation'));
+        ->assertSee(__('admin.products.tabs.automation'));
 });
 
 test('staff without create permission cannot create products', function () {

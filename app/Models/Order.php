@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
  * @property CarbonInterface|null $due_at
  * @property string|null $idempotency_key
  * @property string|null $idempotency_owner_hash
+ * @property array<string, mixed>|null $custom_properties_snapshot
  * @property string|null $storefront_token
  * @property-read Collection<int, OrderItem> $items
  * @property-read Invoice|null $invoice

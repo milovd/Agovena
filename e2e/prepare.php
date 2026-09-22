@@ -7,12 +7,12 @@ use Agovena\Modules\Events\Enums\EventStatus;
 use Agovena\Modules\Events\Models\Event;
 use Agovena\Modules\Events\Models\EventPerformance;
 use Agovena\Modules\Events\Models\EventTicketType;
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Customer\CustomerRegistrationMode;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Models\ShippingMethod;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\ProductOptionType;
 use App\Enums\ProductStatus;
@@ -36,29 +36,12 @@ if ($bootstrapExitCode !== 0) {
 }
 
 $modules = $app->make(ModuleManager::class);
-foreach (['inventory', 'shipping', 'digital', 'subscriptions', 'provisioning', 'events'] as $id) {
+foreach (['downloads', 'provisioning', 'events'] as $id) {
     if (! $modules->isInstalled($id)) {
         $modules->install($id);
     }
     $modules->enable($id);
 }
-
-// Checkout uses development instant pay in e2e (no payment extensions).
-// Persist to .env so `php artisan serve` (separate process) picks it up.
-$envPath = base_path('.env');
-if (is_file($envPath)) {
-    $env = (string) file_get_contents($envPath);
-    if (preg_match('/^AGOVENA_DEV_INSTANT_PAY=.*/m', $env) === 1) {
-        $env = preg_replace('/^AGOVENA_DEV_INSTANT_PAY=.*/m', 'AGOVENA_DEV_INSTANT_PAY=true', $env) ?? $env;
-    } else {
-        $env = rtrim($env)."\nAGOVENA_DEV_INSTANT_PAY=true\n";
-    }
-    file_put_contents($envPath, $env);
-}
-putenv('AGOVENA_DEV_INSTANT_PAY=true');
-$_ENV['AGOVENA_DEV_INSTANT_PAY'] = 'true';
-$_SERVER['AGOVENA_DEV_INSTANT_PAY'] = 'true';
-config(['agovena.payments.allow_development_instant_pay' => true]);
 
 $app->make(SyncRegisteredPermissions::class)(force: true);
 

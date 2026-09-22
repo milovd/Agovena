@@ -23,7 +23,6 @@ use Tests\Support\CreatesStaff;
 uses(CreatesStaff::class);
 
 test('checkout reserves account balance until the remaining gateway amount is paid', function () {
-    config(['agovena.payments.allow_development_instant_pay' => false]);
     app(PaymentGatewayRegistry::class)->clear();
     app(PaymentGatewayRegistry::class)->register(app(ManualPaymentGateway::class));
 
@@ -57,7 +56,6 @@ test('checkout reserves account balance until the remaining gateway amount is pa
 });
 
 test('full account balance payment settles without a gateway', function () {
-    config(['agovena.payments.allow_development_instant_pay' => false]);
     app(PaymentGatewayRegistry::class)->clear();
 
     $customer = Customer::factory()->create();
@@ -82,7 +80,6 @@ test('full account balance payment settles without a gateway', function () {
 });
 
 test('partial account balance without a gateway is rejected', function () {
-    config(['agovena.payments.allow_development_instant_pay' => false]);
     app(PaymentGatewayRegistry::class)->clear();
 
     $customer = Customer::factory()->create();

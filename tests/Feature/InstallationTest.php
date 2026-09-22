@@ -16,6 +16,7 @@ use App\Livewire\Installer\Wizard;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
@@ -139,7 +140,7 @@ test('web installation creates owner settings currency theme and lock', function
 
     $this->get('/')->assertOk();
     $this->get('/admin/login')->assertRedirect(route('login'));
-    $this->get('/install')->assertRedirect(route('admin.dashboard'));
+    $this->get('/install')->assertNotFound();
 });
 
 test('installer catalog presets enable modules without locking a store type', function () {
@@ -164,10 +165,10 @@ test('installer catalog presets enable modules without locking a store type', fu
         ->assertSet('step', 'complete');
 
     $modules = app(ModuleManager::class);
-    expect($modules->isEnabled('inventory'))->toBeTrue()
-        ->and($modules->isEnabled('shipping'))->toBeTrue()
+    expect($modules->isEnabled('inventory'))->toBeFalse()
+        ->and($modules->isEnabled('shipping'))->toBeFalse()
         ->and($modules->isEnabled('digital-delivery'))->toBeTrue()
-        ->and($modules->isEnabled('digital'))->toBeFalse()
+        ->and($modules->isEnabled('downloads'))->toBeFalse()
         ->and(app(SettingsRepository::class)->get('store', 'presets'))->toBe(['physical', 'digital']);
 });
 
@@ -189,6 +190,7 @@ test('cli installation can enable store presets', function () {
 });
 
 test('doctor warns when install lock and storage marker disagree', function () {
+    Cache::put('agovena:scheduler:heartbeat', now()->toIso8601String(), now()->addMinutes(5));
     $state = app(InstallationState::class);
     $state->reset();
     $state->markInstalled();
@@ -216,7 +218,7 @@ test('installer is inaccessible after installation', function () {
         themeId: 'default',
     ));
 
-    $this->get('/install')->assertRedirect(route('admin.dashboard'));
+    $this->get('/install')->assertNotFound();
 
     Livewire::test(Wizard::class)->assertStatus(404);
 });
@@ -328,6 +330,7 @@ test('installer refuses creating a second owner email after partial owner exists
 });
 
 test('doctor reports installation readiness', function () {
+    Cache::put('agovena:scheduler:heartbeat', now()->toIso8601String(), now()->addMinutes(5));
     $this->artisan('agovena:doctor')->assertSuccessful();
 });
 

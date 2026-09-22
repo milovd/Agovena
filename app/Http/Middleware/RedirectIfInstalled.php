@@ -19,7 +19,7 @@ final class RedirectIfInstalled
     public function handle(Request $request, Closure $next): Response
     {
         if ($this->state->installed()) {
-            return redirect()->route('admin.dashboard');
+            abort(404);
         }
 
         return $next($request);

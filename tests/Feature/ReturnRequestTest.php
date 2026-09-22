@@ -2,21 +2,19 @@
 
 declare(strict_types=1);
 
-use Agovena\Modules\Shipping\Enums\ReturnRequestStatus;
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Http\Livewire\Admin\ReturnShow;
-use Agovena\Modules\Shipping\Http\Livewire\Customer\ReturnCreate;
-use Agovena\Modules\Shipping\Models\ReturnRequest;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
-use Agovena\Modules\Shipping\ReturnRequestService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Contracts\ProductStock;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
-use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ReturnRequestStatus;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Http\Livewire\Admin\ReturnShow;
+use App\Agovena\Physical\Http\Livewire\Customer\ReturnCreate;
+use App\Agovena\Physical\Models\ReturnRequest;
+use App\Agovena\Physical\Models\ShippingMethod;
+use App\Agovena\Physical\ReturnRequestService;
 use App\Models\CreditNote;
 use App\Models\Customer;
 use App\Models\Order;
@@ -31,11 +29,7 @@ uses(CreatesStaff::class);
 
 function enableReturns(bool $withInventory = false): void
 {
-    installAndEnableModule('shipping');
-    if ($withInventory) {
-        installAndEnableModule('inventory');
-    }
-    app(SyncRegisteredPermissions::class)(force: true);
+    // Physical commerce and availability are Core capabilities.
 }
 
 function returnsBilling(): AddressData
@@ -234,7 +228,7 @@ test('staff approve receive and restock increments inventory', function () {
         ->and($request->status)->toBe(ReturnRequestStatus::Completed);
 });
 
-test('restock is skipped gracefully when the inventory module is disabled', function () {
+test('core availability restocks a returned physical product', function () {
     enableReturns();
     $staff = $this->createStaff();
     $customer = Customer::factory()->create();
@@ -251,8 +245,8 @@ test('restock is skipped gracefully when the inventory module is disabled', func
     );
     $returns->markReceived($returns->approve($request));
 
-    expect($returns->inventoryAvailable())->toBeFalse()
-        ->and($returns->restock($request->fresh(['items']), [1 => 1]))->toBe(0);
+    expect($returns->inventoryAvailable())->toBeTrue()
+        ->and($returns->restock($request->fresh(['items']), [1 => 1]))->toBe(1);
 });
 
 test('staff can reject a return with a reason', function () {
@@ -373,7 +367,7 @@ test('admin returns index and order detail section render the request', function
         ->assertSee(route('admin.shipping.returns.show', $request), false);
 });
 
-test('return requests survive disabling the shipping module', function () {
+test('return requests remain durable in Core physical commerce', function () {
     enableReturns();
     $staff = $this->createStaff();
     $customer = Customer::factory()->create();
@@ -387,8 +381,5 @@ test('return requests survive disabling the shipping module', function () {
         $customer,
     );
 
-    app(ModuleManager::class)->disable('shipping');
-
-    expect(app(ModuleManager::class)->isEnabled('shipping'))->toBeFalse()
-        ->and(ReturnRequest::query()->where('order_id', $order->id)->exists())->toBeTrue();
+    expect(ReturnRequest::query()->where('order_id', $order->id)->exists())->toBeTrue();
 });

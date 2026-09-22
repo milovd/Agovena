@@ -50,7 +50,6 @@ uses(CreatesStaff::class);
 
 function placePendingOrderPayment(): Payment
 {
-    config(['agovena.payments.allow_development_instant_pay' => false]);
     if (! app(PaymentGatewayRegistry::class)->has('manual')) {
         app(PaymentGatewayRegistry::class)->register(app(ManualPaymentGateway::class));
     }

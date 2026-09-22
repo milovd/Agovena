@@ -12,9 +12,7 @@ use Agovena\Modules\Events\Models\Event;
 use Agovena\Modules\Events\Models\EventPerformance;
 use Agovena\Modules\Events\Models\EventTicket;
 use Agovena\Modules\Events\Models\EventTicketType;
-use Agovena\Modules\Inventory\InventoryService;
-use Agovena\Modules\Shipping\Enums\ShippingMethodType;
-use Agovena\Modules\Shipping\Models\ShippingMethod;
+use App\Agovena\Availability\InventoryService;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
@@ -24,6 +22,8 @@ use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Models\ShippingMethod;
 use App\Agovena\Store\ApplyStorePresets;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -167,7 +167,7 @@ test('event capacity is enforced before the order is placed', function () {
 });
 
 test('mixed cart of ticket shirt and digital programme shares one order and invoice', function () {
-    installAndEnableModules(['inventory', 'shipping', 'digital', 'events']);
+    installAndEnableModules(['inventory', 'shipping', 'downloads', 'events']);
     app(SyncRegisteredPermissions::class)(force: true);
 
     $customer = Customer::factory()->create();
@@ -232,10 +232,10 @@ test('mixed cart of ticket shirt and digital programme shares one order and invo
 });
 
 test('events store preset enables the events module without disabling others', function () {
-    installAndEnableModule('digital');
+    installAndEnableModule('downloads');
     $enabled = app(ApplyStorePresets::class)->handle(['events']);
 
     expect($enabled)->toContain('events')
         ->and(app(ModuleManager::class)->isEnabled('events'))->toBeTrue()
-        ->and(app(ModuleManager::class)->isEnabled('digital'))->toBeTrue();
+        ->and(app(ModuleManager::class)->isEnabled('downloads'))->toBeTrue();
 });

@@ -6,6 +6,7 @@ namespace App\Agovena\Operations;
 
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Settings\SettingsRepository;
+use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Carbon;
@@ -232,7 +233,7 @@ final class CronStatistics
     private function taskIsActive(string $taskId): bool
     {
         return match ($taskId) {
-            'subscription-renewals' => $this->modules->isEnabled('subscriptions'),
+            'subscription-renewals' => app()->bound(ProcessesSubscriptionRenewals::class),
             'sync-provisioning' => $this->modules->isEnabled('provisioning'),
             'cancel-unpaid-orders' => (int) $this->settings->get('store', 'unpaid_order_cancel_after_days', 0) > 0,
             'prune-logs' => true,

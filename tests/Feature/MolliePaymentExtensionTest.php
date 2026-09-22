@@ -12,7 +12,6 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
-use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\ReconcilePaymentStatus;
@@ -76,7 +75,12 @@ test('mollie registers only when the extension is enabled', function () {
     enableMollie();
 
     expect(app(PaymentGatewayRegistry::class)->get('mollie'))->toBeInstanceOf(MolliePaymentGateway::class)
-        ->and(app(AvailablePaymentMethods::class)->ids())->toContain('mollie');
+        ->and(app(AvailablePaymentMethods::class)->ids())->toContain(
+            'mollie:ideal',
+            'mollie:bancontact',
+            'mollie:creditcard',
+            'mollie:paypal',
+        );
 
     app(ExtensionManager::class)->disable('mollie');
 
@@ -126,7 +130,7 @@ test('mollie create payment redirects without marking the order paid', function 
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'mollie',
+        'mollie:creditcard',
         route('storefront.payment.status', $payment->order),
         route('storefront.payment.status', $payment->order),
         'mollie-start-1',
@@ -137,7 +141,8 @@ test('mollie create payment redirects without marking the order paid', function 
         ->and($attempt->status)->toBe(PaymentAttemptStatus::Processing)
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
         ->and($payment->fresh()->order->status)->toBe(OrderStatus::Pending)
-        ->and($api->createCalls)->toBe(1);
+        ->and($api->createCalls)->toBe(1)
+        ->and($api->lastPayload['method'])->toBe('creditcard');
 });
 
 test('mollie initiate is idempotent for retries and double clicks', function () {
@@ -450,6 +455,21 @@ test('mollie secret is not rendered in the extensions settings UI', function () 
         ->assertSet('settingsForm.api_key', '');
 });
 
+test('mollie settings discover all provider methods and persist selected methods', function () {
+    enableMollie();
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'mollie')
+        ->assertSet('settingsMethodSelections', ['ideal', 'bancontact', 'creditcard', 'paypal'])
+        ->assertSet('settingsMethodOptions.0.icon', 'https://www.mollie.com/external/icons/payment-methods/ideal.svg')
+        ->set('settingsMethodSelections', ['ideal', 'creditcard'])
+        ->call('saveSettings');
+
+    expect(app(ExtensionSettingsRepository::class)->get('mollie', 'enabled_methods'))->toBe('ideal,creditcard');
+});
+
 test('mollie health check validates credentials without exposing the key', function () {
     $api = enableMollie();
     $result = app(MolliePaymentGateway::class)->health();
@@ -458,17 +478,6 @@ test('mollie health check validates credentials without exposing the key', funct
         ->and($result->message)->toContain('test')
         ->and($result->message)->not->toContain('test_abcdefghijklmnopqrstuvwxyz123456')
         ->and($api->methods)->not->toBeEmpty();
-});
-
-test('development gateway is not offered at checkout alongside mollie', function () {
-    enableMollie();
-    config(['agovena.payments.allow_development_instant_pay' => true]);
-    app(PaymentGatewayRegistry::class)->register(app(DevelopmentPaymentGateway::class));
-
-    $ids = app(AvailablePaymentMethods::class)->ids();
-
-    expect($ids)->toContain('mollie')
-        ->and($ids)->not->toContain('development');
 });
 
 test('mollie can store a mandate mapping without core customer columns', function () {
