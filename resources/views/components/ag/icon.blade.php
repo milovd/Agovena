@@ -69,9 +69,26 @@
     ];
 
     $inner = $icons[$name] ?? $icons['settings'];
+    $paymentMethodImage = null;
+    if (str_starts_with($name, 'payment-method/')) {
+        $paymentMethodId = substr($name, strlen('payment-method/'));
+        if (preg_match('/^[a-z0-9_]+$/', $paymentMethodId) === 1) {
+            $relativeImagePath = 'images/payment-methods/'.$paymentMethodId.'.svg';
+            if (is_file(public_path($relativeImagePath))) {
+                $paymentMethodImage = asset($relativeImagePath);
+            }
+        }
+    }
 @endphp
 
-<svg
+@if ($paymentMethodImage)
+    <img
+        {{ $attributes->class(['ag-icon'])->merge(['aria-hidden' => 'true', 'alt' => '', 'width' => $size, 'height' => $size]) }}
+        src="{{ $paymentMethodImage }}"
+        loading="lazy"
+    >
+@else
+    <svg
     {{ $attributes->class(['ag-icon'])->merge(['aria-hidden' => 'true', 'focusable' => 'false']) }}
     xmlns="http://www.w3.org/2000/svg"
     width="{{ $size }}"
@@ -85,3 +102,4 @@
 >
     {!! $inner !!}
 </svg>
+@endif

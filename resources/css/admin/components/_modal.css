@@ -193,9 +193,9 @@
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 1.75rem;
+  width: 2.25rem;
   height: 1.75rem;
-  flex: 0 0 1.75rem;
+  flex: 0 0 2.25rem;
   color: var(--ag-color-primary);
 }
 
@@ -205,14 +205,15 @@
 }
 
 .ag-payment-method__provider-icon {
-  position: absolute;
+  position: relative;
   z-index: 1;
-  inset: 50% auto auto 50%;
+  inset: auto;
   display: block;
-  width: 1.5rem;
+  width: auto;
+  max-width: 2.25rem;
   height: 1.5rem;
   object-fit: contain;
-  transform: translate(-50%, -50%);
+  transform: none;
 }
 
 .ag-payment-method__icon img,
@@ -221,6 +222,11 @@
   width: 1.5rem;
   height: 1.5rem;
   object-fit: contain;
+}
+
+.ag-payment-method__icon img {
+  width: auto;
+  max-width: 2.25rem;
 }
 
 .ag-payment-method__label {

@@ -30,6 +30,8 @@ final class FakeStripeApi implements StripeApi
 
     public int $balanceCalls = 0;
 
+    public int $paymentMethodConfigurationCalls = 0;
+
     /** @var list<array<string, mixed>> */
     public array $paymentMethodConfigurations = [[
         'id' => 'pmc_test',
@@ -66,6 +68,7 @@ final class FakeStripeApi implements StripeApi
     public function listPaymentMethodConfigurations(): array
     {
         $this->guard();
+        $this->paymentMethodConfigurationCalls++;
 
         return $this->paymentMethodConfigurations;
     }

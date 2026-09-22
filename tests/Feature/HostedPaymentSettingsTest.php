@@ -78,6 +78,28 @@ test('tebex settings automatically checks the connection without method discover
     expect($api->pingCalls)->toBe(1);
 });
 
+test('paddle settings reuses the cached health snapshot when reopened', function () {
+    $api = enablePaddleForSettings();
+    $staff = $this->createStaff();
+    $component = Livewire::actingAs($staff)->test(Index::class)->call('openSettings', 'paddle');
+
+    $component->call('closeSettings')->call('openSettings', 'paddle');
+
+    expect($api->pingCalls)->toBe(1)
+        ->and($component->get('settingsConnectionCached'))->toBeTrue();
+});
+
+test('tebex settings reuses the cached health snapshot when reopened', function () {
+    $api = enableTebexForSettings();
+    $staff = $this->createStaff();
+    $component = Livewire::actingAs($staff)->test(Index::class)->call('openSettings', 'tebex');
+
+    $component->call('closeSettings')->call('openSettings', 'tebex');
+
+    expect($api->pingCalls)->toBe(1)
+        ->and($component->get('settingsConnectionCached'))->toBeTrue();
+});
+
 test('paddle settings automatically checks after the final credential is entered', function () {
     app(ExtensionManager::class)->discover();
     $api = new FakePaddleApi;

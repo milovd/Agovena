@@ -80,6 +80,7 @@
                                     $settingLabel = $key;
                                     $settingType = 'string';
                                     $settingSecret = false;
+                                    $settingConnection = false;
                                     $settingHelp = '';
                                     if ($settingsManifest !== null) {
                                         foreach ($settingsManifest->settings as $definition) {
@@ -87,6 +88,8 @@
                                                 $settingLabel = $definition['label'];
                                                 $settingType = (string) ($definition['type'] ?? 'string');
                                                 $settingSecret = (bool) ($definition['secret'] ?? false);
+                                                $settingConnection = (bool) ($definition['connection'] ?? false)
+                                                    || (bool) ($definition['connection_context'] ?? false);
                                                 $settingHelp = (string) ($definition['help'] ?? '');
                                                 break;
                                             }
@@ -118,15 +121,18 @@
                                                         $methodIconValue = is_string($method['icon'] ?? null) ? $method['icon'] : '';
                                                         $methodIcon = str_starts_with($methodIconValue, 'ag:')
                                                             ? substr($methodIconValue, 3)
-                                                            : 'payment-bank';
+                                                            : null;
                                                         $methodRemoteIcon = filter_var($methodIconValue, FILTER_VALIDATE_URL) ? $methodIconValue : null;
                                                     @endphp
                                                     <label class="ag-payment-method" wire:key="settings-method-{{ $methodId }}">
                                                         <input class="ag-payment-method__input" type="checkbox" value="{{ $methodId }}" wire:model.live="settingsMethodSelections">
                                                         <span class="ag-payment-method__icon" aria-hidden="true">
-                                                            <x-ag.icon :name="$methodIcon" :size="20" class="ag-payment-method__svg" />
                                                             @if ($methodRemoteIcon)
-                                                                <img class="ag-payment-method__provider-icon" src="{{ $methodRemoteIcon }}" alt="" width="24" height="24" loading="lazy">
+                                                                <img class="ag-payment-method__provider-icon" src="{{ $methodRemoteIcon }}" alt="" width="32" height="24" loading="lazy">
+                                                            @elseif ($methodIcon)
+                                                                <x-ag.icon :name="$methodIcon" :size="32" class="ag-payment-method__svg" />
+                                                            @else
+                                                                <x-ag.icon name="payment-bank" :size="20" class="ag-payment-method__svg" />
                                                             @endif
                                                         </span>
                                                         <span class="ag-payment-method__label">{{ __($method['label']) }}</span>
@@ -139,7 +145,7 @@
                                     @elseif ($settingType === 'boolean')
                                         <label class="ag-field__label" for="ext-setting-{{ $key }}">{{ __($settingLabel) }}</label>
                                         <label class="ag-check">
-                                            <input id="ext-setting-{{ $key }}" type="checkbox" wire:model="settingsForm.{{ $key }}" value="1">
+                                            <input id="ext-setting-{{ $key }}" type="checkbox" wire:model{{ $settingConnection ? '.live' : '' }}="settingsForm.{{ $key }}" value="1">
                                             <span>{{ __($settingLabel) }}</span>
                                         </label>
                                     @elseif ($settingType === 'text')
@@ -151,7 +157,7 @@
                                             id="ext-setting-{{ $key }}"
                                             class="ag-input"
                                             type="{{ $settingSecret ? 'password' : 'text' }}"
-                                            wire:model{{ $settingSecret ? '.live.debounce.500ms' : '' }}="settingsForm.{{ $key }}"
+                                            wire:model{{ $settingConnection ? '.live.debounce.500ms' : '' }}="settingsForm.{{ $key }}"
                                             autocomplete="off"
                                             placeholder="{{ ($secretConfigured[$key] ?? false) ? __('admin.extensions.secret_placeholder') : '' }}"
                                         >

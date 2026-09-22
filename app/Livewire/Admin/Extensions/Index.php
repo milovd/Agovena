@@ -12,6 +12,7 @@ use App\Agovena\Packages\PackageCatalog;
 use App\Agovena\Payments\Contracts\ConfiguresCheckoutMethods;
 use App\Agovena\Payments\HealthResult;
 use App\Agovena\Payments\PaymentGatewayRegistry;
+use App\Agovena\Payments\PaymentMethodDiscoveryCache;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Enums\PackageKind;
 use App\Livewire\Admin\Concerns\InstallsRemotePackages;
@@ -50,7 +51,12 @@ final class Index extends Component
     /** @var list<string> */
     public array $settingsSecretKeys = [];
 
+    /** @var list<string> */
+    public array $settingsConnectionKeys = [];
+
     public bool $settingsMethodsLoaded = false;
+
+    public bool $settingsConnectionCached = false;
 
     public ?string $settingsConnectionState = null;
 
@@ -127,7 +133,9 @@ final class Index extends Component
         $this->settingsMethodSelections = [];
         $this->settingsStoredMethodSelections = [];
         $this->settingsSecretKeys = [];
+        $this->settingsConnectionKeys = [];
         $this->settingsMethodsLoaded = false;
+        $this->settingsConnectionCached = false;
         $this->settingsConnectionState = null;
         $this->settingsConnectionMessage = '';
         foreach ($status['manifest']->settings as $definition) {
@@ -135,6 +143,9 @@ final class Index extends Component
             $secret = (bool) ($definition['secret'] ?? false);
             if ($secret) {
                 $this->settingsSecretKeys[] = $key;
+            }
+            if (($definition['connection'] ?? false) || ($definition['connection_context'] ?? false)) {
+                $this->settingsConnectionKeys[] = $key;
             }
             $current = $settings->get($extensionId, $key, $definition['default'] ?? '');
             $this->secretConfigured[$key] = $secret && $settings->isConfigured($extensionId, $key);
@@ -163,7 +174,9 @@ final class Index extends Component
         $this->settingsMethodSelections = [];
         $this->settingsStoredMethodSelections = [];
         $this->settingsSecretKeys = [];
+        $this->settingsConnectionKeys = [];
         $this->settingsMethodsLoaded = false;
+        $this->settingsConnectionCached = false;
         $this->settingsConnectionState = null;
         $this->settingsConnectionMessage = '';
     }
@@ -216,13 +229,14 @@ final class Index extends Component
     public function updatedSettingsForm(mixed $value, string $key): void
     {
         $key = str_contains($key, '.') ? substr($key, strrpos($key, '.') + 1) : $key;
-        if (! in_array($key, $this->settingsSecretKeys, true)) {
+        if (! in_array($key, $this->settingsConnectionKeys, true)) {
             return;
         }
 
         $this->settingsMethodOptions = [];
         $this->settingsMethodSelections = [];
         $this->settingsMethodsLoaded = false;
+        $this->settingsConnectionCached = false;
         $this->settingsConnectionState = null;
         $this->settingsConnectionMessage = '';
 
@@ -301,6 +315,7 @@ final class Index extends Component
         $this->settingsMethodOptions = [];
         $this->settingsMethodSelections = [];
         $this->settingsMethodsLoaded = false;
+        $this->settingsConnectionCached = false;
         $this->settingsConnectionState = null;
         $this->settingsConnectionMessage = '';
 
@@ -311,7 +326,14 @@ final class Index extends Component
             return;
         }
 
-        $this->checkSettingsConnection($extensionId, $manifest->settings, $extensions, $settings, $gateways);
+        $this->checkSettingsConnection(
+            $extensionId,
+            $manifest->settings,
+            $extensions,
+            $settings,
+            $gateways,
+            true,
+        );
     }
 
     /**
@@ -323,6 +345,7 @@ final class Index extends Component
         ExtensionManager $extensions,
         ExtensionSettingsRepository $settings,
         PaymentGatewayRegistry $gateways,
+        bool $force = false,
     ): void {
         $context = $extensions->context($extensionId);
         $callback = $context?->healthCallback();
@@ -333,6 +356,40 @@ final class Index extends Component
             $this->settingsConnectionMessage = __('admin.extensions.health.unavailable');
 
             return;
+        }
+
+        $this->settingsConnectionCached = false;
+        $discoveryCache = app(PaymentMethodDiscoveryCache::class);
+        $fingerprint = $discoveryCache->fingerprint($extensionId, $definitions, $this->settingsForm, $settings);
+        if ($force) {
+            $discoveryCache->forget($extensionId, $fingerprint);
+        }
+        if (! $force) {
+            $cachedMethods = $discoveryCache->get($extensionId, $fingerprint);
+            if ($cachedMethods !== null) {
+                $this->settingsConnectionCached = true;
+                if (! $hasMethodSettings) {
+                    $this->settingsConnectionState = 'success';
+                    $this->settingsConnectionMessage = __('admin.extensions.settings_connection_cached_without_methods');
+
+                    return;
+                }
+
+                $this->settingsMethodOptions = $cachedMethods;
+                if (! $this->applySettingsMethodOptions()) {
+                    $this->settingsConnectionState = 'error';
+                    $this->settingsConnectionMessage = __('admin.extensions.settings_methods_unavailable');
+
+                    return;
+                }
+
+                $this->settingsConnectionState = 'success';
+                $this->settingsConnectionMessage = __('admin.extensions.settings_connection_cached', [
+                    'count' => count($this->settingsMethodOptions),
+                ]);
+
+                return;
+            }
         }
 
         $snapshot = $settings->snapshot($extensionId);
@@ -349,6 +406,7 @@ final class Index extends Component
             }
 
             if (! $hasMethodSettings) {
+                $discoveryCache->put($extensionId, $fingerprint, []);
                 $this->settingsConnectionState = 'success';
                 $this->settingsConnectionMessage = __('admin.extensions.settings_connection_ok_without_methods');
 
@@ -356,20 +414,14 @@ final class Index extends Component
             }
 
             $this->settingsMethodOptions = $gateway->configurableCheckoutMethods();
-            if ($this->settingsMethodOptions === []) {
+            if (! $this->applySettingsMethodOptions()) {
                 $this->settingsConnectionState = 'error';
                 $this->settingsConnectionMessage = __('admin.extensions.settings_methods_unavailable');
 
                 return;
             }
 
-            $availableIds = array_column($this->settingsMethodOptions, 'id');
-            $requested = $this->settingsMethodSelections !== []
-                ? $this->settingsMethodSelections
-                : $this->settingsStoredMethodSelections;
-            $selected = array_values(array_intersect($requested, $availableIds));
-            $this->settingsMethodSelections = $selected !== [] ? $selected : $availableIds;
-            $this->settingsMethodsLoaded = true;
+            $discoveryCache->put($extensionId, $fingerprint, $this->settingsMethodOptions);
             $this->settingsConnectionState = 'success';
             $this->settingsConnectionMessage = __('admin.extensions.settings_connection_ok', [
                 'count' => count($this->settingsMethodOptions),
@@ -380,6 +432,23 @@ final class Index extends Component
         } finally {
             $settings->restore($extensionId, $snapshot);
         }
+    }
+
+    private function applySettingsMethodOptions(): bool
+    {
+        if ($this->settingsMethodOptions === []) {
+            return false;
+        }
+
+        $availableIds = array_column($this->settingsMethodOptions, 'id');
+        $requested = $this->settingsMethodSelections !== []
+            ? $this->settingsMethodSelections
+            : $this->settingsStoredMethodSelections;
+        $selected = array_values(array_intersect($requested, $availableIds));
+        $this->settingsMethodSelections = $selected !== [] ? $selected : $availableIds;
+        $this->settingsMethodsLoaded = true;
+
+        return true;
     }
 
     /**

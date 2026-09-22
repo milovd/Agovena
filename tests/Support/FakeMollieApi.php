@@ -25,6 +25,8 @@ final class FakeMollieApi implements MollieApi
 
     public int $createCalls = 0;
 
+    public int $listEnabledMethodsCalls = 0;
+
     /** @var array<string, mixed> */
     public array $lastPayload = [];
 
@@ -158,6 +160,8 @@ final class FakeMollieApi implements MollieApi
         if ($this->timeout) {
             throw MollieProviderException::unknown('mollie::messages.health.unreachable');
         }
+
+        $this->listEnabledMethodsCalls++;
 
         return $this->methods;
     }

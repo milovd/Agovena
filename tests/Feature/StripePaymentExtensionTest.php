@@ -175,7 +175,7 @@ test('stripe exposes provider-discovered methods and starts the selected method'
     $gateway = app(StripePaymentGateway::class);
 
     expect($gateway->configurableCheckoutMethods())->toContain(
-        ['id' => 'bancontact', 'label' => 'stripe::messages.methods.bancontact', 'icon' => 'ag:payment-bancontact'],
+        ['id' => 'bancontact', 'label' => 'stripe::messages.methods.bancontact', 'icon' => 'ag:payment-method/bancontact'],
     );
 
     $payment = placeStripeOrder();
@@ -213,11 +213,70 @@ test('stripe settings automatically discovers methods when opened with saved cre
         ->assertSet('settingsConnectionState', 'success')
         ->assertSet('settingsMethodSelections', ['card', 'bancontact'])
         ->assertSet('settingsMethodOptions.0.id', 'bancontact')
-        ->assertSet('settingsMethodOptions.0.icon', 'ag:payment-bancontact')
+        ->assertSet('settingsMethodOptions.0.icon', 'ag:payment-method/bancontact')
+        ->assertSee('images/payment-methods/bancontact.svg')
         ->assertDontSee('wire:click="testConnection')
         ->assertSee('Refresh payment methods');
 });
 
+test('stripe settings verifies a gateway-only snapshot before treating it as cached', function () {
+    $api = enableStripe();
+    app(StripePaymentGateway::class)->configurableCheckoutMethods();
+    $staff = $this->createStaff();
+
+    $component = Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'stripe');
+
+    expect($api->paymentMethodConfigurationCalls)->toBe(1)
+        ->and($api->balanceCalls)->toBe(1)
+        ->and($component->get('settingsConnectionCached'))->toBeFalse();
+});
+
+test('stripe settings reuses cached methods and health state when reopened', function () {
+    $api = enableStripe();
+    $staff = $this->createStaff();
+    $component = Livewire::actingAs($staff)->test(Index::class);
+
+    $component->call('openSettings', 'stripe');
+    expect($api->balanceCalls)->toBe(1)
+        ->and($api->paymentMethodConfigurationCalls)->toBe(1);
+
+    $component->call('closeSettings')->call('openSettings', 'stripe');
+
+    expect($api->balanceCalls)->toBe(1)
+        ->and($api->paymentMethodConfigurationCalls)->toBe(1)
+        ->and($component->get('settingsConnectionCached'))->toBeTrue();
+});
+
+test('stripe settings refresh bypasses the cached provider snapshot', function () {
+    $api = enableStripe();
+    $staff = $this->createStaff();
+    $component = Livewire::actingAs($staff)->test(Index::class)->call('openSettings', 'stripe');
+
+    expect($api->paymentMethodConfigurationCalls)->toBe(1);
+
+    $component->call('refreshPaymentMethods');
+
+    expect($api->balanceCalls)->toBe(2)
+        ->and($api->paymentMethodConfigurationCalls)->toBe(2)
+        ->and($component->get('settingsConnectionCached'))->toBeFalse();
+});
+
+test('stripe settings does not reuse a snapshot after credentials change', function () {
+    $api = enableStripe();
+    $staff = $this->createStaff();
+    $settings = app(ExtensionSettingsRepository::class);
+    $component = Livewire::actingAs($staff)->test(Index::class)->call('openSettings', 'stripe');
+
+    expect($api->paymentMethodConfigurationCalls)->toBe(1);
+
+    $settings->set('stripe', 'secret_key', 'sk_test_'.str_repeat('c', 32), secret: true);
+    $component->call('closeSettings')->call('openSettings', 'stripe');
+
+    expect($api->paymentMethodConfigurationCalls)->toBe(2)
+        ->and($component->get('settingsConnectionCached'))->toBeFalse();
+});
 test('stripe settings automatically discovers methods after the final credential is entered', function () {
     app(ExtensionManager::class)->discover();
     app()->instance(StripeApi::class, new FakeStripeApi);
@@ -237,7 +296,7 @@ test('stripe settings automatically discovers methods after the final credential
         ->assertSet('settingsConnectionState', 'success')
         ->assertSet('settingsMethodSelections', ['bancontact', 'card', 'ideal', 'klarna', 'paypal', 'sepa_debit'])
         ->assertSet('settingsMethodOptions.0.id', 'bancontact')
-        ->assertSet('settingsMethodOptions.0.icon', 'ag:payment-bancontact')
+        ->assertSet('settingsMethodOptions.0.icon', 'ag:payment-method/bancontact')
         ->assertSee('ag-payment-method__icon')
         ->assertSee('ag-payment-method__svg')
         ->assertDontSee('wire:click="testConnection');

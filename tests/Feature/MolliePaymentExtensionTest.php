@@ -477,6 +477,19 @@ test('mollie settings automatically discovers all provider methods when opened',
     expect(app(ExtensionSettingsRepository::class)->get('mollie', 'enabled_methods'))->toBe('ideal,creditcard');
 });
 
+test('mollie settings reuses cached provider methods when reopened', function () {
+    $api = enableMollie();
+    $staff = $this->createStaff();
+    $component = Livewire::actingAs($staff)->test(Index::class)->call('openSettings', 'mollie');
+
+    expect($api->listEnabledMethodsCalls)->toBe(2);
+
+    $component->call('closeSettings')->call('openSettings', 'mollie');
+
+    expect($api->listEnabledMethodsCalls)->toBe(2)
+        ->and($component->get('settingsConnectionCached'))->toBeTrue();
+});
+
 test('mollie settings automatically discovers methods after the api key is entered', function () {
     app(ExtensionManager::class)->discover();
     app()->instance(MollieApi::class, new FakeMollieApi);
