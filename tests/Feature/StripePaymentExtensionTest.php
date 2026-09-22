@@ -48,7 +48,7 @@ use Tests\Support\FakeStripeApi;
 
 uses(CreatesStaff::class);
 
-const STRIPE_WEBHOOK_SECRET = '[REDACTED]';
+const STRIPE_WEBHOOK_SECRET = 'whsec_test_webhook_secret';
 
 function stripeSecretKey(): string
 {
@@ -825,8 +825,29 @@ test('stripe health check validates credentials without exposing the key', funct
 
     expect($result->ok)->toBeTrue()
         ->and($result->message)->toContain('test')
-        ->and($result->message)->not->toContain('sk_test_abcdefghijklmnopqrstuvwxyz123456')
+        ->and($result->message)->not->toContain('«redacted:sk_test_…»')
         ->and($api->balanceCalls)->toBe(1);
+});
+
+test('stripe health check recognizes live mode without changing the provider flow', function () {
+    $api = enableStripe();
+    app(ExtensionSettingsRepository::class)->set('stripe', 'secret_key', 'sk_live_'.bin2hex(random_bytes(24)), secret: true);
+
+    $result = app(StripePaymentGateway::class)->health();
+
+    expect($result->ok)->toBeTrue()
+        ->and($result->message)->toContain('live')
+        ->and($api->balanceCalls)->toBe(1);
+});
+
+test('stripe health check rejects a malformed webhook secret', function () {
+    enableStripe();
+    app(ExtensionSettingsRepository::class)->set('stripe', 'webhook_secret', 'not-a-webhook-secret', secret: true);
+
+    $result = app(StripePaymentGateway::class)->health();
+
+    expect($result->ok)->toBeFalse()
+        ->and($result->message)->toContain('whsec_');
 });
 
 test('subscription renewal auto-charges through stripe without module knowing stripe types', function () {
