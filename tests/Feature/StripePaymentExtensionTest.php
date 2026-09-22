@@ -107,6 +107,7 @@ function stripeSignedRequest(string $type, array $object, string $eventId = 'evt
         'id' => $eventId,
         'object' => 'event',
         'type' => $type,
+        'livemode' => false,
         'data' => ['object' => $object],
     ];
     $payload = json_encode($event, JSON_THROW_ON_ERROR);
@@ -636,6 +637,20 @@ test('duplicate stripe webhook events are harmless', function () {
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Paid);
 });
 
+test('stripe rejects test webhooks when a live key is configured', function () {
+    enableStripe();
+    app(ExtensionSettingsRepository::class)->set('stripe', 'secret_key', 'sk_live_'.bin2hex(random_bytes(24)), secret: true);
+
+    expect(fn () => app(HandlePaymentWebhook::class)->handle(
+        'stripe',
+        stripeSignedRequest('payment_intent.succeeded', [
+            'id' => 'pi_test_mode_event',
+            'status' => 'succeeded',
+            'metadata' => [],
+        ], 'evt_test_mode_on_live'),
+    ))->toThrow(AccessDeniedHttpException::class);
+});
+
 test('stripe payment_intent.payment_failed maps to a failed attempt', function () {
     $api = enableStripe();
     $payment = placeStripeOrder();
@@ -675,6 +690,23 @@ test('status sync can confirm a paid stripe payment after webhook delay', functi
         ->and($payment->fresh()->order->status)->toBe(OrderStatus::Paid);
 });
 
+test('stripe does not capture reusable authorization from unrelated events', function () {
+    enableStripe();
+
+    app(HandlePaymentWebhook::class)->handle(
+        'stripe',
+        stripeSignedRequest('payment_intent.succeeded', [
+            'id' => 'pi_unrelated',
+            'customer' => 'cus_unrelated',
+            'payment_method' => 'pm_unrelated',
+            'metadata' => [],
+            'customer_details' => ['email' => 'unrelated@example.test'],
+        ], 'evt_unrelated_authorization'),
+    );
+
+    expect(StripePaymentAuthorization::query()->count())->toBe(0);
+});
+
 test('stripe full and partial refunds are idempotent', function () {
     $api = enableStripe();
     $staff = $this->createStaff();
@@ -700,6 +732,31 @@ test('stripe full and partial refunds are idempotent', function () {
     $full = app(RecordRefund::class)->handle($payment->fresh(), $staff, 1500, 'remainder');
     expect($full->status)->toBe(RefundStatus::Completed)
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Refunded);
+});
+
+test('stripe pending refund responses stay pending for reconciliation', function () {
+    $api = enableStripe();
+    $api->refundStatus = 'pending';
+    $payment = placeStripeOrder();
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'stripe',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'stripe-pending-refund-1',
+    );
+    $api->markPaid((string) $attempt->external_id);
+    $session = $api->sessionForIntent((string) $attempt->external_id);
+    app(HandlePaymentWebhook::class)->handle(
+        'stripe',
+        stripeSignedRequest('checkout.session.completed', $session, 'evt_pending_refund'),
+    );
+
+    $refund = app(RecordRefund::class)->handle($payment->fresh(), $this->createStaff(), $payment->amount, 'Pending response');
+
+    expect($refund->status)->toBe(RefundStatus::Pending)
+        ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
+        ->and($payment->fresh()->reconciliation_meta['reason'] ?? null)->toBe('provider_refund_outcome_unknown');
 });
 
 test('malformed stripe refund responses stay pending for reconciliation', function () {

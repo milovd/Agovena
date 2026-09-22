@@ -59,6 +59,8 @@ final class FakeStripeApi implements StripeApi
 
     public bool $malformedRefund = false;
 
+    public string $refundStatus = 'succeeded';
+
     public bool $failCancel = false;
 
     public bool $unauthorized = false;
@@ -203,7 +205,7 @@ final class FakeStripeApi implements StripeApi
             'id' => $this->malformedRefund ? '' : 're_test_'.$this->refundCalls,
             'payment_intent' => $paymentIntentId,
             'amount' => $amount,
-            'status' => 'succeeded',
+            'status' => $this->refundStatus,
         ];
     }
 
