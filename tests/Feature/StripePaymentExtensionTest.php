@@ -364,6 +364,19 @@ test('stripe settings reuses cached methods and health state when reopened', fun
         ->and($component->get('settingsConnectionCached'))->toBeTrue();
 });
 
+test('stripe settings rediscover methods after the cache ttl expires', function () {
+    $api = enableStripe();
+    $gateway = app(StripePaymentGateway::class);
+
+    $gateway->configurableCheckoutMethods();
+    expect($api->paymentMethodConfigurationCalls)->toBe(1);
+
+    $this->travelTo(now()->addHours(2));
+    $gateway->configurableCheckoutMethods();
+
+    expect($api->paymentMethodConfigurationCalls)->toBe(2);
+});
+
 test('stripe settings refresh bypasses the cached provider snapshot', function () {
     $api = enableStripe();
     $staff = $this->createStaff();

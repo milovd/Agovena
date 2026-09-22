@@ -70,6 +70,13 @@ final class PaymentMethodDiscoveryCache
             return null;
         }
 
+        $storedAt = $value['stored_at'] ?? null;
+        $storedTimestamp = is_string($storedAt) ? strtotime($storedAt) : false;
+        $ttl = max(60, (int) config('agovena.payments.payment_method_discovery_ttl', 3600));
+        if ($storedTimestamp === false || max(0, now()->timestamp - $storedTimestamp) >= $ttl) {
+            return null;
+        }
+
         if ($requireVerifiedConnection && ($value['connection_verified'] ?? false) !== true) {
             return null;
         }
@@ -100,11 +107,11 @@ final class PaymentMethodDiscoveryCache
      */
     public function put(string $extensionId, string $fingerprint, array $methods, bool $connectionVerified = true): void
     {
-        $this->cache->forever($this->key($extensionId, $fingerprint), [
+        $this->cache->put($this->key($extensionId, $fingerprint), [
             'methods' => $methods,
             'connection_verified' => $connectionVerified,
             'stored_at' => now()->toIso8601String(),
-        ]);
+        ], max(60, (int) config('agovena.payments.payment_method_discovery_ttl', 3600)));
     }
 
     public function forget(string $extensionId, string $fingerprint): void

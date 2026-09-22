@@ -104,6 +104,39 @@ test('mollie credentials are encrypted and never redisplayed', function () {
         ->and($settings->isConfigured('mollie', 'api_key'))->toBeTrue();
 });
 
+test('mollie payment methods are filtered by the billing country', function () {
+    enableMollie();
+
+    $methodsForBelgium = collect(app(AvailablePaymentMethods::class)->options('BE'))->keyBy('id');
+    $methodsForTheNetherlands = collect(app(AvailablePaymentMethods::class)->options('NL'))->keyBy('id');
+
+    expect($methodsForBelgium->has('mollie:ideal'))->toBeFalse()
+        ->and($methodsForBelgium->has('mollie:bancontact'))->toBeTrue()
+        ->and($methodsForBelgium['mollie:bancontact']['metadata']['customer_countries'])->toBe(['BE'])
+        ->and($methodsForTheNetherlands->has('mollie:ideal'))->toBeTrue()
+        ->and($methodsForTheNetherlands['mollie:ideal']['metadata']['customer_countries'])->toBe(['NL']);
+});
+
+test('mollie rejects a payment method that is unavailable in the billing country', function () {
+    enableMollie();
+
+    $product = Product::factory()->active()->create(['price_amount' => 2500]);
+    app(CartService::class)->add($product->id, 1);
+
+    expect(fn () => app(PlaceOrder::class)->handle([
+        'customer_name' => 'Belgian Buyer',
+        'customer_email' => 'belgian-buyer@example.test',
+        'payment_method' => 'mollie:ideal',
+        'billing' => AddressData::fromArray([
+            'name' => 'Belgian Buyer',
+            'line1' => 'Rue de la Loi 1',
+            'city' => 'Brussels',
+            'postal_code' => '1000',
+            'country' => 'BE',
+        ]),
+    ]))->toThrow(ValidationException::class);
+});
+
 test('disabled mollie is unavailable at checkout', function () {
     enableMollie();
     app(ExtensionManager::class)->disable('mollie');
