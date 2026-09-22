@@ -184,6 +184,30 @@ test('verified paypal webhook marks payment paid', function () {
         ->and(PaymentWebhookEvent::query()->count())->toBe(1);
 });
 
+test('approved paypal webhook captures the order before marking it paid', function () {
+    $api = enablePayPal();
+    $payment = placePayPalOrder();
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paypal:paypal',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paypal-approved-capture',
+    );
+
+    app(HandlePaymentWebhook::class)->handle(
+        'paypal',
+        paypalSignedRequest('CHECKOUT.ORDER.APPROVED', [
+            'id' => (string) $attempt->external_id,
+            'status' => 'APPROVED',
+        ], 'WH-TEST-EVT-APPROVED'),
+    );
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($api->captureCalls)->toBe(1)
+        ->and($api->captureIdempotencyKeys)->toBe(['WH-TEST-EVT-APPROVED']);
+});
+
 test('malformed paypal refund responses stay pending for reconciliation', function () {
     $api = enablePayPal();
     $payment = placePayPalOrder();

@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Agovena\Extensions\Stripe\StripeApi;
 use Agovena\Extensions\Stripe\StripePaymentAuthorization;
 use Agovena\Extensions\Stripe\StripePaymentGateway;
+use Agovena\Extensions\Stripe\StripeStatusMapper;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -282,6 +283,37 @@ test('signed stripe webhook paid confirms order and stores reusable authorizatio
         ->and($attempt->fresh()->status)->toBe(PaymentAttemptStatus::Succeeded)
         ->and(StripePaymentAuthorization::query()->where('customer_email', 'stripe-buyer@example.test')->value('payment_method_id'))
         ->toBe('pm_test');
+});
+
+test('stripe checkout webhook retrieves the payment intent when the session omits the payment method', function () {
+    $api = enableStripe();
+    $payment = placeStripeOrder();
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'stripe',
+        'https://example.test/return',
+        'https://example.test/cancel',
+    );
+    $api->markPaid((string) $attempt->external_id);
+    $session = $api->sessionForIntent((string) $attempt->external_id);
+    expect($session)->not->toBeNull();
+    unset($session['payment_method'], $session['customer']);
+
+    app(HandlePaymentWebhook::class)->handle(
+        'stripe',
+        stripeSignedRequest('checkout.session.completed', $session, 'evt_paid_without_method_1'),
+    );
+
+    expect(StripePaymentAuthorization::query()->where('customer_email', 'stripe-buyer@example.test')->value('payment_method_id'))
+        ->toBe('pm_test');
+});
+
+test('stripe checkout session expiry maps to expired', function () {
+    expect(StripeStatusMapper::fromEventType('checkout.session.expired', [
+        'id' => 'cs_expired',
+        'status' => 'expired',
+        'payment_status' => 'unpaid',
+    ]))->toBe(PaymentStatus::Expired);
 });
 
 test('invalid stripe webhook signatures are rejected', function () {

@@ -222,7 +222,7 @@ test('tebex signed completed webhook completes a matching payment', function ():
         'id' => 'evt_tebex_test',
         'type' => 'payment.completed',
         'subject' => [
-            'transaction_id' => $attempt->external_id,
+            'transaction_id' => 'txn_live_tebex',
             'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
             'products' => [['id' => 12345, 'quantity' => 1]],
             'custom' => ['order_id' => (string) $payment->order_id, 'payment_id' => (string) $payment->id],
@@ -240,5 +240,6 @@ test('tebex signed completed webhook completes a matching payment', function ():
         $body,
     ));
 
-    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid);
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($attempt->fresh()->external_id)->toBe('txn_live_tebex');
 });

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\PaymentGateway;
+use App\Agovena\Payments\Contracts\ResolvesWebhookAttempts;
 use App\Agovena\Payments\Contracts\ValidatesWebhookPayload;
 use App\Agovena\Security\SensitiveDataRedactor;
 use App\Enums\PaymentStatus;
@@ -122,11 +123,15 @@ final class HandlePaymentWebhook
                     return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
                 }
 
-                $blocked = false;
-                $attempt = PaymentAttempt::query()
-                    ->where('gateway_id', $gatewayId)
-                    ->where('external_id', $payload->externalPaymentId)
-                    ->first();
+                $attempt = $this->findAttempt($gatewayId, $gateway, $payload);
+                if ($attempt !== null && $attempt->external_id !== $payload->externalPaymentId) {
+                    $previousExternalId = $attempt->external_id;
+                    $meta = is_array($attempt->response_meta) ? $attempt->response_meta : [];
+                    $meta['initial_external_id'] ??= $previousExternalId;
+                    $attempt->external_id = $payload->externalPaymentId;
+                    $attempt->response_meta = $meta;
+                    $attempt->save();
+                }
 
                 if ($attempt !== null && $gateway instanceof ValidatesWebhookPayload && ! $gateway->validateWebhookPayload($attempt, $payload)) {
                     $locked->processing_status = 'ignored';
@@ -192,16 +197,27 @@ final class HandlePaymentWebhook
 
         $attempt = $payload->externalPaymentId === null || $payload->externalPaymentId === ''
             ? null
-            : PaymentAttempt::query()
-                ->where('gateway_id', $gatewayId)
-                ->where('external_id', $payload->externalPaymentId)
-                ->first();
+            : $this->findAttempt($gatewayId, $gateway, $payload);
 
         $processed = $attempt === null
             ? $process()
             : $this->lifecycleLock->run($attempt->order_id, $process);
 
         return new WebhookHandleResult($processed['event'], duplicate: $processed['duplicate']);
+    }
+
+    private function findAttempt(string $gatewayId, PaymentGateway $gateway, WebhookPayload $payload): ?PaymentAttempt
+    {
+        $attempt = PaymentAttempt::query()
+            ->where('gateway_id', $gatewayId)
+            ->where('external_id', $payload->externalPaymentId)
+            ->first();
+
+        if ($attempt !== null || ! $gateway instanceof ResolvesWebhookAttempts) {
+            return $attempt;
+        }
+
+        return $gateway->resolveWebhookAttempt($payload);
     }
 
     /**

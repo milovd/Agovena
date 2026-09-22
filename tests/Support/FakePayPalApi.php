@@ -19,6 +19,11 @@ final class FakePayPalApi implements PayPalApi
 
     public int $refundCalls = 0;
 
+    public int $captureCalls = 0;
+
+    /** @var list<string|null> */
+    public array $captureIdempotencyKeys = [];
+
     public int $pingCalls = 0;
 
     public bool $failCreate = false;
@@ -84,7 +89,8 @@ final class FakePayPalApi implements PayPalApi
     public function captureOrder(string $id, ?string $idempotencyKey = null): array
     {
         $this->guard();
-        unset($idempotencyKey);
+        $this->captureCalls++;
+        $this->captureIdempotencyKeys[] = $idempotencyKey;
         $order = $this->getOrder($id);
         $order['status'] = 'COMPLETED';
         $order['purchase_units'][0]['payments']['captures'][0] = [
