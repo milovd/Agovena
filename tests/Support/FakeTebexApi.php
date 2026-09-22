@@ -5,13 +5,26 @@ declare(strict_types=1);
 namespace Tests\Support;
 
 use Agovena\Extensions\Tebex\TebexApi;
+use Agovena\Extensions\Tebex\TebexConnectionChecker;
 use Agovena\Extensions\Tebex\TebexProviderException;
 
-final class FakeTebexApi implements TebexApi
+final class FakeTebexApi implements TebexApi, TebexConnectionChecker
 {
     public int $basketCalls = 0;
 
     public int $addPackageCalls = 0;
+
+    public int $pingCalls = 0;
+
+    public bool $pingFails = false;
+
+    public function ping(): void
+    {
+        $this->pingCalls++;
+        if ($this->pingFails) {
+            throw TebexProviderException::failed('tebex::messages.errors.request_failed');
+        }
+    }
 
     /** @var list<string|null> */
     public array $addPackageIdempotencyKeys = [];

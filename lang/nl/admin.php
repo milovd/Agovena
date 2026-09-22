@@ -1515,6 +1515,7 @@ return [
         'settings_methods_not_loaded' => 'Betaalmethoden worden automatisch geladen zodra de vereiste credentials beschikbaar zijn.',
         'settings_credentials_required' => 'Vul alle vereiste providercredentials in om betaalmethoden te laden.',
         'settings_connection_ok' => 'De verbinding werkt. :count betaalmethoden geladen.',
+        'settings_connection_ok_without_methods' => 'De verbinding werkt. Deze provider gebruikt een vaste hosted checkoutmethode.',
         'settings_connection_failed' => 'Er kon geen verbinding met de provider worden gemaakt. Controleer de credentials en probeer opnieuw.',
         'settings_refresh_loading' => 'Vernieuwen...',
         'settings_intro' => 'Vul de providerinstellingen in. Betaalmethoden worden automatisch geladen zodra de verbinding beschikbaar is.',

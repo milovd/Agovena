@@ -80,3 +80,27 @@ it('creates Tebex baskets and adds mapped packages', function (): void {
             && $request->data() === ['package' => ['id' => '12345'], 'qty' => 2];
     });
 });
+
+it('probes the Paddle API with a read-only product request', function (): void {
+    Http::fake([
+        'https://sandbox-api.paddle.com/products?per_page=1' => Http::response(['data' => []]),
+    ]);
+
+    (new HttpPaddleApi('[REDACTED]', sandbox: true))->ping();
+
+    Http::assertSent(fn (HttpRequest $request): bool => $request->method() === 'GET'
+        && $request->url() === 'https://sandbox-api.paddle.com/products?per_page=1'
+        && $request->header('Paddle-Version') === ['1']);
+});
+
+it('probes Tebex credentials without creating a basket', function (): void {
+    Http::fake([
+        'https://checkout.tebex.io/api/payments/tbx-0000000000000000000000000000000000000000?type=txn_id' => Http::response([], 404),
+    ]);
+
+    (new HttpTebexApi('project-test', '[REDACTED]'))->ping();
+
+    Http::assertSent(fn (HttpRequest $request): bool => $request->method() === 'GET'
+        && str_contains($request->url(), '/payments/tbx-0000000000000000000000000000000000000000')
+        && str_contains($request->url(), 'type=txn_id'));
+});

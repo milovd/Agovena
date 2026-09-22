@@ -127,8 +127,8 @@ final class FakePayPalApi implements PayPalApi
 
     public function ping(): void
     {
-        $this->guard();
         $this->pingCalls++;
+        $this->guard();
     }
 
     private function guard(): void

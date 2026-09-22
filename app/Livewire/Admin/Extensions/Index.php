@@ -150,7 +150,7 @@ final class Index extends Component
         }
 
         if ($this->settingsCredentialsReady($status['manifest']->settings, $settings)) {
-            $this->discoverPaymentMethods($extensionId, $status['manifest']->settings, $extensions, $settings, $gateways);
+            $this->checkSettingsConnection($extensionId, $status['manifest']->settings, $extensions, $settings, $gateways);
         }
     }
 
@@ -234,7 +234,7 @@ final class Index extends Component
         $manifest = $extensions->manifest($this->settingsExtensionId);
         $settings = app(ExtensionSettingsRepository::class);
         if ($manifest !== null && $this->settingsCredentialsReady($manifest->settings, $settings)) {
-            $this->discoverPaymentMethods(
+            $this->checkSettingsConnection(
                 $this->settingsExtensionId,
                 $manifest->settings,
                 $extensions,
@@ -311,13 +311,13 @@ final class Index extends Component
             return;
         }
 
-        $this->discoverPaymentMethods($extensionId, $manifest->settings, $extensions, $settings, $gateways);
+        $this->checkSettingsConnection($extensionId, $manifest->settings, $extensions, $settings, $gateways);
     }
 
     /**
      * @param  list<array<string, mixed>>  $definitions
      */
-    private function discoverPaymentMethods(
+    private function checkSettingsConnection(
         string $extensionId,
         array $definitions,
         ExtensionManager $extensions,
@@ -327,7 +327,8 @@ final class Index extends Component
         $context = $extensions->context($extensionId);
         $callback = $context?->healthCallback();
         $gateway = $gateways->get($extensionId);
-        if ($callback === null || ! $gateway instanceof ConfiguresCheckoutMethods) {
+        $hasMethodSettings = $this->settingsHasPaymentMethods($definitions);
+        if ($callback === null || ($hasMethodSettings && ! $gateway instanceof ConfiguresCheckoutMethods)) {
             $this->settingsConnectionState = 'error';
             $this->settingsConnectionMessage = __('admin.extensions.health.unavailable');
 
@@ -343,6 +344,13 @@ final class Index extends Component
             if (! $result->ok) {
                 $this->settingsConnectionState = 'error';
                 $this->settingsConnectionMessage = __('admin.extensions.health.fail', ['message' => $result->message]);
+
+                return;
+            }
+
+            if (! $hasMethodSettings) {
+                $this->settingsConnectionState = 'success';
+                $this->settingsConnectionMessage = __('admin.extensions.settings_connection_ok_without_methods');
 
                 return;
             }
@@ -377,27 +385,52 @@ final class Index extends Component
     /**
      * @param  list<array<string, mixed>>  $definitions
      */
+    private function settingsHasPaymentMethods(array $definitions): bool
+    {
+        foreach ($definitions as $definition) {
+            if (($definition['type'] ?? 'string') === 'payment_methods') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $definitions
+     */
     private function settingsCredentialsReady(array $definitions, ExtensionSettingsRepository $settings): bool
     {
-        $requiredSecrets = array_values(array_filter(
+        $connectionSettings = array_values(array_filter(
             $definitions,
-            static fn (array $definition): bool => (bool) ($definition['secret'] ?? false)
-                && (bool) ($definition['required'] ?? false),
+            static fn (array $definition): bool => (bool) ($definition['connection'] ?? false),
         ));
-        if ($requiredSecrets === []) {
-            $requiredSecrets = array_values(array_filter(
+        if ($connectionSettings === []) {
+            $connectionSettings = array_values(array_filter(
+                $definitions,
+                static fn (array $definition): bool => (bool) ($definition['secret'] ?? false)
+                    && (bool) ($definition['required'] ?? false),
+            ));
+        }
+        if ($connectionSettings === []) {
+            $connectionSettings = array_values(array_filter(
                 $definitions,
                 static fn (array $definition): bool => (bool) ($definition['secret'] ?? false),
             ));
         }
 
-        foreach ($requiredSecrets as $definition) {
+        foreach ($connectionSettings as $definition) {
             $key = (string) $definition['key'];
             $value = $this->settingsForm[$key] ?? null;
             if (is_string($value) && trim($value) !== '') {
                 continue;
             }
             if (($this->secretConfigured[$key] ?? false) && $settings->isConfigured($this->settingsExtensionId ?? '', $key)) {
+                continue;
+            }
+            if (! ($definition['secret'] ?? false)
+                && is_scalar($settings->get($this->settingsExtensionId ?? '', $key, null))
+                && trim((string) $settings->get($this->settingsExtensionId ?? '', $key, '')) !== '') {
                 continue;
             }
 

@@ -18,6 +18,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
+use App\Livewire\Admin\Extensions\Index;
 use App\Models\ExtensionSetting;
 use App\Models\Payment;
 use App\Models\PaymentWebhookEvent;
@@ -25,6 +26,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Tests\Support\CreatesStaff;
 use Tests\Support\FakePayPalApi;
@@ -274,4 +276,69 @@ test('paypal health check validates credentials without exposing secrets', funct
 
     expect($health->ok)->toBeTrue()
         ->and($health->message)->not->toContain('test-client-secret-not-real');
+});
+
+test('paypal settings automatically checks the connection without method discovery', function () {
+    $api = enablePayPal();
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'paypal')
+        ->assertSet('settingsMethodsLoaded', false)
+        ->assertSet('settingsMethodOptions', [])
+        ->assertSet('settingsConnectionState', 'success')
+        ->assertSet('settingsConnectionMessage', __('admin.extensions.settings_connection_ok_without_methods'))
+        ->assertDontSee('Refresh payment methods');
+
+    expect($api->pingCalls)->toBe(1);
+});
+
+test('paypal settings automatically checks after the final credential is entered', function () {
+    app(ExtensionManager::class)->discover();
+    $api = new FakePayPalApi;
+    app()->instance(PayPalApi::class, $api);
+    installAndEnableExtension('paypal');
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->forget('paypal', 'client_id');
+    $settings->forget('paypal', 'client_secret');
+    $settings->forget('paypal', 'webhook_id');
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'paypal')
+        ->set('settingsForm.client_id', 'test-client-id-not-real')
+        ->set('settingsForm.webhook_id', 'WH-TEST-WEBHOOK-ID')
+        ->set('settingsForm.client_secret', 'test-client-secret-not-real')
+        ->assertSet('settingsConnectionState', 'success')
+        ->assertSet('settingsConnectionMessage', __('admin.extensions.settings_connection_ok_without_methods'));
+
+    expect($api->pingCalls)->toBe(1)
+        ->and($settings->isConfigured('paypal', 'client_secret'))->toBeFalse();
+});
+
+test('paypal settings reports a failed connection without persisting entered credentials', function () {
+    app(ExtensionManager::class)->discover();
+    $api = new FakePayPalApi;
+    $api->unauthorized = true;
+    app()->instance(PayPalApi::class, $api);
+    installAndEnableExtension('paypal');
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->forget('paypal', 'client_id');
+    $settings->forget('paypal', 'client_secret');
+    $settings->forget('paypal', 'webhook_id');
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'paypal')
+        ->set('settingsForm.client_id', 'test-client-id-not-real')
+        ->set('settingsForm.webhook_id', 'WH-TEST-WEBHOOK-ID')
+        ->set('settingsForm.client_secret', 'test-client-secret-not-real')
+        ->assertSet('settingsConnectionState', 'error')
+        ->assertSet('settingsMethodOptions', []);
+
+    expect($api->pingCalls)->toBe(1)
+        ->and($settings->isConfigured('paypal', 'client_secret'))->toBeFalse();
 });
