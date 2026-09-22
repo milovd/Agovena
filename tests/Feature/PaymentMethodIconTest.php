@@ -37,3 +37,13 @@ test('credit card asset is a transparent Agovena illustration', function (): voi
     Assert::assertStringNotContainsString('fill="#fff"', $svg);
     Assert::assertStringNotContainsString('fill="white"', $svg);
 });
+
+test('checkout payment icons keep their transparent surface', function (): void {
+    $css = file_get_contents(base_path('themes/default/resources/css/components/_checkout.css'));
+
+    Assert::assertIsString($css);
+    Assert::assertMatchesRegularExpression(
+        '/\.store-choice__icon\s*\{[^}]*padding:\s*0;[^}]*background:\s*transparent;[^}]*\}/s',
+        $css,
+    );
+});
