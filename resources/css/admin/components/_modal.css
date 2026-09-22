@@ -204,18 +204,6 @@
   z-index: 0;
 }
 
-.ag-payment-method__provider-icon {
-  position: relative;
-  z-index: 1;
-  inset: auto;
-  display: block;
-  width: auto;
-  max-width: 2.25rem;
-  height: 1.5rem;
-  object-fit: contain;
-  transform: none;
-}
-
 .ag-payment-method__icon img,
 .ag-payment-method__icon .ag-icon {
   display: block;

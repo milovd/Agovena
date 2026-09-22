@@ -277,9 +277,12 @@
                             <label class="store-choice store-choice--row" wire:key="pay-{{ $option['id'] }}">
                                 <input type="radio" wire:model.live="payment_method" value="{{ $option['id'] }}">
                                 <span class="store-choice__copy">
-                                    @if (! empty($option['icon']))
-                                        <img class="store-choice__icon" src="{{ $option['icon'] }}" alt="" aria-hidden="true">
-                                    @endif
+                                    <x-ag.payment-method-icon
+                                        :icon="$option['icon'] ?? null"
+                                        :method-id="$option['id'] ?? null"
+                                        :size="36"
+                                        class="store-choice__icon"
+                                    />
                                     <strong>{{ __($option['label']) }}</strong>
                                 </span>
                             </label>

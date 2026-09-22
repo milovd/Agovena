@@ -119,21 +119,16 @@
                                                     @php
                                                         $methodId = (string) $method['id'];
                                                         $methodIconValue = is_string($method['icon'] ?? null) ? $method['icon'] : '';
-                                                        $methodIcon = str_starts_with($methodIconValue, 'ag:')
-                                                            ? substr($methodIconValue, 3)
-                                                            : null;
-                                                        $methodRemoteIcon = filter_var($methodIconValue, FILTER_VALIDATE_URL) ? $methodIconValue : null;
                                                     @endphp
                                                     <label class="ag-payment-method" wire:key="settings-method-{{ $methodId }}">
                                                         <input class="ag-payment-method__input" type="checkbox" value="{{ $methodId }}" wire:model.live="settingsMethodSelections">
                                                         <span class="ag-payment-method__icon" aria-hidden="true">
-                                                            @if ($methodRemoteIcon)
-                                                                <img class="ag-payment-method__provider-icon" src="{{ $methodRemoteIcon }}" alt="" width="32" height="24" loading="lazy">
-                                                            @elseif ($methodIcon)
-                                                                <x-ag.icon :name="$methodIcon" :size="32" class="ag-payment-method__svg" />
-                                                            @else
-                                                                <x-ag.icon name="payment-bank" :size="20" class="ag-payment-method__svg" />
-                                                            @endif
+                                                            <x-ag.payment-method-icon
+                                                                :icon="$methodIconValue"
+                                                                :method-id="$methodId"
+                                                                :size="32"
+                                                                class="ag-payment-method__svg"
+                                                            />
                                                         </span>
                                                         <span class="ag-payment-method__label">{{ __($method['label']) }}</span>
                                                     </label>
