@@ -66,6 +66,11 @@
                 <div class="ag-modal-settings__header">
                     <h3 id="extension-settings-title" class="ag-modal__title">{{ __('admin.extensions.settings_title', ['extension' => $settingsExtensionId]) }}</h3>
                     <p class="ag-modal-settings__intro">{{ __('admin.extensions.settings_intro') }}</p>
+                    @if ($settingsConnectionState === 'success')
+                        <p class="ag-alert ag-alert--success ag-modal-settings__connection" role="status">{{ $settingsConnectionMessage }}</p>
+                    @elseif ($settingsConnectionState === 'error')
+                        <p class="ag-alert ag-alert--danger ag-modal-settings__connection" role="alert">{{ $settingsConnectionMessage }}</p>
+                    @endif
                 </div>
                 <form wire:submit.prevent="saveSettings" class="ag-modal-settings__form">
                     <div class="ag-modal-settings__body">
@@ -89,29 +94,39 @@
                                     }
                                 @endphp
                                 <div class="ag-field{{ $settingType === 'payment_methods' ? ' ag-modal-settings__field--methods' : '' }}">
-                                    <label class="ag-field__label" for="ext-setting-{{ $key }}">{{ __($settingLabel) }}</label>
                                     @if ($settingType === 'payment_methods')
-                                        @if (! $settingsMethodTested)
-                                            <p class="ag-field__hint">{{ __('admin.extensions.settings_methods_not_tested') }}</p>
+                                        <div class="ag-modal-settings__methods-heading">
+                                            <div>
+                                                <label class="ag-field__label" for="ext-setting-{{ $key }}">{{ __($settingLabel) }}</label>
+                                                @if (! $settingsMethodsLoaded)
+                                                    <p class="ag-field__hint">{{ __('admin.extensions.settings_methods_not_loaded') }}</p>
+                                                @endif
+                                            </div>
+                                            <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="refreshPaymentMethods" wire:loading.attr="disabled" wire:target="refreshPaymentMethods">
+                                                <x-ag.icon name="repeat" :size="16" />
+                                                <span wire:loading.remove wire:target="refreshPaymentMethods">{{ __('admin.extensions.actions.refresh_methods') }}</span>
+                                                <span wire:loading wire:target="refreshPaymentMethods">{{ __('admin.extensions.settings_refresh_loading') }}</span>
+                                            </button>
+                                        </div>
+                                        @if (! $settingsMethodsLoaded)
+                                            <p class="ag-field__hint">{{ __('admin.extensions.settings_credentials_required') }}</p>
                                         @else
                                             <div class="ag-payment-methods">
                                                 @forelse ($settingsMethodOptions as $method)
                                                     @php
                                                         $methodId = (string) $method['id'];
-                                                        $methodIcon = match (true) {
-                                                            in_array($methodId, ['card'], true) => 'credit-card',
-                                                            in_array($methodId, ['bancontact', 'blik', 'eps', 'ideal', 'pay_by_bank', 'sepa_debit', 'us_bank_account'], true) => 'landmark',
-                                                            in_array($methodId, ['cashapp', 'klarna', 'link', 'paypal'], true) => 'wallet',
-                                                            default => 'banknote',
-                                                        };
+                                                        $methodIconValue = is_string($method['icon'] ?? null) ? $method['icon'] : '';
+                                                        $methodIcon = str_starts_with($methodIconValue, 'ag:')
+                                                            ? substr($methodIconValue, 3)
+                                                            : 'payment-bank';
+                                                        $methodRemoteIcon = filter_var($methodIconValue, FILTER_VALIDATE_URL) ? $methodIconValue : null;
                                                     @endphp
                                                     <label class="ag-payment-method" wire:key="settings-method-{{ $methodId }}">
                                                         <input class="ag-payment-method__input" type="checkbox" value="{{ $methodId }}" wire:model.live="settingsMethodSelections">
                                                         <span class="ag-payment-method__icon" aria-hidden="true">
-                                                            @if ($method['icon'])
-                                                                <img src="{{ $method['icon'] }}" alt="" width="24" height="24" loading="lazy">
-                                                            @else
-                                                                <x-ag.icon :name="$methodIcon" :size="20" class="ag-payment-method__svg" />
+                                                            <x-ag.icon :name="$methodIcon" :size="20" class="ag-payment-method__svg" />
+                                                            @if ($methodRemoteIcon)
+                                                                <img class="ag-payment-method__provider-icon" src="{{ $methodRemoteIcon }}" alt="" width="24" height="24" loading="lazy">
                                                             @endif
                                                         </span>
                                                         <span class="ag-payment-method__label">{{ __($method['label']) }}</span>
@@ -122,18 +137,21 @@
                                             </div>
                                         @endif
                                     @elseif ($settingType === 'boolean')
+                                        <label class="ag-field__label" for="ext-setting-{{ $key }}">{{ __($settingLabel) }}</label>
                                         <label class="ag-check">
                                             <input id="ext-setting-{{ $key }}" type="checkbox" wire:model="settingsForm.{{ $key }}" value="1">
                                             <span>{{ __($settingLabel) }}</span>
                                         </label>
                                     @elseif ($settingType === 'text')
+                                        <label class="ag-field__label" for="ext-setting-{{ $key }}">{{ __($settingLabel) }}</label>
                                         <textarea id="ext-setting-{{ $key }}" class="ag-input" rows="4" wire:model="settingsForm.{{ $key }}"></textarea>
                                     @else
+                                        <label class="ag-field__label" for="ext-setting-{{ $key }}">{{ __($settingLabel) }}</label>
                                         <input
                                             id="ext-setting-{{ $key }}"
                                             class="ag-input"
                                             type="{{ $settingSecret ? 'password' : 'text' }}"
-                                            wire:model="settingsForm.{{ $key }}"
+                                            wire:model{{ $settingSecret ? '.live.debounce.500ms' : '' }}="settingsForm.{{ $key }}"
                                             autocomplete="off"
                                             placeholder="{{ ($secretConfigured[$key] ?? false) ? __('admin.extensions.secret_placeholder') : '' }}"
                                         >
@@ -150,13 +168,7 @@
                     </div>
                     <div class="ag-modal__actions ag-modal-settings__actions">
                         <button type="button" class="ag-btn ag-btn--ghost" wire:click="closeSettings">{{ __('common.cancel') }}</button>
-                        @if ($settingsHasHealth)
-                            <button type="button" class="ag-btn ag-btn--secondary" wire:click="testConnection('{{ $settingsExtensionId }}')" wire:loading.attr="disabled" wire:target="testConnection">
-                                <span wire:loading.remove wire:target="testConnection">{{ __('admin.extensions.actions.health') }}</span>
-                                <span wire:loading wire:target="testConnection">{{ __('admin.extensions.settings_test_loading') }}</span>
-                            </button>
-                        @endif
-                        <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="testConnection">{{ __('common.save') }}</button>
+                        <button type="submit" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="saveSettings">{{ __('common.save') }}</button>
                     </div>
                 </form>
             </div>

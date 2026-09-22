@@ -456,7 +456,7 @@ test('mollie secret is not rendered in the extensions settings UI', function () 
         ->assertSet('settingsForm.api_key', '');
 });
 
-test('mollie settings discover all provider methods and persist selected methods', function () {
+test('mollie settings automatically discovers all provider methods when opened', function () {
     enableMollie();
     app(ExtensionSettingsRepository::class)->set('mollie', 'enabled_methods', 'ideal,creditcard');
     $staff = $this->createStaff();
@@ -464,20 +464,20 @@ test('mollie settings discover all provider methods and persist selected methods
     Livewire::actingAs($staff)
         ->test(Index::class)
         ->call('openSettings', 'mollie')
-        ->assertSet('settingsMethodOptions', [])
-        ->assertSet('settingsMethodSelections', [])
-        ->call('testConnection', 'mollie')
-        ->assertSet('settingsMethodTested', true)
+        ->assertSet('settingsMethodsLoaded', true)
+        ->assertSet('settingsConnectionState', 'success')
         ->assertSet('settingsMethodSelections', ['ideal', 'creditcard'])
         ->assertSet('settingsMethodOptions.0.icon', 'https://www.mollie.com/external/icons/payment-methods/ideal.svg')
         ->assertSee('ag-payment-method__icon')
+        ->assertDontSee('wire:click="testConnection')
+        ->assertSee('Refresh payment methods')
         ->set('settingsMethodSelections', ['ideal', 'creditcard'])
         ->call('saveSettings');
 
     expect(app(ExtensionSettingsRepository::class)->get('mollie', 'enabled_methods'))->toBe('ideal,creditcard');
 });
 
-test('mollie settings test connection discovers methods before selection can be saved', function () {
+test('mollie settings automatically discovers methods after the api key is entered', function () {
     app(ExtensionManager::class)->discover();
     app()->instance(MollieApi::class, new FakeMollieApi);
     installAndEnableExtension('mollie');
@@ -492,18 +492,15 @@ test('mollie settings test connection discovers methods before selection can be 
         ->call('openSettings', 'mollie')
         ->assertSet('settingsMethodOptions', [])
         ->set('settingsForm.api_key', 'test_abcdefghijklmnopqrstuvwxyz123456')
-        ->call('testConnection', 'mollie')
-        ->assertSet('showingPasswordConfirmation', true);
+        ->assertSet('settingsMethodsLoaded', true)
+        ->assertSet('settingsConnectionState', 'success')
+        ->assertSet('settingsMethodSelections', ['ideal', 'bancontact', 'creditcard', 'paypal'])
+        ->assertSet('settingsMethodOptions.0.id', 'ideal');
 
     session([
         ConfirmsRecentPassword::SESSION_KEY => time(),
         ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
     ]);
-
-    $component
-        ->call('testConnection', 'mollie')
-        ->assertSet('settingsMethodSelections', ['ideal', 'bancontact', 'creditcard', 'paypal'])
-        ->assertSet('settingsMethodOptions.0.id', 'ideal');
 
     $component
         ->set('settingsMethodSelections', ['ideal', 'creditcard'])

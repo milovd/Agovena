@@ -50,9 +50,11 @@ final class Index extends Component
     /** @var list<string> */
     public array $settingsSecretKeys = [];
 
-    public bool $settingsHasHealth = false;
+    public bool $settingsMethodsLoaded = false;
 
-    public bool $settingsMethodTested = false;
+    public ?string $settingsConnectionState = null;
+
+    public string $settingsConnectionMessage = '';
 
     public function mount(): void
     {
@@ -101,7 +103,7 @@ final class Index extends Component
         }
     }
 
-    public function openSettings(string $extensionId, ExtensionManager $extensions, ExtensionSettingsRepository $settings): void
+    public function openSettings(string $extensionId, ExtensionManager $extensions, ExtensionSettingsRepository $settings, PaymentGatewayRegistry $gateways): void
     {
         $this->authorize('extensions.manage');
 
@@ -125,10 +127,9 @@ final class Index extends Component
         $this->settingsMethodSelections = [];
         $this->settingsStoredMethodSelections = [];
         $this->settingsSecretKeys = [];
-        $this->settingsHasHealth = false;
-        $this->settingsMethodTested = false;
-        $context = $extensions->context($extensionId);
-        $this->settingsHasHealth = $context?->healthCallback() !== null;
+        $this->settingsMethodsLoaded = false;
+        $this->settingsConnectionState = null;
+        $this->settingsConnectionMessage = '';
         foreach ($status['manifest']->settings as $definition) {
             $key = $definition['key'];
             $secret = (bool) ($definition['secret'] ?? false);
@@ -147,6 +148,10 @@ final class Index extends Component
             }
             $this->settingsForm[$key] = $secret ? '' : $current;
         }
+
+        if ($this->settingsCredentialsReady($status['manifest']->settings, $settings)) {
+            $this->discoverPaymentMethods($extensionId, $status['manifest']->settings, $extensions, $settings, $gateways);
+        }
     }
 
     public function closeSettings(): void
@@ -158,8 +163,9 @@ final class Index extends Component
         $this->settingsMethodSelections = [];
         $this->settingsStoredMethodSelections = [];
         $this->settingsSecretKeys = [];
-        $this->settingsHasHealth = false;
-        $this->settingsMethodTested = false;
+        $this->settingsMethodsLoaded = false;
+        $this->settingsConnectionState = null;
+        $this->settingsConnectionMessage = '';
     }
 
     public function saveSettings(ExtensionManager $extensions, ExtensionSettingsRepository $settings): void
@@ -186,8 +192,8 @@ final class Index extends Component
                 continue;
             }
             if (($definition['type'] ?? 'string') === 'payment_methods') {
-                if (! $this->settingsMethodTested || $this->settingsMethodOptions === []) {
-                    session()->flash('error', __('admin.extensions.settings_test_required'));
+                if (! $this->settingsMethodsLoaded || $this->settingsMethodOptions === []) {
+                    session()->flash('error', __('admin.extensions.settings_methods_unavailable'));
 
                     return;
                 }
@@ -209,13 +215,33 @@ final class Index extends Component
 
     public function updatedSettingsForm(mixed $value, string $key): void
     {
+        $key = str_contains($key, '.') ? substr($key, strrpos($key, '.') + 1) : $key;
         if (! in_array($key, $this->settingsSecretKeys, true)) {
             return;
         }
 
         $this->settingsMethodOptions = [];
         $this->settingsMethodSelections = [];
-        $this->settingsMethodTested = false;
+        $this->settingsMethodsLoaded = false;
+        $this->settingsConnectionState = null;
+        $this->settingsConnectionMessage = '';
+
+        if ($this->settingsExtensionId === null) {
+            return;
+        }
+
+        $extensions = app(ExtensionManager::class);
+        $manifest = $extensions->manifest($this->settingsExtensionId);
+        $settings = app(ExtensionSettingsRepository::class);
+        if ($manifest !== null && $this->settingsCredentialsReady($manifest->settings, $settings)) {
+            $this->discoverPaymentMethods(
+                $this->settingsExtensionId,
+                $manifest->settings,
+                $extensions,
+                $settings,
+                app(PaymentGatewayRegistry::class),
+            );
+        }
     }
 
     /**
@@ -256,61 +282,129 @@ final class Index extends Component
         }
     }
 
-    public function testConnection(string $extensionId, ExtensionManager $extensions, ExtensionSettingsRepository $settings, PaymentGatewayRegistry $gateways): void
+    public function refreshPaymentMethods(ExtensionManager $extensions, ExtensionSettingsRepository $settings, PaymentGatewayRegistry $gateways): void
     {
         $this->authorize('extensions.manage');
-        if ($this->settingsExtensionId !== $extensionId) {
+        if ($this->settingsExtensionId === null) {
             return;
         }
 
+        $extensionId = $this->settingsExtensionId;
         $manifest = $extensions->manifest($extensionId);
-        $context = $extensions->context($extensionId);
-        $callback = $context?->healthCallback();
-        if ($manifest === null || $callback === null) {
-            session()->flash('error', __('admin.extensions.health.unavailable'));
+        if ($manifest === null) {
+            $this->settingsConnectionState = 'error';
+            $this->settingsConnectionMessage = __('admin.extensions.health.unavailable');
 
-            return;
-        }
-
-        if ($this->settingsTouchSecrets($manifest->settings) && ! $this->requireRecentPassword('testConnection', ['extensionId' => $extensionId])) {
             return;
         }
 
         $this->settingsMethodOptions = [];
         $this->settingsMethodSelections = [];
-        $this->settingsMethodTested = false;
-        $snapshot = $settings->snapshot($extensionId);
-        $this->persistNonMethodSettings($extensionId, $manifest->settings, $settings);
+        $this->settingsMethodsLoaded = false;
+        $this->settingsConnectionState = null;
+        $this->settingsConnectionMessage = '';
 
-        /** @var HealthResult $result */
-        $result = $callback();
-        if (! $result->ok) {
-            $settings->restore($extensionId, $snapshot);
-            session()->flash('error', __('admin.extensions.health.fail', ['message' => $result->message]));
+        if (! $this->settingsCredentialsReady($manifest->settings, $settings)) {
+            $this->settingsConnectionState = 'error';
+            $this->settingsConnectionMessage = __('admin.extensions.settings_credentials_required');
 
             return;
         }
 
+        $this->discoverPaymentMethods($extensionId, $manifest->settings, $extensions, $settings, $gateways);
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $definitions
+     */
+    private function discoverPaymentMethods(
+        string $extensionId,
+        array $definitions,
+        ExtensionManager $extensions,
+        ExtensionSettingsRepository $settings,
+        PaymentGatewayRegistry $gateways,
+    ): void {
+        $context = $extensions->context($extensionId);
+        $callback = $context?->healthCallback();
         $gateway = $gateways->get($extensionId);
-        if ($gateway instanceof ConfiguresCheckoutMethods) {
+        if ($callback === null || ! $gateway instanceof ConfiguresCheckoutMethods) {
+            $this->settingsConnectionState = 'error';
+            $this->settingsConnectionMessage = __('admin.extensions.health.unavailable');
+
+            return;
+        }
+
+        $snapshot = $settings->snapshot($extensionId);
+        try {
+            $this->persistNonMethodSettings($extensionId, $definitions, $settings);
+
+            /** @var HealthResult $result */
+            $result = $callback();
+            if (! $result->ok) {
+                $this->settingsConnectionState = 'error';
+                $this->settingsConnectionMessage = __('admin.extensions.health.fail', ['message' => $result->message]);
+
+                return;
+            }
+
             $this->settingsMethodOptions = $gateway->configurableCheckoutMethods();
+            if ($this->settingsMethodOptions === []) {
+                $this->settingsConnectionState = 'error';
+                $this->settingsConnectionMessage = __('admin.extensions.settings_methods_unavailable');
+
+                return;
+            }
+
             $availableIds = array_column($this->settingsMethodOptions, 'id');
             $requested = $this->settingsMethodSelections !== []
                 ? $this->settingsMethodSelections
                 : $this->settingsStoredMethodSelections;
             $selected = array_values(array_intersect($requested, $availableIds));
             $this->settingsMethodSelections = $selected !== [] ? $selected : $availableIds;
+            $this->settingsMethodsLoaded = true;
+            $this->settingsConnectionState = 'success';
+            $this->settingsConnectionMessage = __('admin.extensions.settings_connection_ok', [
+                'count' => count($this->settingsMethodOptions),
+            ]);
+        } catch (\Throwable) {
+            $this->settingsConnectionState = 'error';
+            $this->settingsConnectionMessage = __('admin.extensions.settings_connection_failed');
+        } finally {
+            $settings->restore($extensionId, $snapshot);
+        }
+    }
 
-            if ($this->settingsMethodOptions === []) {
-                session()->flash('error', __('admin.extensions.settings_methods_unavailable'));
-
-                return;
-            }
-
-            $this->settingsMethodTested = true;
+    /**
+     * @param  list<array<string, mixed>>  $definitions
+     */
+    private function settingsCredentialsReady(array $definitions, ExtensionSettingsRepository $settings): bool
+    {
+        $requiredSecrets = array_values(array_filter(
+            $definitions,
+            static fn (array $definition): bool => (bool) ($definition['secret'] ?? false)
+                && (bool) ($definition['required'] ?? false),
+        ));
+        if ($requiredSecrets === []) {
+            $requiredSecrets = array_values(array_filter(
+                $definitions,
+                static fn (array $definition): bool => (bool) ($definition['secret'] ?? false),
+            ));
         }
 
-        session()->flash('status', __('admin.extensions.health.ok', ['message' => $result->message]));
+        foreach ($requiredSecrets as $definition) {
+            $key = (string) $definition['key'];
+            $value = $this->settingsForm[$key] ?? null;
+            if (is_string($value) && trim($value) !== '') {
+                continue;
+            }
+            if (($this->secretConfigured[$key] ?? false) && $settings->isConfigured($this->settingsExtensionId ?? '', $key)) {
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
     }
 
     /**

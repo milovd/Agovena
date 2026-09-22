@@ -175,7 +175,7 @@ test('stripe exposes provider-discovered methods and starts the selected method'
     $gateway = app(StripePaymentGateway::class);
 
     expect($gateway->configurableCheckoutMethods())->toContain(
-        ['id' => 'bancontact', 'label' => 'stripe::messages.methods.bancontact', 'icon' => null],
+        ['id' => 'bancontact', 'label' => 'stripe::messages.methods.bancontact', 'icon' => 'ag:payment-bancontact'],
     );
 
     $payment = placeStripeOrder();
@@ -201,7 +201,24 @@ test('stripe enabled methods are filtered in checkout', function () {
         ->not->toContain('stripe:ideal');
 });
 
-test('stripe settings test connection discovers methods before selection can be saved', function () {
+test('stripe settings automatically discovers methods when opened with saved credentials', function () {
+    enableStripe();
+    app(ExtensionSettingsRepository::class)->set('stripe', 'enabled_methods', 'card,bancontact');
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'stripe')
+        ->assertSet('settingsMethodsLoaded', true)
+        ->assertSet('settingsConnectionState', 'success')
+        ->assertSet('settingsMethodSelections', ['card', 'bancontact'])
+        ->assertSet('settingsMethodOptions.0.id', 'bancontact')
+        ->assertSet('settingsMethodOptions.0.icon', 'ag:payment-bancontact')
+        ->assertDontSee('wire:click="testConnection')
+        ->assertSee('Refresh payment methods');
+});
+
+test('stripe settings automatically discovers methods after the final credential is entered', function () {
     app(ExtensionManager::class)->discover();
     app()->instance(StripeApi::class, new FakeStripeApi);
     installAndEnableExtension('stripe');
@@ -216,8 +233,14 @@ test('stripe settings test connection discovers methods before selection can be 
         ->assertSet('settingsMethodOptions', [])
         ->set('settingsForm.secret_key', stripeSecretKey())
         ->set('settingsForm.webhook_secret', STRIPE_WEBHOOK_SECRET)
-        ->call('testConnection', 'stripe')
-        ->assertSet('showingPasswordConfirmation', true);
+        ->assertSet('settingsMethodsLoaded', true)
+        ->assertSet('settingsConnectionState', 'success')
+        ->assertSet('settingsMethodSelections', ['bancontact', 'card', 'ideal', 'klarna', 'paypal', 'sepa_debit'])
+        ->assertSet('settingsMethodOptions.0.id', 'bancontact')
+        ->assertSet('settingsMethodOptions.0.icon', 'ag:payment-bancontact')
+        ->assertSee('ag-payment-method__icon')
+        ->assertSee('ag-payment-method__svg')
+        ->assertDontSee('wire:click="testConnection');
 
     session([
         ConfirmsRecentPassword::SESSION_KEY => time(),
@@ -225,18 +248,50 @@ test('stripe settings test connection discovers methods before selection can be 
     ]);
 
     $component
-        ->call('testConnection', 'stripe')
-        ->assertSet('settingsMethodTested', true)
-        ->assertSet('settingsMethodSelections', ['bancontact', 'card', 'ideal', 'klarna', 'paypal', 'sepa_debit'])
-        ->assertSet('settingsMethodOptions.0.id', 'bancontact')
-        ->assertSee('ag-payment-method__icon')
-        ->assertSee('ag-payment-method__svg');
-
-    $component
         ->set('settingsMethodSelections', ['card', 'bancontact'])
         ->call('saveSettings');
 
     expect(app(ExtensionSettingsRepository::class)->get('stripe', 'enabled_methods'))->toBe('card,bancontact');
+});
+
+test('stripe settings can refresh methods without saving credentials first', function () {
+    enableStripe();
+    $api = app(StripeApi::class);
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'stripe')
+        ->assertSet('settingsMethodsLoaded', true)
+        ->call('refreshPaymentMethods')
+        ->assertSet('settingsMethodsLoaded', true)
+        ->assertSet('settingsConnectionState', 'success');
+
+    expect($api->balanceCalls)->toBeGreaterThan(0);
+});
+
+test('stripe automatic discovery reports a failed connection without persisting entered credentials', function () {
+    app(ExtensionManager::class)->discover();
+    $api = new FakeStripeApi;
+    $api->unauthorized = true;
+    app()->instance(StripeApi::class, $api);
+    installAndEnableExtension('stripe');
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->forget('stripe', 'secret_key');
+    $settings->forget('stripe', 'webhook_secret');
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'stripe')
+        ->set('settingsForm.secret_key', stripeSecretKey())
+        ->set('settingsForm.webhook_secret', STRIPE_WEBHOOK_SECRET)
+        ->assertSet('settingsMethodsLoaded', false)
+        ->assertSet('settingsMethodOptions', [])
+        ->assertSet('settingsConnectionState', 'error');
+
+    expect($settings->isConfigured('stripe', 'secret_key'))->toBeFalse()
+        ->and($settings->isConfigured('stripe', 'webhook_secret'))->toBeFalse();
 });
 
 test('stripe rejects a non-reusable method for automatic renewal', function () {
