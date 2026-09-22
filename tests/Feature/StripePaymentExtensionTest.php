@@ -201,6 +201,22 @@ test('stripe enabled methods are filtered in checkout', function () {
         ->not->toContain('stripe:ideal');
 });
 
+test('stripe preserves official provider CDN icons and rejects untrusted icon URLs', function () {
+    $api = enableStripe();
+    $api->paymentMethodConfigurations[0]['twint'] = [
+        'available' => true,
+        'display_preference' => ['value' => 'on'],
+        'icon' => 'https://b.stripecdn.com/payment-methods/twint.svg',
+    ];
+    $api->paymentMethodConfigurations[0]['paypal']['icon'] = 'https://evil.example.test/paypal.svg';
+
+    $methods = app(StripePaymentGateway::class)->configurableCheckoutMethods();
+    $byId = collect($methods)->keyBy('id');
+
+    expect($byId['twint']['icon'])->toBe('https://b.stripecdn.com/payment-methods/twint.svg')
+        ->and($byId['paypal']['icon'])->toBe('ag:payment-method/paypal');
+});
+
 test('stripe settings automatically discovers methods when opened with saved credentials', function () {
     enableStripe();
     app(ExtensionSettingsRepository::class)->set('stripe', 'enabled_methods', 'card,bancontact');
