@@ -96,7 +96,7 @@
                                             <span>{{ __($method['label']) }}</span>
                                         </label>
                                     @empty
-                                        <p class="ag-field__hint">{{ __('mollie::messages.settings.methods_unavailable') }}</p>
+                                        <p class="ag-field__hint">{{ __('admin.extensions.settings_methods_unavailable') }}</p>
                                     @endforelse
                                 </div>
                             @elseif ($settingType === 'boolean')

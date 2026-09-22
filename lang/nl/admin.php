@@ -1510,6 +1510,8 @@ return [
         'settings_title' => 'Instellingen: :extension',
         'settings_empty' => 'Deze Extensie heeft geen configureerbare instellingen.',
         'settings_requires_enabled' => 'Schakel de Extensie in voordat je instellingen opent.',
+        'settings_methods_required' => 'Selecteer minstens één actieve betaalmethode.',
+        'settings_methods_unavailable' => 'Er zijn nu geen betaalmethoden van de provider beschikbaar.',
         'tabs' => [
             'installed' => 'Geïnstalleerd',
             'available' => 'Beschikbaar',

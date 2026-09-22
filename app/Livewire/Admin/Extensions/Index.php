@@ -170,7 +170,7 @@ final class Index extends Component
                 $availableIds = array_column($this->settingsMethodOptions, 'id');
                 $selected = array_values(array_intersect($this->settingsMethodSelections, $availableIds));
                 if ($selected === []) {
-                    session()->flash('error', __('mollie::messages.settings.methods_required'));
+                    session()->flash('error', __('admin.extensions.settings_methods_required'));
 
                     return;
                 }

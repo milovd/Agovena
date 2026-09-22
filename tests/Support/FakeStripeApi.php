@@ -21,11 +21,27 @@ final class FakeStripeApi implements StripeApi
 
     public int $checkoutCalls = 0;
 
+    /** @var list<array<string, mixed>> */
+    public array $checkoutPayloads = [];
+
     public int $intentCalls = 0;
 
     public int $refundCalls = 0;
 
     public int $balanceCalls = 0;
+
+    /** @var list<array<string, mixed>> */
+    public array $paymentMethodConfigurations = [[
+        'id' => 'pmc_test',
+        'active' => true,
+        'is_default' => true,
+        'card' => ['available' => true, 'display_preference' => ['value' => 'on']],
+        'ideal' => ['available' => true, 'display_preference' => ['value' => 'on']],
+        'bancontact' => ['available' => true, 'display_preference' => ['value' => 'on']],
+        'klarna' => ['available' => true, 'display_preference' => ['value' => 'on']],
+        'sepa_debit' => ['available' => true, 'display_preference' => ['value' => 'on']],
+        'paypal' => ['available' => true, 'display_preference' => ['value' => 'on']],
+    ]];
 
     public bool $failCreate = false;
 
@@ -47,6 +63,13 @@ final class FakeStripeApi implements StripeApi
 
     public bool $serverError = false;
 
+    public function listPaymentMethodConfigurations(): array
+    {
+        $this->guard();
+
+        return $this->paymentMethodConfigurations;
+    }
+
     public string $nextIntentStatus = 'requires_payment_method';
 
     public function createCheckoutSession(array $payload, ?string $idempotencyKey = null): array
@@ -60,6 +83,7 @@ final class FakeStripeApi implements StripeApi
         }
 
         $this->checkoutCalls++;
+        $this->checkoutPayloads[] = $payload;
         $sessionId = 'cs_test_'.$this->checkoutCalls;
         $intentId = 'pi_test_'.$this->checkoutCalls;
         $intent = [

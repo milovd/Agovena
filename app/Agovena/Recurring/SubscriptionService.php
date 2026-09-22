@@ -1133,7 +1133,19 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
     private function renewalModeFromOrder(Order $order): string
     {
         $properties = $order->custom_properties_snapshot;
-        $mode = is_array($properties) ? ($properties['_agovena_renewal_mode'] ?? 'automatic') : 'automatic';
+        $mode = null;
+
+        if (is_array($properties)) {
+            $mode = $properties['_agovena_renewal_mode'] ?? null;
+            if ($mode === null) {
+                foreach ($properties as $property) {
+                    if (is_array($property) && ($property['key'] ?? null) === '_agovena_renewal_mode') {
+                        $mode = $property['value'] ?? null;
+                        break;
+                    }
+                }
+            }
+        }
 
         return in_array((string) $mode, ['manual', 'automatic'], true) ? (string) $mode : 'automatic';
     }

@@ -77,7 +77,7 @@ function stripeBilling(): AddressData
     ]);
 }
 
-function placeStripeOrder(?Customer $customer = null): Payment
+function placeStripeOrder(?Customer $customer = null, array $customProperties = []): Payment
 {
     $product = Product::factory()->active()->create(['price_amount' => 2500]);
     app(CartService::class)->add($product->id, 1);
@@ -86,8 +86,9 @@ function placeStripeOrder(?Customer $customer = null): Payment
         'customer_name' => $customer->name ?? 'Stripe Buyer',
         'customer_email' => $customer->email ?? 'stripe-buyer@example.test',
         'customer_id' => $customer?->id,
-        'payment_method' => 'stripe',
+        'payment_method' => 'stripe:card',
         'billing' => stripeBilling(),
+        'custom_properties' => $customProperties,
     ]);
 
     return $order->payment()->firstOrFail();
@@ -125,7 +126,7 @@ test('stripe registers only when the extension is enabled', function () {
     enableStripe();
 
     expect(app(PaymentGatewayRegistry::class)->get('stripe'))->toBeInstanceOf(StripePaymentGateway::class)
-        ->and(app(AvailablePaymentMethods::class)->ids())->toContain('stripe');
+        ->and(app(AvailablePaymentMethods::class)->ids())->toContain('stripe:card', 'stripe:bancontact');
 
     app(ExtensionManager::class)->disable('stripe');
 
@@ -164,6 +165,53 @@ test('stripe checkout redirects without marking the order paid', function () {
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
         ->and($payment->fresh()->order->status)->toBe(OrderStatus::Pending)
         ->and($api->checkoutCalls)->toBe(1);
+});
+
+test('stripe exposes provider-discovered methods and starts the selected method', function () {
+    $api = enableStripe();
+    $gateway = app(StripePaymentGateway::class);
+
+    expect($gateway->configurableCheckoutMethods())->toContain(
+        ['id' => 'bancontact', 'label' => 'stripe::messages.methods.bancontact', 'icon' => null],
+    );
+
+    $payment = placeStripeOrder();
+    app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'stripe:bancontact',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'stripe-bancontact-1',
+    );
+
+    expect($api->checkoutPayloads[0]['payment_method_types'] ?? null)->toBe(['bancontact']);
+});
+
+test('stripe enabled methods are filtered in checkout', function () {
+    enableStripe();
+    app(ExtensionSettingsRepository::class)->set('stripe', 'enabled_methods', 'card,bancontact');
+
+    expect(app(StripePaymentGateway::class)->checkoutMethods())
+        ->toHaveCount(2)
+        ->and(app(AvailablePaymentMethods::class)->ids())
+        ->toContain('stripe:card', 'stripe:bancontact')
+        ->not->toContain('stripe:ideal');
+});
+
+test('stripe rejects a non-reusable method for automatic renewal', function () {
+    $api = enableStripe();
+    $payment = placeStripeOrder(customProperties: ['_agovena_renewal_mode' => 'automatic']);
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'stripe:bancontact',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'stripe-recurring-bancontact-1',
+    );
+
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($api->checkoutCalls)->toBe(0);
 });
 
 test('stripe initiate is idempotent for retries', function () {
@@ -487,7 +535,7 @@ test('subscription renewal auto-charges through stripe without module knowing st
         'customer_name' => $customer->name,
         'customer_email' => $customer->email,
         'customer_id' => $customer->id,
-        'payment_method' => 'stripe',
+        'payment_method' => 'stripe:card',
         'billing' => stripeBilling(),
     ]);
     $attempt = app(StartOrderPayment::class)->handle(

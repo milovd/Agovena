@@ -1510,6 +1510,8 @@ return [
         'settings_title' => 'Settings: :extension',
         'settings_empty' => 'This Extension has no configurable settings.',
         'settings_requires_enabled' => 'Enable the Extension before opening settings.',
+        'settings_methods_required' => 'Select at least one active payment method.',
+        'settings_methods_unavailable' => 'No provider payment methods are available right now.',
         'tabs' => [
             'installed' => 'Installed',
             'available' => 'Available',

@@ -271,10 +271,19 @@ final class PlaceOrder
                         'customer',
                     );
                 }
-                $payload['custom_properties_snapshot'] = array_values(array_filter(
+                $propertySnapshot = array_values(array_filter(
                     $this->properties->snapshot($customer, $propertyOverlay, invoiceOnly: true),
                     static fn (array $property): bool => $property['key'] !== 'origin',
                 ));
+                $renewalMode = $propertyOverlay['_agovena_renewal_mode'] ?? null;
+                if (in_array($renewalMode, ['manual', 'automatic'], true)) {
+                    $propertySnapshot[] = [
+                        'key' => '_agovena_renewal_mode',
+                        'label' => __('storefront.checkout.renewal_mode'),
+                        'value' => $renewalMode,
+                    ];
+                }
+                $payload['custom_properties_snapshot'] = $propertySnapshot;
 
                 $order = Order::query()->create($payload);
                 if ($referralCode !== '') {
