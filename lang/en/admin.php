@@ -1512,6 +1512,10 @@ return [
         'settings_requires_enabled' => 'Enable the Extension before opening settings.',
         'settings_methods_required' => 'Select at least one active payment method.',
         'settings_methods_unavailable' => 'No provider payment methods are available right now.',
+        'settings_methods_not_tested' => 'Test the connection to load the payment methods available from the provider.',
+        'settings_test_required' => 'Test the connection before saving payment methods.',
+        'settings_test_loading' => 'Testing connection...',
+        'settings_intro' => 'Enter the provider settings, test the connection, then select the methods the checkout may offer.',
         'tabs' => [
             'installed' => 'Installed',
             'available' => 'Available',

@@ -6,6 +6,7 @@ use Agovena\Extensions\Stripe\StripeApi;
 use Agovena\Extensions\Stripe\StripePaymentAuthorization;
 use Agovena\Extensions\Stripe\StripePaymentGateway;
 use Agovena\Extensions\Stripe\StripeStatusMapper;
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Checkout\PlaceOrder;
@@ -28,6 +29,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
+use App\Livewire\Admin\Extensions\Index;
 use App\Livewire\Storefront\PaymentStatusPage;
 use App\Models\Customer;
 use App\Models\ExtensionSetting;
@@ -197,6 +199,44 @@ test('stripe enabled methods are filtered in checkout', function () {
         ->and(app(AvailablePaymentMethods::class)->ids())
         ->toContain('stripe:card', 'stripe:bancontact')
         ->not->toContain('stripe:ideal');
+});
+
+test('stripe settings test connection discovers methods before selection can be saved', function () {
+    app(ExtensionManager::class)->discover();
+    app()->instance(StripeApi::class, new FakeStripeApi);
+    installAndEnableExtension('stripe');
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->forget('stripe', 'secret_key');
+    $settings->forget('stripe', 'webhook_secret');
+    $staff = $this->createStaff();
+
+    $component = Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'stripe')
+        ->assertSet('settingsMethodOptions', [])
+        ->set('settingsForm.secret_key', stripeSecretKey())
+        ->set('settingsForm.webhook_secret', STRIPE_WEBHOOK_SECRET)
+        ->call('testConnection', 'stripe')
+        ->assertSet('showingPasswordConfirmation', true);
+
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
+
+    $component
+        ->call('testConnection', 'stripe')
+        ->assertSet('settingsMethodTested', true)
+        ->assertSet('settingsMethodSelections', ['bancontact', 'card', 'ideal', 'klarna', 'paypal', 'sepa_debit'])
+        ->assertSet('settingsMethodOptions.0.id', 'bancontact')
+        ->assertSee('ag-payment-method__icon')
+        ->assertSee('ag-payment-method__svg');
+
+    $component
+        ->set('settingsMethodSelections', ['card', 'bancontact'])
+        ->call('saveSettings');
+
+    expect(app(ExtensionSettingsRepository::class)->get('stripe', 'enabled_methods'))->toBe('card,bancontact');
 });
 
 test('stripe rejects a non-reusable method for automatic renewal', function () {

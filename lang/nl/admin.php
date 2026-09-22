@@ -1512,6 +1512,10 @@ return [
         'settings_requires_enabled' => 'Schakel de Extensie in voordat je instellingen opent.',
         'settings_methods_required' => 'Selecteer minstens één actieve betaalmethode.',
         'settings_methods_unavailable' => 'Er zijn nu geen betaalmethoden van de provider beschikbaar.',
+        'settings_methods_not_tested' => 'Test de verbinding om de betaalmethodes van de provider op te halen.',
+        'settings_test_required' => 'Test de verbinding voordat je betaalmethodes opslaat.',
+        'settings_test_loading' => 'Verbinding testen...',
+        'settings_intro' => 'Vul de providerinstellingen in, test de verbinding en kies daarna welke methodes de checkout mag aanbieden.',
         'tabs' => [
             'installed' => 'Geïnstalleerd',
             'available' => 'Beschikbaar',

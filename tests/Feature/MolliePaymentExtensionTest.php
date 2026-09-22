@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Agovena\Extensions\Mollie\MollieApi;
 use Agovena\Extensions\Mollie\MollieMandate;
 use Agovena\Extensions\Mollie\MolliePaymentGateway;
+use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
@@ -457,13 +458,54 @@ test('mollie secret is not rendered in the extensions settings UI', function () 
 
 test('mollie settings discover all provider methods and persist selected methods', function () {
     enableMollie();
+    app(ExtensionSettingsRepository::class)->set('mollie', 'enabled_methods', 'ideal,creditcard');
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
         ->test(Index::class)
         ->call('openSettings', 'mollie')
-        ->assertSet('settingsMethodSelections', ['ideal', 'bancontact', 'creditcard', 'paypal'])
+        ->assertSet('settingsMethodOptions', [])
+        ->assertSet('settingsMethodSelections', [])
+        ->call('testConnection', 'mollie')
+        ->assertSet('settingsMethodTested', true)
+        ->assertSet('settingsMethodSelections', ['ideal', 'creditcard'])
         ->assertSet('settingsMethodOptions.0.icon', 'https://www.mollie.com/external/icons/payment-methods/ideal.svg')
+        ->assertSee('ag-payment-method__icon')
+        ->set('settingsMethodSelections', ['ideal', 'creditcard'])
+        ->call('saveSettings');
+
+    expect(app(ExtensionSettingsRepository::class)->get('mollie', 'enabled_methods'))->toBe('ideal,creditcard');
+});
+
+test('mollie settings test connection discovers methods before selection can be saved', function () {
+    app(ExtensionManager::class)->discover();
+    app()->instance(MollieApi::class, new FakeMollieApi);
+    installAndEnableExtension('mollie');
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->forget('mollie', 'api_key');
+    putenv('AGOVENA_EXT_MOLLIE_API_KEY');
+    unset($_ENV['AGOVENA_EXT_MOLLIE_API_KEY'], $_SERVER['AGOVENA_EXT_MOLLIE_API_KEY']);
+    $staff = $this->createStaff();
+
+    $component = Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->call('openSettings', 'mollie')
+        ->assertSet('settingsMethodOptions', [])
+        ->set('settingsForm.api_key', 'test_abcdefghijklmnopqrstuvwxyz123456')
+        ->call('testConnection', 'mollie')
+        ->assertSet('showingPasswordConfirmation', true);
+
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
+
+    $component
+        ->call('testConnection', 'mollie')
+        ->assertSet('settingsMethodSelections', ['ideal', 'bancontact', 'creditcard', 'paypal'])
+        ->assertSet('settingsMethodOptions.0.id', 'ideal');
+
+    $component
         ->set('settingsMethodSelections', ['ideal', 'creditcard'])
         ->call('saveSettings');
 
