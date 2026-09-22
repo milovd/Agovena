@@ -22,7 +22,7 @@ final readonly class CheckoutPaymentMethod
     ) {}
 
     /**
-     * @return array{id: string, gateway_id: string, label: string, icon: string|null}
+     * @return array{id: string, gateway_id: string, label: string, icon: string|null, metadata: array<string, mixed>}
      */
     public function toArray(): array
     {
@@ -31,6 +31,7 @@ final readonly class CheckoutPaymentMethod
             'gateway_id' => $this->gatewayId,
             'label' => $this->label,
             'icon' => $this->icon,
+            'metadata' => $this->metadata,
         ];
     }
 }

@@ -196,6 +196,10 @@
   width: 2.25rem;
   height: 1.75rem;
   flex: 0 0 2.25rem;
+  box-sizing: border-box;
+  padding: 0.2rem;
+  border-radius: 0.25rem;
+  background: #fff;
   color: var(--ag-color-primary);
 }
 

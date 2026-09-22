@@ -40,6 +40,7 @@ use App\Models\Product;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Tests\Support\CreatesStaff;
@@ -215,6 +216,104 @@ test('stripe preserves official provider CDN icons and rejects untrusted icon UR
 
     expect($byId['twint']['icon'])->toBe('https://b.stripecdn.com/payment-methods/twint.svg')
         ->and($byId['paypal']['icon'])->toBe('ag:payment-method/paypal');
+});
+
+test('stripe exposes a credit card label and complete local icon fallbacks', function () {
+    $api = enableStripe();
+    $methodIds = [
+        'acss_debit',
+        'affirm',
+        'afterpay_clearpay',
+        'alipay',
+        'au_becs_debit',
+        'bacs_debit',
+        'bancontact',
+        'blik',
+        'boleto',
+        'card',
+        'cashapp',
+        'crypto',
+        'eps',
+        'fpx',
+        'giropay',
+        'grabpay',
+        'ideal',
+        'klarna',
+        'konbini',
+        'link',
+        'multibanco',
+        'oxxo',
+        'p24',
+        'pay_by_bank',
+        'paypal',
+        'pix',
+        'promptpay',
+        'sepa_debit',
+        'sofort',
+        'swish',
+        'twint',
+        'us_bank_account',
+        'wechat_pay',
+        'zip',
+    ];
+
+    foreach ($methodIds as $methodId) {
+        $api->paymentMethodConfigurations[0][$methodId] = [
+            'available' => true,
+            'display_preference' => ['value' => 'on'],
+        ];
+    }
+
+    app(ExtensionSettingsRepository::class)->set('stripe', 'enabled_methods', implode(',', $methodIds));
+    $definitions = collect(app(StripePaymentGateway::class)->configurableCheckoutMethods())->keyBy('id');
+
+    expect($definitions['card']['label'])->toBe('stripe::messages.methods.card')
+        ->and($definitions['card']['icon'])->toBe('ag:payment-method/creditcard');
+
+    foreach ($methodIds as $methodId) {
+        expect($definitions[$methodId]['icon'])
+            ->toBeString()
+            ->and($definitions[$methodId]['icon'])->not->toBe('');
+    }
+
+    expect(file_get_contents(base_path('public/images/payment-methods/creditcard.svg')))
+        ->toContain('viewBox="0 0 24 16"');
+});
+
+test('stripe payment methods are filtered by the billing country', function () {
+    enableStripe();
+    app(ExtensionSettingsRepository::class)->set('stripe', 'enabled_methods', 'card,bancontact,ideal,twint');
+
+    $methodsForBelgium = collect(app(AvailablePaymentMethods::class)->options('BE'))->keyBy('id');
+    $methodsForTheNetherlands = collect(app(AvailablePaymentMethods::class)->options('NL'))->keyBy('id');
+
+    expect($methodsForBelgium->has('stripe:card'))->toBeTrue()
+        ->and($methodsForBelgium->has('stripe:bancontact'))->toBeTrue()
+        ->and($methodsForBelgium->has('stripe:ideal'))->toBeFalse()
+        ->and($methodsForBelgium->has('stripe:twint'))->toBeFalse()
+        ->and($methodsForTheNetherlands->has('stripe:ideal'))->toBeTrue()
+        ->and($methodsForTheNetherlands['stripe:ideal']['metadata']['customer_countries'])->toBe(['NL']);
+});
+
+test('stripe rejects a payment method that is unavailable in the billing country', function () {
+    enableStripe();
+    app(ExtensionSettingsRepository::class)->set('stripe', 'enabled_methods', 'card,ideal');
+
+    $product = Product::factory()->active()->create(['price_amount' => 2500]);
+    app(CartService::class)->add($product->id, 1);
+
+    expect(fn () => app(PlaceOrder::class)->handle([
+        'customer_name' => 'Belgian Buyer',
+        'customer_email' => 'belgian-buyer@example.test',
+        'payment_method' => 'stripe:ideal',
+        'billing' => AddressData::fromArray([
+            'name' => 'Belgian Buyer',
+            'line1' => 'Rue de la Loi 1',
+            'city' => 'Brussels',
+            'postal_code' => '1000',
+            'country' => 'BE',
+        ]),
+    ]))->toThrow(ValidationException::class);
 });
 
 test('stripe settings automatically discovers methods when opened with saved credentials', function () {

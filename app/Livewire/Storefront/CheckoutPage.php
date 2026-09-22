@@ -135,7 +135,6 @@ final class CheckoutPage extends Component
         }
 
         $this->idempotency_key = (string) Str::uuid();
-        $ids = app(AvailablePaymentMethods::class)->ids();
 
         /** @var Customer|null $customer */
         $customer = current_customer();
@@ -164,10 +163,10 @@ final class CheckoutPage extends Component
                 $this->payment_method = 'account_balance';
                 $this->apply_credit = true;
             } else {
-                $this->payment_method = $ids[0] ?? 'account_balance';
+                $this->payment_method = app(AvailablePaymentMethods::class)->ids($this->billing_country)[0] ?? 'account_balance';
             }
         } else {
-            $this->payment_method = $ids[0] ?? 'account_balance';
+            $this->payment_method = app(AvailablePaymentMethods::class)->ids($this->billing_country)[0] ?? 'account_balance';
         }
 
         $this->propertyValues = $properties->emptyValues($properties->definitionsFor('checkout'), $customer);
@@ -193,6 +192,7 @@ final class CheckoutPage extends Component
         }
 
         $this->fillBillingFromAddress($address);
+        $this->synchronizePaymentMethodWithBillingCountry();
     }
 
     public function updatedBillingLine1(string $value): void
@@ -281,6 +281,7 @@ final class CheckoutPage extends Component
 
     public function updatedBillingCountry(): void
     {
+        $this->synchronizePaymentMethodWithBillingCountry();
         $this->invalidateFrom(CheckoutStep::Delivery);
         $this->shipping_quote_key = '';
         $this->shipping_method_id = null;
@@ -322,7 +323,7 @@ final class CheckoutPage extends Component
             $this->shipping_quote_key = 'method:'.$this->shipping_method_id;
         }
 
-        $allowed = app(AvailablePaymentMethods::class)->ids();
+        $allowed = app(AvailablePaymentMethods::class)->ids($this->billing_country);
         $usingBalance = $this->payment_method === 'account_balance';
         if ($usingBalance) {
             $this->apply_credit = true;
@@ -626,7 +627,7 @@ final class CheckoutPage extends Component
             'creditTotal' => $creditTotal,
             'amountDue' => $amountDue,
             'theme' => $theme,
-            'paymentOptions' => app(AvailablePaymentMethods::class)->options(),
+            'paymentOptions' => app(AvailablePaymentMethods::class)->options($this->billing_country),
 
             'customerLoggedIn' => Auth::check(),
             'registrationEnabled' => $registration->allowsRegistration(),
@@ -688,6 +689,18 @@ final class CheckoutPage extends Component
         $this->billing_postal_code = $address->postalCode;
         $this->billing_country = $address->country;
         $this->billing_phone = (string) ($address->phone ?? '');
+    }
+
+    private function synchronizePaymentMethodWithBillingCountry(): void
+    {
+        if ($this->payment_method === 'account_balance') {
+            return;
+        }
+
+        $allowed = app(AvailablePaymentMethods::class)->ids($this->billing_country);
+        if (! in_array($this->payment_method, $allowed, true)) {
+            $this->payment_method = $allowed[0] ?? '';
+        }
     }
 
     private function applySavedAddressToShipping(int $addressId): void

@@ -10,6 +10,7 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Packages\PackageCatalog;
 use App\Agovena\Payments\Contracts\ConfiguresCheckoutMethods;
+use App\Agovena\Payments\Contracts\RefreshesCheckoutMethods;
 use App\Agovena\Payments\HealthResult;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\PaymentMethodDiscoveryCache;
@@ -413,7 +414,9 @@ final class Index extends Component
                 return;
             }
 
-            $this->settingsMethodOptions = $gateway->configurableCheckoutMethods();
+            $this->settingsMethodOptions = $force && $gateway instanceof RefreshesCheckoutMethods
+                ? $gateway->refreshConfigurableCheckoutMethods()
+                : $gateway->configurableCheckoutMethods();
             if (! $this->applySettingsMethodOptions()) {
                 $this->settingsConnectionState = 'error';
                 $this->settingsConnectionMessage = __('admin.extensions.settings_methods_unavailable');

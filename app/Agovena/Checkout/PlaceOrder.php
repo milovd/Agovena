@@ -307,6 +307,7 @@ final class PlaceOrder
                 $resolvedMethod = $this->resolvePaymentMethod(
                     is_string($method) ? $method : null,
                     $amountDue,
+                    $billing?->country,
                 );
                 $paymentFee = $this->paymentFees->calculate(
                     $resolvedMethod,
@@ -448,13 +449,13 @@ final class PlaceOrder
             && str_contains(strtolower($exception->getMessage()), 'idempotency');
     }
 
-    private function resolvePaymentMethod(?string $value, int $amountDue): string
+    private function resolvePaymentMethod(?string $value, int $amountDue, ?string $country = null): string
     {
         if ($amountDue < 1) {
             return 'account_balance';
         }
 
-        $allowed = app(AvailablePaymentMethods::class)->ids();
+        $allowed = app(AvailablePaymentMethods::class)->ids($country);
         if ($allowed === []) {
             throw ValidationException::withMessages([
                 'payment_method' => __('storefront.errors.payment_gateway_required'),
@@ -480,7 +481,8 @@ final class PlaceOrder
             $optionIds,
         )));
 
-        if (in_array($value, $optionIds, true) || in_array($gatewayId, $gatewayIds, true)) {
+        $hasExplicitMethod = str_contains($value, ':');
+        if (in_array($value, $optionIds, true) || (! $hasExplicitMethod && in_array($gatewayId, $gatewayIds, true))) {
             return $gatewayId;
         }
 
