@@ -31,7 +31,6 @@ function enableSecurityPaddle(?FakePaddleApi $api = null): FakePaddleApi
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('paddle', 'api_key', '[REDACTED]', secret: true);
     $settings->set('paddle', 'webhook_secret', '[REDACTED]', secret: true);
-    $settings->set('paddle', 'price_map', ['1' => 'pri_test']);
     $settings->set('paddle', 'sandbox', true);
 
     return $api;

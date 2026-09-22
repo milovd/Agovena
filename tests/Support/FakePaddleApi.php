@@ -12,6 +12,9 @@ final class FakePaddleApi implements PaddleApi, PaddleConnectionChecker
 {
     public int $transactionCalls = 0;
 
+    /** @var array<string, mixed>|null */
+    public ?array $transactionPayload = null;
+
     public int $pingCalls = 0;
 
     public bool $pingFails = false;
@@ -34,6 +37,7 @@ final class FakePaddleApi implements PaddleApi, PaddleConnectionChecker
     public function createTransaction(array $payload, ?string $idempotencyKey = null): array
     {
         $this->transactionCalls++;
+        $this->transactionPayload = $payload;
 
         return $this->transaction;
     }

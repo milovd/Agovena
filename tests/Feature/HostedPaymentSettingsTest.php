@@ -24,7 +24,6 @@ function enablePaddleForSettings(?FakePaddleApi $api = null): FakePaddleApi
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('paddle', 'api_key', 'test-paddle-api-key', secret: true);
     $settings->set('paddle', 'webhook_secret', 'test-paddle-webhook-secret', secret: true);
-    $settings->set('paddle', 'price_map', '{}');
     $settings->set('paddle', 'sandbox', true);
 
     return $api;

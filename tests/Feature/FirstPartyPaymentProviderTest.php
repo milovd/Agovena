@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Agovena\Extensions\Paddle\PaddleApi;
+use Agovena\Extensions\Paddle\PaddlePaymentGateway;
 use Agovena\Extensions\Tebex\TebexApi;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
@@ -26,7 +27,7 @@ use Tests\Support\FakeTebexApi;
 
 uses(CreatesStaff::class);
 
-function enableFirstPartyPaddle(?FakePaddleApi $api = null): FakePaddleApi
+function enableFirstPartyPaddle(?FakePaddleApi $api = null, bool $withWebhook = true): FakePaddleApi
 {
     app(ExtensionManager::class)->discover();
     $api ??= new FakePaddleApi;
@@ -34,8 +35,9 @@ function enableFirstPartyPaddle(?FakePaddleApi $api = null): FakePaddleApi
     installAndEnableExtension('paddle');
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('paddle', 'api_key', '[REDACTED]', secret: true);
-    $settings->set('paddle', 'webhook_secret', '[REDACTED]', secret: true);
-    $settings->set('paddle', 'price_map', ['1' => 'pri_test']);
+    if ($withWebhook) {
+        $settings->set('paddle', 'webhook_secret', '[REDACTED]', secret: true);
+    }
     $settings->set('paddle', 'sandbox', true);
 
     return $api;
@@ -90,7 +92,14 @@ test('paddle checkout redirects and signed paid webhook completes payment', func
 
     expect($attempt->redirect_url)->toBe('https://checkout.paddle.test/txn_test')
         ->and($attempt->status)->toBe(PaymentAttemptStatus::Processing)
-        ->and($api->transactionCalls)->toBe(1);
+        ->and($api->transactionCalls)->toBe(1)
+        ->and($api->transactionPayload['currency_code'] ?? null)->toBe('EUR')
+        ->and($api->transactionPayload['items'][0]['quantity'] ?? null)->toBe(1)
+        ->and($api->transactionPayload['items'][0]['price']['unit_price'] ?? null)->toBe([
+            'amount' => '2500',
+            'currency_code' => 'EUR',
+        ])
+        ->and($api->transactionPayload['items'][0]['price']['product']['name'] ?? null)->toBe($payment->order->number);
 
     $body = json_encode([
         'event_id' => 'evt_paddle_test',
@@ -99,7 +108,7 @@ test('paddle checkout redirects and signed paid webhook completes payment', func
             'id' => 'txn_test',
             'status' => 'paid',
             'currency_code' => 'EUR',
-            'details' => ['totals' => ['grand_total' => '2500'], 'line_items' => [['price_id' => 'pri_test', 'quantity' => 1]]],
+            'details' => ['totals' => ['grand_total' => '2500'], 'line_items' => [['price_id' => 'pri_generated', 'quantity' => 1, 'totals' => ['total' => '2500']]]],
             'custom_data' => ['order_id' => (string) $payment->order_id, 'payment_id' => (string) $payment->id],
         ],
     ], JSON_THROW_ON_ERROR);
@@ -117,6 +126,24 @@ test('paddle checkout redirects and signed paid webhook completes payment', func
     ));
 
     expect($payment->fresh()->status)->toBe(PaymentStatus::Paid);
+});
+
+test('paddle status synchronization completes a local checkout without a webhook', function (): void {
+    $api = enableFirstPartyPaddle(withWebhook: false);
+    $payment = placeFirstPartyOrder('paddle:paddle', 3);
+    app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:paddle',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-sync-1',
+    );
+
+    $api->transaction['status'] = 'completed';
+    $updated = app(PaddlePaymentGateway::class)->syncStatus($payment->fresh());
+
+    expect($updated->status)->toBe(PaymentStatus::Paid)
+        ->and($api->transactionCalls)->toBe(1);
 });
 
 test('tebex checkout creates a mapped package basket', function (): void {
