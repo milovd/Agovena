@@ -1,5 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="16" viewBox="0 0 24 16">
-  <path fill="#fff" d="M0 2a2 2 0 0 1 2-2h20a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2Z" />
-  <path fill="none" stroke="#004e91" stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
-    d="M5.6 2.5h12.8A1.6 1.6 0 0 1 20 4.1v8a1.6 1.6 0 0 1-1.6 1.6H5.6A1.6 1.6 0 0 1 4 12.1v-8a1.6 1.6 0 0 1 1.6-1.6ZM4 6.5h16" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 22" role="img" aria-labelledby="credit-card-title">
+  <title id="credit-card-title">Credit card</title>
+  <defs>
+    <linearGradient id="card-surface" x1="2" y1="2" x2="30" y2="20" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#24364f" />
+      <stop offset="1" stop-color="#101827" />
+    </linearGradient>
+  </defs>
+  <rect x="0.75" y="0.75" width="30.5" height="20.5" rx="3.25" fill="url(#card-surface)" stroke="#7185a1" stroke-width="1.5" />
+  <rect x="4.5" y="5" width="5.25" height="4.25" rx="0.9" fill="#e3bc58" />
+  <path d="M5.25 6.45h3.75M5.25 7.8h2.55" stroke="#8c6a25" stroke-width="0.55" stroke-linecap="round" />
+  <path d="M15 7.1h10.8M15 9.6h6.8M5 16.8h7.1M15 16.8h4.1" stroke="#d8e2ef" stroke-width="1.05" stroke-linecap="round" opacity="0.9" />
 </svg>
