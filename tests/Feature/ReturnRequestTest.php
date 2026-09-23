@@ -245,8 +245,10 @@ test('core availability restocks a returned physical product', function () {
     );
     $returns->markReceived($returns->approve($request));
 
+    $returnItemId = $request->items->firstOrFail()->id;
+
     expect($returns->inventoryAvailable())->toBeTrue()
-        ->and($returns->restock($request->fresh(['items']), [1 => 1]))->toBe(1);
+        ->and($returns->restock($request->fresh(['items']), [$returnItemId => 1]))->toBe(1);
 });
 
 test('staff can reject a return with a reason', function () {
