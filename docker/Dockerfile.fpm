@@ -13,7 +13,7 @@ WORKDIR /var/www/html
 COPY . .
 
 RUN composer install --no-interaction --prefer-dist --no-dev \
-    && mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs storage/app/packages/modules storage/app/packages/extensions bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
 USER www-data

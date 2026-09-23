@@ -80,6 +80,30 @@ test('path-installed module uses the same lifecycle as bundled modules', functio
         ->and(AgovenaPackage::query()->where('agovena_id', 'sample')->exists())->toBeFalse();
 });
 
+test('install creates a missing managed root before validating an existing package path', function () {
+    $destination = storage_path('app/packages/modules/sample');
+    AgovenaPackage::query()->create([
+        'kind' => PackageKind::Module,
+        'agovena_id' => 'sample',
+        'source_type' => PackageSourceType::Path,
+        'source_locator' => sampleModulePath(),
+        'install_path' => $destination,
+        'is_bundled' => false,
+    ]);
+    File::deleteDirectory(storage_path('app/packages'));
+
+    $package = app(PackageInstaller::class)->install(new PackageSource(
+        kind: PackageKind::Module,
+        sourceType: PackageSourceType::Path,
+        locator: sampleModulePath(),
+    ));
+
+    expect($package->agovena_id)->toBe('sample')
+        ->and(is_dir(storage_path('app/packages/modules')))->toBeTrue()
+        ->and(is_dir($destination))->toBeTrue()
+        ->and(File::exists($destination.'/module.json'))->toBeTrue();
+});
+
 test('composer source installs through the runner without a shell string', function () {
     $fake = new FakeComposerRunner;
     $fake->map('agovena-fixtures/sample-module', sampleModulePath());

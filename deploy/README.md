@@ -18,6 +18,10 @@ Writable by the application user only (typically `www-data`), not the whole tree
 - `storage/`
 - `bootstrap/cache/`
 
+Installed Modules and Extensions are materialized under `storage/app/packages/`. Keep
+that directory persistent together with the database. Losing the package trees while
+keeping the package rows leaves the application unable to load or update those packages.
+
 Do not `chmod 777`. The web server must not own `vendor/`, `app/`, or `.env` as world-writable.
 
 Public merchant media: `php artisan storage:link` (`public/storage` → `storage/app/public`).
@@ -59,7 +63,7 @@ systemctl restart agovena-queue.service
 
 Do not `migrate:fresh`. Do not auto-migrate on HTTP requests.
 
-Backup MariaDB + `storage/app/private` + `storage/app/public` + `.env` before upgrading.
+Backup MariaDB + `storage/app/packages` + `storage/app/private` + `storage/app/public` + `.env` before upgrading.
 If `agovena:upgrade` fails mid-way, MariaDB DDL may already be partially applied - restore from backup, fix the cause, then retry. There is no universal web “rollback” button.
 
 Admin → Updates shows the current application version and whether schema migrations are pending. Operators still deploy release files themselves; Agovena does not self-modify application source over HTTP.

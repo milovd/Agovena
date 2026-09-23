@@ -166,14 +166,16 @@ final class PackageInstaller
             ->first();
         $previousPackage = $existingPackage?->getAttributes();
         $previousLifecycle = $this->lifecycleAttributes($manifest['kind'], $manifest['id']);
-        $canonicalDestination = $this->installRoot($manifest['kind']).DIRECTORY_SEPARATOR.$manifest['id'];
+        $installRoot = $this->ensureInstallRoot($manifest['kind']);
+        $canonicalDestination = $installRoot.DIRECTORY_SEPARATOR.$manifest['id'];
+        $this->assertManagedPath($canonicalDestination, $installRoot);
         $this->assertExistingInstallPath($existingPackage?->install_path, $canonicalDestination);
         $previousFingerprint = $this->packageTreeFingerprint($canonicalDestination);
         if ($operationJournal !== null) {
             $this->updatePackageOperationJournal($operationJournal, [
                 'kind' => $manifest['kind']->value,
                 'agovena_id' => $manifest['id'],
-                'destination' => $this->installRoot($manifest['kind']).DIRECTORY_SEPARATOR.$manifest['id'],
+                'destination' => $canonicalDestination,
                 'previous_fingerprint' => $previousFingerprint,
                 'previous_state' => Crypt::encryptString(json_encode([
                     'package' => $previousPackage,
@@ -1029,8 +1031,7 @@ final class PackageInstaller
         ?array $previousLifecycle,
         ?string $previousFingerprint,
     ): string {
-        $root = $this->installRoot($kind);
-        File::ensureDirectoryExists($root);
+        $root = $this->ensureInstallRoot($kind);
         $this->assertManagedPath($root.DIRECTORY_SEPARATOR.$id, $root);
 
         $destination = $root.DIRECTORY_SEPARATOR.$id;
@@ -2029,6 +2030,21 @@ final class PackageInstaller
         return $kind === PackageKind::Module
             ? storage_path('app/packages/modules')
             : storage_path('app/packages/extensions');
+    }
+
+    private function ensureInstallRoot(PackageKind $kind): string
+    {
+        $root = $this->installRoot($kind);
+        File::ensureDirectoryExists($root);
+
+        if (is_link($root)) {
+            throw new \RuntimeException('Package install roots may not use symbolic links.');
+        }
+        if (! is_dir($root)) {
+            throw new \RuntimeException('Package install root is unavailable.');
+        }
+
+        return $root;
     }
 
     private function refreshManagers(): void

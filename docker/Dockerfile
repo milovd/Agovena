@@ -25,7 +25,7 @@ COPY . .
 COPY --from=assets /app/public/build public/build
 
 RUN composer install --no-interaction --prefer-dist --no-dev \
-    && mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+    && mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs storage/app/packages/modules storage/app/packages/extensions bootstrap/cache \
     && chmod -R ug+rwx storage bootstrap/cache
 
 EXPOSE 80
