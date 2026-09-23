@@ -10,6 +10,10 @@ use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $product_id
+ * @property int $quantity
+ */
 final class InventoryReservation extends Model
 {
     protected $fillable = [

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\OffersCheckoutMethods;
+use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
 
 /**
  * Checkout-facing discovery of enabled PaymentGateway methods.
@@ -47,6 +48,16 @@ final class AvailablePaymentMethods
             ];
         }
 
+        if ($options === [] && $this->developmentPayAllowed()) {
+            $development = app(DevelopmentPaymentGateway::class);
+            $options[] = [
+                'id' => $development->id(),
+                'gateway_id' => $development->id(),
+                'label' => $development->label(),
+                'icon' => null,
+            ];
+        }
+
         return array_values(array_filter(
             $options,
             fn (array $option): bool => $this->isAvailableInCountry($option, $country),
@@ -70,5 +81,11 @@ final class AvailablePaymentMethods
         }
 
         return in_array($country, array_map('strtoupper', array_map('strval', $supportedCountries)), true);
+    }
+
+    private function developmentPayAllowed(): bool
+    {
+        return (bool) config('agovena.payments.allow_development_instant_pay')
+            && ! app()->environment('production');
     }
 }

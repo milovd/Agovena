@@ -23,9 +23,7 @@ $app = require dirname(__DIR__, 2).'/bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 
 $profile = $argv[1] ?? 'smoke';
-$moduleKeys = $profile === 'e2e'
-    ? ['inventory', 'shipping', 'downloads', 'subscriptions', 'provisioning', 'events']
-    : ['inventory'];
+$moduleKeys = ['downloads', 'provisioning', 'events'];
 $extensionKeys = [];
 
 $installer = app(PackageInstaller::class);

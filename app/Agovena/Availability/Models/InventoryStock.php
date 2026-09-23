@@ -13,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $id
  * @property int $product_id
  * @property int $quantity
- * @property string $availability_mode
+ * @property AvailabilityMode $availability_mode
  * @property string|null $provider_key
  * @property bool $track_stock
  * @property bool $allow_oversell

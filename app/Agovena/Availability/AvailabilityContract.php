@@ -18,7 +18,7 @@ final class AvailabilityContract
             return false;
         }
 
-        return match (AvailabilityMode::tryFrom($stock->availability_mode) ?? AvailabilityMode::Finite) {
+        return match ($stock->availability_mode) {
             AvailabilityMode::Unlimited => true,
             AvailabilityMode::Finite => $stock->allow_oversell || $stock->quantity >= $quantity,
             AvailabilityMode::ProviderCapacity => $stock->provider_key !== null

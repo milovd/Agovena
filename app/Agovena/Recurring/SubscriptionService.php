@@ -392,7 +392,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
                     nextPeriodEnd: $periodEnd,
                     periodDays: $periodDays,
                     daysAlreadyPaid: max(0, (int) $earliestDue->diffInDays($dueAt)),
-                    optionsSnapshot: $originItem?->options_snapshot ?? [],
+                    optionsSnapshot: $originItem->options_snapshot ?? [],
                 );
                 $periodEnds[(int) $subscription->id] = $periodEnd;
             }
@@ -954,6 +954,7 @@ final class SubscriptionService implements ProcessesSubscriptionRenewals
             ->exists();
     }
 
+    /** @return EloquentCollection<int, SubscriptionRenewal> */
     private function pendingRenewalsForOrder(Order $order): EloquentCollection
     {
         return SubscriptionRenewal::query()

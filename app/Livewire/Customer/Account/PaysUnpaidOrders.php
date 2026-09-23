@@ -18,7 +18,7 @@ trait PaysUnpaidOrders
     abstract protected function unpaidOrder(): ?Order;
 
     /**
-     * @return list<array{id: string, label: string, gateway_id?: string, icon?: string|null}>
+     * @return list<array{id: string, label: string, gateway_id?: string, icon?: string|null, metadata?: array<string, mixed>}>
      */
     public function paymentGatewayOptions(): array
     {
