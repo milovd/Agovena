@@ -16,6 +16,52 @@ use Composer\Semver\Semver;
 
 final class PackageCatalog
 {
+    /**
+     * @var list<array{
+     *     kind: PackageKind,
+     *     id: string,
+     *     name: string,
+     *     version: string,
+     *     description: string,
+     *     source: PackageSourceType,
+     *     composer_name: string|null,
+     *     lifecycle: PackageLifecycle,
+     *     compatible: bool,
+     *     compatibility_error: string|null,
+     *     installed: bool,
+     *     enabled: bool,
+     *     is_bundled: bool,
+     *     can_purge: bool,
+     *     on_disk: bool,
+     *     monorepo_key: string|null,
+     *     manifest: ModuleManifest|ExtensionManifest
+     * }>|null
+     */
+    private ?array $moduleRows = null;
+
+    /**
+     * @var list<array{
+     *     kind: PackageKind,
+     *     id: string,
+     *     name: string,
+     *     version: string,
+     *     description: string,
+     *     source: PackageSourceType,
+     *     composer_name: string|null,
+     *     lifecycle: PackageLifecycle,
+     *     compatible: bool,
+     *     compatibility_error: string|null,
+     *     installed: bool,
+     *     enabled: bool,
+     *     is_bundled: bool,
+     *     can_purge: bool,
+     *     on_disk: bool,
+     *     monorepo_key: string|null,
+     *     manifest: ModuleManifest|ExtensionManifest
+     * }>|null
+     */
+    private ?array $extensionRows = null;
+
     public function __construct(
         private readonly ModuleManager $modules,
         private readonly ExtensionManager $extensions,
@@ -46,7 +92,9 @@ final class PackageCatalog
      */
     public function modules(): array
     {
-        $this->monorepo->syncAvailableVersions();
+        if ($this->moduleRows !== null) {
+            return $this->moduleRows;
+        }
 
         $rows = [];
         $seen = [];
@@ -75,7 +123,14 @@ final class PackageCatalog
             $rows[] = $this->remoteModuleRow($entry['key'], $manifest);
         }
 
-        return $rows;
+        return $this->moduleRows = $rows;
+    }
+
+    public function refreshAvailableVersions(?string $ref = null): void
+    {
+        $this->monorepo->syncAvailableVersions($ref);
+        $this->moduleRows = null;
+        $this->extensionRows = null;
     }
 
     /**
@@ -101,7 +156,9 @@ final class PackageCatalog
      */
     public function extensions(): array
     {
-        $this->monorepo->syncAvailableVersions();
+        if ($this->extensionRows !== null) {
+            return $this->extensionRows;
+        }
 
         $rows = [];
         $seen = [];
@@ -130,7 +187,7 @@ final class PackageCatalog
             $rows[] = $this->remoteExtensionRow($entry['key'], $manifest);
         }
 
-        return $rows;
+        return $this->extensionRows = $rows;
     }
 
     /**

@@ -25,6 +25,7 @@ final class SystemOperationsStatus
     public function viewData(): array
     {
         $schema = $this->schema->viewData();
+        $this->packages->refreshAvailableVersions();
         $updates = [];
         foreach ([...$this->packages->modules(), ...$this->packages->extensions()] as $row) {
             if ($row['lifecycle'] === PackageLifecycle::UpdateAvailable) {

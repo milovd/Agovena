@@ -9,5 +9,5 @@ interface MonorepoCheckout
     /**
      * Resolve a package subdirectory inside a monorepo checkout at the given ref.
      */
-    public function resolve(string $repositoryUrl, string $ref, string $subdirectory): string;
+    public function resolve(string $repositoryUrl, string $ref, string $subdirectory, bool $refresh = true): string;
 }

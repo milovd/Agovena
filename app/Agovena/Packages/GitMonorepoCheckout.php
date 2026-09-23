@@ -10,15 +10,18 @@ use Symfony\Component\Process\Process;
 
 final class GitMonorepoCheckout implements MonorepoCheckout
 {
+    /** @var array<string, true> */
+    private array $refreshed = [];
+
     public function __construct(
         private readonly MonorepoPackageMap $packageMap,
     ) {}
 
-    public function resolve(string $repositoryUrl, string $ref, string $subdirectory): string
+    public function resolve(string $repositoryUrl, string $ref, string $subdirectory, bool $refresh = true): string
     {
         $subdirectory = $this->packageMap->assertSubdirectory($subdirectory);
         $checkoutRoot = $this->checkoutRoot($repositoryUrl);
-        $this->ensureCheckout($checkoutRoot, $repositoryUrl, $ref);
+        $this->ensureCheckout($checkoutRoot, $repositoryUrl, $ref, $refresh);
         $this->verifyResolvedRef($checkoutRoot, $ref);
 
         $packagePath = $checkoutRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $subdirectory);
@@ -44,9 +47,17 @@ final class GitMonorepoCheckout implements MonorepoCheckout
         return storage_path('app/packages/monorepo-cache/'.hash('sha256', $repositoryUrl));
     }
 
-    private function ensureCheckout(string $checkoutRoot, string $repositoryUrl, string $ref): void
+    private function ensureCheckout(string $checkoutRoot, string $repositoryUrl, string $ref, bool $refresh): void
     {
         File::ensureDirectoryExists(dirname($checkoutRoot));
+
+        $cacheKey = $checkoutRoot.'|'.$ref;
+        if (! $refresh && is_dir($checkoutRoot.DIRECTORY_SEPARATOR.'.git')) {
+            return;
+        }
+        if ($refresh && isset($this->refreshed[$cacheKey])) {
+            return;
+        }
 
         $gitDir = $checkoutRoot.DIRECTORY_SEPARATOR.'.git';
         if (is_dir($gitDir) && ! $this->originMatches($checkoutRoot, $repositoryUrl)) {
@@ -72,12 +83,19 @@ final class GitMonorepoCheckout implements MonorepoCheckout
                 $this->run(['checkout', '--force', 'FETCH_HEAD'], $checkoutRoot);
             }
 
+            $this->refreshed[$cacheKey] = true;
+
+            return;
+        }
+
+        if (! $refresh) {
             return;
         }
 
         $this->run(['fetch', '--tags', '--depth', '1', 'origin', $ref], $checkoutRoot);
         $this->run(['checkout', '--force', $ref], $checkoutRoot);
         $this->run(['reset', '--hard', 'FETCH_HEAD'], $checkoutRoot);
+        $this->refreshed[$cacheKey] = true;
     }
 
     private function originMatches(string $checkoutRoot, string $repositoryUrl): bool

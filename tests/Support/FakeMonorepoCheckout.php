@@ -13,7 +13,7 @@ final class FakeMonorepoCheckout implements MonorepoCheckout
     /** @var array<string, string> repository URL => monorepo root directory */
     private array $repositories = [];
 
-    /** @var list<array{url: string, ref: string, subdirectory: string}> */
+    /** @var list<array{url: string, ref: string, subdirectory: string, refresh: bool}> */
     public array $resolved = [];
 
     public function __construct(
@@ -25,12 +25,13 @@ final class FakeMonorepoCheckout implements MonorepoCheckout
         $this->repositories[$repositoryUrl] = $rootPath;
     }
 
-    public function resolve(string $repositoryUrl, string $ref, string $subdirectory): string
+    public function resolve(string $repositoryUrl, string $ref, string $subdirectory, bool $refresh = true): string
     {
         $this->resolved[] = [
             'url' => $repositoryUrl,
             'ref' => $ref,
             'subdirectory' => $subdirectory,
+            'refresh' => $refresh,
         ];
 
         $root = $this->repositories[$repositoryUrl] ?? null;

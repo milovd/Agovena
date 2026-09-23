@@ -6,6 +6,7 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Packages\MonorepoCheckout;
 use App\Agovena\Packages\MonorepoPackageMap;
+use App\Agovena\Packages\MonorepoRemoteCatalog;
 use App\Agovena\Packages\PackageInstaller;
 use App\Agovena\Packages\PackageSource;
 use App\Agovena\Packages\PackageSourceValidator;
@@ -200,4 +201,15 @@ test('monorepo defaults repository url from config when locator is empty', funct
     ));
 
     expect($package->source_locator)->toBe('https://github.com/agovena/packages-fixture');
+});
+
+test('remote catalog reads an existing checkout without refreshing git', function () {
+    configureMonorepoFixtures();
+    $fake = bindFakeMonorepoCheckout();
+
+    $manifest = app(MonorepoRemoteCatalog::class)->extensionManifest('sample-gateway');
+
+    expect($manifest->id)->toBe('sample-gateway')
+        ->and($fake->resolved)->toHaveCount(1)
+        ->and($fake->resolved[0]['refresh'])->toBeFalse();
 });

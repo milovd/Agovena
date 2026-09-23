@@ -78,7 +78,7 @@ final class MonorepoRemoteCatalog
 
     public function remoteVersion(string $packageKey, PackageKind $kind, ?string $ref = null): string
     {
-        return $this->manifests->read($this->packageDirectory($packageKey, $kind, $ref))['version'];
+        return $this->manifests->read($this->packageDirectory($packageKey, $kind, $ref, refresh: true))['version'];
     }
 
     public function syncAvailableVersions(?string $ref = null): void
@@ -124,7 +124,7 @@ final class MonorepoRemoteCatalog
         return ExtensionManifest::fromArray($json, $directory);
     }
 
-    private function packageDirectory(string $packageKey, PackageKind $kind, ?string $ref): string
+    private function packageDirectory(string $packageKey, PackageKind $kind, ?string $ref, bool $refresh = false): string
     {
         $mapping = $this->map->resolve($packageKey, $kind);
         $local = $this->localPackageDirectory($mapping['path']);
@@ -138,7 +138,7 @@ final class MonorepoRemoteCatalog
             $gitRef = 'main';
         }
 
-        return $this->checkout->resolve($repository, $gitRef, $mapping['path']);
+        return $this->checkout->resolve($repository, $gitRef, $mapping['path'], refresh: $refresh);
     }
 
     private function localPackageDirectory(string $subdirectory): ?string
