@@ -154,7 +154,10 @@ final class InitiateGatewayPayment
 
                 $lockedAttempt->external_id = $result->externalId;
                 $lockedAttempt->redirect_url = $result->redirectUrl;
-                $lockedAttempt->response_meta = $this->redact($result->metadata);
+                $lockedAttempt->response_meta = $this->redact(array_filter([
+                    ...$result->metadata,
+                    'failure_message' => $result->status === 'failed' ? $result->message : null,
+                ], static fn (mixed $value): bool => $value !== null && $value !== ''));
                 $lockedAttempt->status = match ($result->status) {
                     'completed' => PaymentAttemptStatus::Succeeded,
                     'failed' => PaymentAttemptStatus::Failed,

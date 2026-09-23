@@ -6,6 +6,10 @@
         <p class="store-note" role="status">{{ __('storefront.payment_status.waiting') }}</p>
     @endif
 
+    @if (in_array($state, ['failed', 'cancelled', 'expired'], true) && is_string($attempt?->response_meta['failure_message'] ?? null))
+        <p class="store-note" role="alert">{{ $attempt->response_meta['failure_message'] }}</p>
+    @endif
+
     @if (in_array($state, ['failed', 'cancelled', 'expired'], true) && $order->isAwaitingPayment())
         <p>
             <a class="store-btn" href="{{ route('storefront.order.confirmation', $order) }}">{{ __('storefront.payment_status.view_order') }}</a>

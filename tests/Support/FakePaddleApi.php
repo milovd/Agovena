@@ -12,6 +12,8 @@ final class FakePaddleApi implements PaddleApi, PaddleConnectionChecker
 {
     public int $transactionCalls = 0;
 
+    public ?PaddleProviderException $createException = null;
+
     /** @var array<string, mixed>|null */
     public ?array $transactionPayload = null;
 
@@ -38,6 +40,10 @@ final class FakePaddleApi implements PaddleApi, PaddleConnectionChecker
     {
         $this->transactionCalls++;
         $this->transactionPayload = $payload;
+
+        if ($this->createException !== null) {
+            throw $this->createException;
+        }
 
         return $this->transaction;
     }

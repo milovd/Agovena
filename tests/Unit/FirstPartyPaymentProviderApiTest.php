@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Agovena\Extensions\Paddle\HttpPaddleApi;
+use Agovena\Extensions\Paddle\PaddleProviderException;
 use Agovena\Extensions\Tebex\HttpTebexApi;
 use App\Agovena\Extensions\ExtensionManager;
 use Illuminate\Http\Client\Request as HttpRequest;
@@ -58,6 +59,29 @@ it('previews Paddle transaction payment methods with location context', function
         && $request->url() === 'https://sandbox-api.paddle.com/transactions/preview'
         && $request->header('Paddle-Version') === ['1']
         && $request->data()['address']['country_code'] === 'NL');
+});
+
+it('preserves Paddle error codes without exposing the request payload', function (): void {
+    Http::fake([
+        'https://sandbox-api.paddle.com/transactions' => Http::response([
+            'error' => [
+                'code' => 'transaction_default_checkout_url_not_set',
+                'detail' => 'Set a default payment link.',
+            ],
+        ], 400),
+    ]);
+
+    try {
+        (new HttpPaddleApi('[REDACTED]', sandbox: true))->createTransaction([
+            'custom_data' => ['payment_id' => '42'],
+        ]);
+        test()->fail('Expected PaddleProviderException was not thrown.');
+    } catch (PaddleProviderException $exception) {
+        expect($exception->providerCode)->toBe('transaction_default_checkout_url_not_set')
+            ->and($exception->providerDetail)->toBe('Set a default payment link.')
+            ->and($exception->httpStatus)->toBe(400)
+            ->and($exception->getMessage())->not->toContain('[REDACTED]');
+    }
 });
 
 it('refunds a Tebex payment through the documented bodyless endpoint', function (): void {

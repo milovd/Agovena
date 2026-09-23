@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Agovena\Extensions\Paddle\PaddleApi;
 use Agovena\Extensions\Paddle\PaddlePaymentGateway;
+use Agovena\Extensions\Paddle\PaddleProviderException;
 use Agovena\Extensions\Tebex\TebexApi;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
@@ -221,6 +222,30 @@ test('paddle rejects a method that transaction preview does not allow', function
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
         ->and($api->transactionCalls)->toBe(0)
         ->and($api->previewPayload['address']['country_code'] ?? null)->toBe('NL');
+});
+
+test('paddle preserves a safe provider error when checkout creation fails', function (): void {
+    $api = enableFirstPartyPaddle();
+    $api->createException = new PaddleProviderException(
+        'paddle::messages.errors.request_failed',
+        'provider error',
+        'transaction_default_checkout_url_not_set',
+        'default payment link missing',
+        400,
+    );
+    $payment = placeFirstPartyOrder('paddle:card', 5);
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:card',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-missing-payment-link-1',
+    );
+
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($attempt->response_meta['provider_error_code'] ?? null)->toBe('transaction_default_checkout_url_not_set')
+        ->and($attempt->response_meta['failure_message'] ?? null)->toContain('default payment link');
 });
 
 test('paddle status synchronization completes a local checkout without a webhook', function (): void {
