@@ -159,6 +159,19 @@ test('paddle exposes country-aware methods and restricts its hosted checkout', f
         ->and($api->previewPayload['currency_code'] ?? null)->toBe('EUR');
 });
 
+test('paddle checkout methods expose local branded payment icons', function (): void {
+    enableFirstPartyPaddle();
+
+    foreach (['card', 'apple_pay', 'google_pay', 'paypal', 'alipay', 'bancontact', 'blik', 'ideal', 'kakao_pay', 'mb_way', 'naver_pay', 'payco', 'pix', 'samsung_pay', 'upi'] as $method) {
+        expect(is_file(public_path('images/payment-methods/'.$method.'.svg')))->toBeTrue();
+    }
+
+    $southKoreaCard = collect(app(PaddlePaymentGateway::class)->checkoutMethods())
+        ->first(static fn ($method): bool => $method->id === 'paddle:south_korea_local_card');
+
+    expect($southKoreaCard?->icon)->toBe('ag:payment-method/card');
+});
+
 test('paddle rejects a method that transaction preview does not allow', function (): void {
     $api = enableFirstPartyPaddle();
     $api->preview = ['available_payment_methods' => ['card']];
