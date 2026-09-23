@@ -92,7 +92,7 @@ final class FakePaddleApi implements PaddleApi, PaddleConnectionChecker
     public ?array $lastAdjustmentRequest = null;
 
     /**
-     * @param  list<array{id: string, type: string, amount?: string}>|null  $items
+     * @param  list<array{item_id: string, type: string, amount?: string}>|null  $items
      */
     public function createAdjustment(
         string $transactionId,

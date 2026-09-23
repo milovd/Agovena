@@ -15,9 +15,11 @@ use App\Agovena\Payments\RefundRequest;
 use App\Agovena\Payments\StartOrderPayment;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\RefundStatus;
 use App\Models\Payment;
 use App\Models\PaymentWebhookEvent;
 use App\Models\Product;
+use App\Models\Refund;
 use Illuminate\Http\Request;
 use Tests\Support\FakePaddleApi;
 use Tests\Support\FakeTebexApi;
@@ -269,9 +271,20 @@ test('paddle adjustment webhooks use the transaction id for payment lookup', fun
 
     $payment->update(['status' => PaymentStatus::Paid]);
     $attempt->update(['status' => PaymentAttemptStatus::Succeeded]);
+    Refund::query()->create([
+        'payment_id' => $payment->id,
+        'order_id' => $payment->order_id,
+        'amount' => $payment->amount,
+        'currency' => $payment->currency,
+        'status' => RefundStatus::Processing,
+        'provider_reference' => 'adj_test',
+        'provider_claimed_at' => now(),
+        'reason' => 'test',
+    ]);
     app(HandlePaymentWebhook::class)->handle('paddle', $request);
 
-    expect($payment->fresh()->status)->toBe(PaymentStatus::Refunded);
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Refunded)
+        ->and(Refund::query()->where('provider_reference', 'adj_test')->firstOrFail()->status)->toBe(RefundStatus::Completed);
 });
 
 test('tebex requires custom order and payment metadata before marking paid', function (): void {

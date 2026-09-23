@@ -214,6 +214,16 @@ final class RecordRefund
                     ]);
                 }
 
+                $providerStatus = strtolower((string) ($result->metadata['provider_status'] ?? 'approved'));
+                if (in_array($providerStatus, ['pending', 'pending_approval', 'processing'], true)) {
+                    $refund->status = RefundStatus::Processing;
+                    $refund->provider_reference = $result->externalRefundId;
+                    $refund->provider_claimed_at = now();
+                    $refund->save();
+
+                    return $refund->fresh() ?? throw new RuntimeException('Refund disappeared while awaiting provider approval.');
+                }
+
                 $refund->status = RefundStatus::Completed;
                 $refund->provider_reference = $result->externalRefundId;
                 $refund->completed_at = now();

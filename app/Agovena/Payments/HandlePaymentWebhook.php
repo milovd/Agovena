@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Payments;
 
+use App\Agovena\Payments\Contracts\HandlesProviderRefundEvents;
 use App\Agovena\Payments\Contracts\ManagesProviderSubscriptions;
 use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Contracts\ResolvesWebhookAttempts;
@@ -30,6 +31,7 @@ final class HandlePaymentWebhook
         private readonly ApplyNormalizedPaymentStatus $applyStatus,
         private readonly PaymentLifecycleLock $lifecycleLock,
         private readonly ApplyProviderSubscriptionEvent $applyProviderSubscriptionEvent,
+        private readonly ApplyProviderRefundEvent $applyProviderRefundEvent,
     ) {}
 
     public function handle(string $gatewayId, Request $request): WebhookHandleResult
@@ -47,13 +49,6 @@ final class HandlePaymentWebhook
         }
 
         $payload = $gateway->parseWebhook($request);
-        $providerSubscriptionEvent = $gateway instanceof ManagesProviderSubscriptions
-            ? $gateway->providerSubscriptionEvent($payload)
-            : null;
-        if ($providerSubscriptionEvent !== null) {
-            $this->applyProviderSubscriptionEvent->handle($providerSubscriptionEvent);
-        }
-
         $externalEventId = $payload->externalEventId;
         if ($externalEventId === '') {
             $externalEventId = null;
@@ -118,6 +113,38 @@ final class HandlePaymentWebhook
                     }
 
                     return ['event' => $locked, 'duplicate' => true];
+                }
+
+                $providerSubscriptionEvent = $gateway instanceof ManagesProviderSubscriptions
+                    ? $gateway->providerSubscriptionEvent($payload)
+                    : null;
+                if ($providerSubscriptionEvent !== null) {
+                    if ($this->applyProviderSubscriptionEvent->handle($providerSubscriptionEvent)) {
+                        $locked->processing_status = 'processed';
+                        $locked->processed_at = now();
+                        $locked->save();
+
+                        return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
+                    }
+                }
+
+                $providerRefundEvent = $gateway instanceof HandlesProviderRefundEvents
+                    ? $gateway->providerRefundEvent($payload)
+                    : null;
+                if ($providerRefundEvent !== null) {
+                    if ($this->applyProviderRefundEvent->handle($providerRefundEvent)) {
+                        $locked->processing_status = 'processed';
+                        $locked->processed_at = now();
+                        $locked->save();
+
+                        return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
+                    }
+
+                    $locked->processing_status = 'deferred';
+                    $locked->processed_at = null;
+                    $locked->save();
+
+                    return ['event' => $locked->fresh() ?? $locked, 'duplicate' => false];
                 }
 
                 if ($payload->externalPaymentId === null || $payload->externalPaymentId === '') {

@@ -15,10 +15,10 @@ use Illuminate\Support\Facades\Schema;
  */
 final class ApplyProviderSubscriptionEvent
 {
-    public function handle(ProviderSubscriptionEvent $event): void
+    public function handle(ProviderSubscriptionEvent $event): bool
     {
         if (! Schema::hasColumn('subscriptions', 'provider_reference')) {
-            return;
+            return false;
         }
 
         $subscription = Subscription::query()
@@ -30,7 +30,7 @@ final class ApplyProviderSubscriptionEvent
         }
 
         if ($subscription === null) {
-            return;
+            return false;
         }
 
         $subscription->provider_reference = $event->externalSubscriptionId;
@@ -40,6 +40,8 @@ final class ApplyProviderSubscriptionEvent
             $subscription->cancel_at_period_end = $event->cancelAtPeriodEnd;
         }
         $subscription->save();
+
+        return true;
     }
 
     private function applyStatus(Subscription $subscription, ProviderSubscriptionEvent $event): void
