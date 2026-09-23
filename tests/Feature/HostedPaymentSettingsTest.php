@@ -23,6 +23,7 @@ function enablePaddleForSettings(?FakePaddleApi $api = null): FakePaddleApi
 
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('paddle', 'api_key', 'test-paddle-api-key', secret: true);
+    $settings->set('paddle', 'client_token', 'test_abcdefghijklmnopqrstuvwxyz1');
     $settings->set('paddle', 'webhook_secret', 'test-paddle-webhook-secret', secret: true);
     $settings->set('paddle', 'sandbox', true);
 
@@ -113,6 +114,7 @@ test('paddle settings automatically checks after the final credential is entered
         ->test(Index::class)
         ->call('openSettings', 'paddle')
         ->set('settingsForm.api_key', 'test-paddle-api-key')
+        ->set('settingsForm.client_token', 'test_abcdefghijklmnopqrstuvwxyz1')
         ->set('settingsForm.webhook_secret', 'test-paddle-webhook-secret')
         ->assertSet('settingsConnectionState', 'success')
         ->assertSet('settingsConnectionMessage', fn (string $message): bool => str_contains($message, 'payment methods loaded'));
@@ -160,6 +162,7 @@ test('paddle settings reports a failed connection without persisting entered cre
         ->test(Index::class)
         ->call('openSettings', 'paddle')
         ->set('settingsForm.api_key', 'test-paddle-api-key')
+        ->set('settingsForm.client_token', 'test_abcdefghijklmnopqrstuvwxyz1')
         ->set('settingsForm.webhook_secret', 'test-paddle-webhook-secret')
         ->assertSet('settingsConnectionState', 'error')
         ->assertSet('settingsMethodOptions', []);

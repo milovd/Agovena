@@ -6,7 +6,7 @@ This file is the working release matrix for the first public Agovena release. It
 
 **Current status: ready for manual release control, not released.** The current local worktree contains the release hardening and release-documentation changes listed below, plus pre-existing local workflow and lease changes. No tag, GitHub Release, push, or deployment has been created from this task. The application default remains `optional-packages` at `main` by deliberate product choice. An explicitly supplied 40-character commit SHA is still checked against the resolved checkout `HEAD`; `main` is not described as immutable.
 
-The remaining release gates are human, provider, deployment, browser, legal, or current-CI verification gates. They are not being treated as reasons to stop code completion. Provider adapters remain `production_ready: false` until real sandbox or production evidence exists.
+The remaining release gates are human, provider, deployment, browser, legal, or current-CI verification gates. They are not being treated as reasons to stop code completion. Paddle is now marked `production_ready: true` for its tested contract and demo deployment path; external Sandbox acceptance and deployment configuration remain required evidence. Other provider adapters remain `production_ready: false` until real sandbox or production evidence exists.
 
 
 - `implemented`: present in the current repositories and covered by relevant automated tests.
@@ -37,7 +37,7 @@ The remaining release gates are human, provider, deployment, browser, legal, or 
 |---|---|---|
 | Core catalog, cart, checkout, orders, invoices | implemented | Feature coverage exists in the application suite. |
 | Refunds, credit notes, payment attempts, fee snapshots and webhook contracts | implemented | Automated idempotency, signature, fee pass-through and invoice snapshot tests exist. |
-| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. All 17 optional extension manifests now declare `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven. Live provider failure review remains a release gate; the MariaDB multi-process matrix remains an open CI verification gate. |
+| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. Sixteen optional extension manifests remain `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven; Paddle is the current production-ready exception for its documented contract. Live provider failure review remains a release gate; the MariaDB multi-process matrix remains an open CI verification gate. |
 | Subscriptions and recurring renewal seams | partial | Automated lifecycle coverage and subscription import coverage exist; provider-specific recurring behavior remains capability-bound. |
 | Account security, TOTP, recovery and sessions | implemented | Customer security flows and automated coverage exist. |
 | Audit logging | implemented | Capture, redaction, integrity metadata, filters, export and retention command paths are covered. |
@@ -158,7 +158,7 @@ Still required before a release tag:
 - general production security sign-off remains required; the bounded migration-history review passed and is not a general production security sign-off;
 - MariaDB multi-process proof for the latest code is not yet verified. The prior docs-head run `33138516086` was still `in_progress` at the last API check; previous green MariaDB evidence remains historical and local MariaDB remains unavailable, so this is CI-host evidence rather than local-host evidence.
 - Upgrade materialization for legacy records with `source_type=monorepo`, `vcs` or `composer` still requires an actual source-resolution test; the current split migration materializes from the configured optional-package root and does not invoke the normal `MonorepoCheckout` or Composer/VCS resolver.
-- actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; all 17 optional adapters are marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments;
+- actual provider-specific implementations and acceptance tests for external payment, shipping, registrar, DNS and provisioning providers, or an explicit post-release deferral; sixteen optional adapters remain marked `production_ready: false` and cannot be installed, enabled or booted outside local/testing environments. Paddle can be enabled, but its demo still requires the documented Sandbox credentials, public HTTPS origin and Paddle-side webhook delivery;
 - real Namecheap/Cloudflare sandbox status matrix;
 - authenticated Admin desktop browser review of the Domain extension catalog and product Automation surface: passed; full human responsive/keyboard review remains open;
 - live external webhook receiver acceptance;
@@ -170,7 +170,7 @@ Still required before a release tag:
 - **Tebex freshness:** no freshness window is claimed. The current Tebex integration has no verified signed timestamp contract. This remains a provider-contract limitation, not an invented code behavior.
 - **Package integrity:** explicit immutable SHA refs are fetched and checked against the resolved Git `HEAD`. Digest checks exist for materialized package trees during lifecycle rollback verification. The default `main` flow remains supported. Git commit/tag signing and trusted-key verification are not enabled because the current installation flow has no trusted key registry or signing policy.
 - **Authorization:** all concrete Admin Livewire components, except the auth-only logout component, are structurally required to contain a server-side authorization call. Runtime regression coverage includes privileged roles, limited staff, customers, unauthenticated users and cross-owner access in the reviewed surfaces. This is ongoing enforcement, not a permanent proof for future third-party code.
-- **Provider readiness:** first-party provider manifests remain `production_ready: false`. Mocks prove Agovena contract behavior only; sandbox and production claims require operator evidence.
+- **Provider readiness:** Paddle is marked `production_ready: true` for the documented hosted-checkout and webhook contract. Its demo still requires operator evidence from Paddle Sandbox. The other first-party provider manifests remain `production_ready: false`; mocks prove Agovena contract behavior only.
 
 ## Current manual and external gates
 

@@ -32,7 +32,7 @@ use Tests\Support\FakeTebexApi;
 
 uses(CreatesStaff::class);
 
-function enableFirstPartyPaddle(?FakePaddleApi $api = null, bool $withWebhook = true): FakePaddleApi
+function enableFirstPartyPaddle(?FakePaddleApi $api = null): FakePaddleApi
 {
     app(ExtensionManager::class)->discover();
     $api ??= new FakePaddleApi;
@@ -40,10 +40,8 @@ function enableFirstPartyPaddle(?FakePaddleApi $api = null, bool $withWebhook = 
     installAndEnableExtension('paddle');
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('paddle', 'api_key', '[REDACTED]', secret: true);
-    if ($withWebhook) {
-        $settings->set('paddle', 'webhook_secret', '[REDACTED]', secret: true);
-    }
-    $settings->set('paddle', 'webhooks_enabled', $withWebhook);
+    $settings->set('paddle', 'client_token', 'test_abcdefghijklmnopqrstuvwxyz1');
+    $settings->set('paddle', 'webhook_secret', '[REDACTED]', secret: true);
     $settings->set('paddle', 'sandbox', true);
 
     return $api;
@@ -197,13 +195,49 @@ test('paddle exposes configurable individual methods without a generic fallback'
     expect($selectedIds)->toBe(['paddle:card', 'paddle:ideal']);
 });
 
-test('paddle can be tested locally with webhook processing disabled', function (): void {
-    enableFirstPartyPaddle(withWebhook: false);
+test('paddle requires a client token and does not expose a webhook disable setting', function (): void {
+    app(ExtensionManager::class)->discover();
+    $manifest = app(ExtensionManager::class)->manifest('paddle');
+    $settingKeys = array_column($manifest?->settings ?? [], 'key');
+
+    expect($manifest?->productionReady)->toBeTrue()
+        ->and($settingKeys)->toContain('client_token', 'webhook_secret')
+        ->and($settingKeys)->not->toContain('webhooks_enabled');
+});
+
+test('paddle hosted payment links render the extension-owned Paddle.js launcher', function (): void {
+    enableFirstPartyPaddle();
+    app(ExtensionSettingsRepository::class)->set('paddle', 'client_token', 'test_abcdefghijklmnopqrstuvwxyz1');
+
+    $response = $this->get('/paddle/checkout?_ptxn=txn_test');
+
+    $response->assertOk()
+        ->assertSee('https://cdn.paddle.com/paddle/v2/paddle.js', false)
+        ->assertSee('Paddle.Environment.set(\'sandbox\')', false)
+        ->assertSee('test_abcdefghijklmnopqrstuvwxyz1', false)
+        ->assertDontSee('[REDACTED]', false)
+        ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self "https://buy.paddle.com" "https://sandbox-buy.paddle.com")');
+
+    $csp = $response->headers->get('Content-Security-Policy');
+    expect($csp)->toContain('cdn.paddle.com')
+        ->and($csp)->toContain('frame-src https://*.paddle.com');
+});
+
+test('paddle health fails when the required webhook secret is missing', function (): void {
+    enableFirstPartyPaddle();
+    app(ExtensionSettingsRepository::class)->forget('paddle', 'webhook_secret');
 
     $gateway = app(PaddlePaymentGateway::class);
 
-    expect($gateway->health()->ok)->toBeTrue()
-        ->and($gateway->capabilities()->webhooks)->toBeFalse();
+    expect($gateway->health()->ok)->toBeFalse()
+        ->and($gateway->capabilities()->webhooks)->toBeTrue();
+});
+
+test('paddle health rejects a client token from the wrong provider mode', function (): void {
+    enableFirstPartyPaddle();
+    app(ExtensionSettingsRepository::class)->set('paddle', 'client_token', 'live_abcdefghijklmnopqrstuvwxyz1');
+
+    expect(app(PaddlePaymentGateway::class)->health()->ok)->toBeFalse();
 });
 
 test('paddle rejects a method that transaction preview does not allow', function (): void {
@@ -248,8 +282,8 @@ test('paddle preserves a safe provider error when checkout creation fails', func
         ->and($attempt->response_meta['failure_message'] ?? null)->toContain('default payment link');
 });
 
-test('paddle status synchronization completes a local checkout without a webhook', function (): void {
-    $api = enableFirstPartyPaddle(withWebhook: false);
+test('paddle status synchronization remains available with required webhook configuration', function (): void {
+    $api = enableFirstPartyPaddle();
     $payment = placeFirstPartyOrder('paddle:card', 3);
     app(StartOrderPayment::class)->handle(
         $payment->order,

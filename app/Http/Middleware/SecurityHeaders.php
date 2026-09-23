@@ -24,7 +24,10 @@ final class SecurityHeaders
         $response->headers->set('X-Content-Type-Options', 'nosniff');
         $response->headers->set('X-Frame-Options', (string) config('agovena.security.headers.frame', 'DENY'));
         $response->headers->set('Referrer-Policy', (string) config('agovena.security.headers.referrer', 'strict-origin-when-cross-origin'));
-        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+        $paymentPolicy = $request->routeIs('paddle.checkout')
+            ? 'payment=(self "https://buy.paddle.com" "https://sandbox-buy.paddle.com")'
+            : 'payment=()';
+        $response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), '.$paymentPolicy);
         $response->headers->set('X-DNS-Prefetch-Control', 'off');
         $response->headers->set('Content-Security-Policy', $this->contentSecurityPolicy($request));
 
@@ -48,6 +51,12 @@ final class SecurityHeaders
         $font = "'self' https://fonts.gstatic.com data:";
         $img = "'self' data: blob: https:";
         $connect = "'self'";
+        $paddleCheckout = $request->routeIs('paddle.checkout');
+
+        if ($paddleCheckout) {
+            $script .= ' https://cdn.paddle.com';
+            $connect .= ' https://*.paddle.com';
+        }
 
         if (app()->environment('local') && (bool) config('app.debug')) {
             $vite = $this->viteDevOrigins();
@@ -68,6 +77,10 @@ final class SecurityHeaders
             "object-src 'none'",
             "frame-ancestors 'none'",
         ];
+
+        if ($paddleCheckout) {
+            $directives[] = 'frame-src https://*.paddle.com';
+        }
 
         if ($request->isSecure()) {
             $directives[] = 'upgrade-insecure-requests';
