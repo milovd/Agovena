@@ -120,8 +120,8 @@ test('tebex validates every package mapping before creating a basket', function 
 
 test('paddle paid webhook with mismatched amount is ignored', function (): void {
     enableSecurityPaddle();
-    $payment = placeSecurityOrder('paddle:paddle', 1);
-    $attempt = app(StartOrderPayment::class)->handle($payment->order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-mismatch');
+    $payment = placeSecurityOrder('paddle:card', 1);
+    $attempt = app(StartOrderPayment::class)->handle($payment->order, 'paddle:card', 'https://example.test/return', 'https://example.test/cancel', 'paddle-mismatch');
     $timestamp = time();
     $body = json_encode([
         'event_id' => 'evt_paddle_mismatch',
@@ -219,8 +219,8 @@ test('paddle supports partial adjustments while Tebex keeps its full-refund boun
     $paddleApi->transaction['details'] = [
         'line_items' => [['id' => 'txnitm_test']],
     ];
-    $paddlePayment = placeSecurityOrder('paddle:paddle', 1);
-    $paddleAttempt = app(StartOrderPayment::class)->handle($paddlePayment->order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-refund-start');
+    $paddlePayment = placeSecurityOrder('paddle:card', 1);
+    $paddleAttempt = app(StartOrderPayment::class)->handle($paddlePayment->order, 'paddle:card', 'https://example.test/return', 'https://example.test/cancel', 'paddle-refund-start');
     $tebexApi = enableSecurityTebex();
     $tebexPayment = placeSecurityOrder('tebex:tebex', 2);
     $tebexAttempt = app(StartOrderPayment::class)->handle($tebexPayment->order, 'tebex:tebex', 'https://example.test/return', 'https://example.test/cancel', 'tebex-refund-start');
@@ -241,8 +241,8 @@ test('paddle supports partial adjustments while Tebex keeps its full-refund boun
 
 test('paddle adjustment webhooks use the transaction id for payment lookup', function (): void {
     enableSecurityPaddle();
-    $payment = placeSecurityOrder('paddle:paddle', 1);
-    $attempt = app(StartOrderPayment::class)->handle($payment->order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-adjustment-lookup');
+    $payment = placeSecurityOrder('paddle:card', 1);
+    $attempt = app(StartOrderPayment::class)->handle($payment->order, 'paddle:card', 'https://example.test/return', 'https://example.test/cancel', 'paddle-adjustment-lookup');
     $timestamp = time();
     $body = json_encode([
         'event_id' => 'evt_paddle_adjustment',
@@ -318,8 +318,8 @@ test('tebex requires custom order and payment metadata before marking paid', fun
 
 test('first party gateways require an exact full refund in the payment currency', function (): void {
     enableSecurityPaddle();
-    $paddlePayment = placeSecurityOrder('paddle:paddle', 1);
-    app(StartOrderPayment::class)->handle($paddlePayment->order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-refund-boundary');
+    $paddlePayment = placeSecurityOrder('paddle:card', 1);
+    app(StartOrderPayment::class)->handle($paddlePayment->order, 'paddle:card', 'https://example.test/return', 'https://example.test/cancel', 'paddle-refund-boundary');
     enableSecurityTebex();
     $tebexPayment = placeSecurityOrder('tebex:tebex', 2);
     app(StartOrderPayment::class)->handle($tebexPayment->order, 'tebex:tebex', 'https://example.test/return', 'https://example.test/cancel', 'tebex-refund-boundary');
@@ -335,8 +335,8 @@ test('first party gateways require an exact full refund in the payment currency'
 
 test('first party gateways reject refunds without a provider reference', function (): void {
     $paddleApi = enableSecurityPaddle();
-    $paddlePayment = placeSecurityOrder('paddle:paddle', 1);
-    app(StartOrderPayment::class)->handle($paddlePayment->order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-empty-refund');
+    $paddlePayment = placeSecurityOrder('paddle:card', 1);
+    app(StartOrderPayment::class)->handle($paddlePayment->order, 'paddle:card', 'https://example.test/return', 'https://example.test/cancel', 'paddle-empty-refund');
     $paddleApi->adjustment = ['transaction_id' => 'txn_test'];
 
     $tebexApi = enableSecurityTebex();
@@ -354,9 +354,9 @@ test('first party gateways reject refunds without a provider reference', functio
 test('paddle does not persist a processing attempt without a transaction id', function (): void {
     $api = enableSecurityPaddle();
     $api->transaction['id'] = '';
-    $payment = placeSecurityOrder('paddle:paddle', 1);
+    $payment = placeSecurityOrder('paddle:card', 1);
 
-    $attempt = app(StartOrderPayment::class)->handle($payment->order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-empty-transaction');
+    $attempt = app(StartOrderPayment::class)->handle($payment->order, 'paddle:card', 'https://example.test/return', 'https://example.test/cancel', 'paddle-empty-transaction');
 
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
         ->and($attempt->external_id)->toBeNull();

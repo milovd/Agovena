@@ -42,6 +42,7 @@ function enableFirstPartyPaddle(?FakePaddleApi $api = null, bool $withWebhook = 
     if ($withWebhook) {
         $settings->set('paddle', 'webhook_secret', '[REDACTED]', secret: true);
     }
+    $settings->set('paddle', 'webhooks_enabled', $withWebhook);
     $settings->set('paddle', 'sandbox', true);
 
     return $api;
@@ -85,16 +86,16 @@ function placeFirstPartyOrder(string $paymentMethod, int $productId): Payment
 
 test('paddle checkout redirects and signed paid webhook completes payment', function (): void {
     $api = enableFirstPartyPaddle();
-    $payment = placeFirstPartyOrder('paddle:paddle', 1);
+    $payment = placeFirstPartyOrder('paddle:card', 1);
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
-        'paddle:paddle',
+        'paddle:card',
         'https://example.test/return',
         'https://example.test/cancel',
         'paddle-start-1',
     );
 
-    expect($attempt->redirect_url)->toBe('https://checkout.paddle.test/txn_test')
+    expect($attempt->redirect_url)->toBe('https://checkout.paddle.test/txn_test?allowed_payment_methods=card')
         ->and($attempt->status)->toBe(PaymentAttemptStatus::Processing)
         ->and($api->transactionCalls)->toBe(1)
         ->and($api->transactionPayload['currency_code'] ?? null)->toBe('EUR')
@@ -172,6 +173,38 @@ test('paddle checkout methods expose local branded payment icons', function (): 
     expect($southKoreaCard?->icon)->toBe('ag:payment-method/card');
 });
 
+test('paddle exposes configurable individual methods without a generic fallback', function (): void {
+    enableFirstPartyPaddle();
+
+    $gateway = app(PaddlePaymentGateway::class);
+    $checkoutIds = array_map(
+        static fn ($method): string => $method->id,
+        $gateway->checkoutMethods(),
+    );
+    $configurableIds = array_column($gateway->configurableCheckoutMethods(), 'id');
+
+    expect($checkoutIds)->toContain('paddle:card', 'paddle:apple_pay')
+        ->and($checkoutIds)->not->toContain('paddle:paddle')
+        ->and($configurableIds)->toContain('card', 'apple_pay');
+
+    app(ExtensionSettingsRepository::class)->set('paddle', 'enabled_methods', 'card,ideal');
+    $selectedIds = array_map(
+        static fn ($method): string => $method->id,
+        $gateway->checkoutMethods(),
+    );
+
+    expect($selectedIds)->toBe(['paddle:card', 'paddle:ideal']);
+});
+
+test('paddle can be tested locally with webhook processing disabled', function (): void {
+    enableFirstPartyPaddle(withWebhook: false);
+
+    $gateway = app(PaddlePaymentGateway::class);
+
+    expect($gateway->health()->ok)->toBeTrue()
+        ->and($gateway->capabilities()->webhooks)->toBeFalse();
+});
+
 test('paddle rejects a method that transaction preview does not allow', function (): void {
     $api = enableFirstPartyPaddle();
     $api->preview = ['available_payment_methods' => ['card']];
@@ -192,10 +225,10 @@ test('paddle rejects a method that transaction preview does not allow', function
 
 test('paddle status synchronization completes a local checkout without a webhook', function (): void {
     $api = enableFirstPartyPaddle(withWebhook: false);
-    $payment = placeFirstPartyOrder('paddle:paddle', 3);
+    $payment = placeFirstPartyOrder('paddle:card', 3);
     app(StartOrderPayment::class)->handle(
         $payment->order,
-        'paddle:paddle',
+        'paddle:card',
         'https://example.test/return',
         'https://example.test/cancel',
         'paddle-sync-1',
@@ -224,7 +257,7 @@ test('paddle creates a recurring inline price for automatic subscriptions', func
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => 'Recurring Buyer',
         'customer_email' => 'recurring@example.test',
-        'payment_method' => 'paddle:paddle',
+        'payment_method' => 'paddle:card',
         'billing' => AddressData::fromArray([
             'name' => 'Recurring Buyer',
             'line1' => 'Street 1',
@@ -235,7 +268,7 @@ test('paddle creates a recurring inline price for automatic subscriptions', func
         'custom_properties' => ['_agovena_renewal_mode' => 'automatic'],
     ]);
     $payment = $order->payment()->firstOrFail();
-    $attempt = app(StartOrderPayment::class)->handle($order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-recurring-1');
+    $attempt = app(StartOrderPayment::class)->handle($order, 'paddle:card', 'https://example.test/return', 'https://example.test/cancel', 'paddle-recurring-1');
 
     expect($api->transactionPayload['items'][0]['price']['billing_cycle'] ?? null)->toBe([
         'interval' => 'month',
@@ -261,7 +294,7 @@ test('paddle subscription events synchronize the Core subscription projection', 
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => 'Subscription Buyer',
         'customer_email' => 'subscription@example.test',
-        'payment_method' => 'paddle:paddle',
+        'payment_method' => 'paddle:card',
         'billing' => AddressData::fromArray([
             'name' => 'Subscription Buyer',
             'line1' => 'Street 1',
@@ -272,7 +305,7 @@ test('paddle subscription events synchronize the Core subscription projection', 
         'custom_properties' => ['_agovena_renewal_mode' => 'automatic'],
     ]);
     $payment = $order->payment()->firstOrFail();
-    app(StartOrderPayment::class)->handle($order, 'paddle:paddle', 'https://example.test/return', 'https://example.test/cancel', 'paddle-subscription-webhook-1');
+    app(StartOrderPayment::class)->handle($order, 'paddle:card', 'https://example.test/return', 'https://example.test/cancel', 'paddle-subscription-webhook-1');
     $body = json_encode([
         'event_id' => 'evt_paddle_subscription_paid',
         'event_type' => 'transaction.paid',
