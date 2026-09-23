@@ -351,7 +351,13 @@
                 :aria-expanded="open.toString()"
             >
                 <span>{{ __('storefront.checkout.order_summary') }}</span>
-                <strong>{{ \App\Support\MoneyFormatter::format($due) }}</strong>
+                <strong>
+                    @if ($due !== null)
+                        {{ \App\Support\MoneyFormatter::format($due) }}
+                    @else
+                        -
+                    @endif
+                </strong>
             </button>
             <div class="store-checkout__summary-body">
                     <h2 class="store-summary__title">{{ __('storefront.checkout.order_summary') }}</h2>
@@ -398,7 +404,13 @@
                     <dl class="store-totals">
                         <div>
                             <dt>{{ __('storefront.checkout.subtotal') }}</dt>
-                            <dd>{{ \App\Support\MoneyFormatter::format($subtotal) }}</dd>
+                            <dd>
+                                @if ($subtotal !== null)
+                                    {{ \App\Support\MoneyFormatter::format($subtotal) }}
+                                @else
+                                    -
+                                @endif
+                            </dd>
                         </div>
                         @if ($discountTotal?->amount > 0)
                             <div>

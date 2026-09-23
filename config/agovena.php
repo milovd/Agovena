@@ -32,6 +32,8 @@ return [
         'allow_development_instant_pay' => env('AGOVENA_DEV_INSTANT_PAY') !== null
             ? filter_var(env('AGOVENA_DEV_INSTANT_PAY'), FILTER_VALIDATE_BOOLEAN)
             : (env('APP_ENV') === 'local' && filter_var(env('APP_DEBUG', false), FILTER_VALIDATE_BOOLEAN)),
+        /* Payment lifecycle locks must use a shared cache backend. */
+        'lock_store' => env('AGOVENA_PAYMENT_LOCK_STORE', 'database'),
         'pending_attempt_stale_seconds' => (int) env('AGOVENA_PENDING_ATTEMPT_STALE_SECONDS', 900),
         'payment_method_discovery_ttl' => (int) env('AGOVENA_PAYMENT_METHOD_DISCOVERY_TTL', 3600),
         'return_url_origins' => array_values(array_filter(array_map(

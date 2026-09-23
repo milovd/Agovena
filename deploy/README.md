@@ -68,7 +68,7 @@ See also [INSTALL.md](../INSTALL.md), [SUPPORT.md](../SUPPORT.md), and [ATTRIBUT
 
 ## Queue and Redis
 
-Baseline: `QUEUE_CONNECTION=database` and `CACHE_STORE=database` (or `file` sessions). Redis is recommended for multi-node cache/queue/locks, not mandatory for a single VPS.
+Baseline: `QUEUE_CONNECTION=database` and `CACHE_STORE=database` (or `file` sessions). Payment lifecycle locks use `AGOVENA_PAYMENT_LOCK_STORE=database` by default and require the migrated `cache_locks` table. Redis is recommended for multi-node cache/queue/locks, not mandatory for a single VPS.
 
 ## Backup
 
