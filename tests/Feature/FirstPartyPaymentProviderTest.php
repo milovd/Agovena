@@ -12,6 +12,7 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
@@ -215,12 +216,41 @@ test('paddle hosted payment links render the extension-owned Paddle.js launcher'
         ->assertSee('https://cdn.paddle.com/paddle/v2/paddle.js', false)
         ->assertSee('Paddle.Environment.set(\'sandbox\')', false)
         ->assertSee('test_abcdefghijklmnopqrstuvwxyz1', false)
+        ->assertSee("displayMode: 'inline'", false)
+        ->assertSee('showAddDiscounts: false', false)
+        ->assertSee('showAddTaxId: false', false)
+        ->assertSee('allowDiscountRemoval: false', false)
         ->assertDontSee('[REDACTED]', false)
         ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self "https://buy.paddle.com" "https://sandbox-buy.paddle.com")');
 
     $csp = $response->headers->get('Content-Security-Policy');
     expect($csp)->toContain('cdn.paddle.com')
         ->and($csp)->toContain('frame-src https://*.paddle.com');
+});
+
+test('paddle launcher passes the selected method and payment status return', function (): void {
+    $api = enableFirstPartyPaddle();
+    $api->preview = ['available_payment_methods' => ['apple_pay']];
+    $payment = placeFirstPartyOrder('paddle:apple_pay', 6);
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:apple_pay',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-launcher-return-1',
+    );
+
+    app(StorefrontOrderAccess::class)->remember($payment->order);
+
+    $response = $this->get('/paddle/checkout?_ptxn=txn_test&allowed_payment_methods=apple_pay');
+
+    $response->assertOk()
+        ->assertSee('checkoutSettings.allowedPaymentMethods = allowedPaymentMethods', false)
+        ->assertSee('"apple_pay"', false)
+        ->assertSee('/payment', false)
+        ->assertDontSee('[REDACTED]', false);
+
+    expect($api->transactionCalls)->toBe(1);
 });
 
 test('paddle health fails when the required webhook secret is missing', function (): void {

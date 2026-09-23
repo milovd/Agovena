@@ -6,6 +6,12 @@
         <p class="store-note" role="status">{{ __('storefront.payment_status.waiting') }}</p>
     @endif
 
+    @if ($checkoutEvent === 'failed')
+        <p class="store-note" role="alert">{{ __('storefront.payment_status.checkout_event.failed') }}</p>
+    @elseif ($checkoutEvent === 'cancelled')
+        <p class="store-note" role="status">{{ __('storefront.payment_status.checkout_event.cancelled') }}</p>
+    @endif
+
     @if (in_array($state, ['failed', 'cancelled', 'expired'], true) && is_string($attempt?->response_meta['failure_message'] ?? null))
         <p class="store-note" role="alert">{{ $attempt->response_meta['failure_message'] }}</p>
     @endif

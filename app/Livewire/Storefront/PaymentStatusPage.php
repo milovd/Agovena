@@ -23,9 +23,15 @@ final class PaymentStatusPage extends Component
 {
     public Order $order;
 
+    public ?string $checkoutEvent = null;
+
     public function mount(Request $request, StorefrontOrderAccess $access, Order $order, ReconcilePaymentStatus $reconcile): void
     {
         $access->authorize($request, $order);
+        $event = $request->query('checkout_event');
+        $this->checkoutEvent = is_string($event) && in_array($event, ['failed', 'cancelled'], true)
+            ? $event
+            : null;
         $this->order = $order->load(['items', 'payment.attempts']);
 
         $payment = $this->order->payment;
@@ -68,6 +74,7 @@ final class PaymentStatusPage extends Component
             'attempt' => $attempt,
             'state' => $this->state($payment?->status, $attempt?->status),
             'shouldPoll' => $this->shouldPoll($payment?->status, $attempt?->status),
+            'checkoutEvent' => $this->checkoutEvent,
             'theme' => $theme,
         ])->layout($theme->view('layouts.storefront'), [
             'title' => __('storefront.payment_status.page_title'),

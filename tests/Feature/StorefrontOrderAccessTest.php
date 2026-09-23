@@ -63,3 +63,17 @@ test('a checkout session can reopen the order without the token', function () {
         ->assertOk()
         ->assertSee($order->number, false);
 });
+
+test('paddle checkout failures stay on the payment status page', function () {
+    $order = Order::factory()->create();
+    $access = app(StorefrontOrderAccess::class);
+    $statusUrl = $access->paymentStatusUrl($order);
+
+    $this->get($statusUrl.'&checkout_event=failed')
+        ->assertOk()
+        ->assertSee(__('storefront.payment_status.checkout_event.failed'), false);
+
+    $this->get($statusUrl.'&checkout_event=cancelled')
+        ->assertOk()
+        ->assertSee(__('storefront.payment_status.checkout_event.cancelled'), false);
+});

@@ -244,6 +244,10 @@ return [
     'payment_status' => [
         'page_title' => 'Payment status',
         'waiting' => 'Waiting for confirmation from the payment provider. This page updates automatically.',
+        'checkout_event' => [
+            'failed' => 'Paddle reported a failed payment attempt. No payment has been confirmed. You can try again from the order.',
+            'cancelled' => 'The Paddle checkout was closed. Your order has not been confirmed as paid.',
+        ],
         'view_order' => 'View order',
         'retry' => 'Pay now',
         'title' => [
