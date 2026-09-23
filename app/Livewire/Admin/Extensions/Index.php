@@ -230,7 +230,8 @@ final class Index extends Component
     public function updatedSettingsForm(mixed $value, string $key): void
     {
         $key = str_contains($key, '.') ? substr($key, strrpos($key, '.') + 1) : $key;
-        if (! in_array($key, $this->settingsConnectionKeys, true)) {
+        if (! in_array($key, $this->settingsConnectionKeys, true)
+            && ! in_array($key, $this->settingsSecretKeys, true)) {
             return;
         }
 

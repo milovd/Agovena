@@ -45,18 +45,18 @@ function enableTebexForSettings(?FakeTebexApi $api = null): FakeTebexApi
     return $api;
 }
 
-test('paddle settings automatically checks the connection without method discovery', function () {
+test('paddle settings checks the connection and discovers configurable methods', function () {
     $api = enablePaddleForSettings();
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
         ->test(Index::class)
         ->call('openSettings', 'paddle')
-        ->assertSet('settingsMethodsLoaded', false)
-        ->assertSet('settingsMethodOptions', [])
+        ->assertSet('settingsMethodsLoaded', true)
+        ->assertSet('settingsMethodOptions', fn (array $options): bool => count($options) > 0)
         ->assertSet('settingsConnectionState', 'success')
-        ->assertSet('settingsConnectionMessage', __('admin.extensions.settings_connection_ok_without_methods'))
-        ->assertDontSee('Refresh payment methods');
+        ->assertSet('settingsConnectionMessage', fn (string $message): bool => str_contains($message, 'payment'))
+        ->assertSee('Refresh payment methods');
 
     expect($api->pingCalls)->toBe(1);
 });
@@ -115,7 +115,7 @@ test('paddle settings automatically checks after the final credential is entered
         ->set('settingsForm.api_key', 'test-paddle-api-key')
         ->set('settingsForm.webhook_secret', 'test-paddle-webhook-secret')
         ->assertSet('settingsConnectionState', 'success')
-        ->assertSet('settingsConnectionMessage', __('admin.extensions.settings_connection_ok_without_methods'));
+        ->assertSet('settingsConnectionMessage', fn (string $message): bool => str_contains($message, 'payment methods loaded'));
 
     expect($api->pingCalls)->toBe(1)
         ->and($settings->isConfigured('paddle', 'api_key'))->toBeFalse();
