@@ -42,6 +42,21 @@ final class FakePaddleApi implements PaddleApi, PaddleConnectionChecker
         return $this->transaction;
     }
 
+    /** @var array<string, mixed>|null */
+    public ?array $previewPayload = null;
+
+    /** @var array<string, mixed> */
+    public array $preview = [
+        'available_payment_methods' => ['card', 'ideal'],
+    ];
+
+    public function previewTransaction(array $payload): array
+    {
+        $this->previewPayload = $payload;
+
+        return $this->preview;
+    }
+
     public function getTransaction(string $transactionId): array
     {
         return array_merge($this->transaction, ['id' => $transactionId]);

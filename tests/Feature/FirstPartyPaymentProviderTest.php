@@ -11,6 +11,7 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\PaymentInitiation;
@@ -129,6 +130,51 @@ test('paddle checkout redirects and signed paid webhook completes payment', func
     ));
 
     expect($payment->fresh()->status)->toBe(PaymentStatus::Paid);
+});
+
+test('paddle exposes country-aware methods and restricts its hosted checkout', function (): void {
+    $api = enableFirstPartyPaddle();
+    $api->preview = ['available_payment_methods' => ['card', 'ideal']];
+
+    $options = app(AvailablePaymentMethods::class)->options('NL');
+    $ids = array_column($options, 'id');
+
+    expect($ids)->toContain('paddle:card', 'paddle:ideal')
+        ->and($ids)->not->toContain('paddle:bancontact', 'paddle:pix');
+
+    $payment = placeFirstPartyOrder('paddle:ideal', 2);
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:ideal',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-ideal-1',
+    );
+
+    expect($attempt->redirect_url)->toBe('https://checkout.paddle.test/txn_test?allowed_payment_methods=ideal')
+        ->and($api->previewPayload['address'] ?? null)->toBe([
+            'country_code' => 'NL',
+            'postal_code' => '1000 AA',
+        ])
+        ->and($api->previewPayload['currency_code'] ?? null)->toBe('EUR');
+});
+
+test('paddle rejects a method that transaction preview does not allow', function (): void {
+    $api = enableFirstPartyPaddle();
+    $api->preview = ['available_payment_methods' => ['card']];
+    $payment = placeFirstPartyOrder('paddle:ideal', 4);
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:ideal',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-ideal-unavailable-1',
+    );
+
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($api->transactionCalls)->toBe(0)
+        ->and($api->previewPayload['address']['country_code'] ?? null)->toBe('NL');
 });
 
 test('paddle status synchronization completes a local checkout without a webhook', function (): void {

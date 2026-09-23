@@ -38,6 +38,28 @@ it('creates Paddle transactions with checkout metadata and idempotency', functio
     });
 });
 
+it('previews Paddle transaction payment methods with location context', function (): void {
+    Http::fake([
+        'https://sandbox-api.paddle.com/transactions/preview' => Http::response([
+            'data' => [
+                'available_payment_methods' => ['card', 'ideal'],
+            ],
+        ]),
+    ]);
+
+    $response = (new HttpPaddleApi('[REDACTED]', sandbox: true))->previewTransaction([
+        'items' => [['price_id' => 'pri_test', 'quantity' => 1]],
+        'currency_code' => 'EUR',
+        'address' => ['country_code' => 'NL', 'postal_code' => '1000 AA'],
+    ]);
+
+    expect($response['available_payment_methods'])->toBe(['card', 'ideal']);
+    Http::assertSent(fn (HttpRequest $request): bool => $request->method() === 'POST'
+        && $request->url() === 'https://sandbox-api.paddle.com/transactions/preview'
+        && $request->header('Paddle-Version') === ['1']
+        && $request->data()['address']['country_code'] === 'NL');
+});
+
 it('refunds a Tebex payment through the documented bodyless endpoint', function (): void {
     Http::fake([
         'https://checkout.tebex.io/api/payments/*' => Http::response(['transaction_id' => 'tbx-refund']),
