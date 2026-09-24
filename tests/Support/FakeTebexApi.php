@@ -18,6 +18,8 @@ final class FakeTebexApi implements TebexApi, TebexConnectionChecker
     /** @var list<string|null> */
     public array $checkoutIdempotencyKeys = [];
 
+    public string $checkoutUrl = 'https://checkout.tebex.io/checkout/basket-ident';
+
     public int $pingCalls = 0;
 
     public bool $pingFails = false;
@@ -44,7 +46,7 @@ final class FakeTebexApi implements TebexApi, TebexConnectionChecker
         return [
             'id' => 'checkout-test',
             'ident' => 'basket-ident',
-            'links' => ['checkout' => 'https://checkout.tebex.test/basket-ident'],
+            'links' => ['checkout' => $this->checkoutUrl],
         ];
     }
 
@@ -78,7 +80,11 @@ final class FakeTebexApi implements TebexApi, TebexConnectionChecker
             throw new TebexProviderException('tebex::messages.errors.request_failed', null, true);
         }
 
-        return $this->refund ?? ['id' => 'refund-test', 'transaction_id' => $transactionId];
+        return $this->refund ?? [
+            'id' => 'refund-test',
+            'transaction_id' => $transactionId,
+            'status' => ['id' => 2, 'description' => 'Refund'],
+        ];
     }
 
     public function getRecurringPayment(string $reference): array

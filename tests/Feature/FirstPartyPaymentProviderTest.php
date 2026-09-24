@@ -28,7 +28,9 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Payment;
+use App\Models\PaymentAttempt;
 use App\Models\Product;
+use App\Models\Refund;
 use Illuminate\Http\Request;
 use Tests\Support\CreatesStaff;
 use Tests\Support\FakePaddleApi;
@@ -675,7 +677,7 @@ test('tebex checkout creates a custom checkout without package mapping', functio
         'tebex-start-1',
     );
 
-    expect($attempt->redirect_url)->toBe('https://checkout.tebex.test/basket-ident')
+    expect($attempt->redirect_url)->toBe('https://checkout.tebex.io/checkout/basket-ident')
         ->and($attempt->status)->toBe(PaymentAttemptStatus::Processing)
         ->and($api->checkoutCalls)->toBe(1)
         ->and($api->checkoutPayloads[0]['items'][0]['package']['name'] ?? null)->not->toBeEmpty()
@@ -721,7 +723,7 @@ test('tebex retry reuses the custom checkout idempotency key after response loss
     $api->throwOn = null;
     $result = $gateway->initiate($request);
 
-    expect($result->redirectUrl)->toBe('https://checkout.tebex.test/basket-ident')
+    expect($result->redirectUrl)->toBe('https://checkout.tebex.io/checkout/basket-ident')
         ->and($api->checkoutCalls)->toBe(2)
         ->and($api->checkoutIdempotencyKeys)->toBe(['tebex-custom-retry-1', 'tebex-custom-retry-1']);
 });
@@ -736,6 +738,9 @@ test('tebex refund unknown outcome remains pending for reconciliation', function
         'https://example.test/cancel',
         'tebex-refund-attempt-1',
     );
+    PaymentAttempt::query()->where('payment_id', $payment->id)->latest('id')->firstOrFail()->update([
+        'external_id' => 'tbx-refund-attempt-1',
+    ]);
     $payment->update(['status' => PaymentStatus::Paid, 'paid_at' => now()]);
     $payment->order()->update(['status' => OrderStatus::Paid]);
     $api->throwOn = 'refund';
@@ -761,6 +766,61 @@ test('tebex refund unknown outcome remains pending for reconciliation', function
         ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
         ->and($payment->fresh()->reconciliation_meta['reason'] ?? null)->toBe('provider_refund_outcome_unknown')
         ->and($api->refundIdempotencyKeys)->toBe(['refund-'.$refund->id, 'refund-'.$refund->id]);
+});
+
+test('tebex refuses to send a refund before a provider transaction exists', function (): void {
+    $api = enableFirstPartyTebex();
+    $payment = placeFirstPartyOrder('tebex:tebex', 28);
+    app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'tebex:tebex',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'tebex-refund-without-transaction-1',
+    );
+    $payment->update(['status' => PaymentStatus::Paid, 'paid_at' => now()]);
+    $payment->order()->update(['status' => OrderStatus::Paid]);
+
+    try {
+        app(RecordRefund::class)->handle(
+            $payment->fresh(),
+            $this->createStaff(),
+            $payment->amount,
+            'No Tebex transaction yet',
+        );
+    } catch (Throwable) {
+    }
+
+    expect(Refund::query()->latest('id')->firstOrFail()->status->value)->toBe('pending')
+        ->and($api->refundIdempotencyKeys)->toBe([]);
+});
+
+test('tebex reconciles an already completed provider refund without sending it twice', function (): void {
+    $api = enableFirstPartyTebex();
+    $payment = placeFirstPartyOrder('tebex:tebex', 29);
+    app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'tebex:tebex',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'tebex-refund-reconcile-1',
+    );
+    PaymentAttempt::query()->where('payment_id', $payment->id)->latest('id')->firstOrFail()->update([
+        'external_id' => 'tbx-refund-reconcile-1',
+    ]);
+    $payment->update(['status' => PaymentStatus::Paid, 'paid_at' => now()]);
+    $payment->order()->update(['status' => OrderStatus::Paid]);
+    $api->payment = ['status' => ['id' => 2, 'description' => 'Refund']];
+
+    app(RecordRefund::class)->handle(
+        $payment->fresh(),
+        $this->createStaff(),
+        $payment->amount,
+        'Reconcile Tebex refund',
+    );
+
+    expect(Refund::query()->latest('id')->firstOrFail()->status->value)->toBe('completed')
+        ->and($api->refundIdempotencyKeys)->toBe([]);
 });
 
 test('tebex signed completed webhook completes a matching payment', function (): void {
@@ -827,7 +887,7 @@ test('tebex supports provider-managed recurring checkout without pretending to o
     );
 
     expect(app(PaymentGatewayRegistry::class)->get('tebex')->capabilities()->recurring)->toBeTrue()
-        ->and($attempt->redirect_url)->toBe('https://checkout.tebex.test/basket-ident')
+        ->and($attempt->redirect_url)->toBe('https://checkout.tebex.io/checkout/basket-ident')
         ->and(array_map(static fn ($method): string => $method->id, app(TebexPaymentGateway::class)->checkoutMethods()))->toBe(['tebex:tebex'])
         ->and(app(TebexPaymentGateway::class)->checkoutMethods()[0]->label)->toBe('Tebex Checkout')
         ->and(app(TebexPaymentGateway::class)->checkoutMethods()[0]->icon)->toBe('ag:payment-method/tebex')
@@ -835,6 +895,82 @@ test('tebex supports provider-managed recurring checkout without pretending to o
         ->and($api->checkoutPayloads[0]['items'][0]['package']['type'] ?? null)->toBe('subscription')
         ->and($api->checkoutPayloads[0]['items'][0]['package']['expiry_period'] ?? null)->toBe('month')
         ->and($api->checkoutPayloads[0]['items'][0]['package']['expiry_length'] ?? null)->toBe(1);
+});
+
+test('tebex accepts nested payment data from a recurring started webhook', function (): void {
+    enableFirstPartyModules(['subscriptions']);
+    enableFirstPartyTebex();
+    $product = Product::factory()->active()->create(['id' => 26, 'price_amount' => 2500]);
+    app(ProductCapabilityManager::class)->enable($product, 'subscribable', [
+        'interval' => 'month',
+        'interval_count' => 1,
+        'trial_days' => 0,
+    ]);
+    app(CartService::class)->add($product->id, 1);
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => 'Nested Tebex Buyer',
+        'customer_email' => 'nested-tebex@example.test',
+        'payment_method' => 'tebex:tebex',
+        'billing' => AddressData::fromArray([
+            'name' => 'Nested Tebex Buyer',
+            'line1' => 'Street 1',
+            'city' => 'Amsterdam',
+            'postal_code' => '1000 AA',
+            'country' => 'NL',
+        ]),
+        'custom_properties' => ['_agovena_renewal_mode' => 'automatic'],
+    ]);
+    $payment = $order->payment()->firstOrFail();
+    app(StartOrderPayment::class)->handle($order, 'tebex:tebex', 'https://example.test/return', 'https://example.test/cancel', 'tebex-nested-started-1');
+
+    $body = json_encode([
+        'id' => 'evt_tebex_nested_started',
+        'type' => 'recurring-payment.started',
+        'subject' => [
+            'reference' => 'tbx-r-nested-test',
+            'next_payment_at' => '2026-11-01T00:00:00Z',
+            'initial_payment' => [
+                'transaction_id' => 'tbx-nested-started',
+                'status' => ['id' => 1, 'description' => 'Complete'],
+                'created_at' => '2026-10-01T00:00:00Z',
+                'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
+                'products' => [['id' => 54321, 'quantity' => 1]],
+                'custom' => ['order_id' => (string) $order->id, 'payment_id' => (string) $payment->id],
+            ],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $signature = hash_hmac('sha256', hash('sha256', $body), '[REDACTED]');
+
+    app(HandlePaymentWebhook::class)->handle('tebex', Request::create(
+        '/webhooks/payments/tebex',
+        'POST',
+        [],
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_X-SIGNATURE' => $signature],
+        $body,
+    ));
+
+    $subscription = Subscription::query()->where('order_id', $order->id)->firstOrFail();
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($subscription->provider_reference)->toBe('tbx-r-nested-test');
+});
+
+test('tebex rejects a checkout redirect outside the official checkout host', function (): void {
+    $api = enableFirstPartyTebex();
+    $api->checkoutUrl = 'https://attacker.example/checkout';
+    $payment = placeFirstPartyOrder('tebex:tebex', 27);
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'tebex:tebex',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'tebex-unsafe-redirect-1',
+    );
+
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($attempt->redirect_url)->toBeNull();
 });
 
 test('tebex refund status synchronization completes a pending full refund after a missed webhook', function (): void {
@@ -935,6 +1071,27 @@ test('tebex recurring webhooks create and synchronize the Core subscription proj
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Paid);
 
     $send([
+        'id' => 'evt_tebex_recurring_renewed',
+        'type' => 'recurring-payment.renewed',
+        'subject' => [
+            'reference' => 'tbx-r-recurring-test',
+            'status' => ['id' => 2, 'description' => 'Active'],
+            'next_payment_at' => '2026-12-01T00:00:00Z',
+            'last_payment' => [
+                'transaction_id' => 'tbx-tebex-renewed',
+                'status' => ['id' => 1, 'description' => 'Complete'],
+                'created_at' => '2026-11-01T00:00:00Z',
+                'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
+                'products' => [['id' => 54321, 'quantity' => 1]],
+                'custom' => ['order_id' => (string) $order->id, 'payment_id' => (string) $payment->id],
+            ],
+        ],
+    ]);
+
+    expect($subscription->fresh()->current_period_start?->toISOString())->toBe('2026-11-01T00:00:00.000000Z')
+        ->and($subscription->fresh()->next_billing_at?->toISOString())->toBe('2026-12-01T00:00:00.000000Z');
+
+    $send([
         'id' => 'evt_tebex_recurring_cancel_requested',
         'type' => 'recurring-payment.cancellation.requested',
         'subject' => [
@@ -959,6 +1116,19 @@ test('tebex recurring webhooks create and synchronize the Core subscription proj
 
     expect($subscription->fresh()->cancel_at_period_end)->toBeFalse()
         ->and($subscription->fresh()->next_billing_at?->toISOString())->toBe('2026-12-01T00:00:00.000000Z');
+
+    $send([
+        'id' => 'evt_tebex_recurring_status_changed',
+        'type' => 'recurring-payment.status-changed',
+        'subject' => [
+            'reference' => 'tbx-r-recurring-test',
+            'status' => ['id' => 3, 'description' => 'Overdue'],
+            'next_payment_at' => '2026-12-02T00:00:00Z',
+        ],
+    ]);
+
+    expect($subscription->fresh()->status)->toBe(SubscriptionStatus::PastDue)
+        ->and($subscription->fresh()->next_billing_at?->toISOString())->toBe('2026-12-02T00:00:00.000000Z');
 
     $send([
         'id' => 'evt_tebex_recurring_ended',

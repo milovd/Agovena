@@ -26,6 +26,11 @@ it('maps Tebex webhook statuses', function (): void {
         ->and(TebexStatusMapper::fromWebhook('payment.refunded'))->toBe(PaymentStatus::Refunded)
         ->and(TebexStatusMapper::fromWebhook('payment.declined'))->toBe(PaymentStatus::Failed)
         ->and(TebexStatusMapper::fromWebhook('recurring-payment.ended'))->toBe(PaymentStatus::Cancelled)
+        ->and(TebexStatusMapper::fromPaymentStatusId(1))->toBe(PaymentStatus::Paid)
+        ->and(TebexStatusMapper::fromPaymentStatusId(2))->toBe(PaymentStatus::Refunded)
+        ->and(TebexStatusMapper::fromPaymentStatusId(3))->toBe(PaymentStatus::Refunded)
+        ->and(TebexStatusMapper::fromPaymentStatusId(19))->toBe(PaymentStatus::Pending)
+        ->and(TebexStatusMapper::fromPaymentStatusId(21))->toBe(PaymentStatus::Pending)
         ->and(TebexStatusMapper::fromWebhook('validation.webhook'))->toBe(PaymentStatus::Pending);
 });
 
