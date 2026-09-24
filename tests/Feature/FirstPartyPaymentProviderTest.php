@@ -829,6 +829,9 @@ test('tebex supports provider-managed recurring checkout without pretending to o
     expect(app(PaymentGatewayRegistry::class)->get('tebex')->capabilities()->recurring)->toBeTrue()
         ->and($attempt->redirect_url)->toBe('https://checkout.tebex.test/basket-ident')
         ->and(array_map(static fn ($method): string => $method->id, app(TebexPaymentGateway::class)->checkoutMethods()))->toBe(['tebex:tebex'])
+        ->and(app(TebexPaymentGateway::class)->checkoutMethods()[0]->label)->toBe('Tebex Checkout')
+        ->and(app(TebexPaymentGateway::class)->checkoutMethods()[0]->icon)->toBe('ag:payment-method/tebex')
+        ->and(is_file(public_path('images/payment-methods/tebex.svg')))->toBeTrue()
         ->and($api->checkoutPayloads[0]['items'][0]['package']['type'] ?? null)->toBe('subscription')
         ->and($api->checkoutPayloads[0]['items'][0]['package']['expiry_period'] ?? null)->toBe('month')
         ->and($api->checkoutPayloads[0]['items'][0]['package']['expiry_length'] ?? null)->toBe(1);
