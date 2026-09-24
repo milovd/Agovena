@@ -29,7 +29,7 @@ final class PaymentStatusPage extends Component
     {
         $access->authorize($request, $order);
         $event = $request->query('checkout_event');
-        $this->checkoutEvent = is_string($event) && in_array($event, ['failed', 'cancelled'], true)
+        $this->checkoutEvent = is_string($event) && in_array($event, ['failed', 'cancelled', 'error'], true)
             ? $event
             : null;
         $this->order = $order->load(['items', 'payment.attempts']);
@@ -90,6 +90,12 @@ final class PaymentStatusPage extends Component
         if ($payment === PaymentStatus::Refunded || $payment === PaymentStatus::PartiallyRefunded) {
             return 'paid';
         }
+        if ($this->checkoutEvent === 'failed' || $this->checkoutEvent === 'error') {
+            return 'failed';
+        }
+        if ($this->checkoutEvent === 'cancelled') {
+            return 'cancelled';
+        }
         if ($attempt === PaymentAttemptStatus::Failed || $payment === PaymentStatus::Failed) {
             return 'failed';
         }
@@ -112,6 +118,12 @@ final class PaymentStatusPage extends Component
             return false;
         }
 
-        return in_array($this->state($payment, $attempt), ['pending'], true);
+        if ($this->state($payment, $attempt) === 'pending') {
+            return true;
+        }
+
+        return in_array($this->checkoutEvent, ['failed', 'error'], true)
+            && $payment === PaymentStatus::Pending
+            && in_array($attempt, [PaymentAttemptStatus::Pending, PaymentAttemptStatus::Processing], true);
     }
 }

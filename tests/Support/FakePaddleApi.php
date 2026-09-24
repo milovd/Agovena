@@ -68,6 +68,14 @@ final class FakePaddleApi implements PaddleApi, PaddleConnectionChecker
         return array_merge($this->transaction, ['id' => $transactionId]);
     }
 
+    /** @param array<string, mixed> $payload */
+    public function updateTransaction(string $transactionId, array $payload): array
+    {
+        $this->transaction = array_merge($this->transaction, $payload, ['id' => $transactionId]);
+
+        return $this->transaction;
+    }
+
     /** @var array<string, mixed> */
     public array $subscription = [
         'id' => 'sub_test',

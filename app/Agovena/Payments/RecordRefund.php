@@ -209,6 +209,10 @@ final class RecordRefund
                         'message' => $result->message,
                     ]);
 
+                    if ($result->terminalFailure) {
+                        return $refund->fresh() ?? throw new RuntimeException('Refund disappeared after terminal provider rejection.');
+                    }
+
                     throw ValidationException::withMessages([
                         'payment' => $result->message ?: __('admin.refunds.gateway_failed'),
                     ]);

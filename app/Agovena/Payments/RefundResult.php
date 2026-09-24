@@ -15,6 +15,7 @@ final readonly class RefundResult
         public ?string $message = null,
         public array $metadata = [],
         public bool $unknownOutcome = false,
+        public bool $terminalFailure = false,
     ) {}
 
     public static function ok(?string $externalRefundId = null, array $metadata = []): self
@@ -22,9 +23,9 @@ final readonly class RefundResult
         return new self(success: true, externalRefundId: $externalRefundId, metadata: $metadata);
     }
 
-    public static function fail(string $message): self
+    public static function fail(string $message, bool $terminalFailure = false): self
     {
-        return new self(success: false, message: $message);
+        return new self(success: false, message: $message, terminalFailure: $terminalFailure);
     }
 
     public static function unknown(array $metadata = [], ?string $message = null): self

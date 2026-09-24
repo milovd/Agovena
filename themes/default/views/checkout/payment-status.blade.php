@@ -8,6 +8,8 @@
 
     @if ($checkoutEvent === 'failed')
         <p class="store-note" role="alert">{{ __('storefront.payment_status.checkout_event.failed') }}</p>
+    @elseif ($checkoutEvent === 'error')
+        <p class="store-note" role="alert">{{ __('storefront.payment_status.checkout_event.error') }}</p>
     @elseif ($checkoutEvent === 'cancelled')
         <p class="store-note" role="status">{{ __('storefront.payment_status.checkout_event.cancelled') }}</p>
     @endif

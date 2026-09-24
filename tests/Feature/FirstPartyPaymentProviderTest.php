@@ -19,6 +19,8 @@ use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\PaymentInitiation;
 use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Payments\StartOrderPayment;
+use App\Agovena\Recurring\Enums\SubscriptionInterval;
+use App\Agovena\Recurring\Enums\SubscriptionStatus;
 use App\Agovena\Recurring\Models\Subscription;
 use App\Agovena\Recurring\SubscriptionService;
 use App\Enums\OrderStatus;
@@ -217,15 +219,125 @@ test('paddle hosted payment links render the extension-owned Paddle.js launcher'
         ->assertSee('Paddle.Environment.set(\'sandbox\')', false)
         ->assertSee('test_abcdefghijklmnopqrstuvwxyz1', false)
         ->assertSee("displayMode: 'inline'", false)
+        ->assertSee("case 'checkout.payment.error'", false)
+        ->assertSee("case 'checkout.error'", false)
+        ->assertSee('theme: checkoutTheme', false)
+        ->assertSee('locale: checkoutLocale', false)
         ->assertSee('showAddDiscounts: false', false)
         ->assertSee('showAddTaxId: false', false)
         ->assertSee('allowDiscountRemoval: false', false)
+        ->assertDontSee('<h1 class="store-title">Paddle checkout</h1>', false)
         ->assertDontSee('[REDACTED]', false)
         ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(self "https://buy.paddle.com" "https://sandbox-buy.paddle.com")');
 
     $csp = $response->headers->get('Content-Security-Policy');
     expect($csp)->toContain('cdn.paddle.com')
         ->and($csp)->toContain('frame-src https://*.paddle.com');
+});
+
+test('paddle checkout requires order access and binds the payment method to the attempt', function (): void {
+    enableFirstPartyPaddle();
+    $payment = placeFirstPartyOrder('paddle:card', 5);
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:card',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-access-1',
+    );
+    session()->forget(StorefrontOrderAccess::SESSION_KEY);
+
+    $checkoutUrl = '/paddle/checkout?_ptxn='.$attempt->external_id.'&allowed_payment_methods=card';
+    $this->get($checkoutUrl)->assertNotFound();
+
+    app(StorefrontOrderAccess::class)->remember($payment->order);
+    $this->get($checkoutUrl)
+        ->assertOk()
+        ->assertSee('allowedPaymentMethods', false)
+        ->assertSee('card', false);
+
+    $this->get('/paddle/checkout?_ptxn='.$attempt->external_id.'&allowed_payment_methods=bancontact')
+        ->assertNotFound();
+});
+
+test('paddle cancels an open provider transaction before local order cancellation', function (): void {
+    $api = enableFirstPartyPaddle();
+    $payment = placeFirstPartyOrder('paddle:card', 7);
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:card',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-cancel-1',
+    );
+    $api->transaction['status'] = 'ready';
+
+    $cancelled = app(PaddlePaymentGateway::class)->cancel($payment->fresh(), $attempt->fresh());
+
+    expect($api->transaction['status'])->toBe('canceled')
+        ->and($cancelled->status)->toBe(PaymentStatus::Cancelled)
+        ->and($attempt->fresh()->status)->toBe(PaymentAttemptStatus::Cancelled);
+});
+
+test('paddle rejected refunds remain failed instead of completed', function (): void {
+    $api = enableFirstPartyPaddle();
+    $payment = placeFirstPartyOrder('paddle:card', 8);
+    app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:card',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-refund-rejected-1',
+    );
+    $payment->update(['status' => PaymentStatus::Paid, 'paid_at' => now()]);
+    $payment->order()->update(['status' => OrderStatus::Paid]);
+    $api->adjustment = [
+        'id' => 'adj_rejected',
+        'status' => 'rejected',
+    ];
+
+    $refund = app(RecordRefund::class)->handle(
+        $payment->fresh(),
+        $this->createStaff(),
+        $payment->amount,
+        'Rejected by provider',
+    );
+
+    expect($refund->status->value)->toBe('failed');
+});
+
+test('paddle status sync reconciles an adjustment after a missed webhook', function (): void {
+    $api = enableFirstPartyPaddle();
+    $payment = placeFirstPartyOrder('paddle:card', 9);
+    app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:card',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-refund-sync-1',
+    );
+    $payment->update(['status' => PaymentStatus::Paid, 'paid_at' => now()]);
+    $payment->order()->update(['status' => OrderStatus::Paid]);
+    $api->adjustment = [
+        'id' => 'adj_sync',
+        'status' => 'pending_approval',
+    ];
+
+    $refund = app(RecordRefund::class)->handle(
+        $payment->fresh(),
+        $this->createStaff(),
+        $payment->amount,
+        'Awaiting provider approval',
+    );
+    $api->transaction['adjustments'] = [[
+        'id' => 'adj_sync',
+        'status' => 'approved',
+    ]];
+
+    app(PaddlePaymentGateway::class)->syncStatus($payment->fresh());
+
+    expect($refund->fresh()->status->value)->toBe('completed')
+        ->and($payment->fresh()->status)->toBe(PaymentStatus::Refunded);
 });
 
 test('paddle launcher passes the selected method and payment status return', function (): void {
@@ -265,6 +377,14 @@ test('paddle health fails when the required webhook secret is missing', function
 
 test('paddle health rejects a client token from the wrong provider mode', function (): void {
     enableFirstPartyPaddle();
+    app(ExtensionSettingsRepository::class)->set('paddle', 'client_token', 'live_abcdefghijklmnopqrstuvwxyz1');
+
+    expect(app(PaddlePaymentGateway::class)->health()->ok)->toBeFalse();
+});
+
+test('paddle live health rejects a non-HTTPS webhook URL', function (): void {
+    enableFirstPartyPaddle();
+    app(ExtensionSettingsRepository::class)->set('paddle', 'sandbox', false);
     app(ExtensionSettingsRepository::class)->set('paddle', 'client_token', 'live_abcdefghijklmnopqrstuvwxyz1');
 
     expect(app(PaddlePaymentGateway::class)->health()->ok)->toBeFalse();
@@ -468,6 +588,62 @@ test('paddle subscription events synchronize the Core subscription projection', 
         'action' => 'clear_scheduled_change',
         'id' => 'sub_test',
     ]);
+});
+
+test('paddle renewal transaction events still settle the payment for an existing subscription', function (): void {
+    enableFirstPartyModules(['subscriptions']);
+    enableFirstPartyPaddle();
+    $payment = placeFirstPartyOrder('paddle:card', 10);
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paddle:card',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paddle-renewal-event-1',
+    );
+    Subscription::query()->create([
+        'number' => 'SUB-EXISTING-1',
+        'customer_email' => 'existing@example.test',
+        'status' => SubscriptionStatus::Active,
+        'interval' => SubscriptionInterval::Month,
+        'interval_count' => 1,
+        'price_amount' => $payment->amount,
+        'currency' => $payment->currency,
+        'quantity' => 1,
+        'renewal_mode' => 'automatic',
+        'provider_reference' => 'sub_existing',
+    ]);
+
+    $body = json_encode([
+        'event_id' => 'evt_paddle_renewal_paid',
+        'event_type' => 'transaction.paid',
+        'data' => [
+            'id' => $attempt->external_id,
+            'status' => 'paid',
+            'subscription_id' => 'sub_existing',
+            'currency_code' => $payment->currency,
+            'details' => [
+                'totals' => ['grand_total' => (string) $payment->amount],
+                'line_items' => [['quantity' => 1, 'totals' => ['total' => (string) $payment->amount]]],
+            ],
+            'custom_data' => ['order_id' => (string) $payment->order_id, 'payment_id' => (string) $payment->id],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $timestamp = time();
+    $signature = hash_hmac('sha256', $timestamp.':'.$body, '[REDACTED]');
+
+    app(HandlePaymentWebhook::class)->handle('paddle', Request::create(
+        '/webhooks/payments/paddle',
+        'POST',
+        [],
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_PADDLE-SIGNATURE' => 'ts='.$timestamp.';h1='.$signature],
+        $body,
+    ));
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($attempt->fresh()->status)->toBe(PaymentAttemptStatus::Succeeded);
 });
 
 test('tebex checkout creates a mapped package basket', function (): void {

@@ -3018,6 +3018,38 @@ button.store-header__utility[aria-expanded="true"] {
   font-size: 0.9375rem;
 }
 
+.store-provider-checkout {
+  width: 100%;
+  max-width: 68rem;
+  margin: 0 auto;
+}
+
+.store-provider-checkout__frame {
+  overflow: hidden;
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-lg);
+  background: var(--theme-color-surface);
+  box-shadow: 0 18px 48px color-mix(in srgb, var(--theme-color-text) 8%, transparent);
+}
+
+.store-provider-checkout__message {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: var(--theme-space-4);
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-lg);
+  background: var(--theme-color-surface);
+}
+
+@media (max-width: 640px) {
+  .store-provider-checkout__frame {
+    margin-inline: calc(var(--theme-space-2) * -1);
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+}
+
 /* ââ Forms / buttons ââ */
 
 .store-field {

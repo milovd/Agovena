@@ -71,7 +71,16 @@ test('paddle checkout failures stay on the payment status page', function () {
 
     $this->get($statusUrl.'&checkout_event=failed')
         ->assertOk()
-        ->assertSee(__('storefront.payment_status.checkout_event.failed'), false);
+        ->assertSee(__('storefront.payment_status.checkout_event.failed'), false)
+        ->assertSee(__('storefront.payment_status.title.failed'), false)
+        ->assertDontSee(__('storefront.payment_status.title.pending'), false)
+        ->assertDontSee(__('storefront.payment_status.waiting'), false);
+
+    $this->get($statusUrl.'&checkout_event=error')
+        ->assertOk()
+        ->assertSee(__('storefront.payment_status.checkout_event.error'), false)
+        ->assertSee(__('storefront.payment_status.title.failed'), false)
+        ->assertDontSee(__('storefront.payment_status.title.pending'), false);
 
     $this->get($statusUrl.'&checkout_event=cancelled')
         ->assertOk()

@@ -119,7 +119,8 @@ final class HandlePaymentWebhook
                     ? $gateway->providerSubscriptionEvent($payload)
                     : null;
                 if ($providerSubscriptionEvent !== null) {
-                    if ($this->applyProviderSubscriptionEvent->handle($providerSubscriptionEvent)) {
+                    if ($this->applyProviderSubscriptionEvent->handle($providerSubscriptionEvent)
+                        && str_starts_with($providerSubscriptionEvent->eventType, 'subscription.')) {
                         $locked->processing_status = 'processed';
                         $locked->processed_at = now();
                         $locked->save();

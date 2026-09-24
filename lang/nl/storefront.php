@@ -246,6 +246,7 @@ return [
         'waiting' => 'Wachten op bevestiging van de betaalprovider. Deze pagina wordt automatisch bijgewerkt.',
         'checkout_event' => [
             'failed' => 'Paddle meldde een mislukte betaalpoging. Er is geen betaling bevestigd. Je kunt de betaling opnieuw starten vanuit de bestelling.',
+            'error' => 'Paddle kon deze betaling niet afronden. Er is geen betaling bevestigd. Je kunt de betaling opnieuw starten vanuit de bestelling.',
             'cancelled' => 'De Paddle-checkout is gesloten. Je bestelling is niet als betaald bevestigd.',
         ],
         'view_order' => 'Bestelling bekijken',
