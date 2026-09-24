@@ -12,14 +12,36 @@ final class FakePayPalApi implements PayPalApi
     /** @var array<string, array<string, mixed>> */
     public array $orders = [];
 
+    /** @var array<string, array<string, mixed>> */
+    public array $subscriptions = [];
+
+    /** @var array<string, array<string, mixed>> */
+    public array $plans = [];
+
     /** @var array<string, string> */
     public array $idempotency = [];
 
+    /** @var array<string, string> */
+    public array $subscriptionIdempotency = [];
+
+    /** @var array<string, array<string, mixed>> */
+    public array $subscriptionPayloads = [];
+
     public int $createCalls = 0;
+
+    public int $createSubscriptionCalls = 0;
 
     public int $refundCalls = 0;
 
+    public int $saleRefundCalls = 0;
+
     public int $captureCalls = 0;
+
+    public int $suspendCalls = 0;
+
+    public int $activateCalls = 0;
+
+    public int $cancelSubscriptionCalls = 0;
 
     /** @var list<string|null> */
     public array $captureIdempotencyKeys = [];
@@ -115,6 +137,102 @@ final class FakePayPalApi implements PayPalApi
         }
 
         return ['id' => $this->malformedRefund ? '' : 'REFUND_'.$captureId, 'status' => 'COMPLETED'];
+    }
+
+    public function refundSale(string $saleId, array $payload, ?string $idempotencyKey = null): array
+    {
+        $this->guard();
+        unset($payload, $idempotencyKey);
+        $this->saleRefundCalls++;
+        if ($this->failRefund) {
+            throw PayPalProviderException::failed('paypal::messages.errors.refund_failed');
+        }
+        if ($this->unknownRefund) {
+            throw PayPalProviderException::unknown('paypal::messages.health.unreachable');
+        }
+
+        return ['id' => $this->malformedRefund ? '' : 'REFUND_'.$saleId, 'state' => 'completed'];
+    }
+
+    public function createSubscription(array $payload, ?string $idempotencyKey = null): array
+    {
+        $this->guard();
+        if ($this->unknownCreate) {
+            throw PayPalProviderException::unknown('paypal::messages.health.unreachable');
+        }
+        if (is_string($idempotencyKey) && $idempotencyKey !== '' && isset($this->subscriptionIdempotency[$idempotencyKey])) {
+            return $this->subscriptions[$this->subscriptionIdempotency[$idempotencyKey]];
+        }
+
+        $this->createSubscriptionCalls++;
+        $id = 'I-TEST-SUB-'.$this->createSubscriptionCalls;
+        $subscription = [
+            'id' => $id,
+            'status' => 'APPROVAL_PENDING',
+            'plan_id' => $payload['plan_id'] ?? null,
+            'custom_id' => $payload['custom_id'] ?? null,
+            'links' => [[
+                'rel' => 'approve',
+                'href' => 'https://www.sandbox.paypal.com/webapps/billing/subscriptions?ba_token='.$id,
+            ]],
+        ];
+        $this->subscriptions[$id] = $subscription;
+        $this->subscriptionPayloads[$id] = $payload;
+        if (is_string($idempotencyKey) && $idempotencyKey !== '') {
+            $this->subscriptionIdempotency[$idempotencyKey] = $id;
+        }
+
+        return $subscription;
+    }
+
+    public function getSubscription(string $id): array
+    {
+        $this->guard();
+        if (! isset($this->subscriptions[$id])) {
+            throw PayPalProviderException::failed('paypal::messages.errors.provider_failed');
+        }
+
+        return $this->subscriptions[$id];
+    }
+
+    public function getPlan(string $id): array
+    {
+        $this->guard();
+        if (! isset($this->plans[$id])) {
+            throw PayPalProviderException::failed('paypal::messages.errors.provider_failed');
+        }
+
+        return $this->plans[$id];
+    }
+
+    public function suspendSubscription(string $id, string $reason): void
+    {
+        $this->guard();
+        unset($reason);
+        $this->suspendCalls++;
+        $subscription = $this->getSubscription($id);
+        $subscription['status'] = 'SUSPENDED';
+        $this->subscriptions[$id] = $subscription;
+    }
+
+    public function activateSubscription(string $id, string $reason): void
+    {
+        $this->guard();
+        unset($reason);
+        $this->activateCalls++;
+        $subscription = $this->getSubscription($id);
+        $subscription['status'] = 'ACTIVE';
+        $this->subscriptions[$id] = $subscription;
+    }
+
+    public function cancelSubscription(string $id, string $reason): void
+    {
+        $this->guard();
+        unset($reason);
+        $this->cancelSubscriptionCalls++;
+        $subscription = $this->getSubscription($id);
+        $subscription['status'] = 'CANCELLED';
+        $this->subscriptions[$id] = $subscription;
     }
 
     public function verifyWebhookSignature(array $payload): bool

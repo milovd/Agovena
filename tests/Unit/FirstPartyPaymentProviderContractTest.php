@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Agovena\Extensions\Paddle\PaddleStatusMapper;
 use Agovena\Extensions\Paddle\PaddleWebhookVerifier;
+use Agovena\Extensions\PayPal\PayPalStatusMapper;
 use Agovena\Extensions\Tebex\TebexStatusMapper;
 use Agovena\Extensions\Tebex\TebexWebhookVerifier;
 use App\Agovena\Extensions\ExtensionManager;
@@ -32,6 +33,17 @@ it('maps Tebex webhook statuses', function (): void {
         ->and(TebexStatusMapper::fromPaymentStatusId(19))->toBe(PaymentStatus::Pending)
         ->and(TebexStatusMapper::fromPaymentStatusId(21))->toBe(PaymentStatus::Pending)
         ->and(TebexStatusMapper::fromWebhook('validation.webhook'))->toBe(PaymentStatus::Pending);
+});
+
+it('maps PayPal order, sale, refund, and subscription statuses conservatively', function (): void {
+    expect(PayPalStatusMapper::map('COMPLETED'))->toBe(PaymentStatus::Paid)
+        ->and(PayPalStatusMapper::map('CANCELLED'))->toBe(PaymentStatus::Cancelled)
+        ->and(PayPalStatusMapper::map('UNKNOWN_PROVIDER_STATE'))->toBe(PaymentStatus::Pending)
+        ->and(PayPalStatusMapper::fromWebhookEvent(['event_type' => 'PAYMENT.SALE.COMPLETED']))->toBe(PaymentStatus::Paid)
+        ->and(PayPalStatusMapper::fromWebhookEvent(['event_type' => 'PAYMENT.CAPTURE.REFUND.PENDING']))->toBe(PaymentStatus::Pending)
+        ->and(PayPalStatusMapper::fromWebhookEvent(['event_type' => 'PAYMENT.SALE.REFUNDED']))->toBe(PaymentStatus::Refunded)
+        ->and(PayPalStatusMapper::fromWebhookEvent(['event_type' => 'BILLING.SUBSCRIPTION.CANCELLED']))->toBe(PaymentStatus::Cancelled)
+        ->and(PayPalStatusMapper::fromWebhookEvent(['event_type' => 'UNSUPPORTED.EVENT']))->toBeNull();
 });
 
 it('verifies Paddle signatures against the raw body and timestamp', function (): void {

@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use Agovena\Extensions\Paddle\HttpPaddleApi;
 use Agovena\Extensions\Paddle\PaddleProviderException;
+use Agovena\Extensions\PayPal\HttpPayPalApi;
 use Agovena\Extensions\Tebex\HttpTebexApi;
 use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Extensions\ExtensionSettingsRepository;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\Http;
 
@@ -156,4 +158,38 @@ it('probes Tebex credentials without creating a basket', function (): void {
     Http::assertSent(fn (HttpRequest $request): bool => $request->method() === 'GET'
         && str_contains($request->url(), '/payments/tbx-0000000000000000000000000000000000000000')
         && str_contains($request->url(), 'type=txn_id'));
+});
+
+it('uses PayPal billing and refund endpoints with idempotency', function (): void {
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->set('paypal', 'client_id', 'paypal-test-client');
+    $settings->set('paypal', 'client_secret', '[REDACTED]');
+    $settings->set('paypal', 'sandbox', true);
+
+    Http::fake([
+        'https://api-m.sandbox.paypal.com/v1/oauth2/token' => Http::response(['access_token' => 'token-test']),
+        'https://api-m.sandbox.paypal.com/v1/billing/plans/P-TEST' => Http::response(['id' => 'P-TEST', 'status' => 'ACTIVE']),
+        'https://api-m.sandbox.paypal.com/v1/billing/subscriptions' => Http::response(['id' => 'I-TEST', 'status' => 'APPROVAL_PENDING']),
+        'https://api-m.sandbox.paypal.com/v1/payments/sale/SALE-TEST/refund' => Http::response(['id' => 'REFUND-TEST', 'state' => 'completed']),
+        'https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-TEST/suspend' => Http::response([], 204),
+        'https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-TEST/activate' => Http::response([], 204),
+        'https://api-m.sandbox.paypal.com/v1/billing/subscriptions/I-TEST/cancel' => Http::response([], 204),
+    ]);
+
+    $api = new HttpPayPalApi($settings);
+    expect($api->getPlan('P-TEST')['id'])->toBe('P-TEST')
+        ->and($api->createSubscription(['plan_id' => 'P-TEST'], 'subscription-attempt-1')['id'])->toBe('I-TEST')
+        ->and($api->refundSale('SALE-TEST', ['amount' => ['value' => '10.00']], 'refund-attempt-1')['id'])->toBe('REFUND-TEST');
+
+    $api->suspendSubscription('I-TEST', 'period end');
+    $api->activateSubscription('I-TEST', 'resume');
+    $api->cancelSubscription('I-TEST', 'immediate');
+
+    Http::assertSent(fn (HttpRequest $request): bool => $request->method() === 'POST'
+        && $request->url() === 'https://api-m.sandbox.paypal.com/v1/billing/subscriptions'
+        && $request->header('PayPal-Request-Id') === ['subscription-attempt-1']
+        && $request->data()['plan_id'] === 'P-TEST');
+    Http::assertSent(fn (HttpRequest $request): bool => $request->method() === 'POST'
+        && $request->url() === 'https://api-m.sandbox.paypal.com/v1/payments/sale/SALE-TEST/refund'
+        && $request->header('PayPal-Request-Id') === ['refund-attempt-1']);
 });
