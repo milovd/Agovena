@@ -61,7 +61,6 @@ function enableFirstPartyTebex(?FakeTebexApi $api = null): FakeTebexApi
     $settings->set('tebex', 'project_id', 'project-test');
     $settings->set('tebex', 'secret_key', '[REDACTED]', secret: true);
     $settings->set('tebex', 'webhook_secret', '[REDACTED]', secret: true);
-    $settings->set('tebex', 'package_map', ['2' => '12345']);
 
     return $api;
 }
@@ -656,7 +655,16 @@ test('paddle renewal transaction events still settle the payment for an existing
         ->and($attempt->fresh()->status)->toBe(PaymentAttemptStatus::Succeeded);
 });
 
-test('tebex checkout creates a mapped package basket', function (): void {
+test('tebex exposes only provider credentials and no product package mapping setting', function (): void {
+    enableFirstPartyTebex();
+    $manifest = app(ExtensionManager::class)->manifest('tebex');
+    $settingKeys = array_column($manifest?->settings ?? [], 'key');
+
+    expect($settingKeys)->toBe(['project_id', 'secret_key', 'webhook_secret'])
+        ->and($settingKeys)->not->toContain('package_map');
+});
+
+test('tebex checkout creates a custom checkout without package mapping', function (): void {
     $api = enableFirstPartyTebex();
     $payment = placeFirstPartyOrder('tebex:tebex', 2);
     $attempt = app(StartOrderPayment::class)->handle(
@@ -669,12 +677,16 @@ test('tebex checkout creates a mapped package basket', function (): void {
 
     expect($attempt->redirect_url)->toBe('https://checkout.tebex.test/basket-ident')
         ->and($attempt->status)->toBe(PaymentAttemptStatus::Processing)
-        ->and($api->basketCalls)->toBe(1);
+        ->and($api->checkoutCalls)->toBe(1)
+        ->and($api->checkoutPayloads[0]['items'][0]['package']['name'] ?? null)->not->toBeEmpty()
+        ->and($api->checkoutPayloads[0]['items'][0]['package']['price'] ?? null)->toBe(25.0)
+        ->and($api->checkoutPayloads[0]['items'][0]['qty'] ?? null)->toBe(1)
+        ->and($api->checkoutPayloads[0]['items'][0]['package']['custom']['agovena_product_id'] ?? null)->toBe((string) $payment->order->items->first()->product_id);
 });
 
-test('tebex unknown package outcomes require payment reconciliation', function (): void {
+test('tebex unknown custom checkout outcomes require payment reconciliation', function (): void {
     $api = enableFirstPartyTebex();
-    $api->throwOn = 'add_package';
+    $api->throwOn = 'create_checkout';
     $payment = placeFirstPartyOrder('tebex:tebex', 2);
 
     $attempt = app(StartOrderPayment::class)->handle(
@@ -688,12 +700,12 @@ test('tebex unknown package outcomes require payment reconciliation', function (
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
         ->and($attempt->response_meta['provider_outcome'] ?? null)->toBe('unknown')
         ->and($payment->fresh()->reconciliation_status)->toBe('manual_review')
-        ->and($api->basketCalls)->toBe(1);
+        ->and($api->checkoutCalls)->toBe(1);
 });
 
-test('tebex retry does not add a package twice after basket response loss', function (): void {
+test('tebex retry reuses the custom checkout idempotency key after response loss', function (): void {
     $api = enableFirstPartyTebex();
-    $api->throwOn = 'get_basket_after_add';
+    $api->throwOn = 'create_checkout';
     $payment = placeFirstPartyOrder('tebex:tebex', 2);
     $gateway = app(PaymentGatewayRegistry::class)->get('tebex');
     $request = new PaymentInitiation(
@@ -701,7 +713,7 @@ test('tebex retry does not add a package twice after basket response loss', func
         payment: $payment,
         returnUrl: 'https://example.test/return',
         cancelUrl: 'https://example.test/cancel',
-        idempotencyKey: 'tebex-package-retry-1',
+        idempotencyKey: 'tebex-custom-retry-1',
     );
 
     $firstResult = $gateway->initiate($request);
@@ -710,8 +722,8 @@ test('tebex retry does not add a package twice after basket response loss', func
     $result = $gateway->initiate($request);
 
     expect($result->redirectUrl)->toBe('https://checkout.tebex.test/basket-ident')
-        ->and($api->addPackageCalls)->toBe(1)
-        ->and($api->addPackageIdempotencyKeys)->toBe(['tebex-package-retry-1:package:12345']);
+        ->and($api->checkoutCalls)->toBe(2)
+        ->and($api->checkoutIdempotencyKeys)->toBe(['tebex-custom-retry-1', 'tebex-custom-retry-1']);
 });
 
 test('tebex refund unknown outcome remains pending for reconciliation', function (): void {
@@ -790,7 +802,6 @@ test('tebex supports provider-managed recurring checkout without pretending to o
         'interval_count' => 1,
         'trial_days' => 0,
     ]);
-    app(ExtensionSettingsRepository::class)->set('tebex', 'package_map', ['22' => '54321']);
     app(CartService::class)->add($product->id, 1);
 
     $order = app(PlaceOrder::class)->handle([
@@ -818,7 +829,9 @@ test('tebex supports provider-managed recurring checkout without pretending to o
     expect(app(PaymentGatewayRegistry::class)->get('tebex')->capabilities()->recurring)->toBeTrue()
         ->and($attempt->redirect_url)->toBe('https://checkout.tebex.test/basket-ident')
         ->and(array_map(static fn ($method): string => $method->id, app(TebexPaymentGateway::class)->checkoutMethods()))->toBe(['tebex:tebex'])
-        ->and($api->packages)->toBe(['54321' => 1]);
+        ->and($api->checkoutPayloads[0]['items'][0]['package']['type'] ?? null)->toBe('subscription')
+        ->and($api->checkoutPayloads[0]['items'][0]['package']['expiry_period'] ?? null)->toBe('month')
+        ->and($api->checkoutPayloads[0]['items'][0]['package']['expiry_length'] ?? null)->toBe(1);
 });
 
 test('tebex refund status synchronization completes a pending full refund after a missed webhook', function (): void {
@@ -871,7 +884,6 @@ test('tebex recurring webhooks create and synchronize the Core subscription proj
         'interval_count' => 1,
         'trial_days' => 0,
     ]);
-    app(ExtensionSettingsRepository::class)->set('tebex', 'package_map', ['23' => '54321']);
     app(CartService::class)->add($product->id, 1);
     $order = app(PlaceOrder::class)->handle([
         'customer_name' => 'Recurring Tebex Buyer',

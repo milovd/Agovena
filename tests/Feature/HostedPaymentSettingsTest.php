@@ -41,7 +41,6 @@ function enableTebexForSettings(?FakeTebexApi $api = null): FakeTebexApi
     $settings->set('tebex', 'project_id', 'test-tebex-project');
     $settings->set('tebex', 'secret_key', 'test-tebex-secret-key', secret: true);
     $settings->set('tebex', 'webhook_secret', 'test-tebex-webhook-secret', secret: true);
-    $settings->set('tebex', 'package_map', '{}');
 
     return $api;
 }

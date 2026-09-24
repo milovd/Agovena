@@ -97,33 +97,40 @@ it('refunds a Tebex payment through the documented bodyless endpoint', function 
         && $request->data() === []);
 });
 
-it('creates Tebex baskets and adds mapped packages', function (): void {
+it('creates a custom Tebex checkout without package identifiers', function (): void {
     Http::fake([
-        'https://checkout.tebex.io/api/baskets' => Http::response([
-            'id' => 'basket-test',
+        'https://checkout.tebex.io/api/checkout' => Http::response([
+            'id' => 'checkout-test',
             'ident' => 'basket-ident',
             'links' => ['checkout' => 'https://checkout.tebex.test/basket-ident'],
-        ]),
-        'https://checkout.tebex.io/api/baskets/basket-ident/packages' => Http::response([
-            'id' => 'basket-test',
-            'ident' => 'basket-ident',
         ]),
     ]);
 
     $api = new HttpTebexApi('project-test', '[REDACTED]');
-    $basket = $api->createBasket([
-        'email' => 'buyer@example.test',
-        'complete_url' => 'https://agovena.test/complete',
-    ]);
-    $added = $api->addPackage('basket-ident', '12345', 2);
+    $checkout = $api->createCheckout([
+        'basket' => [
+            'email' => 'buyer@example.test',
+            'complete_url' => 'https://agovena.test/complete',
+        ],
+        'items' => [[
+            'package' => [
+                'name' => 'Custom product',
+                'price' => 25.0,
+                'type' => 'single',
+                'custom' => ['agovena_product_id' => '42'],
+            ],
+            'qty' => 1,
+        ]],
+    ], 'payment-attempt-42');
 
-    expect($basket['ident'])->toBe('basket-ident')
-        ->and($added['ident'])->toBe('basket-ident');
-
+    expect($checkout['ident'])->toBe('basket-ident');
     Http::assertSent(function (HttpRequest $request): bool {
         return $request->method() === 'POST'
-            && str_ends_with($request->url(), '/baskets/basket-ident/packages')
-            && $request->data() === ['package' => ['id' => '12345'], 'qty' => 2];
+            && $request->url() === 'https://checkout.tebex.io/api/checkout'
+            && $request->header('Idempotency-Key') === ['payment-attempt-42']
+            && $request->data()['items'][0]['package']['name'] === 'Custom product'
+            && $request->data()['items'][0]['package']['price'] === 25.0
+            && ! array_key_exists('id', $request->data()['items'][0]['package']);
     });
 });
 

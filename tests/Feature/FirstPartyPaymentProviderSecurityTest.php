@@ -48,7 +48,6 @@ function enableSecurityTebex(?FakeTebexApi $api = null): FakeTebexApi
     $settings->set('tebex', 'project_id', 'project-test');
     $settings->set('tebex', 'secret_key', '[REDACTED]', secret: true);
     $settings->set('tebex', 'webhook_secret', '[REDACTED]', secret: true);
-    $settings->set('tebex', 'package_map', ['2' => '12345']);
 
     return $api;
 }
@@ -103,19 +102,22 @@ it('rejects a Tebex webhook when the signature is invalid', function (): void {
     expect(app(PaymentGatewayRegistry::class)->get('tebex')->verifyWebhook($request))->toBeFalse();
 });
 
-test('tebex validates every package mapping before creating a basket', function (): void {
+test('tebex creates a custom checkout without package identifiers', function (): void {
     $api = enableSecurityTebex();
     $payment = placeSecurityOrder('tebex:tebex', 3);
 
-    app(StartOrderPayment::class)->handle(
+    $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
         'tebex:tebex',
         'https://example.test/return',
         'https://example.test/cancel',
-        'tebex-missing-map',
+        'tebex-custom-checkout',
     );
 
-    expect($api->basketCalls)->toBe(0);
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Processing)
+        ->and($api->checkoutCalls)->toBe(1)
+        ->and($api->checkoutPayloads[0]['items'][0]['package']['custom']['agovena_product_id'] ?? null)->toBe('3')
+        ->and(array_key_exists('id', $api->checkoutPayloads[0]['items'][0]['package']))->toBeFalse();
 });
 
 test('paddle paid webhook with mismatched amount is ignored', function (): void {
@@ -234,7 +236,7 @@ test('paddle supports partial adjustments while Tebex keeps its full-refund boun
         ->and($paddleApi->lastAdjustmentRequest['type'] ?? null)->toBe('partial')
         ->and($paddleApi->lastAdjustmentRequest['items'][0]['item_id'] ?? null)->toBe('txnitm_test')
         ->and($paddleApi->lastAdjustmentRequest['items'][0]['amount'] ?? null)->toBe('1')
-        ->and($tebexApi->basketCalls)->toBe(1)
+        ->and($tebexApi->checkoutCalls)->toBe(1)
         ->and($paddleAttempt->external_id)->toBe('txn_test')
         ->and($tebexAttempt->external_id)->toBe('basket-ident');
 });
