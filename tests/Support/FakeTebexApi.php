@@ -78,14 +78,26 @@ final class FakeTebexApi implements TebexApi, TebexConnectionChecker
 
     public function getPayment(string $transactionId): array
     {
-        return ['transaction_id' => $transactionId, 'status' => ['id' => 1]];
+        return array_merge(['transaction_id' => $transactionId, 'status' => ['id' => 1]], $this->payment);
     }
+
+    /** @var array<string, mixed> */
+    public array $payment = [];
 
     /** @var array<string, mixed>|null */
     public ?array $refund = null;
 
     /** @var list<string|null> */
     public array $refundIdempotencyKeys = [];
+
+    /** @var list<array<string, mixed>> */
+    public array $recurringActions = [];
+
+    /** @var array<string, mixed> */
+    public array $recurringPayment = [
+        'reference' => 'tbx-r-test',
+        'status' => ['id' => 2, 'description' => 'Active'],
+    ];
 
     public function refundPayment(string $transactionId, ?string $reason = null, ?string $idempotencyKey = null): array
     {
@@ -95,5 +107,30 @@ final class FakeTebexApi implements TebexApi, TebexConnectionChecker
         }
 
         return $this->refund ?? ['id' => 'refund-test', 'transaction_id' => $transactionId];
+    }
+
+    public function getRecurringPayment(string $reference): array
+    {
+        return array_merge($this->recurringPayment, ['reference' => $reference]);
+    }
+
+    public function cancelRecurringPayment(string $reference): array
+    {
+        $this->recurringActions[] = ['action' => 'cancel', 'reference' => $reference];
+        $this->recurringPayment['status'] = ['id' => 5, 'description' => 'Cancelled'];
+
+        return array_merge($this->recurringPayment, ['reference' => $reference]);
+    }
+
+    public function updateRecurringPaymentStatus(string $reference, string $status, ?string $pausedUntil = null): array
+    {
+        $this->recurringActions[] = array_filter([
+            'action' => 'status',
+            'reference' => $reference,
+            'status' => $status,
+            'paused_until' => $pausedUntil,
+        ], static fn (mixed $value): bool => $value !== null);
+
+        return array_merge($this->recurringPayment, ['reference' => $reference]);
     }
 }
