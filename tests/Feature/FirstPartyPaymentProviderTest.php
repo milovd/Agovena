@@ -219,6 +219,8 @@ test('paddle hosted payment links render the extension-owned Paddle.js launcher'
         ->assertSee('Paddle.Environment.set(\'sandbox\')', false)
         ->assertSee('test_abcdefghijklmnopqrstuvwxyz1', false)
         ->assertSee("displayMode: 'inline'", false)
+        ->assertSee('Paddle.Checkout.open({', false)
+        ->assertSee('transactionId: transactionId', false)
         ->assertSee("case 'checkout.payment.error'", false)
         ->assertSee("case 'checkout.error'", false)
         ->assertSee('theme: checkoutTheme', false)
