@@ -37,7 +37,7 @@ The remaining release gates are human, provider, deployment, browser, legal, or 
 |---|---|---|
 | Core catalog, cart, checkout, orders, invoices | implemented | Feature coverage exists in the application suite. |
 | Refunds, credit notes, payment attempts, fee snapshots and webhook contracts | implemented | Automated idempotency, signature, fee pass-through and invoice snapshot tests exist. |
-| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. Sixteen optional extension manifests remain `production_ready: false` until provider-specific endpoints, credentials and acceptance flows are proven; Paddle is the current production-ready exception for its documented contract. Live provider failure review remains a release gate; the MariaDB multi-process matrix remains an open CI verification gate. |
+| Inventory reservations and provisioning seams | partial | Atomic stock reservations, idempotent cancellation release, queue retry propagation, server-selection fail-closed behavior and manual-review transitions are covered. Optional extension manifests remain `production_ready: false` until their provider-specific endpoints, credentials and acceptance flows are ready; Paddle and Tebex are the current production-ready exceptions for their documented contracts. Live provider failure review remains a release gate; the MariaDB multi-process matrix remains an open CI verification gate. |
 | Subscriptions and recurring renewal seams | partial | Automated lifecycle coverage and subscription import coverage exist; provider-specific recurring behavior remains capability-bound. |
 | Account security, TOTP, recovery and sessions | implemented | Customer security flows and automated coverage exist. |
 | Audit logging | implemented | Capture, redaction, integrity metadata, filters, export and retention command paths are covered. |
@@ -81,7 +81,7 @@ Still required for the complete roadmap matrix:
 
 - Provider-neutral fee pass-through now snapshots the selected policy on orders and invoices.
 - Saved payment method consent, removal, re-authentication and provider revocation are covered by the existing gateway and renewal suites.
-- Keep Paddle, Tebex, Mollie, Stripe and PayPal status honest until real sandbox checks are completed.
+- Keep external provider verification separate from the package readiness labels for Paddle, Tebex, Mollie, Stripe and PayPal until real sandbox checks are completed.
 
 ### Migration and import
 

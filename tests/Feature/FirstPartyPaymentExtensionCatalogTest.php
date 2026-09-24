@@ -28,6 +28,7 @@ it('keeps first-party payment extensions discoverable from the monorepo catalog'
         $manifest = json_decode(File::get($manifestPath), true, flags: JSON_THROW_ON_ERROR);
         expect($manifest['id'] ?? null)->toBe($id)
             ->and($manifest['category'] ?? null)->toBe('payment_gateway')
-            ->and($manifest['provider'] ?? null)->toContain('Agovena\\Extensions\\');
+            ->and($manifest['provider'] ?? null)->toContain('Agovena\\Extensions\\')
+            ->and($manifest['production_ready'] ?? null)->toBeTrue();
     }
 });
