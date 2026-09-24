@@ -102,6 +102,26 @@ it('rejects a Tebex webhook when the signature is invalid', function (): void {
     expect(app(PaymentGatewayRegistry::class)->get('tebex')->verifyWebhook($request))->toBeFalse();
 });
 
+test('tebex answers the signed validation webhook without persisting a payment event', function (): void {
+    enableSecurityTebex();
+    $body = json_encode(['id' => 'validation-test', 'type' => 'validation.webhook'], JSON_THROW_ON_ERROR);
+    $signature = hash_hmac('sha256', hash('sha256', $body), '[REDACTED]');
+    $request = Request::create(
+        '/webhooks/payments/tebex',
+        'POST',
+        [],
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_X-SIGNATURE' => $signature],
+        $body,
+    );
+
+    $response = app(PaymentGatewayRegistry::class)->get('tebex')->webhookValidationResponse($request);
+
+    expect($response)->toBe(['id' => 'validation-test'])
+        ->and(PaymentWebhookEvent::query()->count())->toBe(0);
+});
+
 test('tebex creates a custom checkout without package identifiers', function (): void {
     $api = enableSecurityTebex();
     $payment = placeSecurityOrder('tebex:tebex', 3);
@@ -162,7 +182,7 @@ test('tebex completed webhook with mismatched amount is ignored', function (): v
         'subject' => [
             'transaction_id' => $attempt->external_id,
             'price_paid' => ['amount' => 0.01, 'currency' => 'EUR'],
-            'products' => [['id' => 12345, 'quantity' => 1]],
+            'products' => [['id' => 12345, 'quantity' => 1, 'custom' => ['agovena_product_id' => (string) $payment->order->items->first()->product_id, 'agovena_order_item_id' => (string) $payment->order->items->first()->id]]],
             'custom' => ['order_id' => (string) $payment->order_id, 'payment_id' => (string) $payment->id],
         ],
     ], JSON_THROW_ON_ERROR);
@@ -192,7 +212,7 @@ test('duplicate Tebex webhooks are idempotent and retain their replay ledger ent
         'subject' => [
             'transaction_id' => $attempt->external_id,
             'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
-            'products' => [['id' => 12345, 'quantity' => 1]],
+            'products' => [['id' => 12345, 'quantity' => 1, 'custom' => ['agovena_product_id' => (string) $payment->order->items->first()->product_id, 'agovena_order_item_id' => (string) $payment->order->items->first()->id]]],
             'custom' => ['order_id' => (string) $payment->order_id, 'payment_id' => (string) $payment->id],
         ],
     ], JSON_THROW_ON_ERROR);
@@ -214,6 +234,47 @@ test('duplicate Tebex webhooks are idempotent and retain their replay ledger ent
         ->and($second->duplicate)->toBeTrue()
         ->and(PaymentWebhookEvent::query()->where('gateway_id', 'tebex')->where('external_event_id', 'evt_tebex_duplicate')->count())->toBe(1)
         ->and(PaymentWebhookEvent::query()->where('external_event_id', 'evt_tebex_duplicate')->value('retention_exempt'))->toBeTrue();
+});
+
+test('tebex refund webhook amount mismatches remain deferred', function (): void {
+    enableSecurityTebex();
+    $payment = placeSecurityOrder('tebex:tebex', 2);
+    $attempt = app(StartOrderPayment::class)->handle($payment->order, 'tebex:tebex', 'https://example.test/return', 'https://example.test/cancel', 'tebex-refund-webhook');
+    $attempt->update(['external_id' => 'tbx-refund-webhook']);
+    $payment->update(['status' => PaymentStatus::Paid]);
+    $refund = Refund::query()->create([
+        'payment_id' => $payment->id,
+        'order_id' => $payment->order_id,
+        'amount' => $payment->amount,
+        'currency' => $payment->currency,
+        'status' => RefundStatus::Processing,
+        'provider_reference' => null,
+        'provider_claimed_at' => now(),
+        'reason' => 'Mismatch test',
+    ]);
+    $body = json_encode([
+        'id' => 'evt_tebex_refund_mismatch',
+        'type' => 'payment.refunded',
+        'subject' => [
+            'transaction_id' => 'tbx-refund-webhook',
+            'status' => ['id' => 2, 'description' => 'Refund'],
+            'price_paid' => ['amount' => 0.01, 'currency' => 'EUR'],
+        ],
+    ], JSON_THROW_ON_ERROR);
+    $signature = hash_hmac('sha256', hash('sha256', $body), '[REDACTED]');
+
+    app(HandlePaymentWebhook::class)->handle('tebex', Request::create(
+        '/webhooks/payments/tebex',
+        'POST',
+        [],
+        [],
+        [],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_X-SIGNATURE' => $signature],
+        $body,
+    ));
+
+    expect($refund->fresh()->status)->toBe(RefundStatus::Processing)
+        ->and(PaymentWebhookEvent::query()->where('external_event_id', 'evt_tebex_refund_mismatch')->value('processing_status'))->toBe('deferred');
 });
 
 test('paddle supports partial adjustments while Tebex keeps its full-refund boundary', function (): void {
@@ -299,7 +360,7 @@ test('tebex requires custom order and payment metadata before marking paid', fun
         'subject' => [
             'transaction_id' => $attempt->external_id,
             'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
-            'products' => [['id' => 12345, 'quantity' => 1]],
+            'products' => [['id' => 12345, 'quantity' => 1, 'custom' => ['agovena_product_id' => (string) $payment->order->items->first()->product_id, 'agovena_order_item_id' => (string) $payment->order->items->first()->id]]],
         ],
     ], JSON_THROW_ON_ERROR);
     $signature = hash_hmac('sha256', hash('sha256', $body), '[REDACTED]');

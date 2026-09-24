@@ -20,6 +20,9 @@ final class FakeTebexApi implements TebexApi, TebexConnectionChecker
 
     public string $checkoutUrl = 'https://checkout.tebex.io/checkout/basket-ident';
 
+    /** @var array<string, mixed> */
+    public array $basket = [];
+
     public int $pingCalls = 0;
 
     public bool $pingFails = false;
@@ -48,6 +51,11 @@ final class FakeTebexApi implements TebexApi, TebexConnectionChecker
             'ident' => 'basket-ident',
             'links' => ['checkout' => $this->checkoutUrl],
         ];
+    }
+
+    public function getBasket(string $ident): array
+    {
+        return $this->basket;
     }
 
     public function getPayment(string $transactionId): array

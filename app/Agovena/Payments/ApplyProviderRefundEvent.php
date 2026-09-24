@@ -43,6 +43,12 @@ final class ApplyProviderRefundEvent
                 return false;
             }
 
+            if ($event->amountMinor !== null
+                && ($refund->amount !== $event->amountMinor
+                    || strtoupper((string) $refund->currency) !== strtoupper((string) $event->currency))) {
+                return false;
+            }
+
             $refund->provider_reference = $event->externalRefundId;
             $status = strtolower($event->status);
             if (in_array($status, ['pending', 'pending_approval', 'processing'], true)) {

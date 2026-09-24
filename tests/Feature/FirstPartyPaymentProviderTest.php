@@ -791,7 +791,7 @@ test('tebex refuses to send a refund before a provider transaction exists', func
     } catch (Throwable) {
     }
 
-    expect(Refund::query()->latest('id')->firstOrFail()->status->value)->toBe('pending')
+    expect(Refund::query()->latest('id')->firstOrFail()->status->value)->toBe('failed')
         ->and($api->refundIdempotencyKeys)->toBe([]);
 });
 
@@ -833,7 +833,7 @@ test('tebex signed completed webhook completes a matching payment', function ():
         'subject' => [
             'transaction_id' => 'txn_live_tebex',
             'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
-            'products' => [['id' => 12345, 'quantity' => 1]],
+            'products' => [['id' => 12345, 'quantity' => 1, 'custom' => ['agovena_product_id' => (string) $payment->order->items->first()->product_id, 'agovena_order_item_id' => (string) $payment->order->items->first()->id]]],
             'custom' => ['order_id' => (string) $payment->order_id, 'payment_id' => (string) $payment->id],
         ],
     ], JSON_THROW_ON_ERROR);
@@ -934,7 +934,7 @@ test('tebex accepts nested payment data from a recurring started webhook', funct
                 'status' => ['id' => 1, 'description' => 'Complete'],
                 'created_at' => '2026-10-01T00:00:00Z',
                 'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
-                'products' => [['id' => 54321, 'quantity' => 1]],
+                'products' => [['id' => 54321, 'quantity' => 1, 'custom' => ['agovena_product_id' => (string) $payment->order->items->first()->product_id, 'agovena_order_item_id' => (string) $payment->order->items->first()->id]]],
                 'custom' => ['order_id' => (string) $order->id, 'payment_id' => (string) $payment->id],
             ],
         ],
@@ -971,6 +971,25 @@ test('tebex rejects a checkout redirect outside the official checkout host', fun
 
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
         ->and($attempt->redirect_url)->toBeNull();
+});
+
+test('tebex status sync resolves a completed payment through its basket link', function (): void {
+    $api = enableFirstPartyTebex();
+    $payment = placeFirstPartyOrder('tebex:tebex', 24);
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'tebex:tebex',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'tebex-basket-sync-1',
+    );
+    $api->basket = ['links' => ['payment' => 'https://checkout.tebex.io/api/payments/tbx-basket-sync-1?type=txn_id']];
+    $api->payment = ['status' => ['id' => 1, 'description' => 'Complete']];
+
+    app(PaymentGatewayRegistry::class)->get('tebex')->syncStatus($payment->fresh());
+
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($attempt->fresh()->external_id)->toBe('tbx-basket-sync-1');
 });
 
 test('tebex refund status synchronization completes a pending full refund after a missed webhook', function (): void {
@@ -1061,7 +1080,7 @@ test('tebex recurring webhooks create and synchronize the Core subscription proj
             'transaction_id' => 'txn_tebex_recurring',
             'recurring_payment_reference' => 'tbx-r-recurring-test',
             'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
-            'products' => [['id' => 54321, 'quantity' => 1]],
+            'products' => [['id' => 54321, 'quantity' => 1, 'custom' => ['agovena_product_id' => (string) $payment->order->items->first()->product_id, 'agovena_order_item_id' => (string) $payment->order->items->first()->id]]],
             'custom' => ['order_id' => (string) $order->id, 'payment_id' => (string) $payment->id],
         ],
     ]);
@@ -1082,7 +1101,7 @@ test('tebex recurring webhooks create and synchronize the Core subscription proj
                 'status' => ['id' => 1, 'description' => 'Complete'],
                 'created_at' => '2026-11-01T00:00:00Z',
                 'price_paid' => ['amount' => 25.0, 'currency' => 'EUR'],
-                'products' => [['id' => 54321, 'quantity' => 1]],
+                'products' => [['id' => 54321, 'quantity' => 1, 'custom' => ['agovena_product_id' => (string) $payment->order->items->first()->product_id, 'agovena_order_item_id' => (string) $payment->order->items->first()->id]]],
                 'custom' => ['order_id' => (string) $order->id, 'payment_id' => (string) $payment->id],
             ],
         ],

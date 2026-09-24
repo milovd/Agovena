@@ -11,5 +11,7 @@ final readonly class ProviderRefundEvent
         public string $externalRefundId,
         public string $transactionId,
         public string $status,
+        public ?int $amountMinor = null,
+        public ?string $currency = null,
     ) {}
 }
