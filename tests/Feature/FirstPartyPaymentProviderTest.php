@@ -106,6 +106,10 @@ test('paddle checkout redirects and signed paid webhook completes payment', func
             'amount' => '2500',
             'currency_code' => 'EUR',
         ])
+        ->and($api->transactionPayload['items'][0]['price']['quantity'] ?? null)->toBe([
+            'minimum' => 1,
+            'maximum' => 1,
+        ])
         ->and($api->transactionPayload['items'][0]['price']['product']['name'] ?? null)->toBe($payment->order->number);
 
     $body = json_encode([
