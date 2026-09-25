@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Agovena\Extensions\PayPal\PayPalApi;
+use Agovena\Extensions\PayPal\PayPalPaymentAuthorization;
 use Agovena\Extensions\PayPal\PayPalPaymentGateway;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
@@ -175,21 +176,8 @@ test('paypal checkout redirects without marking the order paid', function () {
         ->and($api->createCalls)->toBe(1);
 });
 
-test('paypal creates a provider-managed subscription for a matching billing plan', function () {
+test('paypal automatic checkout stores a reusable vault authorization after capture', function () {
     $api = enablePayPal();
-    app(ExtensionSettingsRepository::class)->set('paypal', 'subscription_plan_id', 'P-TEST-PLAN');
-    $api->plans['P-TEST-PLAN'] = [
-        'id' => 'P-TEST-PLAN',
-        'status' => 'ACTIVE',
-        'billing_cycles' => [[
-            'tenure_type' => 'REGULAR',
-            'frequency' => 'MONTH',
-            'frequency_interval' => '1',
-            'pricing_scheme' => [
-                'fixed_price' => ['value' => '25.00', 'currency_code' => 'EUR'],
-            ],
-        ]],
-    ];
     $payment = placePayPalSubscriptionOrder();
 
     $attempt = app(StartOrderPayment::class)->handle(
@@ -197,43 +185,67 @@ test('paypal creates a provider-managed subscription for a matching billing plan
         'paypal:paypal',
         'https://example.test/return',
         'https://example.test/cancel',
-        'paypal-subscription-1',
+        'paypal-vault-setup-1',
     );
 
     expect($attempt->redirect_url)->toStartWith('https://www.sandbox.paypal.com/')
-        ->and($attempt->external_id)->toBe('I-TEST-SUB-1')
-        ->and($attempt->response_meta['provider_subscription_id'] ?? null)->toBe('I-TEST-SUB-1')
-        ->and($api->createSubscriptionCalls)->toBe(1)
-        ->and($api->createCalls)->toBe(0);
+        ->and($api->orderPayloads[$attempt->external_id]['payment_source']['paypal']['attributes']['vault']['store_in_vault'] ?? null)->toBe('ON_SUCCESS')
+        ->and($api->orderPayloads[$attempt->external_id]['payment_source']['paypal']['attributes']['vault']['usage_type'] ?? null)->toBe('MERCHANT')
+        ->and($api->orderPayloads[$attempt->external_id]['payment_source']['paypal']['attributes']['vault']['usage_pattern'] ?? null)->toBe('SUBSCRIPTION_PREPAID');
+
+    app(HandlePaymentWebhook::class)->handle(
+        'paypal',
+        paypalSignedRequest('CHECKOUT.ORDER.APPROVED', [
+            'id' => (string) $attempt->external_id,
+            'status' => 'APPROVED',
+        ], 'WH-TEST-EVT-VAULT'),
+    );
+
+    $authorization = PayPalPaymentAuthorization::query()->first();
+    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($api->captureCalls)->toBe(1)
+        ->and($authorization)->not->toBeNull()
+        ->and($authorization->status)->toBe('active')
+        ->and($authorization->payment_token_id)->toBe('VAULT_'.$attempt->external_id)
+        ->and($authorization->payment_token_hash)->not->toBeNull();
 });
 
-test('paypal rejects a subscription plan when amount or billing cycle differs', function () {
+test('paypal recurring charges use the stored vault authorization without a redirect', function () {
     $api = enablePayPal();
-    app(ExtensionSettingsRepository::class)->set('paypal', 'subscription_plan_id', 'P-TEST-PLAN');
-    $api->plans['P-TEST-PLAN'] = [
-        'id' => 'P-TEST-PLAN',
-        'status' => 'ACTIVE',
-        'billing_cycles' => [[
-            'tenure_type' => 'REGULAR',
-            'frequency' => 'YEAR',
-            'frequency_interval' => '1',
-            'pricing_scheme' => [
-                'fixed_price' => ['value' => '25.00', 'currency_code' => 'EUR'],
-            ],
-        ]],
-    ];
-    $payment = placePayPalSubscriptionOrder();
-
-    $attempt = app(StartOrderPayment::class)->handle(
-        $payment->order,
+    $firstPayment = placePayPalSubscriptionOrder();
+    $firstAttempt = app(StartOrderPayment::class)->handle(
+        $firstPayment->order,
         'paypal:paypal',
         'https://example.test/return',
         'https://example.test/cancel',
-        'paypal-subscription-invalid-plan',
+        'paypal-vault-first-payment',
+    );
+    app(HandlePaymentWebhook::class)->handle(
+        'paypal',
+        paypalSignedRequest('CHECKOUT.ORDER.APPROVED', [
+            'id' => (string) $firstAttempt->external_id,
+            'status' => 'APPROVED',
+        ], 'WH-TEST-EVT-VAULT-FIRST'),
     );
 
-    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
-        ->and($api->createSubscriptionCalls)->toBe(0);
+    $renewalPayment = placePayPalSubscriptionOrder();
+    $renewalAttempt = app(StartOrderPayment::class)->handle(
+        $renewalPayment->order,
+        'paypal:paypal',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paypal-vault-renewal',
+    );
+
+    $payload = $api->orderPayloads[$renewalAttempt->external_id];
+    expect($renewalAttempt->status)->toBe(PaymentAttemptStatus::Succeeded)
+        ->and($renewalPayment->fresh()->status)->toBe(PaymentStatus::Paid)
+        ->and($payload['payment_source']['paypal']['vault_id'] ?? null)->toBe('VAULT_'.$firstAttempt->external_id)
+        ->and($payload['payment_source']['paypal']['stored_credential']['payment_initiator'] ?? null)->toBe('MERCHANT')
+        ->and($payload['payment_source']['paypal']['stored_credential']['payment_type'] ?? null)->toBe('RECURRING')
+        ->and($payload['payment_source']['paypal']['stored_credential']['usage'] ?? null)->toBe('SUBSEQUENT')
+        ->and($api->createCalls)->toBe(2)
+        ->and($api->captureCalls)->toBe(2);
 });
 
 test('paypal transport uncertainty requires payment reconciliation', function () {
@@ -302,98 +314,71 @@ test('paypal approved webhook captures the order before marking it paid', functi
         ->and($api->captureIdempotencyKeys)->toBe(['WH-TEST-EVT-APPROVED']);
 });
 
-test('paypal subscription sale webhook settles the payment and stores the sale reference for refunds', function () {
+test('paypal recurring charges can be refunded through the capture endpoint', function () {
     $api = enablePayPal();
-    app(ExtensionSettingsRepository::class)->set('paypal', 'subscription_plan_id', 'P-TEST-PLAN');
-    $api->plans['P-TEST-PLAN'] = [
-        'id' => 'P-TEST-PLAN',
-        'status' => 'ACTIVE',
-        'billing_cycles' => [[
-            'tenure_type' => 'REGULAR',
-            'frequency' => 'MONTH',
-            'frequency_interval' => '1',
-            'pricing_scheme' => [
-                'fixed_price' => ['value' => '25.00', 'currency_code' => 'EUR'],
-            ],
-        ]],
-    ];
+    $firstPayment = placePayPalSubscriptionOrder();
+    $firstAttempt = app(StartOrderPayment::class)->handle(
+        $firstPayment->order,
+        'paypal:paypal',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paypal-refund-vault-first',
+    );
+    app(HandlePaymentWebhook::class)->handle(
+        'paypal',
+        paypalSignedRequest('CHECKOUT.ORDER.APPROVED', [
+            'id' => (string) $firstAttempt->external_id,
+            'status' => 'APPROVED',
+        ], 'WH-TEST-EVT-REFUND-FIRST'),
+    );
+
+    $renewalPayment = placePayPalSubscriptionOrder();
+    $renewalAttempt = app(StartOrderPayment::class)->handle(
+        $renewalPayment->order,
+        'paypal:paypal',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'paypal-refund-vault-renewal',
+    );
+
+    $refund = app(RecordRefund::class)->handle($renewalPayment->fresh(), $this->createStaff(), 1000, 'Recurring refund');
+
+    expect($renewalAttempt->status)->toBe(PaymentAttemptStatus::Succeeded)
+        ->and($refund->status)->toBe(RefundStatus::Completed)
+        ->and($refund->provider_reference)->toBe('REFUND_CAPTURE_'.$renewalAttempt->external_id)
+        ->and($api->refundCalls)->toBe(1)
+        ->and($api->saleRefundCalls)->toBe(0);
+});
+
+test('paypal vault deletion webhooks revoke the reusable authorization', function () {
+    $api = enablePayPal();
     $payment = placePayPalSubscriptionOrder();
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
         'paypal:paypal',
         'https://example.test/return',
         'https://example.test/cancel',
-        'paypal-subscription-sale',
+        'paypal-vault-delete-setup',
+    );
+    app(HandlePaymentWebhook::class)->handle(
+        'paypal',
+        paypalSignedRequest('CHECKOUT.ORDER.APPROVED', [
+            'id' => (string) $attempt->external_id,
+            'status' => 'APPROVED',
+        ], 'WH-TEST-EVT-DELETE-SETUP'),
     );
 
     app(HandlePaymentWebhook::class)->handle(
         'paypal',
-        paypalSignedRequest('PAYMENT.SALE.COMPLETED', [
-            'id' => 'SALE_TEST',
-            'state' => 'completed',
-            'billing_agreement_id' => $attempt->external_id,
-            'amount' => ['total' => '25.00', 'currency' => 'EUR'],
-        ], 'WH-TEST-EVT-SALE'),
+        paypalSignedRequest('VAULT.PAYMENT-TOKEN.DELETED', [
+            'id' => 'VAULT_'.$attempt->external_id,
+        ], 'WH-TEST-EVT-DELETE'),
     );
 
-    expect($payment->fresh()->status)->toBe(PaymentStatus::Paid)
-        ->and($payment->fresh()->attempts()->latest('id')->value('response_meta')['paypal_sale_id'] ?? null)->toBe('SALE_TEST');
-
-    $refund = app(RecordRefund::class)->handle($payment->fresh(), $this->createStaff(), 1000, 'Subscription refund');
-
-    expect($refund->status)->toBe(RefundStatus::Completed)
-        ->and($refund->provider_reference)->toBe('REFUND_SALE_TEST')
-        ->and($api->saleRefundCalls)->toBe(1)
-        ->and($api->refundCalls)->toBe(0);
-
-    app(HandlePaymentWebhook::class)->handle(
-        'paypal',
-        paypalSignedRequest('PAYMENT.SALE.REFUNDED', [
-            'id' => 'REFUND_SALE_TEST',
-            'state' => 'completed',
-            'billing_agreement_id' => $attempt->external_id,
-            'amount' => ['total' => '10.00', 'currency' => 'EUR'],
-        ], 'WH-TEST-EVT-SALE-REFUND'),
-    );
-
-    expect($refund->fresh()->status)->toBe(RefundStatus::Completed);
-});
-
-test('paypal subscription lifecycle uses suspend for period-end cancellation and activate for resume', function () {
-    $api = enablePayPal();
-    $api->subscriptions['I-LIFECYCLE'] = ['id' => 'I-LIFECYCLE', 'status' => 'ACTIVE'];
-    $gateway = app(PayPalPaymentGateway::class);
-
-    $gateway->cancelProviderSubscription('I-LIFECYCLE', true);
-    $gateway->resumeProviderSubscription('I-LIFECYCLE');
-    $gateway->cancelProviderSubscription('I-LIFECYCLE', false);
-
-    expect($api->suspendCalls)->toBe(1)
-        ->and($api->activateCalls)->toBe(1)
-        ->and($api->cancelSubscriptionCalls)->toBe(1)
-        ->and($api->subscriptions['I-LIFECYCLE']['status'])->toBe('CANCELLED');
-});
-
-test('paypal subscription webhooks normalize provider lifecycle state for Core', function () {
-    enablePayPal();
-    $gateway = app(PayPalPaymentGateway::class);
-    $request = paypalSignedRequest('BILLING.SUBSCRIPTION.SUSPENDED', [
-        'id' => 'I-LIFECYCLE',
-        'status' => 'SUSPENDED',
-        'custom_id' => '42',
-        'plan_id' => 'P-TEST',
-        'billing_info' => ['next_billing_time' => '2026-10-01T12:00:00Z'],
-    ], 'WH-TEST-EVT-SUSPENDED');
-
-    expect($gateway->verifyWebhook($request))->toBeTrue();
-    $event = $gateway->providerSubscriptionEvent($gateway->parseWebhook($request));
-
-    expect($event)->not->toBeNull()
-        ->and($event->externalSubscriptionId)->toBe('I-LIFECYCLE')
-        ->and($event->eventType)->toBe('subscription.updated')
-        ->and($event->status)->toBe('active')
-        ->and($event->cancelAtPeriodEnd)->toBeTrue()
-        ->and($event->nextBillingAt)->toBe('2026-10-01T12:00:00Z');
+    $authorization = PayPalPaymentAuthorization::query()->first();
+    expect($authorization)->not->toBeNull()
+        ->and($authorization->status)->toBe('revoked')
+        ->and($api->createCalls)->toBe(1);
 });
 
 test('malformed paypal refund responses stay pending for reconciliation', function () {
