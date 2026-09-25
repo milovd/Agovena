@@ -11,6 +11,7 @@ use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Orders\StorefrontOrderAccess;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\HandlePaymentWebhook;
 use App\Agovena\Payments\PaymentGatewayRegistry;
@@ -136,7 +137,9 @@ test('paypal registers only when the extension is enabled', function () {
     expect($gateway)->toBeInstanceOf(PayPalPaymentGateway::class)
         ->and(app(AvailablePaymentMethods::class)->ids())->toContain('paypal:paypal')
         ->and($gateway->capabilities()->recurring)->toBeTrue()
-        ->and($gateway->checkoutMethods()[0]->icon)->toBe('ag:payment-method/paypal');
+        ->and($gateway->checkoutMethods()[0]->icon)->toBe('ag:payment-method/paypal')
+        ->and(is_file(public_path('images/payment-methods/paypal.svg')))->toBeTrue()
+        ->and(str_contains((string) file_get_contents(public_path('images/payment-methods/paypal.svg')), 'M 12.237 2.8'))->toBeTrue();
 
     app(ExtensionManager::class)->disable('paypal');
 
@@ -174,6 +177,32 @@ test('paypal checkout redirects without marking the order paid', function () {
         ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
         ->and($payment->fresh()->order->status)->toBe(OrderStatus::Pending)
         ->and($api->createCalls)->toBe(1);
+});
+
+test('paypal storefront checkout uses the provider-owned SDK overlay', function () {
+    $api = enablePayPal();
+    $payment = placePayPalOrder();
+    $access = app(StorefrontOrderAccess::class);
+    $access->remember($payment->order);
+    $returnUrl = $access->paymentStatusUrl($payment->order);
+
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'paypal:paypal',
+        $returnUrl,
+        $returnUrl,
+        'paypal-overlay-1',
+    );
+
+    expect(str_contains((string) $attempt->redirect_url, '/paypal/checkout'))->toBeTrue()
+        ->and($attempt->response_meta['checkout_surface'] ?? null)->toBe('overlay')
+        ->and($attempt->response_meta['provider_checkout_url'] ?? null)->toBe('[REDACTED]');
+
+    $this->get($attempt->redirect_url)
+        ->assertOk()
+        ->assertSee('paypal-button-container')
+        ->assertSee('https://www.paypal.com/sdk/js', false)
+        ->assertSee((string) $attempt->external_id, false);
 });
 
 test('paypal automatic checkout stores a reusable vault authorization after capture', function () {
