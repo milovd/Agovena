@@ -37,7 +37,7 @@ Group related work into meaningful commits. Avoid noise commits for tiny edits; 
 - Keep PRs focused
 - Explain why the change is needed
 - Use the PR template when present
-- Update [CHANGELOG.md](CHANGELOG.md) / operator docs when behavior merchants rely on changes
+- Update relevant documentation / operator docs when behavior merchants rely on changes
 
 ## Local packages
 

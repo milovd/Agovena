@@ -60,4 +60,4 @@ Security issues should be reported privately through the [Security Policy](SECUR
 
 Agovena is open source software released under the [MIT License](LICENSE).
 
-Third-party data sources used by optional features are documented in [ATTRIBUTION.md](ATTRIBUTION.md). Public product changes are listed in [CHANGELOG.md](CHANGELOG.md).
+Third-party data sources used by optional features are documented in [ATTRIBUTION.md](ATTRIBUTION.md).

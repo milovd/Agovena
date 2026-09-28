@@ -102,7 +102,6 @@ cp -f "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/SECURITY.md" "$STAGING/" 2>/dev/n
 [[ -f "$ROOT/.env.example" ]] && cp -f "$ROOT/.env.example" "$STAGING/"
 [[ -f "$ROOT/INSTALL.md" ]] && cp -f "$ROOT/INSTALL.md" "$STAGING/"
 [[ -f "$ROOT/SUPPORT.md" ]] && cp -f "$ROOT/SUPPORT.md" "$STAGING/"
-[[ -f "$ROOT/CHANGELOG.md" ]] && cp -f "$ROOT/CHANGELOG.md" "$STAGING/"
 [[ -f "$ROOT/agovena_banner.png" ]] && cp -f "$ROOT/agovena_banner.png" "$STAGING/"
 
 mkdir -p \
