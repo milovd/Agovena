@@ -4,103 +4,74 @@
 
 <p align="center">
   <strong>Open-source commerce, built to stay modular.</strong><br>
-  Sell physical products, digital goods, hosting, domains, and subscriptions from one self-hosted platform. Only enable what you need.
+  Run physical, digital and service-based commerce on infrastructure you control.
+</p>
+
+<p align="center">
+  <a href="https://agovena.com">Website</a> ·
+  <a href="https://agovena.com/docs">Documentation</a> ·
+  <a href="https://agovena.com/marketplace">Marketplace</a> ·
+  <a href="https://agovena.com/development">Developers</a>
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT License"></a>
-  <a href="https://github.com/milovd/Agovena/stargazers"><img src="https://img.shields.io/github/stars/milovd/Agovena?style=flat" alt="Stars"></a>
+  <a href="https://github.com/milovd/Agovena/stargazers"><img src="https://img.shields.io/github/stars/milovd/Agovena?style=flat" alt="GitHub stars"></a>
 </p>
 
-## Getting started
+## About Agovena
 
-Agovena is in early development: a modular, self-hosted commerce platform built on Laravel, with a commerce core, optional modules, provider extensions, themes, and operational tooling.
+Agovena is an early-stage, self-hosted commerce platform built with Laravel. It provides a shared commerce Core and lets you add capabilities through Modules, provider integrations through Extensions, and presentation through Themes.
 
-**Native Linux is the primary production path.** Docker is optional convenience, not a runtime requirement.
+The platform is designed for more than one selling model. You can combine physical products, digital goods, downloads, subscriptions, domains, events and provisioned services without locking the store into one permanent type.
 
-See **[INSTALL.md](INSTALL.md)** for release-artifact and VPS install steps, and **[SUPPORT.md](SUPPORT.md)** for the honest support matrix.
+Agovena is not production-ready for every provider, host or deployment environment. Read the documentation, test the flows you need in an isolated environment, and review the limitations before accepting live orders.
 
-**Requirements**
+## Start here
 
-- PHP 8.3 or 8.4 with PHP-FPM
-- Composer 2
-- MariaDB/MySQL for production (SQLite is OK for local/dev; it is not equivalent for concurrency)
-- Nginx (recommended) or Apache, document root = `public/`
-- A queue worker (`php artisan queue:work`) and cron `* * * * * php artisan schedule:run`
-- Node.js 22+ only to **build** frontend assets from a source checkout. Release artifacts should include `public/build`. Merchants should not need npm merely to install a stable release.
-- Outbound HTTPS for optional Admin FX sync and automatic EU VAT rates
+| You want to... | Go to |
+|---|---|
+| Learn what Agovena is | [Introduction](https://agovena.com/docs) |
+| Install a store | [Installation guide](https://agovena.com/docs/installation) |
+| Set up a first store | [Getting started](https://agovena.com/docs/getting-started) |
+| Browse Modules and Extensions | [Marketplace](https://agovena.com/marketplace) |
+| Build a Module, Extension or Theme | [Developer documentation](https://agovena.com/development) |
+| Run Agovena locally | [Contributing guide](CONTRIBUTING.md) |
+| Report a security issue | [Security policy](SECURITY.md) |
 
-PHP 8.3 and 8.4 are exercised in CI. MariaDB 11 is exercised in CI for migrations and the test suite. That is not a claim that every host OS is production-verified.
+The website is the canonical home for installation, operator and developer documentation. This repository keeps source code, contribution policy, security policy and release history close to the code.
 
-See [deploy/README.md](deploy/README.md) for Nginx/Apache, systemd, cron, permissions, backup, and upgrade.
+## Repositories
 
-Redis is recommended for multi-node cache/queue/locks. A single VPS can use `QUEUE_CONNECTION=database` without Redis.
+- [Agovena Core](https://github.com/milovd/Agovena): the Laravel application and shared commerce contracts.
+- [Optional packages](https://github.com/milovd/optional-packages): first-party Modules and Extensions.
+- [Agovena website](https://github.com/milovd/agovena-site): the product website and documentation source.
 
-`docker-compose.prod.yml` is an optional stack (nginx, php-fpm, worker, scheduler, MariaDB, Redis). It does **not** auto-migrate.
+Package identity comes from each `module.json` or `extension.json` manifest. Optional packages are not permanent business types and should remain separate from Core.
 
-OS status: see [SUPPORT.md](SUPPORT.md). Do not treat community similarity as validated.
+## Development
+
+Agovena uses Laravel, Livewire, Blade, Alpine, Vite and native CSS. For a contributor checkout:
 
 ```bash
-# Prefer a release tarball (includes vendor + public/build). From source:
 composer install
-cp .env.example .env
-php artisan key:generate
-# configure DB in .env, then:
-php artisan migrate
-# source checkouts only - skip when public/build is already present:
-npm install && npm run build
-php artisan agovena:install # or open /install
-php artisan agovena:doctor
-php artisan agovena:verify-providers # all enabled Extensions
-php artisan agovena:verify-providers mollie --sandbox # Mollie only; refuses live_ keys
+npm ci
+npm run build
 ```
 
-`agovena:seed-demo` loads local-only sample products (refuses in production).
+Then follow the [contributing guide](CONTRIBUTING.md) and the [developer documentation](https://agovena.com/development) for the relevant setup and architecture context.
 
-- Storefront: `/`
-- Login: `/login` (Admin is permission-based at `/admin`)
-- Customer account: `/account` (Security / 2FA at `/account/security`)
-- Installer: `/install` until the store is installed, then it stays closed
+## Community and contribution
 
-## Stack
+- [Join the Agovena Discord](https://discord.gg/W2eJzwsfC6)
+- [Read the contribution guide](CONTRIBUTING.md)
+- [Read the Code of Conduct](CODE_OF_CONDUCT.md)
+- [Browse open issues](https://github.com/milovd/Agovena/issues)
 
-- Laravel 13
-- Livewire 4
-- Blade + Alpine (via Livewire)
-- Vite + native CSS (ITCSS/BEM/`--ag-*` and `--theme-*` tokens)
-- No Filament / no project-wide Tailwind
+Please do not include secrets, credentials, tokens or private customer data in issues, pull requests or support requests.
 
-## Architecture (two levels)
+## License and attribution
 
-Merchants choose **selling intents** (physical, digital keys/codes, downloads, subscriptions, hosting/provisioned services, events, or custom). Developers compose those experiences from **Core** + optional **Modules** (capabilities) + **Extensions** (providers) + **Themes** (presentation).
+Agovena is released under the [MIT License](LICENSE). Third-party data sources used by optional features are documented in [ATTRIBUTION.md](ATTRIBUTION.md).
 
-There is no permanent `store_type`. Downloads (files) and Digital Delivery (secrets/keys) are separate Modules. First-party Modules and Extensions ship from the [optional-packages](https://github.com/milovd/optional-packages) monorepo - Extensions use category folders such as `extensions/payments/`, `extensions/provisioning/`, and `extensions/shipping/` (identity comes from each manifest `id`, not the folder path).
-
-See [themes/README.md](themes/README.md), [core/README.md](core/README.md), [CHANGELOG.md](CHANGELOG.md), and [optional-packages](https://github.com/milovd/optional-packages).
-
-## Docs map
-
-| Doc | Purpose |
-|-----|---------|
-| [INSTALL.md](INSTALL.md) | Install and upgrade |
-| [SUPPORT.md](SUPPORT.md) | What is validated vs unverified |
-| [CHANGELOG.md](CHANGELOG.md) | Notable product changes toward release |
-| [SECURITY.md](SECURITY.md) | Vulnerability reporting |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
-| [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) | Community expectations |
-| [ATTRIBUTION.md](ATTRIBUTION.md) | Third-party FX / VAT data sources |
-| [deploy/README.md](deploy/README.md) | Native hosting templates |
-
-## Security
-
-Please report vulnerabilities privately. See [SECURITY.md](SECURITY.md).
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
-
-## License
-
-Licensed under the [MIT License](LICENSE).
-
-Third-party data sources used for optional FX sync and automatic VAT rates are documented in [ATTRIBUTION.md](ATTRIBUTION.md).
+See [CHANGELOG.md](CHANGELOG.md) for public product changes.
