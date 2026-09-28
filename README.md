@@ -4,14 +4,15 @@
 
 <p align="center">
   <strong>Open-source commerce, built to stay modular.</strong><br>
-  Run physical, digital and service-based commerce on infrastructure you control.
+  Build the store you need on infrastructure you control.
 </p>
 
 <p align="center">
   <a href="https://agovena.com">Website</a> ·
   <a href="https://agovena.com/docs">Documentation</a> ·
   <a href="https://agovena.com/marketplace">Marketplace</a> ·
-  <a href="https://agovena.com/development">Developers</a>
+  <a href="https://agovena.com/development">Developers</a> ·
+  <a href="https://discord.gg/W2eJzwsfC6">Community</a>
 </p>
 
 <p align="center">
@@ -19,59 +20,44 @@
   <a href="https://github.com/milovd/Agovena/stargazers"><img src="https://img.shields.io/github/stars/milovd/Agovena?style=flat" alt="GitHub stars"></a>
 </p>
 
-## About Agovena
+## What is Agovena?
 
-Agovena is an early-stage, self-hosted commerce platform built with Laravel. It provides a shared commerce Core and lets you add capabilities through Modules, provider integrations through Extensions, and presentation through Themes.
+Agovena is an open-source, self-hosted commerce platform built with Laravel. It gives you a shared foundation for products, customers, checkout, orders, payments and invoices, with room to add the capabilities your business needs.
 
-The platform is designed for more than one selling model. You can combine physical products, digital goods, downloads, subscriptions, domains, events and provisioned services without locking the store into one permanent type.
+Use Agovena for physical products, digital goods, downloads, subscriptions, domains, events, provisioned services, or a combination of them. You do not have to choose one permanent store type.
 
-Agovena is not production-ready for every provider, host or deployment environment. Read the documentation, test the flows you need in an isolated environment, and review the limitations before accepting live orders.
+Agovena is early-stage software. Provider integrations, host environments and deployment paths have different verification levels. Review the documentation and test the flows you need before accepting live orders.
 
-## Start here
+## Built to stay modular
 
-| You want to... | Go to |
-|---|---|
-| Learn what Agovena is | [Introduction](https://agovena.com/docs) |
-| Install a store | [Installation guide](https://agovena.com/docs/installation) |
-| Set up a first store | [Getting started](https://agovena.com/docs/getting-started) |
-| Browse Modules and Extensions | [Marketplace](https://agovena.com/marketplace) |
-| Build a Module, Extension or Theme | [Developer documentation](https://agovena.com/development) |
-| Run Agovena locally | [Contributing guide](CONTRIBUTING.md) |
-| Report a security issue | [Security policy](SECURITY.md) |
+- **Core** provides the shared commerce foundation.
+- **Modules** add business capabilities without turning them into permanent store types.
+- **Extensions** connect providers for payments, shipping, domains and provisioning.
+- **Themes** control storefront and Admin presentation.
 
-The website is the canonical home for installation, operator and developer documentation. This repository keeps source code, contribution policy, security policy and release history close to the code.
+First-party Modules and Extensions live in the [optional-packages](https://github.com/milovd/optional-packages) repository. Package identity comes from each `module.json` or `extension.json` manifest.
 
-## Repositories
+## Documentation
 
-- [Agovena Core](https://github.com/milovd/Agovena): the Laravel application and shared commerce contracts.
-- [Optional packages](https://github.com/milovd/optional-packages): first-party Modules and Extensions.
-- [Agovena website](https://github.com/milovd/agovena-site): the product website and documentation source.
+The [Agovena documentation](https://agovena.com/docs) contains the installation guide, getting started guide, configuration and operations documentation. The [developer documentation](https://agovena.com/development) covers the architecture, API, Modules, Extensions, Themes and contribution workflow.
 
-Package identity comes from each `module.json` or `extension.json` manifest. Optional packages are not permanent business types and should remain separate from Core.
+Browse available first-party packages in the [Marketplace](https://agovena.com/marketplace).
 
-## Development
+## Contributing
 
-Agovena uses Laravel, Livewire, Blade, Alpine, Vite and native CSS. For a contributor checkout:
+Contributions, focused bug reports and clear documentation improvements are welcome. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request and follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
-```bash
-composer install
-npm ci
-npm run build
-```
+Security issues should be reported privately through the [Security Policy](SECURITY.md). Do not include credentials, tokens, secrets or private customer data in issues, pull requests or support requests.
 
-Then follow the [contributing guide](CONTRIBUTING.md) and the [developer documentation](https://agovena.com/development) for the relevant setup and architecture context.
-
-## Community and contribution
+## Community
 
 - [Join the Agovena Discord](https://discord.gg/W2eJzwsfC6)
-- [Read the contribution guide](CONTRIBUTING.md)
-- [Read the Code of Conduct](CODE_OF_CONDUCT.md)
 - [Browse open issues](https://github.com/milovd/Agovena/issues)
+- [Visit the Agovena website](https://agovena.com)
+- [Explore optional packages](https://github.com/milovd/optional-packages)
 
-Please do not include secrets, credentials, tokens or private customer data in issues, pull requests or support requests.
+## License
 
-## License and attribution
+Agovena is open source software released under the [MIT License](LICENSE).
 
-Agovena is released under the [MIT License](LICENSE). Third-party data sources used by optional features are documented in [ATTRIBUTION.md](ATTRIBUTION.md).
-
-See [CHANGELOG.md](CHANGELOG.md) for public product changes.
+Third-party data sources used by optional features are documented in [ATTRIBUTION.md](ATTRIBUTION.md). Public product changes are listed in [CHANGELOG.md](CHANGELOG.md).
