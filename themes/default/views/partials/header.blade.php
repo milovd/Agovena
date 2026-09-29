@@ -8,6 +8,17 @@
     $discoveryCategories = $discoveryCategories ?? collect();
     $suggestUrl = route('storefront.search.suggest');
     $brandingLogoUrl = $brandingLogoUrl ?? app(\App\Agovena\Theme\StorefrontBrand::class)->logoUrl();
+    $navItems = collect($themeMainNav ?? [])
+        ->filter(static fn (array $item): bool => ! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home', 'events'], true))
+        ->values();
+    $customNavSetting = strtolower(trim($cfg->string('header.custom_nav_items', '3')));
+    $customNavCount = filter_var($customNavSetting, FILTER_VALIDATE_INT);
+    if ($customNavSetting !== 'infinite' && ($customNavCount === false || $customNavCount < 0)) {
+        $customNavCount = 3;
+    }
+    $desktopNavItems = $customNavSetting === 'infinite'
+        ? $navItems
+        : $navItems->take($customNavCount);
 @endphp
 
 @if ($uspItems !== [])
@@ -76,7 +87,7 @@
     x-effect="syncDrawerLock()"
 >
     <div class="store-header">
-        <div class="store-header__inner" :class="{ 'is-nav-compact': navCompact }">
+        <div class="store-header__inner">
             <button
                 type="button"
                 class="store-header__menu"
@@ -196,57 +207,9 @@
                     </div>
                 @endif
 
-                @foreach ($themeMainNav ?? [] as $item)
-                    @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home', 'events'], true))
-                        <a
-                            class="store-nav__link"
-                            data-nav-item="{{ $loop->index }}"
-                            x-show="isNavItemVisible({{ $loop->index }})"
-                            href="{{ $item['url'] }}"
-                        >{{ $item['label'] }}</a>
-                    @endif
+                @foreach ($desktopNavItems as $item)
+                    <a class="store-nav__link" href="{{ $item['url'] }}">{{ $item['label'] }}</a>
                 @endforeach
-
-                <div
-                    class="store-nav__more"
-                    x-show="navOverflow.length > 0"
-                    x-cloak
-                    @mouseenter="openMore()"
-                    @mouseleave="closeMore()"
-                    @focusin="openMore()"
-                    @click.outside="closeMore()"
-                >
-                    <button
-                        type="button"
-                        class="store-nav__link store-nav__more-trigger"
-                        :aria-expanded="moreOpen.toString()"
-                        aria-haspopup="true"
-                    >
-                        {{ __('storefront.nav.more') }}
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-                    </button>
-                    <div
-                        class="store-nav__more-panel"
-                        x-show="moreOpen"
-                        x-cloak
-                        x-transition.opacity.duration.120ms
-                        role="menu"
-                        aria-label="{{ __('storefront.nav.more') }}"
-                    >
-                        <div class="store-nav__more-panel-inner">
-                            @foreach ($themeMainNav ?? [] as $item)
-                                @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home', 'events'], true))
-                                    <a
-                                        href="{{ $item['url'] }}"
-                                        role="menuitem"
-                                        x-show="isNavItemOverflow({{ $loop->index }})"
-                                        @click="closeMore()"
-                                    >{{ $item['label'] }}</a>
-                                @endif
-                            @endforeach
-                        </div>
-                    </div>
-                </div>
             </nav>
 
             @if ($searchOn)
@@ -588,10 +551,8 @@
                         </div>
                     </div>
                 @endif
-                @foreach ($themeMainNav ?? [] as $item)
-                    @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home', 'events'], true))
-                        <a class="store-nav__link store-drawer__primary-link" href="{{ $item['url'] }}" @click="closeDrawerOnNavigate">{{ $item['label'] }}</a>
-                    @endif
+                @foreach ($navItems as $item)
+                    <a class="store-nav__link store-drawer__primary-link" href="{{ $item['url'] }}" @click="closeDrawerOnNavigate">{{ $item['label'] }}</a>
                 @endforeach
                 @if ($showAccount)
                     @auth

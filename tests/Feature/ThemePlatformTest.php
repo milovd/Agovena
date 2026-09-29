@@ -21,6 +21,7 @@ test('theme manager discovers default theme and config defaults', function () {
 
     $config = $themes->config();
     expect($config->bool('header.announcement_enabled'))->toBeTrue()
+        ->and($config->string('header.custom_nav_items'))->toBe('3')
         ->and($config->string('colors.accent'))->toBe('#155EEF')
         ->and($config->sections())->not->toBeEmpty()
         ->and($config->uspItems())->toHaveCount(3);
@@ -66,19 +67,49 @@ test('homepage keeps the storefront chrome compact and the hero deterministic', 
         ->toContain('store-brand__fallback')
         ->toContain('Physical products, digital goods, and services with a storefront you control.');
 
-    expect(app(ThemeManager::class)->config()->sections()[0]['image'] ?? null)->toBe('');
-    expect(substr_count($html, 'class="store-hero__plate store-hero__plate--'))->toBe(3);
+    expect(app(ThemeManager::class)->config()->sections()[0])->not->toHaveKey('image');
+    expect(substr_count($html, 'class="store-hero__plate store-hero__plate--'))->toBe(4);
     expect($html)
         ->toContain('/storage/demo/minecraft-survival-server.jpg')
         ->toContain('/storage/demo/domain-registration-and-dns-management.jpg')
         ->toContain('/storage/demo/agovena-essential-tee.jpg')
-        ->toContain('Agovena Merch')
-        ->toContain('Deals')
-        ->toContain('store-nav__more')
+        ->toContain('/storage/demo/python-automation-starter-kit.jpg')
         ->toContain('Products')
         ->toContain('Services')
+        ->toContain('Domains')
+        ->not->toContain('>Deals</a>')
         ->toContain('href="/domains"')
+        ->toContain('store-promo__media')
+        ->not->toContain('store-promo__placeholder')
+        ->not->toContain('demo/promo-split.jpg')
+        ->not->toContain('store-nav__more')
+        ->not->toContain('>More<')
         ->not->toContain('Agovena Essential Tee');
+});
+
+test('custom navigation setting controls desktop items without an overflow menu', function () {
+    Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
+    $config = app(ThemeManager::class)->config();
+
+    $config->set('header.custom_nav_items', '2');
+    $limitedHtml = $this->get('/')->assertOk()->getContent();
+    preg_match('/<nav class="store-nav"[^>]*>(.*?)<\/nav>/s', $limitedHtml, $limitedMatch);
+
+    expect($limitedMatch[1] ?? '')->toContain('>Products</a>')
+        ->toContain('>Services</a>')
+        ->not->toContain('>Domains</a>')
+        ->not->toContain('>Deals</a>')
+        ->not->toContain('store-nav__more');
+    expect($limitedHtml)->toContain('store-drawer__primary-link')->toContain('Products');
+
+    $config->set('header.custom_nav_items', 'infinite');
+    $infiniteHtml = $this->get('/')->assertOk()->getContent();
+    preg_match('/<nav class="store-nav"[^>]*>(.*?)<\/nav>/s', $infiniteHtml, $infiniteMatch);
+
+    expect($infiniteMatch[1] ?? '')->toContain('>Domains</a>')
+        ->toContain('>About</a>')
+        ->not->toContain('>Deals</a>')
+        ->not->toContain('store-nav__more');
 });
 
 test('demo seeder populates catalog and refuses production', function () {
@@ -208,7 +239,7 @@ test('theme customize normalizes section content and link destinations', functio
     expect($config->sections())->toHaveCount(2)
         ->and($config->sections()[0]['title'])->toBe('alert(1)Safe')
         ->and($config->sections()[0]['cta_href'])->toBe('')
-        ->and($config->sections()[0]['image'])->toBe('')
+        ->and($config->sections()[0])->not->toHaveKey('image')
         ->and($config->sections()[1]['limit'])->toBe(24);
 });
 

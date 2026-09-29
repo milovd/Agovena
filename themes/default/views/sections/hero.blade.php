@@ -1,39 +1,14 @@
 @php
-    $image = $section['image'] ?? null;
-    $imageUrl = null;
-    if (is_string($image) && $image !== '') {
-        $imageUrl = str_starts_with($image, 'http')
-            ? $image
-            : \App\Agovena\Media\PublicMedia::url($image);
-    }
-
-    $productsBySlug = collect($spotlightProducts ?? [])
-        ->keyBy('slug');
-    $demoHeroDefinitions = [
-        ['slug' => 'minecraft-survival-server', 'asset' => 'demo/minecraft-survival-server.jpg'],
-        ['slug' => 'domain-registration-and-dns-management', 'asset' => 'demo/domain-registration-and-dns-management.jpg'],
-        ['slug' => 'agovena-essential-tee', 'asset' => 'demo/agovena-essential-tee.jpg'],
-    ];
-    $spotlight = collect($demoHeroDefinitions)
-        ->map(function (array $definition) use ($productsBySlug): ?array {
-            $product = $productsBySlug->get($definition['slug']);
-            $image = \Illuminate\Support\Facades\Storage::disk('public')->exists($definition['asset'])
-                ? \App\Agovena\Media\PublicMedia::url($definition['asset'])
-                : ($product ? \App\Agovena\Media\ProductMedia::primaryUrl($product) : null);
-
-            if (! $image) {
-                return null;
-            }
-
-            return [
-                'image' => $image,
-                'href' => $product
-                    ? route('storefront.product', $product->slug)
-                    : route('storefront.home').'#catalog',
-            ];
-        })
-        ->filter()
+    $heroCards = collect($spotlightProducts ?? [])
+        ->map(static fn ($product): array => [
+            'image' => \App\Agovena\Media\ProductMedia::primaryUrl($product),
+            'href' => route('storefront.product', $product->slug),
+        ])
+        ->filter(static fn (array $card): bool => is_string($card['image']) && $card['image'] !== '')
+        ->take(4)
         ->values();
+    $imageUrl = $heroCards->first()['image'] ?? null;
+    $spotlight = $heroCards->slice(1)->values();
 
     $brand = $siteName ?? 'Store';
 @endphp

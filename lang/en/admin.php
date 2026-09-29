@@ -684,6 +684,7 @@ return [
                 'sticky' => 'Sticky header',
                 'show_account' => 'Show account entry',
                 'show_discovery_bar' => 'Show discovery navigation',
+                'custom_nav_items' => 'Custom navigation items',
             ],
             'footer' => [
                 'tagline' => 'Footer tagline',
@@ -710,6 +711,7 @@ return [
                 'announcement_enabled' => 'Top strip with shipping, returns, and other store benefits.',
                 'usp_items' => 'Benefits on the left; tick “CTA button” for a right-side call to action (for example Shop now).',
                 'show_discovery_bar' => 'Secondary bar for menu links and category discovery.',
+                'custom_nav_items' => 'Enter a number of custom desktop navigation items, or “infinite” to show all items. Categories is always shown separately.',
             ],
         ],
     ],

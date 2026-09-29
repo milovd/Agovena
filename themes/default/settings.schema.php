@@ -220,6 +220,15 @@ return new ThemeSettingsSchema([
         sort: 70,
     ),
     new ThemeSettingField(
+        key: 'header.custom_nav_items',
+        label: 'admin.appearance.theme_fields.header.custom_nav_items',
+        type: 'text',
+        default: '3',
+        group: 'header',
+        help: 'admin.appearance.theme_field_help.header.custom_nav_items',
+        sort: 75,
+    ),
+    new ThemeSettingField(
         key: 'footer.tagline',
         label: 'admin.appearance.theme_fields.footer.tagline',
         type: 'string',
@@ -265,7 +274,6 @@ return new ThemeSettingsSchema([
                 'lede' => 'Physical products, digital goods, and services with a storefront you control.',
                 'cta_label' => 'Shop the catalog',
                 'cta_href' => '#catalog',
-                'image' => '',
             ],
             [
                 'type' => 'featured_categories',
@@ -284,7 +292,7 @@ return new ThemeSettingsSchema([
                 'body' => 'Physical goods, digital downloads, and services - presented with the same clear commerce experience.',
                 'cta_label' => 'Browse catalog',
                 'cta_href' => '#catalog',
-                'image' => 'demo/promo-split.jpg',
+                'image' => '',
             ],
             [
                 'type' => 'trust_strip',

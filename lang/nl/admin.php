@@ -684,6 +684,7 @@ return [
                 'sticky' => 'Vastgezette header',
                 'show_account' => 'Accountingang tonen',
                 'show_discovery_bar' => 'Ontdekkingsnavigatie tonen',
+                'custom_nav_items' => 'Aangepaste navigatie-items',
             ],
             'footer' => [
                 'tagline' => 'Footer-slogan',
@@ -710,6 +711,7 @@ return [
                 'announcement_enabled' => 'Balk bovenaan met verzending, retourneren en andere winkelvoordelen.',
                 'usp_items' => 'Voordelen links; vink “CTA-knop” aan voor een actie aan de rechterkant (bijvoorbeeld Nu shoppen).',
                 'show_discovery_bar' => 'Tweede balk voor menulinks en het ontdekken van categorieën.',
+                'custom_nav_items' => 'Vul een aantal aangepaste desktop-navigatie-items in, of “infinite” om alle items te tonen. Categories blijft apart zichtbaar.',
             ],
         ],
     ],

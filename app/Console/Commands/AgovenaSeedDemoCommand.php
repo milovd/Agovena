@@ -1182,11 +1182,10 @@ final class AgovenaSeedDemoCommand extends Command
         $legal = Menu::query()->firstOrCreate(['handle' => 'footer_legal'], ['name' => 'Footer legal']);
 
         foreach ([
-            ['label' => 'Deals', 'type' => 'url', 'url' => '/#catalog', 'sort' => 0],
-            ['label' => 'About', 'type' => 'page', 'page_id' => $about->id, 'sort' => 1],
-            ['label' => 'Products', 'type' => 'url', 'url' => '/#catalog', 'sort' => 2],
-            ['label' => 'Services', 'type' => 'url', 'url' => '/categories/provisioning', 'sort' => 3],
-            ['label' => 'Domains', 'type' => 'url', 'url' => '/domains', 'sort' => 4],
+            ['label' => 'Products', 'type' => 'url', 'url' => '/#catalog', 'sort' => 0],
+            ['label' => 'Services', 'type' => 'url', 'url' => '/categories/provisioning', 'sort' => 1],
+            ['label' => 'Domains', 'type' => 'url', 'url' => '/domains', 'sort' => 2],
+            ['label' => 'About', 'type' => 'page', 'page_id' => $about->id, 'sort' => 3],
         ] as $item) {
             MenuItem::query()->firstOrCreate(
                 ['menu_id' => $header->id, 'label' => $item['label']],

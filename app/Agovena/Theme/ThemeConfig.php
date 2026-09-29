@@ -111,7 +111,6 @@ final class ThemeConfig
                     'lede' => $this->cleanText($section['lede'] ?? '', 500),
                     'cta_label' => $this->cleanText($section['cta_label'] ?? '', 120),
                     'cta_href' => $this->safeHref($section['cta_href'] ?? ''),
-                    'image' => $this->safeMediaPath($section['image'] ?? ''),
                 ];
 
                 continue;

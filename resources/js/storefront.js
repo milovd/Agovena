@@ -168,12 +168,6 @@ document.addEventListener('alpine:init', () => {
 
     window.Alpine.data('storefrontHeader', () => ({
         navOpen: false,
-        navCompact: false,
-        navFitFrame: null,
-        navOverflow: [],
-        navItemWidths: {},
-        navCategoriesWidth: 0,
-        moreOpen: false,
         drawerTop: 0,
         drawerObserver: null,
         drawerFrame: null,
@@ -205,7 +199,6 @@ document.addEventListener('alpine:init', () => {
             refresh();
             requestAnimationFrame(refresh);
             window.setTimeout(refresh, 200);
-            requestAnimationFrame(() => this.updateNavFit());
             if ('ResizeObserver' in window) {
                 this.drawerObserver = new ResizeObserver(refresh);
                 document.querySelectorAll('.store-usp, .store-header, .store-discover').forEach((element) => {
@@ -215,72 +208,6 @@ document.addEventListener('alpine:init', () => {
         },
         handleResize() {
             this.scheduleDrawerTopRefresh();
-            this.scheduleNavFit();
-        },
-        scheduleNavFit() {
-            if (this.navFitFrame !== null) return;
-            this.navFitFrame = requestAnimationFrame(() => {
-                this.navFitFrame = null;
-                this.updateNavFit();
-            });
-        },
-        updateNavFit() {
-            const nav = this.$refs.desktopNav;
-            if (!nav || window.matchMedia('(max-width: 1099px)').matches) {
-                this.navCompact = false;
-                this.navOverflow = [];
-                return;
-            }
-
-            if (getComputedStyle(nav).display === 'none') return;
-
-            const styles = getComputedStyle(nav);
-            const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;
-            const categories = nav.querySelector('.store-cats');
-            if (this.navCategoriesWidth === 0 && categories) {
-                this.navCategoriesWidth = categories.getBoundingClientRect().width;
-            }
-
-            const items = [...nav.querySelectorAll('[data-nav-item]')];
-            items.forEach((item) => {
-                const index = Number(item.dataset.navItem);
-                if (Number.isFinite(index) && !this.navItemWidths[index]) {
-                    this.navItemWidths[index] = item.getBoundingClientRect().width;
-                }
-            });
-
-            const widths = items
-                .map((item) => Number(item.dataset.navItem))
-                .filter((index) => Number.isFinite(index))
-                .map((index) => this.navItemWidths[index] || 0);
-            const visibleCount = (categories ? 1 : 0) + widths.length;
-            const requiredWidth = this.navCategoriesWidth
-                + widths.reduce((total, width) => total + width, 0)
-                + Math.max(0, visibleCount - 1) * gap;
-
-            if (requiredWidth <= nav.clientWidth + 1) {
-                this.navOverflow = [];
-                this.navCompact = false;
-                return;
-            }
-
-            const moreWidth = 82;
-            const overflow = [];
-            let used = this.navCategoriesWidth;
-            items.forEach((item) => {
-                const index = Number(item.dataset.navItem);
-                const width = this.navItemWidths[index] || 0;
-                const next = used + (used > 0 ? gap : 0) + width;
-                const withMore = next + gap + moreWidth;
-                if (withMore <= nav.clientWidth + 1 && overflow.length === 0) {
-                    used = next;
-                    return;
-                }
-                overflow.push(index);
-            });
-
-            this.navOverflow = overflow;
-            this.navCompact = overflow.length === items.length && this.navCategoriesWidth + gap + moreWidth > nav.clientWidth + 1;
         },
         updateDrawerTop() {
             const chromeParts = [
@@ -316,7 +243,6 @@ document.addEventListener('alpine:init', () => {
         closeAll() {
             this.navOpen = false;
             this.catsOpen = false;
-            this.moreOpen = false;
             this.mobileCatsOpen = false;
             this.mobileCategoryOpen = null;
             this.mobileAccountOpen = false;
@@ -328,18 +254,6 @@ document.addEventListener('alpine:init', () => {
         closeCategories() {
             this.catsOpen = false;
             this.activeCat = null;
-        },
-        openMore() {
-            this.moreOpen = true;
-        },
-        closeMore() {
-            this.moreOpen = false;
-        },
-        isNavItemVisible(index) {
-            return !this.navOverflow.includes(index);
-        },
-        isNavItemOverflow(index) {
-            return this.navOverflow.includes(index);
         },
         setActiveCategory(categoryId) {
             this.activeCat = categoryId;

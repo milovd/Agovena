@@ -6,6 +6,7 @@
             ? $image
             : \App\Agovena\Media\PublicMedia::url($image);
     }
+    $imageUrl ??= is_string($fallbackImage ?? null) ? $fallbackImage : null;
 @endphp
 
 <section class="store-section store-promo" aria-labelledby="promo-heading">

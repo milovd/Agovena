@@ -1,5 +1,13 @@
 @php
     $showExcerpt = ($themeConfig?->bool('catalog.show_excerpt', false) ?? false);
+    $fallbackPromoImage = $products
+        ->map(static fn ($product): ?string => \App\Agovena\Media\ProductMedia::primaryUrl($product))
+        ->filter()
+        ->first()
+        ?? $categories
+            ->map(static fn ($category): ?string => \App\Agovena\Media\PublicMedia::url($category->image_path))
+            ->filter()
+            ->first();
 @endphp
 
 <div class="store-home">
@@ -41,7 +49,10 @@
                     'showExcerpt' => $showExcerpt,
                 ])
             @elseif ($type === 'promo_split')
-                @include('theme::sections.promo-split', ['section' => $section])
+                @include('theme::sections.promo-split', [
+                    'section' => $section,
+                    'fallbackImage' => $fallbackPromoImage,
+                ])
             @elseif ($type === 'trust_strip')
                 @include('theme::sections.trust-strip', ['section' => $section])
             @elseif ($type === 'rich_text')
