@@ -7,10 +7,20 @@
             : \App\Agovena\Media\PublicMedia::url($image);
     }
 
-    $spotlight = collect($spotlightProducts ?? [])
-        ->filter(fn ($product) => filled(\App\Agovena\Media\ProductMedia::primaryUrl($product)))
-        ->take(3)
+    $products = collect($spotlightProducts ?? [])
+        ->filter(fn ($product) => filled(\App\Agovena\Media\ProductMedia::primaryUrl($product)));
+    $preferredSlugs = [
+        'minecraft-survival-server',
+        'domain-registration-and-dns-management',
+        'agovena-essential-tee',
+    ];
+    $preferred = $products
+        ->filter(fn ($product) => in_array($product->slug, $preferredSlugs, true))
+        ->sortBy(fn ($product) => array_search($product->slug, $preferredSlugs, true))
         ->values();
+    $spotlight = $preferred->count() === count($preferredSlugs)
+        ? $preferred
+        : $products->take(3)->values();
 
     $brand = $siteName ?? 'Store';
 @endphp

@@ -68,6 +68,12 @@ test('homepage keeps the storefront chrome compact and the hero deterministic', 
 
     expect(app(ThemeManager::class)->config()->sections()[0]['image'] ?? null)->toBe('');
     expect(substr_count($html, 'class="store-hero__plate store-hero__plate--'))->toBe(3);
+    expect($html)
+        ->toContain('/storage/demo/minecraft-survival-server.jpg')
+        ->toContain('/storage/demo/domain-registration-and-dns-management.jpg')
+        ->toContain('/storage/demo/agovena-essential-tee.jpg')
+        ->toContain('Agovena Merch')
+        ->not->toContain('Agovena Essential Tee');
 });
 
 test('demo seeder populates catalog and refuses production', function () {

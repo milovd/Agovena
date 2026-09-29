@@ -39,7 +39,10 @@ it('seeds the official demo catalog and customer journeys without loading accoun
         ->and(Order::query()->where('status', 'paid')->count())->toBe(6)
         ->and(Order::query()->where('status', 'cancelled')->count())->toBe(1)
         ->and(Order::query()->where('status', 'pending')->count())->toBe(1)
-        ->and(Invoice::query()->count())->toBe(8);
+        ->and(Invoice::query()->count())->toBe(8)
+        ->and(Product::query()->where('slug', 'agovena-essential-tee')->value('name'))->toBe('Agovena Merch')
+        ->and(Product::query()->where('slug', 'minecraft-survival-server')->value('description'))
+        ->toContain('NOT AN OFFICIAL MINECRAFT SERVICE');
 
     expect(Schema::hasTable('service_instances'))->toBeTrue()
         ->and(Schema::hasTable('domain_registrations'))->toBeTrue()
