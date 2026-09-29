@@ -7277,6 +7277,11 @@ a.store-order-card__item-title:focus-visible {
   margin: 0 auto;
 }
 
+.store-domain-search--product {
+  max-width: none;
+  margin: 0;
+}
+
 .store-domain-search__hero,
 .store-domain-search__results {
   padding: clamp(1.25rem, 3vw, 2.25rem);

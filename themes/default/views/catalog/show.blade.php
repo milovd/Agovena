@@ -11,6 +11,7 @@
         ->all();
     $reviewCount = 0;
     $ratingAverage = 0.0;
+    $isDomainProduct = $product->hasCapability('domain_registration');
 @endphp
 
 <article class="store-product">
@@ -135,7 +136,13 @@
                 <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
             @endif
 
-            @if ($priceAvailable && ! $isOutOfStock)
+            @if ($isDomainProduct)
+                <section class="store-product__domain-search" aria-labelledby="domain-availability-heading">
+                    @livewire(\Agovena\Modules\Domains\Http\Livewire\Storefront\DomainSearch::class, ['productId' => $product->id], key('domain-search-product-'.$product->id))
+                </section>
+            @endif
+
+            @if ($priceAvailable && ! $isOutOfStock && ! $isDomainProduct)
             <form wire:submit="addToCart" class="store-product__form">
                 @include('theme::partials.product-options')
                 <div class="store-product__buy">

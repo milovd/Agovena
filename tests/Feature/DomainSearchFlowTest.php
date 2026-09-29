@@ -55,6 +55,33 @@ it('shows agovena.com as unavailable with reserved demo alternatives', function 
         ->toContain('agovena.test', 'agovena.invalid');
 });
 
+it('renders a domain registration as a normal product page with embedded availability search', function (): void {
+    $product = createDemoDomainProduct();
+
+    $this->get(route('storefront.product', $product->slug))
+        ->assertOk()
+        ->assertSee(__('domains::storefront.product_title'), false)
+        ->assertSee('id="domain-query"', false)
+        ->assertDontSee('wire:submit="addToCart"', false);
+});
+
+it('scopes embedded domain search and selection to the product page product', function (): void {
+    $product = createDemoDomainProduct();
+
+    $component = Livewire::test(DomainSearch::class, ['productId' => $product->id])
+        ->set('query', 'agovena.com')
+        ->call('search');
+    $result = $component->get('result');
+    $token = collect($result['alternatives'])->firstWhere('domain', 'agovena.test')['selection_token'];
+
+    $component->call('selectDomain', $token)
+        ->assertRedirect(route('storefront.checkout'));
+
+    expect(collect(session('domains.quotes'))
+        ->contains(fn (array $quote): bool => (int) ($quote['product_id'] ?? 0) === $product->id))
+        ->toBeTrue();
+});
+
 it('selects a searched domain into checkout without using a product detail page', function (): void {
     createDemoDomainProduct();
 

@@ -1,8 +1,13 @@
-<div class="store-domain-search">
+<div class="store-domain-search{{ ($embedded ?? false) ? ' store-domain-search--product' : '' }}">
     <section class="store-domain-search__hero">
-        <p class="store-domain-search__eyebrow">{{ __('domains::storefront.demo_note') }}</p>
-        <h1 class="store-title">{{ __('domains::storefront.title') }}</h1>
-        <p class="store-domain-search__lede">{{ __('domains::storefront.lede') }}</p>
+        <p class="store-domain-search__eyebrow">{{ ($embedded ?? false) ? __('domains::storefront.product_eyebrow') : __('domains::storefront.demo_note') }}</p>
+        @if ($embedded ?? false)
+            <h2 id="domain-availability-heading" class="store-subtitle">{{ __('domains::storefront.product_title') }}</h2>
+            <p class="store-domain-search__lede">{{ __('domains::storefront.product_lede') }}</p>
+        @else
+            <h1 class="store-title">{{ __('domains::storefront.title') }}</h1>
+            <p class="store-domain-search__lede">{{ __('domains::storefront.lede') }}</p>
+        @endif
         <form class="store-domain-search__form" wire:submit="search">
             <label class="store-domain-search__label" for="domain-query">{{ __('domains::storefront.search_label') }}</label>
             <div class="store-domain-search__control">
