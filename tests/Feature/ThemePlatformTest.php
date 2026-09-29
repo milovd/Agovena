@@ -53,10 +53,10 @@ test('homepage renders announcement hero and featured sections', function () {
 });
 
 test('demo seeder populates catalog and refuses production', function () {
-    Artisan::call('agovena:seed-demo', ['--force' => true]);
+    Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
 
     expect(Product::query()->count())->toBeGreaterThan(5)
-        ->and(Category::query()->whereNull('parent_id')->count())->toBe(3)
+        ->and(Category::query()->whereNull('parent_id')->count())->toBe(5)
         ->and(Category::query()->whereNotNull('parent_id')->count())->toBe(2)
         ->and(Page::query()->published()->count())->toBeGreaterThan(0);
 
@@ -64,46 +64,43 @@ test('demo seeder populates catalog and refuses production', function () {
     expect($featured)->not->toBeEmpty();
 
     $this->get('/')->assertOk()->assertSee($featured->first()->name, false);
-    $this->get('/categories/phones')->assertOk();
-    $this->get('/categories/android')->assertOk();
+    $this->get('/categories/provisioning')->assertOk();
+    $this->get('/categories/game-hosting')->assertOk();
     $this->get('/about')->assertOk()->assertSee('About', false);
 });
 
 test('categories index page lists root categories', function () {
-    Artisan::call('agovena:seed-demo', ['--force' => true]);
+    Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
 
     $this->get('/categories')
         ->assertOk()
-        ->assertSee('Phones', false)
-        ->assertSee('Audio', false);
+        ->assertSee('Provisioning', false)
+        ->assertSee('Physical Products', false);
 });
 
 test('product detail shows gallery nav and zero reviews', function () {
-    Artisan::call('agovena:seed-demo', ['--force' => true]);
+    Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
 
-    $this->get('/products/nova-phone-14')
+    $this->get('/products/minecraft-survival-server')
         ->assertOk()
         ->assertSee('View 0 reviews', false)
-        ->assertSee('Scroll thumbnails left', false)
-        ->assertSee('Scroll thumbnails right', false)
-        ->assertSee('Show image 1', false)
-        ->assertSee('Show image 8', false)
-        ->assertSee('store-product__thumb is-active', false)
+        ->assertSee('class="store-product__gallery"', false)
+        ->assertSee('/storage/demo/minecraft-survival-server.jpg', false)
         ->assertSee('x-data="storefrontProductGallery"', false)
         ->assertSee('x-data="storefrontProductPanels"', false)
         ->assertSee('Details', false)
         ->assertSee('Reviews', false)
         ->assertSee('Specifications', false)
-        ->assertSee('6.1 inch OLED', false)
+        ->assertSee('8 GB', false)
         ->assertSee('No reviews yet', false)
-        ->assertSee('6.1 inch OLED, dual camera, all-day battery.', false);
+        ->assertSee('A ready-to-configure Minecraft service plan for the Pterodactyl demo flow.', false);
 });
 
 test('store setting can disable reviews on product pages', function () {
-    Artisan::call('agovena:seed-demo', ['--force' => true]);
+    Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
     app(SettingsRepository::class)->set('store', 'enable_reviews', false);
 
-    $this->get('/products/nova-phone-14')
+    $this->get('/products/minecraft-survival-server')
         ->assertOk()
         ->assertDontSee('View 0 reviews', false)
         ->assertDontSee('No reviews yet', false)
@@ -111,11 +108,11 @@ test('store setting can disable reviews on product pages', function () {
 });
 
 test('search suggest returns product thumbnails', function () {
-    Artisan::call('agovena:seed-demo', ['--force' => true]);
+    Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
 
-    $this->getJson(route('storefront.search.suggest', ['q' => 'Nova']))
+    $this->getJson(route('storefront.search.suggest', ['q' => 'Minecraft']))
         ->assertOk()
-        ->assertJsonPath('items.0.name', 'Nova Phone 14')
+        ->assertJsonPath('items.0.name', 'Minecraft Survival Server')
         ->assertJsonStructure(['query', 'items' => [['name', 'slug', 'url', 'price', 'image']], 'results_url']);
 });
 
