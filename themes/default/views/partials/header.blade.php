@@ -92,13 +92,29 @@
                 </svg>
             </button>
 
-            <a class="store-brand" href="{{ route('storefront.home') }}">
+            <a
+                class="store-brand"
+                href="{{ route('storefront.home') }}"
+                x-data="{ logoReady: false }"
+                x-init="logoReady = $refs.logo && $refs.logo.complete && $refs.logo.naturalWidth > 0"
+                :class="{ 'is-logo-ready': logoReady }"
+            >
+                <svg class="store-brand__fallback" x-show="!logoReady" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
+                    <path d="M20 5 6.5 34h6.1l2.7-6.5h9.4l2.7 6.5h6.1L20 5Zm-2.4 17.2L20 13.8l2.4 8.4h-4.8Z" fill="currentColor"/>
+                    <circle cx="6.5" cy="34" r="2" fill="currentColor"/>
+                    <circle cx="33.5" cy="34" r="2" fill="currentColor"/>
+                </svg>
                 <img
+                    x-ref="logo"
                     class="store-brand__logo"
                     src="{{ $brandingLogoUrl }}"
                     alt="{{ $siteName ?? __('storefront.shop') }}"
-                    width="160"
-                    height="36"
+                    width="40"
+                    height="40"
+                    loading="eager"
+                    decoding="sync"
+                    fetchpriority="high"
+                    @load="logoReady = true"
                 >
             </a>
 
@@ -181,7 +197,7 @@
                 @endif
 
                 @foreach ($themeMainNav ?? [] as $item)
-                    @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
+                    @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home', 'events'], true))
                         <a class="store-nav__link" href="{{ $item['url'] }}">{{ $item['label'] }}</a>
                     @endif
                 @endforeach
@@ -527,7 +543,7 @@
                     </div>
                 @endif
                 @foreach ($themeMainNav ?? [] as $item)
-                    @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home'], true))
+                    @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home', 'events'], true))
                         <a class="store-nav__link store-drawer__primary-link" href="{{ $item['url'] }}" @click="closeDrawerOnNavigate">{{ $item['label'] }}</a>
                     @endif
                 @endforeach

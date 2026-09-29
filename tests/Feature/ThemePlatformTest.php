@@ -52,6 +52,24 @@ test('homepage renders announcement hero and featured sections', function () {
         ->assertSee('DM+Sans', false);
 });
 
+test('homepage keeps the storefront chrome compact and the hero deterministic', function () {
+    Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
+
+    $html = $this->get('/')->assertOk()->getContent();
+
+    expect($html)
+        ->not->toContain('class="store-nav__link" href="/categories/events"')
+        ->not->toContain('store-drawer__primary-link" href="/categories/events"')
+        ->toContain('loading="eager"')
+        ->toContain('decoding="sync"')
+        ->toContain('fetchpriority="high"')
+        ->toContain('store-brand__fallback')
+        ->toContain('Physical products, digital goods, and services with a storefront you control.');
+
+    expect(app(ThemeManager::class)->config()->sections()[0]['image'] ?? null)->toBe('');
+    expect(substr_count($html, 'class="store-hero__plate store-hero__plate--'))->toBe(3);
+});
+
 test('demo seeder populates catalog and refuses production', function () {
     Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
 

@@ -63,6 +63,12 @@
         <link rel="icon" href="{{ $brandingFaviconUrl }}">
     @endif
     @php
+        $storefrontLogoUrl = $brandingLogoUrl ?? app(\App\Agovena\Theme\StorefrontBrand::class)->logoUrl();
+    @endphp
+    @if ($storefrontLogoUrl)
+        <link rel="preload" as="image" href="{{ $storefrontLogoUrl }}" fetchpriority="high">
+    @endif
+    @php
         $config = $themeConfig ?? null;
         if ($config === null && isset($theme)) {
             $config = app(\App\Agovena\Theme\ThemeManager::class)->config($theme);

@@ -262,10 +262,10 @@ return new ThemeSettingsSchema([
                 'type' => 'hero',
                 'eyebrow' => 'Self-hosted commerce',
                 'title' => 'A sharper way to sell what you stock',
-                'lede' => 'Phones, audio, and accessories with clear prices and a storefront you control.',
+                'lede' => 'Physical products, digital goods, and services with a storefront you control.',
                 'cta_label' => 'Shop the catalog',
                 'cta_href' => '#catalog',
-                'image' => 'demo/hero-promo.jpg',
+                'image' => '',
             ],
             [
                 'type' => 'featured_categories',
