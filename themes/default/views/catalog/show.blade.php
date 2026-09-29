@@ -136,6 +136,39 @@
                 <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
             @endif
 
+            @if ($isDomainProduct)
+                <section class="store-product__domain-highlights" aria-labelledby="domain-highlights-heading">
+                    <h2 id="domain-highlights-heading" class="visually-hidden">{{ __('storefront.product.domain_highlights_aria') }}</h2>
+                    <div class="store-product__domain-highlight">
+                        <span class="store-product__domain-highlight-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.2 2.5 3.3 5.5 3.3 9S14.2 18.5 12 21c-2.2-2.5-3.3-5.5-3.3-9S9.8 5.5 12 3Z"/></svg>
+                        </span>
+                        <span>
+                            <strong>{{ __('storefront.product.domain_extensions_title') }}</strong>
+                            <span class="store-product__domain-highlight-text">{{ __('storefront.product.domain_extensions_text') }}</span>
+                        </span>
+                    </div>
+                    <div class="store-product__domain-highlight">
+                        <span class="store-product__domain-highlight-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+                        </span>
+                        <span>
+                            <strong>{{ __('storefront.product.domain_dns_title') }}</strong>
+                            <span class="store-product__domain-highlight-text">{{ __('storefront.product.domain_dns_text') }}</span>
+                        </span>
+                    </div>
+                    <div class="store-product__domain-highlight">
+                        <span class="store-product__domain-highlight-icon" aria-hidden="true">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 5 6v5c0 4.5 2.9 8.5 7 10 4.1-1.5 7-5.5 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-4"/></svg>
+                        </span>
+                        <span>
+                            <strong>{{ __('storefront.product.domain_checkout_title') }}</strong>
+                            <span class="store-product__domain-highlight-text">{{ __('storefront.product.domain_checkout_text') }}</span>
+                        </span>
+                    </div>
+                </section>
+            @endif
+
             @if ($priceAvailable && ! $isOutOfStock && ! $isDomainProduct)
             <form wire:submit="addToCart" class="store-product__form">
                 @include('theme::partials.product-options')

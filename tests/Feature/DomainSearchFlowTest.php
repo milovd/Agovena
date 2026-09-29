@@ -61,6 +61,10 @@ it('renders a domain registration as a normal product page with embedded availab
     $this->get(route('storefront.product', $product->slug))
         ->assertOk()
         ->assertSee(__('domains::storefront.product_title'), false)
+        ->assertSee(__('storefront.product.domain_extensions_title'), false)
+        ->assertSee(__('storefront.product.domain_dns_title'), false)
+        ->assertDontSee(__('storefront.product.delivery_title'), false)
+        ->assertDontSee(__('storefront.product.returns_title'), false)
         ->assertSee('id="domain-query"', false)
         ->assertDontSee('wire:submit="addToCart"', false);
 });
