@@ -490,10 +490,11 @@ final class AgovenaSeedDemoCommand extends Command
                 ],
                 'capabilities' => [
                     ['key' => 'domain_registration', 'config' => [
-                        'provider_key' => 'cloudflare-domain',
-                        'registrar_key' => 'cloudflare-domain',
-                        'dns_provider_key' => 'cloudflare-domain',
+                        'provider_key' => 'demo-registrar',
+                        'registrar_key' => 'demo-registrar',
+                        'dns_provider_key' => 'demo-dns',
                         'domain_name' => 'demo.agovena.test',
+                        'allowed_tlds' => ['test', 'invalid'],
                         'auto_renew' => true,
                         'mode' => 'demo',
                         'calls_enabled' => false,
@@ -501,7 +502,6 @@ final class AgovenaSeedDemoCommand extends Command
                 ],
                 'options' => [
                     ['key' => 'domain_name', 'label' => 'Domain name', 'type' => 'text', 'required' => true, 'constraints' => ['minlength' => 4]],
-                    ['key' => 'dns_management', 'label' => 'Include DNS zone management', 'type' => 'toggle', 'required' => false, 'price' => 0],
                 ],
             ],
             [
@@ -1006,9 +1006,9 @@ final class AgovenaSeedDemoCommand extends Command
             'unit_index' => 1,
             'domain_name' => 'demo.agovena.test',
             'status' => DomainRegistrationStatus::Active,
-            'provider_key' => 'cloudflare-domain',
-            'registrar_key' => 'cloudflare-domain',
-            'dns_provider_key' => 'cloudflare-domain',
+            'provider_key' => 'demo-registrar',
+            'registrar_key' => 'demo-registrar',
+            'dns_provider_key' => 'demo-dns',
             'provider_reference' => 'demo-domain-reference-001',
             'auto_renew' => true,
             'meta' => [
@@ -1022,6 +1022,10 @@ final class AgovenaSeedDemoCommand extends Command
                         ['type' => 'A', 'name' => '@', 'content' => '192.0.2.10', 'ttl' => 300],
                         ['type' => 'CNAME', 'name' => 'www', 'content' => 'demo.agovena.invalid', 'ttl' => 300],
                     ],
+                ],
+                'dns_records' => [
+                    ['id' => 'demo-record-a', 'type' => 'A', 'name' => '@', 'content' => '192.0.2.10', 'ttl' => 300, 'proxied' => false],
+                    ['id' => 'demo-record-cname', 'type' => 'CNAME', 'name' => 'www', 'content' => 'demo.agovena.invalid', 'ttl' => 300, 'proxied' => false],
                 ],
             ],
             'registered_at' => $now->copy()->subDay(),
@@ -1182,6 +1186,14 @@ final class AgovenaSeedDemoCommand extends Command
             MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'Services', 'type' => 'url', 'url' => '/categories/provisioning', 'sort' => 1]);
             MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'About', 'type' => 'page', 'page_id' => $about->id, 'sort' => 2]);
         }
+        MenuItem::query()->firstOrCreate([
+            'menu_id' => $header->id,
+            'label' => 'Domains',
+        ], [
+            'type' => 'url',
+            'url' => '/domains',
+            'sort' => 3,
+        ]);
         if ($footer->wasRecentlyCreated) {
             MenuItem::query()->create(['menu_id' => $footer->id, 'label' => 'Demo Guide', 'type' => 'page', 'page_id' => $guide->id, 'sort' => 0]);
         }

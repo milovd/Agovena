@@ -6,6 +6,7 @@ namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\OffersCheckoutMethods;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
+use Throwable;
 
 /**
  * Checkout-facing discovery of enabled PaymentGateway methods.
@@ -32,6 +33,14 @@ final class AvailablePaymentMethods
     {
         $options = [];
         foreach ($this->gateways->all() as $gateway) {
+            try {
+                if (! $gateway->health()->ok) {
+                    continue;
+                }
+            } catch (Throwable) {
+                continue;
+            }
+
             if ($gateway instanceof OffersCheckoutMethods) {
                 foreach ($gateway->checkoutMethods() as $method) {
                     $options[] = $method->toArray();

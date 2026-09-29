@@ -108,6 +108,8 @@ final class Edit extends Component
 
     public int $domainYears = 1;
 
+    public string $domainAllowedTlds = 'test, invalid';
+
     public string $digitalSecretSource = 'pool';
 
     public function mount(Product $product): void
@@ -166,6 +168,10 @@ final class Edit extends Component
                 $this->domainName = (string) ($row->config['domain_name'] ?? '');
                 $this->domainAutoRenew = (bool) ($row->config['auto_renew'] ?? false);
                 $this->domainYears = max(1, (int) ($row->config['years'] ?? 1));
+                $allowedTlds = $row->config['allowed_tlds'] ?? ['test', 'invalid'];
+                $this->domainAllowedTlds = is_array($allowedTlds)
+                    ? implode(', ', array_map('strval', $allowedTlds))
+                    : (string) $allowedTlds;
             }
             if ($row->capability === 'digital_secret') {
                 $source = (string) ($row->config['source'] ?? 'pool');
@@ -526,12 +532,19 @@ final class Edit extends Component
             }
             if ($key === 'domain_registration') {
                 $domainName = strtolower(rtrim(trim($this->domainName), '.'));
+                $allowedTlds = array_values(array_unique(array_filter(array_map(
+                    static fn (string $tld): ?string => preg_match('/^[a-z0-9-]{2,63}$/', strtolower(ltrim(trim($tld), '.'))) === 1
+                        ? strtolower(ltrim(trim($tld), '.'))
+                        : null,
+                    preg_split('/[\s,]+/', $this->domainAllowedTlds) ?: [],
+                ))));
                 $config = [
                     'registrar_key' => trim($this->domainRegistrarKey) !== '' ? trim($this->domainRegistrarKey) : null,
                     'dns_provider_key' => trim($this->domainDnsProviderKey) !== '' ? trim($this->domainDnsProviderKey) : null,
                     'domain_name' => $domainName !== '' ? $domainName : null,
                     'auto_renew' => $this->domainAutoRenew,
                     'years' => max(1, min(10, $this->domainYears)),
+                    'allowed_tlds' => $allowedTlds !== [] ? $allowedTlds : ['test', 'invalid'],
                 ];
             }
             if ($key === 'digital_secret') {

@@ -912,6 +912,8 @@ return [
             'domain_auto_renew' => 'Enable auto-renew',
             'domain_years' => 'Registration years',
             'domain_years_hint' => 'Limited to 1 through 10 years.',
+            'domain_allowed_tlds' => 'Search TLDs',
+            'domain_allowed_tlds_hint' => 'Comma-separated TLDs offered by the domain search, for example test, invalid. Use reserved demo TLDs in local demos.',
             'event_ticket' => 'Event ticket',
             'event_ticket_help' => 'Issues a unique admission ticket after payment. Map the product to an event performance in Events.',
             'provider_key' => 'Provisioning provider',

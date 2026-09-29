@@ -14,6 +14,7 @@ use App\Agovena\Notifications\BackInStockNotifier;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
@@ -30,6 +31,11 @@ final class ProductShow extends Component
     {
         $this->slug = $slug;
         $product = $get->handle($this->slug);
+        if ($product->hasCapability('domain_registration') && Route::has('domains')) {
+            $this->redirectRoute('domains', navigate: true);
+
+            return;
+        }
         foreach ($options->activeOptions($product) as $option) {
             $this->optionSelections[$option->key] = match ($option->type->value) {
                 'checkbox' => [],

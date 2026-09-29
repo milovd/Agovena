@@ -540,6 +540,11 @@
                                         <input id="domainYears" class="ag-input" type="number" min="1" max="10" wire:model="domainYears">
                                         <p class="ag-field__hint">{{ __('admin.products.capabilities.domain_years_hint') }}</p>
                                     </div>
+                                    <div class="ag-field ag-grid__span-2">
+                                        <label class="ag-field__label" for="domainAllowedTlds">{{ __('admin.products.capabilities.domain_allowed_tlds') }}</label>
+                                        <input id="domainAllowedTlds" class="ag-input" type="text" wire:model="domainAllowedTlds" aria-describedby="domainAllowedTlds-hint">
+                                        <p id="domainAllowedTlds-hint" class="ag-field__hint">{{ __('admin.products.capabilities.domain_allowed_tlds_hint') }}</p>
+                                    </div>
                                     <div class="ag-field">
                                         <x-ag.checkbox
                                             id="domainAutoRenew"

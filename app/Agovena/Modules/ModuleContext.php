@@ -106,6 +106,21 @@ final class ModuleContext
     }
 
     /**
+     * Register public storefront routes owned by a Module.
+     *
+     * @param  callable(): void  $routes
+     */
+    public function storefrontRoutes(callable $routes): void
+    {
+        Route::group([
+            'middleware' => ['web'],
+        ], $routes);
+
+        app(Router::class)->getRoutes()->refreshNameLookups();
+        app(Router::class)->getRoutes()->refreshActionLookups();
+    }
+
+    /**
      * Register authenticated customer API routes under /api/v1.
      *
      * @param  callable(): void  $routes

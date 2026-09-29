@@ -28,12 +28,15 @@
                 @foreach ($registrations as $registration)
                     <li class="store-order-items__row" wire:key="customer-domain-{{ $registration->id }}">
                         <div>
-                            <strong>{{ $registration->domain_name ?? __('domains::customer.awaiting_domain') }}</strong>
+                            <strong><a href="{{ route('customer.domains.show', $registration) }}">{{ $registration->domain_name ?? __('domains::customer.awaiting_domain') }}</a></strong>
                             <p>{{ __('domains::customer.status') }}: {{ __('domains::status.'.$registration->status->value) }}</p>
                             @if ($registration->expires_at)
                                 <p>{{ __('domains::customer.expires') }}: {{ $registration->expires_at->toDateString() }}</p>
                             @endif
                         </div>
+                        @if ($registration->status->value === 'active')
+                            <a class="store-btn store-btn--secondary" href="{{ route('customer.domains.show', $registration) }}">{{ __('domains::customer.open') }}</a>
+                        @endif
                     </li>
                 @endforeach
             </ul>
