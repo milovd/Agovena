@@ -73,6 +73,7 @@ test('homepage keeps the storefront chrome compact and the hero deterministic', 
         ->toContain('/storage/demo/domain-registration-and-dns-management.jpg')
         ->toContain('/storage/demo/agovena-essential-tee.jpg')
         ->toContain('Agovena Merch')
+        ->toContain('Deals')
         ->not->toContain('Agovena Essential Tee');
 });
 

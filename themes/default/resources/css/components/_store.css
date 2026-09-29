@@ -3833,6 +3833,46 @@ a.store-cart-line__name:hover {
   }
 }
 
+@media (min-width: 1100px) {
+  .store-header__inner.is-nav-compact {
+    grid-template-columns: auto 2.5rem minmax(0, 1fr) auto;
+    grid-template-areas: "menu brand search actions";
+    gap: var(--theme-space-2);
+  }
+
+  .store-header__inner.is-nav-compact .store-header__menu {
+    display: inline-flex;
+    grid-area: menu;
+  }
+
+  .store-header__inner.is-nav-compact .store-brand {
+    grid-area: brand;
+  }
+
+  .store-header__inner.is-nav-compact .store-nav {
+    display: none;
+  }
+
+  .store-header__inner.is-nav-compact .store-header__search-wrap {
+    grid-area: search;
+    width: auto;
+  }
+
+  .store-header__inner.is-nav-compact .store-header__actions {
+    grid-area: actions;
+  }
+
+  .store-header__inner.is-nav-compact .store-header__region,
+  .store-header__inner.is-nav-compact .store-header__auth,
+  .store-header__inner.is-nav-compact .store-header__account {
+    display: none;
+  }
+
+  .store-header__inner.is-nav-compact .store-header__cart {
+    display: inline-flex;
+  }
+}
+
 @media (max-width: 767px) {
   .store-header__inner {
     grid-template-columns: minmax(0, 1fr) minmax(6.75rem, 1.15fr) auto auto;

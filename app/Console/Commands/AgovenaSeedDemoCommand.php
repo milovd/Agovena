@@ -1182,18 +1182,9 @@ final class AgovenaSeedDemoCommand extends Command
         $legal = Menu::query()->firstOrCreate(['handle' => 'footer_legal'], ['name' => 'Footer legal']);
 
         if ($header->wasRecentlyCreated) {
-            MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'Products', 'type' => 'url', 'url' => '/#catalog', 'sort' => 0]);
-            MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'Services', 'type' => 'url', 'url' => '/categories/provisioning', 'sort' => 1]);
-            MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'About', 'type' => 'page', 'page_id' => $about->id, 'sort' => 2]);
+            MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'Deals', 'type' => 'url', 'url' => '/#catalog', 'sort' => 0]);
+            MenuItem::query()->create(['menu_id' => $header->id, 'label' => 'About', 'type' => 'page', 'page_id' => $about->id, 'sort' => 1]);
         }
-        MenuItem::query()->firstOrCreate([
-            'menu_id' => $header->id,
-            'label' => 'Domains',
-        ], [
-            'type' => 'url',
-            'url' => '/domains',
-            'sort' => 3,
-        ]);
         if ($footer->wasRecentlyCreated) {
             MenuItem::query()->create(['menu_id' => $footer->id, 'label' => 'Demo Guide', 'type' => 'page', 'page_id' => $guide->id, 'sort' => 0]);
         }

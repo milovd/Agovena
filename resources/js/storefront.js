@@ -168,6 +168,8 @@ document.addEventListener('alpine:init', () => {
 
     window.Alpine.data('storefrontHeader', () => ({
         navOpen: false,
+        navCompact: false,
+        navFitFrame: null,
         drawerTop: 0,
         drawerObserver: null,
         drawerFrame: null,
@@ -199,12 +201,41 @@ document.addEventListener('alpine:init', () => {
             refresh();
             requestAnimationFrame(refresh);
             window.setTimeout(refresh, 200);
+            requestAnimationFrame(() => this.updateNavFit());
             if ('ResizeObserver' in window) {
                 this.drawerObserver = new ResizeObserver(refresh);
                 document.querySelectorAll('.store-usp, .store-header, .store-discover').forEach((element) => {
                     this.drawerObserver.observe(element);
                 });
             }
+        },
+        handleResize() {
+            this.scheduleDrawerTopRefresh();
+            this.scheduleNavFit();
+        },
+        scheduleNavFit() {
+            if (this.navFitFrame !== null) return;
+            this.navFitFrame = requestAnimationFrame(() => {
+                this.navFitFrame = null;
+                this.updateNavFit();
+            });
+        },
+        updateNavFit() {
+            const nav = this.$refs.desktopNav;
+            if (!nav || window.matchMedia('(max-width: 1099px)').matches) {
+                this.navCompact = false;
+                return;
+            }
+
+            if (getComputedStyle(nav).display === 'none') return;
+
+            const styles = getComputedStyle(nav);
+            const gap = parseFloat(styles.columnGap || styles.gap || '0') || 0;
+            const items = [...nav.children].filter((item) => getComputedStyle(item).display !== 'none');
+            const requiredWidth = items.reduce((total, item) => total + item.getBoundingClientRect().width, 0)
+                + Math.max(0, items.length - 1) * gap;
+
+            this.navCompact = requiredWidth > nav.clientWidth + 1;
         },
         updateDrawerTop() {
             const chromeParts = [

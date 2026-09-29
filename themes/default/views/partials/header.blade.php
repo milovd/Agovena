@@ -71,12 +71,12 @@
     data-view-all-label="{{ __('storefront.search.view_all') }}"
     x-data="storefrontHeader"
     @keydown.escape.window="closeAll()"
-    @resize.window="scheduleDrawerTopRefresh()"
+    @resize.window="handleResize()"
     @scroll.window.passive="scheduleDrawerTopRefresh()"
     x-effect="syncDrawerLock()"
 >
     <div class="store-header">
-        <div class="store-header__inner">
+        <div class="store-header__inner" :class="{ 'is-nav-compact': navCompact }">
             <button
                 type="button"
                 class="store-header__menu"
@@ -118,7 +118,7 @@
                 >
             </a>
 
-            <nav class="store-nav" aria-label="{{ __('storefront.primary_nav') }}">
+            <nav class="store-nav" x-ref="desktopNav" aria-label="{{ __('storefront.primary_nav') }}">
                 @if ($categoriesOn && $discoveryCategories->isNotEmpty())
                     <div
                         class="store-cats"
