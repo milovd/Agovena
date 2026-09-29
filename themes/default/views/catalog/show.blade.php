@@ -14,7 +14,7 @@
     $isDomainProduct = $product->hasCapability('domain_registration');
 @endphp
 
-<article class="store-product">
+<article class="store-product{{ $isDomainProduct ? ' store-product--domain' : '' }}">
     <nav class="store-breadcrumbs store-breadcrumbs--compact" aria-label="{{ __('storefront.breadcrumb_aria') }}">
         <a href="{{ route('storefront.home') }}">{{ __('storefront.nav.home') }}</a>
         @if ($product->category)
@@ -186,6 +186,7 @@
                 </section>
             @endif
 
+            @if (! $isDomainProduct)
             <div class="store-product__perks" role="list">
                 <div class="store-product__perk" role="listitem">
                     <span class="store-product__perk-icon" aria-hidden="true">
@@ -206,6 +207,7 @@
                     </div>
                 </div>
             </div>
+            @endif
         </div>
 
         @if ($isDomainProduct)

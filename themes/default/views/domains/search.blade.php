@@ -1,4 +1,4 @@
-<div class="store-domain-search{{ ($embedded ?? false) ? ' store-domain-search--product' : '' }}">
+<div class="store-domain-search{{ ($embedded ?? false) ? ' store-domain-search--product' : '' }}{{ (($embedded ?? false) && is_array($result)) ? ' store-domain-search--has-results' : '' }}">
     <section class="store-domain-search__hero">
         <p class="store-domain-search__eyebrow">{{ ($embedded ?? false) ? __('domains::storefront.product_eyebrow') : __('domains::storefront.demo_note') }}</p>
         @if ($embedded ?? false)
