@@ -3775,6 +3775,16 @@ a.store-cart-line__name:hover {
     gap: var(--theme-space-8);
   }
 
+  .store-product__domain-search {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .store-product__info {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
   .store-promo__layout {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     padding: var(--theme-space-6);
