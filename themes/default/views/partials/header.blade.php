@@ -198,9 +198,55 @@
 
                 @foreach ($themeMainNav ?? [] as $item)
                     @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home', 'events'], true))
-                        <a class="store-nav__link" href="{{ $item['url'] }}">{{ $item['label'] }}</a>
+                        <a
+                            class="store-nav__link"
+                            data-nav-item="{{ $loop->index }}"
+                            x-show="isNavItemVisible({{ $loop->index }})"
+                            href="{{ $item['url'] }}"
+                        >{{ $item['label'] }}</a>
                     @endif
                 @endforeach
+
+                <div
+                    class="store-nav__more"
+                    x-show="navOverflow.length > 0"
+                    x-cloak
+                    @mouseenter="openMore()"
+                    @mouseleave="closeMore()"
+                    @focusin="openMore()"
+                    @click.outside="closeMore()"
+                >
+                    <button
+                        type="button"
+                        class="store-nav__link store-nav__more-trigger"
+                        :aria-expanded="moreOpen.toString()"
+                        aria-haspopup="true"
+                    >
+                        {{ __('storefront.nav.more') }}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+                    <div
+                        class="store-nav__more-panel"
+                        x-show="moreOpen"
+                        x-cloak
+                        x-transition.opacity.duration.120ms
+                        role="menu"
+                        aria-label="{{ __('storefront.nav.more') }}"
+                    >
+                        <div class="store-nav__more-panel-inner">
+                            @foreach ($themeMainNav ?? [] as $item)
+                                @if (! empty($item['url']) && ! in_array(mb_strtolower($item['label']), ['shop', 'home', 'events'], true))
+                                    <a
+                                        href="{{ $item['url'] }}"
+                                        role="menuitem"
+                                        x-show="isNavItemOverflow({{ $loop->index }})"
+                                        @click="closeMore()"
+                                    >{{ $item['label'] }}</a>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
             </nav>
 
             @if ($searchOn)

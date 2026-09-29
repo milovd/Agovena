@@ -1172,6 +1172,63 @@ button.store-header__utility[aria-expanded="true"] {
   outline: none;
 }
 
+.store-nav__more {
+  position: relative;
+}
+
+.store-nav__more-trigger {
+  width: 5.125rem;
+  min-width: 5.125rem;
+  justify-content: center;
+}
+
+.store-nav__more-panel {
+  position: absolute;
+  top: calc(100% - 0.15rem);
+  right: 0;
+  z-index: 40;
+  padding-top: 0.65rem;
+  min-width: 12rem;
+}
+
+.store-nav__more-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.65rem;
+}
+
+.store-nav__more-panel-inner {
+  display: grid;
+  gap: 0.2rem;
+  padding: var(--theme-space-2);
+  background: var(--theme-color-surface);
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-lg);
+  box-shadow: var(--theme-shadow-md);
+}
+
+.store-nav__more-panel-inner a {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--theme-radius);
+  color: var(--theme-color-text);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.store-nav__more-panel-inner a:hover,
+.store-nav__more-panel-inner a:focus-visible {
+  color: var(--theme-color-accent);
+  background: var(--theme-color-accent-soft);
+  outline: none;
+}
+
 .store-cats {
   position: relative;
 }

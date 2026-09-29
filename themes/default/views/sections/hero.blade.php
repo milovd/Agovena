@@ -7,20 +7,33 @@
             : \App\Agovena\Media\PublicMedia::url($image);
     }
 
-    $products = collect($spotlightProducts ?? [])
-        ->filter(fn ($product) => filled(\App\Agovena\Media\ProductMedia::primaryUrl($product)));
-    $preferredSlugs = [
-        'minecraft-survival-server',
-        'domain-registration-and-dns-management',
-        'agovena-essential-tee',
+    $productsBySlug = collect($spotlightProducts ?? [])
+        ->keyBy('slug');
+    $demoHeroDefinitions = [
+        ['slug' => 'minecraft-survival-server', 'asset' => 'demo/minecraft-survival-server.jpg'],
+        ['slug' => 'domain-registration-and-dns-management', 'asset' => 'demo/domain-registration-and-dns-management.jpg'],
+        ['slug' => 'agovena-essential-tee', 'asset' => 'demo/agovena-essential-tee.jpg'],
     ];
-    $preferred = $products
-        ->filter(fn ($product) => in_array($product->slug, $preferredSlugs, true))
-        ->sortBy(fn ($product) => array_search($product->slug, $preferredSlugs, true))
+    $spotlight = collect($demoHeroDefinitions)
+        ->map(function (array $definition) use ($productsBySlug): ?array {
+            $product = $productsBySlug->get($definition['slug']);
+            $image = \Illuminate\Support\Facades\Storage::disk('public')->exists($definition['asset'])
+                ? \App\Agovena\Media\PublicMedia::url($definition['asset'])
+                : ($product ? \App\Agovena\Media\ProductMedia::primaryUrl($product) : null);
+
+            if (! $image) {
+                return null;
+            }
+
+            return [
+                'image' => $image,
+                'href' => $product
+                    ? route('storefront.product', $product->slug)
+                    : route('storefront.home').'#catalog',
+            ];
+        })
+        ->filter()
         ->values();
-    $spotlight = $preferred->count() === count($preferredSlugs)
-        ? $preferred
-        : $products->take(3)->values();
 
     $brand = $siteName ?? 'Store';
 @endphp
@@ -63,14 +76,14 @@
                 </div>
             @endif
 
-            @foreach ($spotlight as $i => $product)
+            @foreach ($spotlight as $i => $card)
                 <a
                     class="store-hero__plate store-hero__plate--{{ $i + 1 }}"
-                    href="{{ route('storefront.product', $product->slug) }}"
+                    href="{{ $card['href'] }}"
                     tabindex="-1"
                 >
                     <img
-                        src="{{ \App\Agovena\Media\ProductMedia::primaryUrl($product) }}"
+                        src="{{ $card['image'] }}"
                         alt=""
                         loading="eager"
                     >

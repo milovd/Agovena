@@ -59,6 +59,7 @@ return [
         'admin_hint' => 'Open de Admin voor deze winkel',
         'logout' => 'Uitloggen',
         'deals' => 'Aanbiedingen',
+        'more' => 'Meer',
         'about' => 'Over ons',
         'terms' => 'Voorwaarden',
         'privacy' => 'Privacy',
