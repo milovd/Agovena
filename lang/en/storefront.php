@@ -59,6 +59,7 @@ return [
         'admin_hint' => 'Open the Admin for this store',
         'logout' => 'Log out',
         'about' => 'About',
+        'about_us' => 'About Us',
         'terms' => 'Terms',
         'privacy' => 'Privacy',
         'shop_products' => 'Products',

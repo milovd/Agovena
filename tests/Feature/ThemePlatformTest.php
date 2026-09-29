@@ -75,10 +75,11 @@ test('homepage keeps the storefront chrome compact and the hero deterministic', 
         ->toContain('/storage/demo/agovena-essential-tee.jpg')
         ->toContain('/storage/demo/python-automation-starter-kit.jpg')
         ->toContain('Products')
-        ->toContain('Services')
-        ->toContain('Domains')
+        ->toContain('About Us')
+        ->not->toContain('>Services</a>')
+        ->not->toContain('>Domains</a>')
         ->not->toContain('>Deals</a>')
-        ->toContain('href="/domains"')
+        ->not->toContain('href="/domains"')
         ->toContain('store-promo__media')
         ->not->toContain('store-promo__placeholder')
         ->not->toContain('demo/promo-split.jpg')
@@ -96,7 +97,8 @@ test('custom navigation setting controls desktop items without an overflow menu'
     preg_match('/<nav class="store-nav"[^>]*>(.*?)<\/nav>/s', $limitedHtml, $limitedMatch);
 
     expect($limitedMatch[1] ?? '')->toContain('>Products</a>')
-        ->toContain('>Services</a>')
+        ->toContain('>About Us</a>')
+        ->not->toContain('>Services</a>')
         ->not->toContain('>Domains</a>')
         ->not->toContain('>Deals</a>')
         ->not->toContain('store-nav__more');
@@ -106,8 +108,9 @@ test('custom navigation setting controls desktop items without an overflow menu'
     $infiniteHtml = $this->get('/')->assertOk()->getContent();
     preg_match('/<nav class="store-nav"[^>]*>(.*?)<\/nav>/s', $infiniteHtml, $infiniteMatch);
 
-    expect($infiniteMatch[1] ?? '')->toContain('>Domains</a>')
-        ->toContain('>About</a>')
+    expect($infiniteMatch[1] ?? '')->toContain('>About Us</a>')
+        ->not->toContain('>Services</a>')
+        ->not->toContain('>Domains</a>')
         ->not->toContain('>Deals</a>')
         ->not->toContain('store-nav__more');
 });

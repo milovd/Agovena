@@ -294,7 +294,7 @@ class AgovenaServiceProvider extends ServiceProvider
 
             $view->with('themeMainNav', $main !== [] ? $this->flattenMenuLinks($main) : [
                 ['label' => __('storefront.nav.shop_products'), 'url' => route('storefront.home').'#catalog'],
-                ['label' => __('storefront.nav.about'), 'url' => url('/about')],
+                ['label' => __('storefront.nav.about_us'), 'url' => url('/about')],
             ]);
             $view->with('themeFooterNav', $footer !== [] ? $this->flattenMenuLinks($footer) : [
                 ['label' => __('storefront.nav.cart'), 'url' => route('storefront.cart')],

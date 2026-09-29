@@ -1182,10 +1182,38 @@ final class AgovenaSeedDemoCommand extends Command
         $legal = Menu::query()->firstOrCreate(['handle' => 'footer_legal'], ['name' => 'Footer legal']);
 
         foreach ([
+            ['label' => 'Services', 'url' => '/categories/provisioning'],
+            ['label' => 'Domains', 'url' => '/domains'],
+        ] as $legacyItem) {
+            MenuItem::query()
+                ->where('menu_id', $header->id)
+                ->where('label', $legacyItem['label'])
+                ->where('type', 'url')
+                ->where('url', $legacyItem['url'])
+                ->delete();
+        }
+
+        $legacyAbout = MenuItem::query()
+            ->where('menu_id', $header->id)
+            ->where('label', 'About')
+            ->where('type', 'page')
+            ->where('page_id', $about->id)
+            ->first();
+        if ($legacyAbout !== null && ! MenuItem::query()
+            ->where('menu_id', $header->id)
+            ->where('label', 'About Us')
+            ->where('type', 'page')
+            ->where('page_id', $about->id)
+            ->exists()) {
+            $legacyAbout->update([
+                'label' => 'About Us',
+                'sort' => 1,
+            ]);
+        }
+
+        foreach ([
             ['label' => 'Products', 'type' => 'url', 'url' => '/#catalog', 'sort' => 0],
-            ['label' => 'Services', 'type' => 'url', 'url' => '/categories/provisioning', 'sort' => 1],
-            ['label' => 'Domains', 'type' => 'url', 'url' => '/domains', 'sort' => 2],
-            ['label' => 'About', 'type' => 'page', 'page_id' => $about->id, 'sort' => 3],
+            ['label' => 'About Us', 'type' => 'page', 'page_id' => $about->id, 'sort' => 1],
         ] as $item) {
             MenuItem::query()->firstOrCreate(
                 ['menu_id' => $header->id, 'label' => $item['label']],
