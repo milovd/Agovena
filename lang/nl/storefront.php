@@ -291,7 +291,7 @@ return [
         'configure_eyebrow' => 'Product configureren',
         'configure_breadcrumb' => 'Configuratie',
         'configure_title' => ':product configureren',
-        'configure_lede' => 'Kies de opties voor dit product voordat je het aan je winkelmand toevoegt.',
+        'configure_lede' => 'Kies de opties voor dit product voordat je verdergaat.',
         'select_options_for_price' => 'Kies opties om de totaalprijs te zien.',
         'tabs_aria' => 'Productinformatie',
         'tab_details' => 'Details',

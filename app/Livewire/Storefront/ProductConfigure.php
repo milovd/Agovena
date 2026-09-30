@@ -9,11 +9,15 @@ use App\Agovena\Catalog\GetStorefrontProduct;
 use App\Agovena\Catalog\Options\ProductOptionPricer;
 use App\Agovena\Catalog\Options\ProductOptionValidator;
 use App\Agovena\Theme\ThemeManager;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 final class ProductConfigure extends Component
 {
     public string $slug;
+
+    #[Locked]
+    public string $intent = 'cart';
 
     public int $quantity = 1;
 
@@ -24,6 +28,7 @@ final class ProductConfigure extends Component
     {
         $this->slug = $slug;
         $this->quantity = min(99, max(1, (int) request()->query('quantity', 1)));
+        $this->intent = request()->query('intent') === 'checkout' ? 'checkout' : 'cart';
 
         $product = $get->handle($this->slug);
         foreach ($options->activeOptions($product) as $option) {
@@ -45,17 +50,30 @@ final class ProductConfigure extends Component
         $this->quantity = max(1, $this->quantity - 1);
     }
 
-    public function addToCart(CartService $cart, GetStorefrontProduct $get): void
+    public function continueConfiguration(CartService $cart, GetStorefrontProduct $get): void
     {
         $this->addProduct($cart, $get);
-        session()->flash('status', __('storefront.flash.added_to_cart'));
-        $this->redirect(route('storefront.cart'), navigate: true);
+
+        if ($this->intent !== 'checkout') {
+            session()->flash('status', __('storefront.flash.added_to_cart'));
+        }
+
+        $this->redirect(
+            route($this->intent === 'checkout' ? 'storefront.checkout' : 'storefront.cart'),
+            navigate: true,
+        );
+    }
+
+    public function addToCart(CartService $cart, GetStorefrontProduct $get): void
+    {
+        $this->intent = 'cart';
+        $this->continueConfiguration($cart, $get);
     }
 
     public function buyNow(CartService $cart, GetStorefrontProduct $get): void
     {
-        $this->addProduct($cart, $get);
-        $this->redirect(route('storefront.checkout'), navigate: true);
+        $this->intent = 'checkout';
+        $this->continueConfiguration($cart, $get);
     }
 
     public function render(

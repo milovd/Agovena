@@ -16,7 +16,7 @@
             <h1 id="product-configuration-heading" class="store-product-configure__title">{{ __('storefront.product.configure_title', ['product' => $product->name]) }}</h1>
             <p class="store-product-configure__lede">{{ __('storefront.product.configure_lede') }}</p>
 
-            <form wire:submit="addToCart" class="store-product__form">
+            <form wire:submit="continueConfiguration" class="store-product__form">
                 @include('theme::partials.product-options')
 
                 <div class="store-product__buy">
@@ -35,14 +35,10 @@
                     </div>
                 </div>
 
-                <div class="store-product__actions">
-                    <button type="button" class="store-btn store-btn--primary store-btn--lg" wire:click="buyNow" wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="buyNow">{{ __('storefront.product.buy_now') }}</span>
-                        <span wire:loading wire:target="buyNow">{{ __('storefront.product.working') }}</span>
-                    </button>
-                    <button type="submit" class="store-btn store-btn--outline store-btn--lg" wire:loading.attr="disabled" wire:target="addToCart">
-                        <span wire:loading.remove wire:target="addToCart">{{ __('storefront.product.add_to_cart') }}</span>
-                        <span wire:loading wire:target="addToCart">{{ __('storefront.product.adding') }}</span>
+                <div class="store-product__actions store-product__actions--single">
+                    <button type="submit" class="store-btn store-btn--primary store-btn--lg" wire:loading.attr="disabled" wire:target="continueConfiguration">
+                        <span wire:loading.remove wire:target="continueConfiguration">{{ __('storefront.continue') }}</span>
+                        <span wire:loading wire:target="continueConfiguration">{{ __('storefront.product.working') }}</span>
                     </button>
                 </div>
                 @error('quantity') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror

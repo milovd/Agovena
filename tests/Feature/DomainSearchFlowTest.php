@@ -105,6 +105,9 @@ it('keeps domain product pages simple and sends domain selection to configuratio
     $this->get(route('domains.product.configure', $product->slug))
         ->assertOk()
         ->assertSee(__('domains::storefront.configuration_title', ['product' => $product->name]), false)
+        ->assertSee('<nav class="store-breadcrumbs store-breadcrumbs--compact"', false)
+        ->assertSee(__('storefront.product.configure_breadcrumb'), false)
+        ->assertDontSee('store-domain-search__back', false)
         ->assertSee('id="domain-query"', false);
 });
 
@@ -123,6 +126,23 @@ it('scopes domain configuration and selection to the product page product', func
     expect(collect(session('domains.quotes'))
         ->contains(fn (array $quote): bool => (int) ($quote['product_id'] ?? 0) === $product->id))
         ->toBeTrue();
+});
+
+it('preserves buy now intent and shows continue in domain configuration', function (): void {
+    $product = createDemoDomainProduct();
+
+    $component = Livewire::withQueryParams(['intent' => 'checkout'])
+        ->test(DomainSearch::class, ['productId' => $product->id])
+        ->set('query', 'agovena.com')
+        ->call('search')
+        ->assertSee(__('domains::storefront.continue'), false)
+        ->assertDontSee(__('domains::storefront.select'), false);
+
+    $result = $component->get('result');
+    $token = collect($result['alternatives'])->firstWhere('domain', 'agovena.test')['selection_token'];
+
+    $component->call('selectDomain', $token)
+        ->assertRedirect(route('storefront.checkout'));
 });
 
 it('uses the selected extension quote in cart pricing', function (): void {

@@ -1,8 +1,15 @@
 @php($configurationPage = $configuration ?? false)
 <div class="store-domain-search{{ $configurationPage ? ' store-domain-search--configuration' : '' }}{{ ($configurationPage && is_array($result)) ? ' store-domain-search--has-results' : '' }}">
+    @if ($configurationPage && $product)
+        <nav class="store-breadcrumbs store-breadcrumbs--compact" aria-label="{{ __('storefront.breadcrumb_aria') }}">
+            <a href="{{ route('storefront.product', $product->slug) }}">{{ $product->name }}</a>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page">{{ __('storefront.product.configure_breadcrumb') }}</span>
+        </nav>
+    @endif
+
     <section class="store-domain-search__hero">
         @if ($configurationPage && $product)
-            <a class="store-domain-search__back" href="{{ route('storefront.product', $product->slug) }}">← {{ $product->name }}</a>
             <p class="store-domain-search__eyebrow">{{ __('domains::storefront.product_eyebrow') }}</p>
             <h1 class="store-title">{{ __('domains::storefront.configuration_title', ['product' => $product->name]) }}</h1>
             <p class="store-domain-search__lede">{{ __('domains::storefront.configuration_lede') }}</p>
@@ -35,7 +42,7 @@
                         <span class="store-domain-result__price">{{ $requested['price'] }}</span>
                     @endif
                     @if (($requested['available'] ?? false) && ! empty($requested['selection_token']))
-                        <button type="button" class="store-btn store-btn--primary" wire:click="selectDomain('{{ $requested['selection_token'] }}')">{{ __('domains::storefront.select') }}</button>
+                        <button type="button" class="store-btn store-btn--primary" wire:click="selectDomain('{{ $requested['selection_token'] }}')">{{ $configurationPage ? __('domains::storefront.continue') : __('domains::storefront.select') }}</button>
                     @endif
                 </div>
             </div>
@@ -52,7 +59,7 @@
                                     <strong>{{ $alternative['domain'] }}</strong>
                                     <span>{{ $alternative['price'] }}</span>
                                 </div>
-                                <button type="button" class="store-btn store-btn--secondary" wire:click="selectDomain('{{ $alternative['selection_token'] }}')">{{ __('domains::storefront.select') }}</button>
+                                <button type="button" class="store-btn store-btn--secondary" wire:click="selectDomain('{{ $alternative['selection_token'] }}')">{{ $configurationPage ? __('domains::storefront.continue') : __('domains::storefront.select') }}</button>
                             </article>
                         @endforeach
                     </div>

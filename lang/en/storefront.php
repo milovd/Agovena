@@ -291,7 +291,7 @@ return [
         'configure_eyebrow' => 'Configure product',
         'configure_breadcrumb' => 'Configuration',
         'configure_title' => 'Configure :product',
-        'configure_lede' => 'Choose the options for this product before adding it to your cart.',
+        'configure_lede' => 'Choose the options for this product before continuing.',
         'select_options_for_price' => 'Select options to see the total price.',
         'tabs_aria' => 'Product information',
         'tab_details' => 'Details',

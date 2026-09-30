@@ -147,14 +147,6 @@
             @if (($priceAvailable || $isDomainProduct) && ! $isOutOfStock)
             <form wire:submit="addToCart" class="store-product__form">
                 <div class="store-product__price-row">
-                    @if ($isDomainProduct)
-                        <p class="store-product__price store-product__price--dynamic">{{ __('storefront.product.domain_price_dynamic') }}</p>
-                    @elseif ($configuredPrice)
-                        <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
-                    @else
-                        <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
-                    @endif
-
                     <div
                         class="store-qty"
                         role="group"
@@ -168,6 +160,15 @@
                         <input id="quantity" class="store-qty__input" type="number" min="1" max="99" value="{{ $quantity }}" wire:model="quantity" x-ref="input" @change="normalize()">
                         <button type="button" class="store-qty__btn" @click="increment()" aria-label="{{ __('storefront.product.increase') }}">+</button>
                     </div>
+
+                    @if ($isDomainProduct)
+                        <p class="store-product__price store-product__price--dynamic">{{ __('storefront.product.domain_price_dynamic') }}</p>
+                    @elseif ($configuredPrice)
+                        <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
+                    @else
+                        <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
+                    @endif
+
                 </div>
 
                 <div class="store-product__actions">
