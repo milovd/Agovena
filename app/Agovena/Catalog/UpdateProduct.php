@@ -21,6 +21,12 @@ final class UpdateProduct
      *     specifications?: list<array{label: string, value: string}>|null,
      *     show_details?: bool,
      *     show_specifications?: bool,
+     *     show_delivery_card?: bool|null,
+     *     delivery_title?: string|null,
+     *     delivery_text?: string|null,
+     *     show_returns_card?: bool|null,
+     *     returns_title?: string|null,
+     *     returns_text?: string|null,
      *     status: string|ProductStatus,
      *     price_amount: int,
      *     currency: string,
@@ -57,6 +63,24 @@ final class UpdateProduct
             'specifications' => $this->normalizeSpecifications($data['specifications'] ?? null),
             'show_details' => $data['show_details'] ?? true,
             'show_specifications' => $data['show_specifications'] ?? true,
+            'show_delivery_card' => array_key_exists('show_delivery_card', $data)
+                ? (bool) $data['show_delivery_card']
+                : $product->show_delivery_card,
+            'delivery_title' => array_key_exists('delivery_title', $data)
+                ? $this->nullableText($data['delivery_title'])
+                : $product->delivery_title,
+            'delivery_text' => array_key_exists('delivery_text', $data)
+                ? $this->nullableText($data['delivery_text'])
+                : $product->delivery_text,
+            'show_returns_card' => array_key_exists('show_returns_card', $data)
+                ? (bool) $data['show_returns_card']
+                : $product->show_returns_card,
+            'returns_title' => array_key_exists('returns_title', $data)
+                ? $this->nullableText($data['returns_title'])
+                : $product->returns_title,
+            'returns_text' => array_key_exists('returns_text', $data)
+                ? $this->nullableText($data['returns_text'])
+                : $product->returns_text,
             'status' => $status,
             'price_amount' => $data['price_amount'],
             'currency' => strtoupper($data['currency']),
@@ -66,6 +90,13 @@ final class UpdateProduct
         $product->save();
 
         return $product->refresh();
+    }
+
+    private function nullableText(mixed $value): ?string
+    {
+        $text = trim((string) ($value ?? ''));
+
+        return $text === '' ? null : $text;
     }
 
     /**

@@ -21,6 +21,12 @@ final class CreateProduct
      *     specifications?: list<array{label: string, value: string}>|null,
      *     show_details?: bool,
      *     show_specifications?: bool,
+     *     show_delivery_card?: bool|null,
+     *     delivery_title?: string|null,
+     *     delivery_text?: string|null,
+     *     show_returns_card?: bool|null,
+     *     returns_title?: string|null,
+     *     returns_text?: string|null,
      *     status: string|ProductStatus,
      *     price_amount: int,
      *     currency: string,
@@ -56,12 +62,25 @@ final class CreateProduct
             'specifications' => $this->normalizeSpecifications($data['specifications'] ?? null),
             'show_details' => $data['show_details'] ?? true,
             'show_specifications' => $data['show_specifications'] ?? true,
+            'show_delivery_card' => $data['show_delivery_card'] ?? null,
+            'delivery_title' => $this->nullableText($data['delivery_title'] ?? null),
+            'delivery_text' => $this->nullableText($data['delivery_text'] ?? null),
+            'show_returns_card' => $data['show_returns_card'] ?? null,
+            'returns_title' => $this->nullableText($data['returns_title'] ?? null),
+            'returns_text' => $this->nullableText($data['returns_text'] ?? null),
             'status' => $status,
             'price_amount' => $data['price_amount'],
             'currency' => strtoupper($data['currency']),
             'image_path' => $data['image_path'] ?? null,
             'category_id' => $data['category_id'] ?? null,
         ]);
+    }
+
+    private function nullableText(mixed $value): ?string
+    {
+        $text = trim((string) ($value ?? ''));
+
+        return $text === '' ? null : $text;
     }
 
     /**

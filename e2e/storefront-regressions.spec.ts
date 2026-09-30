@@ -31,6 +31,13 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
 
     const quantity = page.locator('#quantity');
     await expect(quantity).toHaveValue('1');
+    const priceRow = page.locator('.store-product__price-row');
+    await expect(priceRow).toHaveCSS('display', 'flex');
+    const priceBox = await priceRow.locator('.store-product__price').boundingBox();
+    const quantityBox = await priceRow.locator('.store-qty').boundingBox();
+    expect(priceBox).not.toBeNull();
+    expect(quantityBox).not.toBeNull();
+    expect(Math.abs(priceBox!.y - quantityBox!.y)).toBeLessThanOrEqual(2);
 
     await page.getByRole('button', { name: 'Increase quantity' }).click();
     await expect(quantity).toHaveValue('2');
@@ -42,10 +49,24 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
     await expect(thumbnails).toHaveCount(3);
     const mainImage = page.locator('.store-product__media img');
     await expect(mainImage).toHaveAttribute('src', /gallery-1\.png$/);
+    const desktopMediaBox = await page.locator('.store-product__media').boundingBox();
+    expect(desktopMediaBox).not.toBeNull();
+    expect(desktopMediaBox!.width).toBeLessThanOrEqual(480);
 
     await thumbnails.nth(1).click();
     await expect(mainImage).toHaveAttribute('src', /gallery-2\.png$/);
     await expect(thumbnails.nth(1)).toHaveAttribute('aria-current', 'true');
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobilePriceBox = await priceRow.locator('.store-product__price').boundingBox();
+    const mobileQuantityBox = await priceRow.locator('.store-qty').boundingBox();
+    expect(mobilePriceBox).not.toBeNull();
+    expect(mobileQuantityBox).not.toBeNull();
+    expect(Math.abs(mobilePriceBox!.y - mobileQuantityBox!.y)).toBeLessThanOrEqual(2);
+    const mobileMediaBox = await page.locator('.store-product__media').boundingBox();
+    expect(mobileMediaBox).not.toBeNull();
+    expect(mobileMediaBox!.width).toBeLessThanOrEqual(390);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     expect(pageErrors).toEqual([]);
 });
 

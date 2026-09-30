@@ -24,6 +24,12 @@ test('staff with permission can create and publish a product', function () {
         ->set('name', 'Starter Kit')
         ->set('sku', 'SKU-STARTER-1')
         ->set('description', 'A generic product')
+        ->set('show_delivery_card', true)
+        ->set('delivery_title', 'Instant access')
+        ->set('delivery_text', 'Your download is ready after payment.')
+        ->set('show_returns_card', false)
+        ->set('returns_title', 'Returns')
+        ->set('returns_text', 'Digital orders are final.')
         ->set('status', 'active')
         ->set('price', '25.00')
         ->set('currency', 'EUR')
@@ -35,7 +41,13 @@ test('staff with permission can create and publish a product', function () {
     expect($product)->not->toBeNull()
         ->and($product->status)->toBe(ProductStatus::Active)
         ->and($product->price_amount)->toBe(2500)
-        ->and($product->sku)->toBe('SKU-STARTER-1');
+        ->and($product->sku)->toBe('SKU-STARTER-1')
+        ->and($product->show_delivery_card)->toBeTrue()
+        ->and($product->delivery_title)->toBe('Instant access')
+        ->and($product->delivery_text)->toBe('Your download is ready after payment.')
+        ->and($product->show_returns_card)->toBeFalse()
+        ->and($product->returns_title)->toBe('Returns')
+        ->and($product->returns_text)->toBe('Digital orders are final.');
 });
 
 test('product form uses task focused tabs instead of one long page', function () {
@@ -45,7 +57,10 @@ test('product form uses task focused tabs instead of one long page', function ()
         ->assertSee('role="tablist"', false)
         ->assertSee(__('admin.products.tabs.details'))
         ->assertSee(__('admin.products.tabs.pricing'))
-        ->assertSee(__('admin.products.tabs.automation'));
+        ->assertSee(__('admin.products.tabs.automation'))
+        ->assertSee(__('admin.products.form.storefront_cards'))
+        ->assertSee(__('admin.products.form.show_delivery_card'))
+        ->assertSee(__('admin.products.form.show_returns_card'));
 });
 
 test('staff without create permission cannot create products', function () {
@@ -80,6 +95,12 @@ test('staff can update product presentation and specifications', function () {
         ->set('subtitle', 'Clear case for MagSafe phones')
         ->set('show_details', true)
         ->set('show_specifications', false)
+        ->set('show_delivery_card', true)
+        ->set('delivery_title', 'Digital delivery')
+        ->set('delivery_text', 'Your access details are delivered after payment.')
+        ->set('show_returns_card', false)
+        ->set('returns_title', 'Returns')
+        ->set('returns_text', 'Digital items are non-returnable.')
         ->set('specRows', [
             ['label' => 'Material', 'value' => 'Polycarbonate'],
             ['label' => '', 'value' => ''],
@@ -91,9 +112,33 @@ test('staff can update product presentation and specifications', function () {
 
     expect($product->subtitle)->toBe('Clear case for MagSafe phones')
         ->and($product->show_specifications)->toBeFalse()
+        ->and($product->show_delivery_card)->toBeTrue()
+        ->and($product->delivery_title)->toBe('Digital delivery')
+        ->and($product->delivery_text)->toBe('Your access details are delivered after payment.')
+        ->and($product->show_returns_card)->toBeFalse()
+        ->and($product->returns_title)->toBe('Returns')
+        ->and($product->returns_text)->toBe('Digital items are non-returnable.')
         ->and($product->specifications)->toBe([
             ['label' => 'Material', 'value' => 'Polycarbonate'],
         ]);
+});
+
+test('product storefront renders customized information cards', function () {
+    $product = Product::factory()->active()->create([
+        'show_delivery_card' => true,
+        'delivery_title' => 'Digital delivery',
+        'delivery_text' => 'Access details arrive after payment.',
+        'show_returns_card' => false,
+        'returns_title' => 'Returns',
+        'returns_text' => 'This should not be rendered.',
+    ]);
+
+    $this->get(route('storefront.product', $product->slug))
+        ->assertOk()
+        ->assertSee('Digital delivery', false)
+        ->assertSee('Access details arrive after payment.', false)
+        ->assertDontSee('This should not be rendered.', false)
+        ->assertDontSee(__('storefront.product.returns_title'), false);
 });
 
 test('physical selling preset enables available fulfillment capabilities', function () {

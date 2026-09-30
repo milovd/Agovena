@@ -28,6 +28,12 @@ use Illuminate\Support\Collection;
  * @property array<int, array{label: string, value: string}>|null $specifications
  * @property bool $show_details
  * @property bool $show_specifications
+ * @property bool|null $show_delivery_card
+ * @property string|null $delivery_title
+ * @property string|null $delivery_text
+ * @property bool|null $show_returns_card
+ * @property string|null $returns_title
+ * @property string|null $returns_text
  * @property ProductStatus $status
  * @property int $price_amount
  * @property string $currency
@@ -45,6 +51,12 @@ use Illuminate\Support\Collection;
     'specifications',
     'show_details',
     'show_specifications',
+    'show_delivery_card',
+    'delivery_title',
+    'delivery_text',
+    'show_returns_card',
+    'returns_title',
+    'returns_text',
     'status',
     'price_amount',
     'currency',
@@ -64,6 +76,8 @@ class Product extends Model
             'specifications' => 'array',
             'show_details' => 'boolean',
             'show_specifications' => 'boolean',
+            'show_delivery_card' => 'boolean',
+            'show_returns_card' => 'boolean',
         ];
     }
 

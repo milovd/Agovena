@@ -169,6 +169,34 @@
                 </div>
             </div>
         </section>
+        <section class="ag-section" aria-labelledby="section-storefront-cards">
+            <header class="ag-section__header">
+                <h3 id="section-storefront-cards" class="ag-section__title">{{ __('admin.products.form.storefront_cards') }}</h3>
+                <p class="ag-section__lede">{{ __('admin.products.form.storefront_cards_lede') }}</p>
+            </header>
+            <div class="ag-section__body">
+                <div class="ag-grid ag-grid--2">
+                    <div class="ag-field">
+                        <x-ag.switch id="show_delivery_card" wire:model="show_delivery_card" :label="__('admin.products.form.show_delivery_card')" />
+                        <label class="ag-field__label" for="delivery_title">{{ __('admin.products.form.delivery_card_title') }}</label>
+                        <input id="delivery_title" class="ag-input" type="text" wire:model="delivery_title" maxlength="120" placeholder="{{ __('storefront.product.delivery_title') }}">
+                        @error('delivery_title') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        <label class="ag-field__label" for="delivery_text">{{ __('admin.products.form.delivery_card_text') }}</label>
+                        <textarea id="delivery_text" class="ag-input ag-input--area" rows="3" wire:model="delivery_text" maxlength="1000" placeholder="{{ __('storefront.product.delivery_text') }}"></textarea>
+                        @error('delivery_text') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="ag-field">
+                        <x-ag.switch id="show_returns_card" wire:model="show_returns_card" :label="__('admin.products.form.show_returns_card')" />
+                        <label class="ag-field__label" for="returns_title">{{ __('admin.products.form.returns_card_title') }}</label>
+                        <input id="returns_title" class="ag-input" type="text" wire:model="returns_title" maxlength="120" placeholder="{{ __('storefront.product.returns_title') }}">
+                        @error('returns_title') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        <label class="ag-field__label" for="returns_text">{{ __('admin.products.form.returns_card_text') }}</label>
+                        <textarea id="returns_text" class="ag-input ag-input--area" rows="3" wire:model="returns_text" maxlength="1000" placeholder="{{ __('storefront.product.returns_text') }}"></textarea>
+                        @error('returns_text') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                </div>
+            </div>
+        </section>
         </div>
 
         <div id="product-tab-pricing" role="tabpanel" x-cloak x-show="activeTab === 'pricing'">

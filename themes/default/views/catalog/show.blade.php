@@ -12,6 +12,20 @@
     $reviewCount = 0;
     $ratingAverage = 0.0;
     $isDomainProduct = $product->hasCapability('domain_registration');
+    $showDeliveryCard = $product->show_delivery_card ?? ! $isDomainProduct;
+    $showReturnsCard = $product->show_returns_card ?? ! $isDomainProduct;
+    $deliveryTitle = filled($product->delivery_title)
+        ? $product->delivery_title
+        : __('storefront.product.delivery_title');
+    $deliveryText = filled($product->delivery_text)
+        ? $product->delivery_text
+        : __('storefront.product.delivery_text');
+    $returnsTitle = filled($product->returns_title)
+        ? $product->returns_title
+        : __('storefront.product.returns_title');
+    $returnsText = filled($product->returns_text)
+        ? $product->returns_text
+        : __('storefront.product.returns_text');
 @endphp
 
 <article class="store-product{{ $isDomainProduct ? ' store-product--domain' : '' }}">
@@ -130,17 +144,17 @@
                 <p class="store-product__lede">{{ $lede }}</p>
             @endif
 
-            @if ($isDomainProduct)
-                <p class="store-product__price store-product__price--dynamic">{{ __('storefront.product.domain_price_dynamic') }}</p>
-            @elseif ($priceAvailable && $configuredPrice && ! $isOutOfStock)
-                <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
-            @else
-                <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
-            @endif
-
             @if (($priceAvailable || $isDomainProduct) && ! $isOutOfStock)
             <form wire:submit="addToCart" class="store-product__form">
-                <div class="store-product__buy">
+                <div class="store-product__price-row">
+                    @if ($isDomainProduct)
+                        <p class="store-product__price store-product__price--dynamic">{{ __('storefront.product.domain_price_dynamic') }}</p>
+                    @elseif ($configuredPrice)
+                        <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
+                    @else
+                        <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
+                    @endif
+
                     <div
                         class="store-qty"
                         role="group"
@@ -169,6 +183,14 @@
                 @error('quantity') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
                 @error('product') <p class="store-field__error" role="alert">{{ $message }}</p> @enderror
             </form>
+            @else
+                @if ($isDomainProduct)
+                    <p class="store-product__price store-product__price--dynamic">{{ __('storefront.product.domain_price_dynamic') }}</p>
+                @elseif ($priceAvailable && ! $isOutOfStock)
+                    <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
+                @else
+                    <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
+                @endif
             @endif
 
             @if ($isOutOfStock)
@@ -187,26 +209,30 @@
                 </section>
             @endif
 
-            @if (! $isDomainProduct)
+            @if ($showDeliveryCard || $showReturnsCard)
             <div class="store-product__perks" role="list">
+                @if ($showDeliveryCard)
                 <div class="store-product__perk" role="listitem">
                     <span class="store-product__perk-icon" aria-hidden="true">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h13l2 7H6"/><circle cx="9" cy="19" r="1"/><circle cx="17" cy="19" r="1"/></svg>
                     </span>
                     <div>
-                        <p class="store-product__perk-title">{{ __('storefront.product.delivery_title') }}</p>
-                        <p class="store-product__perk-text">{{ __('storefront.product.delivery_text') }}</p>
+                        <p class="store-product__perk-title">{{ $deliveryTitle }}</p>
+                        <p class="store-product__perk-text">{{ $deliveryText }}</p>
                     </div>
                 </div>
+                @endif
+                @if ($showReturnsCard)
                 <div class="store-product__perk" role="listitem">
                     <span class="store-product__perk-icon" aria-hidden="true">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16v12H4z"/><path d="M8 7V5h8v2"/></svg>
                     </span>
                     <div>
-                        <p class="store-product__perk-title">{{ __('storefront.product.returns_title') }}</p>
-                        <p class="store-product__perk-text">{{ __('storefront.product.returns_text') }}</p>
+                        <p class="store-product__perk-title">{{ $returnsTitle }}</p>
+                        <p class="store-product__perk-text">{{ $returnsText }}</p>
                     </div>
                 </div>
+                @endif
             </div>
             @endif
         </div>

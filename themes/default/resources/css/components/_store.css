@@ -4206,7 +4206,9 @@ a.store-cart-line__name:hover {
   border-radius: 1.25rem;
   border: 0;
   background: var(--theme-color-surface-muted, #eef2f7);
-  min-height: 22rem;
+  width: min(100%, 30rem);
+  min-height: 0;
+  margin-inline: auto;
   display: grid;
   place-items: center;
 }
@@ -4303,6 +4305,23 @@ a.store-cart-line__name:hover {
 .store-product__price {
   font-size: 1.85rem;
   margin-bottom: var(--theme-space-5);
+}
+
+.store-product__price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--theme-space-4);
+  flex-wrap: wrap;
+  margin-bottom: var(--theme-space-4);
+}
+
+.store-product__price-row .store-product__price {
+  margin: 0;
+}
+
+.store-product__price-row .store-product__buy {
+  margin: 0;
 }
 
 .store-product__buy {

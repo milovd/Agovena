@@ -48,6 +48,18 @@ final class Create extends Component
 
     public bool $show_specifications = true;
 
+    public bool $show_delivery_card = true;
+
+    public string $delivery_title = '';
+
+    public string $delivery_text = '';
+
+    public bool $show_returns_card = true;
+
+    public string $returns_title = '';
+
+    public string $returns_text = '';
+
     public string $status = 'draft';
 
     public string $price = '0.00';
@@ -129,6 +141,12 @@ final class Create extends Component
             'specRows.*.value' => ['nullable', 'string', 'max:255'],
             'show_details' => ['boolean'],
             'show_specifications' => ['boolean'],
+            'show_delivery_card' => ['boolean'],
+            'delivery_title' => ['nullable', 'string', 'max:120'],
+            'delivery_text' => ['nullable', 'string', 'max:1000'],
+            'show_returns_card' => ['boolean'],
+            'returns_title' => ['nullable', 'string', 'max:120'],
+            'returns_text' => ['nullable', 'string', 'max:1000'],
             'status' => ['required', Rule::enum(ProductStatus::class)],
             'price' => ['required', 'string', 'max:20'],
             'currency' => ['required', $currencyRule],
@@ -174,6 +192,12 @@ final class Create extends Component
                 'specifications' => $data['specRows'],
                 'show_details' => (bool) $data['show_details'],
                 'show_specifications' => (bool) $data['show_specifications'],
+                'show_delivery_card' => (bool) $data['show_delivery_card'],
+                'delivery_title' => $data['delivery_title'] ?: null,
+                'delivery_text' => $data['delivery_text'] ?: null,
+                'show_returns_card' => (bool) $data['show_returns_card'],
+                'returns_title' => $data['returns_title'] ?: null,
+                'returns_text' => $data['returns_text'] ?: null,
                 'status' => $data['status'],
                 'price_amount' => $priceAmount,
                 'currency' => $data['currency'],
