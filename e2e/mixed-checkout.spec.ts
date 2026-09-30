@@ -8,7 +8,7 @@ test('mixed cart composes delivery and configure then payment', async ({ page })
     await addProductToCart(page, 'e2e-ticket');
     await page.goto('/checkout');
 
-    await expect(page.getByTestId('checkout-stepper').getByText('Delivery & configure')).toBeVisible();
+    await expect(page.getByTestId('checkout-stepper').getByText('Delivery')).toBeVisible();
     await fillCheckoutDetails(page, { ...guest, email: `mixed-${Date.now()}@example.test` });
     await continueCheckout(page);
 

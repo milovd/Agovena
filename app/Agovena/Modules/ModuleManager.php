@@ -6,6 +6,7 @@ namespace App\Agovena\Modules;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
+use App\Agovena\Catalog\Pricing\ProductPriceResolverRegistry;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\CustomerAccountOverview;
 use App\Agovena\Extensions\ExtensionManager;
@@ -273,6 +274,7 @@ final class ModuleManager
         $context = new ModuleContext(
             $this->admin,
             $this->capabilities,
+            $this->app->make(ProductPriceResolverRegistry::class),
             $this->customerAccountNav,
             $this->customerAccountOverview,
             $this->events,

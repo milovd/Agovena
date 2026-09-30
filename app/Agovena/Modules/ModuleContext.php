@@ -6,6 +6,7 @@ namespace App\Agovena\Modules;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
+use App\Agovena\Catalog\Pricing\ProductPriceResolverRegistry;
 use App\Agovena\Customer\AccountNavItem;
 use App\Agovena\Customer\AccountOverviewCard;
 use App\Agovena\Customer\CustomerAccountNav;
@@ -25,6 +26,7 @@ final class ModuleContext
     public function __construct(
         private readonly AdminRegistrar $admin,
         private readonly ProductCapabilityRegistry $capabilities,
+        private readonly ProductPriceResolverRegistry $productPricing,
         private readonly CustomerAccountNav $customerAccountNav,
         private readonly CustomerAccountOverview $customerAccountOverview,
         private readonly Dispatcher $events,
@@ -44,6 +46,11 @@ final class ModuleContext
     public function capabilities(): ProductCapabilityRegistry
     {
         return $this->capabilities;
+    }
+
+    public function productPricing(): ProductPriceResolverRegistry
+    {
+        return $this->productPricing;
     }
 
     public function customerAccountNav(AccountNavItem $item): void

@@ -13,6 +13,7 @@ use App\Agovena\Catalog\Options\ProductOptionValidator;
 use App\Agovena\Notifications\BackInStockNotifier;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
+use App\Models\Product;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -22,22 +23,6 @@ final class ProductShow extends Component
     public string $slug;
 
     public int $quantity = 1;
-
-    /** @var array<string, mixed> */
-    public array $optionSelections = [];
-
-    public function mount(string $slug, GetStorefrontProduct $get, ProductOptionValidator $options): void
-    {
-        $this->slug = $slug;
-        $product = $get->handle($this->slug);
-        foreach ($options->activeOptions($product) as $option) {
-            $this->optionSelections[$option->key] = match ($option->type->value) {
-                'checkbox' => [],
-                'toggle' => false,
-                default => '',
-            };
-        }
-    }
 
     public function incrementQuantity(): void
     {
@@ -73,20 +58,30 @@ final class ProductShow extends Component
         $this->backInStockMessage = __('storefront.product.back_in_stock_subscribed');
     }
 
-    public function addToCart(CartService $cart, GetStorefrontProduct $get): void
+    public function addToCart(CartService $cart, GetStorefrontProduct $get, ProductOptionValidator $options): void
     {
-        $this->addProduct($cart, $get);
+        $product = $get->handle($this->slug);
+        if ($this->redirectToConfiguration($product, $options, 'cart')) {
+            return;
+        }
+
+        $this->addProduct($cart, $product);
         session()->flash('status', __('storefront.flash.added_to_cart'));
         $this->redirect(route('storefront.cart'), navigate: true);
     }
 
-    public function buyNow(CartService $cart, GetStorefrontProduct $get): void
+    public function buyNow(CartService $cart, GetStorefrontProduct $get, ProductOptionValidator $options): void
     {
-        $this->addProduct($cart, $get);
+        $product = $get->handle($this->slug);
+        if ($this->redirectToConfiguration($product, $options, 'checkout')) {
+            return;
+        }
+
+        $this->addProduct($cart, $product);
         $this->redirect(route('storefront.checkout'), navigate: true);
     }
 
-    public function render(GetStorefrontProduct $get, ListStorefrontProducts $list, ThemeManager $themes, ProductOptionValidator $options, ProductOptionPricer $pricer)
+    public function render(GetStorefrontProduct $get, ListStorefrontProducts $list, ThemeManager $themes, ProductOptionPricer $pricer)
     {
         $theme = $themes->active();
         $config = $themes->config($theme);
@@ -105,7 +100,7 @@ final class ProductShow extends Component
 
         $configuredPrice = null;
         try {
-            $configuredPrice = $pricer->unitPrice($product, $this->optionSelections);
+            $configuredPrice = $pricer->unitPrice($product, []);
         } catch (\InvalidArgumentException) {
             $configuredPrice = null;
         }
@@ -120,7 +115,6 @@ final class ProductShow extends Component
             'theme' => $theme,
             'themeConfig' => $config,
             'enableReviews' => $enableReviews,
-            'purchaseOptions' => $options->activeOptions($product),
             'configuredPrice' => $configuredPrice,
             'priceAvailable' => $configuredPrice !== null,
             'isOutOfStock' => $isOutOfStock,
@@ -131,14 +125,31 @@ final class ProductShow extends Component
         ]);
     }
 
-    private function addProduct(CartService $cart, GetStorefrontProduct $get): void
+    private function addProduct(CartService $cart, Product $product): void
     {
-        $product = $get->handle($this->slug);
-
         $this->validate([
             'quantity' => ['required', 'integer', 'min:1', 'max:99'],
         ]);
 
-        $cart->add($product->id, $this->quantity, $this->optionSelections);
+        $cart->add($product->id, $this->quantity);
+    }
+
+    private function redirectToConfiguration(Product $product, ProductOptionValidator $options, string $intent): bool
+    {
+        $requiresConfiguration = $product->hasCapability('domain_registration')
+            || $options->activeOptions($product)->isNotEmpty();
+
+        if (! $requiresConfiguration) {
+            return false;
+        }
+
+        $route = $product->hasCapability('domain_registration')
+            ? 'domains.product.configure'
+            : 'storefront.product.configure';
+
+        $parameters = ['slug' => $product->slug, 'intent' => $intent, 'quantity' => $this->quantity];
+        $this->redirect(route($route, $parameters), navigate: true);
+
+        return true;
     }
 }

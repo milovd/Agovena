@@ -7,14 +7,18 @@ use Agovena\Modules\Domains\DomainService;
 use Agovena\Modules\Domains\Enums\DomainRegistrationStatus;
 use Agovena\Modules\Domains\Http\Livewire\Storefront\DomainSearch;
 use Agovena\Modules\Domains\Models\DomainRegistration;
+use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\PricedCartLine;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Money\Money;
+use App\Enums\ProductOptionType;
 use App\Events\OrderPreflight;
+use App\Livewire\Storefront\ProductShow;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductOption;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 
@@ -32,6 +36,17 @@ function createDemoDomainProduct(): Product
         'allowed_tlds' => ['test', 'invalid'],
         'mode' => 'demo',
         'calls_enabled' => false,
+    ]);
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'domain_name',
+        'label' => 'Domain name',
+        'type' => ProductOptionType::Text,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => ['minlength' => 4],
     ]);
 
     return $product->fresh();
@@ -55,21 +70,45 @@ it('shows agovena.com as unavailable with reserved demo alternatives', function 
         ->toContain('agovena.test', 'agovena.invalid');
 });
 
-it('renders a domain registration as a normal product page with embedded availability search', function (): void {
+it('shows provider-specific prices for each available extension', function (): void {
+    createDemoDomainProduct();
+
+    $result = app(DomainSearchService::class)->search('agovena.com');
+    $alternatives = collect($result['alternatives'])->keyBy('domain');
+
+    expect($alternatives['agovena.test']['price_minor'])->toBe(1299)
+        ->and($alternatives['agovena.invalid']['price_minor'])->toBe(999)
+        ->and($alternatives['agovena.invalid']['price'])->not->toBe($alternatives['agovena.test']['price']);
+});
+
+it('keeps domain product pages simple and sends domain selection to configuration', function (): void {
     $product = createDemoDomainProduct();
 
     $this->get(route('storefront.product', $product->slug))
         ->assertOk()
-        ->assertSee(__('domains::storefront.product_title'), false)
-        ->assertSee(__('storefront.product.domain_extensions_title'), false)
-        ->assertSee(__('storefront.product.domain_dns_title'), false)
+        ->assertSee(__('storefront.product.domain_price_dynamic'), false)
+        ->assertSee(__('storefront.product.add_to_cart'), false)
+        ->assertDontSee(__('domains::storefront.product_title'), false)
         ->assertDontSee(__('storefront.product.delivery_title'), false)
         ->assertDontSee(__('storefront.product.returns_title'), false)
-        ->assertSee('id="domain-query"', false)
-        ->assertDontSee('wire:submit="addToCart"', false);
+        ->assertDontSee('id="domain-query"', false)
+        ->assertSee('wire:submit="addToCart"', false);
+
+    Livewire::test(ProductShow::class, ['slug' => $product->slug])
+        ->call('buyNow')
+        ->assertRedirect(route('domains.product.configure', [
+            'slug' => $product->slug,
+            'intent' => 'checkout',
+            'quantity' => 1,
+        ]));
+
+    $this->get(route('domains.product.configure', $product->slug))
+        ->assertOk()
+        ->assertSee(__('domains::storefront.configuration_title', ['product' => $product->name]), false)
+        ->assertSee('id="domain-query"', false);
 });
 
-it('scopes embedded domain search and selection to the product page product', function (): void {
+it('scopes domain configuration and selection to the product page product', function (): void {
     $product = createDemoDomainProduct();
 
     $component = Livewire::test(DomainSearch::class, ['productId' => $product->id])
@@ -79,11 +118,50 @@ it('scopes embedded domain search and selection to the product page product', fu
     $token = collect($result['alternatives'])->firstWhere('domain', 'agovena.test')['selection_token'];
 
     $component->call('selectDomain', $token)
-        ->assertRedirect(route('storefront.checkout'));
+        ->assertRedirect(route('storefront.cart'));
 
     expect(collect(session('domains.quotes'))
         ->contains(fn (array $quote): bool => (int) ($quote['product_id'] ?? 0) === $product->id))
         ->toBeTrue();
+});
+
+it('uses the selected extension quote in cart pricing', function (): void {
+    $product = createDemoDomainProduct();
+
+    $component = Livewire::test(DomainSearch::class, ['productId' => $product->id])
+        ->set('query', 'agovena.com')
+        ->call('search');
+    $result = $component->get('result');
+    $token = collect($result['alternatives'])->firstWhere('domain', 'agovena.invalid')['selection_token'];
+
+    $component->call('selectDomain', $token);
+    $line = app(CartService::class)->pricedLines()[0];
+
+    expect($line->unitPrice->amount)->toBe(999)
+        ->and($line->unitPrice->currency)->toBe('EUR')
+        ->and(collect(session('domains.quotes'))->firstWhere('domain', 'agovena.invalid')['price_minor'])->toBe(999);
+});
+
+it('rejects checkout when a domain quote price changed', function (): void {
+    $product = createDemoDomainProduct();
+    $result = app(DomainSearchService::class)->search('agovena.com', $product->id);
+    $token = app(DomainSearchService::class)->issueSelection(
+        collect($result['alternatives'])->firstWhere('domain', 'agovena.invalid'),
+        $product->id,
+    );
+    session()->put('domains.quotes.'.$token.'.price_minor', 1299);
+
+    $line = new PricedCartLine(
+        productId: $product->id,
+        label: $product->name,
+        quantity: 1,
+        unitPrice: Money::of(1299, 'EUR'),
+        lineTotal: Money::of(1299, 'EUR'),
+        selections: ['domain_name' => 'agovena.invalid'],
+    );
+
+    expect(fn () => event(new OrderPreflight([$line])))
+        ->toThrow(ValidationException::class, __('domains::storefront.validation.price_changed', ['domain' => 'agovena.invalid']));
 });
 
 it('selects a searched domain into checkout without using a product detail page', function (): void {

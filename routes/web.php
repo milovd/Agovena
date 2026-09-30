@@ -91,6 +91,7 @@ use App\Livewire\Storefront\ContentPage;
 use App\Livewire\Storefront\CookiePolicy;
 use App\Livewire\Storefront\OrderConfirmation;
 use App\Livewire\Storefront\PaymentStatusPage;
+use App\Livewire\Storefront\ProductConfigure;
 use App\Livewire\Storefront\ProductShow;
 use Illuminate\Support\Facades\Route;
 
@@ -122,6 +123,7 @@ Route::post('/preferences/currency', [PreferencesController::class, 'currency'])
 Route::get('/search/suggest', SearchSuggestController::class)
     ->name('storefront.search.suggest');
 Route::get('/products/{slug}', ProductShow::class)->name('storefront.product');
+Route::get('/products/{slug}/configure', ProductConfigure::class)->name('storefront.product.configure');
 Route::get('/categories', StorefrontCategoriesIndex::class)->name('storefront.categories');
 Route::get('/categories/{slug}', CategoryShow::class)->name('storefront.category');
 Route::get('/cart', CartPage::class)->name('storefront.cart');

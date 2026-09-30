@@ -165,7 +165,7 @@ test('mixed carts combine delivery and configuration into fulfillment', function
         ->assertSee(__('storefront.checkout.steps.review'));
 });
 
-test('configurable checkout continues from configure without extra fields', function () {
+test('checkout skips the duplicate configuration step after product configuration', function () {
     $vps = Product::factory()->active()->create(['name' => 'VPS', 'price_amount' => 4000]);
     $option = ProductOption::query()->create([
         'product_id' => $vps->id,
@@ -190,7 +190,7 @@ test('configurable checkout continues from configure without extra fields', func
     app(CartService::class)->add($vps->id, 1, ['os' => 'ubuntu']);
 
     Livewire::test(CheckoutPage::class)
-        ->assertSee(__('storefront.checkout.steps.configuration'))
+        ->assertDontSee(__('storefront.checkout.steps.configuration'))
         ->set('customer_name', 'Config Buyer')
         ->set('customer_email', 'config@example.com')
         ->set('billing_name', 'Config Buyer')
@@ -198,8 +198,6 @@ test('configurable checkout continues from configure without extra fields', func
         ->set('billing_city', 'Amsterdam')
         ->set('billing_postal_code', '1012 JS')
         ->set('billing_country', 'NL')
-        ->call('continueStep')
-        ->assertSet('step', CheckoutStep::Configuration->value)
         ->call('continueStep')
         ->assertSet('step', CheckoutStep::Payment->value);
 });

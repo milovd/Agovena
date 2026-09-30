@@ -34,7 +34,7 @@ test('digital-only carts require billing and payment but not shipping', function
         ->and($requirements->has(CartRequirement::ProductConfiguration))->toBeFalse();
 });
 
-test('mixed carts compose shipping and product configuration requirements', function () {
+test('mixed carts compose shipping without a duplicate configuration step', function () {
     enableCommerceModules();
 
     $shirt = Product::factory()->active()->create(['name' => 'T-shirt']);
@@ -93,7 +93,7 @@ test('mixed carts compose shipping and product configuration requirements', func
     expect($requirements->has(CartRequirement::Billing))->toBeTrue()
         ->and($requirements->requiresShipping())->toBeTrue()
         ->and($requirements->has(CartRequirement::ShippingMethod))->toBeTrue()
-        ->and($requirements->has(CartRequirement::ProductConfiguration))->toBeTrue()
+        ->and($requirements->has(CartRequirement::ProductConfiguration))->toBeFalse()
         ->and($requirements->has(CartRequirement::CustomProperties))->toBeTrue()
         ->and($requirements->has(CartRequirement::Payment))->toBeTrue()
         ->and($cart->requiresShipping())->toBeTrue();

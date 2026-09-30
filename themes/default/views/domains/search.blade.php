@@ -1,10 +1,13 @@
-<div class="store-domain-search{{ ($embedded ?? false) ? ' store-domain-search--product' : '' }}{{ (($embedded ?? false) && is_array($result)) ? ' store-domain-search--has-results' : '' }}">
+@php($configurationPage = $configuration ?? false)
+<div class="store-domain-search{{ $configurationPage ? ' store-domain-search--configuration' : '' }}{{ ($configurationPage && is_array($result)) ? ' store-domain-search--has-results' : '' }}">
     <section class="store-domain-search__hero">
-        <p class="store-domain-search__eyebrow">{{ ($embedded ?? false) ? __('domains::storefront.product_eyebrow') : __('domains::storefront.demo_note') }}</p>
-        @if ($embedded ?? false)
-            <h2 id="domain-availability-heading" class="store-subtitle">{{ __('domains::storefront.product_title') }}</h2>
-            <p class="store-domain-search__lede">{{ __('domains::storefront.product_lede') }}</p>
+        @if ($configurationPage && $product)
+            <a class="store-domain-search__back" href="{{ route('storefront.product', $product->slug) }}">← {{ $product->name }}</a>
+            <p class="store-domain-search__eyebrow">{{ __('domains::storefront.product_eyebrow') }}</p>
+            <h1 class="store-title">{{ __('domains::storefront.configuration_title', ['product' => $product->name]) }}</h1>
+            <p class="store-domain-search__lede">{{ __('domains::storefront.configuration_lede') }}</p>
         @else
+            <p class="store-domain-search__eyebrow">{{ __('domains::storefront.demo_note') }}</p>
             <h1 class="store-title">{{ __('domains::storefront.title') }}</h1>
             <p class="store-domain-search__lede">{{ __('domains::storefront.lede') }}</p>
         @endif
@@ -28,6 +31,9 @@
                 </div>
                 <div class="store-domain-result__action">
                     <strong class="store-domain-result__status">{{ ($requested['available'] ?? false) ? __('domains::storefront.available') : __('domains::storefront.unavailable') }}</strong>
+                    @if (($requested['available'] ?? false) && ! empty($requested['price']))
+                        <span class="store-domain-result__price">{{ $requested['price'] }}</span>
+                    @endif
                     @if (($requested['available'] ?? false) && ! empty($requested['selection_token']))
                         <button type="button" class="store-btn store-btn--primary" wire:click="selectDomain('{{ $requested['selection_token'] }}')">{{ __('domains::storefront.select') }}</button>
                     @endif

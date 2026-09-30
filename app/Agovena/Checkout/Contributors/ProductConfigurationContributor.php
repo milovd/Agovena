@@ -23,7 +23,7 @@ final class ProductConfigurationContributor implements CartRequirementContributo
             if ($product === null) {
                 continue;
             }
-            if ($this->options->activeOptions($product)->isNotEmpty()) {
+            if ($this->options->hasRequiredUnfilled($product, $line->selections)) {
                 return [CartRequirement::ProductConfiguration];
             }
         }

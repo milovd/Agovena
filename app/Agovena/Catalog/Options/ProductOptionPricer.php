@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Catalog\Options;
 
+use App\Agovena\Catalog\Pricing\ProductPriceResolverRegistry;
 use App\Agovena\Money\CurrencyConverter;
 use App\Agovena\Money\Money;
 use App\Agovena\Money\ResolveProductPrice;
@@ -24,6 +25,7 @@ final class ProductOptionPricer
     public function __construct(
         private readonly ProductOptionValidator $validator,
         private readonly ResolveProductPrice $resolveProductPrice,
+        private readonly ProductPriceResolverRegistry $priceResolvers,
         private readonly CurrencyConverter $converter,
         private readonly StorefrontPreferences $preferences,
         private readonly OrderItemRuntimeSecretStore $runtimeSecrets,
@@ -41,6 +43,9 @@ final class ProductOptionPricer
             throw new InvalidArgumentException('Product is not available in currency '.$target);
         }
 
+        $dynamicBase = $this->priceResolvers->resolve($product, $selections, $target);
+        $baseAmount = $dynamicBase->amount ?? $resolved->money->amount;
+
         $adjustmentNative = 0;
         foreach ($this->resolved($product, $selections) as $row) {
             $adjustmentNative += $row['price_adjustment_amount'];
@@ -50,7 +55,7 @@ final class ProductOptionPricer
             ? 0
             : $this->converter->convert($adjustmentNative, $product->currency, $target);
 
-        return Money::of($resolved->money->amount + $adjustment, $target);
+        return Money::of($baseAmount + $adjustment, $target);
     }
 
     /**

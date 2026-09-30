@@ -21,6 +21,7 @@ use App\Agovena\Cart\TokenCartRepository;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\ListStorefrontCategories;
+use App\Agovena\Catalog\Pricing\ProductPriceResolverRegistry;
 use App\Agovena\Checkout\CartRequirementComposer;
 use App\Agovena\Checkout\Contributors\CoreCheckoutContributor;
 use App\Agovena\Checkout\Contributors\CustomPropertyRequirementContributor;
@@ -122,6 +123,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(CustomerAccountNav::class);
         $this->app->singleton(CustomerAccountOverview::class);
         $this->app->singleton(ProductCapabilityRegistry::class);
+        $this->app->singleton(ProductPriceResolverRegistry::class);
         $this->app->singleton(ProductCapabilityManager::class);
         $this->app->singleton(ModuleManager::class);
         $this->app->singleton(PackageMigrationRunner::class);
@@ -234,6 +236,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $context = new ModuleContext(
             $this->app->make(AdminRegistrar::class),
             $this->app->make(ProductCapabilityRegistry::class),
+            $this->app->make(ProductPriceResolverRegistry::class),
             $this->app->make(CustomerAccountNav::class),
             $this->app->make(CustomerAccountOverview::class),
             $this->app->make('events'),
