@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 final class ProductOptionValidator
 {
+    public function __construct(private readonly ConfigurableProductOptionResolver $configurableOptions) {}
+
     /**
      * @param  array<string, mixed>  $selections
      * @return array<string, mixed>
@@ -36,7 +38,7 @@ final class ProductOptionValidator
                 continue;
             }
 
-            $clean[$option->key] = $this->assertValue($option, $submitted);
+            $clean[$option->key] = $this->assertValue($product, $option, $submitted, $normalized);
         }
 
         return CartLineKey::normalize($clean);
@@ -74,41 +76,94 @@ final class ProductOptionValidator
         return false;
     }
 
-    private function assertValue(ProductOption $option, mixed $submitted): mixed
+    /**
+     * @param  array<string, mixed>  $selections
+     */
+    private function assertValue(Product $product, ProductOption $option, mixed $submitted, array $selections): mixed
     {
         $constraints = is_array($option->constraints) ? $option->constraints : [];
 
         return match ($option->type) {
-            ProductOptionType::Select, ProductOptionType::Radio => $this->assertChoice($option, $submitted),
-            ProductOptionType::Checkbox => $this->assertChoices($option, $submitted),
+            ProductOptionType::Select, ProductOptionType::Radio => $this->assertChoice($product, $option, $submitted, $selections),
+            ProductOptionType::Checkbox => $this->assertChoices($product, $option, $submitted, $selections),
             ProductOptionType::Toggle => $this->assertToggle($submitted),
-            ProductOptionType::Text => $this->assertText($option, $submitted, $constraints),
-            ProductOptionType::Number => $this->assertNumber($option, $submitted, $constraints),
+            ProductOptionType::Text, ProductOptionType::Textarea => $this->assertText($product, $option, $submitted, $constraints, $selections),
+            ProductOptionType::Number => $this->assertNumber($product, $option, $submitted, $constraints, $selections),
         };
     }
 
-    private function assertChoice(ProductOption $option, mixed $submitted): string
+    /**
+     * @param  array<string, mixed>  $selections
+     */
+    private function assertChoice(Product $product, ProductOption $option, mixed $submitted, array $selections): string
     {
         $value = trim((string) $submitted);
-        $choice = $this->findChoice($option, $value);
-        if ($choice === null || ! $choice->is_active) {
+        try {
+            $dynamicChoices = $this->configurableOptions->choices($product, $option, $selections, refresh: true);
+        } catch (ProductOptionChoicesUnavailable) {
+            throw ValidationException::withMessages([
+                'optionSelections.'.$option->key => __('storefront.errors.product_option_choices_unavailable'),
+            ]);
+        }
+
+        if ($dynamicChoices !== null) {
+            $choice = collect($dynamicChoices)->first(
+                static fn (array $choice): bool => $choice['value'] === $value,
+            );
+
+            if ($choice === null) {
+                throw ValidationException::withMessages([
+                    'optionSelections.'.$option->key => __('storefront.errors.product_option_invalid', ['option' => $option->label]),
+                ]);
+            }
+
+            $selectedValue = $choice['value'];
+        } else {
+            $choice = $this->findChoice($option, $value);
+            if ($choice === null || ! $choice->is_active) {
+                throw ValidationException::withMessages([
+                    'optionSelections.'.$option->key => __('storefront.errors.product_option_invalid', ['option' => $option->label]),
+                ]);
+            }
+
+            $selectedValue = $choice->value;
+        }
+
+        $this->assertProviderValue($product, $option, $selectedValue, $selections);
+
+        return $selectedValue;
+    }
+
+    /**
+     * @param  array<string, mixed>  $selections
+     */
+    private function assertProviderValue(Product $product, ProductOption $option, mixed $value, array $selections): void
+    {
+        try {
+            $providerValid = $this->configurableOptions->validateValue($product, $option, $value, $selections);
+        } catch (ProductOptionChoicesUnavailable) {
+            throw ValidationException::withMessages([
+                'optionSelections.'.$option->key => __('storefront.errors.product_option_choices_unavailable'),
+            ]);
+        }
+
+        if ($providerValid === false) {
             throw ValidationException::withMessages([
                 'optionSelections.'.$option->key => __('storefront.errors.product_option_invalid', ['option' => $option->label]),
             ]);
         }
-
-        return $choice->value;
     }
 
     /**
+     * @param  array<string, mixed>  $selections
      * @return list<string>
      */
-    private function assertChoices(ProductOption $option, mixed $submitted): array
+    private function assertChoices(Product $product, ProductOption $option, mixed $submitted, array $selections): array
     {
         $values = is_array($submitted) ? $submitted : [$submitted];
         $clean = [];
         foreach ($values as $value) {
-            $clean[] = $this->assertChoice($option, $value);
+            $clean[] = $this->assertChoice($product, $option, $value, $selections);
         }
 
         return array_values(array_unique($clean));
@@ -121,12 +176,28 @@ final class ProductOptionValidator
 
     /**
      * @param  array<string, mixed>  $constraints
+     * @param  array<string, mixed>  $selections
      */
-    private function assertText(ProductOption $option, mixed $submitted, array $constraints): string
+    private function assertText(Product $product, ProductOption $option, mixed $submitted, array $constraints, array $selections): string
     {
         $value = trim((string) $submitted);
-        $max = isset($constraints['max_length']) ? (int) $constraints['max_length'] : 255;
+        $defaultMax = $option->type === ProductOptionType::Textarea ? 5000 : 255;
+        $max = isset($constraints['max_length']) ? (int) $constraints['max_length'] : $defaultMax;
         if (mb_strlen($value) > max(1, $max)) {
+            throw ValidationException::withMessages([
+                'optionSelections.'.$option->key => __('storefront.errors.product_option_invalid', ['option' => $option->label]),
+            ]);
+        }
+
+        try {
+            $providerValid = $this->configurableOptions->validateValue($product, $option, $value, $selections);
+        } catch (ProductOptionChoicesUnavailable) {
+            throw ValidationException::withMessages([
+                'optionSelections.'.$option->key => __('storefront.errors.product_option_choices_unavailable'),
+            ]);
+        }
+
+        if ($providerValid === false) {
             throw ValidationException::withMessages([
                 'optionSelections.'.$option->key => __('storefront.errors.product_option_invalid', ['option' => $option->label]),
             ]);
@@ -137,8 +208,9 @@ final class ProductOptionValidator
 
     /**
      * @param  array<string, mixed>  $constraints
+     * @param  array<string, mixed>  $selections
      */
-    private function assertNumber(ProductOption $option, mixed $submitted, array $constraints): string
+    private function assertNumber(Product $product, ProductOption $option, mixed $submitted, array $constraints, array $selections): string
     {
         if (! is_numeric($submitted)) {
             throw ValidationException::withMessages([
@@ -152,6 +224,20 @@ final class ProductOptionValidator
             ]);
         }
         if (isset($constraints['max']) && $number > (float) $constraints['max']) {
+            throw ValidationException::withMessages([
+                'optionSelections.'.$option->key => __('storefront.errors.product_option_invalid', ['option' => $option->label]),
+            ]);
+        }
+
+        try {
+            $providerValid = $this->configurableOptions->validateValue($product, $option, $submitted, $selections);
+        } catch (ProductOptionChoicesUnavailable) {
+            throw ValidationException::withMessages([
+                'optionSelections.'.$option->key => __('storefront.errors.product_option_choices_unavailable'),
+            ]);
+        }
+
+        if ($providerValid === false) {
             throw ValidationException::withMessages([
                 'optionSelections.'.$option->key => __('storefront.errors.product_option_invalid', ['option' => $option->label]),
             ]);

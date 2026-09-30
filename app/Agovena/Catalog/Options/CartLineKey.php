@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Agovena\Catalog\Options;
 
+use LogicException;
+
 final class CartLineKey
 {
     /**
@@ -16,7 +18,14 @@ final class CartLineKey
             return (string) $productId;
         }
 
-        return $productId.':'.sha1((string) json_encode($normalized));
+        $applicationKey = config('app.key');
+        if (! is_string($applicationKey) || $applicationKey === '') {
+            throw new LogicException('The application key is required to derive configurable cart line keys.');
+        }
+
+        $payload = $productId.':'.json_encode($normalized, JSON_THROW_ON_ERROR);
+
+        return $productId.':'.hash_hmac('sha256', $payload, $applicationKey);
     }
 
     /**

@@ -12,7 +12,6 @@ use App\Agovena\Customer\CustomerRegistrationMode;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Physical\Enums\ShippingMethodType;
-use App\Agovena\Physical\Models\ShippingMethod;
 use App\Agovena\Settings\SettingsRepository;
 use App\Enums\ProductOptionType;
 use App\Enums\ProductStatus;
@@ -23,6 +22,7 @@ use App\Models\ProductImage;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
 use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 require __DIR__.'/../vendor/autoload.php';
@@ -84,32 +84,40 @@ $e2eCategory = Category::query()->updateOrCreate(
     ],
 );
 
-if (! ShippingMethod::query()->where('code', 'e2e-standard')->exists()) {
-    ShippingMethod::query()->create([
+DB::table('shipping_methods')->updateOrInsert(
+    ['code' => 'e2e-standard'],
+    [
         'name' => 'Standard delivery',
-        'code' => 'e2e-standard',
-        'type' => ShippingMethodType::Flat,
-        'config' => ['amount' => 495],
+        'type' => ShippingMethodType::Flat->value,
+        'zone_id' => null,
+        'config' => json_encode(['amount' => 495], JSON_THROW_ON_ERROR),
         'currency' => 'EUR',
         'is_active' => true,
         'sort' => 1,
-    ]);
-}
+        'created_at' => now(),
+        'updated_at' => now(),
+    ],
+);
+
+DB::table('shipping_methods')->where('code', 'demo-parcel')->update([
+    'type' => ShippingMethodType::Zone->value,
+    'config' => json_encode(['amount' => 499], JSON_THROW_ON_ERROR),
+    'updated_at' => now(),
+]);
 
 function e2eProduct(string $slug, string $name, int $price): Product
 {
-    $product = Product::query()->where('slug', $slug)->first();
-    if ($product === null) {
-        $product = Product::query()->create([
+    $product = Product::query()->updateOrCreate(
+        ['slug' => $slug],
+        [
             'name' => $name,
-            'slug' => $slug,
             'sku' => strtoupper($slug),
             'description' => $name,
             'status' => ProductStatus::Active,
             'price_amount' => $price,
             'currency' => 'EUR',
-        ]);
-    }
+        ],
+    );
 
     $product->forceFill(['created_at' => now()->subYears(2), 'updated_at' => now()->subYears(2)])->save();
 
@@ -172,6 +180,18 @@ ProductOptionChoice::query()->firstOrCreate(
         'price_adjustment_amount' => 0,
         'sort' => 1,
         'is_active' => true,
+    ],
+);
+ProductOption::query()->updateOrCreate(
+    ['product_id' => $vps->id, 'key' => 'setup_notes'],
+    [
+        'label' => 'Setup notes',
+        'type' => ProductOptionType::Textarea,
+        'is_required' => false,
+        'is_active' => true,
+        'sort' => 2,
+        'price_adjustment_amount' => 0,
+        'constraints' => ['max_length' => 1000],
     ],
 );
 

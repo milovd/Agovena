@@ -6,6 +6,8 @@ namespace App\Livewire\Storefront;
 
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\GetStorefrontProduct;
+use App\Agovena\Catalog\Options\ConfigurableProductOptionResolver;
+use App\Agovena\Catalog\Options\ProductOptionChoicesUnavailable;
 use App\Agovena\Catalog\Options\ProductOptionPricer;
 use App\Agovena\Catalog\Options\ProductOptionValidator;
 use App\Agovena\Theme\ThemeManager;
@@ -80,12 +82,31 @@ final class ProductConfigure extends Component
         GetStorefrontProduct $get,
         ProductOptionValidator $options,
         ProductOptionPricer $pricer,
+        ConfigurableProductOptionResolver $configurableOptions,
         ThemeManager $themes,
     ) {
         $theme = $themes->active();
         $config = $themes->config($theme);
         $product = $get->handle($this->slug);
         $purchaseOptions = $options->activeOptions($product);
+        $dynamicOptionChoices = [];
+        $optionHints = [];
+        $optionChoiceErrors = [];
+        foreach ($purchaseOptions as $option) {
+            try {
+                $choices = $configurableOptions->choices($product, $option, $this->optionSelections);
+                if ($choices !== null) {
+                    $dynamicOptionChoices[$option->key] = $choices;
+                }
+                $hint = $configurableOptions->hint($product, $option, $this->optionSelections);
+                if ($hint !== null) {
+                    $optionHints[$option->key] = $hint;
+                }
+            } catch (ProductOptionChoicesUnavailable) {
+                $dynamicOptionChoices[$option->key] = [];
+                $optionChoiceErrors[$option->key] = __('storefront.errors.product_option_choices_unavailable');
+            }
+        }
         $configuredPrice = null;
 
         try {
@@ -97,6 +118,9 @@ final class ProductConfigure extends Component
         return view($theme->view('catalog.configure'), [
             'product' => $product,
             'purchaseOptions' => $purchaseOptions,
+            'dynamicOptionChoices' => $dynamicOptionChoices,
+            'optionHints' => $optionHints,
+            'optionChoiceErrors' => $optionChoiceErrors,
             'configuredPrice' => $configuredPrice,
             'theme' => $theme,
             'themeConfig' => $config,

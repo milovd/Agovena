@@ -34,6 +34,8 @@ use App\Agovena\Provisioning\RunProvisionerAction;
 use App\Enums\ProductOptionType;
 use App\Livewire\Admin\Products\Create as CreateProductForm;
 use App\Livewire\Admin\Products\Edit as EditProductForm;
+use App\Livewire\Admin\Products\OptionsEditor;
+use App\Livewire\Storefront\ProductConfigure;
 use App\Models\Customer;
 use App\Models\ExtensionSetting;
 use App\Models\OrderItem;
@@ -369,6 +371,439 @@ test('multiple provisioners can coexist', function () {
 
     expect(collect(app(ProvisionerRegistry::class)->all())->map(fn (Provisioner $provisioner): string => $provisioner->id())->all())
         ->toContain('manual', 'pterodactyl', 'other-panel');
+});
+
+test('product location options load live panel choices and preserve the selected value in cart', function () {
+    $api = enablePterodactyl();
+    $api->locations = [
+        ['id' => 1, 'short' => 'ams', 'long' => 'Amsterdam'],
+        ['id' => 2, 'short' => 'fra', 'long' => 'Frankfurt'],
+    ];
+
+    $product = makePterodactylProduct();
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'location_id',
+        'label' => 'Server region',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+
+    Livewire::test(ProductConfigure::class, ['slug' => $product->slug])
+        ->assertSee('Amsterdam')
+        ->assertSee('Frankfurt')
+        ->set('optionSelections.location_id', '2')
+        ->call('continueConfiguration')
+        ->assertRedirect(route('storefront.cart'));
+
+    expect(app(CartService::class)->lines()[0]->selections['location_id'])->toBe('2');
+});
+
+test('checkout revalidates live provider selections before creating an order', function () {
+    $api = enablePterodactyl();
+    $api->locations = [
+        ['id' => 1, 'short' => 'ams', 'long' => 'Amsterdam'],
+        ['id' => 2, 'short' => 'fra', 'long' => 'Frankfurt'],
+    ];
+    $product = makePterodactylProduct();
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'location_id',
+        'label' => 'Server region',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+    app(CartService::class)->add($product->id, 1, ['location_id' => '2']);
+    $api->locations = [['id' => 1, 'short' => 'ams', 'long' => 'Amsterdam']];
+    $customer = Customer::factory()->create();
+    app(CustomerCreditLedger::class)->credit($customer, 100000, 'Checkout validation fixture');
+
+    expect(fn () => app(PlaceOrder::class)->handle([
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+        'customer_id' => $customer->id,
+        'billing' => pterodactylBilling(),
+        'apply_credit' => true,
+        'payment_method' => 'account_balance',
+    ]))->toThrow(ValidationException::class)
+        ->and(DB::table('orders')->count())->toBe(0);
+});
+
+test('live choices use the product connection without exposing its credentials', function () {
+    $api = enablePterodactyl();
+    $panelUrl = 'https://tenant-panel.example.test';
+    $api->locationsByPanel[$panelUrl] = [
+        ['id' => 99, 'short' => 'tenant', 'long' => 'Tenant Frankfurt'],
+    ];
+    $server = ProvisioningServer::query()->create([
+        'name' => 'Tenant Panel',
+        'provider_key' => 'pterodactyl',
+        'settings' => [
+            'panel_url' => $panelUrl,
+            'application_api_key' => 'fake-tenant-key-not-real',
+            'user_id' => '5',
+        ],
+        'is_active' => true,
+    ]);
+    $product = Product::factory()->active()->create(['price_amount' => 5000]);
+    app(ProductCapabilityManager::class)->enable($product, 'provisionable', [
+        'server_id' => $server->id,
+        'provider_key' => 'pterodactyl',
+        'provider_settings' => [
+            'location_id' => '1',
+            'nest_id' => '1',
+            'egg_id' => '15',
+            'memory' => '1024',
+            'disk' => '2048',
+        ],
+    ]);
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'location_id',
+        'label' => 'Server region',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+
+    Livewire::test(ProductConfigure::class, ['slug' => $product->slug])
+        ->assertSee('Tenant Frankfurt')
+        ->assertDontSee('Default location')
+        ->assertDontSee('fake-tenant-key-not-real');
+
+    expect($api->connectionPanelUrls)->toContain($panelUrl);
+});
+
+test('invalid live provider options are rejected before they enter the cart', function () {
+    $api = enablePterodactyl();
+    $api->locations = [['id' => 1, 'short' => 'ams', 'long' => 'Amsterdam']];
+    $product = makePterodactylProduct();
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'location_id',
+        'label' => 'Server region',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+
+    expect(fn () => app(CartService::class)->add($product->id, 1, ['location_id' => '999']))
+        ->toThrow(ValidationException::class)
+        ->and(app(CartService::class)->isEmpty())->toBeTrue();
+});
+
+test('selected live location reaches provisioning while node placement stays automatic', function () {
+    $api = enablePterodactyl();
+    $api->locations = [
+        ['id' => 1, 'short' => 'ams', 'long' => 'Amsterdam'],
+        ['id' => 2, 'short' => 'fra', 'long' => 'Frankfurt'],
+    ];
+    $product = makePterodactylProduct();
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'location_id',
+        'label' => 'Server region',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+
+    $instance = payForPterodactylProduct($product, selections: ['location_id' => '2']);
+
+    expect($instance->status)->toBe(ServiceInstanceStatus::Active)
+        ->and($api->lastCreatePayload['deploy']['locations'] ?? null)->toBe([2])
+        ->and($api->lastCreatePayload['deploy'] ?? [])->not->toHaveKey('node_id');
+});
+
+test('egg choices refresh from the selected live nest', function () {
+    $api = enablePterodactyl();
+    $api->nests = [
+        ['id' => 1, 'name' => 'Minecraft Nest'],
+        ['id' => 2, 'name' => 'FiveM Nest'],
+    ];
+    $api->eggsByNest = [
+        1 => [['id' => 15, 'name' => 'Vanilla Minecraft']],
+        2 => [['id' => 25, 'name' => 'FiveM Server']],
+    ];
+    $product = makePterodactylProduct(['nest_id' => '1', 'egg_id' => '15']);
+    foreach ([['nest_id', 'Game family'], ['egg_id', 'Game template']] as [$key, $label]) {
+        ProductOption::query()->create([
+            'product_id' => $product->id,
+            'key' => $key,
+            'label' => $label,
+            'type' => ProductOptionType::Select,
+            'is_required' => true,
+            'is_active' => true,
+            'sort' => 0,
+            'price_adjustment_amount' => 0,
+            'constraints' => [],
+        ]);
+    }
+
+    Livewire::test(ProductConfigure::class, ['slug' => $product->slug])
+        ->assertSee('Minecraft Nest')
+        ->assertSee('Vanilla Minecraft')
+        ->set('optionSelections.nest_id', '2')
+        ->assertSee('FiveM Nest')
+        ->assertSee('FiveM Server')
+        ->assertDontSee('Vanilla Minecraft');
+});
+
+test('environment option uses live egg variables and reaches provisioning from encrypted cart state', function () {
+    $api = enablePterodactyl();
+    $product = makePterodactylProduct(['environment' => '']);
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(OptionsEditor::class, ['productId' => $product->id])
+        ->call('create')
+        ->set('extensionField', 'environment')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $option = ProductOption::query()->where('product_id', $product->id)->firstOrFail();
+    expect($option->type->value)->toBe('textarea');
+
+    Livewire::test(ProductConfigure::class, ['slug' => $product->slug])
+        ->assertSee('SERVER_JARFILE')
+        ->assertSee('MC_VERSION')
+        ->assertDontSee('LOCKED_SETTING')
+        ->assertDontSee('HIDDEN_SETTING')
+        ->set('optionSelections.environment', 'MC_VERSION=1.21')
+        ->call('continueConfiguration')
+        ->assertRedirect(route('storefront.cart'));
+
+    $rawCart = session('agovena.cart');
+    expect(json_encode($rawCart, JSON_THROW_ON_ERROR))->not->toContain('MC_VERSION=1.21')
+        ->and(app(CartService::class)->lines()[0]->selections['environment'])->toBe('MC_VERSION=1.21');
+
+    app(CartService::class)->clear();
+    $instance = payForPterodactylProduct($product, selections: ['environment' => 'MC_VERSION=1.21']);
+
+    expect($instance->status)->toBe(ServiceInstanceStatus::Active)
+        ->and($api->lastCreatePayload['environment']['MC_VERSION'] ?? null)->toBe('1.21');
+});
+
+test('environment option rejects names not declared by the selected egg', function () {
+    $api = enablePterodactyl();
+    $product = makePterodactylProduct(['environment' => '']);
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'environment',
+        'label' => 'Environment variables',
+        'type' => ProductOptionType::Textarea,
+        'is_required' => false,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => ['max_length' => 5000],
+    ]);
+
+    expect(fn () => app(CartService::class)->add($product->id, 1, ['environment' => 'UNKNOWN_OPTION=not-allowed']))
+        ->toThrow(ValidationException::class)
+        ->and(app(CartService::class)->isEmpty())->toBeTrue()
+        ->and($api->createCalls)->toBe(0);
+});
+
+test('environment option rejects egg variables that are not customer editable and viewable', function () {
+    enablePterodactyl();
+    $product = makePterodactylProduct(['environment' => '']);
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'environment',
+        'label' => 'Environment variables',
+        'type' => ProductOptionType::Textarea,
+        'is_required' => false,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => ['max_length' => 5000],
+    ]);
+
+    foreach (['LOCKED_SETTING=changed', 'HIDDEN_SETTING=changed'] as $selection) {
+        expect(fn () => app(CartService::class)->add($product->id, 1, ['environment' => $selection]))
+            ->toThrow(ValidationException::class)
+            ->and(app(CartService::class)->isEmpty())->toBeTrue();
+    }
+});
+
+test('environment option validates submitted values and required defaults against egg rules', function () {
+    enablePterodactyl();
+    $product = makePterodactylProduct(['environment' => '']);
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'environment',
+        'label' => 'Environment variables',
+        'type' => ProductOptionType::Textarea,
+        'is_required' => false,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => ['max_length' => 5000],
+    ]);
+
+    foreach (['MC_VERSION=1.22', 'SERVER_JARFILE='] as $selection) {
+        expect(fn () => app(CartService::class)->add($product->id, 1, ['environment' => $selection]))
+            ->toThrow(ValidationException::class)
+            ->and(app(CartService::class)->isEmpty())->toBeTrue();
+    }
+});
+
+test('merchant can configure per-product choices for a standard extension resource field', function () {
+    $api = enablePterodactyl();
+    $product = makePterodactylProduct();
+
+    Livewire::actingAs($this->createStaff())
+        ->test(OptionsEditor::class, ['productId' => $product->id])
+        ->call('create')
+        ->set('extensionField', 'memory')
+        ->assertSet('type', ProductOptionType::Number->value)
+        ->set('type', ProductOptionType::Select->value)
+        ->set('choicesText', "1024:1 GiB\n2048:2 GiB")
+        ->call('save')
+        ->assertHasNoErrors();
+
+    Livewire::test(ProductConfigure::class, ['slug' => $product->slug])
+        ->assertSee('1 GiB')
+        ->assertSee('2 GiB')
+        ->set('optionSelections.memory', '2048')
+        ->call('continueConfiguration')
+        ->assertRedirect(route('storefront.cart'));
+
+    app(CartService::class)->clear();
+    $instance = payForPterodactylProduct($product, selections: ['memory' => '2048']);
+
+    expect($instance->status)->toBe(ServiceInstanceStatus::Active)
+        ->and($api->lastCreatePayload['limits']['memory'] ?? null)->toBe(2048);
+});
+
+test('standard pterodactyl resource options reject fractional values before carting', function () {
+    enablePterodactyl();
+    $product = makePterodactylProduct();
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'memory',
+        'label' => 'Memory',
+        'type' => ProductOptionType::Number,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+
+    expect(fn () => app(CartService::class)->add($product->id, 1, ['memory' => '1024.5']))
+        ->toThrow(ValidationException::class)
+        ->and(app(CartService::class)->isEmpty())->toBeTrue();
+});
+
+test('pterodactyl validates values from static preset choices against its resource rules', function () {
+    enablePterodactyl();
+    $product = makePterodactylProduct();
+    $option = ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'memory',
+        'label' => 'Memory',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+    $option->choices()->create([
+        'value' => '1024.5',
+        'label' => 'Invalid fractional memory',
+        'price_adjustment_amount' => 0,
+        'sort' => 0,
+        'is_active' => true,
+    ]);
+
+    expect(fn () => app(CartService::class)->add($product->id, 1, ['memory' => '1024.5']))
+        ->toThrow(ValidationException::class)
+        ->and(app(CartService::class)->isEmpty())->toBeTrue();
+});
+
+test('customer configured server name reaches the Pterodactyl create payload', function () {
+    $api = enablePterodactyl();
+    $product = makePterodactylProduct();
+
+    Livewire::actingAs($this->createStaff())
+        ->test(OptionsEditor::class, ['productId' => $product->id])
+        ->call('create')
+        ->set('extensionField', 'servername')
+        ->set('is_required', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $instance = payForPterodactylProduct($product, selections: ['servername' => 'My Custom Server']);
+
+    expect($instance->status)->toBe(ServiceInstanceStatus::Active)
+        ->and($api->lastCreatePayload['name'] ?? null)->toBe('My Custom Server');
+});
+
+test('additional allocation options map to the provider allocation limit', function () {
+    $api = enablePterodactyl();
+    $product = makePterodactylProduct();
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'additional_allocations',
+        'label' => 'Additional allocations',
+        'type' => ProductOptionType::Number,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => ['min' => 0, 'max' => 20],
+    ]);
+
+    $instance = payForPterodactylProduct($product, selections: ['additional_allocations' => '2']);
+
+    expect($instance->status)->toBe(ServiceInstanceStatus::Active)
+        ->and($api->lastCreatePayload['feature_limits']['allocations'] ?? null)->toBe(3);
+});
+
+test('merchant can enable a live extension field per product and customers see its provider choices', function () {
+    $api = enablePterodactyl();
+    $api->locations = [
+        ['id' => 3, 'short' => 'ams', 'long' => 'Amsterdam'],
+        ['id' => 4, 'short' => 'fra', 'long' => 'Frankfurt'],
+    ];
+    $product = makePterodactylProduct();
+
+    Livewire::actingAs($this->createStaff())
+        ->test(OptionsEditor::class, ['productId' => $product->id])
+        ->call('create')
+        ->set('extensionField', 'location_id')
+        ->set('is_required', true)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $option = ProductOption::query()->where('product_id', $product->id)->firstOrFail();
+    expect($option->key)->toBe('location_id')
+        ->and($option->type)->toBe(ProductOptionType::Select)
+        ->and($option->choices()->count())->toBe(0);
+
+    Livewire::test(ProductConfigure::class, ['slug' => $product->slug])
+        ->assertSee('Amsterdam')
+        ->assertSee('Frankfurt');
 });
 
 test('paid pterodactyl order provisions a server and stores extension-owned mapping', function () {
@@ -1085,6 +1520,38 @@ test('http adapter maps panel errors without leaking secrets', function () {
         expect($exception->errorKey)->not->toContain('[REDACTED]')
             ->and($exception->getMessage())->not->toContain('[REDACTED]');
     }
+});
+
+test('http adapter loads live locations nests and eggs from the selected panel', function () {
+    enablePterodactyl();
+    $api = new HttpPterodactylApi(app(ExtensionSettingsRepository::class), [
+        'panel_url' => 'https://panel.example.test',
+        'application_api_key' => 'test-application-key-not-real',
+    ]);
+    Http::fake(function ($request) {
+        $path = parse_url($request->url(), PHP_URL_PATH);
+        $data = match ($path) {
+            '/api/application/locations' => [['attributes' => ['id' => 3, 'short' => 'ams', 'long' => 'Amsterdam']]],
+            '/api/application/nests' => [['attributes' => ['id' => 1, 'name' => 'Minecraft Nest']]],
+            '/api/application/nests/1/eggs' => [['attributes' => ['id' => 15, 'name' => 'Vanilla Egg']]],
+            default => [],
+        };
+
+        return Http::response([
+            'data' => $data,
+            'meta' => ['pagination' => ['total_pages' => 1]],
+        ]);
+    });
+
+    $locations = $api->getLocations();
+    $nests = $api->getNests();
+    $eggs = $api->getEggs(1);
+
+    expect($locations[0]['long'] ?? null)->toBe('Amsterdam')
+        ->and($nests[0]['name'] ?? null)->toBe('Minecraft Nest')
+        ->and($eggs[0]['name'] ?? null)->toBe('Vanilla Egg');
+
+    Http::assertSentCount(3);
 });
 
 test('http adapter treats timeouts as a safe failure', function () {

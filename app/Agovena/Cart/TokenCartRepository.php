@@ -14,6 +14,7 @@ final class TokenCartRepository implements CartRepository
     public function __construct(
         private readonly Request $request,
         private readonly Repository $cache,
+        private readonly CartSelectionCipher $selectionCipher,
     ) {}
 
     public function token(): string
@@ -106,7 +107,14 @@ final class TokenCartRepository implements CartRepository
      */
     private function persist(array $items): void
     {
-        $lines = array_values($items);
+        $lines = [];
+        foreach (array_values($items) as $row) {
+            $lines[] = [
+                'product_id' => (int) $row['product_id'],
+                'quantity' => (int) $row['quantity'],
+                'selections_encrypted' => $this->selectionCipher->encrypt($row['selections']),
+            ];
+        }
 
         if ($lines === []) {
             $this->cache->forget($this->cacheKey());
@@ -114,7 +122,7 @@ final class TokenCartRepository implements CartRepository
             return;
         }
 
-        $this->cache->put($this->cacheKey(), ['v' => 2, 'lines' => $lines], now()->addDays(7));
+        $this->cache->put($this->cacheKey(), ['v' => 3, 'lines' => $lines], now()->addDays(7));
     }
 
     /**
@@ -123,20 +131,40 @@ final class TokenCartRepository implements CartRepository
     private function raw(): array
     {
         $raw = $this->cache->get($this->cacheKey(), []);
-        if (! is_array($raw) || ($raw['v'] ?? null) !== 2 || ! isset($raw['lines']) || ! is_array($raw['lines'])) {
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $version = $raw['v'] ?? null;
+        if (! in_array($version, [2, 3], true) || ! isset($raw['lines']) || ! is_array($raw['lines'])) {
             return [];
         }
 
         $lines = [];
+        $needsMigration = $version !== 3;
+
         foreach ($raw['lines'] as $row) {
             if (! is_array($row)) {
                 continue;
             }
+
+            $selections = $needsMigration
+                ? (isset($row['selections']) && is_array($row['selections']) ? $row['selections'] : [])
+                : $this->selectionCipher->decrypt($row['selections_encrypted'] ?? null);
+
+            if ($selections === null) {
+                continue;
+            }
+
             $lines[] = [
                 'product_id' => (int) ($row['product_id'] ?? 0),
                 'quantity' => (int) ($row['quantity'] ?? 0),
-                'selections' => isset($row['selections']) && is_array($row['selections']) ? $row['selections'] : [],
+                'selections' => $selections,
             ];
+        }
+
+        if ($needsMigration) {
+            $this->persist($lines);
         }
 
         return $lines;

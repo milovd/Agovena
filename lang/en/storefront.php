@@ -386,6 +386,7 @@ return [
         'discount_currency' => 'This discount code is not valid for your cart currency.',
         'product_option_required' => 'Please choose :option.',
         'product_option_invalid' => 'The selected :option is not valid.',
+        'product_option_choices_unavailable' => 'Options are temporarily unavailable. Please refresh and try again.',
         'product_configuration_required' => 'This cart has products that still need configuration.',
     ],
 

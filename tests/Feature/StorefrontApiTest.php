@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Enums\InvoiceStatus;
+use App\Enums\ProductOptionType;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\PaymentAttempt;
 use App\Models\Product;
+use App\Models\ProductOption;
 use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Laravel\Sanctum\Sanctum;
 use Tests\Support\CreatesStaff;
@@ -163,6 +165,34 @@ test('api cart persists across requests with the cart token header', function ()
         ->assertOk()
         ->assertJsonPath('data.item_count', 2)
         ->assertJsonPath('data.lines.0.product_id', $product->id);
+});
+
+test('api cart redacts sensitive configurable selections from its response', function (): void {
+    $product = Product::factory()->active()->create([
+        'name' => 'API configured service',
+        'slug' => 'api-configured-service',
+    ]);
+    ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'environment',
+        'label' => 'Environment',
+        'type' => ProductOptionType::Textarea,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 0,
+        'price_adjustment_amount' => 0,
+        'constraints' => ['max_length' => 5000],
+    ]);
+    $submitted = 'TEST_VALUE=fixture-only';
+
+    $this->postJson('/api/v1/cart', [
+        'product_id' => $product->id,
+        'quantity' => 1,
+        'selections' => ['environment' => $submitted],
+    ])
+        ->assertOk()
+        ->assertJsonPath('data.lines.0.selections.environment', '[REDACTED]')
+        ->assertDontSee($submitted);
 });
 
 test('api payment forwards the caller idempotency key to the payment attempt', function () {

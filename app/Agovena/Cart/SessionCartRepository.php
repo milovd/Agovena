@@ -11,7 +11,10 @@ final class SessionCartRepository implements CartRepository
 {
     private const string KEY = 'agovena.cart';
 
-    public function __construct(private readonly Session $session) {}
+    public function __construct(
+        private readonly Session $session,
+        private readonly CartSelectionCipher $selectionCipher,
+    ) {}
 
     public function lines(): array
     {
@@ -109,7 +112,11 @@ final class SessionCartRepository implements CartRepository
     {
         $lines = [];
         foreach ($items as $row) {
-            $lines[] = $row;
+            $lines[] = [
+                'product_id' => (int) $row['product_id'],
+                'quantity' => (int) $row['quantity'],
+                'selections_encrypted' => $this->selectionCipher->encrypt($row['selections']),
+            ];
         }
 
         if ($lines === []) {
@@ -118,7 +125,7 @@ final class SessionCartRepository implements CartRepository
             return;
         }
 
-        $this->session->put(self::KEY, ['v' => 2, 'lines' => $lines]);
+        $this->session->put(self::KEY, ['v' => 3, 'lines' => $lines]);
     }
 
     /**
@@ -133,17 +140,33 @@ final class SessionCartRepository implements CartRepository
             return [];
         }
 
-        if (($raw['v'] ?? null) === 2 && isset($raw['lines']) && is_array($raw['lines'])) {
+        $version = $raw['v'] ?? null;
+        if (in_array($version, [2, 3], true) && isset($raw['lines']) && is_array($raw['lines'])) {
             $lines = [];
+            $needsMigration = $version !== 3;
+
             foreach ($raw['lines'] as $row) {
                 if (! is_array($row)) {
                     continue;
                 }
+
+                $selections = $version === 3
+                    ? $this->selectionCipher->decrypt($row['selections_encrypted'] ?? null)
+                    : (isset($row['selections']) && is_array($row['selections']) ? $row['selections'] : []);
+
+                if ($selections === null) {
+                    continue;
+                }
+
                 $lines[] = [
                     'product_id' => (int) ($row['product_id'] ?? 0),
                     'quantity' => (int) ($row['quantity'] ?? 0),
-                    'selections' => isset($row['selections']) && is_array($row['selections']) ? $row['selections'] : [],
+                    'selections' => $selections,
                 ];
+            }
+
+            if ($needsMigration) {
+                $this->persist($lines);
             }
 
             return $lines;
@@ -159,6 +182,10 @@ final class SessionCartRepository implements CartRepository
                 'quantity' => (int) $quantity,
                 'selections' => [],
             ];
+        }
+
+        if ($legacy !== []) {
+            $this->persist($legacy);
         }
 
         return $legacy;

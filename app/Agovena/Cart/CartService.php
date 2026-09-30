@@ -123,7 +123,9 @@ final class CartService
             }
             $snapshot = $this->optionPricer->snapshot($product, $line->selections);
             $optionLabels = [];
+            $safeSelections = [];
             foreach ($snapshot as $row) {
+                $safeSelections[$row['key']] = $row['value'];
                 $optionLabels[] = [
                     'key' => $row['key'],
                     'label' => $row['label'],
@@ -139,6 +141,7 @@ final class CartService
                 lineTotal: $unit->multiply($line->quantity),
                 lineKey: $line->lineKey,
                 selections: $line->selections,
+                safeSelections: $safeSelections,
                 optionLabels: $optionLabels,
                 slug: $product->slug,
                 imageUrl: ProductMedia::primaryUrl($product),

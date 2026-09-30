@@ -191,7 +191,7 @@ final class AccountController
                 'unit_amount' => $line->unitPrice->amount,
                 'line_total_amount' => $line->lineTotal->amount,
                 'currency' => $line->unitPrice->currency,
-                'selections' => $line->selections,
+                'selections' => $line->safeSelections,
             ];
         }
 

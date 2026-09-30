@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Products;
 
+use App\Agovena\Catalog\Options\ConfigurableProductOptionResolver;
 use App\Agovena\Customer\Properties\CustomerPropertyValidator;
 use App\Enums\ProductOptionType;
 use App\Models\Product;
@@ -11,12 +12,14 @@ use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 
 final class OptionsEditor extends Component
 {
     use AuthorizesRequests;
 
+    #[Locked]
     public int $productId;
 
     public bool $showForm = false;
@@ -45,6 +48,8 @@ final class OptionsEditor extends Component
 
     public string $choicesText = '';
 
+    public string $extensionField = '';
+
     public function mount(int $productId): void
     {
         $this->authorize('products.update');
@@ -56,6 +61,29 @@ final class OptionsEditor extends Component
         $this->authorize('products.update');
         $this->resetForm();
         $this->showForm = true;
+    }
+
+    public function updatedExtensionField(string $value): void
+    {
+        $this->authorize('products.update');
+        if ($value === '') {
+            return;
+        }
+
+        $product = Product::query()->with('capabilities')->findOrFail($this->productId);
+        $definition = app(ConfigurableProductOptionResolver::class)->definition($product, $value);
+        if ($definition === null) {
+            $this->addError('extensionField', __('admin.product_options.extension_field_unavailable'));
+
+            return;
+        }
+
+        $this->key = $definition->key;
+        $this->label = (string) __($definition->label);
+        $this->type = $definition->type->value;
+        $this->max_length = $definition->type === ProductOptionType::Textarea ? 5000 : 255;
+        $this->choicesText = '';
+        $this->resetValidation();
     }
 
     public function edit(int $id): void
@@ -75,20 +103,29 @@ final class OptionsEditor extends Component
         $this->sort = $option->sort;
         $this->price_adjustment_amount = $option->price_adjustment_amount;
         $constraints = $option->constraints ?? [];
-        $this->max_length = isset($constraints['max_length']) ? (int) $constraints['max_length'] : 255;
+        $this->max_length = isset($constraints['max_length'])
+            ? (int) $constraints['max_length']
+            : ($option->type === ProductOptionType::Textarea ? 5000 : 255);
         $this->min = isset($constraints['min']) ? (int) $constraints['min'] : null;
         $this->max = isset($constraints['max']) ? (int) $constraints['max'] : null;
         $this->choicesText = $this->choicesToText($option);
+        $product = Product::query()->with('capabilities')->findOrFail($this->productId);
+        $this->extensionField = app(ConfigurableProductOptionResolver::class)->definition($product, $option->key)->key ?? '';
         $this->showForm = true;
     }
 
-    public function save(CustomerPropertyValidator $keyValidator): void
+    public function save(CustomerPropertyValidator $keyValidator, ConfigurableProductOptionResolver $configurableOptions): void
     {
         $this->authorize('products.update');
         $this->key = strtolower(trim($this->key));
         $keyValidator->assertKey($this->key);
 
         $data = $this->validate([
+            'editingId' => [
+                'nullable',
+                'integer',
+                Rule::exists('product_options', 'id')->where('product_id', $this->productId),
+            ],
             'key' => [
                 'required',
                 'string',
@@ -110,10 +147,39 @@ final class OptionsEditor extends Component
         ]);
 
         $type = ProductOptionType::from($data['type']);
-        $option = ProductOption::query()->updateOrCreate(
-            ['id' => $this->editingId],
-            [
-                'product_id' => $this->productId,
+        $product = Product::query()->with('capabilities')->findOrFail($this->productId);
+        $definition = $configurableOptions->definition($product, $data['key']);
+        if ($definition?->lockType && $definition->type !== $type) {
+            $this->addError('type', __('admin.product_options.extension_field_type'));
+
+            return;
+        }
+
+        $dynamicChoices = $definition->dynamicChoices ?? false;
+        if ($dynamicChoices && trim((string) ($data['choicesText'] ?? '')) !== '') {
+            $this->addError('choicesText', __('admin.product_options.extension_choices_managed'));
+
+            return;
+        }
+
+        $existingOption = $data['editingId'] === null
+            ? null
+            : ProductOption::query()->where('product_id', $this->productId)->with('choices')->findOrFail($data['editingId']);
+        $existingUnconfiguredField = $existingOption !== null
+            && $existingOption->key === $data['key']
+            && $existingOption->choices->isEmpty();
+        $choices = $type->hasChoices() && ! $dynamicChoices
+            ? $keyValidator->sanitizeOptions($this->parseChoices($data['choicesText'] ?? ''))
+            : [];
+
+        if ($type->hasChoices() && $choices === [] && ! $dynamicChoices && ! $existingUnconfiguredField) {
+            $this->addError('choicesText', __('admin.product_options.choices_required'));
+
+            return;
+        }
+
+        app('db')->transaction(function () use ($data, $type, $choices, $keyValidator): void {
+            $attributes = [
                 'key' => $data['key'],
                 'label' => $data['label'],
                 'type' => $type,
@@ -126,17 +192,24 @@ final class OptionsEditor extends Component
                     'min' => $data['min'] ?? null,
                     'max' => $data['max'] ?? null,
                 ]),
-            ],
-        );
+            ];
 
-        if ($type->hasChoices()) {
-            $choices = $keyValidator->sanitizeOptions($this->parseChoices($data['choicesText'] ?? ''));
-            if ($choices === []) {
-                $this->addError('choicesText', __('admin.product_options.choices_required'));
-
-                return;
+            if ($data['editingId'] === null) {
+                $option = ProductOption::query()->create([
+                    'product_id' => $this->productId,
+                    ...$attributes,
+                ]);
+            } else {
+                $option = ProductOption::query()
+                    ->where('product_id', $this->productId)
+                    ->whereKey($data['editingId'])
+                    ->lockForUpdate()
+                    ->firstOrFail();
+                $option->fill($attributes)->save();
             }
+
             $option->choices()->delete();
+
             foreach ($choices as $index => $choice) {
                 ProductOptionChoice::query()->create([
                     'product_option_id' => $option->id,
@@ -147,9 +220,7 @@ final class OptionsEditor extends Component
                     'is_active' => true,
                 ]);
             }
-        } else {
-            $option->choices()->delete();
-        }
+        });
 
         session()->flash('status', __($this->editingId ? 'admin.product_options.updated' : 'admin.product_options.created'));
         $this->resetForm();
@@ -167,20 +238,23 @@ final class OptionsEditor extends Component
         $this->resetForm();
     }
 
-    public function render()
+    public function render(ConfigurableProductOptionResolver $configurableOptions)
     {
         $this->authorize('products.update');
-        $product = Product::query()->findOrFail($this->productId);
+        $product = Product::query()->with('capabilities')->findOrFail($this->productId);
+        $extensionFields = $configurableOptions->definitions($product);
 
         return view('livewire.admin.products.options-editor', [
             'options' => $product->purchaseOptions()->with('choices')->ordered()->get(),
             'types' => ProductOptionType::cases(),
+            'extensionFields' => $extensionFields,
+            'selectedExtensionField' => $configurableOptions->definition($product, $this->key),
         ]);
     }
 
     private function resetForm(): void
     {
-        $this->reset(['showForm', 'editingId', 'key', 'label', 'choicesText', 'min', 'max']);
+        $this->reset(['showForm', 'editingId', 'key', 'label', 'choicesText', 'extensionField', 'min', 'max']);
         $this->type = ProductOptionType::Select->value;
         $this->is_required = false;
         $this->is_active = true;

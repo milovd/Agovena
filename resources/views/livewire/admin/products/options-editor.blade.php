@@ -6,6 +6,18 @@
     <div class="ag-section__body">
         @if ($showForm)
             <form wire:submit="save" class="ag-form" novalidate>
+                @if ($extensionFields !== [])
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="opt-extension-field">{{ __('admin.product_options.extension_field') }}</label>
+                        <select id="opt-extension-field" class="ag-select" wire:model.live="extensionField">
+                            <option value="">{{ __('admin.product_options.custom_field') }}</option>
+                            @foreach ($extensionFields as $field)
+                                <option value="{{ $field->key }}">{{ __($field->label) }}</option>
+                            @endforeach
+                        </select>
+                        @error('extensionField') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    </div>
+                @endif
                 <div class="ag-grid ag-grid--2">
                     <div class="ag-field">
                         <label class="ag-field__label" for="opt-label">{{ __('admin.product_options.field_label') }}</label>
@@ -14,17 +26,18 @@
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="opt-key">{{ __('admin.product_options.key') }}</label>
-                        <input id="opt-key" class="ag-input" wire:model="key" required>
+                        <input id="opt-key" class="ag-input" wire:model="key" required @readonly($extensionField !== '')>
                         <p class="ag-field__hint">{{ __('admin.product_options.provisioning_key_hint') }}</p>
                         @error('key') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="opt-type">{{ __('admin.product_options.type') }}</label>
-                        <select id="opt-type" class="ag-select" wire:model.live="type">
+                        <select id="opt-type" class="ag-select" wire:model.live="type" @disabled($selectedExtensionField?->lockType)>
                             @foreach ($types as $type)
                                 <option value="{{ $type->value }}">{{ __('admin.product_options.types.'.$type->value) }}</option>
                             @endforeach
                         </select>
+                        @error('type') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="opt-sort">{{ __('admin.product_options.sort') }}</label>
@@ -33,16 +46,27 @@
                 </div>
                 @if (in_array($type, ['select', 'radio', 'checkbox'], true))
                     <div class="ag-field">
-                        <label class="ag-field__label" for="opt-choices">{{ __('admin.product_options.choices') }}</label>
-                        <textarea id="opt-choices" class="ag-input" rows="5" wire:model="choicesText"></textarea>
-                        <p class="ag-field__help">{{ __('admin.product_options.choices_help') }}</p>
-                        @error('choicesText') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        @if ($selectedExtensionField?->dynamicChoices)
+                            <label class="ag-field__label">{{ __('admin.product_options.choices') }}</label>
+                            <p class="ag-field__help">{{ __('admin.product_options.extension_choices_help') }}</p>
+                        @else
+                            <label class="ag-field__label" for="opt-choices">{{ __('admin.product_options.choices') }}</label>
+                            <textarea id="opt-choices" class="ag-input" rows="5" wire:model="choicesText"></textarea>
+                            <p class="ag-field__help">{{ __('admin.product_options.choices_help') }}</p>
+                            @error('choicesText') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        @endif
                     </div>
                 @else
                     <div class="ag-field">
                         <label class="ag-field__label" for="opt-price">{{ __('admin.product_options.price_adjustment') }}</label>
                         <input id="opt-price" class="ag-input" type="number" min="0" wire:model.number="price_adjustment_amount">
                         <p class="ag-field__help">{{ __('admin.product_options.price_adjustment_help') }}</p>
+                    </div>
+                @endif
+                @if (in_array($type, ['text', 'textarea'], true))
+                    <div class="ag-field">
+                        <label class="ag-field__label" for="opt-max-length">{{ __('admin.product_options.max_length') }}</label>
+                        <input id="opt-max-length" class="ag-input" type="number" min="1" max="5000" wire:model.number="max_length">
                     </div>
                 @endif
                 <x-ag.switch id="opt-required" wire:model="is_required" :label="__('admin.product_options.required')" />

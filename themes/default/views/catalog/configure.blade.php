@@ -37,7 +37,7 @@
 
                 <div class="store-product__actions store-product__actions--single">
                     <button type="submit" class="store-btn store-btn--primary store-btn--lg" wire:loading.attr="disabled" wire:target="continueConfiguration">
-                        <span wire:loading.remove wire:target="continueConfiguration">{{ __('storefront.continue') }}</span>
+                        <span wire:loading.remove wire:target="continueConfiguration">{{ __('storefront.checkout.continue') }}</span>
                         <span wire:loading wire:target="continueConfiguration">{{ __('storefront.product.working') }}</span>
                     </button>
                 </div>

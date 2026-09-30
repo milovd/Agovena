@@ -68,7 +68,7 @@ test('configuration page validates options before adding the configured product 
     $this->get(route('storefront.product.configure', $product->slug))
         ->assertOk()
         ->assertSee(__('storefront.product.configure_title', ['product' => $product->name]), false)
-        ->assertSee(__('storefront.continue'), false)
+        ->assertSee(__('storefront.checkout.continue'), false)
         ->assertDontSee(__('storefront.product.buy_now'), false)
         ->assertDontSee(__('storefront.product.add_to_cart'), false)
         ->assertSee('Location', false);
@@ -87,7 +87,7 @@ test('buy now intent is preserved through product configuration', function (): v
 
     $this->get(route('storefront.product.configure', ['slug' => $product->slug, 'intent' => 'checkout']))
         ->assertOk()
-        ->assertSee(__('storefront.continue'), false)
+        ->assertSee(__('storefront.checkout.continue'), false)
         ->assertDontSee(__('storefront.product.buy_now'), false)
         ->assertDontSee(__('storefront.product.add_to_cart'), false);
 

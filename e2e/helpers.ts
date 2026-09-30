@@ -33,15 +33,36 @@ export async function addProductToCart(page: Page, slug: string, options: Record
     await closeHeaderOverlays(page);
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeEnabled();
 
-    for (const value of Object.values(options)) {
-        const select = page.locator('.store-product__options select').first();
-        if (await select.count()) {
-            await select.selectOption(value);
+    await page.getByRole('button', { name: 'Add to cart' }).click();
+    const addedStatus = page.getByText('Added to cart.');
+    const configured = await Promise.race([
+        page.waitForURL(url => new URL(url.toString()).pathname.endsWith('/configure'), { timeout: 15_000 })
+            .then(() => true)
+            .catch(() => false),
+        addedStatus.waitFor({ state: 'visible', timeout: 15_000 })
+            .then(() => false)
+            .catch(() => false),
+    ]);
+
+    if (configured) {
+        for (const [key, value] of Object.entries(options)) {
+            const field = page.locator(`[wire\\:model\\.live="optionSelections.${key}"]`);
+            await expect(field).toBeVisible();
+            const tagName = await field.evaluate(element => element.tagName.toLowerCase());
+            if (tagName === 'select') {
+                await field.selectOption(value);
+            } else {
+                await field.fill(value);
+            }
         }
+
+        await page.getByRole('button', { name: 'Continue' }).click();
+        await expect(page).toHaveURL(/\/cart$/);
+
+        return;
     }
 
-    await page.getByRole('button', { name: 'Add to cart' }).click();
-    await expect(page.getByText('Added to cart.')).toBeVisible({ timeout: 15_000 });
+    await expect(addedStatus).toBeVisible({ timeout: 15_000 });
 }
 
 export async function fillCheckoutDetails(page: Page, identity = guest): Promise<void> {

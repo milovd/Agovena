@@ -9,6 +9,7 @@ use App\Agovena\Money\CurrencyConverter;
 use App\Agovena\Money\Money;
 use App\Agovena\Money\ResolveProductPrice;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisionedProducts;
+use App\Agovena\Provisioning\Contracts\ProvidesConfigurableProductOptions;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Security\OrderItemRuntimeSecretStore;
 use App\Agovena\Security\SensitiveDataRedactor;
@@ -24,6 +25,7 @@ final class ProductOptionPricer
 {
     public function __construct(
         private readonly ProductOptionValidator $validator,
+        private readonly ConfigurableProductOptionResolver $configurableOptions,
         private readonly ResolveProductPrice $resolveProductPrice,
         private readonly ProductPriceResolverRegistry $priceResolvers,
         private readonly CurrencyConverter $converter,
@@ -167,7 +169,7 @@ final class ProductOptionPricer
                 continue;
             }
 
-            $resolved = $this->resolveOption($option, $submitted);
+            $resolved = $this->resolveOption($product, $option, $submitted, $normalized);
             if ($resolved !== null) {
                 $rows[] = $resolved;
             }
@@ -186,7 +188,7 @@ final class ProductOptionPricer
      *     price_adjustment_amount: int
      * }|null
      */
-    private function resolveOption(ProductOption $option, mixed $submitted): ?array
+    private function resolveOption(Product $product, ProductOption $option, mixed $submitted, array $selections): ?array
     {
         if ($option->type === ProductOptionType::Toggle) {
             $on = $submitted === true || $submitted === 1 || $submitted === '1';
@@ -209,13 +211,13 @@ final class ProductOptionPricer
             $amount = 0;
             $labels = [];
             foreach ($submitted as $value) {
-                $choice = $this->choice($option, (string) $value);
+                $choice = $this->choice($product, $option, (string) $value, $selections);
                 if ($choice === null) {
                     continue;
                 }
-                $choices[] = $choice->value;
-                $labels[] = $choice->label;
-                $amount += max(0, $choice->price_adjustment_amount);
+                $choices[] = $choice['value'];
+                $labels[] = $choice['label'];
+                $amount += max(0, $choice['price_adjustment_amount']);
             }
             if ($choices === []) {
                 return null;
@@ -232,7 +234,7 @@ final class ProductOptionPricer
         }
 
         if (in_array($option->type, [ProductOptionType::Select, ProductOptionType::Radio], true)) {
-            $choice = $this->choice($option, (string) $submitted);
+            $choice = $this->choice($product, $option, (string) $submitted, $selections);
             if ($choice === null) {
                 return null;
             }
@@ -241,9 +243,9 @@ final class ProductOptionPricer
                 'key' => $option->key,
                 'label' => $option->label,
                 'type' => $option->type->value,
-                'value' => $choice->value,
-                'display' => $choice->label,
-                'price_adjustment_amount' => max(0, $choice->price_adjustment_amount),
+                'value' => $choice['value'],
+                'display' => $choice['label'],
+                'price_adjustment_amount' => max(0, $choice['price_adjustment_amount']),
             ];
         }
 
@@ -262,13 +264,34 @@ final class ProductOptionPricer
         ];
     }
 
-    private function choice(ProductOption $option, string $value): ?ProductOptionChoice
+    /**
+     * @param  array<string, mixed>  $selections
+     * @return array{value: string, label: string, price_adjustment_amount: int}|null
+     */
+    private function choice(Product $product, ProductOption $option, string $value, array $selections): ?array
     {
-        $choices = $option->relationLoaded('choices') ? $option->choices : $option->choices()->get();
+        try {
+            $dynamicChoices = $this->configurableOptions->choices($product, $option, $selections);
+        } catch (ProductOptionChoicesUnavailable $exception) {
+            throw new InvalidArgumentException('Product option choices are unavailable.', previous: $exception);
+        }
 
-        return $choices->first(
+        if ($dynamicChoices !== null) {
+            return collect($dynamicChoices)->first(
+                static fn (array $choice): bool => $choice['value'] === $value,
+            );
+        }
+
+        $choices = $option->relationLoaded('choices') ? $option->choices : $option->choices()->get();
+        $choice = $choices->first(
             static fn (ProductOptionChoice $choice): bool => $choice->is_active && $choice->value === $value,
         );
+
+        return $choice === null ? null : [
+            'value' => $choice->value,
+            'label' => $choice->label,
+            'price_adjustment_amount' => max(0, $choice->price_adjustment_amount),
+        ];
     }
 
     private function isSensitiveOptionKey(string $key, ?Product $product = null): bool
@@ -285,16 +308,39 @@ final class ProductOptionPricer
             return false;
         }
 
-        $config = $product->capability('provisionable')?->runtimeConfig() ?? [];
-        $providerKey = is_string($config['provider_key'] ?? null) ? trim($config['provider_key']) : '';
-        $provider = $providerKey !== '' ? $this->provisioners->get($providerKey) : null;
-        if (! $provider instanceof ConfiguresProvisionedProducts) {
-            return $providerKey !== '';
+        $capability = $product->capability('provisionable');
+        if ($capability === null) {
+            return false;
         }
 
-        foreach ($provider->productSettings() as $definition) {
-            if ($definition->secret && $definition->key === $key) {
-                return true;
+        $config = $capability->runtimeConfig();
+        if (! is_array($config)) {
+            return true;
+        }
+
+        $providerKey = is_string($config['provider_key'] ?? null) ? trim($config['provider_key']) : '';
+        if ($providerKey === '') {
+            return true;
+        }
+
+        $provider = $this->provisioners->get($providerKey);
+        if ($provider === null) {
+            return true;
+        }
+
+        if ($provider instanceof ConfiguresProvisionedProducts) {
+            foreach ($provider->productSettings() as $definition) {
+                if ($definition->secret && $definition->key === $key) {
+                    return true;
+                }
+            }
+        }
+
+        if ($provider instanceof ProvidesConfigurableProductOptions) {
+            foreach ($provider->configurableProductOptions() as $definition) {
+                if ($definition->sensitive && $definition->key === $key) {
+                    return true;
+                }
             }
         }
 

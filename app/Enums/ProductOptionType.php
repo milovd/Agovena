@@ -11,6 +11,7 @@ enum ProductOptionType: string
     case Checkbox = 'checkbox';
     case Toggle = 'toggle';
     case Text = 'text';
+    case Textarea = 'textarea';
     case Number = 'number';
 
     public function hasChoices(): bool

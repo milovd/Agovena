@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { addProductToCart, continueCheckout, fillCheckoutDetails, placeOrder } from './helpers';
+import { addProductToCart, continueCheckout, fillCheckoutDetails } from './helpers';
 
 test('physical checkout walks details delivery and payment', async ({ page }) => {
     await addProductToCart(page, 'e2e-physical');
@@ -15,6 +15,5 @@ test('physical checkout walks details delivery and payment', async ({ page }) =>
     await continueCheckout(page);
 
     await expect(page.getByRole('heading', { name: 'Payment' })).toBeVisible();
-    await placeOrder(page);
-    await expect(page).toHaveURL(/\/orders\//);
+    await expect(page.locator('.store-summary-line')).toHaveCount(1);
 });

@@ -9,9 +9,19 @@ use Agovena\Extensions\Pterodactyl\PterodactylProviderException;
 
 final class FakePterodactylApi implements PterodactylApi
 {
+    /** @var list<string> */
+    public array $connectionPanelUrls = [];
+
+    /** @var array<string, list<array{id: int, short: string, long: string}>> */
+    public array $locationsByPanel = [];
+
     public function withConnection(array $settings): PterodactylApi
     {
-        unset($settings);
+        $panelUrl = trim((string) ($settings['panel_url'] ?? ''));
+        $this->connectionPanelUrls[] = $panelUrl;
+        if (isset($this->locationsByPanel[$panelUrl])) {
+            $this->locations = $this->locationsByPanel[$panelUrl];
+        }
 
         return $this;
     }
@@ -76,6 +86,35 @@ final class FakePterodactylApi implements PterodactylApi
     public ?array $deployableNodeOverride = null;
 
     public int $capacityCalls = 0;
+
+    /** @var list<array{id: int, short: string, long: string}> */
+    public array $locations = [
+        ['id' => 1, 'short' => 'default', 'long' => 'Default location'],
+    ];
+
+    /** @var list<array{id: int, name: string}> */
+    public array $nests = [
+        ['id' => 1, 'name' => 'Default nest'],
+    ];
+
+    /** @var array<int, list<array{id: int, name: string}>> */
+    public array $eggsByNest = [
+        1 => [
+            ['id' => 15, 'name' => 'Default egg'],
+            ['id' => 16, 'name' => 'Alternate egg'],
+        ],
+    ];
+
+    /** @var list<array{attributes: array<string, mixed>}> */
+    public array $eggVariables = [
+        ['attributes' => ['name' => 'Server Jar File', 'env_variable' => 'SERVER_JARFILE', 'default_value' => 'server.jar', 'user_viewable' => true, 'user_editable' => true, 'rules' => 'required|string|max:100']],
+        ['attributes' => ['name' => 'Minecraft Version', 'env_variable' => 'MC_VERSION', 'default_value' => '1.20', 'user_viewable' => true, 'user_editable' => true, 'rules' => 'nullable|string|in:1.20,1.21']],
+        ['attributes' => ['name' => 'Custom Setting', 'env_variable' => 'FOO', 'default_value' => '', 'user_viewable' => true, 'user_editable' => true, 'rules' => 'nullable|string']],
+        ['attributes' => ['name' => 'Fixture License', 'env_variable' => 'LEAK', 'default_value' => '', 'user_viewable' => true, 'user_editable' => true, 'rules' => 'nullable|string']],
+        ['attributes' => ['name' => 'Service License', 'env_variable' => 'FIVEM_LICENSE', 'default_value' => '', 'user_viewable' => true, 'user_editable' => true, 'rules' => 'nullable|string']],
+        ['attributes' => ['name' => 'Locked Setting', 'env_variable' => 'LOCKED_SETTING', 'default_value' => 'locked', 'user_viewable' => true, 'user_editable' => false, 'rules' => 'required|string']],
+        ['attributes' => ['name' => 'Hidden Setting', 'env_variable' => 'HIDDEN_SETTING', 'default_value' => 'hidden', 'user_viewable' => false, 'user_editable' => true, 'rules' => 'required|string']],
+    ];
 
     public function getCapacityVector(int $locationId): array
     {
@@ -144,6 +183,30 @@ final class FakePterodactylApi implements PterodactylApi
         return $this->serversById[$serverId];
     }
 
+    /** @return list<array{id: int, short: string, long: string}> */
+    public function getLocations(): array
+    {
+        $this->guardTransport();
+
+        return $this->locations;
+    }
+
+    /** @return list<array{id: int, name: string}> */
+    public function getNests(): array
+    {
+        $this->guardTransport();
+
+        return $this->nests;
+    }
+
+    /** @return list<array{id: int, name: string}> */
+    public function getEggs(int $nestId): array
+    {
+        $this->guardTransport();
+
+        return $this->eggsByNest[$nestId] ?? [];
+    }
+
     public function getEgg(int $nestId, int $eggId): array
     {
         $this->guardTransport();
@@ -157,9 +220,7 @@ final class FakePterodactylApi implements PterodactylApi
             'startup' => 'java -jar server.jar',
             'relationships' => [
                 'variables' => [
-                    'data' => [
-                        ['attributes' => ['env_variable' => 'SERVER_JARFILE', 'default_value' => 'server.jar']],
-                    ],
+                    'data' => $this->eggVariables,
                 ],
             ],
         ];

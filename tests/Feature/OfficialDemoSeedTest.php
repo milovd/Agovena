@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Physical\Enums\ShippingMethodType;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -58,6 +59,8 @@ it('seeds the official demo catalog and customer journeys without loading accoun
         ->and(DB::table('shipments')->where('tracking_number', 'DEMO-TRACK-0001')->count())->toBe(1)
         ->and(DB::table('payments')->where('status', 'failed')->count())->toBe(1)
         ->and(DB::table('payments')->where('status', 'pending')->count())->toBe(1)
+        ->and(DB::table('shipping_methods')->where('code', 'demo-parcel')->value('type'))->toBe(ShippingMethodType::Zone->value)
+        ->and(json_decode(DB::table('shipping_methods')->where('code', 'demo-parcel')->value('config'), true))->toBe(['amount' => 499])
         ->and(DB::table('agovena_modules')->whereIn('module_id', ['provisioning', 'domains', 'downloads', 'digital-delivery', 'events'])->where('enabled', true)->count())->toBe(5)
         ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['pterodactyl', 'cloudflare-domain'])->where('enabled', true)->count())->toBe(2);
 });

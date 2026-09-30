@@ -19,12 +19,14 @@ use App\Agovena\Physical\Enums\ShippingMethodType;
 use App\Agovena\Physical\Models\ShippingMethod;
 use App\Agovena\Recurring\Models\Subscription;
 use App\Enums\ProductOptionType;
+use App\Livewire\Storefront\CheckoutPage;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
 use Illuminate\Support\Facades\Storage;
+use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
@@ -86,6 +88,17 @@ test('mixed physical digital and provisionable subscription cart checks out toge
         'sort' => 1,
         'is_active' => true,
     ]);
+    ProductOption::query()->create([
+        'product_id' => $hosted->id,
+        'key' => 'setup_notes',
+        'label' => 'Setup notes',
+        'type' => ProductOptionType::Textarea,
+        'is_required' => false,
+        'is_active' => true,
+        'sort' => 2,
+        'price_adjustment_amount' => 0,
+        'constraints' => ['max_length' => 1000],
+    ]);
 
     $method = ShippingMethod::query()->create([
         'name' => 'Mixed parcel',
@@ -109,6 +122,9 @@ test('mixed physical digital and provisionable subscription cart checks out toge
     $requirements = app(CartRequirementComposer::class)->compose($cart);
     expect($requirements->requiresShipping())->toBeTrue()
         ->and($requirements->has(CartRequirement::ShippingAddress))->toBeTrue();
+
+    Livewire::test(CheckoutPage::class)
+        ->assertSee(__('storefront.checkout.title'), false);
 
     $billing = AddressData::fromArray([
         'name' => $customer->name,
@@ -139,4 +155,57 @@ test('mixed physical digital and provisionable subscription cart checks out toge
     expect(DigitalEntitlement::query()->where('order_id', $order->id)->exists())->toBeTrue()
         ->and(Subscription::query()->where('order_id', $order->id)->exists())->toBeTrue()
         ->and(ServiceInstance::query()->where('order_id', $order->id)->exists())->toBeTrue();
+});
+
+test('digital and provisioned subscription cart renders checkout before payment', function () {
+    installAndEnableModules(['downloads', 'subscriptions', 'provisioning']);
+    $capabilities = app(ProductCapabilityManager::class);
+    Storage::fake('local');
+
+    $digital = Product::factory()->active()->create(['name' => 'Guide', 'price_amount' => 1200]);
+    $capabilities->enable($digital, 'digital');
+    $path = 'digital/'.$digital->id.'/guide.txt';
+    Storage::disk('local')->put($path, 'guide');
+    DigitalAsset::query()->create([
+        'product_id' => $digital->id,
+        'label' => 'Guide',
+        'disk' => 'local',
+        'path' => $path,
+        'filename' => 'guide.txt',
+        'download_limit' => 3,
+        'is_active' => true,
+    ]);
+
+    $hosted = Product::factory()->active()->create(['name' => 'Managed VPS', 'price_amount' => 4000]);
+    $capabilities->enable($hosted, 'subscribable', ['interval' => 'month', 'interval_count' => 1, 'trial_days' => 0]);
+    $capabilities->enable($hosted, 'provisionable', ['provider_key' => 'manual']);
+    $os = ProductOption::query()->create([
+        'product_id' => $hosted->id,
+        'key' => 'os',
+        'label' => 'Operating System',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 1,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+    ProductOptionChoice::query()->create([
+        'product_option_id' => $os->id,
+        'value' => 'ubuntu',
+        'label' => 'Ubuntu',
+        'price_adjustment_amount' => 0,
+        'sort' => 1,
+        'is_active' => true,
+    ]);
+
+    $cart = app(CartService::class);
+    $cart->add($digital->id, 1);
+    $cart->add($hosted->id, 1, ['os' => 'ubuntu']);
+
+    Livewire::test(CheckoutPage::class)
+        ->assertSee(__('storefront.checkout.title'), false)
+        ->assertSee('Guide', false)
+        ->assertSee('Managed VPS', false)
+        ->assertSee('Ubuntu', false);
 });

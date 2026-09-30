@@ -16,6 +16,7 @@ use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Physical\Enums\ShippingMethodType;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -898,9 +899,9 @@ final class AgovenaSeedDemoCommand extends Command
         $methodId = DB::table('shipping_methods')->insertGetId([
             'name' => 'Demo parcel delivery',
             'code' => 'demo-parcel',
-            'type' => 'manual',
+            'type' => ShippingMethodType::Zone->value,
             'zone_id' => $zoneId,
-            'config' => json_encode(['mode' => 'demo', 'calls_enabled' => false], JSON_THROW_ON_ERROR),
+            'config' => json_encode(['amount' => 499], JSON_THROW_ON_ERROR),
             'currency' => 'EUR',
             'is_active' => true,
             'sort' => 0,

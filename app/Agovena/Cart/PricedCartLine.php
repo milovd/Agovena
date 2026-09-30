@@ -10,6 +10,7 @@ final readonly class PricedCartLine
 {
     /**
      * @param  array<string, mixed>  $selections
+     * @param  array<string, mixed>  $safeSelections
      * @param  list<array{key: string, label: string, display: string}>  $optionLabels
      */
     public function __construct(
@@ -20,6 +21,7 @@ final readonly class PricedCartLine
         public Money $lineTotal,
         public string $lineKey = '',
         public array $selections = [],
+        public array $safeSelections = [],
         public array $optionLabels = [],
         public ?string $slug = null,
         public ?string $imageUrl = null,

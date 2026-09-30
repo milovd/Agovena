@@ -125,6 +125,38 @@ it('redacts every option when its provisioner is unavailable', function (): void
         ->toBeTrue();
 });
 
+it('keeps ordinary manual provisioner selections visible in order summaries', function (): void {
+    installAndEnableModule('provisioning');
+    $product = Product::factory()->active()->create(['price_amount' => 1000]);
+    $product->capabilities()->create([
+        'capability' => 'provisionable',
+        'config' => ['provider_key' => 'manual'],
+    ]);
+    $option = ProductOption::query()->create([
+        'product_id' => $product->id,
+        'key' => 'os',
+        'label' => 'Operating system',
+        'type' => ProductOptionType::Select,
+        'is_required' => true,
+        'is_active' => true,
+        'sort' => 1,
+        'price_adjustment_amount' => 0,
+        'constraints' => [],
+    ]);
+    $option->choices()->create([
+        'value' => 'ubuntu',
+        'label' => 'Ubuntu',
+        'price_adjustment_amount' => 0,
+        'sort' => 1,
+        'is_active' => true,
+    ]);
+
+    $snapshot = app(ProductOptionPricer::class)->snapshot($product, ['os' => 'ubuntu']);
+
+    expect($snapshot[0]['value'] ?? null)->toBe('ubuntu')
+        ->and($snapshot[0]['display'] ?? null)->toBe('Ubuntu');
+});
+
 it('preserves embedded credentials from ordinary option keys in runtime secrets', function (): void {
     $product = Product::factory()->active()->create(['price_amount' => 1000]);
     ProductOption::query()->create([

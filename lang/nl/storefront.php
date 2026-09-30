@@ -386,6 +386,7 @@ return [
         'discount_currency' => 'Deze kortingscode is niet geldig voor de valuta van je winkelwagen.',
         'product_option_required' => 'Kies :option.',
         'product_option_invalid' => 'De gekozen :option is niet geldig.',
+        'product_option_choices_unavailable' => 'Opties zijn tijdelijk niet beschikbaar. Vernieuw de pagina en probeer opnieuw.',
         'product_configuration_required' => 'Deze winkelwagen bevat producten die nog geconfigureerd moeten worden.',
     ],
 

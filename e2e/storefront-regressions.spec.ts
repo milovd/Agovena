@@ -128,3 +128,39 @@ test('quantity stepper updates locally without a Livewire roundtrip per click', 
     await expect(page).toHaveURL(/\/cart$/);
     await expect(page.locator('.store-qty__input')).toHaveValue('4');
 });
+
+test('product configuration options render responsively and continue to checkout', async ({ page }) => {
+    const pageErrors: string[] = [];
+    page.on('pageerror', error => pageErrors.push(error.message));
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/products/e2e-vps/configure?intent=checkout');
+    await chooseEssentialCookies(page);
+
+    const continueButton = page.locator('.store-product__form button[type="submit"]');
+    await expect(continueButton.locator('span').first()).toHaveText('Continue');
+
+    const operatingSystem = page.locator('.store-field').filter({ hasText: 'Operating system' }).locator('select');
+    const notes = page.locator('.store-field').filter({ hasText: 'Setup notes' }).locator('textarea');
+    await expect(operatingSystem).toBeVisible();
+    await expect(notes).toBeVisible();
+    await operatingSystem.selectOption('ubuntu');
+    await notes.fill('Keep backups enabled');
+
+    const desktopForm = await page.locator('.store-product__form').boundingBox();
+    const desktopNotes = await notes.boundingBox();
+    expect(desktopForm).not.toBeNull();
+    expect(desktopNotes).not.toBeNull();
+    expect(desktopNotes!.width).toBeLessThan(desktopForm!.width);
+    await page.screenshot({ path: 'test-results/product-configure-options-desktop.png', fullPage: true });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const mobileNotes = await notes.boundingBox();
+    expect(mobileNotes).not.toBeNull();
+    expect(mobileNotes!.width).toBeLessThanOrEqual(390);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.screenshot({ path: 'test-results/product-configure-options-mobile.png', fullPage: true });
+
+    await continueButton.click();
+    await expect(page).toHaveURL(/\/checkout$/);
+    expect(pageErrors).toEqual([]);
+});
