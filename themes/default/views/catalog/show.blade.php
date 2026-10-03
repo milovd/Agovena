@@ -57,6 +57,9 @@
                         :src="currentImage()"
                         src="{{ $galleryUrls[0] }}"
                         alt="{{ $product->name }}"
+                        loading="eager"
+                        decoding="async"
+                        fetchpriority="high"
                     >
                 @else
                     <span class="store-product-card__placeholder store-product-card__placeholder--lg"></span>
@@ -91,7 +94,7 @@
                                     :aria-current="thumbAriaCurrent({{ $i }})"
                                     aria-label="{{ __('storefront.product.show_image', ['number' => $i + 1]) }}"
                                 >
-                                    <img src="{{ $url }}" alt="" loading="lazy">
+                                    <img src="{{ $url }}" alt="" loading="lazy" decoding="async" fetchpriority="low">
                                 </button>
                             </li>
                         @endforeach
@@ -147,6 +150,17 @@
             @if (($priceAvailable || $isDomainProduct) && ! $isOutOfStock)
             <form wire:submit="addToCart" class="store-product__form">
                 <div class="store-product__price-row">
+                    @if ($isDomainProduct)
+                        <p class="store-product__price store-product__price--dynamic">{{ __('storefront.product.domain_price_dynamic') }}</p>
+                    @elseif ($configuredPrice)
+                        <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
+                    @else
+                        <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
+                    @endif
+                </div>
+
+                <div class="store-product__quantity-row">
+                    <label class="store-product__quantity-label" for="quantity">{{ __('storefront.product.quantity') }}</label>
                     <div
                         class="store-qty"
                         role="group"
@@ -155,20 +169,10 @@
                         data-min="1"
                         data-max="99"
                     >
-                        <label class="visually-hidden" for="quantity">{{ __('storefront.product.quantity') }}</label>
                         <button type="button" class="store-qty__btn" @click="decrement()" aria-label="{{ __('storefront.product.decrease') }}">−</button>
                         <input id="quantity" class="store-qty__input" type="number" min="1" max="99" value="{{ $quantity }}" wire:model="quantity" x-ref="input" @change="normalize()">
                         <button type="button" class="store-qty__btn" @click="increment()" aria-label="{{ __('storefront.product.increase') }}">+</button>
                     </div>
-
-                    @if ($isDomainProduct)
-                        <p class="store-product__price store-product__price--dynamic">{{ __('storefront.product.domain_price_dynamic') }}</p>
-                    @elseif ($configuredPrice)
-                        <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
-                    @else
-                        <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
-                    @endif
-
                 </div>
 
                 <div class="store-product__actions">

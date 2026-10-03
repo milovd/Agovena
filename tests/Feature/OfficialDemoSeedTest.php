@@ -42,6 +42,11 @@ it('seeds the official demo catalog and customer journeys without loading accoun
         ->and(Order::query()->where('status', 'pending')->count())->toBe(1)
         ->and(Invoice::query()->count())->toBe(8)
         ->and(Product::query()->where('slug', 'agovena-essential-tee')->value('name'))->toBe('Agovena Merch')
+        ->and(Product::query()->where('slug', 'agovena-launch-night')->value('name'))->toBe('Concert Demo')
+        ->and(Product::query()->where('slug', 'agovena-launch-night')->value('sku'))->toBe('AGV-EVENT-DEMO')
+        ->and(Product::query()->where('slug', 'agovena-launch-night')->value('subtitle'))->toContain('fictional')
+        ->and(DB::table('events')->where('slug', 'agovena-launch-night')->value('name'))->toBe('Concert Demo')
+        ->and(DB::table('events')->where('slug', 'agovena-launch-night')->value('venue'))->toBe('Demo Venue')
         ->and(Product::query()->where('slug', 'minecraft-survival-server')->value('description'))
         ->toContain('NOT AN OFFICIAL MINECRAFT SERVICE');
 

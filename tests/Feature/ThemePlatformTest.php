@@ -1,6 +1,7 @@
 <?php
 
 use App\Agovena\Catalog\ListStorefrontProducts;
+use App\Agovena\Media\ProductMedia;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
 use App\Livewire\Admin\Appearance\Customize;
@@ -8,6 +9,7 @@ use App\Models\Category;
 use App\Models\Page;
 use App\Models\Product;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Storage;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
@@ -54,7 +56,16 @@ test('homepage renders announcement hero and featured sections', function () {
 });
 
 test('homepage keeps the storefront chrome compact and the hero deterministic', function () {
-    Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
+    expect(Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]))->toBe(0);
+    $minecraft = Product::query()->where('slug', 'minecraft-survival-server')->firstOrFail();
+    $publicDisk = Storage::disk('public');
+    expect($minecraft->image_path)->toMatch('/^demo\/minecraft-survival-server-[a-f0-9]{12}\.jpg$/')
+        ->and($publicDisk->exists($minecraft->image_path))->toBeTrue()
+        ->and(ProductMedia::primaryUrl($minecraft))->toBe('/storage/'.$minecraft->image_path);
+
+    $teeImage = Product::query()->where('slug', 'agovena-essential-tee')->firstOrFail()->image_path;
+    $domainImage = Product::query()->where('slug', 'domain-registration-and-dns-management')->firstOrFail()->image_path;
+    $pythonImage = Product::query()->where('slug', 'python-automation-starter-kit')->firstOrFail()->image_path;
 
     $html = $this->get('/')->assertOk()->getContent();
 
@@ -70,10 +81,10 @@ test('homepage keeps the storefront chrome compact and the hero deterministic', 
     expect(app(ThemeManager::class)->config()->sections()[0])->not->toHaveKey('image');
     expect(substr_count($html, 'class="store-hero__plate store-hero__plate--'))->toBe(4);
     expect($html)
-        ->toContain('/storage/demo/minecraft-survival-server.jpg')
-        ->toContain('/storage/demo/domain-registration-and-dns-management.jpg')
-        ->toContain('/storage/demo/agovena-essential-tee.jpg')
-        ->toContain('/storage/demo/python-automation-starter-kit.jpg')
+        ->toContain('/storage/'.$minecraft->image_path)
+        ->toContain('/storage/'.$domainImage)
+        ->toContain('/storage/'.$teeImage)
+        ->toContain('/storage/'.$pythonImage)
         ->toContain('Products')
         ->toContain('About Us')
         ->not->toContain('>Services</a>')
@@ -143,12 +154,17 @@ test('categories index page lists root categories', function () {
 
 test('product detail shows gallery nav and zero reviews', function () {
     Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
+    $heroImage = Product::query()->where('slug', 'minecraft-survival-server')->firstOrFail()->image_path;
 
     $this->get('/products/minecraft-survival-server')
         ->assertOk()
         ->assertSee('View 0 reviews', false)
         ->assertSee('class="store-product__gallery"', false)
-        ->assertSee('/storage/demo/minecraft-survival-server.jpg', false)
+        ->assertSee('/storage/'.$heroImage, false)
+        ->assertSee('fetchpriority="high"', false)
+        ->assertSee('loading="eager"', false)
+        ->assertSee('class="store-product__quantity-row"', false)
+        ->assertSeeInOrder(['class="store-product__rating"', 'class="store-product__lede"', 'class="store-product__price-row"', 'class="store-product__quantity-row"', 'class="store-product__actions"'], false)
         ->assertSee('x-data="storefrontProductGallery"', false)
         ->assertSee('x-data="storefrontProductPanels"', false)
         ->assertSee('Details', false)

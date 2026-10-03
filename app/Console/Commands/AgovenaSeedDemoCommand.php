@@ -390,14 +390,7 @@ final class AgovenaSeedDemoCommand extends Command
             }
         });
 
-        Storage::disk('public')->delete(array_map(static fn (string $slug): string => 'demo/'.$slug.'.jpg', [
-            'minecraft-survival-server',
-            'domain-registration-and-dns-management',
-            'agovena-essential-tee',
-            'python-automation-starter-kit',
-            'agovena-pro-license',
-            'agovena-launch-night',
-        ]));
+        // Public demo images are immutable. Deleting an in-flight image can leave a pending-deletion file on Windows.
         Storage::disk('local')->delete('demo/downloads/agovena_automation_starter.py');
     }
 
@@ -573,17 +566,17 @@ final class AgovenaSeedDemoCommand extends Command
             ],
             [
                 'key' => 'event',
-                'name' => 'Agovena Launch Night',
+                'name' => 'Concert Demo',
                 'slug' => 'agovena-launch-night',
-                'sku' => 'AGV-EVENT-LAUNCH',
-                'subtitle' => 'An official-style launch event with a downloadable customer ticket.',
-                'description' => 'A synthetic Agovena concert and product night that demonstrates event dates, performance capacity, ticket type, order fulfilment and customer ticket download.',
+                'sku' => 'AGV-EVENT-DEMO',
+                'subtitle' => 'A fictional concert example for the events and ticketing demo.',
+                'description' => 'A synthetic concert ticket that demonstrates event dates, performance capacity, ticket types, order fulfilment and customer ticket download. This is not a real event.',
                 'price' => 2999,
                 'category' => 'events',
                 'asset' => 'agovena-launch-night',
                 'specifications' => [
-                    ['label' => 'Event type', 'value' => 'Concert and product night'],
-                    ['label' => 'Venue', 'value' => 'The Foundry, Brussels'],
+                    ['label' => 'Event type', 'value' => 'Demo concert'],
+                    ['label' => 'Venue', 'value' => 'Demo Venue'],
                     ['label' => 'Ticket delivery', 'value' => 'Customer account ticket'],
                 ],
                 'capabilities' => [
@@ -1110,11 +1103,11 @@ final class AgovenaSeedDemoCommand extends Command
 
         $now = now();
         $eventId = DB::table('events')->insertGetId([
-            'name' => 'Agovena Launch Night',
+            'name' => 'Concert Demo',
             'slug' => 'agovena-launch-night',
-            'description' => 'A synthetic Agovena concert and product night for the official demo environment.',
+            'description' => 'A fictional concert example for the Agovena demo catalog. This is not a real event.',
             'status' => 'published',
-            'venue' => 'The Foundry, Brussels',
+            'venue' => 'Demo Venue',
             'starts_at' => $now->copy()->addMonth()->setTime(19, 30),
             'ends_at' => $now->copy()->addMonth()->setTime(23, 30),
             'sales_starts_at' => $now->copy()->subMonth(),
@@ -1237,8 +1230,16 @@ final class AgovenaSeedDemoCommand extends Command
             throw new \RuntimeException('Demo asset is missing: '.$source);
         }
 
-        $relative = 'demo/'.$slug.'.jpg';
-        Storage::disk('public')->put($relative, File::get($source));
+        $hash = hash_file('sha256', $source);
+        if (! is_string($hash)) {
+            throw new \RuntimeException('Demo asset could not be read: '.$source);
+        }
+
+        $relative = 'demo/'.$slug.'-'.substr($hash, 0, 12).'.jpg';
+        $disk = Storage::disk('public');
+        if (! $disk->exists($relative) && ! $disk->put($relative, File::get($source))) {
+            throw new \RuntimeException('Demo asset could not be stored: '.$relative);
+        }
 
         return $relative;
     }

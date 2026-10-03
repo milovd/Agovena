@@ -32,73 +32,53 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
     const quantity = page.locator('#quantity');
     await expect(quantity).toHaveValue('1');
     const priceRow = page.locator('.store-product__price-row');
-    await expect(priceRow).toHaveCSS('display', 'flex');
-    const priceBox = await priceRow.locator('.store-product__price').boundingBox();
-    const quantityBox = await priceRow.locator('.store-qty').boundingBox();
-    expect(priceBox).not.toBeNull();
-    expect(quantityBox).not.toBeNull();
-    expect(quantityBox!.x).toBeLessThan(priceBox!.x);
-    expect(Math.abs(priceBox!.y - quantityBox!.y)).toBeLessThanOrEqual(2);
+    const quantityRow = page.locator('.store-product__quantity-row');
+    await expect(quantityRow.getByText('Quantity')).toBeVisible();
+    const mainImage = page.locator('.store-product__media img');
+    await expect(mainImage).toHaveAttribute('fetchpriority', 'high');
+    await expect(mainImage).toHaveAttribute('loading', 'eager');
+    await expect(mainImage).toHaveAttribute('src', /gallery-1\.png$/);
+
+    const checkProductSpacing = async (maxGap: number) => {
+        const media = await page.locator('.store-product__media').boundingBox();
+        const info = await page.locator('.store-product__info').boundingBox();
+        const title = await page.locator('.store-product__title').boundingBox();
+        const rating = await page.locator('.store-product__rating').boundingBox();
+        const price = await priceRow.boundingBox();
+        const quantityControl = await quantityRow.boundingBox();
+        expect(media && info && title && rating && price && quantityControl).toBeTruthy();
+        expect(rating!.y - (title!.y + title!.height)).toBeGreaterThanOrEqual(0);
+        expect(rating!.y - (title!.y + title!.height)).toBeLessThanOrEqual(12);
+        expect(quantityControl!.y - (price!.y + price!.height)).toBeGreaterThanOrEqual(0);
+        expect(quantityControl!.y - (price!.y + price!.height)).toBeLessThanOrEqual(20);
+        if (media!.x < info!.x) {
+            expect(info!.x - (media!.x + media!.width)).toBeLessThanOrEqual(maxGap);
+        }
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    };
+    await checkProductSpacing(32);
 
     await page.getByRole('button', { name: 'Increase quantity' }).click();
     await expect(quantity).toHaveValue('2');
-
     await page.getByRole('button', { name: 'Decrease quantity' }).click();
     await expect(quantity).toHaveValue('1');
 
     const thumbnails = page.locator('.store-product__thumb');
     await expect(thumbnails).toHaveCount(3);
-    const mainImage = page.locator('.store-product__media img');
-    await expect(mainImage).toHaveAttribute('src', /gallery-1\.png$/);
-    const desktopMediaBox = await page.locator('.store-product__media').boundingBox();
-    const layoutBox = await page.locator('.store-product__layout').boundingBox();
-    expect(desktopMediaBox).not.toBeNull();
-    expect(layoutBox).not.toBeNull();
-    expect(desktopMediaBox!.width).toBeLessThanOrEqual(480);
-    expect(Math.abs(desktopMediaBox!.x - layoutBox!.x)).toBeLessThanOrEqual(2);
-
     await thumbnails.nth(1).click();
     await expect(mainImage).toHaveAttribute('src', /gallery-2\.png$/);
     await expect(thumbnails.nth(1)).toHaveAttribute('aria-current', 'true');
 
-    const perksBox = await page.locator('.store-product__perks').boundingBox();
-    const actionsBox = await page.locator('.store-product__actions').boundingBox();
-    expect(perksBox).not.toBeNull();
-    expect(actionsBox).not.toBeNull();
-    expect(Math.abs((perksBox!.y + perksBox!.height) - (desktopMediaBox!.y + desktopMediaBox!.height))).toBeLessThanOrEqual(2);
-    expect(perksBox!.y - (actionsBox!.y + actionsBox!.height)).toBeGreaterThanOrEqual(40);
+    const perks = await page.locator('.store-product__perks').boundingBox();
+    const actions = await page.locator('.store-product__actions').boundingBox();
+    expect(perks && actions).toBeTruthy();
+    expect(perks!.y - (actions!.y + actions!.height)).toBeGreaterThanOrEqual(16);
+    expect(perks!.y - (actions!.y + actions!.height)).toBeLessThanOrEqual(32);
 
     await page.setViewportSize({ width: 768, height: 980 });
-    const tabletMediaBox = await page.locator('.store-product__media').boundingBox();
-    const tabletLayoutBox = await page.locator('.store-product__layout').boundingBox();
-    const tabletPerksBox = await page.locator('.store-product__perks').boundingBox();
-    const tabletQuantityBox = await priceRow.locator('.store-qty').boundingBox();
-    const tabletPriceBox = await priceRow.locator('.store-product__price').boundingBox();
-    expect(tabletMediaBox).not.toBeNull();
-    expect(tabletLayoutBox).not.toBeNull();
-    expect(tabletPerksBox).not.toBeNull();
-    expect(tabletQuantityBox).not.toBeNull();
-    expect(tabletPriceBox).not.toBeNull();
-    expect(Math.abs(tabletMediaBox!.x - tabletLayoutBox!.x)).toBeLessThanOrEqual(2);
-    expect(Math.abs(tabletMediaBox!.width - tabletMediaBox!.height)).toBeLessThanOrEqual(2);
-    expect(Math.abs(tabletPerksBox!.y + tabletPerksBox!.height - tabletMediaBox!.y - tabletMediaBox!.height)).toBeLessThanOrEqual(2);
-    expect(tabletQuantityBox!.x).toBeLessThan(tabletPriceBox!.x);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-
+    await checkProductSpacing(32);
     await page.setViewportSize({ width: 390, height: 844 });
-    const mobilePriceBox = await priceRow.locator('.store-product__price').boundingBox();
-    const mobileQuantityBox = await priceRow.locator('.store-qty').boundingBox();
-    expect(mobilePriceBox).not.toBeNull();
-    expect(mobileQuantityBox).not.toBeNull();
-    expect(mobileQuantityBox!.x).toBeLessThan(mobilePriceBox!.x);
-    expect(Math.abs(mobilePriceBox!.y - mobileQuantityBox!.y)).toBeLessThanOrEqual(2);
-    const mobileMediaBox = await page.locator('.store-product__media').boundingBox();
-    const mobileLayoutBox = await page.locator('.store-product__layout').boundingBox();
-    expect(mobileMediaBox).not.toBeNull();
-    expect(mobileLayoutBox).not.toBeNull();
-    expect(mobileMediaBox!.width).toBeLessThanOrEqual(390);
-    expect(Math.abs(mobileMediaBox!.x - mobileLayoutBox!.x)).toBeLessThanOrEqual(2);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await checkProductSpacing(32);
     expect(pageErrors).toEqual([]);
 });
 
