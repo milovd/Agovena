@@ -164,6 +164,8 @@ test('product detail shows gallery nav and zero reviews', function () {
         ->assertSee('fetchpriority="high"', false)
         ->assertSee('loading="eager"', false)
         ->assertSee('class="store-product__quantity-row"', false)
+        ->assertSee('class="visually-hidden" for="quantity"', false)
+        ->assertDontSee('class="store-product__quantity-label"', false)
         ->assertSeeInOrder(['class="store-product__rating"', 'class="store-product__lede"', 'class="store-product__price-row"', 'class="store-product__quantity-row"', 'class="store-product__actions"'], false)
         ->assertSee('x-data="storefrontProductGallery"', false)
         ->assertSee('x-data="storefrontProductPanels"', false)

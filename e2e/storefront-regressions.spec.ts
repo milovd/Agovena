@@ -33,7 +33,8 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
     await expect(quantity).toHaveValue('1');
     const priceRow = page.locator('.store-product__price-row');
     const quantityRow = page.locator('.store-product__quantity-row');
-    await expect(quantityRow.getByText('Quantity')).toBeVisible();
+    await expect(quantityRow.locator('label[for="quantity"]')).toHaveClass(/visually-hidden/);
+    await expect(quantityRow.locator('.store-qty__btn').first()).toHaveCSS('height', '40px');
     const mainImage = page.locator('.store-product__media img');
     await expect(mainImage).toHaveAttribute('fetchpriority', 'high');
     await expect(mainImage).toHaveAttribute('loading', 'eager');
@@ -44,15 +45,19 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
         const info = await page.locator('.store-product__info').boundingBox();
         const title = await page.locator('.store-product__title').boundingBox();
         const rating = await page.locator('.store-product__rating').boundingBox();
-        const price = await priceRow.boundingBox();
+        const lede = await page.locator('.store-product__lede').boundingBox();
+        const price = await priceRow.locator('.store-product__price').boundingBox();
         const quantityControl = await quantityRow.boundingBox();
-        expect(media && info && title && rating && price && quantityControl).toBeTruthy();
+        const actions = await page.locator('.store-product__actions').boundingBox();
+        expect(media && info && title && rating && lede && price && quantityControl && actions).toBeTruthy();
         expect(rating!.y - (title!.y + title!.height)).toBeGreaterThanOrEqual(0);
         expect(rating!.y - (title!.y + title!.height)).toBeLessThanOrEqual(12);
+        expect(price!.y - (lede!.y + lede!.height)).toBeGreaterThanOrEqual(32);
         expect(quantityControl!.y - (price!.y + price!.height)).toBeGreaterThanOrEqual(0);
-        expect(quantityControl!.y - (price!.y + price!.height)).toBeLessThanOrEqual(20);
+        expect(actions!.y - (quantityControl!.y + quantityControl!.height)).toBeGreaterThanOrEqual(20);
         if (media!.x < info!.x) {
             expect(info!.x - (media!.x + media!.width)).toBeLessThanOrEqual(maxGap);
+            expect(Math.abs(title!.y - media!.y)).toBeLessThanOrEqual(2);
         }
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
     };
@@ -72,14 +77,31 @@ test('product quantity and gallery remain interactive', async ({ page }) => {
     const perks = await page.locator('.store-product__perks').boundingBox();
     const actions = await page.locator('.store-product__actions').boundingBox();
     expect(perks && actions).toBeTruthy();
-    expect(perks!.y - (actions!.y + actions!.height)).toBeGreaterThanOrEqual(16);
-    expect(perks!.y - (actions!.y + actions!.height)).toBeLessThanOrEqual(32);
+    expect(perks!.y - (actions!.y + actions!.height)).toBeGreaterThanOrEqual(30);
+    expect(perks!.y - (actions!.y + actions!.height)).toBeLessThanOrEqual(48);
 
     await page.setViewportSize({ width: 768, height: 980 });
     await checkProductSpacing(32);
     await page.setViewportSize({ width: 390, height: 844 });
     await checkProductSpacing(32);
     expect(pageErrors).toEqual([]);
+});
+
+test('product specifications remain readable at 320px', async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 740 });
+    await page.goto('/products/e2e-physical');
+    await chooseEssentialCookies(page);
+
+    const table = page.locator('.store-product-specs__table').first();
+    const value = table.locator('dd').first();
+    await expect(value).toBeVisible();
+    const tableBox = await table.boundingBox();
+    const valueBox = await value.boundingBox();
+    expect(tableBox && valueBox).toBeTruthy();
+    expect(valueBox!.width).toBeGreaterThan(48);
+    expect(valueBox!.x + valueBox!.width).toBeLessThanOrEqual(tableBox!.x + tableBox!.width);
+    expect(await table.evaluate(element => element.scrollWidth <= element.clientWidth)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 });
 
 test('quantity stepper updates locally without a Livewire roundtrip per click', async ({ page }) => {

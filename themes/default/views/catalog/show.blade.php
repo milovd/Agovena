@@ -160,7 +160,7 @@
                 </div>
 
                 <div class="store-product__quantity-row">
-                    <label class="store-product__quantity-label" for="quantity">{{ __('storefront.product.quantity') }}</label>
+                    <label class="visually-hidden" for="quantity">{{ __('storefront.product.quantity') }}</label>
                     <div
                         class="store-qty"
                         role="group"
