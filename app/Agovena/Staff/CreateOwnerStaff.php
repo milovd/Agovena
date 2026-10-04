@@ -45,9 +45,9 @@ final class CreateOwnerStaff
             [
                 'name' => $name,
                 'password' => Hash::make($password),
-                'email_verified_at' => now(),
             ],
         );
+        $user->forceFill(['email_verified_at' => now()])->save();
 
         Role::findOrCreate('owner', User::GUARD);
         $user->syncRoles(['owner']);

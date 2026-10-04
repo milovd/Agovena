@@ -329,7 +329,9 @@ it('seeds hashed demo credentials without printing an explicitly supplied passwo
             ->and(Hash::check($password, User::query()->where('email', 'demo@agovena.com')->firstOrFail()->password))->toBeTrue()
             ->and(Hash::check($password, User::query()->where('email', 'admin@agovena.com')->firstOrFail()->password))->toBeTrue()
             ->and(User::query()->where('email', 'admin@agovena.com')->firstOrFail()->hasRole('owner', User::GUARD))->toBeTrue()
-            ->and(User::query()->where('email', 'demo@agovena.com')->firstOrFail()->getRoleNames()->all())->toBe([]);
+            ->and(User::query()->where('email', 'admin@agovena.com')->firstOrFail()->hasVerifiedEmail())->toBeTrue()
+            ->and(User::query()->where('email', 'demo@agovena.com')->firstOrFail()->getRoleNames()->all())->toBe([])
+            ->and(User::query()->where('email', 'demo@agovena.com')->firstOrFail()->hasVerifiedEmail())->toBeTrue();
     } finally {
         putenv($previous === false ? 'AGOVENA_DEMO_PASSWORD' : 'AGOVENA_DEMO_PASSWORD='.$previous);
     }
