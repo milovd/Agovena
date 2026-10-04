@@ -335,8 +335,17 @@ final class AgovenaSeedDemoCommand extends Command
         $productOptionIds = Schema::hasTable('product_options') && $productIds !== []
             ? DB::table('product_options')->whereIn('product_id', $productIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all()
             : [];
+        $capacityKeys = Schema::hasTable('provisioning_capacity_reservations') && $orderIds !== []
+            ? DB::table('provisioning_capacity_reservations')
+                ->whereIn('order_id', $orderIds)
+                ->distinct()
+                ->pluck('capacity_key')
+                ->filter(static fn ($key): bool => is_string($key) && $key !== '')
+                ->values()
+                ->all()
+            : [];
 
-        Schema::withoutForeignKeyConstraints(function () use ($deleteByIds, $productIds, $productOptionIds, $categoryIds, $userIds, $customerIds, $orderIds, $orderItemIds): void {
+        Schema::withoutForeignKeyConstraints(function () use ($deleteByIds, $productIds, $productOptionIds, $capacityKeys, $categoryIds, $userIds, $customerIds, $orderIds, $orderItemIds): void {
             $serviceIds = [];
             if (Schema::hasTable('service_instances') && ($orderIds !== [] || $productIds !== [])) {
                 $serviceIds = DB::table('service_instances')->where(function ($query) use ($orderIds, $productIds): void {
@@ -381,7 +390,7 @@ final class AgovenaSeedDemoCommand extends Command
             $deleteByIds('postnl_shipments', 'order_id', $orderIds);
             $deleteByIds('service_instance_runtime_secrets', 'service_instance_id', $serviceIds);
             $deleteByIds('provisioning_capacity_reservations', 'order_id', $orderIds);
-            $deleteByIds('provisioning_capacity_locks', 'service_instance_id', $serviceIds);
+            $deleteByIds('provisioning_capacity_locks', 'lock_key', $capacityKeys);
             $deleteByIds('service_instances', 'id', $serviceIds);
             if (Schema::hasTable('provisioning_servers')) {
                 DB::table('provisioning_servers')->where('name', 'Demo Pterodactyl Panel')->delete();
