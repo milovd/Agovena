@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Spatie\Permission\Models\Role;
 use Tests\Support\FakeMonorepoCheckout;
 
 it('seeds the official demo catalog and customer journeys without loading accounts', function (): void {
@@ -245,9 +246,11 @@ it('does not load demo identities through normal database seeding', function ():
         ->and(Product::query()->count())->toBe(0);
 });
 
-it('only replaces demo-owned records during a forced reseed', function (): void {
+it('resets all store-owned records during a forced reseed', function (): void {
     $existingUser = User::factory()->create(['email' => 'existing-history@example.test']);
     $existingCustomer = $existingUser->ensureCustomer();
+    Role::findOrCreate('owner', User::GUARD);
+    $existingUser->assignRole('owner');
     $existingProduct = Product::factory()->create(['slug' => 'existing-history-product']);
     $existingOrder = Order::factory()->create([
         'number' => 'AGO-HISTORY-0001',
@@ -262,10 +265,11 @@ it('only replaces demo-owned records during a forced reseed', function (): void 
     ]);
 
     expect($exitCode)->toBe(0, Artisan::output())
-        ->and(User::query()->whereKey($existingUser->id)->exists())->toBeTrue()
-        ->and(Customer::query()->whereKey($existingCustomer->id)->exists())->toBeTrue()
-        ->and(Product::query()->whereKey($existingProduct->id)->exists())->toBeTrue()
-        ->and(Order::query()->whereKey($existingOrder->id)->exists())->toBeTrue();
+        ->and(User::query()->whereKey($existingUser->id)->exists())->toBeFalse()
+        ->and(Customer::query()->whereKey($existingCustomer->id)->exists())->toBeFalse()
+        ->and(Product::query()->whereKey($existingProduct->id)->exists())->toBeFalse()
+        ->and(Order::query()->whereKey($existingOrder->id)->exists())->toBeFalse()
+        ->and(User::query()->where('email', 'demo-seed-test@agovena.test')->exists())->toBeTrue();
 });
 
 it('does not clear existing data when account credentials cannot be delivered non-interactively', function (): void {
@@ -323,7 +327,9 @@ it('seeds hashed demo credentials without printing an explicitly supplied passwo
             ->and(User::query()->where('email', 'demo@agovena.com')->firstOrFail()->password)->not->toBe($password)
             ->and(User::query()->where('email', 'admin@agovena.com')->firstOrFail()->password)->not->toBe($password)
             ->and(Hash::check($password, User::query()->where('email', 'demo@agovena.com')->firstOrFail()->password))->toBeTrue()
-            ->and(Hash::check($password, User::query()->where('email', 'admin@agovena.com')->firstOrFail()->password))->toBeTrue();
+            ->and(Hash::check($password, User::query()->where('email', 'admin@agovena.com')->firstOrFail()->password))->toBeTrue()
+            ->and(User::query()->where('email', 'admin@agovena.com')->firstOrFail()->hasRole('owner', User::GUARD))->toBeTrue()
+            ->and(User::query()->where('email', 'demo@agovena.com')->firstOrFail()->getRoleNames()->all())->toBe([]);
     } finally {
         putenv($previous === false ? 'AGOVENA_DEMO_PASSWORD' : 'AGOVENA_DEMO_PASSWORD='.$previous);
     }

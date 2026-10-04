@@ -20,6 +20,7 @@ use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Packages\PackageInstaller;
 use App\Agovena\Packages\PackageSource;
 use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Staff\CreateOwnerStaff;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PackageKind;
@@ -47,7 +48,6 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Spatie\Permission\Models\Permission;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
@@ -55,10 +55,10 @@ use Throwable;
 final class AgovenaSeedDemoCommand extends Command
 {
     protected $signature = 'agovena:seed-demo
-        {--force : Replace the local commerce/demo state managed by this command}
+        {--force : Reset the local store state and replace it with the official demo dataset}
         {--skip-accounts : Skip demo account creation for catalog-only automated tests}';
 
-    protected $description = 'Seed the official local Agovena demo dataset; refuses in production';
+    protected $description = 'Reset and seed the official local Agovena demo dataset; refuses in production';
 
     /** @var list<string> */
     private const DEMO_MODULES = [
@@ -76,75 +76,100 @@ final class AgovenaSeedDemoCommand extends Command
     ];
 
     /** @var list<string> */
-    private const DEMO_CATEGORY_SLUGS = [
-        'provisioning',
-        'physical-products',
-        'downloadable-products',
-        'digital-products',
+    private const DEMO_RESET_TABLES = [
+        'audit_logs',
+        'back_in_stock_subscriptions',
+        'categories',
+        'consent_event_categories',
+        'consent_events',
+        'credit_note_items',
+        'credit_notes',
+        'customer_addresses',
+        'customer_credit_accounts',
+        'customer_credit_entries',
+        'customer_password_reset_tokens',
+        'customer_property_definitions',
+        'customer_property_values',
+        'customers',
+        'digital_assets',
+        'digital_entitlements',
+        'digital_secret_deliveries',
+        'digital_secret_items',
+        'discount_codes',
+        'discount_redemptions',
+        'domain_registrations',
+        'email_logs',
+        'event_performances',
+        'event_ticket_types',
+        'event_tickets',
         'events',
-        'game-hosting',
-        'domain-services',
-        'phones',
-        'android',
-        'audio',
-        'apparel',
-        'home',
-        'digital',
-        'services',
-        'accessories',
-        'iphone',
-    ];
+        'import_identity_reservations',
+        'import_rows',
+        'import_runs',
+        'inventory_reservations',
+        'inventory_stocks',
+        'invoice_items',
+        'invoices',
+        'menu_items',
+        'menus',
+        'model_has_permissions',
+        'model_has_roles',
+        'mollie_mandates',
+        'notifications',
+        'notification_preferences',
+        'oauth_identities',
+        'order_item_runtime_secrets',
+        'order_items',
+        'orders',
+        'pages',
+        'password_reset_tokens',
+        'payment_attempts',
+        'payment_webhook_events',
+        'payments',
+        'paypal_payment_authorizations',
+        'personal_access_tokens',
+        'postnl_shipments',
+        'product_capabilities',
+        'product_currency_prices',
+        'product_images',
+        'product_option_choices',
+        'product_options',
+        'product_plan_change_requests',
+        'product_plan_changes',
+        'products',
+        'provisioning_capacity_locks',
+        'provisioning_capacity_reservations',
+        'provisioning_servers',
+        'proxmox_vms',
+        'pterodactyl_servers',
+        'push_subscriptions',
+        'queue_outboxes',
+        'referral_attributions',
+        'referral_codes',
+        'referral_visits',
+        'refunds',
+        'return_request_items',
+        'return_requests',
+        'security_user_suspensions',
+        'staff_users',
+        'service_instance_runtime_secrets',
+        'service_instances',
+        'sessions',
+        'shipment_items',
+        'shipments',
+        'shipping_methods',
+        'shipping_zones',
+        'stripe_payment_authorizations',
+        'subscription_renewals',
+        'subscriptions',
+        'tax_rates',
+        'ticket_message_attachments',
+        'ticket_messages',
+        'tickets',
+        'user_notifications',
+        'users',
+        'webhook_deliveries',
 
-    /** @var list<string> */
-    private const DEMO_PRODUCT_SLUGS = [
-        'minecraft-survival-server',
-        'domain-registration-and-dns-management',
-        'agovena-essential-tee',
-        'python-automation-starter-kit',
-        'agovena-pro-license',
-        'agovena-launch-night',
-        'nova-phone-14',
-        'nova-phone-14-pro',
-        'pulse-x',
-        'iphone-15',
-        'iphone-15-pro',
-        'air-soft-buds',
-        'studio-max-headphones',
-        'clip-buds-mini',
-        'clear-case-magsafe',
-        '40w-gan-charger',
-        'braided-usb-c-cable',
-        'desk-stand-aluminum',
-        'linen-overshirt',
-        'merino-crew',
-        'canvas-tote',
-        'wireless-earbuds',
-        'ceramic-pour-over-set',
-        'oak-desk-tray',
-        'wool-throw',
-        'pattern-library-license',
-        'icon-pack-outline',
-        'starter-theme-kit',
-        'setup-consultation',
-        'managed-updates-monthly',
-        'content-migration',
-    ];
-
-    /** @var list<string> */
-    private const DEMO_USER_EMAILS = [
-        'demo@agovena.com',
-        'admin@agovena.com',
-        'demo-seed-test@agovena.test',
-    ];
-
-    /** @var list<string> */
-    private const DEMO_PAGE_SLUGS = [
-        'about',
-        'demo-guide',
-        'demo-terms',
-        'demo-privacy',
-        'terms',
-        'privacy',
     ];
 
     public function handle(): int
@@ -318,244 +343,10 @@ final class AgovenaSeedDemoCommand extends Command
 
     private function resetLocalDemoState(): void
     {
-        $productIds = DB::table('products')
-            ->whereIn('slug', self::DEMO_PRODUCT_SLUGS)
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->all();
-        $categoryIds = DB::table('categories')
-            ->whereIn('slug', self::DEMO_CATEGORY_SLUGS)
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->all();
-        $userIds = DB::table('users')
-            ->whereIn('email', self::DEMO_USER_EMAILS)
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->all();
-        $customerIds = DB::table('customers')
-            ->where(function ($query) use ($userIds): void {
-                $query->whereIn('email', self::DEMO_USER_EMAILS);
-                if ($userIds !== []) {
-                    $query->orWhereIn('user_id', $userIds);
-                }
-            })
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->all();
-
-        $orderIds = DB::table('orders')
-            ->where(function ($query) use ($customerIds): void {
-                $query->where('number', 'like', 'DEMO-%');
-                if ($customerIds !== []) {
-                    $query->orWhereIn('customer_id', $customerIds);
-                }
-            })
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->all();
-        if ($productIds !== []) {
-            $orderIds = array_values(array_unique(array_merge(
-                $orderIds,
-                DB::table('order_items')->whereIn('product_id', $productIds)->pluck('order_id')->all(),
-            )));
-        }
-        $orderItemIds = $orderIds === []
-            ? []
-            : DB::table('order_items')->whereIn('order_id', $orderIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all();
-
-        $deleteByIds = static function (string $table, string $column, array $ids): void {
-            if ($ids !== [] && Schema::hasTable($table)) {
-                DB::table($table)->whereIn($column, $ids)->delete();
-            }
-        };
-
-        $productOptionIds = Schema::hasTable('product_options') && $productIds !== []
-            ? DB::table('product_options')->whereIn('product_id', $productIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all()
-            : [];
-        $capacityKeys = Schema::hasTable('provisioning_capacity_reservations') && $orderIds !== []
-            ? DB::table('provisioning_capacity_reservations')
-                ->whereIn('order_id', $orderIds)
-                ->distinct()
-                ->pluck('capacity_key')
-                ->filter(static fn ($key): bool => is_string($key) && $key !== '')
-                ->values()
-                ->all()
-            : [];
-
-        Schema::withoutForeignKeyConstraints(function () use ($deleteByIds, $productIds, $productOptionIds, $capacityKeys, $categoryIds, $userIds, $customerIds, $orderIds, $orderItemIds): void {
-            $serviceIds = [];
-            if (Schema::hasTable('service_instances') && ($orderIds !== [] || $productIds !== [])) {
-                $serviceIds = DB::table('service_instances')->where(function ($query) use ($orderIds, $productIds): void {
-                    if ($orderIds !== []) {
-                        $query->whereIn('order_id', $orderIds);
-                    }
-                    if ($productIds !== []) {
-                        $query->orWhereIn('product_id', $productIds);
-                    }
-                })->pluck('id')->map(static fn ($id): int => (int) $id)->all();
-            }
-            $shipmentIds = Schema::hasTable('shipments') && $orderIds !== []
-                ? DB::table('shipments')->whereIn('order_id', $orderIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all()
-                : [];
-            $invoiceIds = Schema::hasTable('invoices') && $orderIds !== []
-                ? DB::table('invoices')->whereIn('order_id', $orderIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all()
-                : [];
-            $creditNoteIds = Schema::hasTable('credit_notes') && $orderIds !== []
-                ? DB::table('credit_notes')->whereIn('order_id', $orderIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all()
-                : [];
-            $ticketIds = Schema::hasTable('tickets') && $orderIds !== []
-                ? DB::table('tickets')->whereIn('order_id', $orderIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all()
-                : [];
-            $returnRequestIds = Schema::hasTable('return_requests') && $orderIds !== []
-                ? DB::table('return_requests')->whereIn('order_id', $orderIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all()
-                : [];
-            $eventIds = Schema::hasTable('events')
-                ? DB::table('events')->where('slug', 'agovena-launch-night')->pluck('id')->map(static fn ($id): int => (int) $id)->all()
-                : [];
-
-            $deleteByIds('event_tickets', 'order_id', $orderIds);
-            $deleteByIds('event_tickets', 'event_id', $eventIds);
-            $deleteByIds('event_ticket_types', 'event_id', $eventIds);
-            $deleteByIds('event_performances', 'event_id', $eventIds);
-            $deleteByIds('events', 'id', $eventIds);
-
-            $deleteByIds('digital_secret_deliveries', 'order_id', $orderIds);
-            $deleteByIds('digital_secret_items', 'product_id', $productIds);
-            $deleteByIds('digital_entitlements', 'order_id', $orderIds);
-            $deleteByIds('digital_assets', 'product_id', $productIds);
-            $deleteByIds('domain_registrations', 'order_id', $orderIds);
-            $deleteByIds('postnl_shipments', 'order_id', $orderIds);
-            $deleteByIds('service_instance_runtime_secrets', 'service_instance_id', $serviceIds);
-            $deleteByIds('provisioning_capacity_reservations', 'order_id', $orderIds);
-            $deleteByIds('provisioning_capacity_locks', 'lock_key', $capacityKeys);
-            $deleteByIds('service_instances', 'id', $serviceIds);
-            if (Schema::hasTable('provisioning_servers')) {
-                DB::table('provisioning_servers')->where('name', 'Demo Pterodactyl Panel')->delete();
-            }
-
-            $deleteByIds('shipment_items', 'shipment_id', $shipmentIds);
-            $deleteByIds('shipments', 'id', $shipmentIds);
-            if (Schema::hasTable('shipping_methods')) {
-                DB::table('shipping_methods')->where('code', 'demo-parcel')->delete();
-            }
-            if (Schema::hasTable('shipping_zones')) {
-                DB::table('shipping_zones')->where('name', 'Demo Belgium')->delete();
-            }
-            $deleteByIds('return_request_items', 'return_request_id', $returnRequestIds);
-            $deleteByIds('return_requests', 'id', $returnRequestIds);
-            $deleteByIds('invoice_items', 'invoice_id', $invoiceIds);
-            $deleteByIds('invoices', 'id', $invoiceIds);
-            $deleteByIds('credit_note_items', 'credit_note_id', $creditNoteIds);
-            $deleteByIds('credit_notes', 'id', $creditNoteIds);
-            $deleteByIds('refunds', 'order_id', $orderIds);
-            $deleteByIds('payment_attempts', 'order_id', $orderIds);
-            $deleteByIds('payments', 'order_id', $orderIds);
-            $deleteByIds('discount_redemptions', 'order_id', $orderIds);
-            $deleteByIds('product_plan_change_requests', 'order_id', $orderIds);
-            $deleteByIds('product_plan_changes', 'from_product_id', $productIds);
-            $deleteByIds('product_plan_changes', 'to_product_id', $productIds);
-            $deleteByIds('subscription_renewals', 'order_id', $orderIds);
-            $deleteByIds('subscriptions', 'order_id', $orderIds);
-            $deleteByIds('ticket_messages', 'ticket_id', $ticketIds);
-            $deleteByIds('tickets', 'id', $ticketIds);
-            $deleteByIds('inventory_reservations', 'order_id', $orderIds);
-            $deleteByIds('referral_attributions', 'order_id', $orderIds);
-            $deleteByIds('order_item_runtime_secrets', 'order_item_id', $orderItemIds);
-            $deleteByIds('order_address_snapshots', 'order_id', $orderIds);
-            $deleteByIds('order_items', 'id', $orderItemIds);
-            $deleteByIds('orders', 'id', $orderIds);
-
-            $deleteByIds('product_option_choices', 'product_option_id', $productOptionIds);
-            $deleteByIds('product_options', 'id', $productOptionIds);
-            if (Schema::hasTable('product_option_choices') && Schema::hasTable('product_options')) {
-                DB::table('product_option_choices')->whereNotExists(function ($query): void {
-                    $query->select(DB::raw(1))
-                        ->from('product_options')
-                        ->whereColumn('product_options.id', 'product_option_choices.product_option_id');
-                })->delete();
-            }
-            $deleteByIds('product_capabilities', 'product_id', $productIds);
-            $deleteByIds('product_images', 'product_id', $productIds);
-            $deleteByIds('product_currency_prices', 'product_id', $productIds);
-            $deleteByIds('inventory_stocks', 'product_id', $productIds);
-            $deleteByIds('products', 'id', $productIds);
-            if (Schema::hasTable('categories') && $categoryIds !== []) {
-                DB::table('categories')->whereIn('id', $categoryIds)->whereNotExists(function ($query): void {
-                    $query->select(DB::raw(1))->from('products')->whereColumn('products.category_id', 'categories.id');
-                })->delete();
-            }
-
-            $deleteByIds('customer_addresses', 'customer_id', $customerIds);
-            $deleteByIds('customer_property_values', 'customer_id', $customerIds);
-            $deleteByIds('customer_credit_entries', 'customer_id', $customerIds);
-            $deleteByIds('customer_credit_accounts', 'customer_id', $customerIds);
-            $deleteByIds('consent_events', 'user_id', $userIds);
-            $deleteByIds('oauth_identities', 'user_id', $userIds);
-            $deleteByIds('security_user_suspensions', 'user_id', $userIds);
-            $deleteByIds('security_ip_rules', 'created_by', $userIds);
-            $deleteByIds('notification_preferences', 'user_id', $userIds);
-            $deleteByIds('push_subscriptions', 'user_id', $userIds);
-            $deleteByIds('user_notifications', 'user_id', $userIds);
-            $deleteByIds('notifications', 'notifiable_id', $userIds);
-            if ($userIds !== []) {
-                if (Schema::hasTable('model_has_permissions')) {
-                    DB::table('model_has_permissions')->where('model_type', User::class)->whereIn('model_id', $userIds)->delete();
-                }
-                if (Schema::hasTable('model_has_roles')) {
-                    DB::table('model_has_roles')->where('model_type', User::class)->whereIn('model_id', $userIds)->delete();
-                }
-                $deleteByIds('personal_access_tokens', 'tokenable_id', $userIds);
-            }
-            $deleteByIds('customers', 'id', $customerIds);
-            $deleteByIds('users', 'id', $userIds);
-
-            $demoPageIds = Schema::hasTable('pages')
-                ? DB::table('pages')->whereIn('slug', self::DEMO_PAGE_SLUGS)->where(function ($query): void {
-                    $query->where('body', 'like', '%official local demo dataset%')
-                        ->orWhere('body', 'like', '%synthetic demo content%')
-                        ->orWhere('body', 'like', '%synthetic customer and order records%')
-                        ->orWhere('body', 'like', '%Demo content for local development%')
-                        ->orWhere('body', 'like', '%Demo terms page. Publish your own legal copy before going live.%')
-                        ->orWhere('body', 'like', '%Demo privacy page. Publish your own privacy policy before going live.%')
-                        ->orWhere('body', 'like', '%Demo electronics storefront for Agovena local development%');
-                })->pluck('id')->map(static fn ($id): int => (int) $id)->all()
-                : [];
-            $deleteByIds('menu_items', 'page_id', $demoPageIds);
-            $deleteByIds('pages', 'id', $demoPageIds);
-            if (Schema::hasTable('menu_items') && Schema::hasTable('menus')) {
-                $demoMenuIds = DB::table('menus')
-                    ->whereIn('handle', ['header', 'footer', 'footer_legal'])
-                    ->pluck('id')
-                    ->map(static fn ($id): int => (int) $id)
-                    ->all();
-                if ($demoMenuIds !== []) {
-                    DB::table('menu_items')
-                        ->whereIn('menu_id', $demoMenuIds)
-                        ->where(function ($query): void {
-                            $query->whereIn('label', [
-                                'Products',
-                                'Shop',
-                                'About',
-                                'About Us',
-                                'Demo Guide',
-                                'Demo Terms',
-                                'Demo Privacy',
-                                'Terms',
-                                'Privacy',
-                                'Cart',
-                                'Deals',
-                                'Services',
-                                'Domains',
-                            ])->orWhereIn('url', [
-                                '/',
-                                '/#catalog',
-                                '/cart',
-                                '/categories/provisioning',
-                                '/categories/events',
-                                '/domains',
-                            ]);
-                        })->delete();
+        Schema::withoutForeignKeyConstraints(function (): void {
+            foreach (self::DEMO_RESET_TABLES as $table) {
+                if (Schema::hasTable($table)) {
+                    DB::table($table)->delete();
                 }
             }
         });
@@ -849,15 +640,12 @@ final class AgovenaSeedDemoCommand extends Command
         ])->save();
         $demoUser->ensureCustomer();
 
-        $adminUser = new User;
-        $adminUser->forceFill([
-            'name' => 'Demo Admin',
-            'email' => 'admin@agovena.com',
-            'password' => $passwords->admin,
-            'email_verified_at' => now(),
-        ])->save();
+        $adminUser = app(CreateOwnerStaff::class)(
+            name: 'Demo Admin',
+            email: 'admin@agovena.com',
+            password: $passwords->admin,
+        );
         $adminUser->ensureCustomer();
-        $adminUser->syncPermissions(Permission::query()->where('guard_name', User::GUARD)->get());
 
         return $demoUser->customer()->firstOrFail();
     }
