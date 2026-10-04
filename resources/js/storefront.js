@@ -166,6 +166,17 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 
+    window.Alpine.data('storefrontBrand', () => ({
+        logoReady: false,
+        init() {
+            const logo = this.$refs.logo;
+            this.logoReady = Boolean(logo?.complete && logo.naturalWidth > 0);
+        },
+        markLogoReady() {
+            this.logoReady = true;
+        },
+    }));
+
     window.Alpine.data('storefrontHeader', () => ({
         navOpen: false,
         drawerTop: 0,

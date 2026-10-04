@@ -1,6 +1,22 @@
 import { test, expect } from '@playwright/test';
 import { chooseEssentialCookies } from './helpers';
 
+test('brand switches between the loaded logo and its fallback without inline Alpine state', async ({ page }) => {
+    const brand = page.locator('.store-brand');
+    const logo = brand.locator('.store-brand__logo');
+    const fallback = brand.locator('.store-brand__fallback');
+
+    await page.goto('/');
+    await expect(brand).toHaveClass(/is-logo-ready/);
+    await expect(fallback).toBeHidden();
+    expect(await logo.evaluate((image: HTMLImageElement) => image.naturalWidth)).toBeGreaterThan(0);
+
+    await page.route('**/*', route => route.request().resourceType() === 'image' ? route.abort() : route.continue());
+    await page.reload();
+    await expect(brand).not.toHaveClass(/is-logo-ready/);
+    await expect(fallback).toBeVisible();
+});
+
 test('category menu closes after leaving the hover region', async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));

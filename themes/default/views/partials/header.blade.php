@@ -106,8 +106,7 @@
             <a
                 class="store-brand"
                 href="{{ route('storefront.home') }}"
-                x-data="{ logoReady: false }"
-                x-init="logoReady = $refs.logo && $refs.logo.complete && $refs.logo.naturalWidth > 0"
+                x-data="storefrontBrand"
                 :class="{ 'is-logo-ready': logoReady }"
             >
                 <svg class="store-brand__fallback" x-show="!logoReady" width="40" height="40" viewBox="0 0 40 40" fill="none" aria-hidden="true">
@@ -125,7 +124,7 @@
                     loading="eager"
                     decoding="sync"
                     fetchpriority="high"
-                    @load="logoReady = true"
+                    @load="markLogoReady()"
                 >
             </a>
 
