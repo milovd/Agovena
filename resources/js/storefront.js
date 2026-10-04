@@ -171,6 +171,7 @@ document.addEventListener('alpine:init', () => {
         drawerTop: 0,
         drawerObserver: null,
         drawerFrame: null,
+        navFrame: null,
         catsOpen: false,
         mobileCatsOpen: false,
         mobileCategoryOpen: null,
@@ -195,10 +196,14 @@ document.addEventListener('alpine:init', () => {
                 viewAll: root.dataset.viewAllLabel || '',
             };
 
-            const refresh = () => this.updateDrawerTop();
+            const refresh = () => {
+                this.updateNavLayout();
+                this.updateDrawerTop();
+            };
             refresh();
             requestAnimationFrame(refresh);
             window.setTimeout(refresh, 200);
+            document.fonts?.ready.then(() => this.scheduleNavLayoutRefresh());
             if ('ResizeObserver' in window) {
                 this.drawerObserver = new ResizeObserver(refresh);
                 document.querySelectorAll('.store-usp, .store-header, .store-discover').forEach((element) => {
@@ -207,7 +212,39 @@ document.addEventListener('alpine:init', () => {
             }
         },
         handleResize() {
+            this.scheduleNavLayoutRefresh();
             this.scheduleDrawerTopRefresh();
+        },
+        updateNavLayout() {
+            const root = this.$root;
+            root.classList.remove('is-nav-compact');
+            if (window.innerWidth < 1100) return;
+
+            const inner = root.querySelector('.store-header__inner');
+            const nav = this.$refs.desktopNav;
+            const search = inner?.querySelector('.store-header__search-wrap:not(.store-header__search-wrap--mobile)');
+            const actions = inner?.querySelector('.store-header__actions');
+            if (!inner || !nav || !actions) return;
+
+            const lastLink = [...nav.querySelectorAll('.store-nav__link')].at(-1);
+            const linkRight = lastLink?.getBoundingClientRect().right ?? nav.getBoundingClientRect().right;
+            const searchRect = search?.getBoundingClientRect();
+            const actionsRect = actions.getBoundingClientRect();
+            const innerRight = inner.getBoundingClientRect().right - parseFloat(getComputedStyle(inner).paddingRight);
+            const compact = linkRight > (searchRect?.left ?? actionsRect.left) - 8
+                || (searchRect && searchRect.right > actionsRect.left - 8)
+                || actionsRect.right > innerRight + 1;
+
+            root.classList.toggle('is-nav-compact', compact);
+            if (!compact && this.navOpen) this.closeDrawer();
+            if (compact) this.closeCategories();
+        },
+        scheduleNavLayoutRefresh() {
+            if (this.navFrame !== null) return;
+            this.navFrame = requestAnimationFrame(() => {
+                this.navFrame = null;
+                this.updateNavLayout();
+            });
         },
         updateDrawerTop() {
             const chromeParts = [

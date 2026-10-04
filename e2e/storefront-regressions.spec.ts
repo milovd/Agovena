@@ -22,6 +22,92 @@ test('category menu closes after leaving the hover region', async ({ page }) => 
     expect(pageErrors).toEqual([]);
 });
 
+test('menu stays at the right of the search and cart while resizing', async ({ page }) => {
+    await page.goto('/');
+    await chooseEssentialCookies(page);
+
+    for (const width of [767, 768, 900, 1099]) {
+        await page.setViewportSize({ width, height: 900 });
+        const menu = await page.locator('.store-header__menu').boundingBox();
+        const cart = await page.locator('.store-header__cart').boundingBox();
+        const search = await page.locator(width < 768 ? '.store-header__mobile-search' : '.store-header__search-wrap:not(.store-header__search-wrap--mobile)').boundingBox();
+        expect(menu && cart && search).toBeTruthy();
+        expect(menu!.x).toBeGreaterThan(cart!.x);
+        expect(menu!.x - (search!.x + search!.width)).toBeGreaterThanOrEqual(8);
+        expect(menu!.x + menu!.width).toBeLessThanOrEqual(width);
+    }
+});
+
+test('desktop navigation keeps its links clear of the search field', async ({ page }) => {
+    await page.goto('/');
+    await chooseEssentialCookies(page);
+
+    for (const width of [1440, 1200, 1160, 1100]) {
+        await page.setViewportSize({ width, height: 900 });
+        const links = page.locator('.store-nav .store-nav__link');
+        const search = await page.locator('.store-header__search-wrap:not(.store-header__search-wrap--mobile)').boundingBox();
+        const lastLink = await links.last().boundingBox();
+        const actions = await page.locator('.store-header__actions').boundingBox();
+        expect(await links.count()).toBeGreaterThanOrEqual(3);
+        expect(search && lastLink && actions).toBeTruthy();
+        expect(search!.x - (lastLink!.x + lastLink!.width)).toBeGreaterThanOrEqual(8);
+        expect(actions!.x - (search!.x + search!.width)).toBeGreaterThanOrEqual(8);
+    }
+});
+
+test('extra navigation items move to the existing drawer when space runs out', async ({ page }) => {
+    await page.goto('/');
+    await chooseEssentialCookies(page);
+    await page.evaluate(() => {
+        const link = document.createElement('a');
+        link.href = '/products';
+        link.textContent = 'More offers';
+        link.className = 'store-nav__link';
+        document.querySelector('.store-nav')!.append(link);
+        const drawerLink = link.cloneNode(true) as HTMLAnchorElement;
+        drawerLink.classList.add('store-drawer__primary-link');
+        document.querySelector('.store-drawer__nav')!.append(drawerLink);
+    });
+
+    await page.setViewportSize({ width: 1100, height: 900 });
+    const menu = page.locator('.store-header__menu');
+    await expect(menu).toBeVisible();
+    await expect(page.locator('.store-nav')).toBeHidden();
+    const cart = await page.locator('.store-header__cart').boundingBox();
+    const menuBox = await menu.boundingBox();
+    expect(menuBox && cart).toBeTruthy();
+    expect(menuBox!.x).toBeGreaterThan(cart!.x);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+    await menu.click();
+    await expect(page.locator('#store-mobile-nav')).toBeVisible();
+    await expect(page.locator('.store-drawer__nav').getByText('More offers')).toBeVisible();
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(page.locator('.store-nav')).toBeVisible();
+    await expect(menu).toBeHidden();
+    await expect(page.locator('#store-mobile-nav')).toBeHidden();
+    await expect(page.locator('body')).not.toHaveClass(/store-drawer-open/);
+
+    await page.evaluate(() => {
+        for (let index = 0; index < 5; index++) {
+            const link = document.createElement('a');
+            link.href = '/products';
+            link.textContent = `Additional item ${index}`;
+            link.className = 'store-nav__link';
+            document.querySelector('.store-nav')!.append(link);
+            const drawerLink = link.cloneNode(true) as HTMLAnchorElement;
+            drawerLink.classList.add('store-drawer__primary-link');
+            document.querySelector('.store-drawer__nav')!.append(drawerLink);
+        }
+    });
+    await page.setViewportSize({ width: 1300, height: 900 });
+    await expect(menu).toBeVisible();
+    await expect(page.locator('.store-nav')).toBeHidden();
+    await menu.click();
+    await expect(page.locator('.store-drawer__nav').getByText('Additional item 4')).toBeVisible();
+});
+
 test('product quantity and gallery remain interactive', async ({ page }) => {
     const pageErrors: string[] = [];
     page.on('pageerror', error => pageErrors.push(error.message));
