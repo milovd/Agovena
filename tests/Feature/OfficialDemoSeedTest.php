@@ -76,6 +76,21 @@ it('seeds the official demo catalog and customer journeys without loading accoun
         ->and(json_decode(DB::table('shipping_methods')->where('code', 'demo-parcel')->value('config'), true))->toBe(['amount' => 499])
         ->and(DB::table('agovena_modules')->whereIn('module_id', ['provisioning', 'domains', 'downloads', 'digital-delivery', 'events'])->where('enabled', true)->count())->toBe(5)
         ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['pterodactyl', 'cloudflare-domain'])->where('enabled', true)->count())->toBe(2);
+
+    $memoryOptionId = DB::table('product_options')
+        ->where('product_id', Product::query()->where('slug', 'minecraft-survival-server')->value('id'))
+        ->where('key', 'memory')
+        ->value('id');
+
+    expect(DB::table('product_option_choices')
+        ->where('product_option_id', $memoryOptionId)
+        ->orderBy('value')
+        ->pluck('price_adjustment_amount', 'value')
+        ->all())->toBe([
+            '16gb' => 1000,
+            '4gb' => 0,
+            '8gb' => 300,
+        ]);
 });
 
 it('bootstraps missing demo packages from the configured monorepo', function (): void {

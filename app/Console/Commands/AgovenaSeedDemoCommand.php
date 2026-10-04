@@ -519,7 +519,7 @@ final class AgovenaSeedDemoCommand extends Command
                 'sku' => 'AGV-MC-SURVIVAL',
                 'subtitle' => 'A ready-to-configure Minecraft service plan for the Pterodactyl demo flow.',
                 'description' => 'A synthetic Minecraft hosting plan that demonstrates product options, provider mapping, service provisioning and the customer Go to server action. No real panel or server is contacted by the demo. NOT AN OFFICIAL MINECRAFT SERVICE. NOT APPROVED BY OR ASSOCIATED WITH MOJANG OR MICROSOFT.',
-                'price' => 1499,
+                'price' => 1199,
                 'category' => 'game-hosting',
                 'asset' => 'minecraft-survival-server',
                 'specifications' => [
@@ -540,7 +540,7 @@ final class AgovenaSeedDemoCommand extends Command
                     ]],
                 ],
                 'options' => [
-                    ['key' => 'memory', 'label' => 'Memory', 'type' => 'select', 'required' => true, 'choices' => [['value' => '4gb', 'label' => '4 GB', 'price' => -300], ['value' => '8gb', 'label' => '8 GB', 'price' => 0], ['value' => '16gb', 'label' => '16 GB', 'price' => 700]]],
+                    ['key' => 'memory', 'label' => 'Memory', 'type' => 'select', 'required' => true, 'choices' => [['value' => '4gb', 'label' => '4 GB', 'price' => 0], ['value' => '8gb', 'label' => '8 GB', 'price' => 300], ['value' => '16gb', 'label' => '16 GB', 'price' => 1000]]],
                     ['key' => 'region', 'label' => 'Server region', 'type' => 'radio', 'required' => true, 'choices' => [['value' => 'eu-central', 'label' => 'EU Central', 'price' => 0], ['value' => 'us-east', 'label' => 'US East', 'price' => 0]]],
                 ],
             ],

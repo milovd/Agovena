@@ -12,7 +12,7 @@ if (class_exists(Mysql::class)) {
 $defaultDatabaseConnection = env('DB_CONNECTION', 'sqlite');
 $compensationDatabase = env('DB_COMPENSATION_DATABASE', $defaultDatabaseConnection === 'sqlite'
     ? database_path('compensation-journal.sqlite')
-    : 'agovena_compensation');
+    : env('DB_DATABASE', 'laravel'));
 
 return [
 
