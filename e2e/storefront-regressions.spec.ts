@@ -38,6 +38,42 @@ test('menu stays at the right of the search and cart while resizing', async ({ p
     }
 });
 
+test('search keeps its desktop width when navigation collapses into the menu', async ({ page }) => {
+    await page.goto('/');
+    await chooseEssentialCookies(page);
+
+    const menu = page.locator('.store-header__menu');
+    const search = page.locator('.store-header__search-wrap:not(.store-header__search-wrap--mobile)');
+    const cart = page.locator('.store-header__cart');
+    const expectCompactSearch = async () => {
+        await expect(menu).toBeVisible();
+        const searchBox = await search.boundingBox();
+        const cartBox = await cart.boundingBox();
+        expect(searchBox && cartBox).toBeTruthy();
+        expect(searchBox!.width).toBeLessThanOrEqual(336);
+        expect(searchBox!.width).toBeGreaterThanOrEqual(240);
+        expect(cartBox!.x - (searchBox!.x + searchBox!.width)).toBeGreaterThanOrEqual(8);
+    };
+
+    for (const width of [768, 900, 1099]) {
+        await page.setViewportSize({ width, height: 900 });
+        await expectCompactSearch();
+    }
+
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.evaluate(() => {
+        for (let index = 0; index < 5; index++) {
+            const link = document.createElement('a');
+            link.href = '/products';
+            link.textContent = `Additional item ${index}`;
+            link.className = 'store-nav__link';
+            document.querySelector('.store-nav')!.append(link);
+        }
+    });
+    await page.setViewportSize({ width: 1300, height: 900 });
+    await expectCompactSearch();
+});
+
 test('desktop navigation keeps its links clear of the search field', async ({ page }) => {
     await page.goto('/');
     await chooseEssentialCookies(page);

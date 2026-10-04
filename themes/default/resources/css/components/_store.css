@@ -3940,8 +3940,8 @@ a.store-cart-line__name:hover {
   .store-header__search-wrap {
     grid-area: search;
     width: 100%;
-    max-width: none;
-    justify-self: stretch;
+    max-width: 20rem;
+    justify-self: end;
   }
 
   .store-header__actions {
@@ -4119,8 +4119,8 @@ a.store-cart-line__name:hover {
 
   .store-chrome.is-nav-compact .store-header__search-wrap:not(.store-header__search-wrap--mobile) {
     grid-area: search;
-    max-width: none;
-    justify-self: stretch;
+    max-width: 20rem;
+    justify-self: end;
   }
 
   .store-chrome.is-nav-compact .store-header__actions {
