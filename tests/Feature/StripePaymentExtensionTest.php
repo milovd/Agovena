@@ -803,8 +803,8 @@ test('stripe provider failures stay as safe agovena failures', function () {
 
 test('stripe network timeout does not leak secrets into logs', function () {
     $api = enableStripe();
-    $api->timeout = true;
     $payment = placeStripeOrder();
+    $api->timeout = true;
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
@@ -821,8 +821,8 @@ test('stripe network timeout does not leak secrets into logs', function () {
 
 test('stripe transport uncertainty requires payment reconciliation', function () {
     $api = enableStripe();
-    $api->unknownOutcome = true;
     $payment = placeStripeOrder();
+    $api->unknownOutcome = true;
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,
@@ -853,28 +853,25 @@ test('malformed stripe checkout response fails the attempt', function () {
     expect($attempt->status)->toBe(PaymentAttemptStatus::Failed);
 });
 
-test('stripe unauthorized and server errors fail safely without leaking secrets', function () {
+test('stripe unauthorized and server errors fail safely without leaking secrets', function (string $mode) {
     $secret = '[REDACTED]';
+    $api = enableStripe();
+    $payment = placeStripeOrder();
+    $api->{$mode} = true;
 
-    foreach (['unauthorized', 'serverError'] as $mode) {
-        $api = enableStripe();
-        $api->{$mode} = true;
-        $payment = placeStripeOrder();
+    $attempt = app(StartOrderPayment::class)->handle(
+        $payment->order,
+        'stripe',
+        'https://example.test/return',
+        'https://example.test/cancel',
+        'stripe-'.$mode.'-1',
+    );
 
-        $attempt = app(StartOrderPayment::class)->handle(
-            $payment->order,
-            'stripe',
-            'https://example.test/return',
-            'https://example.test/cancel',
-            'stripe-'.$mode.'-1',
-        );
-
-        expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
-            ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
-            ->and(json_encode($attempt->response_meta))->not->toContain($secret)
-            ->and(json_encode($attempt->response_meta))->not->toContain(STRIPE_WEBHOOK_SECRET);
-    }
-});
+    expect($attempt->status)->toBe(PaymentAttemptStatus::Failed)
+        ->and($payment->fresh()->status)->toBe(PaymentStatus::Pending)
+        ->and(json_encode($attempt->response_meta))->not->toContain($secret)
+        ->and(json_encode($attempt->response_meta))->not->toContain(STRIPE_WEBHOOK_SECRET);
+})->with(['unauthorized', 'serverError']);
 
 test('stripe health check validates credentials without exposing the key', function () {
     $api = enableStripe();

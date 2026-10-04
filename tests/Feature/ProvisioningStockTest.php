@@ -32,6 +32,7 @@ use App\Agovena\Extensions\ExtensionSettingDefinition;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\Contracts\PaymentGateway;
+use App\Agovena\Payments\HealthResult;
 use App\Agovena\Payments\PaymentGatewayCapabilities;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -160,10 +161,12 @@ function stockProduct(): Product
 }
 
 test('order snapshots use effective provider option overrides for capacity', function () {
-    enableStockPterodactyl();
+    $api = enableStockPterodactyl();
+    $api->locations[] = ['id' => 2, 'short' => 'other', 'long' => 'Other location'];
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -211,6 +214,7 @@ test('order items receive an immutable provisioning snapshot at placement', func
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -421,6 +425,7 @@ test('paid provisioning uses the placement snapshot after product configuration 
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -452,6 +457,7 @@ test('paid provisioning reconciles missing quantity units idempotently', functio
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -568,6 +574,7 @@ test('checkout reserves checked capacity so it cannot be sold twice', function (
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -603,6 +610,7 @@ test('expired checkout capacity reservations are released lazily', function () {
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -638,6 +646,7 @@ test('reserve purges expired reservations without an expected quantity', functio
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -672,6 +681,7 @@ test('paid orders keep provisioning capacity reserved until release', function (
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -702,6 +712,7 @@ test('paid items that lose provisioning capability release their checkout reserv
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -741,6 +752,7 @@ test('ambiguous legacy reservations fail closed during order item cleanup', func
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -781,6 +793,7 @@ test('paid provisioning rechecks capacity after its checkout hold expires', func
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -839,6 +852,7 @@ test('server-scoped paid provisioning fails closed when its server disappears', 
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -909,6 +923,7 @@ test('same-order reservations accumulate quantity for duplicate capacity lines',
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -940,6 +955,7 @@ test('instance capacity metadata commits only the matching reservation pool', fu
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -1044,6 +1060,7 @@ test('unknown provider outcome keeps the capacity reservation for manual recover
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -1100,6 +1117,7 @@ test('failed provider provisioning releases a reservation when no external insta
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     $product = stockProduct();
@@ -1184,6 +1202,7 @@ test('mixed vector revalidation and commit use the instance fingerprint', functi
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     app(CartService::class)->add($product->id, 1);
@@ -1248,6 +1267,7 @@ test('capacity reservations aggregate mixed resource vectors in one pool', funct
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     app(CartService::class)->add($product->id, 1);

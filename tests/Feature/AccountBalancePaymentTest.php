@@ -81,6 +81,7 @@ test('full account balance payment settles without a gateway', function () {
 
 test('partial account balance without a gateway is rejected', function () {
     app(PaymentGatewayRegistry::class)->clear();
+    config(['agovena.payments.allow_development_instant_pay' => false]);
 
     $customer = Customer::factory()->create();
     $product = Product::factory()->active()->create(['price_amount' => 1000, 'currency' => 'EUR']);

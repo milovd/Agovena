@@ -34,7 +34,10 @@ function enableMollieForRuntimeTests(): ExtensionManager
     app(ExtensionManager::class)->discover();
     app()->instance(MollieApi::class, new FakeMollieApi);
 
-    return installAndEnableExtension('mollie');
+    $extensions = installAndEnableExtension('mollie');
+    app(ExtensionSettingsRepository::class)->set('mollie', 'api_key', 'test_abcdefghijklmnopqrstuvwxyz123456', secret: true);
+
+    return $extensions;
 }
 
 test('extension enable fails when extension is not installed', function () {
@@ -262,6 +265,7 @@ test('core payment contracts do not import vendor SDKs', function () {
 
 test('without payment extensions checkout offers no methods', function () {
     app(PaymentGatewayRegistry::class)->clear();
+    config(['agovena.payments.allow_development_instant_pay' => false]);
 
     expect(app(AvailablePaymentMethods::class)->ids())->toBe([]);
 });

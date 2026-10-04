@@ -23,6 +23,7 @@ use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\Contracts\PaymentGateway;
+use App\Agovena\Payments\HealthResult;
 use App\Agovena\Payments\PaymentGatewayCapabilities;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -556,6 +557,7 @@ test('server scoped provisioning uses the encrypted placement snapshot after ser
     $gateway = Mockery::mock(PaymentGateway::class);
     $gateway->shouldReceive('id')->andReturn('pending-test');
     $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
     $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
     app(PaymentGatewayRegistry::class)->register($gateway);
     app(CartService::class)->add($product->id, 1);

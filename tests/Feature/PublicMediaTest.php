@@ -63,18 +63,21 @@ test('private local-disk files are not reachable at /storage', function () {
 test('storefront html does not embed APP_URL into public media paths', function () {
     config(['app.url' => 'http://127.0.0.1:8000']);
     Storage::fake('public');
-    Storage::disk('public')->put('demo/hero-promo.jpg', 'img-bytes');
+    Storage::disk('public')->put('products/ghost.png', 'img-bytes');
+    Product::factory()->active()->create([
+        'name' => 'Ghost Phone',
+        'image_path' => 'products/ghost.png',
+    ]);
 
     $html = $this->get('/')->assertOk()->getContent();
 
-    expect($html)->toContain('/storage/demo/hero-promo.jpg')
+    expect($html)->toContain('/storage/products/ghost.png')
         ->and($html)->not->toContain('http://127.0.0.1:8000/storage/')
         ->and($html)->not->toContain('http://localhost/storage/');
 });
 
-test('homepage hero uses origin-relative storage urls when files exist', function () {
+test('homepage hero uses origin-relative product media urls when files exist', function () {
     Storage::fake('public');
-    Storage::disk('public')->put('demo/hero-promo.jpg', 'img-bytes');
     Storage::disk('public')->put('products/ghost.png', 'img-bytes');
     Product::factory()->active()->create([
         'name' => 'Ghost Phone',
@@ -83,7 +86,7 @@ test('homepage hero uses origin-relative storage urls when files exist', functio
 
     $this->get('/')
         ->assertOk()
-        ->assertSee('/storage/demo/hero-promo.jpg', false)
+        ->assertSee('<img src="/storage/products/ghost.png" alt="" loading="eager">', false)
         ->assertSee('/storage/products/ghost.png', false)
         ->assertDontSee('cdn.example.test/storage', false)
         ->assertDontSee(rtrim((string) config('app.url'), '/').'/storage/', false);

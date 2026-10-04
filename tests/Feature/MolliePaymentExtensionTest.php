@@ -398,8 +398,8 @@ test('mollie provider failures stay as safe agovena failures', function () {
 
 test('mollie network timeout does not leak secrets into logs', function () {
     $api = enableMollie();
-    $api->timeout = true;
     $payment = placeMollieOrder();
+    $api->timeout = true;
 
     $attempt = app(StartOrderPayment::class)->handle(
         $payment->order,

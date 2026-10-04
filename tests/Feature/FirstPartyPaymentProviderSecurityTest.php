@@ -32,6 +32,7 @@ function enableSecurityPaddle(?FakePaddleApi $api = null): FakePaddleApi
     installAndEnableExtension('paddle');
     $settings = app(ExtensionSettingsRepository::class);
     $settings->set('paddle', 'api_key', '[REDACTED]', secret: true);
+    $settings->set('paddle', 'client_token', 'test_fixture_token');
     $settings->set('paddle', 'webhook_secret', '[REDACTED]', secret: true);
     $settings->set('paddle', 'sandbox', true);
 
