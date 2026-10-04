@@ -332,7 +332,11 @@ final class AgovenaSeedDemoCommand extends Command
             }
         };
 
-        Schema::withoutForeignKeyConstraints(function () use ($deleteByIds, $productIds, $categoryIds, $userIds, $customerIds, $orderIds, $orderItemIds): void {
+        $productOptionIds = Schema::hasTable('product_options') && $productIds !== []
+            ? DB::table('product_options')->whereIn('product_id', $productIds)->pluck('id')->map(static fn ($id): int => (int) $id)->all()
+            : [];
+
+        Schema::withoutForeignKeyConstraints(function () use ($deleteByIds, $productIds, $productOptionIds, $categoryIds, $userIds, $customerIds, $orderIds, $orderItemIds): void {
             $serviceIds = [];
             if (Schema::hasTable('service_instances') && ($orderIds !== [] || $productIds !== [])) {
                 $serviceIds = DB::table('service_instances')->where(function ($query) use ($orderIds, $productIds): void {
@@ -415,8 +419,8 @@ final class AgovenaSeedDemoCommand extends Command
             $deleteByIds('order_items', 'id', $orderItemIds);
             $deleteByIds('orders', 'id', $orderIds);
 
-            $deleteByIds('product_option_choices', 'product_id', $productIds);
-            $deleteByIds('product_options', 'product_id', $productIds);
+            $deleteByIds('product_option_choices', 'product_option_id', $productOptionIds);
+            $deleteByIds('product_options', 'id', $productOptionIds);
             $deleteByIds('product_capabilities', 'product_id', $productIds);
             $deleteByIds('product_images', 'product_id', $productIds);
             $deleteByIds('product_currency_prices', 'product_id', $productIds);

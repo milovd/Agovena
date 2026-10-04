@@ -93,6 +93,23 @@ it('seeds the official demo catalog and customer journeys without loading accoun
         ]);
 });
 
+it('can replace the demo catalog during a forced reseed', function (): void {
+    expect(Artisan::call('agovena:seed-demo', [
+        '--force' => true,
+        '--skip-accounts' => true,
+    ]))->toBe(0, Artisan::output());
+
+    expect(Artisan::call('agovena:seed-demo', [
+        '--force' => true,
+        '--skip-accounts' => true,
+    ]))->toBe(0, Artisan::output())
+        ->and(Product::query()->where('slug', 'minecraft-survival-server')->count())->toBe(1);
+
+    $reseededMinecraftProductId = Product::query()->where('slug', 'minecraft-survival-server')->value('id');
+
+    expect(DB::table('product_options')->where('product_id', $reseededMinecraftProductId)->count())->toBe(2);
+});
+
 it('bootstraps missing demo packages from the configured monorepo', function (): void {
     $optionalRoot = optionalPackagesRoot();
     $configuredPath = config('agovena.packages.optional_packages_path');
