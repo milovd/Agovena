@@ -271,7 +271,7 @@ final class AgovenaSeedDemoCommand extends Command
             $detail = trim($exception->getMessage());
             throw new \RuntimeException(
                 'Required demo '.strtolower($kind->value).' '.$packageId
-                .' is not available and could not be installed from the configured optional-packages monorepo.'
+                .' could not be prepared. The package may be missing or its installation/migrations failed.'
                 .($detail !== '' ? ' Detail: '.$detail : ''),
                 previous: $exception,
             );
