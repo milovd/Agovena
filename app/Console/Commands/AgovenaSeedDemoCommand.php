@@ -17,9 +17,13 @@ use Agovena\Modules\Provisioning\Models\ServiceInstance;
 use App\Agovena\Demo\DemoAccountPasswords;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Packages\PackageInstaller;
+use App\Agovena\Packages\PackageSource;
 use App\Agovena\Physical\Enums\ShippingMethodType;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PackageKind;
+use App\Enums\PackageSourceType;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Models\Category;
@@ -142,8 +146,9 @@ final class AgovenaSeedDemoCommand extends Command
         }
 
         try {
-            $this->ensureDemoModules();
-            $this->ensureDemoExtensions();
+            $installer = app(PackageInstaller::class);
+            $this->ensureDemoModules($installer);
+            $this->ensureDemoExtensions($installer);
             $this->resetLocalDemoState();
 
             DB::transaction(function () use ($passwords): void {
@@ -187,13 +192,20 @@ final class AgovenaSeedDemoCommand extends Command
         return $value;
     }
 
-    private function ensureDemoModules(): void
+    private function ensureDemoModules(PackageInstaller $installer): void
     {
         $manager = app(ModuleManager::class);
 
         foreach (self::DEMO_MODULES as $moduleId) {
             if ($manager->manifest($moduleId) === null) {
-                throw new \RuntimeException('Required demo module is not available: '.$moduleId);
+                $this->installDemoPackage($installer, PackageKind::Module, $moduleId);
+            }
+
+            if ($manager->manifest($moduleId) === null) {
+                throw new \RuntimeException(
+                    'Required demo module is not available: '.$moduleId
+                    .'. Configure AGOVENA_OPTIONAL_PACKAGES_PATH or AGOVENA_PACKAGES_MONOREPO_URL.',
+                );
             }
 
             if (! $manager->isInstalled($moduleId)) {
@@ -206,13 +218,28 @@ final class AgovenaSeedDemoCommand extends Command
         }
     }
 
-    private function ensureDemoExtensions(): void
+    private function ensureDemoExtensions(PackageInstaller $installer): void
     {
         $manager = app(ExtensionManager::class);
+        $allowExperimental = app()->environment(['local', 'testing']);
 
         foreach (self::DEMO_EXTENSIONS as $extensionId) {
-            if ($manager->manifest($extensionId) === null) {
-                throw new \RuntimeException('Required demo extension is not available: '.$extensionId);
+            $manifest = $manager->manifest($extensionId);
+            if ($manifest === null && $allowExperimental) {
+                $this->installDemoPackage($installer, PackageKind::Extension, $extensionId);
+                $manifest = $manager->manifest($extensionId);
+            }
+
+            if ($manifest === null) {
+                $this->warn('Skipping demo extension '.$extensionId.' because it is not installed in this environment.');
+
+                continue;
+            }
+
+            if (! $manifest->productionReady && ! $allowExperimental) {
+                $this->warn('Skipping non-production-ready demo extension '.$extensionId.' outside local/testing.');
+
+                continue;
             }
 
             if (! $manager->isInstalled($extensionId)) {
@@ -222,6 +249,30 @@ final class AgovenaSeedDemoCommand extends Command
             if (! $manager->isEnabled($extensionId)) {
                 $manager->enable($extensionId);
             }
+        }
+    }
+
+    private function installDemoPackage(PackageInstaller $installer, PackageKind $kind, string $packageId): void
+    {
+        $ref = (string) config('agovena.packages.monorepo.default_ref', 'main');
+        if ($ref === '' || $ref === '*') {
+            $ref = 'main';
+        }
+
+        try {
+            $installer->install(new PackageSource(
+                kind: $kind,
+                sourceType: PackageSourceType::Monorepo,
+                locator: '',
+                constraint: $ref,
+                composerName: $packageId,
+            ), expectedAgovenaId: $packageId);
+        } catch (Throwable $exception) {
+            throw new \RuntimeException(
+                'Required demo '.strtolower($kind->value).' '.$packageId
+                .' is not available and could not be installed from the configured optional-packages monorepo.',
+                previous: $exception,
+            );
         }
     }
 

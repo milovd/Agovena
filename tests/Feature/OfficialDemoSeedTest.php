@@ -3,6 +3,10 @@
 declare(strict_types=1);
 
 use App\Agovena\Demo\DemoAccountPasswords;
+use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Packages\MonorepoCheckout;
+use App\Agovena\Packages\MonorepoPackageMap;
 use App\Agovena\Physical\Enums\ShippingMethodType;
 use App\Models\Category;
 use App\Models\Customer;
@@ -12,8 +16,10 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
+use Tests\Support\FakeMonorepoCheckout;
 
 it('seeds the official demo catalog and customer journeys without loading accounts', function (): void {
     $exitCode = Artisan::call('agovena:seed-demo', [
@@ -70,6 +76,134 @@ it('seeds the official demo catalog and customer journeys without loading accoun
         ->and(json_decode(DB::table('shipping_methods')->where('code', 'demo-parcel')->value('config'), true))->toBe(['amount' => 499])
         ->and(DB::table('agovena_modules')->whereIn('module_id', ['provisioning', 'domains', 'downloads', 'digital-delivery', 'events'])->where('enabled', true)->count())->toBe(5)
         ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['pterodactyl', 'cloudflare-domain'])->where('enabled', true)->count())->toBe(2);
+});
+
+it('bootstraps missing demo packages from the configured monorepo', function (): void {
+    $optionalRoot = optionalPackagesRoot();
+    $configuredPath = config('agovena.packages.optional_packages_path');
+    $configuredRepository = config('agovena.packages.monorepo.repository');
+    $configuredEnvironment = app()->environment();
+    $packagesRoot = storage_path('app/packages');
+    $fake = new FakeMonorepoCheckout(app(MonorepoPackageMap::class));
+    $fake->map('https://github.com/milovd/optional-packages', $optionalRoot);
+
+    File::deleteDirectory($packagesRoot);
+    config([
+        'agovena.packages.optional_packages_path' => base_path('missing-optional-packages'),
+        'agovena.packages.monorepo.repository' => 'https://github.com/milovd/optional-packages',
+    ]);
+    app()->instance(MonorepoCheckout::class, $fake);
+    app(ModuleManager::class)->refresh();
+    app(ExtensionManager::class)->refresh();
+
+    try {
+        $exitCode = Artisan::call('agovena:seed-demo', [
+            '--force' => true,
+            '--skip-accounts' => true,
+        ]);
+
+        expect($exitCode)->toBe(0, Artisan::output())
+            ->and($fake->resolved)->toHaveCount(7)
+            ->and(File::exists(storage_path('app/packages/modules/provisioning/module.json')))->toBeTrue()
+            ->and(File::exists(storage_path('app/packages/extensions/pterodactyl/extension.json')))->toBeTrue();
+    } finally {
+        config([
+            'agovena.packages.optional_packages_path' => $configuredPath,
+            'agovena.packages.monorepo.repository' => $configuredRepository,
+        ]);
+        app()['env'] = $configuredEnvironment;
+        app()->forgetInstance(MonorepoCheckout::class);
+        File::deleteDirectory($packagesRoot);
+        app(ModuleManager::class)->refresh();
+        app(ExtensionManager::class)->refresh();
+    }
+});
+
+it('seeds a demo environment without enabling experimental provider extensions', function (): void {
+    $optionalRoot = optionalPackagesRoot();
+    $configuredPath = config('agovena.packages.optional_packages_path');
+    $configuredRepository = config('agovena.packages.monorepo.repository');
+    $configuredEnvironment = app()->environment();
+    $packagesRoot = storage_path('app/packages');
+    $fake = new FakeMonorepoCheckout(app(MonorepoPackageMap::class));
+    $fake->map('https://github.com/milovd/optional-packages', $optionalRoot);
+
+    File::deleteDirectory($packagesRoot);
+    config([
+        'agovena.packages.optional_packages_path' => base_path('missing-optional-packages'),
+        'agovena.packages.monorepo.repository' => 'https://github.com/milovd/optional-packages',
+    ]);
+    app()['env'] = 'demo';
+    app()->instance(MonorepoCheckout::class, $fake);
+    app(ModuleManager::class)->refresh();
+    app(ExtensionManager::class)->refresh();
+
+    try {
+        $exitCode = Artisan::call('agovena:seed-demo', [
+            '--force' => true,
+            '--skip-accounts' => true,
+        ]);
+
+        expect($exitCode)->toBe(0, Artisan::output())
+            ->and($fake->resolved)->toHaveCount(5)
+            ->and(File::exists(storage_path('app/packages/extensions/pterodactyl/extension.json')))->toBeFalse()
+            ->and(File::exists(storage_path('app/packages/extensions/cloudflare-domain/extension.json')))->toBeFalse()
+            ->and(DB::table('agovena_extensions')->where('enabled', true)->count())->toBe(0)
+            ->and(DB::table('agovena_modules')->whereIn('module_id', ['provisioning', 'domains', 'downloads', 'digital-delivery', 'events'])->where('enabled', true)->count())->toBe(5);
+    } finally {
+        config([
+            'agovena.packages.optional_packages_path' => $configuredPath,
+            'agovena.packages.monorepo.repository' => $configuredRepository,
+        ]);
+        app()['env'] = $configuredEnvironment;
+        app()->forgetInstance(MonorepoCheckout::class);
+        File::deleteDirectory($packagesRoot);
+        app(ModuleManager::class)->refresh();
+        app(ExtensionManager::class)->refresh();
+    }
+});
+
+it('rejects a mismatched manifest during demo package bootstrap', function (): void {
+    $optionalRoot = optionalPackagesRoot();
+    $configuredPath = config('agovena.packages.optional_packages_path');
+    $configuredRepository = config('agovena.packages.monorepo.repository');
+    $configuredPackages = config('agovena.packages.monorepo.packages');
+    $packagesRoot = storage_path('app/packages');
+    $fake = new FakeMonorepoCheckout(app(MonorepoPackageMap::class));
+    $fake->map('https://github.com/milovd/optional-packages', $optionalRoot);
+    $packageMap = $configuredPackages;
+    $packageMap['provisioning']['path'] = 'modules/downloads';
+
+    File::deleteDirectory($packagesRoot);
+    config([
+        'agovena.packages.optional_packages_path' => base_path('missing-optional-packages'),
+        'agovena.packages.monorepo.repository' => 'https://github.com/milovd/optional-packages',
+        'agovena.packages.monorepo.packages' => $packageMap,
+    ]);
+    app()->instance(MonorepoCheckout::class, $fake);
+    app(ModuleManager::class)->refresh();
+    app(ExtensionManager::class)->refresh();
+
+    try {
+        $exitCode = Artisan::call('agovena:seed-demo', [
+            '--force' => true,
+            '--skip-accounts' => true,
+        ]);
+
+        expect($exitCode)->toBe(1, Artisan::output())
+            ->and(File::exists(storage_path('app/packages/modules/provisioning/module.json')))->toBeFalse()
+            ->and(DB::table('agovena_modules')->where('module_id', 'provisioning')->exists())->toBeFalse();
+    } finally {
+        config([
+            'agovena.packages.optional_packages_path' => $configuredPath,
+            'agovena.packages.monorepo.repository' => $configuredRepository,
+            'agovena.packages.monorepo.packages' => $configuredPackages,
+        ]);
+        app()->forgetInstance(MonorepoCheckout::class);
+        File::deleteDirectory($packagesRoot);
+        app(ModuleManager::class)->refresh();
+        app(ExtensionManager::class)->refresh();
+    }
 });
 
 it('does not load demo identities through normal database seeding', function (): void {
