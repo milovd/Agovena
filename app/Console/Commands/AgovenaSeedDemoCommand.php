@@ -87,6 +87,12 @@ final class AgovenaSeedDemoCommand extends Command
         'phones',
         'android',
         'audio',
+        'apparel',
+        'home',
+        'digital',
+        'services',
+        'accessories',
+        'iphone',
     ];
 
     /** @var list<string> */
@@ -98,6 +104,30 @@ final class AgovenaSeedDemoCommand extends Command
         'agovena-pro-license',
         'agovena-launch-night',
         'nova-phone-14',
+        'nova-phone-14-pro',
+        'pulse-x',
+        'iphone-15',
+        'iphone-15-pro',
+        'air-soft-buds',
+        'studio-max-headphones',
+        'clip-buds-mini',
+        'clear-case-magsafe',
+        '40w-gan-charger',
+        'braided-usb-c-cable',
+        'desk-stand-aluminum',
+        'linen-overshirt',
+        'merino-crew',
+        'canvas-tote',
+        'wireless-earbuds',
+        'ceramic-pour-over-set',
+        'oak-desk-tray',
+        'wool-throw',
+        'pattern-library-license',
+        'icon-pack-outline',
+        'starter-theme-kit',
+        'setup-consultation',
+        'managed-updates-monthly',
+        'content-migration',
     ];
 
     /** @var list<string> */
@@ -113,6 +143,8 @@ final class AgovenaSeedDemoCommand extends Command
         'demo-guide',
         'demo-terms',
         'demo-privacy',
+        'terms',
+        'privacy',
     ];
 
     public function handle(): int
@@ -166,9 +198,15 @@ final class AgovenaSeedDemoCommand extends Command
 
         $this->info('Official Agovena demo data seeded: catalog, capabilities, customer journeys, orders, invoices, pages and menus.');
         if ($generatedPasswords && $passwords !== null) {
-            $this->warn('Save these one-time credentials in a password manager. Do not record this terminal session. Reseeding replaces both accounts and passwords.');
-            $this->line('Demo customer (demo@agovena.com): '.$passwords->customer);
-            $this->line('Demo admin (admin@agovena.com): '.$passwords->admin);
+            $this->warn('Save these credentials in a password manager. They are shown once and replaced on the next reseed.');
+            $this->newLine();
+            $this->line('Demo customer');
+            $this->line('  Email: demo@agovena.com');
+            $this->line('  Password: '.$passwords->customer);
+            $this->newLine();
+            $this->line('Demo admin');
+            $this->line('  Email: admin@agovena.com');
+            $this->line('  Password: '.$passwords->admin);
         }
 
         return self::SUCCESS;
@@ -430,6 +468,13 @@ final class AgovenaSeedDemoCommand extends Command
 
             $deleteByIds('product_option_choices', 'product_option_id', $productOptionIds);
             $deleteByIds('product_options', 'id', $productOptionIds);
+            if (Schema::hasTable('product_option_choices') && Schema::hasTable('product_options')) {
+                DB::table('product_option_choices')->whereNotExists(function ($query): void {
+                    $query->select(DB::raw(1))
+                        ->from('product_options')
+                        ->whereColumn('product_options.id', 'product_option_choices.product_option_id');
+                })->delete();
+            }
             $deleteByIds('product_capabilities', 'product_id', $productIds);
             $deleteByIds('product_images', 'product_id', $productIds);
             $deleteByIds('product_currency_prices', 'product_id', $productIds);
@@ -469,15 +514,49 @@ final class AgovenaSeedDemoCommand extends Command
                 ? DB::table('pages')->whereIn('slug', self::DEMO_PAGE_SLUGS)->where(function ($query): void {
                     $query->where('body', 'like', '%official local demo dataset%')
                         ->orWhere('body', 'like', '%synthetic demo content%')
-                        ->orWhere('body', 'like', '%synthetic customer and order records%');
+                        ->orWhere('body', 'like', '%synthetic customer and order records%')
+                        ->orWhere('body', 'like', '%Demo content for local development%')
+                        ->orWhere('body', 'like', '%Demo terms page. Publish your own legal copy before going live.%')
+                        ->orWhere('body', 'like', '%Demo privacy page. Publish your own privacy policy before going live.%')
+                        ->orWhere('body', 'like', '%Demo electronics storefront for Agovena local development%');
                 })->pluck('id')->map(static fn ($id): int => (int) $id)->all()
                 : [];
             $deleteByIds('menu_items', 'page_id', $demoPageIds);
             $deleteByIds('pages', 'id', $demoPageIds);
             if (Schema::hasTable('menu_items') && Schema::hasTable('menus')) {
-                $demoMenuIds = DB::table('menu_items')->whereIn('label', ['Demo Guide', 'Demo Terms', 'Demo Privacy'])->orWhere('url', '/categories/provisioning')->orWhere('url', '/categories/events')->pluck('menu_id')->map(static fn ($id): int => (int) $id)->all();
-                $deleteByIds('menu_items', 'menu_id', $demoMenuIds);
-                $deleteByIds('menus', 'id', $demoMenuIds);
+                $demoMenuIds = DB::table('menus')
+                    ->whereIn('handle', ['header', 'footer', 'footer_legal'])
+                    ->pluck('id')
+                    ->map(static fn ($id): int => (int) $id)
+                    ->all();
+                if ($demoMenuIds !== []) {
+                    DB::table('menu_items')
+                        ->whereIn('menu_id', $demoMenuIds)
+                        ->where(function ($query): void {
+                            $query->whereIn('label', [
+                                'Products',
+                                'Shop',
+                                'About',
+                                'About Us',
+                                'Demo Guide',
+                                'Demo Terms',
+                                'Demo Privacy',
+                                'Terms',
+                                'Privacy',
+                                'Cart',
+                                'Deals',
+                                'Services',
+                                'Domains',
+                            ])->orWhereIn('url', [
+                                '/',
+                                '/#catalog',
+                                '/cart',
+                                '/categories/provisioning',
+                                '/categories/events',
+                                '/domains',
+                            ]);
+                        })->delete();
+                }
             }
         });
 
@@ -1266,52 +1345,18 @@ final class AgovenaSeedDemoCommand extends Command
         $footer = Menu::query()->firstOrCreate(['handle' => 'footer'], ['name' => 'Footer']);
         $legal = Menu::query()->firstOrCreate(['handle' => 'footer_legal'], ['name' => 'Footer legal']);
 
-        foreach ([
-            ['label' => 'Services', 'url' => '/categories/provisioning'],
-            ['label' => 'Domains', 'url' => '/domains'],
-        ] as $legacyItem) {
-            MenuItem::query()
-                ->where('menu_id', $header->id)
-                ->where('label', $legacyItem['label'])
-                ->where('type', 'url')
-                ->where('url', $legacyItem['url'])
-                ->delete();
-        }
-
-        $legacyAbout = MenuItem::query()
-            ->where('menu_id', $header->id)
-            ->where('label', 'About')
-            ->where('type', 'page')
-            ->where('page_id', $about->id)
-            ->first();
-        if ($legacyAbout !== null && ! MenuItem::query()
-            ->where('menu_id', $header->id)
-            ->where('label', 'About Us')
-            ->where('type', 'page')
-            ->where('page_id', $about->id)
-            ->exists()) {
-            $legacyAbout->update([
-                'label' => 'About Us',
-                'sort' => 1,
-            ]);
-        }
-
-        foreach ([
-            ['label' => 'Products', 'type' => 'url', 'url' => '/#catalog', 'sort' => 0],
-            ['label' => 'About Us', 'type' => 'page', 'page_id' => $about->id, 'sort' => 1],
-        ] as $item) {
-            MenuItem::query()->firstOrCreate(
-                ['menu_id' => $header->id, 'label' => $item['label']],
-                $item + ['menu_id' => $header->id],
+        $ensureMenuItem = static function (Menu $menu, array $attributes): void {
+            MenuItem::query()->updateOrCreate(
+                ['menu_id' => $menu->id, 'label' => $attributes['label']],
+                $attributes + ['menu_id' => $menu->id],
             );
-        }
-        if ($footer->wasRecentlyCreated) {
-            MenuItem::query()->create(['menu_id' => $footer->id, 'label' => 'Demo Guide', 'type' => 'page', 'page_id' => $guide->id, 'sort' => 0]);
-        }
-        if ($legal->wasRecentlyCreated) {
-            MenuItem::query()->create(['menu_id' => $legal->id, 'label' => 'Demo Terms', 'type' => 'page', 'page_id' => $terms->id, 'sort' => 0]);
-            MenuItem::query()->create(['menu_id' => $legal->id, 'label' => 'Demo Privacy', 'type' => 'page', 'page_id' => $privacy->id, 'sort' => 1]);
-        }
+        };
+
+        $ensureMenuItem($header, ['label' => 'Products', 'type' => 'url', 'url' => '/#catalog', 'sort' => 0]);
+        $ensureMenuItem($header, ['label' => 'About Us', 'type' => 'page', 'page_id' => $about->id, 'sort' => 1]);
+        $ensureMenuItem($footer, ['label' => 'Demo Guide', 'type' => 'page', 'page_id' => $guide->id, 'sort' => 0]);
+        $ensureMenuItem($legal, ['label' => 'Demo Terms', 'type' => 'page', 'page_id' => $terms->id, 'sort' => 0]);
+        $ensureMenuItem($legal, ['label' => 'Demo Privacy', 'type' => 'page', 'page_id' => $privacy->id, 'sort' => 1]);
     }
 
     private function storeAsset(string $slug): string

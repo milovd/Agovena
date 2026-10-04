@@ -304,8 +304,8 @@ it('refuses to generate credentials for captured Artisan output', function (): v
 it('generates different high-entropy passwords for the demo customer and admin', function (): void {
     $passwords = DemoAccountPasswords::generate();
 
-    expect($passwords->customer)->toMatch('/\A[a-f0-9]{64}\z/')
-        ->and($passwords->admin)->toMatch('/\A[a-f0-9]{64}\z/')
+    expect($passwords->customer)->toMatch('/\A[A-Za-z0-9]{24}\z/')
+        ->and($passwords->admin)->toMatch('/\A[A-Za-z0-9]{24}\z/')
         ->and($passwords->customer)->not->toBe($passwords->admin);
 });
 
