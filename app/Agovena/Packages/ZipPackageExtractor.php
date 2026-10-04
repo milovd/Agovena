@@ -13,39 +13,17 @@ final class ZipPackageExtractor
 {
     public function extract(string $zipPath, PackageKind $expectedKind): ResolvedPackageOrigin
     {
-        if (is_link($zipPath) || ! is_file($zipPath)) {
-            throw ValidationException::withMessages([
-                'package' => __('admin.packages.zip_not_found'),
-            ]);
-        }
-
-        $zip = new ZipArchive;
-        $opened = $zip->open($zipPath);
-        if ($opened !== true) {
-            throw ValidationException::withMessages([
-                'package' => __('admin.packages.zip_invalid'),
-            ]);
-        }
-
         $target = null;
 
         try {
-            $this->assertArchiveSafe($zip);
             $target = $this->createExtractionDirectory();
-            if (! $zip->extractTo($target)) {
-                throw ValidationException::withMessages([
-                    'package' => __('admin.packages.zip_extract_failed'),
-                ]);
-            }
-            $this->assertExtractionTree($target);
+            $this->extractArchiveTo($zipPath, $target);
         } catch (\Throwable $exception) {
             if ($target !== null && ! $this->deleteExtractionTree($target)) {
                 throw new \RuntimeException('Package extraction cleanup did not complete.', 0, $exception);
             }
 
             throw $exception;
-        } finally {
-            $zip->close();
         }
 
         $manifest = $expectedKind === PackageKind::Module ? 'module.json' : 'extension.json';
@@ -62,6 +40,40 @@ final class ZipPackageExtractor
         }
 
         return new ResolvedPackageOrigin($packageRoot, $target);
+    }
+
+    public function extractArchiveTo(string $zipPath, string $target): void
+    {
+        if (is_link($zipPath) || ! is_file($zipPath)) {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.zip_not_found'),
+            ]);
+        }
+
+        if (is_link($target)) {
+            throw new \RuntimeException('Package archive extraction target may not use symbolic links.');
+        }
+
+        $zip = new ZipArchive;
+        $opened = $zip->open($zipPath);
+        if ($opened !== true) {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.zip_invalid'),
+            ]);
+        }
+
+        try {
+            $this->assertArchiveSafe($zip);
+            File::ensureDirectoryExists($target);
+            if (! is_dir($target) || ! $zip->extractTo($target)) {
+                throw ValidationException::withMessages([
+                    'package' => __('admin.packages.zip_extract_failed'),
+                ]);
+            }
+            $this->assertExtractionTree($target);
+        } finally {
+            $zip->close();
+        }
     }
 
     private function createExtractionDirectory(): string

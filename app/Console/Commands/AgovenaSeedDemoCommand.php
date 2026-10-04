@@ -268,9 +268,11 @@ final class AgovenaSeedDemoCommand extends Command
                 composerName: $packageId,
             ), expectedAgovenaId: $packageId);
         } catch (Throwable $exception) {
+            $detail = trim($exception->getMessage());
             throw new \RuntimeException(
                 'Required demo '.strtolower($kind->value).' '.$packageId
-                .' is not available and could not be installed from the configured optional-packages monorepo.',
+                .' is not available and could not be installed from the configured optional-packages monorepo.'
+                .($detail !== '' ? ' Detail: '.$detail : ''),
                 previous: $exception,
             );
         }

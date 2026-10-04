@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Packages;
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\Process\Process;
 
@@ -15,6 +16,7 @@ final class GitMonorepoCheckout implements MonorepoCheckout
 
     public function __construct(
         private readonly MonorepoPackageMap $packageMap,
+        private readonly ZipPackageExtractor $zipExtractor,
     ) {}
 
     public function resolve(string $repositoryUrl, string $ref, string $subdirectory, bool $refresh = true): string
@@ -24,7 +26,8 @@ final class GitMonorepoCheckout implements MonorepoCheckout
         $this->ensureCheckout($checkoutRoot, $repositoryUrl, $ref, $refresh);
         $this->verifyResolvedRef($checkoutRoot, $ref);
 
-        $packagePath = $checkoutRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $subdirectory);
+        $sourceRoot = $this->sourceRoot($checkoutRoot);
+        $packagePath = $sourceRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $subdirectory);
         $resolved = realpath($packagePath);
         if ($resolved === false || ! is_dir($resolved)) {
             throw ValidationException::withMessages([
@@ -32,7 +35,7 @@ final class GitMonorepoCheckout implements MonorepoCheckout
             ]);
         }
 
-        $root = realpath($checkoutRoot);
+        $root = realpath($sourceRoot);
         if ($root === false || ! str_starts_with($resolved, $root.DIRECTORY_SEPARATOR)) {
             throw ValidationException::withMessages([
                 'package' => __('admin.packages.monorepo_invalid_subdirectory'),
@@ -64,23 +67,29 @@ final class GitMonorepoCheckout implements MonorepoCheckout
             File::deleteDirectory($checkoutRoot);
         }
 
-        if (! is_dir($checkoutRoot.DIRECTORY_SEPARATOR.'.git')) {
+        if (! is_dir($checkoutRoot.DIRECTORY_SEPARATOR.'.git')
+            && ! is_file($checkoutRoot.DIRECTORY_SEPARATOR.'.agovena-archive-root')
+        ) {
             if (is_dir($checkoutRoot)) {
                 File::deleteDirectory($checkoutRoot);
             }
 
-            $arguments = ['clone', '--depth', '1'];
-            if (! $this->isImmutableCommit($ref)) {
-                $arguments[] = '--branch';
-                $arguments[] = $ref;
-            }
-            $arguments[] = $repositoryUrl;
-            $arguments[] = $checkoutRoot;
-            $this->run($arguments, dirname($checkoutRoot));
+            try {
+                $arguments = ['clone', '--depth', '1'];
+                if (! $this->isImmutableCommit($ref)) {
+                    $arguments[] = '--branch';
+                    $arguments[] = $ref;
+                }
+                $arguments[] = $repositoryUrl;
+                $arguments[] = $checkoutRoot;
+                $this->run($arguments, dirname($checkoutRoot));
 
-            if ($this->isImmutableCommit($ref)) {
-                $this->run(['fetch', '--depth', '1', 'origin', $ref], $checkoutRoot);
-                $this->run(['checkout', '--force', 'FETCH_HEAD'], $checkoutRoot);
+                if ($this->isImmutableCommit($ref)) {
+                    $this->run(['fetch', '--depth', '1', 'origin', $ref], $checkoutRoot);
+                    $this->run(['checkout', '--force', 'FETCH_HEAD'], $checkoutRoot);
+                }
+            } catch (\Throwable $gitException) {
+                $this->installArchiveCheckout($checkoutRoot, $repositoryUrl, $ref, $gitException);
             }
 
             $this->refreshed[$cacheKey] = true;
@@ -92,10 +101,119 @@ final class GitMonorepoCheckout implements MonorepoCheckout
             return;
         }
 
-        $this->run(['fetch', '--tags', '--depth', '1', 'origin', $ref], $checkoutRoot);
-        $this->run(['checkout', '--force', $ref], $checkoutRoot);
-        $this->run(['reset', '--hard', 'FETCH_HEAD'], $checkoutRoot);
+        try {
+            $this->run(['fetch', '--tags', '--depth', '1', 'origin', $ref], $checkoutRoot);
+            $this->run(['checkout', '--force', $ref], $checkoutRoot);
+            $this->run(['reset', '--hard', 'FETCH_HEAD'], $checkoutRoot);
+        } catch (\Throwable $gitException) {
+            File::deleteDirectory($checkoutRoot);
+            $this->installArchiveCheckout($checkoutRoot, $repositoryUrl, $ref, $gitException);
+        }
         $this->refreshed[$cacheKey] = true;
+    }
+
+    private function sourceRoot(string $checkoutRoot): string
+    {
+        $marker = $checkoutRoot.DIRECTORY_SEPARATOR.'.agovena-archive-root';
+        if (! is_file($marker)) {
+            return $checkoutRoot;
+        }
+
+        $relative = trim((string) file_get_contents($marker));
+        $checkout = realpath($checkoutRoot);
+        $root = realpath($checkoutRoot.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $relative));
+        if ($relative === ''
+            || str_starts_with($relative, DIRECTORY_SEPARATOR)
+            || preg_match('#(^|[\\/])\.\.([\\/]|$)#', $relative) === 1
+            || $checkout === false
+            || $root === false
+            || ! is_dir($root)
+            || ! str_starts_with($root, $checkout.DIRECTORY_SEPARATOR)
+        ) {
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.monorepo_checkout_failed', [
+                    'error' => 'Downloaded monorepo archive root is invalid.',
+                ]),
+            ]);
+        }
+
+        return $root;
+    }
+
+    private function installArchiveCheckout(string $checkoutRoot, string $repositoryUrl, string $ref, \Throwable $gitException): void
+    {
+        $archiveUrl = $this->archiveUrl($repositoryUrl, $ref);
+        if ($archiveUrl === null) {
+            throw $gitException;
+        }
+
+        File::deleteDirectory($checkoutRoot);
+        $archivePath = $checkoutRoot.'.zip';
+        File::delete($archivePath);
+
+        try {
+            File::ensureDirectoryExists(dirname($checkoutRoot));
+            $response = Http::timeout((float) config('agovena.packages.composer_timeout', 180))
+                ->retry(2, 250)
+                ->get($archiveUrl);
+            if (! $response->successful()) {
+                throw new \RuntimeException('Monorepo archive download returned HTTP '.$response->status().'.');
+            }
+
+            $body = $response->body();
+            $maxBytes = max(1, (int) config('agovena.packages.zip_max_compressed_bytes', 50 * 1024 * 1024));
+            if (strlen($body) > $maxBytes) {
+                throw new \RuntimeException('Monorepo archive exceeds the configured compressed size limit.');
+            }
+
+            File::put($archivePath, $body);
+            $this->zipExtractor->extractArchiveTo($archivePath, $checkoutRoot);
+
+            $directories = array_values(array_filter(
+                File::directories($checkoutRoot),
+                static fn (string $path): bool => ! is_link($path),
+            ));
+            if (count($directories) !== 1) {
+                throw new \RuntimeException('Downloaded monorepo archive has an unexpected root layout.');
+            }
+
+            $relative = ltrim(str_replace(['/', '\\'], DIRECTORY_SEPARATOR, substr($directories[0], strlen($checkoutRoot))), DIRECTORY_SEPARATOR);
+            File::put($checkoutRoot.DIRECTORY_SEPARATOR.'.agovena-archive-root', $relative);
+            File::put($checkoutRoot.DIRECTORY_SEPARATOR.'.agovena-archive-ref', $ref);
+        } catch (\Throwable $archiveException) {
+            File::deleteDirectory($checkoutRoot);
+            throw ValidationException::withMessages([
+                'package' => __('admin.packages.monorepo_checkout_failed', [
+                    'error' => 'Git checkout failed and the HTTPS monorepo archive fallback also failed: '.$archiveException->getMessage(),
+                ]),
+            ]);
+        } finally {
+            File::delete($archivePath);
+        }
+    }
+
+    private function archiveUrl(string $repositoryUrl, string $ref): ?string
+    {
+        $parts = parse_url($repositoryUrl);
+        if (strtolower((string) ($parts['host'] ?? '')) !== 'github.com') {
+            return null;
+        }
+
+        $segments = array_values(array_filter(explode('/', trim((string) ($parts['path'] ?? ''), '/'))));
+        if (count($segments) !== 2) {
+            return null;
+        }
+
+        $repository = preg_replace('/\.git\z/i', '', $segments[1]);
+        if (! is_string($repository) || $repository === '') {
+            return null;
+        }
+
+        $encodedRef = str_replace('%2F', '/', rawurlencode($ref));
+
+        return $this->isImmutableCommit($ref)
+            ? "https://codeload.github.com/{$segments[0]}/{$repository}/zip/{$encodedRef}"
+            : "https://codeload.github.com/{$segments[0]}/{$repository}/zip/refs/heads/{$encodedRef}";
     }
 
     private function originMatches(string $checkoutRoot, string $repositoryUrl): bool
@@ -112,6 +230,20 @@ final class GitMonorepoCheckout implements MonorepoCheckout
     private function verifyResolvedRef(string $checkoutRoot, string $requestedRef): void
     {
         if (! $this->isImmutableCommit($requestedRef)) {
+            return;
+        }
+
+        $archiveRef = $checkoutRoot.DIRECTORY_SEPARATOR.'.agovena-archive-ref';
+        if (is_file($archiveRef)) {
+            $resolved = trim((string) file_get_contents($archiveRef));
+            if (! hash_equals(strtolower(trim($requestedRef)), strtolower($resolved))) {
+                throw ValidationException::withMessages([
+                    'package' => __('admin.packages.monorepo_checkout_failed', [
+                        'error' => 'Downloaded package archive did not match the requested immutable ref.',
+                    ]),
+                ]);
+            }
+
             return;
         }
 
