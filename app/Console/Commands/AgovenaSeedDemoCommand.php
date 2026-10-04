@@ -14,6 +14,7 @@ use Agovena\Modules\Events\Models\EventTicket;
 use Agovena\Modules\Events\Models\EventTicketType;
 use Agovena\Modules\Provisioning\Enums\ServiceInstanceStatus;
 use Agovena\Modules\Provisioning\Models\ServiceInstance;
+use App\Agovena\Demo\DemoAccountPasswords;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Physical\Enums\ShippingMethodType;
@@ -43,6 +44,8 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
+use Symfony\Component\Console\Output\ConsoleOutput;
+use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
 
 final class AgovenaSeedDemoCommand extends Command
@@ -122,11 +125,20 @@ final class AgovenaSeedDemoCommand extends Command
             return self::FAILURE;
         }
 
-        $demoPassword = $this->demoPassword();
-        if (! $this->option('skip-accounts') && $demoPassword === null) {
-            $this->error('AGOVENA_DEMO_PASSWORD is required for demo accounts. Set it in the local environment; it is never printed or stored by this command.');
+        $passwords = null;
+        $generatedPasswords = false;
+        if (! $this->option('skip-accounts')) {
+            $demoPassword = $this->demoPassword();
+            if ($demoPassword !== null) {
+                $passwords = new DemoAccountPasswords($demoPassword, $demoPassword);
+            } elseif (! $this->input->isInteractive() || ! $this->hasPrivateTerminal()) {
+                $this->error('Demo passwords require a private interactive terminal with normal output (not --quiet/--silent). Use a TTY, set AGOVENA_DEMO_PASSWORD locally, or pass --skip-accounts. No demo data was reset.');
 
-            return self::FAILURE;
+                return self::FAILURE;
+            } else {
+                $passwords = DemoAccountPasswords::generate();
+                $generatedPasswords = true;
+            }
         }
 
         try {
@@ -134,9 +146,9 @@ final class AgovenaSeedDemoCommand extends Command
             $this->ensureDemoExtensions();
             $this->resetLocalDemoState();
 
-            DB::transaction(function () use ($demoPassword): void {
+            DB::transaction(function () use ($passwords): void {
                 $catalog = $this->seedCatalog();
-                $customer = $this->seedAccounts($demoPassword);
+                $customer = $this->seedAccounts($passwords);
                 $orders = $this->seedOrders($customer, $catalog);
                 $this->seedFulfilmentRecords($customer, $catalog, $orders);
                 $this->seedPagesAndMenus();
@@ -148,8 +160,21 @@ final class AgovenaSeedDemoCommand extends Command
         }
 
         $this->info('Official Agovena demo data seeded: catalog, capabilities, customer journeys, orders, invoices, pages and menus.');
+        if ($generatedPasswords && $passwords !== null) {
+            $this->warn('Save these one-time credentials in a password manager. Do not record this terminal session. Reseeding replaces both accounts and passwords.');
+            $this->line('Demo customer (demo@agovena.com): '.$passwords->customer);
+            $this->line('Demo admin (admin@agovena.com): '.$passwords->admin);
+        }
 
         return self::SUCCESS;
+    }
+
+    private function hasPrivateTerminal(): bool
+    {
+        return $this->output->getOutput() instanceof ConsoleOutput
+            && $this->output->getVerbosity() >= OutputInterface::VERBOSITY_NORMAL
+            && defined('STDIN') && defined('STDOUT')
+            && stream_isatty(STDIN) && stream_isatty(STDOUT);
     }
 
     private function demoPassword(): ?string
@@ -656,9 +681,9 @@ final class AgovenaSeedDemoCommand extends Command
         }
     }
 
-    private function seedAccounts(?string $demoPassword): Customer
+    private function seedAccounts(?DemoAccountPasswords $passwords): Customer
     {
-        if ($demoPassword === null) {
+        if ($passwords === null) {
             $testUser = new User;
             $testUser->forceFill([
                 'name' => 'Demo Seed Test Customer',
@@ -674,7 +699,7 @@ final class AgovenaSeedDemoCommand extends Command
         $demoUser->forceFill([
             'name' => 'Demo Customer',
             'email' => 'demo@agovena.com',
-            'password' => $demoPassword,
+            'password' => $passwords->customer,
             'email_verified_at' => now(),
         ])->save();
         $demoUser->ensureCustomer();
@@ -683,7 +708,7 @@ final class AgovenaSeedDemoCommand extends Command
         $adminUser->forceFill([
             'name' => 'Demo Admin',
             'email' => 'admin@agovena.com',
-            'password' => $demoPassword,
+            'password' => $passwords->admin,
             'email_verified_at' => now(),
         ])->save();
         $adminUser->ensureCustomer();

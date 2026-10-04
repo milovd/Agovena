@@ -52,6 +52,12 @@ AGOVENA_OPTIONAL_PACKAGES_PATH=../optional-packages
 
 Then install/enable packages from **Admin → Modules** / **Admin → Extensions**.
 
+## Local demo data
+
+`php artisan agovena:seed-demo --force` replaces demo-owned records. It refuses to run when `APP_ENV=production`; do not use it on a live store. Run it from a private interactive terminal with normal output (for example `docker exec -it ... sh`, followed by the Artisan command), not with `--quiet`/`--silent`, through CI, redirected output, or a recorded terminal session. With no `AGOVENA_DEMO_PASSWORD` set, it generates separate high-entropy passwords for `demo@agovena.com` and `admin@agovena.com` and displays them once after a successful seed. Save them directly in a password manager; only password hashes are stored in the database. Reseeding replaces both accounts and passwords.
+
+For non-interactive local automation, set `AGOVENA_DEMO_PASSWORD` securely in the process environment (the existing behavior uses it for both accounts), or use `--skip-accounts` for catalog-only tests. Never commit credentials to `.env` or pipe the generated output to logs.
+
 ## Upgrade
 
 ```bash

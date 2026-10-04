@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Demo\DemoAccountPasswords;
 use App\Agovena\Physical\Enums\ShippingMethodType;
 use App\Models\Category;
 use App\Models\Customer;
@@ -11,6 +12,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 
 it('seeds the official demo catalog and customer journeys without loading accounts', function (): void {
@@ -100,11 +102,63 @@ it('only replaces demo-owned records during a forced reseed', function (): void 
         ->and(Order::query()->whereKey($existingOrder->id)->exists())->toBeTrue();
 });
 
-it('does not clear existing data when account credentials are missing', function (): void {
-    Product::factory()->create(['slug' => 'existing-local-record']);
+it('does not clear existing data when account credentials cannot be delivered non-interactively', function (): void {
+    $previous = getenv('AGOVENA_DEMO_PASSWORD');
+    putenv('AGOVENA_DEMO_PASSWORD');
 
-    $exitCode = Artisan::call('agovena:seed-demo', ['--force' => true]);
+    try {
+        Product::factory()->create(['slug' => 'existing-local-record']);
 
-    expect($exitCode)->toBe(1)
-        ->and(Product::query()->where('slug', 'existing-local-record')->exists())->toBeTrue();
+        $exitCode = Artisan::call('agovena:seed-demo', ['--force' => true, '--no-interaction' => true]);
+
+        expect($exitCode)->toBe(1)
+            ->and(Product::query()->where('slug', 'existing-local-record')->exists())->toBeTrue();
+    } finally {
+        putenv($previous === false ? 'AGOVENA_DEMO_PASSWORD' : 'AGOVENA_DEMO_PASSWORD='.$previous);
+    }
+});
+
+it('refuses to generate credentials for captured Artisan output', function (): void {
+    $previous = getenv('AGOVENA_DEMO_PASSWORD');
+    putenv('AGOVENA_DEMO_PASSWORD');
+
+    try {
+        Product::factory()->create(['slug' => 'existing-local-record']);
+
+        $exitCode = Artisan::call('agovena:seed-demo', ['--force' => true]);
+
+        expect($exitCode)->toBe(1)
+            ->and(Artisan::output())->not->toContain('Demo customer (')
+            ->and(Product::query()->where('slug', 'existing-local-record')->exists())->toBeTrue();
+    } finally {
+        putenv($previous === false ? 'AGOVENA_DEMO_PASSWORD' : 'AGOVENA_DEMO_PASSWORD='.$previous);
+    }
+});
+
+it('generates different high-entropy passwords for the demo customer and admin', function (): void {
+    $passwords = DemoAccountPasswords::generate();
+
+    expect($passwords->customer)->toMatch('/\A[a-f0-9]{64}\z/')
+        ->and($passwords->admin)->toMatch('/\A[a-f0-9]{64}\z/')
+        ->and($passwords->customer)->not->toBe($passwords->admin);
+});
+
+it('seeds hashed demo credentials without printing an explicitly supplied password', function (): void {
+    $previous = getenv('AGOVENA_DEMO_PASSWORD');
+    $password = str_repeat('x', 32);
+    putenv('AGOVENA_DEMO_PASSWORD='.$password);
+
+    try {
+        $exitCode = Artisan::call('agovena:seed-demo', ['--force' => true, '--no-interaction' => true]);
+        $output = Artisan::output();
+
+        expect($exitCode)->toBe(0, $output)
+            ->and($output)->not->toContain($password)
+            ->and(User::query()->where('email', 'demo@agovena.com')->firstOrFail()->password)->not->toBe($password)
+            ->and(User::query()->where('email', 'admin@agovena.com')->firstOrFail()->password)->not->toBe($password)
+            ->and(Hash::check($password, User::query()->where('email', 'demo@agovena.com')->firstOrFail()->password))->toBeTrue()
+            ->and(Hash::check($password, User::query()->where('email', 'admin@agovena.com')->firstOrFail()->password))->toBeTrue();
+    } finally {
+        putenv($previous === false ? 'AGOVENA_DEMO_PASSWORD' : 'AGOVENA_DEMO_PASSWORD='.$previous);
+    }
 });
