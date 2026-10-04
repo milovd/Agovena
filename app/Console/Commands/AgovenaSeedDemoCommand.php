@@ -411,12 +411,12 @@ final class AgovenaSeedDemoCommand extends Command
             $deleteByIds('credit_note_items', 'credit_note_id', $creditNoteIds);
             $deleteByIds('credit_notes', 'id', $creditNoteIds);
             $deleteByIds('refunds', 'order_id', $orderIds);
-            $deleteByIds('payment_webhook_events', 'order_id', $orderIds);
             $deleteByIds('payment_attempts', 'order_id', $orderIds);
             $deleteByIds('payments', 'order_id', $orderIds);
             $deleteByIds('discount_redemptions', 'order_id', $orderIds);
             $deleteByIds('product_plan_change_requests', 'order_id', $orderIds);
-            $deleteByIds('product_plan_changes', 'order_id', $orderIds);
+            $deleteByIds('product_plan_changes', 'from_product_id', $productIds);
+            $deleteByIds('product_plan_changes', 'to_product_id', $productIds);
             $deleteByIds('subscription_renewals', 'order_id', $orderIds);
             $deleteByIds('subscriptions', 'order_id', $orderIds);
             $deleteByIds('ticket_messages', 'ticket_id', $ticketIds);
