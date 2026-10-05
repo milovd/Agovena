@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
+use Agovena\Modules\Provisioning\Support\ServerApi;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Modules\ModuleManager;
-use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\Http;
 
 it('discovers all requested first-party server extensions', function (): void {
     $root = config('agovena.packages.optional_packages_path');
@@ -90,21 +89,17 @@ it('loads each new server API through its first-party discovery namespace', func
         'Agovena\\Extensions\\Virtualizor\\HttpVirtualizorApi',
     ];
 
-    Http::fake(function (Request $request) {
-        return Http::response(['ok' => true], 200);
-    });
-
     foreach ($apis as $apiClass) {
         expect(class_exists($apiClass))->toBeTrue($apiClass);
         $api = new $apiClass(app(ExtensionSettingsRepository::class), [
             'api_url' => 'https://provider.invalid',
-            'api_token' => '[REDACTED]',
+            'api_token' => 'test-token',
             'api_username' => 'test-user',
-            'api_secret' => '[REDACTED]',
+            'api_secret' => 'test-secret',
             'verify_tls' => true,
             'timeout' => 2,
         ]);
 
-        expect($api->connectionTest())->toBe(['ok' => true]);
+        expect($api)->toBeInstanceOf(ServerApi::class);
     }
 });

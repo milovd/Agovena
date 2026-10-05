@@ -141,6 +141,17 @@ test('product storefront renders customized information cards', function () {
         ->assertDontSee(__('storefront.product.returns_title'), false);
 });
 
+test('nonphysical products do not imply shipping or returns cards by default', function () {
+    $product = Product::factory()->active()->create([
+        'show_delivery_card' => null,
+        'show_returns_card' => null,
+    ]);
+
+    $this->get(route('storefront.product', $product->slug))
+        ->assertOk()
+        ->assertDontSee('class="store-product__perks"', false);
+});
+
 test('physical selling preset enables available fulfillment capabilities', function () {
     $staff = $this->createStaff();
     $product = Product::factory()->create();

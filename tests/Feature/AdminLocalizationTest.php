@@ -75,6 +75,22 @@ test('setup copy describes payment gateways and module choices', function () {
         ->and(__('admin.modules.custom_modules_toggle'))->toBe('Choose modules');
 });
 
+test('product capability copy identifies stock and shipping as Core, not retired modules', function () {
+    foreach (['en', 'nl'] as $locale) {
+        $copy = implode(' ', [
+            __('admin.products.capabilities.lede', [], $locale),
+            __('admin.products.capabilities.none', [], $locale),
+            __('admin.products.capabilities.inventory_help', [], $locale),
+        ]);
+
+        expect($copy)->not->toContain('module tables')
+            ->not->toContain('moduletabellen')
+            ->not->toContain('Inventory-module')
+            ->not->toContain('Module (for example Inventory)')
+            ->and(strtolower($copy))->toContain('core');
+    }
+});
+
 test('admin screens never render raw translation keys', function () {
     $staff = $this->createStaff();
 

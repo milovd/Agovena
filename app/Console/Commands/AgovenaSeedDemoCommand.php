@@ -46,6 +46,7 @@ use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -212,12 +213,16 @@ final class AgovenaSeedDemoCommand extends Command
             }
         }
 
+        $phase = 'modules';
         try {
             $installer = app(PackageInstaller::class);
             $this->ensureDemoModules($installer);
+            $phase = 'extensions';
             $extensions = $this->ensureDemoExtensions($installer);
+            $phase = 'reset';
             $this->resetLocalDemoState();
 
+            $phase = 'seed';
             DB::transaction(function () use ($passwords, $extensions): void {
                 $catalog = $this->seedCatalog($extensions);
                 $customer = $this->seedAccounts($passwords);
@@ -227,7 +232,11 @@ final class AgovenaSeedDemoCommand extends Command
                 $this->seedStoreSetup();
             });
         } catch (Throwable $exception) {
-            $this->error('Demo seed failed: '.$exception->getMessage());
+            Log::warning('demo.seed.failed', [
+                'phase' => $phase,
+                'exception_type' => get_debug_type($exception),
+            ]);
+            $this->error('Demo seed failed. Review the package configuration and current demo state before retrying.');
 
             return self::FAILURE;
         }
@@ -377,11 +386,9 @@ final class AgovenaSeedDemoCommand extends Command
                 composerName: $packageId,
             ), expectedAgovenaId: $packageId);
         } catch (Throwable $exception) {
-            $detail = trim($exception->getMessage());
             throw new \RuntimeException(
                 'Required demo '.strtolower($kind->value).' '.$packageId
-                .' could not be prepared. The package may be missing or its installation/migrations failed.'
-                .($detail !== '' ? ' Detail: '.$detail : ''),
+                .' could not be prepared. The package may be missing or its installation/migrations failed.',
                 previous: $exception,
             );
         }

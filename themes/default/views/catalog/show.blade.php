@@ -12,8 +12,9 @@
     $reviewCount = 0;
     $ratingAverage = 0.0;
     $isDomainProduct = $product->hasCapability('domain_registration');
-    $showDeliveryCard = $product->show_delivery_card ?? ! $isDomainProduct;
-    $showReturnsCard = $product->show_returns_card ?? ! $isDomainProduct;
+    $isPhysicalProduct = ! $isDomainProduct && $product->hasCapability('physical');
+    $showDeliveryCard = $product->show_delivery_card ?? $isPhysicalProduct;
+    $showReturnsCard = $product->show_returns_card ?? $isPhysicalProduct;
     $deliveryTitle = filled($product->delivery_title)
         ? $product->delivery_title
         : __('storefront.product.delivery_title');

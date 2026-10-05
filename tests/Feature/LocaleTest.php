@@ -34,6 +34,7 @@ test('storefront catalog and product chrome follow the site locale', function ()
         'show_specifications' => true,
         'specifications' => [['label' => 'Kleur', 'value' => 'Zwart']],
     ]);
+    $product->capabilities()->create(['capability' => 'physical']);
 
     $this->get(route('storefront.category', $category->slug))
         ->assertOk()

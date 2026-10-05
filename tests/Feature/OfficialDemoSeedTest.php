@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Spatie\Permission\Models\Role;
 use Tests\Support\FakeMonorepoCheckout;
@@ -214,7 +215,7 @@ it('seeds a demo environment with the extensions required by demo products', fun
     }
 });
 
-it('omits only journeys that actually depend on an unavailable extension', function (string $missingExtension, ?string $omittedSlug, int $expectedProducts, int $expectedOrders): void {
+it('omits only journeys that actually depend on unavailable extensions', function (array $missingExtensions, ?string $omittedSlug, int $expectedProducts, int $expectedOrders): void {
     $optionalRoot = optionalPackagesRoot();
     $configuredPath = config('agovena.packages.optional_packages_path');
     $configuredRepository = config('agovena.packages.monorepo.repository');
@@ -224,7 +225,9 @@ it('omits only journeys that actually depend on an unavailable extension', funct
     $fake = new FakeMonorepoCheckout(app(MonorepoPackageMap::class));
     $fake->map('https://github.com/milovd/optional-packages', $optionalRoot);
     $packageMap = $configuredPackages;
-    $packageMap[$missingExtension]['path'] = 'extensions/not-available';
+    foreach ($missingExtensions as $missingExtension) {
+        $packageMap[$missingExtension]['path'] = 'extensions/not-available';
+    }
 
     File::deleteDirectory($packagesRoot);
     config([
@@ -245,12 +248,16 @@ it('omits only journeys that actually depend on an unavailable extension', funct
             ->and(Product::query()->where('slug', 'domain-registration-and-dns-management')->exists())->toBeTrue()
             ->and(Order::query()->count())->toBe($expectedOrders)
             ->and(Invoice::query()->count())->toBe($expectedOrders)
-            ->and(DB::table('agovena_extensions')->where('extension_id', $missingExtension)->where('enabled', true)->exists())->toBeFalse()
             ->and(Page::query()->where('slug', 'demo-guide')->value('body'))->toContain('reserved .test domain');
+
+        foreach ($missingExtensions as $missingExtension) {
+            expect(DB::table('agovena_extensions')->where('extension_id', $missingExtension)->where('enabled', true)->exists())->toBeFalse();
+        }
 
         if ($omittedSlug !== null) {
             expect(Product::query()->where('slug', $omittedSlug)->exists())->toBeFalse()
-                ->and(Page::query()->where('slug', 'demo-guide')->value('body'))->not->toContain('Pterodactyl service');
+                ->and(Page::query()->where('slug', 'demo-guide')->value('body'))->not->toContain('Pterodactyl service')
+                ->and(DB::table('service_instances')->where('provider_key', 'pterodactyl')->count())->toBe(0);
             $this->get('/products/'.$omittedSlug)->assertNotFound();
         }
 
@@ -279,11 +286,13 @@ it('omits only journeys that actually depend on an unavailable extension', funct
         app(ExtensionManager::class)->refresh();
     }
 })->with([
-    'pterodactyl' => ['pterodactyl', 'minecraft-survival-server', 5, 6],
-    'cloudflare-domain' => ['cloudflare-domain', null, 6, 8],
+    'pterodactyl' => [['pterodactyl'], 'minecraft-survival-server', 5, 6],
+    'cloudflare-domain' => [['cloudflare-domain'], null, 6, 8],
+    'both' => [['pterodactyl', 'cloudflare-domain'], 'minecraft-survival-server', 5, 6],
 ]);
 
 it('rejects a mismatched manifest during demo package bootstrap', function (): void {
+    $existingProduct = Product::factory()->create(['slug' => 'existing-store-product']);
     $optionalRoot = optionalPackagesRoot();
     $configuredPath = config('agovena.packages.optional_packages_path');
     $configuredRepository = config('agovena.packages.monorepo.repository');
@@ -312,12 +321,62 @@ it('rejects a mismatched manifest during demo package bootstrap', function (): v
 
         expect($exitCode)->toBe(1, Artisan::output())
             ->and(File::exists(storage_path('app/packages/modules/provisioning/module.json')))->toBeFalse()
-            ->and(DB::table('agovena_modules')->where('module_id', 'provisioning')->exists())->toBeFalse();
+            ->and(DB::table('agovena_modules')->where('module_id', 'provisioning')->exists())->toBeFalse()
+            ->and(Product::query()->whereKey($existingProduct->id)->exists())->toBeTrue()
+            ->and(Artisan::output())->not->toContain('Detail:');
     } finally {
         config([
             'agovena.packages.optional_packages_path' => $configuredPath,
             'agovena.packages.monorepo.repository' => $configuredRepository,
             'agovena.packages.monorepo.packages' => $configuredPackages,
+        ]);
+        app()->forgetInstance(MonorepoCheckout::class);
+        File::deleteDirectory($packagesRoot);
+        app(ModuleManager::class)->refresh();
+        app(ExtensionManager::class)->refresh();
+    }
+});
+
+it('does not print package checkout diagnostics or reset existing data when a required module fails', function (): void {
+    $existingProduct = Product::factory()->create(['slug' => 'existing-store-product']);
+    $marker = 'sensitive-checkout-detail-marker';
+    $configuredPath = config('agovena.packages.optional_packages_path');
+    $configuredRepository = config('agovena.packages.monorepo.repository');
+    $packagesRoot = storage_path('app/packages');
+
+    File::deleteDirectory($packagesRoot);
+    config([
+        'agovena.packages.optional_packages_path' => base_path('missing-optional-packages'),
+        'agovena.packages.monorepo.repository' => 'https://github.com/milovd/optional-packages',
+    ]);
+    app()->instance(MonorepoCheckout::class, new class($marker) implements MonorepoCheckout
+    {
+        public function __construct(private readonly string $marker) {}
+
+        public function resolve(string $repositoryUrl, string $ref, string $subdirectory, bool $refresh = true): string
+        {
+            throw new RuntimeException($this->marker);
+        }
+    });
+    app(ModuleManager::class)->refresh();
+
+    try {
+        Log::spy();
+        $exitCode = Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
+
+        expect($exitCode)->toBe(1)
+            ->and(Artisan::output())->not->toContain($marker)
+            ->and(Product::query()->whereKey($existingProduct->id)->exists())->toBeTrue();
+        Log::shouldHaveReceived('warning')->once()->withArgs(
+            static fn (string $event, array $context): bool => $event === 'demo.seed.failed'
+                && $context['phase'] === 'modules'
+                && isset($context['exception_type'])
+                && ! str_contains(json_encode($context, JSON_THROW_ON_ERROR), $marker),
+        );
+    } finally {
+        config([
+            'agovena.packages.optional_packages_path' => $configuredPath,
+            'agovena.packages.monorepo.repository' => $configuredRepository,
         ]);
         app()->forgetInstance(MonorepoCheckout::class);
         File::deleteDirectory($packagesRoot);

@@ -123,23 +123,25 @@ test('admin modules page does not list inventory as an optional module', functio
         ->assertDontSee('Subscription Inventory');
 });
 
-test('unselected core-only setup is not active and becomes active when selected', function () {
+test('core-only selling setups are not installable modules on either tab', function () {
     $staff = $this->createStaff();
 
     Livewire::actingAs($staff)
         ->test(ModulesIndex::class)
         ->set('tab', 'available')
-        ->assertViewHas('availablePresets', function (array $rows): bool {
-            $physical = collect($rows)->first(fn (array $row): bool => $row['preset']->id === 'physical');
-
-            return $physical !== null && $physical['status'] === 'missing';
-        })
+        ->assertViewHas('availablePresets', fn (array $rows): bool => collect($rows)
+            ->every(fn (array $row): bool => ! in_array($row['preset']->id, ['physical', 'subscriptions'], true)))
         ->call('installPreset', 'physical')
-        ->assertViewHas('installedPresetRows', function (array $rows): bool {
-            $physical = collect($rows)->first(fn (array $row): bool => $row['preset']->id === 'physical');
+        ->assertViewHas('installedPresetRows', fn (array $rows): bool => collect($rows)
+            ->every(fn (array $row): bool => ! in_array($row['preset']->id, ['physical', 'subscriptions'], true)));
 
-            return $physical !== null && $physical['status'] === 'active';
-        });
+    expect(app(ApplyStorePresets::class)->selected())->not->toContain('physical');
+
+    app(ApplyStorePresets::class)->installPreset('subscriptions', []);
+    Livewire::actingAs($staff)
+        ->test(ModulesIndex::class)
+        ->assertViewHas('installedPresetRows', fn (array $rows): bool => collect($rows)
+            ->every(fn (array $row): bool => $row['preset']->id !== 'subscriptions'));
 });
 
 test('a disabled preset module moves its setup out of the installed tab', function () {

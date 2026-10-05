@@ -878,8 +878,8 @@ return [
         ],
         'capabilities' => [
             'title' => 'Capabilities',
-            'lede' => 'Composable product behaviors provided by Core or enabled Modules. Stock and fulfillment data stay in module tables - not on the product row.',
-            'none' => 'No capabilities are registered. Enable a Module (for example Inventory) to attach behaviors.',
+            'lede' => 'Composable product behaviors provided by Core or enabled Modules. Stock and fulfillment data are managed separately from the product row.',
+            'none' => 'No capabilities are registered. Check Core setup and enabled Modules to attach behaviors.',
             'unknown' => 'Unknown capability :capability.',
             'missing_requirement' => 'Capability :capability requires :requires first.',
             'physical' => 'Physical',

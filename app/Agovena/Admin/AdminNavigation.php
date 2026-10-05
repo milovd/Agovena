@@ -19,19 +19,22 @@ final class AdminNavigation
      * @var array<string, string>
      */
     private const NAV_MODULE_OWNERS = [
-        'inventory-stocks' => 'inventory',
-        'shipping-methods' => 'shipping',
-        'shipping-returns' => 'shipping',
-        'shipping-fulfillment' => 'shipping',
         'digital-assets' => 'downloads',
         'digital-downloads' => 'downloads',
         'digital-delivery-secrets' => 'digital-delivery',
         'digital-secrets' => 'digital-delivery',
-        'subscriptions' => 'subscriptions',
-        'plan-changes' => 'subscriptions',
         'events-checkin' => 'events',
         'event-tickets' => 'events',
         'provisioning' => 'provisioning',
+    ];
+
+    private const CORE_NAV_IDS = [
+        'inventory-stocks',
+        'shipping-methods',
+        'shipping-returns',
+        'shipping-fulfillment',
+        'subscriptions',
+        'plan-changes',
     ];
 
     /**
@@ -158,6 +161,10 @@ final class AdminNavigation
     {
         if ($item->moduleId !== null) {
             return $item->moduleId;
+        }
+
+        if (in_array($item->id, self::CORE_NAV_IDS, true)) {
+            return null;
         }
 
         if ($modules->manifest($item->id) !== null) {

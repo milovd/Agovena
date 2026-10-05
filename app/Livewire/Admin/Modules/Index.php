@@ -101,7 +101,7 @@ final class Index extends Component
         $this->authorize('modules.manage');
 
         $preset = $catalog->find($presetId);
-        if ($preset === null) {
+        if ($preset === null || $preset->moduleIds === []) {
             session()->flash('error', __('admin.modules.preset_not_found'));
 
             return;
@@ -252,7 +252,7 @@ final class Index extends Component
         $availableCustomPresetRow = $this->buildAvailableCustomPresetRow($presets, $groups, $installedPresetIds);
 
         foreach ($presets->all() as $preset) {
-            if ($preset->isCustom) {
+            if ($preset->isCustom || $preset->moduleIds === []) {
                 continue;
             }
 
@@ -424,12 +424,10 @@ final class Index extends Component
                 function (string $id) use ($catalog, $modules): bool {
                     $preset = $catalog->find($id);
 
-                    return $preset !== null && ! $preset->isCustom && (
-                        $preset->moduleIds === []
-                        || collect($preset->moduleIds)->every(
+                    return $preset !== null && ! $preset->isCustom && $preset->moduleIds !== []
+                        && collect($preset->moduleIds)->every(
                             fn (string $moduleId): bool => $modules->manifest($moduleId) !== null && $modules->isEnabled($moduleId),
-                        )
-                    );
+                        );
                 },
             ));
         }

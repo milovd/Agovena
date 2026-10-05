@@ -7,6 +7,7 @@ use App\Agovena\Admin\AdminNavigationNode;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\NavigationItem;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Models\AgovenaModule;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
@@ -80,4 +81,18 @@ test('admin sidebar renders grouped collapsible sections with sibling links', fu
 
     expect($html)->toContain('agovena.admin.nav.v6.')
         ->and($html)->not->toContain('admin-nav__toggle');
+});
+
+test('core commerce links remain in the sidebar without retired module rows', function () {
+    AgovenaModule::query()->whereIn('module_id', ['inventory', 'shipping', 'subscriptions'])->delete();
+    app(SyncRegisteredPermissions::class)(force: true);
+
+    $this->actingAs($this->createStaff())
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('href="/admin/inventory"', false)
+        ->assertSee('href="/admin/shipping/methods"', false)
+        ->assertSee('href="/admin/shipping/returns"', false)
+        ->assertSee('href="/admin/subscriptions"', false)
+        ->assertSee('href="/admin/plan-changes"', false);
 });
