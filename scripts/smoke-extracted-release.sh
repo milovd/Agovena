@@ -41,7 +41,7 @@ run_artisan() {
   shift
   echo "==> $label"
   if ! php artisan "$@" ; then
-    echo "::error::artisan failed: $label ($*)"
+    echo "::error::artisan failed: $label"
     if [[ -f storage/logs/laravel.log ]]; then
       echo "---- laravel.log (tail) ----"
       tail -n 80 storage/logs/laravel.log || true

@@ -24,5 +24,6 @@ it('verifies a backup artifact through the operator command', function (): void 
 it('release smoke verifies the encrypted artifact created by the backup command', function (): void {
     $script = file_get_contents(base_path('scripts/smoke-extracted-release.sh'));
 
-    expect($script)->toBeString()->toContain('agovena:backup-verify');
+    expect($script)->toBeString()->toContain('agovena:backup-verify')
+        ->not->toContain('artisan failed: $label ($*)');
 });

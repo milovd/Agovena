@@ -14,6 +14,7 @@ use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
+use App\Models\Page;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
@@ -213,6 +214,75 @@ it('seeds a demo environment with the extensions required by demo products', fun
     }
 });
 
+it('omits only journeys that actually depend on an unavailable extension', function (string $missingExtension, ?string $omittedSlug, int $expectedProducts, int $expectedOrders): void {
+    $optionalRoot = optionalPackagesRoot();
+    $configuredPath = config('agovena.packages.optional_packages_path');
+    $configuredRepository = config('agovena.packages.monorepo.repository');
+    $configuredPackages = config('agovena.packages.monorepo.packages');
+    $configuredEnvironment = app()->environment();
+    $packagesRoot = storage_path('app/packages');
+    $fake = new FakeMonorepoCheckout(app(MonorepoPackageMap::class));
+    $fake->map('https://github.com/milovd/optional-packages', $optionalRoot);
+    $packageMap = $configuredPackages;
+    $packageMap[$missingExtension]['path'] = 'extensions/not-available';
+
+    File::deleteDirectory($packagesRoot);
+    config([
+        'agovena.packages.optional_packages_path' => base_path('missing-optional-packages'),
+        'agovena.packages.monorepo.repository' => 'https://github.com/milovd/optional-packages',
+        'agovena.packages.monorepo.packages' => $packageMap,
+    ]);
+    app()['env'] = 'demo';
+    app()->instance(MonorepoCheckout::class, $fake);
+    app(ModuleManager::class)->refresh();
+    app(ExtensionManager::class)->refresh();
+
+    try {
+        $exitCode = Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
+
+        expect($exitCode)->toBe(0, Artisan::output())
+            ->and(Product::query()->count())->toBe($expectedProducts)
+            ->and(Product::query()->where('slug', 'domain-registration-and-dns-management')->exists())->toBeTrue()
+            ->and(Order::query()->count())->toBe($expectedOrders)
+            ->and(Invoice::query()->count())->toBe($expectedOrders)
+            ->and(DB::table('agovena_extensions')->where('extension_id', $missingExtension)->where('enabled', true)->exists())->toBeFalse()
+            ->and(Page::query()->where('slug', 'demo-guide')->value('body'))->toContain('reserved .test domain');
+
+        if ($omittedSlug !== null) {
+            expect(Product::query()->where('slug', $omittedSlug)->exists())->toBeFalse()
+                ->and(Page::query()->where('slug', 'demo-guide')->value('body'))->not->toContain('Pterodactyl service');
+            $this->get('/products/'.$omittedSlug)->assertNotFound();
+        }
+
+        foreach (Product::query()->pluck('slug') as $slug) {
+            $this->get('/products/'.$slug)->assertOk();
+        }
+        $this->get('/products/domain-registration-and-dns-management')->assertDontSee('Cloudflare Domains demo');
+
+        config(['agovena.packages.monorepo.packages' => $configuredPackages]);
+        expect(Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]))->toBe(0, Artisan::output())
+            ->and(Product::query()->count())->toBe(6)
+            ->and(Order::query()->count())->toBe(8);
+        if ($omittedSlug !== null) {
+            $this->get('/products/'.$omittedSlug)->assertOk();
+        }
+    } finally {
+        config([
+            'agovena.packages.optional_packages_path' => $configuredPath,
+            'agovena.packages.monorepo.repository' => $configuredRepository,
+            'agovena.packages.monorepo.packages' => $configuredPackages,
+        ]);
+        app()['env'] = $configuredEnvironment;
+        app()->forgetInstance(MonorepoCheckout::class);
+        File::deleteDirectory($packagesRoot);
+        app(ModuleManager::class)->refresh();
+        app(ExtensionManager::class)->refresh();
+    }
+})->with([
+    'pterodactyl' => ['pterodactyl', 'minecraft-survival-server', 5, 6],
+    'cloudflare-domain' => ['cloudflare-domain', null, 6, 8],
+]);
+
 it('rejects a mismatched manifest during demo package bootstrap', function (): void {
     $optionalRoot = optionalPackagesRoot();
     $configuredPath = config('agovena.packages.optional_packages_path');
@@ -302,6 +372,42 @@ it('does not clear existing data when account credentials cannot be delivered no
             ->and(Product::query()->where('slug', 'existing-local-record')->exists())->toBeTrue();
     } finally {
         putenv($previous === false ? 'AGOVENA_DEMO_PASSWORD' : 'AGOVENA_DEMO_PASSWORD='.$previous);
+    }
+});
+
+it('omits provider-backed products in staging rather than linking to unavailable detail pages', function (): void {
+    $previousEnvironment = app()->environment();
+    expect(Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]))->toBe(0, Artisan::output())
+        ->and(Product::query()->where('slug', 'minecraft-survival-server')->exists())->toBeTrue()
+        ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['pterodactyl', 'cloudflare-domain'])->where('enabled', true)->count())->toBe(2);
+    app()['env'] = 'staging';
+
+    try {
+        $exitCode = Artisan::call('agovena:seed-demo', [
+            '--force' => true,
+            '--skip-accounts' => true,
+        ]);
+
+        expect($exitCode)->toBe(0, Artisan::output())
+            ->and(Product::query()->pluck('slug')->all())->toEqualCanonicalizing([
+                'agovena-essential-tee',
+                'python-automation-starter-kit',
+                'agovena-pro-license',
+                'agovena-launch-night',
+                'domain-registration-and-dns-management',
+            ])
+            ->and(Order::query()->count())->toBe(6)
+            ->and(Invoice::query()->count())->toBe(6)
+            ->and(DB::table('service_instances')->count())->toBe(0)
+            ->and(DB::table('domain_registrations')->count())->toBe(1)
+            ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['pterodactyl', 'cloudflare-domain'])->where('enabled', true)->count())->toBe(2)
+            ->and($this->get('/products/minecraft-survival-server')->status())->toBe(404);
+
+        foreach (Product::query()->pluck('slug') as $slug) {
+            $this->get('/products/'.$slug)->assertOk();
+        }
+    } finally {
+        app()['env'] = $previousEnvironment;
     }
 });
 
