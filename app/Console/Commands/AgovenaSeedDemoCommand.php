@@ -20,6 +20,7 @@ use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Packages\PackageInstaller;
 use App\Agovena\Packages\PackageSource;
 use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Staff\CreateOwnerStaff;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
@@ -73,6 +74,15 @@ final class AgovenaSeedDemoCommand extends Command
     private const DEMO_EXTENSIONS = [
         'pterodactyl',
         'cloudflare-domain',
+    ];
+
+    /** @var list<string> */
+    private const DEMO_PRESETS = [
+        'physical',
+        'digital',
+        'downloadable',
+        'hosting',
+        'events',
     ];
 
     /** @var list<string> */
@@ -214,6 +224,7 @@ final class AgovenaSeedDemoCommand extends Command
                 $orders = $this->seedOrders($customer, $catalog);
                 $this->seedFulfilmentRecords($customer, $catalog, $orders);
                 $this->seedPagesAndMenus();
+                $this->seedStoreSetup();
             });
         } catch (Throwable $exception) {
             $this->error('Demo seed failed: '.$exception->getMessage());
@@ -284,7 +295,7 @@ final class AgovenaSeedDemoCommand extends Command
     private function ensureDemoExtensions(PackageInstaller $installer): void
     {
         $manager = app(ExtensionManager::class);
-        $allowExperimental = app()->environment(['local', 'testing']);
+        $allowExperimental = app()->environment(['local', 'testing', 'demo']);
 
         foreach (self::DEMO_EXTENSIONS as $extensionId) {
             $manifest = $manager->manifest($extensionId);
@@ -353,6 +364,13 @@ final class AgovenaSeedDemoCommand extends Command
 
         // Public demo images are immutable. Deleting an in-flight image can leave a pending-deletion file on Windows.
         Storage::disk('local')->delete('demo/downloads/agovena_automation_starter.py');
+    }
+
+    private function seedStoreSetup(): void
+    {
+        $settings = app(SettingsRepository::class);
+        $settings->set('store', 'presets', self::DEMO_PRESETS);
+        $settings->set('store', 'custom_modules', []);
     }
 
     /** @return array{categories: array<string, Category>, products: array<string, Product>} */

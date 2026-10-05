@@ -81,12 +81,14 @@ foreach ($npm['packages'] ?? [] as $path => $package) {
     $name = (string) ($package['name'] ?? basename((string) $path));
     $version = (string) $package['version'];
     $scope = ! empty($package['dev']) ? 'development' : 'required';
+    $license = $package['license'] ?? null;
+    $licenses = is_string($license) && trim($license) !== '' ? [trim($license)] : [];
     $components[] = $component(
         $name,
         $version,
         'pkg:npm/'.rawurlencode($name).'@'.rawurlencode($version),
         $scope,
-        []
+        $licenses
     );
 }
 

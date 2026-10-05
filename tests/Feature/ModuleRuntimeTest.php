@@ -10,6 +10,8 @@ use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
+use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Store\ApplyStorePresets;
 use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Models\Product;
 use App\Models\ProductCapability;
@@ -116,5 +118,57 @@ test('admin modules page does not list inventory as an optional module', functio
         ->test(ModulesIndex::class)
         ->set('tab', 'available')
         ->assertOk()
-        ->assertDontSee('Inventory');
+        ->assertDontSee('Inventory')
+        ->assertDontSee('Shipping')
+        ->assertDontSee('Subscription Inventory');
+});
+
+test('unselected core-only setup is not active and becomes active when selected', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(ModulesIndex::class)
+        ->set('tab', 'available')
+        ->assertViewHas('availablePresets', function (array $rows): bool {
+            $physical = collect($rows)->first(fn (array $row): bool => $row['preset']->id === 'physical');
+
+            return $physical !== null && $physical['status'] === 'missing';
+        })
+        ->call('installPreset', 'physical')
+        ->assertViewHas('installedPresetRows', function (array $rows): bool {
+            $physical = collect($rows)->first(fn (array $row): bool => $row['preset']->id === 'physical');
+
+            return $physical !== null && $physical['status'] === 'active';
+        });
+});
+
+test('a disabled preset module moves its setup out of the installed tab', function () {
+    app(ApplyStorePresets::class)->installPreset('hosting', []);
+    app(ModuleManager::class)->disable('domains');
+
+    Livewire::actingAs($this->createStaff())
+        ->test(ModulesIndex::class)
+        ->set('tab', 'available')
+        ->assertViewHas('installedPresetRows', fn (array $rows): bool => collect($rows)
+            ->every(fn (array $row): bool => $row['preset']->id !== 'hosting'))
+        ->assertViewHas('availablePresets', fn (array $rows): bool => collect($rows)
+            ->contains(fn (array $row): bool => $row['preset']->id === 'hosting' && $row['status'] === 'partial'))
+        ->assertSee(__('admin.modules.preset_status.partial'));
+});
+
+test('a disabled custom module is not marked as an active installed setup', function () {
+    app(ApplyStorePresets::class)->installCustomModule('events', [], []);
+    app(ModuleManager::class)->disable('events');
+
+    Livewire::actingAs($this->createStaff())
+        ->test(ModulesIndex::class)
+        ->set('tab', 'available')
+        ->assertViewHas('hasCustomModules', false)
+        ->assertViewHas('customStatus', 'missing')
+        ->assertViewHas('showCustomRemove', true)
+        ->assertSee(__('admin.modules.uninstall_setup'))
+        ->call('uninstallPreset', 'custom')
+        ->assertViewHas('showCustomRemove', false);
+
+    expect(app(ApplyStorePresets::class)->selected())->not->toContain('custom');
 });

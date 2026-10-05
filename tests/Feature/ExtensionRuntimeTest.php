@@ -186,6 +186,29 @@ test('extensions without production readiness cannot be installed or enabled in 
         ->and(fn () => $extensions->enable('cpanel'))->toThrow(ValidationException::class);
 });
 
+test('demo can install non-production-ready extensions for seeded product journeys', function () {
+    app()['env'] = 'demo';
+    installAndEnableModule('provisioning');
+    $extensions = app(ExtensionManager::class);
+
+    expect($extensions->install('pterodactyl')->extension_id)->toBe('pterodactyl')
+        ->and($extensions->enable('pterodactyl')->enabled)->toBeTrue()
+        ->and(fn () => $extensions->install('cpanel'))->toThrow(ValidationException::class);
+});
+
+test('demo runtime does not boot unrelated experimental extensions from existing rows', function () {
+    app()['env'] = 'demo';
+    installAndEnableModule('provisioning');
+    AgovenaExtension::query()->updateOrCreate(
+        ['extension_id' => 'cpanel'],
+        ['version' => '1.0.0', 'installed_at' => now(), 'enabled' => true],
+    );
+
+    app(ExtensionManager::class)->rebuildRuntime();
+
+    expect(app(ProvisionerRegistry::class)->get('cpanel'))->toBeNull();
+});
+
 test('runtime does not boot a non-production-ready extension from a legacy enabled row', function () {
     app()['env'] = 'production';
     installAndEnableModule('provisioning');

@@ -1306,11 +1306,11 @@ return [
 
     'modules' => [
         'title' => 'Modules',
-        'lede' => 'Compose your store from compatible Modules. Presets are module bundles, not a separate store type.',
+        'lede' => 'Compose your store from Core capabilities and compatible Modules. Presets are setup bundles, not a separate store type.',
         'setup_eyebrow' => 'Store setup',
         'setup_title' => 'Choose capabilities for this store',
-        'setup_lede' => 'Select one or more store presets. Expand a preset to see which Modules it includes.',
-        'setup_lede_available' => 'Install a store setup to add its Modules. Existing setups and enabled Modules stay untouched.',
+        'setup_lede' => 'Select one or more store presets. Expand a preset to see which optional Modules it includes.',
+        'setup_lede_available' => 'Install a store setup to add its optional Modules. Core capabilities are available without a Module.',
         'source_of_truth' => 'Modules are the source of truth',
         'presets_aria' => 'Store setup bundles',
         'view_modules' => 'View modules (:count)',
@@ -1333,7 +1333,7 @@ return [
         'uninstall_preset_disable' => 'These Modules will be disabled: :modules.',
         'uninstall_preset_keep' => 'These Modules stay enabled (used by other setups): :modules.',
         'installed_setups_title' => 'Your store setups',
-        'installed_setups_lede' => 'Product models enabled on this store. Expand a setup to manage its Modules.',
+        'installed_setups_lede' => 'Core capabilities and optional Modules enabled on this store. Expand a setup to manage its Modules.',
         'installed_setups_aria' => 'Installed store setups',
         'preset_not_found' => 'That store setup was not found.',
         'uninstall_shared_confirm' => 'Uninstall :module? This Module is also used by: :presets. Uninstalling disables it for all of these setups.',

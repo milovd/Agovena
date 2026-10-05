@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 use App\Agovena\Demo\DemoAccountPasswords;
 use App\Agovena\Extensions\ExtensionManager;
+use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Packages\MonorepoCheckout;
 use App\Agovena\Packages\MonorepoPackageMap;
 use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Settings\SettingsRepository;
 use App\Models\Category;
 use App\Models\Customer;
 use App\Models\Invoice;
@@ -76,7 +78,10 @@ it('seeds the official demo catalog and customer journeys without loading accoun
         ->and(DB::table('shipping_methods')->where('code', 'demo-parcel')->value('type'))->toBe(ShippingMethodType::Zone->value)
         ->and(json_decode(DB::table('shipping_methods')->where('code', 'demo-parcel')->value('config'), true))->toBe(['amount' => 499])
         ->and(DB::table('agovena_modules')->whereIn('module_id', ['provisioning', 'domains', 'downloads', 'digital-delivery', 'events'])->where('enabled', true)->count())->toBe(5)
-        ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['pterodactyl', 'cloudflare-domain'])->where('enabled', true)->count())->toBe(2);
+        ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['pterodactyl', 'cloudflare-domain'])->where('enabled', true)->count())->toBe(2)
+        ->and(DB::table('agovena_modules')->where('enabled', true)->pluck('module_id')->sort()->values()->all())->toBe(['digital-delivery', 'domains', 'downloads', 'events', 'provisioning'])
+        ->and(app(SettingsRepository::class)->get('store', 'presets'))->toBe(['physical', 'digital', 'downloadable', 'hosting', 'events'])
+        ->and(app(SettingsRepository::class)->get('store', 'custom_modules'))->toBe([]);
 
     $memoryOptionId = DB::table('product_options')
         ->where('product_id', Product::query()->where('slug', 'minecraft-survival-server')->value('id'))
@@ -95,6 +100,9 @@ it('seeds the official demo catalog and customer journeys without loading accoun
 });
 
 it('can replace the demo catalog during a forced reseed', function (): void {
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->set('pterodactyl', 'panel_url', 'https://panel.example.test');
+
     expect(Artisan::call('agovena:seed-demo', [
         '--force' => true,
         '--skip-accounts' => true,
@@ -109,6 +117,9 @@ it('can replace the demo catalog during a forced reseed', function (): void {
     $reseededMinecraftProductId = Product::query()->where('slug', 'minecraft-survival-server')->value('id');
 
     expect(DB::table('product_options')->where('product_id', $reseededMinecraftProductId)->count())->toBe(2);
+    expect($settings->get('pterodactyl', 'panel_url'))->toBe('https://panel.example.test')
+        ->and(Order::query()->count())->toBe(8)
+        ->and(Product::query()->count())->toBe(6);
 });
 
 it('bootstraps missing demo packages from the configured monorepo', function (): void {
@@ -152,7 +163,7 @@ it('bootstraps missing demo packages from the configured monorepo', function ():
     }
 });
 
-it('seeds a demo environment without enabling experimental provider extensions', function (): void {
+it('seeds a demo environment with the extensions required by demo products', function (): void {
     $optionalRoot = optionalPackagesRoot();
     $configuredPath = config('agovena.packages.optional_packages_path');
     $configuredRepository = config('agovena.packages.monorepo.repository');
@@ -178,11 +189,17 @@ it('seeds a demo environment without enabling experimental provider extensions',
         ]);
 
         expect($exitCode)->toBe(0, Artisan::output())
-            ->and($fake->resolved)->toHaveCount(5)
-            ->and(File::exists(storage_path('app/packages/extensions/pterodactyl/extension.json')))->toBeFalse()
-            ->and(File::exists(storage_path('app/packages/extensions/cloudflare-domain/extension.json')))->toBeFalse()
-            ->and(DB::table('agovena_extensions')->where('enabled', true)->count())->toBe(0)
-            ->and(DB::table('agovena_modules')->whereIn('module_id', ['provisioning', 'domains', 'downloads', 'digital-delivery', 'events'])->where('enabled', true)->count())->toBe(5);
+            ->and($fake->resolved)->toHaveCount(7)
+            ->and(File::exists(storage_path('app/packages/extensions/pterodactyl/extension.json')))->toBeTrue()
+            ->and(File::exists(storage_path('app/packages/extensions/cloudflare-domain/extension.json')))->toBeTrue()
+            ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['pterodactyl', 'cloudflare-domain'])->where('enabled', true)->count())->toBe(2)
+            ->and(DB::table('agovena_modules')->where('enabled', true)->pluck('module_id')->sort()->values()->all())->toBe(['digital-delivery', 'domains', 'downloads', 'events', 'provisioning'])
+            ->and(DB::table('agovena_modules')->whereIn('module_id', ['provisioning', 'domains', 'downloads', 'digital-delivery', 'events'])->where('enabled', true)->count())->toBe(5)
+            ->and($this->get('/products/minecraft-survival-server')->status())->toBe(200);
+
+        foreach (Product::query()->pluck('slug') as $slug) {
+            $this->get('/products/'.$slug)->assertOk();
+        }
     } finally {
         config([
             'agovena.packages.optional_packages_path' => $configuredPath,

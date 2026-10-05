@@ -29,13 +29,14 @@ final class ApplyStorePresets
     public function handle(array $presetIds, array $customModuleIds = []): array
     {
         $selectedPresets = $this->validPresetIds($presetIds);
+        $selectedCustomModules = $this->validModuleIds($customModuleIds);
         $selectedModules = array_values(array_unique(array_merge(
             $this->catalog->moduleIdsFor($selectedPresets),
-            array_values(array_filter($customModuleIds, 'is_string')),
+            $selectedCustomModules,
         )));
 
         $this->settings->set('store', 'presets', $selectedPresets);
-        $this->settings->set('store', 'custom_modules', array_values(array_filter($customModuleIds, 'is_string')));
+        $this->settings->set('store', 'custom_modules', $selectedCustomModules);
 
         $enabled = [];
         foreach ($selectedModules as $moduleId) {
@@ -74,8 +75,9 @@ final class ApplyStorePresets
         }
 
         $selectedPresets = $this->validPresetIds(array_values(array_unique([...$existingPresetIds, $presetId])));
+        $selectedCustomModules = $this->validModuleIds($customModuleIds);
         $this->settings->set('store', 'presets', $selectedPresets);
-        $this->settings->set('store', 'custom_modules', array_values(array_filter($customModuleIds, 'is_string')));
+        $this->settings->set('store', 'custom_modules', $selectedCustomModules);
 
         if ($preset->isCustom || $preset->moduleIds === []) {
             return [];
@@ -121,7 +123,7 @@ final class ApplyStorePresets
             ]);
         }
 
-        $custom = array_values(array_unique([...$customModuleIds, $moduleId]));
+        $custom = $this->validModuleIds([...$customModuleIds, $moduleId]);
         $presets = $this->validPresetIds(array_values(array_unique([...$existingPresetIds, 'custom'])));
 
         $this->settings->set('store', 'custom_modules', $custom);
@@ -165,7 +167,7 @@ final class ApplyStorePresets
 
         $remainingCustomModules = $preset->isCustom
             ? []
-            : array_values(array_filter($customModuleIds, 'is_string'));
+            : $this->validModuleIds($customModuleIds);
 
         $stillNeeded = array_flip(array_values(array_unique(array_merge(
             $this->catalog->moduleIdsFor(array_values(array_filter(
@@ -220,9 +222,7 @@ final class ApplyStorePresets
     {
         $stored = $this->settings->get('store', 'custom_modules', []);
 
-        return is_array($stored)
-            ? array_values(array_filter($stored, 'is_string'))
-            : [];
+        return is_array($stored) ? $this->validModuleIds($stored) : [];
     }
 
     /** @param list<string> $presetIds */
@@ -233,6 +233,21 @@ final class ApplyStorePresets
             if ($this->catalog->find($id) !== null) {
                 $selected[] = $id;
             }
+        }
+
+        return array_values(array_unique($selected));
+    }
+
+    /** @param list<mixed> $moduleIds */
+    private function validModuleIds(array $moduleIds): array
+    {
+        $selected = [];
+        foreach ($moduleIds as $moduleId) {
+            if (! is_string($moduleId) || $this->modules->manifest($moduleId) === null) {
+                continue;
+            }
+
+            $selected[] = $moduleId;
         }
 
         return array_values(array_unique($selected));

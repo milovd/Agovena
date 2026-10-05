@@ -1304,11 +1304,11 @@ return [
 
     'modules' => [
         'title' => 'Modules',
-        'lede' => 'Bouw je winkel uit compatibele Modules. Presets zijn modulebundels, geen apart winkeltype.',
+        'lede' => 'Bouw je winkel uit Core-capabilities en compatibele Modules. Presets zijn setupbundels, geen apart winkeltype.',
         'setup_eyebrow' => 'Winkelinrichting',
         'setup_title' => 'Kies capabilities voor deze winkel',
-        'setup_lede' => 'Selecteer één of meer winkelpresets. Klap een preset open om te zien welke Modules daarbij horen.',
-        'setup_lede_available' => 'Installeer een winkelsetup om de bijbehorende Modules toe te voegen. Bestaande setups en ingeschakelde Modules blijven behouden.',
+        'setup_lede' => 'Selecteer één of meer winkelpresets. Klap een preset open om te zien welke optionele Modules daarbij horen.',
+        'setup_lede_available' => 'Installeer een winkelsetup om optionele Modules toe te voegen. Core-capabilities zijn zonder Module beschikbaar.',
         'source_of_truth' => 'Modules zijn de bron van waarheid',
         'presets_aria' => 'Winkelbundels',
         'view_modules' => 'Modules bekijken (:count)',
@@ -1331,7 +1331,7 @@ return [
         'uninstall_preset_disable' => 'Deze Modules worden uitgeschakeld: :modules.',
         'uninstall_preset_keep' => 'Deze Modules blijven ingeschakeld (gebruikt door andere setups): :modules.',
         'installed_setups_title' => 'Jouw winkelsetups',
-        'installed_setups_lede' => 'Productmodellen die op deze winkel actief zijn. Klap een setup open om de Modules te beheren.',
+        'installed_setups_lede' => 'Core-capabilities en optionele Modules die op deze winkel actief zijn. Klap een setup open om de Modules te beheren.',
         'installed_setups_aria' => 'Geïnstalleerde winkelsetups',
         'preset_not_found' => 'Die winkelsetup is niet gevonden.',
         'uninstall_shared_confirm' => ':module uninstallen? Deze Module wordt ook gebruikt door: :presets. Uninstallen schakelt hem uit voor al deze setups.',

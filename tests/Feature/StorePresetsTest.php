@@ -128,6 +128,14 @@ test('custom preset enables no modules and core still works with zero modules', 
         ->toContain('events', 'downloadable');
 });
 
+test('store presets expose only current optional modules', function () {
+    $legacyIds = ['inventory', 'shipping', 'subscriptions'];
+
+    foreach (app(StorePresetCatalog::class)->all() as $preset) {
+        expect(array_intersect($legacyIds, $preset->moduleIds))->toBe([]);
+    }
+});
+
 test('staff can apply store presets from admin', function () {
     $staff = $this->createStaff();
 

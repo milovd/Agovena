@@ -25,6 +25,9 @@ use RuntimeException;
 
 final class ExtensionManager
 {
+    /** @var list<string> */
+    private const DEMO_EXPERIMENTAL_EXTENSIONS = ['pterodactyl', 'cloudflare-domain'];
+
     /** @var array<string, ExtensionManifest>|null */
     private ?array $discovered = null;
 
@@ -426,7 +429,9 @@ final class ExtensionManager
 
     private function canUseManifest(ExtensionManifest $manifest): bool
     {
-        return $manifest->productionReady || app()->environment(['local', 'testing']);
+        return $manifest->productionReady
+            || app()->environment(['local', 'testing'])
+            || (app()->environment('demo') && in_array($manifest->id, self::DEMO_EXPERIMENTAL_EXTENSIONS, true));
     }
 
     private function assertDependencies(ExtensionManifest $manifest, bool $requireEnabled): void

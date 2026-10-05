@@ -86,7 +86,11 @@
                     <span class="ag-setup-board__copy">
                         <span class="ag-setup-board__title-row">
                             <strong class="ag-setup-board__title">{{ __('admin.store_presets.custom') }}</strong>
-                            <span class="ag-badge ag-badge--success">{{ __('admin.modules.status.enabled') }}</span>
+                            <span @class([
+                                'ag-badge',
+                                'ag-badge--success' => $customStatus === 'active',
+                                'ag-badge--warning' => $customStatus === 'partial',
+                            ])>{{ __('admin.modules.preset_status.'.$customStatus) }}</span>
                         </span>
                         <span class="ag-setup-board__lede">{{ __('admin.store_presets.custom_lede') }}</span>
                     </span>

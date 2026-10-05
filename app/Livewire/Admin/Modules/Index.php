@@ -231,7 +231,9 @@ final class Index extends Component
         $installedPresetRows = [];
         $installedPresetIds = $this->installedPresetIds($presets, $modules);
 
-        $hasCustomModules = $this->customModuleIds !== [] || in_array('custom', $this->selectedPresets, true);
+        $customStatus = $this->customPresetStatus($modules);
+        $hasCustomModules = $customStatus !== 'missing';
+        $showCustomRemove = ! $hasCustomModules && in_array('custom', $this->selectedPresets, true);
         $customModuleRows = [];
         if ($this->customModuleIds !== []) {
             foreach ($catalog->modules() as $moduleRow) {
@@ -278,7 +280,7 @@ final class Index extends Component
         }
 
         $customUninstallConfirm = null;
-        if ($hasCustomModules) {
+        if ($hasCustomModules || $showCustomRemove) {
             $customPreset = $presets->find('custom');
             if ($customPreset !== null) {
                 $customUninstallConfirm = $this->buildPresetUninstallConfirm(
@@ -294,6 +296,8 @@ final class Index extends Component
             'availableCustomPresetRow' => $availableCustomPresetRow,
             'installedPresetRows' => $installedPresetRows,
             'hasCustomModules' => $hasCustomModules,
+            'showCustomRemove' => $showCustomRemove,
+            'customStatus' => $customStatus,
             'customModuleRows' => $customModuleRows,
             'customUninstallConfirm' => $customUninstallConfirm,
             'tabs' => [
@@ -354,7 +358,7 @@ final class Index extends Component
         array $installedPresetIds,
     ): ?array {
         $preset = $catalog->find('custom');
-        if ($preset === null || $groups === []) {
+        if ($preset === null || ($groups === [] && ! in_array('custom', $this->selectedPresets, true))) {
             return null;
         }
 
@@ -417,7 +421,16 @@ final class Index extends Component
         if ($this->selectedPresets !== []) {
             return array_values(array_filter(
                 $this->selectedPresets,
-                fn (string $id): bool => $catalog->find($id) !== null && $id !== 'custom',
+                function (string $id) use ($catalog, $modules): bool {
+                    $preset = $catalog->find($id);
+
+                    return $preset !== null && ! $preset->isCustom && (
+                        $preset->moduleIds === []
+                        || collect($preset->moduleIds)->every(
+                            fn (string $moduleId): bool => $modules->manifest($moduleId) !== null && $modules->isEnabled($moduleId),
+                        )
+                    );
+                },
             ));
         }
 
@@ -429,7 +442,7 @@ final class Index extends Component
 
             $enabledCount = 0;
             foreach ($preset->moduleIds as $moduleId) {
-                if ($modules->isEnabled($moduleId)) {
+                if ($modules->manifest($moduleId) !== null && $modules->isEnabled($moduleId)) {
                     $enabledCount++;
                 }
             }
@@ -496,12 +509,16 @@ final class Index extends Component
     private function presetStatus(StorePreset $preset, ModuleManager $modules): string
     {
         if ($preset->moduleIds === []) {
-            return 'active';
+            return in_array($preset->id, $this->selectedPresets, true) ? 'active' : 'missing';
         }
 
         $enabled = 0;
         $installed = 0;
         foreach ($preset->moduleIds as $moduleId) {
+            if ($modules->manifest($moduleId) === null) {
+                continue;
+            }
+
             if ($modules->isEnabled($moduleId)) {
                 $enabled++;
             }
@@ -519,6 +536,26 @@ final class Index extends Component
         }
 
         return 'missing';
+    }
+
+    private function customPresetStatus(ModuleManager $modules): string
+    {
+        if ($this->customModuleIds === []) {
+            return in_array('custom', $this->selectedPresets, true) ? 'active' : 'missing';
+        }
+
+        $enabled = 0;
+        foreach ($this->customModuleIds as $moduleId) {
+            if ($modules->manifest($moduleId) !== null && $modules->isEnabled($moduleId)) {
+                $enabled++;
+            }
+        }
+
+        if ($enabled === count($this->customModuleIds)) {
+            return 'active';
+        }
+
+        return $enabled > 0 ? 'partial' : 'missing';
     }
 
     /**

@@ -7,7 +7,7 @@
         </div>
     </div>
 
-    @if ($availablePresets === [] && ($availableCustomPresetRow['moduleCount'] ?? 0) === 0)
+    @if ($availablePresets === [] && ($availableCustomPresetRow['moduleCount'] ?? 0) === 0 && ! $showCustomRemove)
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ __('admin.modules.empty.available_presets_title') }}</p>
             <p class="ag-empty__text">{{ __('admin.modules.empty.available_presets_text') }}</p>
@@ -30,6 +30,9 @@
                             <span class="ag-setup-board__copy">
                                 <span class="ag-setup-board__title-row">
                                     <strong class="ag-setup-board__title">{{ __($preset->labelKey) }}</strong>
+                                    @if ($row['status'] === 'partial')
+                                        <span class="ag-badge ag-badge--warning">{{ __($row['statusLabel']) }}</span>
+                                    @endif
                                 </span>
                                 <span class="ag-setup-board__lede">{{ __($preset->ledeKey) }}</span>
                             </span>
@@ -99,6 +102,18 @@
                         </div>
 
                         <div class="ag-setup-board__header-actions">
+                            @can('modules.manage')
+                                @if ($showCustomRemove && $customUninstallConfirm)
+                                    <button
+                                        type="button"
+                                        class="ag-btn ag-btn--ghost ag-btn--sm"
+                                        wire:confirm="{{ $customUninstallConfirm }}"
+                                        wire:click="uninstallPreset('custom')"
+                                        wire:loading.attr="disabled"
+                                        wire:target="uninstallPreset"
+                                    >{{ __('admin.modules.uninstall_setup') }}</button>
+                                @endif
+                            @endcan
                             @if ($customModuleCount > 0)
                                 <button
                                     type="button"
