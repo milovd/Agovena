@@ -6,6 +6,7 @@ use App\Agovena\Extensions\ExtensionManifest;
 use App\Enums\PackageSourceType;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 
@@ -1353,8 +1354,12 @@ return new class extends Migration
         }
 
         $manifestData = json_decode((string) file_get_contents($manifestPath), true);
+        // production_ready is a release status, not package identity, so a package
+        // promoted after this migration was written must still be recognized.
         if (! is_array($manifestData)
-            || $this->canonicalize($manifestData) !== $this->canonicalize($definition['manifest'])) {
+            || ! is_bool($manifestData['production_ready'] ?? null)
+            || $this->canonicalize(Arr::except($manifestData, ['production_ready']))
+                !== $this->canonicalize(Arr::except($definition['manifest'], ['production_ready']))) {
             return false;
         }
 
