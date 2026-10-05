@@ -108,11 +108,6 @@ test('generic server provisioners remain explicitly unsupported until readback g
         {
             return [];
         }
-
-        protected function buildCreatePayload(ServiceInstanceInfo $instance, array $providerSettings, string $externalId): array
-        {
-            return ['name' => $instance->label, 'external_id' => $externalId] + $providerSettings;
-        }
     };
     $instance = new ServiceInstanceInfo(
         id: 1,

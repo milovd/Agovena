@@ -126,11 +126,6 @@ function makeGenericProvisioner(ServerApi $api): AbstractServerProvisioner
         {
             return [];
         }
-
-        protected function buildCreatePayload(ServiceInstanceInfo $instance, array $providerSettings, string $externalId): array
-        {
-            return ['name' => $instance->label, 'settings' => $providerSettings, 'external_id' => $externalId];
-        }
     };
 }
 
