@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Agovena\Extensions\Postnl\HttpPostnlApi;
 use Agovena\Extensions\Postnl\PostnlApi;
 use Agovena\Extensions\Postnl\PostnlCarrier;
 use Agovena\Extensions\Postnl\PostnlShipment;
@@ -26,7 +27,10 @@ use App\Enums\OrderStatus;
 use App\Models\Customer;
 use App\Models\ExtensionSetting;
 use App\Models\Product;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Tests\Support\CreatesStaff;
@@ -184,13 +188,60 @@ test('invalid credentials and timeouts do not leak secrets', function () {
         ->toThrow(ValidationException::class);
 });
 
-test('label failure does not store a barcode mapping', function () {
+test('label failure keeps the announced barcode so a retry never announces a second parcel', function () {
     $api = enablePostnl();
     $api->failLabel = true;
     $shipment = paidShippableOrder();
     expect(fn () => app(ShipmentService::class)->dispatchCarrier($shipment, 'postnl', '3085'))
+        ->toThrow(ValidationException::class);
+
+    $row = PostnlShipment::query()->sole();
+    expect($row->label_path)->toBeNull()
+        ->and($row->provider_status)->toBe('label_failed');
+
+    $api->failLabel = false;
+    $updated = app(ShipmentService::class)->dispatchCarrier($shipment->fresh() ?? $shipment, 'postnl', '3085');
+
+    expect($api->createCalls)->toBe(1)
+        ->and($api->barcodeCalls)->toBe(1)
+        ->and($updated->external_ref)->toBe($row->barcode)
+        ->and(PostnlShipment::query()->count())->toBe(1);
+});
+
+test('postnl refuses to announce a parcel when its shipment mapping table is missing', function () {
+    $api = enablePostnl();
+    $shipment = paidShippableOrder();
+    Schema::drop('postnl_shipments');
+
+    expect(fn () => app(PostnlCarrier::class)->createShipment($shipment->order, '3085'))
         ->toThrow(ValidationException::class)
-        ->and(PostnlShipment::query()->count())->toBe(0);
+        ->and($api->barcodeCalls)->toBe(0)
+        ->and($api->createCalls)->toBe(0);
+});
+
+test('postnl refuses a concurrent shipment creation for the same order', function () {
+    $api = enablePostnl();
+    $shipment = paidShippableOrder();
+    $lock = Cache::lock('postnl:create-shipment:'.$shipment->order_id, 30);
+    expect($lock->get())->toBeTrue();
+
+    try {
+        expect(fn () => app(PostnlCarrier::class)->createShipment($shipment->order, '3085'))
+            ->toThrow(ValidationException::class)
+            ->and($api->barcodeCalls)->toBe(0)
+            ->and($api->createCalls)->toBe(0);
+    } finally {
+        $lock->release();
+    }
+});
+
+test('postnl delivery options without a tariff never become free shipping quotes', function () {
+    $api = enablePostnl();
+    $api->unpricedCheckout = true;
+    $shipment = paidShippableOrder();
+
+    expect(app(PostnlCarrier::class)->quote($shipment->order))->toBe([])
+        ->and($api->checkoutCalls)->toBe(1);
 });
 
 test('tracking sync maps delivered without exposing provider internals', function () {
@@ -199,11 +250,54 @@ test('tracking sync maps delivered without exposing provider internals', functio
     $updated = app(ShipmentService::class)->dispatchCarrier($shipment, 'postnl', '3085');
     $api = app(PostnlApi::class);
     expect($api)->toBeInstanceOf(FakePostnlApi::class);
-    $api->nextStatus = '7';
+    $api->nextPhase = '4';
     $synced = app(ShipmentService::class)->syncTracking($updated);
 
     expect($synced->status)->toBe(ShipmentStatus::Delivered)
         ->and($synced->tracking_url)->not->toContain('api.postnl');
+});
+
+test('postnl tracking maps documented phase codes and ignores unknown phases', function () {
+    $api = enablePostnl();
+    $shipment = paidShippableOrder();
+    $updated = app(ShipmentService::class)->dispatchCarrier($shipment, 'postnl', '3085');
+    $carrier = app(PostnlCarrier::class);
+
+    foreach (['1' => 'processing', '2' => 'shipped', '3' => 'shipped', '4' => 'delivered', '99' => 'processing', '7' => 'processing'] as $phase => $expected) {
+        $api->nextPhase = (string) $phase;
+        expect($carrier->tracking((string) $updated->external_ref)['status'])->toBe($expected);
+    }
+});
+
+test('postnl http client uses the documented endpoints and api key header only', function () {
+    enablePostnl();
+    app()->forgetInstance(PostnlApi::class);
+    Http::preventStrayRequests();
+    Http::fake([
+        'api-sandbox.postnl.nl/shipment/v1_1/barcode*' => Http::response(['Barcode' => '3SDEVC000000001']),
+        'api-sandbox.postnl.nl/shipment/v2_2/label*' => Http::response(['ResponseShipments' => []]),
+        'api-sandbox.postnl.nl/shipment/v2/status/barcode/*' => Http::response(['CurrentStatus' => []]),
+        'api-sandbox.postnl.nl/shipment/v1/checkout' => Http::response(['DeliveryOptions' => []]),
+    ]);
+    $client = app(HttpPostnlApi::class);
+
+    $client->barcode(['CustomerCode' => 'DEVC', 'CustomerNumber' => '12345678', 'Type' => '3S', 'Serie' => '000000000-999999999']);
+    $client->createShipment(['Message' => []], 'postnl-order-1');
+    $client->status('3SDEVC000000001');
+    $client->checkout(['Options' => ['Daytime']]);
+
+    $sent = Http::recorded()->map(fn ($pair) => $pair[0]);
+    expect($sent)->toHaveCount(4);
+    expect($sent[0]->method())->toBe('GET')
+        ->and($sent[0]->url())->toStartWith('https://api-sandbox.postnl.nl/shipment/v1_1/barcode?')
+        ->and($sent[1]->method())->toBe('POST')
+        ->and($sent[1]->url())->toBe('https://api-sandbox.postnl.nl/shipment/v2_2/label?confirm=true')
+        ->and($sent[2]->url())->toBe('https://api-sandbox.postnl.nl/shipment/v2/status/barcode/3SDEVC000000001')
+        ->and($sent[3]->url())->toBe('https://api-sandbox.postnl.nl/shipment/v1/checkout');
+    foreach ($sent as $request) {
+        expect($request->header('apikey'))->toBe(['test-postnl-key-not-real'])
+            ->and($request->hasHeader('Idempotency-Key'))->toBeFalse();
+    }
 });
 
 test('tracking failure stays a safe validation error', function () {

@@ -39,7 +39,9 @@ final class FakePostnlApi implements PostnlApi
 
     public bool $rateUnavailable = false;
 
-    public string $nextStatus = '1';
+    public string $nextPhase = '1';
+
+    public bool $unpricedCheckout = false;
 
     public function barcode(array $query): array
     {
@@ -91,8 +93,12 @@ final class FakePostnlApi implements PostnlApi
         $this->statusCalls++;
 
         return [
-            'Barcode' => $barcode,
-            'Status' => ['PhaseCode' => $this->nextStatus, 'StatusCode' => $this->nextStatus],
+            'CurrentStatus' => [
+                'Shipment' => [
+                    'Barcode' => $barcode,
+                    'Status' => ['PhaseCode' => $this->nextPhase, 'StatusCode' => '1'],
+                ],
+            ],
         ];
     }
 
@@ -106,6 +112,10 @@ final class FakePostnlApi implements PostnlApi
             throw PostnlProviderException::failed('postnl::messages.errors.unsupported_destination', 422);
         }
         $this->checkoutCalls++;
+
+        if ($this->unpricedCheckout) {
+            return [['ProductCode' => '3085', 'DeliveryDate' => '2026-08-15']];
+        }
 
         return [[
             'ProductCode' => '3085',
