@@ -209,10 +209,13 @@ test('proxmox deletes an already stopped vm without issuing a stop request', fun
         'token_secret' => '[REDACTED]',
     ]);
     Http::fake([
+        'https://pve.example.test:8006/api2/json/cluster/resources*' => Http::response([
+            'data' => [['id' => 'qemu/200', 'type' => 'qemu', 'vmid' => 200, 'node' => 'pve1', 'name' => 'agovena-1']],
+        ]),
         'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/200/status/current' => Http::response([
             'data' => ['status' => 'stopped'],
         ]),
-        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/200' => Http::response([
+        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/200?purge=1' => Http::response([
             'data' => 'UPID:pve:000000A5:00000000:5E7A7C3E:qmdelete:200:',
         ]),
         'https://pve.example.test:8006/api2/json/nodes/pve1/tasks/UPID%3Apve%3A000000A5%3A00000000%3A5E7A7C3E%3Aqmdelete%3A200%3A/status' => Http::response([
@@ -225,19 +228,136 @@ test('proxmox deletes an already stopped vm without issuing a stop request', fun
     Http::assertNotSent(fn ($request) => str_ends_with($request->url(), '/qemu/200/status/stop'));
 });
 
-test('proxmox treats an already absent vm during delete as success', function () {
-    enableProxmox();
-    $api = new HttpProxmoxApi(app(ExtensionSettingsRepository::class), [
+function proxmoxHttpApi(): HttpProxmoxApi
+{
+    return new HttpProxmoxApi(app(ExtensionSettingsRepository::class), [
         'api_url' => 'https://pve.example.test:8006',
         'token_user' => 'root@pam',
         'token_id' => 'agovena',
         'token_secret' => '[REDACTED]',
     ]);
-    Http::fake(fn () => Http::response([], 404));
+}
+
+// Proxmox VE answers HTTP 500 "Configuration file '...' does not exist" for an absent VMID
+// (pve-guest-common AbstractConfig::load_config), never 404. Absence must come from the
+// documented cluster-wide resource index instead.
+test('proxmox treats a vm missing from the cluster resource index as absent during delete', function () {
+    enableProxmox();
+    $api = proxmoxHttpApi();
+    Http::fake([
+        'https://pve.example.test:8006/api2/json/cluster/resources*' => Http::response(['data' => []]),
+        'https://pve.example.test:8006/*' => Http::response(['data' => null], 500),
+    ]);
 
     $api->deleteVm('pve1', 200);
 
-    Http::assertSentCount(3);
+    Http::assertNotSent(fn ($request) => $request->method() === 'DELETE');
+    Http::assertNotSent(fn ($request) => str_contains($request->url(), '/status/stop'));
+});
+
+// The VM index schema marks "name" optional; one unnamed VM must not break lookups.
+test('proxmox name lookup skips unnamed vms from the node index', function () {
+    enableProxmox();
+    $api = proxmoxHttpApi();
+    Http::fake([
+        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu' => Http::response([
+            'data' => [
+                ['vmid' => 150, 'status' => 'stopped'],
+                ['name' => 'managed-vm', 'vmid' => 200, 'status' => 'running'],
+            ],
+        ]),
+    ]);
+
+    expect($api->findVmByName('pve1', 'managed-vm'))->toBe(['node' => 'pve1', 'vmid' => 200, 'name' => 'managed-vm']);
+});
+
+// pve-http-server only reads parameters from the body for POST/PUT; DELETE parameters must be
+// sent in the query string. purge removes the VMID from HA, backup and replication configs; without
+// it Proxmox refuses to destroy an HA-managed VM.
+test('proxmox delete sends purge as a query parameter', function () {
+    enableProxmox();
+    $api = proxmoxHttpApi();
+    Http::fake([
+        'https://pve.example.test:8006/api2/json/cluster/resources*' => Http::response([
+            'data' => [['id' => 'qemu/200', 'type' => 'qemu', 'vmid' => 200, 'node' => 'pve1']],
+        ]),
+        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/200/status/current' => Http::response([
+            'data' => ['status' => 'stopped'],
+        ]),
+        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/200*' => Http::response([
+            'data' => 'UPID:pve1:000000A5:00000000:5E7A7C3E:qmdestroy:200:root@pam!agovena:',
+        ]),
+        'https://pve.example.test:8006/api2/json/nodes/pve1/tasks/*' => Http::response([
+            'data' => ['status' => 'stopped', 'exitstatus' => 'OK'],
+        ]),
+    ]);
+
+    $api->deleteVm('pve1', 200);
+
+    Http::assertSent(fn ($request) => $request->method() === 'DELETE'
+        && str_ends_with($request->url(), '/nodes/pve1/qemu/200?purge=1'));
+});
+
+test('proxmox reports an absent vm config as null when proxmox answers 500 does not exist', function () {
+    enableProxmox();
+    $api = proxmoxHttpApi();
+    Http::fake([
+        'https://pve.example.test:8006/api2/json/cluster/resources*' => Http::response([
+            'data' => [['id' => 'lxc/201', 'type' => 'lxc', 'vmid' => 201, 'node' => 'pve1']],
+        ]),
+        'https://pve.example.test:8006/*' => Http::response(['data' => null], 500),
+    ]);
+
+    expect($api->findVmConfig('pve1', 200))->toBeNull();
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/cluster/resources') && str_contains($request->url(), 'type=vm'));
+});
+
+test('proxmox refuses to treat a vm that moved to another node as absent', function () {
+    enableProxmox();
+    $api = proxmoxHttpApi();
+    Http::fake([
+        'https://pve.example.test:8006/api2/json/cluster/resources*' => Http::response([
+            'data' => [['id' => 'qemu/200', 'type' => 'qemu', 'vmid' => 200, 'node' => 'pve2']],
+        ]),
+        'https://pve.example.test:8006/*' => Http::response(['data' => null], 500),
+    ]);
+
+    expect(fn () => $api->findVmConfig('pve1', 200))->toThrow(ProxmoxProviderException::class);
+});
+
+// pve-common PVE::UPID::status_is_error: "OK" and "WARNINGS: <n>" are successful exit statuses.
+test('proxmox treats a task finished with warnings as successful', function () {
+    enableProxmox();
+    $api = proxmoxHttpApi();
+    $upid = 'UPID:pve1:000000A5:00000000:5E7A7C3E:qmclone:9000:root@pam!agovena:';
+    Http::fake([
+        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/9000/clone' => Http::response(['data' => $upid]),
+        'https://pve.example.test:8006/api2/json/nodes/pve1/tasks/*' => Http::response([
+            'data' => ['status' => 'stopped', 'exitstatus' => 'WARNINGS: 1'],
+        ]),
+    ]);
+
+    expect($api->cloneVm('pve1', 9000, ['newid' => 200]))->toBe($upid);
+});
+
+test('proxmox grows disks through the documented resize endpoint and waits for its task', function () {
+    enableProxmox();
+    $api = proxmoxHttpApi();
+    $upid = 'UPID:pve1:000000A5:00000000:5E7A7C3E:resize:200:root@pam!agovena:';
+    Http::fake([
+        'https://pve.example.test:8006/api2/json/nodes/pve1/qemu/200/resize' => Http::response(['data' => $upid]),
+        'https://pve.example.test:8006/api2/json/nodes/pve1/tasks/*' => Http::response([
+            'data' => ['status' => 'stopped', 'exitstatus' => 'OK'],
+        ]),
+    ]);
+
+    $api->resizeDisk('pve1', 200, 'scsi0', '80G');
+
+    Http::assertSent(fn ($request) => $request->method() === 'PUT'
+        && str_ends_with($request->url(), '/nodes/pve1/qemu/200/resize')
+        && $request['disk'] === 'scsi0'
+        && $request['size'] === '80G');
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/tasks/'.rawurlencode($upid).'/status'));
 });
 
 test('proxmox plan changes send the complete target vm configuration', function () {
@@ -267,6 +387,156 @@ test('proxmox plan changes send the complete target vm configuration', function 
         'net0' => 'virtio=AA:BB:CC:DD:EE:FF,bridge=vmbr1',
         'onboot' => 0,
     ]);
+    // A size= edit in the config does not resize the volume; only PUT .../resize does.
+    foreach ($api->configUpdates as $update) {
+        expect($update['payload'])->not->toHaveKey('scsi0');
+    }
+    expect(end($api->resizeCalls))->toBe(['node' => 'pve1', 'vmid' => $mapping->vmid, 'disk' => 'scsi0', 'size' => '80G']);
+});
+
+test('proxmox plan changes fail closed instead of shrinking a disk', function () {
+    $api = enableProxmox();
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+    $resizeCalls = count($api->resizeCalls);
+
+    expect(fn () => app(ProxmoxProvisioner::class)->changePlan(EloquentProvisionedServiceResolver::info($instance), [
+        'id' => 'smaller-plan',
+        'provider_settings' => ['cores' => '2', 'memory' => '2048', 'disk' => '10', 'autostart' => '1'],
+    ]))->toThrow(ValidationException::class)
+        ->and(count($api->resizeCalls))->toBe($resizeCalls);
+});
+
+test('proxmox resizes the boot disk and never a cloud-init cdrom drive', function () {
+    $api = enableProxmox();
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+    $mapping = ProxmoxVm::query()->where('service_instance_id', $instance->id)->firstOrFail();
+    $api->vms[$mapping->vmid]['config'] = [
+        'ide2' => 'local-lvm:vm-'.$mapping->vmid.'-cloudinit,media=cdrom',
+        'boot' => 'order=scsi0;ide2;net0',
+    ] + $api->vms[$mapping->vmid]['config'];
+
+    app(ProxmoxProvisioner::class)->changePlan(EloquentProvisionedServiceResolver::info($instance), [
+        'id' => 'bigger-plan',
+        'provider_settings' => ['cores' => '2', 'memory' => '2048', 'disk' => '60', 'autostart' => '1'],
+    ]);
+
+    expect(end($api->resizeCalls)['disk'])->toBe('scsi0')
+        ->and($api->vms[$mapping->vmid]['config']['ide2'])->toBe('local-lvm:vm-'.$mapping->vmid.'-cloudinit,media=cdrom');
+});
+
+test('proxmox marks ownership in the clone request itself', function () {
+    $api = enableProxmox();
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+
+    expect($api->clonePayloads[0]['description'] ?? null)->toBe('agovena-service-instance:'.$instance->id);
+});
+
+test('proxmox adopts its own vm after a clone task timeout without cloning twice', function () {
+    $api = enableProxmox();
+    $api->timeoutAfterClone = true;
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+    expect($instance->status)->not->toBe(ServiceInstanceStatus::Active);
+
+    $api->timeoutAfterClone = false;
+    $retried = app(ProvisioningOrchestrator::class)->provision($instance->fresh());
+
+    expect($api->cloneCalls)->toBe(1)
+        ->and($retried->fresh()->status)->toBe(ServiceInstanceStatus::Active)
+        ->and(ProxmoxVm::query()->where('service_instance_id', $instance->id)->value('vmid'))->toBe(200)
+        ->and($api->statusByKey['pve1:200']['status'])->toBe('running');
+});
+
+test('proxmox sync never powers on or unsuspends a suspended vm', function () {
+    $api = enableProxmox();
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+    $mapping = ProxmoxVm::query()->where('service_instance_id', $instance->id)->firstOrFail();
+    $orchestrator = app(ProvisioningOrchestrator::class);
+    $instance = $orchestrator->suspend($instance);
+    $startCalls = $api->startCalls;
+
+    $instance = $orchestrator->sync($instance->fresh());
+
+    expect($instance->status)->toBe(ServiceInstanceStatus::Suspended)
+        ->and($api->startCalls)->toBe($startCalls)
+        ->and($api->statusByKey[$mapping->node.':'.$mapping->vmid]['status'])->toBe('stopped')
+        ->and((int) $api->vms[$mapping->vmid]['config']['onboot'])->toBe(0);
+});
+
+test('proxmox sync keeps an active service with a customer stopped vm active', function () {
+    $api = enableProxmox();
+    $instance = payForProxmoxProduct(makeProxmoxProduct(['autostart' => '0']));
+    expect($instance->status)->toBe(ServiceInstanceStatus::Active);
+
+    $instance = app(ProvisioningOrchestrator::class)->sync($instance->fresh());
+
+    expect($instance->status)->toBe(ServiceInstanceStatus::Active);
+});
+
+test('proxmox plan change on a suspended service keeps the vm powered off', function () {
+    $api = enableProxmox();
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+    $mapping = ProxmoxVm::query()->where('service_instance_id', $instance->id)->firstOrFail();
+    $instance = app(ProvisioningOrchestrator::class)->suspend($instance);
+    $startCalls = $api->startCalls;
+
+    app(ProxmoxProvisioner::class)->changePlan(EloquentProvisionedServiceResolver::info($instance->fresh()), [
+        'id' => 'bigger-plan',
+        'provider_settings' => ['cores' => '4', 'memory' => '4096', 'disk' => '40', 'autostart' => '1'],
+    ]);
+
+    expect($api->startCalls)->toBe($startCalls)
+        ->and($api->statusByKey[$mapping->node.':'.$mapping->vmid]['status'])->toBe('stopped')
+        ->and((int) $api->vms[$mapping->vmid]['config']['onboot'])->toBe(0)
+        ->and((int) $api->vms[$mapping->vmid]['config']['cores'])->toBe(4);
+});
+
+test('proxmox unsuspend and start are idempotent when the vm already runs', function () {
+    $api = enableProxmox();
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+    $mapping = ProxmoxVm::query()->where('service_instance_id', $instance->id)->firstOrFail();
+    $orchestrator = app(ProvisioningOrchestrator::class);
+    $instance = $orchestrator->suspend($instance);
+    // A previous unsuspend attempt powered the VM on and then failed before Core recorded it.
+    $api->statusByKey[$mapping->node.':'.$mapping->vmid] = ['status' => 'running'];
+
+    $instance = $orchestrator->unsuspend($instance->fresh());
+    app(ProxmoxProvisioner::class)->runAction(EloquentProvisionedServiceResolver::info($instance), 'start');
+
+    expect($instance->status)->toBe(ServiceInstanceStatus::Active)
+        ->and((int) $api->vms[$mapping->vmid]['config']['onboot'])->toBe(1);
+});
+
+test('proxmox terminate removes its own vm even when the mapping was never stored', function () {
+    $api = enableProxmox();
+    $api->timeoutAfterClone = true;
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+    ProxmoxVm::query()->where('service_instance_id', $instance->id)->delete();
+    $api->vms[555] = [
+        'node' => 'pve1',
+        'name' => 'customer-owned',
+        'config' => ['description' => 'not agovena'],
+    ];
+
+    app(ProxmoxProvisioner::class)->terminate(EloquentProvisionedServiceResolver::info($instance->fresh()));
+
+    expect($api->vms)->not->toHaveKey(200)
+        ->and($api->vms)->toHaveKey(555);
+});
+
+test('proxmox terminate never deletes an unmarked vm that only shares the deterministic name', function () {
+    $api = enableProxmox();
+    $api->failClone = true;
+    $instance = payForProxmoxProduct(makeProxmoxProduct());
+    $api->vms[556] = [
+        'node' => 'pve1',
+        'name' => 'agovena-'.$instance->id,
+        'config' => ['description' => 'hand made'],
+    ];
+
+    app(ProxmoxProvisioner::class)->terminate(EloquentProvisionedServiceResolver::info($instance->fresh()));
+
+    expect($api->vms)->toHaveKey(556)
+        ->and($api->deleteCalls)->toBe(0);
 });
 
 test('proxmox rejects malformed vm ids instead of casting them', function () {

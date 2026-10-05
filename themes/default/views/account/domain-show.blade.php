@@ -34,11 +34,11 @@
                     <article class="store-domain-record" wire:key="dns-record-{{ $record['id'] ?? $loop->index }}">
                         <div>
                             <strong>{{ $record['type'] ?? '' }} {{ $record['name'] ?? '' }}</strong>
-                            <p>{{ $record['content'] ?? '' }} · TTL {{ $record['ttl'] ?? '' }}</p>
+                            <p>@isset($record['priority']){{ $record['priority'] }} @endisset{{ $record['content'] ?? '' }} · TTL {{ $record['ttl'] ?? '' }}</p>
                         </div>
                         <div class="store-domain-record__actions">
                             <button type="button" class="store-btn store-btn--secondary" wire:click="editRecord(@js($record))">{{ __('domains::customer.edit') }}</button>
-                            <button type="button" class="store-btn store-btn--ghost" wire:click="deleteRecord('{{ $record['id'] ?? '' }}')" wire:confirm="{{ __('domains::customer.delete_confirm') }}">{{ __('domains::customer.delete') }}</button>
+                            <button type="button" class="store-btn store-btn--ghost" wire:click="deleteRecord(@js((string) ($record['id'] ?? '')))" wire:confirm="{{ __('domains::customer.delete_confirm') }}">{{ __('domains::customer.delete') }}</button>
                         </div>
                     </article>
                 @empty
@@ -51,10 +51,13 @@
             <h2>{{ __('domains::customer.save_record') }}</h2>
             <form class="store-domain-record-form" wire:submit="saveRecord">
                 <div class="store-domain-record-form__grid">
-                    <label class="store-field"><span>{{ __('domains::customer.record_type') }}</span><select class="store-input" wire:model="recordType"><option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option><option>TXT</option></select></label>
+                    <label class="store-field"><span>{{ __('domains::customer.record_type') }}</span><select class="store-input" wire:model.live="recordType"><option>A</option><option>AAAA</option><option>CNAME</option><option>MX</option><option>TXT</option></select></label>
                     <label class="store-field"><span>{{ __('domains::customer.record_name') }}</span><input class="store-input" wire:model="recordName" required></label>
-                    <label class="store-field store-domain-record-form__wide"><span>{{ __('domains::customer.record_content') }}</span><input class="store-input" wire:model="recordContent" required></label>
+                    <label class="store-field store-domain-record-form__wide"><span>{{ __('domains::customer.record_content') }}</span><input class="store-input" wire:model="recordContent" required>@error('recordContent')<p class="store-field__error">{{ $message }}</p>@enderror</label>
                     <label class="store-field"><span>{{ __('domains::customer.record_ttl') }}</span><input class="store-input" type="number" min="60" max="86400" wire:model="recordTtl" required></label>
+                    @if ($recordType === 'MX')
+                        <label class="store-field"><span>{{ __('domains::customer.record_priority') }}</span><input class="store-input" type="number" min="0" max="65535" wire:model="recordPriority" required>@error('recordPriority')<p class="store-field__error">{{ $message }}</p>@enderror</label>
+                    @endif
                 </div>
                 <button type="submit" class="store-btn store-btn--primary">{{ __('domains::customer.save_record') }}</button>
             </form>

@@ -31,6 +31,7 @@ use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Provisioning\Contracts\Provisioner;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Provisioning\RunProvisionerAction;
+use App\Agovena\Provisioning\ServiceInstanceInfo;
 use App\Enums\ProductOptionType;
 use App\Livewire\Admin\Products\Create as CreateProductForm;
 use App\Livewire\Admin\Products\Edit as EditProductForm;
@@ -44,10 +45,12 @@ use App\Models\ProductOption;
 use App\Models\ProductOptionChoice;
 use App\Models\ProvisioningServer;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -1480,6 +1483,8 @@ test('http adapter calculates deployable capacity from real node resources', fun
             'data' => [[
                 'attributes' => [
                     'id' => 7,
+                    'location_id' => 3,
+                    'public' => true,
                     'maintenance_mode' => false,
                     'memory' => 2048,
                     'memory_overallocate' => 50,
@@ -1585,4 +1590,474 @@ test('core and modules do not import pterodactyl or mollie extension types', fun
                 ->not->toContain('Mollie\\Api\\');
         }
     }
+});
+
+/**
+ * In-test emulator of the official Pterodactyl 1.x Application and Client API
+ * contracts (routes/api-application.php, routes/api-client.php,
+ * PterodactylSerializer, ServerTransformer, NodeTransformer, EggTransformer,
+ * StoreServerRequest, UpdateServerBuildConfigurationRequest,
+ * UpdateServerStartupRequest, NodeController allowed filters, StatsTransformer).
+ */
+function officialPterodactylPanel(): object
+{
+    $panel = new class
+    {
+        /** @var array<int, array<string, mixed>> */
+        public array $nodes = [
+            1 => ['id' => 1, 'uuid' => 'node-uuid-1', 'public' => true, 'name' => 'ams-1', 'location_id' => 1, 'maintenance_mode' => false, 'memory' => 8192, 'memory_overallocate' => 0, 'disk' => 32768, 'disk_overallocate' => 0],
+        ];
+
+        /** @var array<int, array<string, mixed>> */
+        public array $servers = [];
+
+        /** @var list<array<string, mixed>> */
+        public array $requests = [];
+
+        public int $nextServerId = 10;
+
+        public string $powerState = 'running';
+
+        /** @var list<array<string, mixed>> */
+        public array $eggVariables = [
+            ['id' => 1, 'egg_id' => 15, 'name' => 'Server Jar File', 'env_variable' => 'SERVER_JARFILE', 'default_value' => 'server.jar', 'user_viewable' => true, 'user_editable' => true, 'rules' => 'required|string|max:100'],
+            ['id' => 2, 'egg_id' => 15, 'name' => 'Minecraft Version', 'env_variable' => 'MC_VERSION', 'default_value' => '1.20', 'user_viewable' => true, 'user_editable' => true, 'rules' => 'nullable|string|in:1.20,1.21'],
+            ['id' => 3, 'egg_id' => 15, 'name' => 'Custom Setting', 'env_variable' => 'FOO', 'default_value' => '', 'user_viewable' => true, 'user_editable' => true, 'rules' => 'nullable|string'],
+            ['id' => 4, 'egg_id' => 15, 'name' => 'Locked Setting', 'env_variable' => 'LOCKED_SETTING', 'default_value' => 'locked', 'user_viewable' => true, 'user_editable' => false, 'rules' => 'required|string'],
+        ];
+
+        /** @return array<string, mixed> */
+        public function egg(): array
+        {
+            return ['id' => 15, 'uuid' => 'egg-uuid-15', 'name' => 'Vanilla', 'nest' => 1, 'docker_image' => 'ghcr.io/pterodactyl/games:java', 'docker_images' => ['Java' => 'ghcr.io/pterodactyl/games:java'], 'startup' => 'java -jar {{SERVER_JARFILE}}'];
+        }
+
+        /** @return array<string, mixed> */
+        public function nodeAttributes(array $node): array
+        {
+            $servers = array_filter($this->servers, static fn (array $server): bool => $server['node_id'] === $node['id']);
+
+            return $node + ['allocated_resources' => [
+                'memory' => array_sum(array_column($servers, 'memory')),
+                'disk' => array_sum(array_column($servers, 'disk')),
+            ]];
+        }
+
+        /** @return array<string, mixed> */
+        public function transform(array $server): array
+        {
+            $environment = [];
+            foreach ($this->eggVariables as $variable) {
+                $environment[$variable['env_variable']] = $server['variables'][$variable['env_variable']] ?? $variable['default_value'];
+            }
+            $environment['STARTUP'] = $server['startup'];
+            $environment['P_SERVER_LOCATION'] = 'ams';
+            $environment['P_SERVER_UUID'] = $server['uuid'];
+            $environment['P_SERVER_ALLOCATION_LIMIT'] = $server['allocation_limit'];
+
+            return [
+                'id' => $server['id'],
+                'external_id' => $server['external_id'],
+                'uuid' => $server['uuid'],
+                'identifier' => $server['uuidShort'],
+                'name' => $server['name'],
+                'description' => '',
+                'status' => $server['status'],
+                'suspended' => $server['status'] === 'suspended',
+                'limits' => ['memory' => $server['memory'], 'swap' => $server['swap'], 'disk' => $server['disk'], 'io' => $server['io'], 'cpu' => $server['cpu'], 'threads' => null, 'oom_disabled' => true],
+                'feature_limits' => ['databases' => $server['database_limit'], 'allocations' => $server['allocation_limit'], 'backups' => $server['backup_limit']],
+                'user' => $server['owner_id'],
+                'node' => $server['node_id'],
+                'allocation' => $server['allocation_id'],
+                'nest' => $server['nest_id'],
+                'egg' => $server['egg_id'],
+                'container' => [
+                    'startup_command' => $server['startup'],
+                    'image' => $server['image'],
+                    'installed' => $server['status'] === 'installing' ? 0 : 1,
+                    'environment' => $environment,
+                    'skip_scripts' => $server['skip_scripts'],
+                ],
+                'updated_at' => '2026-10-05T12:00:00+00:00',
+                'created_at' => '2026-10-05T12:00:00+00:00',
+            ];
+        }
+
+        /** @return array<string, mixed> */
+        public function serverResource(array $server, array $includes): array
+        {
+            $attributes = $this->transform($server);
+            foreach ($includes as $include) {
+                $attributes['relationships'][$include] = match ($include) {
+                    'node' => ['object' => 'node', 'attributes' => $this->nodeAttributes($this->nodes[$server['node_id']])],
+                    'user' => ['object' => 'user', 'attributes' => ['id' => $server['owner_id'], 'username' => 'owner']],
+                    'nest' => ['object' => 'nest', 'attributes' => ['id' => $server['nest_id'], 'name' => 'Minecraft']],
+                    'egg' => ['object' => 'egg', 'attributes' => $this->egg()],
+                    'location' => ['object' => 'location', 'attributes' => ['id' => $this->nodes[$server['node_id']]['location_id'], 'short' => 'ams']],
+                    'allocations' => ['object' => 'list', 'data' => [['object' => 'allocation', 'attributes' => ['id' => $server['allocation_id'], 'ip' => '10.0.0.1', 'port' => 25565, 'assigned' => true]]]],
+                    default => ['object' => 'null_resource', 'attributes' => null],
+                };
+            }
+
+            return ['object' => 'server', 'attributes' => $attributes];
+        }
+
+        /** @param array<string, mixed> $data @param array<string, mixed> $rules */
+        public function validationFails(array $data, array $rules): bool
+        {
+            return Validator::make($data, $rules)->fails();
+        }
+
+        /** @param array<string, mixed> $environment */
+        public function environmentFails(array $environment): bool
+        {
+            $data = [];
+            $rules = [];
+            foreach ($this->eggVariables as $variable) {
+                $data['environment'][$variable['env_variable']] = $environment[$variable['env_variable']] ?? null;
+                $rules['environment.'.$variable['env_variable']] = $variable['rules'];
+            }
+
+            return Validator::make($data, $rules)->fails();
+        }
+
+        public function handle(Request $request): mixed
+        {
+            $path = (string) parse_url($request->url(), PHP_URL_PATH);
+            parse_str((string) parse_url($request->url(), PHP_URL_QUERY), $query);
+            $method = strtoupper($request->method());
+            $body = $method === 'GET' ? [] : (json_decode($request->body() ?: '[]', true) ?: []);
+            $this->requests[] = ['method' => $method, 'path' => $path, 'query' => $query, 'body' => $body];
+            $includes = array_filter(explode(',', (string) ($query['include'] ?? '')));
+            $notFound = Http::response(['errors' => [['code' => 'NotFoundHttpException', 'status' => '404', 'detail' => 'The requested resource could not be found on the server.']]], 404);
+            $invalid = static fn (string $detail) => Http::response(['errors' => [['code' => 'ValidationException', 'status' => '422', 'detail' => $detail]]], 422);
+
+            if ($method === 'GET' && $path === '/api/application/servers') {
+                return Http::response(['object' => 'list', 'data' => [], 'meta' => ['pagination' => ['total' => 0, 'count' => 0, 'per_page' => 1, 'current_page' => 1, 'total_pages' => 1]]]);
+            }
+            if ($method === 'GET' && $path === '/api/application/nodes') {
+                foreach (array_keys((array) ($query['filter'] ?? [])) as $filter) {
+                    if (! in_array($filter, ['uuid', 'name', 'fqdn', 'daemon_token_id'], true)) {
+                        return Http::response(['errors' => [['code' => 'InvalidFilterQuery', 'status' => '400', 'detail' => 'Requested filter(s) `'.$filter.'` are not allowed.']]], 400);
+                    }
+                }
+
+                return Http::response(['object' => 'list', 'data' => array_values(array_map(
+                    fn (array $node): array => ['object' => 'node', 'attributes' => $this->nodeAttributes($node)],
+                    $this->nodes,
+                )), 'meta' => ['pagination' => ['total' => count($this->nodes), 'count' => count($this->nodes), 'per_page' => 100, 'current_page' => 1, 'total_pages' => 1]]]);
+            }
+            if ($method === 'GET' && $path === '/api/application/nests/1/eggs/15') {
+                $attributes = $this->egg();
+                if (in_array('variables', $includes, true)) {
+                    $attributes['relationships']['variables'] = ['object' => 'list', 'data' => array_map(
+                        static fn (array $variable): array => ['object' => 'egg_variable', 'attributes' => $variable],
+                        $this->eggVariables,
+                    )];
+                }
+
+                return Http::response(['object' => 'egg', 'attributes' => $attributes]);
+            }
+            if ($method === 'POST' && $path === '/api/application/servers') {
+                if ($this->validationFails($body, [
+                    'external_id' => 'sometimes|nullable|string|between:1,191',
+                    'name' => 'required|string|min:1|max:191',
+                    'user' => 'required|integer',
+                    'egg' => 'required|integer',
+                    'docker_image' => 'required|string|max:191',
+                    'startup' => 'required|string',
+                    'environment' => 'present|array',
+                    'limits' => 'required|array',
+                    'limits.memory' => 'required|numeric|min:0',
+                    'limits.swap' => 'required|numeric|min:-1',
+                    'limits.disk' => 'required|numeric|min:0',
+                    'limits.io' => 'required|numeric|between:10,1000',
+                    'limits.cpu' => 'required|numeric|min:0',
+                    'feature_limits' => 'required|array',
+                    'feature_limits.databases' => 'present|nullable|integer|min:0',
+                    'feature_limits.allocations' => 'sometimes|nullable|integer|min:0',
+                    'feature_limits.backups' => 'present|nullable|integer|min:0',
+                    'deploy' => 'required|array',
+                    'deploy.locations' => 'present|array',
+                    'deploy.dedicated_ip' => 'required_with:deploy,boolean',
+                    'deploy.port_range' => 'present|array',
+                ]) || $this->environmentFails((array) ($body['environment'] ?? []))) {
+                    return $invalid('The given data was invalid.');
+                }
+                foreach ($this->servers as $existing) {
+                    if (($body['external_id'] ?? null) !== null && $existing['external_id'] === $body['external_id']) {
+                        return $invalid('The external id has already been taken.');
+                    }
+                }
+                $node = null;
+                foreach ($this->nodes as $candidate) {
+                    $resources = $this->nodeAttributes($candidate)['allocated_resources'];
+                    if ($candidate['public'] && in_array($candidate['location_id'], $body['deploy']['locations'], true)
+                        && $resources['memory'] + $body['limits']['memory'] <= $candidate['memory'] * (1 + $candidate['memory_overallocate'] / 100)
+                        && $resources['disk'] + $body['limits']['disk'] <= $candidate['disk'] * (1 + $candidate['disk_overallocate'] / 100)
+                    ) {
+                        $node = $candidate;
+                        break;
+                    }
+                }
+                if ($node === null) {
+                    return Http::response(['errors' => [['code' => 'NoViableNodeException', 'status' => '500', 'detail' => 'No nodes satisfying the requirements specified for automatic deployment could be found.']]], 500);
+                }
+                $id = $this->nextServerId++;
+                $this->servers[$id] = [
+                    'id' => $id,
+                    'external_id' => $body['external_id'] ?? null,
+                    'uuid' => sprintf('%08d-0000-4000-8000-000000000000', $id),
+                    'uuidShort' => sprintf('%08d', $id),
+                    'name' => $body['name'],
+                    'status' => 'installing',
+                    'owner_id' => $body['user'],
+                    'node_id' => $node['id'],
+                    'allocation_id' => 100 + $id,
+                    'nest_id' => 1,
+                    'egg_id' => $body['egg'],
+                    'startup' => $body['startup'],
+                    'image' => $body['docker_image'],
+                    'skip_scripts' => (bool) ($body['skip_scripts'] ?? false),
+                    'memory' => $body['limits']['memory'],
+                    'swap' => $body['limits']['swap'],
+                    'disk' => $body['limits']['disk'],
+                    'io' => $body['limits']['io'],
+                    'cpu' => $body['limits']['cpu'],
+                    'database_limit' => $body['feature_limits']['databases'],
+                    'allocation_limit' => $body['feature_limits']['allocations'] ?? null,
+                    'backup_limit' => $body['feature_limits']['backups'],
+                    'variables' => array_map(static fn (mixed $value): string => (string) ($value ?? ''), $body['environment']),
+                ];
+
+                return Http::response($this->serverResource($this->servers[$id], []), 201);
+            }
+            if ($method === 'GET' && preg_match('#^/api/application/servers/external/(.+)$#', $path, $match) === 1) {
+                foreach ($this->servers as $server) {
+                    if ($server['external_id'] === rawurldecode($match[1])) {
+                        return Http::response($this->serverResource($server, $includes));
+                    }
+                }
+
+                return $notFound;
+            }
+            if (preg_match('#^/api/application/servers/(\d+)(/[a-z]+)?$#', $path, $match) === 1) {
+                $id = (int) $match[1];
+                $action = $match[2] ?? '';
+                if (! isset($this->servers[$id])) {
+                    return $notFound;
+                }
+                if ($method === 'GET' && $action === '') {
+                    return Http::response($this->serverResource($this->servers[$id], $includes));
+                }
+                if ($method === 'DELETE' && $action === '') {
+                    unset($this->servers[$id]);
+
+                    return Http::response('', 204);
+                }
+                if ($method === 'POST' && in_array($action, ['/suspend', '/unsuspend'], true)) {
+                    $this->servers[$id]['status'] = $action === '/suspend' ? 'suspended' : null;
+
+                    return Http::response('', 204);
+                }
+                if ($method === 'PATCH' && $action === '/build') {
+                    if ($this->validationFails($body, [
+                        'allocation' => 'required|integer',
+                        'memory' => 'required_without:limits|numeric|min:0',
+                        'swap' => 'required_without:limits|numeric|min:-1',
+                        'io' => 'required_without:limits|numeric|between:10,1000',
+                        'cpu' => 'required_without:limits|numeric|min:0',
+                        'disk' => 'required_without:limits|numeric|min:0',
+                        'feature_limits' => 'required|array',
+                        'feature_limits.databases' => 'present|nullable|integer|min:0',
+                        'feature_limits.allocations' => 'sometimes|nullable|integer|min:0',
+                        'feature_limits.backups' => 'present|nullable|integer|min:0',
+                    ]) || $body['allocation'] !== $this->servers[$id]['allocation_id']) {
+                        return $invalid('The given data was invalid.');
+                    }
+                    foreach (['memory', 'swap', 'disk', 'io', 'cpu'] as $key) {
+                        $this->servers[$id][$key] = $body[$key];
+                    }
+                    $this->servers[$id]['database_limit'] = $body['feature_limits']['databases'];
+                    $this->servers[$id]['allocation_limit'] = $body['feature_limits']['allocations'] ?? null;
+                    $this->servers[$id]['backup_limit'] = $body['feature_limits']['backups'];
+
+                    return Http::response($this->serverResource($this->servers[$id], []));
+                }
+                if ($method === 'PATCH' && $action === '/startup') {
+                    if ($this->validationFails($body, [
+                        'startup' => 'required|string',
+                        'environment' => 'present|array',
+                        'egg' => 'required|integer',
+                        'image' => 'required|string|max:191',
+                        'skip_scripts' => 'present|boolean',
+                    ]) || ($body['environment'] !== [] && $this->environmentFails($body['environment']))) {
+                        return $invalid('The given data was invalid.');
+                    }
+                    foreach ($body['environment'] as $key => $value) {
+                        $this->servers[$id]['variables'][$key] = (string) ($value ?? '');
+                    }
+                    $this->servers[$id]['startup'] = $body['startup'];
+                    $this->servers[$id]['image'] = $body['image'];
+                    $this->servers[$id]['skip_scripts'] = $body['skip_scripts'];
+
+                    return Http::response($this->serverResource($this->servers[$id], []));
+                }
+            }
+            if (preg_match('#^/api/client/servers/([a-z0-9-]+)(/[a-z]+)?$#', $path, $match) === 1) {
+                $server = collect($this->servers)->first(fn (array $server): bool => $server['uuidShort'] === $match[1]);
+                if ($server === null) {
+                    return $notFound;
+                }
+                $action = $match[2] ?? '';
+                if ($method === 'POST' && $action === '/power') {
+                    if (! in_array($body['signal'] ?? null, ['start', 'stop', 'restart', 'kill'], true)) {
+                        return $invalid('The selected signal is invalid.');
+                    }
+
+                    return Http::response('', 204);
+                }
+                if ($method === 'GET' && $action === '/resources') {
+                    return Http::response(['object' => 'stats', 'attributes' => [
+                        'current_state' => $this->powerState,
+                        'is_suspended' => $server['status'] === 'suspended',
+                        'resources' => ['memory_bytes' => 0, 'cpu_absolute' => 0, 'disk_bytes' => 0, 'network_rx_bytes' => 0, 'network_tx_bytes' => 0, 'uptime' => 0],
+                    ]]);
+                }
+                if ($method === 'GET' && $action === '') {
+                    return Http::response(['object' => 'server', 'attributes' => [
+                        'server_owner' => true,
+                        'identifier' => $server['uuidShort'],
+                        'internal_id' => $server['id'],
+                        'uuid' => $server['uuid'],
+                        'name' => $server['name'],
+                        'status' => $server['status'],
+                        'is_suspended' => $server['status'] === 'suspended',
+                        'is_installing' => $server['status'] === 'installing',
+                        'is_transferring' => false,
+                    ]]);
+                }
+            }
+
+            return $notFound;
+        }
+    };
+
+    Http::fake(fn (Request $request) => $panel->handle($request));
+
+    return $panel;
+}
+
+/** @return array<string, mixed> */
+function officialPterodactylConnection(): array
+{
+    return [
+        'panel_url' => 'https://panel.example.test',
+        'application_api_key' => 'test-application-key-not-real',
+        'client_api_key' => 'test-client-key-not-real',
+        'user_id' => '1',
+        'verify_tls' => true,
+        'timeout' => '5',
+    ];
+}
+
+function officialPterodactylProvisioner(): PterodactylProvisioner
+{
+    enablePterodactyl();
+
+    return new PterodactylProvisioner(
+        app(ExtensionSettingsRepository::class),
+        new HttpPterodactylApi(app(ExtensionSettingsRepository::class), officialPterodactylConnection()),
+    );
+}
+
+/** @param array<string, mixed> $providerSettings */
+function officialPterodactylInstance(array $providerSettings = [], string $status = 'provisioning'): ServiceInstanceInfo
+{
+    return new ServiceInstanceInfo(
+        id: 501,
+        label: 'Survival server',
+        status: $status,
+        providerKey: 'pterodactyl',
+        externalRef: null,
+        meta: ['server_settings_required' => true],
+        serverSettings: officialPterodactylConnection(),
+        providerSettings: array_merge([
+            'location_id' => '1',
+            'nest_id' => '1',
+            'egg_id' => '15',
+            'memory' => '1024',
+            'disk' => '2048',
+            'cpu' => '200',
+            'environment' => "SERVER_JARFILE=custom.jar\nFOO=bar",
+        ], $providerSettings),
+    );
+}
+
+test('http adapter normalizes the official application server container startup command', function () {
+    enablePterodactyl();
+    Http::fake(['*' => Http::response(['object' => 'server', 'attributes' => [
+        'id' => 12,
+        'identifier' => 'abc12345',
+        'container' => [
+            'startup_command' => 'java -jar server.jar',
+            'image' => 'ghcr.io/pterodactyl/games:java',
+            'environment' => ['SERVER_JARFILE' => 'server.jar'],
+        ],
+    ]])]);
+    $api = new HttpPterodactylApi(app(ExtensionSettingsRepository::class), officialPterodactylConnection());
+
+    $server = $api->getServer(12);
+
+    expect($server['startup'])->toBe('java -jar server.jar')
+        ->and($server['docker_image'])->toBe('ghcr.io/pterodactyl/games:java')
+        ->and($server['environment'])->toBe(['SERVER_JARFILE' => 'server.jar']);
+});
+
+test('http adapter discovers deployable nodes with only the official node list filters', function () {
+    enablePterodactyl();
+    $panel = officialPterodactylPanel();
+    $panel->nodes[2] = ['id' => 2, 'uuid' => 'node-uuid-2', 'public' => true, 'name' => 'fra-1', 'location_id' => 2, 'maintenance_mode' => false, 'memory' => 8192, 'memory_overallocate' => 0, 'disk' => 32768, 'disk_overallocate' => 0];
+    $panel->nodes[3] = ['id' => 3, 'uuid' => 'node-uuid-3', 'public' => false, 'name' => 'ams-private', 'location_id' => 1, 'maintenance_mode' => false, 'memory' => 8192, 'memory_overallocate' => 0, 'disk' => 32768, 'disk_overallocate' => 0];
+    $panel->nodes[4] = ['id' => 4, 'uuid' => 'node-uuid-4', 'public' => true, 'name' => 'ams-unbounded', 'location_id' => 1, 'maintenance_mode' => false, 'memory' => 2048, 'memory_overallocate' => -1, 'disk' => 32768, 'disk_overallocate' => 0];
+    $api = new HttpPterodactylApi(app(ExtensionSettingsRepository::class), officialPterodactylConnection());
+
+    $nodes = $api->getDeployableNodes(1, 1024, 2048);
+
+    expect(array_column($nodes, 'id'))->toBe([1, 4])
+        ->and($nodes[0]['capacity'])->toBe(8)
+        ->and($nodes[1]['capacity'])->toBe(1)
+        ->and($api->getCapacityVector(1))->toBe(['memory' => 8192 + 2027, 'disk' => 65536]);
+    foreach ($panel->requests as $request) {
+        expect($request['query'])->not->toHaveKey('filter');
+    }
+});
+
+test('http adapter reads pterodactyl serializer relationships nested in attributes', function () {
+    enablePterodactyl();
+    $panel = officialPterodactylPanel();
+    $panel->servers[10] = [
+        'id' => 10, 'external_id' => 'agovena-501', 'uuid' => '00000010-0000-4000-8000-000000000000', 'uuidShort' => '00000010',
+        'name' => 'Survival server', 'status' => null, 'owner_id' => 1, 'node_id' => 1, 'allocation_id' => 110, 'nest_id' => 1, 'egg_id' => 15,
+        'startup' => 'java -jar {{SERVER_JARFILE}}', 'image' => 'ghcr.io/pterodactyl/games:java', 'skip_scripts' => false,
+        'memory' => 1024, 'swap' => 0, 'disk' => 2048, 'io' => 500, 'cpu' => 200, 'database_limit' => 0, 'allocation_limit' => 1, 'backup_limit' => 0,
+        'variables' => [],
+    ];
+    $api = new HttpPterodactylApi(app(ExtensionSettingsRepository::class), officialPterodactylConnection());
+
+    $egg = $api->getEgg(1, 15);
+    $server = $api->getServer(10);
+
+    expect(array_column(array_column($egg['relationships']['variables']['data'] ?? [], 'attributes'), 'env_variable'))
+        ->toBe(['SERVER_JARFILE', 'MC_VERSION', 'FOO', 'LOCKED_SETTING'])
+        ->and($server['node']['id'] ?? null)->toBe(1)
+        ->and($server['node']['location_id'] ?? null)->toBe(1)
+        ->and($server['user_id'] ?? null)->toBe(1)
+        ->and($server['egg']['id'] ?? null)->toBe(15);
+});
+
+test('an installed panel server with a null status is active', function () {
+    expect(PterodactylStatusMapper::lifecycleStatus(['status' => null, 'suspended' => false]))->toBe('active')
+        ->and(PterodactylStatusMapper::lifecycleStatus(['status' => 'reinstall_failed', 'suspended' => false]))->toBe('manual_review')
+        ->and(PterodactylStatusMapper::lifecycleStatus(['suspended' => false]))->toBe('manual_review');
 });

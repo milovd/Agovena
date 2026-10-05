@@ -771,7 +771,7 @@ it('maps Cloudflare DNS zone and record management', function (): void {
     $registration->setAttribute('meta', ['dns_zone' => ['zone_reference' => 'zone-1']]);
 
     expect($provider->key())->toBe('cloudflare-dns')
-        ->and($provider->capabilities())->toBe(['zone_management', 'record_management'])
+        ->and($provider->capabilities())->toBe(['zone_management', 'records'])
         ->and($zone['zone_reference'])->toBe('zone-1')
         ->and($provider->listRecords($registration)[0]['id'])->toBe('record-1')
         ->and($provider->upsertRecord($registration, [
@@ -787,18 +787,22 @@ it('maps Cloudflare DNS zone and record management', function (): void {
 it('maps Cloudflare registration capabilities', function (): void {
     installAndEnableModules(['domains']);
     $api = Mockery::mock(CloudflareApi::class);
-    $api->shouldReceive('check')->once()->with(['acmecorp.dev'])->andReturn([
+    $api->shouldReceive('check')->twice()->with(['acmecorp.dev'])->andReturn([
         'domains' => [[
             'name' => 'acmecorp.dev',
             'registrable' => true,
             'pricing' => ['registration_cost' => '10.11', 'currency' => 'USD'],
         ]],
     ]);
+    $api->shouldReceive('registrationStatus')->once()->with('acmecorp.dev')->andReturnNull();
     $api->shouldReceive('register')->once()->with('acmecorp.dev', ['auto_renew' => true])->andReturn([
-        'id' => 'registration-123',
-        'domain_name' => 'acmecorp.dev',
-        'status' => 'pending',
-        'expires_at' => null,
+        'success' => true,
+        'result' => [
+            'state' => 'in_progress',
+            'completed' => false,
+            'context' => ['domain_name' => 'acmecorp.dev'],
+            'links' => ['self' => '/accounts/fixture/registrar/registrations/acmecorp.dev/registration-status'],
+        ],
     ]);
     $registrar = new CloudflareRegistrar($api);
     $registration = new DomainRegistration(['domain_name' => 'acmecorp.dev', 'auto_renew' => true]);
@@ -809,8 +813,8 @@ it('maps Cloudflare registration capabilities', function (): void {
         'price_minor' => 1011,
         'currency' => 'USD',
     ])->and($registrar->register($registration))->toMatchArray([
-        'provider_reference' => 'registration-123',
-        'status' => 'pending',
+        'provider_reference' => 'acmecorp.dev',
+        'status' => 'registering',
     ]);
 });
 

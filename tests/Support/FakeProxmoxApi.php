@@ -21,17 +21,31 @@ final class FakeProxmoxApi implements ProxmoxApi
 
     public int $deleteCalls = 0;
 
+    public int $startCalls = 0;
+
     public bool $failCreate = false;
 
     public bool $failClone = false;
 
     public bool $failStart = false;
 
+    /** Simulates a clone task that created the VM but whose task polling timed out. */
+    public bool $timeoutAfterClone = false;
+
     public bool $unauthorized = false;
 
     public bool $unreachable = false;
 
     public bool $timeout = false;
+
+    /** @var list<array<string, mixed>> */
+    public array $clonePayloads = [];
+
+    /** @var list<array{vmid: int, payload: array<string, mixed>}> */
+    public array $configUpdates = [];
+
+    /** @var list<array{node: string, vmid: int, disk: string, size: string}> */
+    public array $resizeCalls = [];
 
     /** @var array{memory_free: int|float, cpu_cores: int|float, storage_free: int|float} */
     public array $nodeCapacity = [
@@ -73,21 +87,31 @@ final class FakeProxmoxApi implements ProxmoxApi
     {
         $this->guardTransport();
         $this->cloneCalls++;
+        $this->clonePayloads[] = $payload;
         if ($this->failCreate || $this->failClone) {
             throw ProxmoxProviderException::failed('proxmox::messages.errors.create_failed');
         }
 
         $vmid = (int) ($payload['newid'] ?? $this->nextVmId++);
+        $config = [
+            'boot' => 'order=scsi0;net0',
+            'scsi0' => 'local-lvm:vm-'.$vmid.'-disk-0,size=20G',
+            'net0' => 'virtio=AA:BB:CC:DD:EE:FF,bridge=vmbr0',
+        ];
+        if (is_string($payload['description'] ?? null)) {
+            $config['description'] = $payload['description'];
+        }
         $this->vms[$vmid] = [
             'node' => $node,
             'template' => $templateVmid,
             'name' => (string) ($payload['name'] ?? 'vm-'.$vmid),
-            'config' => [
-                'scsi0' => 'local-lvm:vm-'.$vmid.'-disk-0,size=20G',
-                'net0' => 'virtio=AA:BB:CC:DD:EE:FF,bridge=vmbr0',
-            ],
+            'config' => $config,
         ];
         $this->statusByKey[$node.':'.$vmid] = ['status' => 'stopped'];
+
+        if ($this->timeoutAfterClone) {
+            throw ProxmoxProviderException::failed('proxmox::messages.errors.timeout');
+        }
 
         return 'UPID:pve:'.$vmid.':00000000:00000000:00000000:00000000:qmclone:200:root@pam:';
     }
@@ -98,13 +122,36 @@ final class FakeProxmoxApi implements ProxmoxApi
         if (! isset($this->vms[$vmid])) {
             throw ProxmoxProviderException::failed('proxmox::messages.errors.not_found', 404);
         }
+        $this->configUpdates[] = ['vmid' => $vmid, 'payload' => $payload];
         $this->vms[$vmid]['config'] = array_merge($this->vms[$vmid]['config'], $payload);
+    }
+
+    public function resizeDisk(string $node, int $vmid, string $disk, string $size): void
+    {
+        $this->guardTransport();
+        $this->resizeCalls[] = ['node' => $node, 'vmid' => $vmid, 'disk' => $disk, 'size' => $size];
+        $current = $this->vms[$vmid]['config'][$disk] ?? null;
+        if (! is_string($current) || preg_match('/size=(\d+)G/', $current, $matches) !== 1
+            || preg_match('/\A(\d+)G\z/', $size, $requested) !== 1
+        ) {
+            throw ProxmoxProviderException::failed('proxmox::messages.errors.provider_failed');
+        }
+        // Proxmox VE: "shrinking disks is not supported".
+        if ((int) $requested[1] < (int) $matches[1]) {
+            throw ProxmoxProviderException::failed('proxmox::messages.errors.provider_failed');
+        }
+        $this->vms[$vmid]['config'][$disk] = (string) preg_replace('/size=\d+G/', 'size='.$requested[1].'G', $current);
     }
 
     public function start(string $node, int $vmid): void
     {
         $this->guardTransport();
+        $this->startCalls++;
         if ($this->failStart) {
+            throw ProxmoxProviderException::failed('proxmox::messages.errors.provider_failed');
+        }
+        // Proxmox VE vm_start dies with "VM <vmid> already running".
+        if (($this->statusByKey[$node.':'.$vmid]['status'] ?? null) === 'running') {
             throw ProxmoxProviderException::failed('proxmox::messages.errors.provider_failed');
         }
         $this->statusByKey[$node.':'.$vmid] = ['status' => 'running'];
