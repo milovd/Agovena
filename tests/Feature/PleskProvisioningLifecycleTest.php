@@ -13,6 +13,7 @@ use Agovena\Modules\Provisioning\ServiceInstanceRuntimeSecretStore;
 use Agovena\Modules\Provisioning\Support\ServerProviderException;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Provisioning\ServiceInstanceInfo;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Client\Request;
@@ -247,7 +248,7 @@ test('plesk migration creates the claim table with unique identity columns and i
         expect(fn () => DB::table('plesk_accounts')->insert($duplicate + $row))->toThrow(QueryException::class);
     }
 
-    $migration = require base_path('../optional-packages/extensions/provisioning/plesk/database/migrations/2026_10_05_000000_create_plesk_accounts_table.php');
+    $migration = require OptionalPackagesPath::extensionsRoot().'/provisioning/plesk/database/migrations/2026_10_05_000000_create_plesk_accounts_table.php';
     $migration->down();
     expect(Schema::hasTable('plesk_accounts'))->toBeFalse();
     $migration->up();
