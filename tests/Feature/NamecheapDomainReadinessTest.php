@@ -300,7 +300,7 @@ it('refuses registration before any billable call when the registrant contact is
     'single name' => [[], true, ['name' => 'Jane'], 'name'],
     'local phone' => [[], true, ['phone' => '0470123456'], 'phone'],
     'missing phone' => [[], true, ['phone' => null], 'phone'],
-    'bad country' => [[], true, ['country' => 'Belgium'], 'country'],
+    'bad country' => [[], true, ['country' => 'B1'], 'country'],
 ]);
 
 it('reconciles a registration that already succeeded instead of registering twice', function (): void {
