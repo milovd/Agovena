@@ -321,7 +321,7 @@ final class AgovenaSeedDemoCommand extends Command
         foreach (self::DEMO_EXTENSIONS as $extensionId) {
             if (! app()->environment(['local', 'testing', 'demo'])) {
                 $available[$extensionId] = false;
-                $this->warn('Experimental demo extension '.$extensionId.' cannot run in this environment. Its stored lifecycle state is unchanged.');
+                $this->warn('Demo provider extension '.$extensionId.' is only seeded in local, testing or demo environments. Its stored lifecycle state is unchanged.');
 
                 continue;
             }

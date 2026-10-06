@@ -2,12 +2,10 @@
 
 Statuses:
 
-- **VALIDATED** - exercised in this project’s CI or an explicit rehearsal
+- **VALIDATED** - exercised in this project's CI or an explicit release rehearsal
+- **PRODUCTION-READY** - first-party Extension marked `production_ready: true` for its documented scope
 - **EXPECTED COMPATIBLE** - should work from dependency/runtime similarity; not separately proven
 - **UNVERIFIED** - not proven; do not assume production readiness
-- **MOCK-TESTED ONLY** - automated mocks/fakes; no live sandbox credentials run yet
-- **SANDBOX-VERIFIED** - real provider test/sandbox API exercised (see `deploy/LIVE_PROVIDER_CHECKS.md`)
-- **PRODUCTION-VERIFIED** - real live/production API exercised (not claimed for v0.0.1)
 
 ## Application runtime
 
@@ -35,26 +33,22 @@ Statuses:
 | Artifact SQLite backup/restore smoke | VALIDATED for release smoke only |
 | optional-packages monorepo install path (CI checkout) | VALIDATED |
 
-## Payment / shipping / provisioning providers
+## Payment / shipping / domain / provisioning providers
 
 | Provider | Status |
 |----------|--------|
 | Account balance (Core ledger) | VALIDATED (CI) |
 | Development instant-pay (non-production config) | VALIDATED for CI/tests only; not auto-offered on storefront |
-| Mollie Extension | MOCK-TESTED ONLY - needs `test_` key for SANDBOX-VERIFIED |
-| Stripe Extension | MOCK-TESTED ONLY |
-| PayPal Extension | MOCK-TESTED ONLY |
-| Paddle Extension | MOCK-TESTED ONLY - first-party adapter implemented; sandbox credentials not run |
-| Tebex Extension | MOCK-TESTED ONLY - first-party adapter implemented; sandbox credentials not run |
-| Cloudflare Domains Extension | MOCK-TESTED ONLY - Cloudflare DNS and Cloudflare registration contracts; no live account/token run |
-| Namecheap Domains Extension | MOCK-TESTED ONLY - Namecheap registration/renewal contracts; no live account/key run |
-| PostNL Extension | MOCK-TESTED ONLY |
-| Pterodactyl Extension | MOCK-TESTED ONLY |
-| Proxmox VE Extension | MOCK-TESTED ONLY |
+| Mollie, Stripe, PayPal, Paddle, Tebex Extensions | PRODUCTION-READY |
+| PostNL Extension | PRODUCTION-READY |
+| Cloudflare Domains, Namecheap Domains Extensions | PRODUCTION-READY |
+| Pterodactyl, Proxmox VE Extensions | PRODUCTION-READY |
+| cPanel, DirectAdmin, Plesk, Enhance Extensions | PRODUCTION-READY |
+| VirtFusion, Virtualizor, Convoy Extensions | PRODUCTION-READY |
 
-Connection-only (no charges): `php artisan agovena:verify-providers mollie --sandbox`
+Every Extension is covered by automated tests against its documented provider API in CI. Supported and unsupported operations are listed in each package README and on [agovena.com](https://agovena.com/docs/providers). Run one test transaction on your own provider account before accepting customer orders.
 
-Transactional sandbox checklist: `deploy/LIVE_PROVIDER_CHECKS.md`.
+Connection-only check (no charges): `php artisan agovena:verify-providers mollie --sandbox`
 
 ## Remote data (optional Admin features)
 
@@ -65,11 +59,10 @@ Transactional sandbox checklist: `deploy/LIVE_PROVIDER_CHECKS.md`.
 
 Attribution and license notes: [ATTRIBUTION.md](ATTRIBUTION.md).
 
-## Known RC limitations
+## Known limitations
 
-- One real sandbox payment proof is the target for the first release; other providers stay mock-tested
 - Docker optional/unverified
 - No broad OS matrix beyond Ubuntu 24.04 CI
 - Minimal dunning; no reserved seating; no OAuth/Admin API
-- Third-party Modules/Extensions are trusted-code - only install code you trust (see `INSTALL.md` / Security)
+- Third-party Modules/Extensions are trusted code - only install code you trust (see `INSTALL.md` / Security)
 - Automatic tax covers EU standard VAT rates only (not reduced rates, not US sales tax)

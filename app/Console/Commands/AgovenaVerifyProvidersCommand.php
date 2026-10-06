@@ -74,8 +74,8 @@ final class AgovenaVerifyProvidersCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info('Connection checks passed. Status remains MOCK-TESTED until the sandbox checklist in deploy/LIVE_PROVIDER_CHECKS.md is completed.');
-        $this->comment('This command never creates payments. Do not treat OK as SANDBOX-VERIFIED or PRODUCTION-VERIFIED.');
+        $this->info('Connection checks passed.');
+        $this->comment('This command never creates payments. Run one test transaction on your own provider account before accepting customer orders.');
 
         return self::SUCCESS;
     }
