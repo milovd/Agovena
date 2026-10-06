@@ -818,49 +818,50 @@ it('maps Cloudflare registration capabilities', function (): void {
     ]);
 });
 
-it('maps Namecheap registration and renewal capabilities', function (): void {
+it('maps Namecheap availability and renewal capabilities', function (): void {
     installAndEnableModules(['domains']);
     $api = Mockery::mock(NamecheapApi::class);
-    $api->shouldReceive('check')->once()->with(['example.test'])->andReturn([
+    $api->shouldReceive('check')->once()->with(['example.com'])->andReturn([
         'domains' => [[
-            'domain' => 'example.test',
+            'domain' => 'example.com',
             'available' => true,
-            'registration_price' => '12.50',
-            'currency' => 'USD',
+            'premium' => false,
+            'error_no' => '0',
+            'premium_registration_price' => null,
+            'eap_fee' => null,
+            'icann_fee' => null,
         ]],
     ]);
-    $api->shouldReceive('register')->once()->with('example.test', 2)->andReturn([
-        'domain' => 'example.test',
-        'registered' => true,
+    $api->shouldReceive('registrationPrice')->once()->with('com', 1)->andReturn(['price' => '12.50', 'currency' => 'USD']);
+    $api->shouldReceive('info')->once()->with('example.com')->andReturn([
+        'domain' => 'example.com',
         'domain_id' => '123',
-        'order_id' => '456',
-        'transaction_id' => '789',
-        'charged_amount' => '25.00',
+        'is_owner' => true,
+        'is_premium' => false,
+        'status' => 'Ok',
+        'expires_at' => '2027-01-10T00:00:00+00:00',
     ]);
-    $api->shouldReceive('renew')->once()->with('example.test', 1)->andReturn([
-        'domain' => 'example.test',
+    $api->shouldReceive('renew')->once()->with('example.com', 1)->andReturn([
+        'domain' => 'example.com',
         'renewed' => true,
         'domain_id' => '123',
         'order_id' => '457',
         'transaction_id' => '790',
         'charged_amount' => '12.50',
+        'expires_at' => '2028-01-10T00:00:00+00:00',
     ]);
     $registrar = new NamecheapRegistrar($api);
-    $registration = new DomainRegistration([
-        'domain_name' => 'Example.test',
-        'meta' => ['provider_settings' => ['years' => 2]],
-    ]);
+    $registration = new DomainRegistration(['domain_name' => 'Example.com']);
+    $registration->expires_at = now()->setDate(2027, 1, 10)->startOfDay();
 
-    expect($registrar->checkAvailability('Example.test'))->toMatchArray([
+    expect($registrar->checkAvailability('Example.com'))->toMatchArray([
         'available' => true,
-        'domain' => 'example.test',
+        'domain' => 'example.com',
         'price_minor' => 1250,
         'currency' => 'USD',
-    ])->and($registrar->register($registration))->toMatchArray([
-        'provider_reference' => '789',
-        'status' => 'active',
     ])->and($registrar->renew($registration))->toMatchArray([
-        'provider_reference' => '790',
+        'provider_reference' => '123',
+        'expires_at' => '2028-01-10T00:00:00+00:00',
         'status' => 'active',
     ]);
 });

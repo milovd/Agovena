@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Agovena\Extensions\ExperimentalProvisioner\ExperimentalProvisionerServiceProvider;
 use Agovena\Extensions\Mollie\MollieApi;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
@@ -14,7 +15,6 @@ use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\PaymentGatewayRegistry;
-use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Livewire\Admin\Extensions\Index as ExtensionsIndex;
 use App\Models\AgovenaExtension;
 use App\Models\AgovenaModule;
@@ -165,62 +165,80 @@ test('extension enable fails when platform version is incompatible', function ()
         ->toThrow(ValidationException::class);
 });
 
+function useExperimentalExtensionFixture(): ExtensionManager
+{
+    config(['agovena.packages.extra_extension_paths' => [base_path('tests/fixtures/runtime-extensions')]]);
+    app()->forgetInstance(ExtensionManager::class);
+
+    return app(ExtensionManager::class);
+}
+
 test('extensions without production readiness cannot be installed or enabled in production', function () {
     app()['env'] = 'production';
     installAndEnableModule('provisioning');
-    $extensions = app(ExtensionManager::class);
-    $manifest = $extensions->manifest('cpanel');
+    $extensions = useExperimentalExtensionFixture();
+    $manifest = $extensions->manifest('experimental-provisioner');
 
     expect($manifest)->not->toBeNull()
         ->and($manifest?->productionReady)->toBeFalse()
-        ->and(fn () => $extensions->install('cpanel'))->toThrow(ValidationException::class)
-        ->and(fn () => $extensions->enable('cpanel'))->toThrow(ValidationException::class);
+        ->and(fn () => $extensions->install('experimental-provisioner'))->toThrow(ValidationException::class)
+        ->and(fn () => $extensions->enable('experimental-provisioner'))->toThrow(ValidationException::class);
 });
 
 test('extensions without production readiness cannot be installed or enabled in staging', function () {
     app()['env'] = 'staging';
     installAndEnableModule('provisioning');
-    $extensions = app(ExtensionManager::class);
+    $extensions = useExperimentalExtensionFixture();
 
-    expect(fn () => $extensions->install('cpanel'))->toThrow(ValidationException::class)
-        ->and(fn () => $extensions->enable('cpanel'))->toThrow(ValidationException::class);
+    expect(fn () => $extensions->install('experimental-provisioner'))->toThrow(ValidationException::class)
+        ->and(fn () => $extensions->enable('experimental-provisioner'))->toThrow(ValidationException::class);
 });
 
-test('demo can install non-production-ready extensions for seeded product journeys', function () {
+test('demo installs production-ready extensions but refuses experimental ones', function () {
     app()['env'] = 'demo';
     installAndEnableModule('provisioning');
-    $extensions = app(ExtensionManager::class);
+    $extensions = useExperimentalExtensionFixture();
 
     expect($extensions->install('pterodactyl')->extension_id)->toBe('pterodactyl')
         ->and($extensions->enable('pterodactyl')->enabled)->toBeTrue()
-        ->and(fn () => $extensions->install('cpanel'))->toThrow(ValidationException::class);
+        ->and(fn () => $extensions->install('experimental-provisioner'))->toThrow(ValidationException::class);
 });
 
-test('demo runtime does not boot unrelated experimental extensions from existing rows', function () {
+test('demo runtime does not boot experimental extensions from existing rows', function () {
     app()['env'] = 'demo';
     installAndEnableModule('provisioning');
+    $extensions = useExperimentalExtensionFixture();
     AgovenaExtension::query()->updateOrCreate(
-        ['extension_id' => 'cpanel'],
-        ['version' => '1.0.0', 'installed_at' => now(), 'enabled' => true],
-    );
-
-    app(ExtensionManager::class)->rebuildRuntime();
-
-    expect(app(ProvisionerRegistry::class)->get('cpanel'))->toBeNull();
-});
-
-test('runtime does not boot a non-production-ready extension from a legacy enabled row', function () {
-    app()['env'] = 'production';
-    installAndEnableModule('provisioning');
-    $extensions = app(ExtensionManager::class);
-    AgovenaExtension::query()->updateOrCreate(
-        ['extension_id' => 'cpanel'],
+        ['extension_id' => 'experimental-provisioner'],
         ['version' => '1.0.0', 'installed_at' => now(), 'enabled' => true],
     );
 
     $extensions->rebuildRuntime();
 
-    expect(app(ProvisionerRegistry::class)->get('cpanel'))->toBeNull();
+    expect(app()->bound(ExperimentalProvisionerServiceProvider::BOOTED_FLAG))->toBeFalse();
+});
+
+test('runtime does not boot a non-production-ready extension from a legacy enabled row', function () {
+    app()['env'] = 'production';
+    installAndEnableModule('provisioning');
+    $extensions = useExperimentalExtensionFixture();
+    AgovenaExtension::query()->updateOrCreate(
+        ['extension_id' => 'experimental-provisioner'],
+        ['version' => '1.0.0', 'installed_at' => now(), 'enabled' => true],
+    );
+
+    $extensions->rebuildRuntime();
+
+    expect(app()->bound(ExperimentalProvisionerServiceProvider::BOOTED_FLAG))->toBeFalse();
+});
+
+test('runtime boots the readiness fixture when readiness is not enforced', function () {
+    installAndEnableModule('provisioning');
+    $extensions = useExperimentalExtensionFixture();
+    $extensions->install('experimental-provisioner');
+    $extensions->enable('experimental-provisioner');
+
+    expect(app()->bound(ExperimentalProvisionerServiceProvider::BOOTED_FLAG))->toBeTrue();
 });
 
 test('enable registers payment gateway and disable removes it while preserving settings', function () {
