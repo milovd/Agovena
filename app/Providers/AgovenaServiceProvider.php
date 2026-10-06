@@ -972,6 +972,7 @@ class AgovenaServiceProvider extends ServiceProvider
             default: 7,
             help: 'admin.settings.field_help.subscription_invoice_lead_days',
             sort: 30,
+            max: 31,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
@@ -990,6 +991,7 @@ class AgovenaServiceProvider extends ServiceProvider
             default: 3,
             help: 'admin.settings.field_help.subscription_retry_max',
             sort: 32,
+            min: 1,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
@@ -999,6 +1001,7 @@ class AgovenaServiceProvider extends ServiceProvider
             default: 24,
             help: 'admin.settings.field_help.subscription_retry_hours',
             sort: 33,
+            min: 1,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
@@ -1009,6 +1012,17 @@ class AgovenaServiceProvider extends ServiceProvider
             help: 'admin.settings.field_help.subscription_retry_exhausted',
             sort: 34,
             options: ['manual', 'cancel_at_period_end'],
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'subscription_consolidation_window_days',
+            label: 'admin.settings.fields.subscription_consolidation_window_days',
+            type: 'integer',
+            default: 31,
+            help: 'admin.settings.field_help.subscription_consolidation_window_days',
+            sort: 34,
+            min: 1,
+            max: 31,
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',

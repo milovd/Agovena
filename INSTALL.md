@@ -7,7 +7,7 @@ Native Linux (Ubuntu) is the primary production path. Docker is optional.
 - Ubuntu 24.04 (validated in CI) or another Linux host with the same stack
 - PHP 8.3 or 8.4 with PHP-FPM (`mbstring`, `intl`, `bcmath`, `ctype`, `json`, `tokenizer`, `xml`, `curl`, `zip`, `pdo_mysql`)
 - Composer 2
-- MariaDB 10.11+ / 11.x (MySQL 8 may work; MariaDB is what CI validates)
+- MariaDB 10.11+ (CI validates MariaDB 11.4; MySQL 8 may work but is not validated)
 - Nginx (recommended) or Apache
 - A queue worker and a cron entry for `schedule:run`
 - Outbound HTTPS if you use Admin currency sync (Frankfurter) or automatic EU VAT rates (vatnode JSON via jsDelivr)
