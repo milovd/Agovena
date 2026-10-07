@@ -5,7 +5,7 @@
 <section id="categories" class="store-section store-categories" aria-labelledby="categories-heading">
     <div class="store-section__header store-section__header--row">
         <div>
-            <h2 id="categories-heading" class="store-section__title">{{ $section['title'] ?? 'Jump in' }}</h2>
+            <h2 id="categories-heading" class="store-section__title">{{ $section['title'] ?? 'Shop by category' }}</h2>
             @if (! empty($section['lede']))
                 <p class="store-section__lede">{{ $section['lede'] }}</p>
             @endif

@@ -77,7 +77,7 @@ test('homepage keeps the storefront chrome compact and the hero deterministic', 
         ->toContain('decoding="sync"')
         ->toContain('fetchpriority="high"')
         ->toContain('store-brand__fallback')
-        ->toContain('Physical products, digital goods, and services with a storefront you control.');
+        ->toContain('Order physical goods, digital products and services together, with one checkout.');
 
     expect(app(ThemeManager::class)->config()->sections()[0])->not->toHaveKey('image');
     expect(substr_count($html, 'class="store-hero__plate store-hero__plate--'))->toBe(4);

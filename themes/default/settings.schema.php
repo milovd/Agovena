@@ -270,15 +270,15 @@ return new ThemeSettingsSchema([
             [
                 'type' => 'hero',
                 'eyebrow' => 'Self-hosted commerce',
-                'title' => 'A sharper way to sell what you stock',
-                'lede' => 'Physical products, digital goods, and services with a storefront you control.',
+                'title' => 'Products, downloads and services in one store',
+                'lede' => 'Order physical goods, digital products and services together, with one checkout.',
                 'cta_label' => 'Shop the catalog',
                 'cta_href' => '#catalog',
             ],
             [
                 'type' => 'featured_categories',
-                'title' => 'Jump in',
-                'lede' => 'Four doors into the catalog.',
+                'title' => 'Shop by category',
+                'lede' => 'Pick a category to start browsing.',
             ],
             [
                 'type' => 'featured_products',
