@@ -121,6 +121,19 @@ test('every Theme Admin skin partial is imported exactly once by the Theme admin
         ->and(array_unique($imports))->toHaveCount(count($imports));
 });
 
+test('every core Admin stylesheet partial is imported exactly once by the Admin entry', function () {
+    $css = resource_path('css');
+    $imports = cssImports($css.'/admin.css');
+
+    $partials = array_map(
+        static fn (string $file): string => './'.substr($file, strlen(str_replace('\\', '/', $css)) + 1),
+        frontendFiles($css.'/admin', '.css'),
+    );
+
+    expect($imports)->toEqualCanonicalizing($partials)
+        ->and(array_unique($imports))->toHaveCount(count($imports));
+});
+
 test('every storefront and Admin script module is reachable from its Vite entry', function () {
     $storefront = jsModuleGraph(resource_path('js/storefront.js'));
     $admin = jsModuleGraph(resource_path('js/admin.js'));

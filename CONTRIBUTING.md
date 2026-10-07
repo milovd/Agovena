@@ -37,7 +37,7 @@ The frontend is server-rendered Blade + Livewire with small Alpine components; t
 | Shared Admin partials (confirmation modal, tab bar) | `resources/views/livewire/admin/partials/` |
 | Storefront CSS | `themes/default/resources/css/components/store/_<domain>.css`, imported by `components/_store.css` |
 | Theme Admin skin CSS | `themes/default/resources/css/admin/_<area>.css`, imported by `admin.css` |
-| Core Admin CSS | `resources/css/admin/` (ITCSS, imported by `resources/css/admin.css`) |
+| Core Admin CSS | `resources/css/admin/components/` for reusable Admin UI, `resources/css/admin/screens/_<domain>.css` for one screen or domain; all imported by `resources/css/admin.css` (ITCSS) |
 | Storefront JavaScript | `resources/js/storefront/<domain>.js`, registered from `resources/js/storefront.js` |
 | Admin JavaScript | `resources/js/admin/<area>.js`, registered from `resources/js/admin.js` |
 | Behaviour shared by both | `resources/js/shared/` |
