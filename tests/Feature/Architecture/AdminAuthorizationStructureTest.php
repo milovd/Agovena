@@ -77,7 +77,8 @@ function adminComponentsWithoutRenderAuthorization(array $roots): array
                 continue;
             }
             $checked++;
-            if (preg_match('/\$this\s*->\s*authorize\s*\(|\bGate\s*::\s*(?:authorize|allows|denies|check)\s*\(|abort_unless\s*\(/', $render[1]) !== 1) {
+            // Only calls that stop the request count; Gate::allows() and friends merely branch.
+            if (preg_match('/\$this\s*->\s*authorize\s*\(|\bGate\s*::\s*authorize\s*\(|abort_(?:unless|if)\s*\(/', $render[1]) !== 1) {
                 $missing[] = $path;
             }
         }
