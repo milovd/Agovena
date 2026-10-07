@@ -22,27 +22,41 @@ The project is early but has a runnable Laravel Core, Admin, default Theme store
 
 ## Frontend structure
 
-The frontend is server-rendered Blade + Livewire with small Alpine components; there is no SPA layer.
+The frontend is server-rendered Blade + Livewire with small Alpine components; there is no SPA layer. Ownership follows the domains in `app/Agovena/*`.
 
-**Ownership** follows the same domains as `app/Agovena/*` and `app/Livewire/*`:
+**Where things go**
 
 | What | Where |
 | --- | --- |
-| Storefront pages, layouts and sections | `themes/default/views/{catalog,cart,checkout,account,pages,sections,layouts}` |
-| Shared storefront chrome (header, footer, consent, icons) | `themes/default/views/partials` |
-| Admin screens | `resources/views/livewire/admin/<domain>` |
-| Generic UI primitives shared by Admin and storefront | `resources/views/components/ag` (`<x-ag.*>`) |
-| Storefront CSS | `themes/default/resources/css/components/store/*` (ordered by `_store.css`) |
-| Storefront / Admin Alpine components | `resources/js/storefront/*`, `resources/js/admin/*`, shared behaviour in `resources/js/shared/*` |
+| Generic UI primitive or small composition (icon, switch, checkbox, card, badge, file upload, empty state) | `resources/views/components/ag` as `<x-ag.*>`. No domain knowledge. |
+| Storefront page for a core domain (catalog, cart, checkout, account, pages) | `themes/default/views/<domain>/`, sections in `<domain>/partials/` |
+| Homepage sections | `themes/default/views/sections/` |
+| Storefront chrome (header, footer, consent) | `themes/default/views/partials/`, header pieces in `partials/header/` |
+| Admin screen for a core domain | `resources/views/livewire/admin/<domain>/`, sections in `<domain>/partials/` |
+| Admin screen for an optional Module | the Module itself: `modules/<id>/resources/views/admin/`, rendered as `<id>::admin.<view>` |
+| Shared Admin partials (confirmation modal, tab bar) | `resources/views/livewire/admin/partials/` |
+| Storefront CSS | `themes/default/resources/css/components/store/_<domain>.css`, imported by `components/_store.css` |
+| Theme Admin skin CSS | `themes/default/resources/css/admin/_<area>.css`, imported by `admin.css` |
+| Core Admin CSS | `resources/css/admin/` (ITCSS, imported by `resources/css/admin.css`) |
+| Storefront JavaScript | `resources/js/storefront/<domain>.js`, registered from `resources/js/storefront.js` |
+| Admin JavaScript | `resources/js/admin/<area>.js`, registered from `resources/js/admin.js` |
+| Behaviour shared by both | `resources/js/shared/` |
 
-**Placing new UI**
+- Domain meaning wins over size: a product price, order summary or cart line stays in its domain even when it is small. `<x-ag.*>` must not know about orders, products, checkout or payments.
+- A large page is a composition: the route view stays the entry point and includes sections from a `partials/` folder next to it. Keep `@php use ...` enums and nested `@livewire` components in the parent view.
+- The `@import` order in each CSS index is the cascade order. `tests/Feature/Architecture/FrontendArchitectureTest.php` fails when a CSS partial, script module or Alpine component is not wired to the entry that ships it.
 
-- Generic and free of business meaning (button, switch, card, icon, empty state): an `<x-ag.*>` component. It must not know about orders, products, checkout or any other domain.
-- Has domain meaning (product price, order summary, cart line): keep it in that domain's views, even if it is small.
-- A large page is a composition: keep the route view as the entry point and move sections into a `partials/` folder next to it (for example `checkout/partials/payment.blade.php`, `livewire/admin/orders/partials/show-items.blade.php`). Keep `@php use ...` enums and nested `@livewire` components in the parent view.
-- New storefront CSS goes in the matching `components/store/_<domain>.css` file. The `@import` order in `_store.css` is the cascade order.
+**Contracts**
 
-**Theme compatibility.** View names are a public contract: Themes and optional packages render views such as `theme::partials.header`, `theme::account.services` and `livewire.admin.orders.show` by name, and a Theme can override any non-namespaced view by shipping the same relative path. Do not rename or move existing views, the `resources/js/storefront.js` / `resources/js/admin.js` entries, or the CSS entries in `theme.json`; add new partials instead.
+| Contract | Status |
+| --- | --- |
+| Theme entry views: every `theme::` view that core or a Module renders by name (`layouts.storefront`, `layouts.checkout`, `layouts.error`, `account.*`, `catalog.*`, `cart.index`, `checkout.index`, `domains.search`, `invoices.document`, `errors.*`, `account.partials.nav`, ...) | Public. A Theme replaces the whole `theme::` namespace (there is no per-view fallback), so renaming one breaks every third-party Theme. Keep these names. |
+| `layouts.admin` / `layouts.admin-guest` and their composer data | Public. Rendered by core and Modules; provided by a Theme with the `admin` capability. |
+| Views only included from inside the default Theme (its `partials/header/*`, `partials/admin/*`, `<domain>/partials/*`) | Private to that Theme. Another Theme never sees them; reorganise freely. |
+| `resources/views/livewire/admin/**` | Internal to core. A Theme with the `admin` capability can still shadow a path, so prefer adding partials over renaming. |
+| Module and Extension views | Owned by the package under its own namespace (`provisioning::admin.show`, `paypal::checkout`), registered with `loadViewsFrom()`. Never add package views to core. |
+| `<x-ag.*>`, `resources/js/storefront.js`, `resources/js/admin.js`, `theme.json` `css` / `admin_css` | Public building blocks for Themes and packages. |
+| `ModuleContext` / `AdminRegistrar` hooks, `module.json`, `extension.json`, `theme.json`, `settings.schema.php` | Public extension API. |
 
 ## Commits
 
