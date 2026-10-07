@@ -201,3 +201,38 @@ test('every Blade include in core and the default Theme resolves to a view', fun
 
     expect($missing)->toBe([]);
 });
+
+test('the default Theme provides every Theme entry view that core and optional packages render by name', function () {
+    $roots = [base_path('app')];
+    $packages = OptionalPackagesPath::root();
+    if ($packages !== null) {
+        $roots[] = $packages;
+    }
+
+    $entries = [];
+    foreach ($roots as $root) {
+        foreach (frontendFiles($root, '.php') as $file) {
+            $source = (string) file_get_contents($file);
+            preg_match_all("/->view\\('([a-z0-9._-]+)'\\)|'theme::([a-z0-9._-]+)'/", $source, $matches);
+            foreach (array_filter([...$matches[1], ...$matches[2]]) as $view) {
+                $entries[$view] = $file;
+            }
+            // Admin layouts resolve through the Admin Theme's prepended view location.
+            preg_match_all("/(?:->layout\\(|Layout\\()'(layouts\\.admin(?:-guest)?)'/", $source, $layouts);
+            foreach ($layouts[1] as $view) {
+                $entries[$view] = $file;
+            }
+        }
+    }
+
+    expect($entries)->toHaveKeys(['layouts.storefront', 'layouts.checkout', 'layouts.admin', 'catalog.show', 'checkout.index']);
+
+    $missing = [];
+    foreach ($entries as $view => $file) {
+        if (! is_file(base_path('themes/default/views/'.str_replace('.', '/', $view).'.blade.php'))) {
+            $missing[] = "{$view} (rendered by {$file})";
+        }
+    }
+
+    expect($missing)->toBe([]);
+});
