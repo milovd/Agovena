@@ -1,0 +1,133 @@
+/* Homepage category promo tiles */
+.store-section__link {
+  color: var(--theme-color-accent);
+  font-weight: 650;
+  text-decoration: none;
+  font-size: 0.9375rem;
+}
+
+.store-section__link:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.store-promo-tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--theme-space-3);
+}
+
+.store-promo-tile {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-height: 11.5rem;
+  padding: var(--theme-space-4);
+  border-radius: 1.25rem;
+  text-decoration: none;
+  color: #fff;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform var(--theme-ease), box-shadow var(--theme-ease);
+}
+
+.store-promo-tile:hover,
+.store-promo-tile:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgb(15 23 42 / 0.12);
+  outline: none;
+}
+
+.store-promo-tile--tone-a {
+  background: linear-gradient(160deg, #155eef 0%, #0b2f8a 100%);
+}
+
+.store-promo-tile--tone-b {
+  background: linear-gradient(160deg, #0f766e 0%, #115e59 100%);
+}
+
+.store-promo-tile--tone-c {
+  background: linear-gradient(160deg, #1e3a5f 0%, #0f172a 100%);
+}
+
+.store-promo-tile--tone-d {
+  background: linear-gradient(160deg, #2563eb 0%, #1d4ed8 72%, #1e40af 100%);
+}
+
+.store-promo-tile__copy {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 70%;
+}
+
+.store-promo-tile__name {
+  font-family: var(--theme-font-display);
+  font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.store-promo-tile__meta {
+  font-size: 0.8125rem;
+  opacity: 0.82;
+}
+
+.store-promo-tile__media {
+  position: absolute;
+  right: -0.35rem;
+  bottom: -0.85rem;
+  width: 48%;
+  aspect-ratio: 1;
+  z-index: 1;
+  border-radius: 1rem;
+  overflow: hidden;
+  transform: rotate(-8deg);
+  box-shadow: 0 12px 24px rgb(0 0 0 / 0.22);
+  border: 2px solid rgb(255 255 255 / 0.35);
+}
+
+.store-promo-tile__media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.store-promo-tile__fallback {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-family: var(--theme-font-display);
+  font-size: 2rem;
+  font-weight: 800;
+  background: rgb(255 255 255 / 0.16);
+}
+
+@media (min-width: 900px) {
+  .store-promo-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: var(--theme-space-4);
+  }
+
+  .store-promo-tile {
+    min-height: 13rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .store-product__actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .store-product__perks {
+    grid-template-columns: 1fr 1fr;
+  }
+}

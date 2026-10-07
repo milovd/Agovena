@@ -126,7 +126,9 @@ it('disables customer notification switches for an explicit merchant-managed eve
 });
 
 it('keeps notification badges in the shared storefront chrome', function (): void {
-    $css = File::get(base_path('themes/default/resources/css/components/_store.css'));
+    $css = collect(File::files(base_path('themes/default/resources/css/components/store')))
+        ->map(fn ($file): string => File::get($file->getPathname()))
+        ->implode("\n");
 
     expect($css)
         ->toContain('.store-header__account-count {')

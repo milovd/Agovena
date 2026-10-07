@@ -1,0 +1,97 @@
+/*  Cart / checkout layouts (visual correction)  */
+
+.store-cart__layout,
+.store-checkout__layout {
+  display: grid;
+  gap: var(--theme-space-6);
+}
+
+.store-summary {
+  background: var(--theme-color-surface);
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-lg);
+  padding: var(--theme-space-5);
+  box-shadow: var(--theme-shadow-sm);
+  height: fit-content;
+}
+
+.store-summary__title {
+  margin: 0 0 var(--theme-space-4);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.store-summary__back {
+  display: inline-block;
+  margin-top: var(--theme-space-3);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--theme-color-text-muted);
+  text-decoration: none;
+}
+
+.store-summary__back:hover {
+  color: var(--theme-color-accent);
+}
+
+.store-panel {
+  border: 1px solid var(--theme-color-border);
+  border-radius: var(--theme-radius-lg);
+  padding: var(--theme-space-5);
+  margin: 0 0 var(--theme-space-5);
+  background: var(--theme-color-surface);
+}
+
+.store-panel__title {
+  padding: 0;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.store-checkout__summary {
+  list-style: none;
+  margin: 0 0 var(--theme-space-4);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-space-3);
+}
+
+.store-checkout__summary li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--theme-space-3);
+  font-size: 0.9375rem;
+  color: var(--theme-color-text-muted);
+}
+
+.store-checkout__summary strong {
+  color: var(--theme-color-text);
+}
+
+.store-checkout__coupon {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--theme-space-2);
+}
+
+.store-checkout__coupon .store-btn {
+  min-height: 2.75rem;
+  padding-inline: var(--theme-space-4);
+}
+
+.store-cart__subtotal {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 0 var(--theme-space-4);
+  font-size: 1.05rem;
+}
+
+@media (min-width: 900px) {
+  .store-cart__layout,
+  .store-checkout__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 24rem);
+    align-items: start;
+  }
+}

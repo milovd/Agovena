@@ -1,0 +1,23 @@
+/* -- Typography helpers -- */
+
+.store-title {
+  margin: 0 0 var(--theme-space-4);
+  font-family: var(--theme-font-display);
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--theme-color-ink);
+}
+
+.store-subtitle {
+  margin: 0 0 var(--theme-space-3);
+  font-family: var(--theme-font-display);
+  font-size: 1.125rem;
+  font-weight: 650;
+}
+
+.store-lede {
+  color: var(--theme-color-text-muted);
+  margin: 0 0 var(--theme-space-6);
+  max-width: 40rem;
+}
