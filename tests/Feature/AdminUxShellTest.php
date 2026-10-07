@@ -106,7 +106,7 @@ test('dashboard chart ranges return the requested number of daily points', funct
 
 test('dashboard chart renders filled revenue bars and selected line markers', function () {
     $view = file_get_contents(resource_path('views/livewire/admin/dashboard.blade.php'));
-    $script = file_get_contents(resource_path('js/admin.js'));
+    $script = file_get_contents(resource_path('js/admin/chart.js'));
 
     expect($view)->toContain("'barBackgroundColor' => 'var(--ag-color-chart-1)'")
         ->and($script)->toContain('buildLinePointRadii')
@@ -118,7 +118,7 @@ test('dashboard chart renders filled revenue bars and selected line markers', fu
 test('admin charts read their config from the chart root without double escaping', function () {
     $staff = $this->createStaff();
     $html = Livewire::actingAs($staff)->test(Dashboard::class)->html();
-    $script = file_get_contents(resource_path('js/admin.js'));
+    $script = file_get_contents(resource_path('js/admin/chart.js'));
 
     expect($html)->toContain('data-chart-config="{&quot;type&quot;')
         ->and($html)->not->toContain('&amp;quot;')
