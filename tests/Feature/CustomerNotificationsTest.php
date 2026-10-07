@@ -166,6 +166,22 @@ it('keeps notification settings visible in the account sidebar', function (): vo
         ->not->toContain('href="'.route('customer.notifications').'"');
 });
 
+it('gives the browser push installer its messages and URLs as attribute values it can parse', function (): void {
+    $user = User::factory()->create(['email_verified_at' => now()]);
+
+    $html = (string) $this->actingAs($user)->get(route('customer.notification-settings'))->getContent();
+    $installer = new DOMDocument;
+    @$installer->loadHTML($html);
+    $controls = (new DOMXPath($installer))->query('//*[@x-data="storefrontPushInstaller"]')->item(0);
+
+    // The browser reads data-* attributes decoded once, exactly like DOMDocument.
+    expect($controls)->toBeInstanceOf(DOMElement::class)
+        ->and(json_decode($controls->getAttribute('data-messages'), true))
+        ->toMatchArray(['unsupported' => __('customer.notifications.push_unsupported')])
+        ->and($controls->getAttribute('data-config-url'))->toBe(route('customer.notifications.push-config'))
+        ->and($controls->getAttribute('data-subscribe-url'))->toBe(route('customer.notifications.push-subscription'));
+});
+
 it('stores a browser push subscription only for the authenticated owner', function (): void {
     $user = User::factory()->create(['email_verified_at' => now()]);
     $payload = [

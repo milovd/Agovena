@@ -26,17 +26,17 @@
                 class="store-notification-push__controls"
                 x-data="storefrontPushInstaller"
                 data-configured="{{ $pushConfigured ? 'true' : 'false' }}"
-                data-config-url="{{ e(route('customer.notifications.push-config')) }}"
-                data-subscribe-url="{{ e(route('customer.notifications.push-subscription')) }}"
-                data-unsubscribe-url="{{ e(route('customer.notifications.push-subscription')) }}"
-                data-messages="{{ e(json_encode([
+                data-config-url="{{ route('customer.notifications.push-config') }}"
+                data-subscribe-url="{{ route('customer.notifications.push-subscription') }}"
+                data-unsubscribe-url="{{ route('customer.notifications.push-subscription') }}"
+                data-messages="{{ json_encode([
                     'unsupported' => __('customer.notifications.push_unsupported'),
                     'notConfigured' => __('customer.notifications.push_not_configured'),
                     'permissionDenied' => __('customer.notifications.push_permission_denied'),
                     'installed' => __('customer.notifications.push_installed'),
                     'removed' => __('customer.notifications.push_removed'),
                     'failed' => __('customer.notifications.push_failed'),
-                ])) }}"
+                ]) }}"
             >
                 <p class="store-notification-push__status" role="status" x-text="status"></p>
                 <button
