@@ -26,7 +26,6 @@ fi
 [[ -f "$ROOT/scripts/ci/native-order-smoke.php" ]] || fail "native-order-smoke.php missing"
 [[ -f "$ROOT/scripts/ci/native-queue-proof.php" ]] || fail "native-queue-proof.php missing"
 [[ -f "$ROOT/scripts/smoke-backup-restore.sh" ]] || fail "smoke-backup-restore.sh missing"
-[[ -f "$ROOT/INSTALL.md" ]] || fail "INSTALL.md missing"
 [[ -f "$ROOT/SUPPORT.md" ]] || fail "SUPPORT.md missing"
 
 for bad in \

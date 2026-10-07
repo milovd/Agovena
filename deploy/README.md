@@ -68,7 +68,7 @@ If `agovena:upgrade` fails mid-way, MariaDB DDL may already be partially applied
 
 Admin → Updates shows the current application version and whether schema migrations are pending. Operators still deploy release files themselves; Agovena does not self-modify application source over HTTP.
 
-See also [INSTALL.md](../INSTALL.md), [SUPPORT.md](../SUPPORT.md), and [ATTRIBUTION.md](../ATTRIBUTION.md) for remote FX/VAT data sources.
+Installation and upgrade steps are on [agovena.com](https://agovena.com/docs/installation). See also [SUPPORT.md](../SUPPORT.md), and [ATTRIBUTION.md](../ATTRIBUTION.md) for remote FX/VAT data sources.
 
 ## Queue and Redis
 
