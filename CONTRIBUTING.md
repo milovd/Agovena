@@ -87,6 +87,18 @@ AGOVENA_OPTIONAL_PACKAGES_PATH=../optional-packages
 AGOVENA_PACKAGES_MONOREPO_URL=https://github.com/milovd/optional-packages
 ```
 
+## Package versions
+
+`config/agovena.php` `version` is the only Core version. Each Module and Extension declares the Core versions it runs on in the `agovena` field of its manifest.
+
+- While Core is `0.x`, a patch release (`0.0.1` → `0.0.2`) must not break packages; a minor release (`0.0.x` → `0.1.0`) may. Packages therefore declare a range such as `>=0.0.1 <0.1.0`, not `^0.0.1` (which Composer reads as `>=0.0.1 <0.0.2` and would disable every package on the next patch release). `make:agovena-*` scaffolding writes this range for the current Core.
+- Bump a package's `version` whenever its shipped files change, so installs see the update.
+- When Core stops supporting older first-party package releases, set `agovena.packages.minimum_versions` (for example `'events' => '1.1.0'`). Older installs cannot be installed or enabled, stay enabled but are not booted, and show an Update action.
+
+Upgrades: deploy the new Core release, then run `php artisan agovena:upgrade`. It applies Core migrations, updates every installed Module and Extension that has a newer version or cannot run on the new Core (each update rolls back on failure), runs package migrations, and fails listing any enabled package that still cannot run.
+
+Core still ships 14 legacy Module Admin views (`livewire.admin.{digital,digital-delivery,domains,events,provisioning}.*`) for Modules older than 1.1.0. Remove them in the release that sets `minimum_versions` to `1.1.0` for downloads, digital-delivery, domains, events and provisioning; `ModuleViewCompatibilityTest` fails until both happen together.
+
 ## Security
 
 See [SECURITY.md](SECURITY.md). Do not file public issues for vulnerabilities.

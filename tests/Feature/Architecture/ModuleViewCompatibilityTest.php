@@ -9,8 +9,8 @@ use App\Agovena\Packages\OptionalPackagesPath;
  * namespace (for example provisioning::admin.show). Operators install
  * packages from optional-packages main by default and installed packages
  * only change when they are updated, so Modules released before that move
- * still render the old core names. Core keeps these copies until every
- * supported optional-packages release ships its own views.
+ * (below 1.1.0) still render the old core names. Core keeps these copies until
+ * it requires 1.1.0 of those Modules; the last test below enforces that.
  */
 
 /**
@@ -37,12 +37,6 @@ function legacyModuleAdminViews(): array
         'livewire.admin.provisioning.customer-section' => ['provisioning', 'provisioning', 'admin.customer-section'],
     ];
 }
-
-test('core keeps the Admin views that Modules released before package-owned views still render', function () {
-    foreach (array_keys(legacyModuleAdminViews()) as $view) {
-        expect(view()->exists($view))->toBeTrue("{$view} must stay in core for released Modules");
-    }
-});
 
 test('legacy core module views stay identical to the views the Modules now ship', function () {
     $root = OptionalPackagesPath::modulesRoot();
@@ -110,4 +104,29 @@ test('every view an optional package renders by name resolves against this core'
 
     expect($checked)->toBeGreaterThan(0)
         ->and($missing)->toBe([]);
+});
+
+/*
+ * Removal condition for the legacy copies: Module 1.1.0 is the first release that
+ * renders its own namespaced views. Once Core requires 1.1.0 of every affected Module
+ * (agovena.packages.minimum_versions), older Modules are not booted and agovena:upgrade
+ * updates them, so nothing can render the legacy names and the copies must go.
+ */
+const FIRST_MODULE_VERSION_WITH_OWN_VIEWS = '1.1.0';
+
+test('legacy core module views are removed exactly when Core requires Modules that ship their own views', function () {
+    $modules = array_values(array_unique(array_column(legacyModuleAdminViews(), 0)));
+    $required = array_filter($modules, fn (string $module): bool => version_compare(
+        (string) config('agovena.packages.minimum_versions.'.$module, '0.0.0'),
+        FIRST_MODULE_VERSION_WITH_OWN_VIEWS,
+        '>=',
+    ));
+
+    foreach (legacyModuleAdminViews() as $legacy => [$module]) {
+        if (in_array($module, $required, true)) {
+            expect(view()->exists($legacy))->toBeFalse("{$legacy} is unreachable once Core requires {$module} ".FIRST_MODULE_VERSION_WITH_OWN_VIEWS.'; delete it');
+        } else {
+            expect(view()->exists($legacy))->toBeTrue("{$legacy} is still rendered by {$module} releases older than ".FIRST_MODULE_VERSION_WITH_OWN_VIEWS);
+        }
+    }
 });

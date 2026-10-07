@@ -477,6 +477,7 @@ return new class extends Migration
         if ($packagePath === null) {
             throw new RuntimeException("The {$targetId} package is unavailable or invalid. No legacy domain records were changed.");
         }
+        $packageVersion = (string) json_decode((string) file_get_contents($packagePath.DIRECTORY_SEPARATOR.'extension.json'), true)['version'];
         $targetExtension = DB::table('agovena_extensions')->where('extension_id', $targetId)->first();
         $targetPackage = DB::table('agovena_packages')
             ->where('kind', 'extension')
@@ -498,6 +499,7 @@ return new class extends Migration
             'source_type' => PackageSourceType::Path->value,
             'source_locator' => $packagePath,
             'package_path' => $packagePath,
+            'package_version' => $packageVersion,
             'now' => $migrationNow,
         ];
     }
@@ -536,7 +538,7 @@ return new class extends Migration
         DB::table('agovena_extensions')->updateOrInsert(
             ['extension_id' => $targetId],
             [
-                'version' => self::VERSION,
+                'version' => $plan['package_version'],
                 'enabled' => $enabled,
                 'installed_at' => $installedAt,
                 'enabled_at' => $enabled ? $enabledAt : null,
@@ -565,8 +567,8 @@ return new class extends Migration
                 'version_constraint' => $targetPackage?->version_constraint
                     ?? $legacyPackage?->version_constraint
                     ?? '*',
-                'installed_version' => self::VERSION,
-                'available_version' => self::VERSION,
+                'installed_version' => $plan['package_version'],
+                'available_version' => $plan['package_version'],
                 'install_path' => $plan['package_path'],
                 'is_bundled' => false,
                 'created_at' => $packageCreatedAt,
@@ -1354,12 +1356,15 @@ return new class extends Migration
         }
 
         $manifestData = json_decode((string) file_get_contents($manifestPath), true);
-        // production_ready is a release status, not package identity, so a package
-        // promoted after this migration was written must still be recognized.
+        // production_ready, version and the supported Core range are release metadata,
+        // not package identity, so later releases of the same package must still be recognized.
+        $releaseMetadata = ['production_ready', 'version', 'agovena'];
         if (! is_array($manifestData)
             || ! is_bool($manifestData['production_ready'] ?? null)
-            || $this->canonicalize(Arr::except($manifestData, ['production_ready']))
-                !== $this->canonicalize(Arr::except($definition['manifest'], ['production_ready']))) {
+            || ! is_string($manifestData['version'] ?? null)
+            || version_compare($manifestData['version'], self::VERSION, '<')
+            || $this->canonicalize(Arr::except($manifestData, $releaseMetadata))
+                !== $this->canonicalize(Arr::except($definition['manifest'], $releaseMetadata))) {
             return false;
         }
 

@@ -13,9 +13,9 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Modules\Contracts\Module;
 use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Packages\PackageAutoload;
+use App\Agovena\Packages\PackageCompatibility;
 use App\Agovena\Packages\PackageMigrationRunner;
 use App\Models\AgovenaModule;
-use Composer\Semver\Semver;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +41,7 @@ final class ModuleManager
         private readonly Dispatcher $events,
         private readonly PackageAutoload $autoload,
         private readonly PackageMigrationRunner $migrations,
+        private readonly PackageCompatibility $compatibility,
     ) {}
 
     public function refresh(): void
@@ -94,6 +95,12 @@ final class ModuleManager
 
         foreach ($this->discover() as $manifest) {
             if (! $this->isEnabled($manifest->id)) {
+                continue;
+            }
+
+            // An enabled Module that this Core cannot run stays enabled but is not booted
+            // until it is updated, exactly as if it were temporarily disabled.
+            if ($this->compatibility->problem($manifest->id, $manifest->version, $manifest->agovena) !== null) {
                 continue;
             }
 
@@ -388,19 +395,9 @@ final class ModuleManager
 
     private function assertCompatible(ModuleManifest $manifest): void
     {
-        $platform = (string) config('agovena.version', '0.1.0');
-        $constraint = $manifest->agovena;
-        if ($constraint === '*' || $constraint === '') {
-            return;
-        }
-
-        if (! Semver::satisfies($platform, $constraint)) {
-            throw ValidationException::withMessages([
-                'module' => __('admin.packages.incompatible', [
-                    'constraint' => $constraint,
-                    'platform' => $platform,
-                ]),
-            ]);
+        $problem = $this->compatibility->problem($manifest->id, $manifest->version, $manifest->agovena);
+        if ($problem !== null) {
+            throw ValidationException::withMessages(['module' => $problem]);
         }
     }
 

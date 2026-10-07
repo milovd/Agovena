@@ -61,6 +61,8 @@ php artisan up
 systemctl restart agovena-queue.service
 ```
 
+`agovena:upgrade` also updates installed Modules and Extensions that have a newer version or that the new Core can no longer run, and exits non-zero naming any enabled package that still cannot run (it stays enabled but is not loaded until updated). Use `--without-package-updates` to update packages separately from Admin → Modules / Extensions.
+
 Do not `migrate:fresh`. Do not auto-migrate on HTTP requests.
 
 Backup MariaDB + `storage/app/packages` + `storage/app/private` + `storage/app/public` + `.env` before upgrading.

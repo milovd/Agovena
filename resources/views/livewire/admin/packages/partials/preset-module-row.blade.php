@@ -39,6 +39,9 @@
                     wire:click="uninstallPackage('{{ $manifest->id }}')"
                 >{{ __('admin.packages.actions.uninstall') }}</button>
             @endif
+            @if ($row['lifecycle']->value === 'update_available')
+                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="updatePackage('{{ $manifest->id }}')" wire:key="module-update-{{ $presetId }}-{{ $manifest->id }}">{{ __('admin.packages.actions.update') }}</button>
+            @endif
         @endcan
     </div>
 </div>

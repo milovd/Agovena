@@ -12,7 +12,6 @@ use App\Enums\PackageKind;
 use App\Enums\PackageLifecycle;
 use App\Enums\PackageSourceType;
 use App\Models\AgovenaPackage;
-use Composer\Semver\Semver;
 
 final class PackageCatalog
 {
@@ -67,6 +66,7 @@ final class PackageCatalog
         private readonly ExtensionManager $extensions,
         private readonly PackageInstaller $installer,
         private readonly MonorepoRemoteCatalog $monorepo,
+        private readonly PackageCompatibility $compatibility,
     ) {}
 
     /**
@@ -215,7 +215,8 @@ final class PackageCatalog
     {
         $status = $this->modules->status($manifest->id);
         $package = $this->packageRow(PackageKind::Module, $manifest->id);
-        $compatible = $this->compatible($manifest->agovena);
+        $problem = $this->compatibility->problem($manifest->id, $manifest->version, $manifest->agovena);
+        $compatible = $problem === null;
 
         return [
             'kind' => PackageKind::Module,
@@ -233,10 +234,7 @@ final class PackageCatalog
                 updateAvailable: $package !== null && $this->installer->hasUpdate($package),
             ),
             'compatible' => $compatible,
-            'compatibility_error' => $compatible ? null : __('admin.packages.incompatible', [
-                'constraint' => $manifest->agovena,
-                'platform' => (string) config('agovena.version', '0.1.0'),
-            ]),
+            'compatibility_error' => $problem,
             'installed' => $status['installed'],
             'enabled' => $status['enabled'],
             'is_bundled' => false,
@@ -270,7 +268,8 @@ final class PackageCatalog
      */
     private function remoteModuleRow(string $packageKey, ModuleManifest $manifest): array
     {
-        $compatible = $this->compatible($manifest->agovena);
+        $problem = $this->compatibility->problem($manifest->id, $manifest->version, $manifest->agovena);
+        $compatible = $problem === null;
 
         return [
             'kind' => PackageKind::Module,
@@ -282,10 +281,7 @@ final class PackageCatalog
             'composer_name' => $packageKey,
             'lifecycle' => $compatible ? PackageLifecycle::Available : PackageLifecycle::Incompatible,
             'compatible' => $compatible,
-            'compatibility_error' => $compatible ? null : __('admin.packages.incompatible', [
-                'constraint' => $manifest->agovena,
-                'platform' => (string) config('agovena.version', '0.1.0'),
-            ]),
+            'compatibility_error' => $problem,
             'installed' => false,
             'enabled' => false,
             'is_bundled' => false,
@@ -373,7 +369,8 @@ final class PackageCatalog
      */
     private function remoteExtensionRow(string $packageKey, ExtensionManifest $manifest): array
     {
-        $compatible = $this->compatible($manifest->agovena);
+        $problem = $this->compatibility->problem($manifest->id, $manifest->version, $manifest->agovena);
+        $compatible = $problem === null;
 
         return [
             'kind' => PackageKind::Extension,
@@ -385,10 +382,7 @@ final class PackageCatalog
             'composer_name' => $packageKey,
             'lifecycle' => $compatible ? PackageLifecycle::Available : PackageLifecycle::Incompatible,
             'compatible' => $compatible,
-            'compatibility_error' => $compatible ? null : __('admin.packages.incompatible', [
-                'constraint' => $manifest->agovena,
-                'platform' => (string) config('agovena.version', '0.1.0'),
-            ]),
+            'compatibility_error' => $problem,
             'installed' => false,
             'enabled' => false,
             'is_bundled' => false,
@@ -427,27 +421,14 @@ final class PackageCatalog
             : PackageSourceType::Monorepo;
     }
 
-    private function compatible(string $constraint): bool
-    {
-        $platform = (string) config('agovena.version', '0.1.0');
-        if ($constraint === '*' || $constraint === '') {
-            return true;
-        }
-
-        try {
-            return Semver::satisfies($platform, $constraint);
-        } catch (\Throwable) {
-            return false;
-        }
-    }
-
     private function lifecycle(bool $installed, bool $enabled, bool $wasDisabled, bool $compatible, bool $updateAvailable): PackageLifecycle
     {
-        if (! $compatible) {
-            return PackageLifecycle::Incompatible;
-        }
+        // An update is the way out of an incompatible install, so offer it first.
         if ($updateAvailable) {
             return PackageLifecycle::UpdateAvailable;
+        }
+        if (! $compatible) {
+            return PackageLifecycle::Incompatible;
         }
         if ($enabled) {
             return PackageLifecycle::Enabled;

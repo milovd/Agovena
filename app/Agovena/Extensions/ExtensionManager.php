@@ -11,12 +11,12 @@ use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Packages\OptionalPackagesPath;
 use App\Agovena\Packages\PackageAutoload;
+use App\Agovena\Packages\PackageCompatibility;
 use App\Agovena\Packages\PackageMigrationRunner;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Models\AgovenaExtension;
-use Composer\Semver\Semver;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schema;
@@ -48,6 +48,7 @@ final class ExtensionManager
         private readonly ModuleManager $modules,
         private readonly PackageMigrationRunner $migrations,
         private readonly RuntimeRegistry $runtimeRegistries,
+        private readonly PackageCompatibility $compatibility,
     ) {}
 
     public function refresh(): void
@@ -99,6 +100,12 @@ final class ExtensionManager
 
         foreach ($this->discover() as $manifest) {
             if (! $this->isEnabled($manifest->id) || ! $this->canUseManifest($manifest)) {
+                continue;
+            }
+
+            // An enabled Extension that this Core cannot run stays enabled but is not booted
+            // until it is updated, exactly as if it were temporarily disabled.
+            if ($this->compatibility->problem($manifest->id, $manifest->version, $manifest->agovena) !== null) {
                 continue;
             }
 
@@ -408,20 +415,9 @@ final class ExtensionManager
             ]);
         }
 
-        $platform = (string) config('agovena.version', '0.1.0');
-        $constraint = $manifest->agovena;
-        if ($constraint === '*' || $constraint === '') {
-            return;
-        }
-
-        if (! Semver::satisfies($platform, $constraint)) {
-            throw ValidationException::withMessages([
-                'extension' => __('admin.extensions.incompatible', [
-                    'extension' => $manifest->id,
-                    'constraint' => $constraint,
-                    'platform' => $platform,
-                ]),
-            ]);
+        $problem = $this->compatibility->problem($manifest->id, $manifest->version, $manifest->agovena);
+        if ($problem !== null) {
+            throw ValidationException::withMessages(['extension' => $manifest->name.': '.$problem]);
         }
     }
 

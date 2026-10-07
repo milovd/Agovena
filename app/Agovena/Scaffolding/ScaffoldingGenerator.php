@@ -6,6 +6,7 @@ namespace App\Agovena\Scaffolding;
 
 use App\Agovena\Extensions\ExtensionCategory;
 use App\Agovena\Packages\OptionalPackagesPath;
+use App\Agovena\Packages\PackageCompatibility;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -13,7 +14,10 @@ use RuntimeException;
 
 final class ScaffoldingGenerator
 {
-    public function __construct(private readonly Filesystem $files) {}
+    public function __construct(
+        private readonly Filesystem $files,
+        private readonly PackageCompatibility $compatibility,
+    ) {}
 
     public function module(string $id, bool $force): string
     {
@@ -29,7 +33,7 @@ final class ScaffoldingGenerator
             'version' => '0.1.0',
             'description' => '',
             'author' => '',
-            'agovena' => '^0.1',
+            'agovena' => $this->compatibility->recommendedConstraint(),
             'provider' => $namespace.'\\'.$class.'ServiceProvider',
             'dependencies' => [],
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES).PHP_EOL);
@@ -56,7 +60,7 @@ final class ScaffoldingGenerator
             'description' => '',
             'author' => '',
             'category' => $resolvedCategory->value,
-            'agovena' => '^0.1',
+            'agovena' => $this->compatibility->recommendedConstraint(),
             'provider' => $namespace.'\\'.$class.'ServiceProvider',
             'dependencies' => [],
             'settings' => [],

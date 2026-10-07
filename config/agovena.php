@@ -64,6 +64,13 @@ return [
         'zip_max_uncompressed_bytes' => 100 * 1024 * 1024,
         'composer_binary' => env('AGOVENA_COMPOSER_BINARY'),
         /*
+         * Minimum package versions this Core release needs, keyed by Module or
+         * Extension id. Raise an entry when Core removes something older versions
+         * of that package still use; agovena:upgrade then updates the package, and
+         * an older installed copy is not booted until it is updated.
+         */
+        'minimum_versions' => [],
+        /*
          * GitHub monorepo distribution (option B). Core installs individual packages
          * from subdirectories into storage/app/packages/{modules|extensions}/{id}.
          * Set AGOVENA_PACKAGES_MONOREPO_URL when the real monorepo is published.
