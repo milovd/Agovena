@@ -67,13 +67,15 @@ jobs:
           archive="$(basename "$(cat dist/latest-archive.txt)")"
           sbom="${archive%.tar.gz}.sbom.cdx.json"
           (cd dist && sha256sum "$archive" "$sbom" > checksum.txt)
-          awk -v heading="## ${GITHUB_REF_NAME}" '
-            index($0, heading) == 1 { found = 1; next }
-            found && /^## / { exit }
-            found { print }
-          ' CHANGELOG.md > dist/release-notes.md
-          if [ ! -s dist/release-notes.md ]; then
-            echo "CHANGELOG.md has no section for ${GITHUB_REF_NAME}" >&2
+          # Release notes live in the annotated tag message; the GitHub release is the canonical changelog.
+          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
+          if [ "$(git cat-file -t "${GITHUB_REF_NAME}")" != "tag" ]; then
+            echo "${GITHUB_REF_NAME} must be an annotated tag that contains the release notes" >&2
+            exit 1
+          fi
+          git tag -l --format='%(contents:body)' "${GITHUB_REF_NAME}" > dist/release-notes.md
+          if [ ! -s dist/release-notes.md ] || ! grep -q '[^[:space:]]' dist/release-notes.md; then
+            echo "Tag ${GITHUB_REF_NAME} has no release notes in its message body" >&2
             exit 1
           fi
 
