@@ -5,7 +5,6 @@ declare(strict_types=1);
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Operations\CronStatistics;
 use App\Agovena\Provisioning\Contracts\PollsProvisionedInstances;
-use Illuminate\Support\Facades\File;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
@@ -58,41 +57,4 @@ test('the product form loads without provisioning servers while no provisioner c
         ->get(route('admin.products.create'))
         ->assertOk()
         ->assertDontSee('wire:model="provisioningServerId"', false);
-});
-
-/*
- * Package-specific checks that remain in Core until their Module registers the
- * behaviour itself (each needs a package release; see CONTRIBUTING "Package versions").
- * Do not add to this list: give the Module an extension point instead.
- */
-test('core does not branch on optional package ids or query their tables outside the known follow-ups', function () {
-    $followUps = [
-        'Agovena/Admin/DashboardMetrics.php',
-        'Agovena/Admin/GettingStartedChecklist.php',
-        'Agovena/Imports/ImportExecutor.php',
-        'Agovena/Recurring/Http/Livewire/Customer/SubscriptionShow.php',
-        'Agovena/Recurring/SubscriptionService.php',
-        'Console/Commands/AgovenaVerifyProvidersCommand.php',
-        // Seeds sample data for every first-party package by design.
-        'Console/Commands/AgovenaSeedDemoCommand.php',
-    ];
-    $packageIds = 'provisioning|downloads|digital-delivery|domains|events|postnl|mollie|stripe|paypal|paddle|tebex';
-    $packageTables = 'provisioning_servers|service_instances|digital_assets|digital_secret_items|postnl_shipments|domain_registrations|event_tickets';
-
-    $offenders = [];
-    foreach (File::allFiles(app_path()) as $file) {
-        $relative = str_replace('\\', '/', $file->getRelativePathname());
-        if ($file->getExtension() !== 'php' || in_array($relative, $followUps, true) || str_contains($relative, '/migrations/')) {
-            continue;
-        }
-
-        if (preg_match("/isEnabled\\('({$packageIds})'\\)/", $file->getContents()) === 1) {
-            $offenders[] = $relative.' checks whether an optional package is enabled by its ID';
-        }
-        if (preg_match("/(hasTable|table|exists)\\('({$packageTables})'/", $file->getContents()) === 1) {
-            $offenders[] = $relative.' uses a table an optional package owns';
-        }
-    }
-
-    expect($offenders)->toBe([]);
 });

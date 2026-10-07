@@ -86,7 +86,8 @@ test('every view an optional package renders by name resolves against this core'
     $missing = [];
     $checked = 0;
     foreach ($sources as $path => $source) {
-        preg_match_all("/\\bview\\('([a-z0-9._:-]+)'/", $source, $matches);
+        // view('...') calls plus Blade @include / @extends / @each of a view by name.
+        preg_match_all("/(?:\\bview\\(|@(?:include|extends|each)\\()'([a-z0-9._:-]+)'/", $source, $matches);
         foreach ($matches[1] as $view) {
             $checked++;
             if (str_contains($view, '::')) {
