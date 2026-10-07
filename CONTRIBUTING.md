@@ -20,6 +20,28 @@ The project is early but has a runnable Laravel Core, Admin, default Theme store
 - Do not describe unfinished work as shipped
 - Do not use long dash punctuation in UI copy, docs, comments, or commits (use commas, colons, parentheses, or spaced hyphens)
 
+## Backend structure
+
+Business logic is organised by domain under `app/Agovena/<Domain>`, the namespace optional packages build against. Laravel's own layers stay where Laravel puts them and stay thin.
+
+| What | Where |
+| --- | --- |
+| Business rules for a core domain: actions (`IssueInvoiceFromOrder`, `DeleteOrder`), services, registries, value objects | `app/Agovena/<Domain>/` |
+| Interfaces that Modules and Extensions implement or call | `app/Agovena/<Domain>/Contracts/` (public package API; changing one breaks packages) |
+| A core capability a product can switch on (`Availability`, `Physical`, `Recurring`) | Self-contained like a Module: `app/Agovena/<Capability>/` with its own service provider, `Models`, `Enums`, `Events`, `Listeners`, `Http/Livewire` and `resources/{database,lang}` |
+| Eloquent models, enums and events shared by core domains | `app/Models`, `app/Enums`, `app/Events` |
+| Admin and account screens for core domains | `app/Livewire/Admin/<Area>`, `app/Livewire/Customer` (call domain actions; no business rules) |
+| HTTP controllers, middleware, console commands | `app/Http`, `app/Console/Commands` (thin entry points) |
+| Anything specific to one Module or Extension | That package in optional-packages. Core exposes a contract, capability or `ModuleContext`/`AdminRegistrar` hook instead of naming the package. |
+
+Domains with similar names have separate jobs:
+
+- `Recurring` is subscriptions and renewals, including consolidated renewal billing. `PlanChanges` moves a subscription or service to another plan.
+- `Physical` is shipping methods, zones, shipments and returns. `Shipping` holds the carrier contracts that shipping Extensions implement. `Fulfillment` is the seam that shows fulfillment on order pages.
+- `Support` is the helpdesk (tickets and attachments). `Customer` is customer accounts and their properties.
+
+`tests/Feature/Architecture/CoreModuleBoundaryTest.php` fails when Core imports, names, enables-by-ID or queries a package outside its documented list of remaining couplings.
+
 ## Frontend structure
 
 The frontend is server-rendered Blade + Livewire with small Alpine components; there is no SPA layer. Ownership follows the domains in `app/Agovena/*`.
@@ -33,7 +55,7 @@ The frontend is server-rendered Blade + Livewire with small Alpine components; t
 | Homepage sections | `themes/default/views/sections/` |
 | Storefront chrome (header, footer, consent) | `themes/default/views/partials/`, header pieces in `partials/header/` |
 | Admin screen for a core domain | `resources/views/livewire/admin/<domain>/`, sections in `<domain>/partials/` |
-| Admin screen for an optional Module | the Module itself: `modules/<id>/resources/views/admin/`, rendered as `<id>::admin.<view>` (core keeps legacy copies of existing ones, see Contracts) |
+| Admin screen for an optional Module | the Module itself: `modules/<id>/resources/views/admin/`, rendered as `<namespace>::admin.<view>`, where `<namespace>` is what the Module registers with `loadViewsFrom()` (usually its ID; Downloads uses `digital`). Core keeps legacy copies of existing ones, see Contracts. |
 | Shared Admin partials (confirmation modal, tab bar) | `resources/views/livewire/admin/partials/` |
 | Storefront CSS | `themes/default/resources/css/components/store/_<domain>.css`, imported by `components/_store.css` |
 | Theme Admin skin CSS | `themes/default/resources/css/admin/_<area>.css`, imported by `admin.css` |
@@ -54,8 +76,9 @@ The frontend is server-rendered Blade + Livewire with small Alpine components; t
 | `layouts.admin` / `layouts.admin-guest` and their composer data | Public. Rendered by core and Modules; provided by a Theme with the `admin` capability. |
 | Views only included from inside the default Theme (its `partials/header/*`, `partials/admin/*`, `<domain>/partials/*`) | Private to that Theme. Another Theme never sees them; reorganise freely. |
 | `resources/views/livewire/admin/**` | Internal to core. A Theme with the `admin` capability can still shadow a path, so prefer adding partials over renaming. |
+| `livewire.admin.partials.confirm-password-modal` with `App\Livewire\Concerns\RequiresRecentPassword` | Public. Module Admin screens include the modal and use the trait for re-authentication (Provisioning). Keep the view name and the trait's properties and methods. |
 | Module and Extension views | Owned by the package under its own namespace (`provisioning::admin.show`, `paypal::checkout`), registered with `loadViewsFrom()`. Never add new package views to core. |
-| Legacy Module Admin views (`livewire.admin.{digital,digital-delivery,domains,events,provisioning}.*`) | Compatibility copies for Modules released before they shipped their own views. Operators install optional-packages `main` by default and keep installed copies until they update, so these stay until every supported optional-packages release renders `<module>::admin.*`. `ModuleViewCompatibilityTest` keeps them identical to the Module copies. |
+| Legacy Module Admin views (`livewire.admin.{digital,digital-delivery,domains,events,provisioning}.*`) | Compatibility copies for Modules released before they shipped their own views. Operators install optional-packages `main` by default and keep installed copies until they update, so these stay until Core requires Module 1.1.0 (see Package versions). `ModuleViewCompatibilityTest` keeps them identical to the Module copies and fails if they outlive that. |
 | `<x-ag.*>`, `resources/js/storefront.js`, `resources/js/admin.js`, `theme.json` `css` / `admin_css` | Public building blocks for Themes and packages. |
 | `ModuleContext` / `AdminRegistrar` hooks, `module.json`, `extension.json`, `theme.json`, `settings.schema.php` | Public extension API. |
 
