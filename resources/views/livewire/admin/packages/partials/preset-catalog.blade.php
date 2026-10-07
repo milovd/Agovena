@@ -149,7 +149,7 @@
                                     <h4 class="ag-setup-board__group-title">{{ __('admin.modules.groups.'.$group) }}</h4>
                                     <div class="ag-setup-board__installed-modules">
                                         @foreach ($moduleRows as $moduleRow)
-                                            @include('livewire.admin.partials.available-module-row', ['row' => $moduleRow])
+                                            @include('livewire.admin.packages.partials.available-module-row', ['row' => $moduleRow])
                                         @endforeach
                                     </div>
                                 </div>

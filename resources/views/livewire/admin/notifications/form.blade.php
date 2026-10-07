@@ -46,7 +46,7 @@
     @endif
 
     <div class="notification-templates__tabs">
-        @include('livewire.admin.partials.package-tabs', [
+        @include('livewire.admin.partials.tabs', [
             'active' => $tab,
             'tabs' => $tabs,
             'ariaLabel' => __('admin.notifications.form_tabs_aria'),

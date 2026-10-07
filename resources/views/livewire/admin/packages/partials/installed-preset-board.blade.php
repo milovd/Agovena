@@ -67,7 +67,7 @@
                 <div class="ag-setup-board__panel" x-show="open" x-cloak>
                     <div class="ag-setup-board__installed-modules">
                         @foreach ($row['moduleRows'] as $moduleRow)
-                            @include('livewire.admin.partials.preset-module-row', [
+                            @include('livewire.admin.packages.partials.preset-module-row', [
                                 'row' => $moduleRow,
                                 'presetId' => $preset->id,
                                 'otherPresetLabels' => $moduleRow['otherPresetLabels'] ?? [],
@@ -113,7 +113,7 @@
             <div class="ag-setup-board__panel">
                 <div class="ag-setup-board__installed-modules">
                     @foreach ($customModuleRows as $moduleRow)
-                        @include('livewire.admin.partials.preset-module-row', [
+                        @include('livewire.admin.packages.partials.preset-module-row', [
                             'row' => $moduleRow,
                             'presetId' => 'custom',
                             'otherPresetLabels' => $moduleRow['otherPresetLabels'] ?? [],

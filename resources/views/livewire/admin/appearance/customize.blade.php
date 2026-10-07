@@ -25,7 +25,7 @@
     @endif
 
     <div class="theme-customizer__tabs">
-        @include('livewire.admin.partials.package-tabs', [
+        @include('livewire.admin.partials.tabs', [
             'active' => $tab,
             'tabs' => $tabs,
             'ariaLabel' => __('admin.appearance.customize.navigation_aria'),

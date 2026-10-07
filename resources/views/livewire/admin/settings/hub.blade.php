@@ -14,7 +14,7 @@
             <p class="ag-empty__text">{{ __('admin.settings.empty_text') }}</p>
         </div>
     @else
-        @include('livewire.admin.partials.package-tabs', [
+        @include('livewire.admin.partials.tabs', [
             'active' => $tab,
             'tabs' => $tabs,
             'ariaLabel' => __('admin.settings.tabs_aria'),

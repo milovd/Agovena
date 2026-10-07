@@ -8,7 +8,7 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
-    @include('livewire.admin.partials.package-tabs', ['active' => $tab, 'tabs' => $tabs])
+    @include('livewire.admin.partials.tabs', ['active' => $tab, 'tabs' => $tabs])
 
     @if ($tab === 'installed')
         <div class="ag-toolbar" style="margin-bottom: 1rem;">
@@ -19,10 +19,10 @@
                 @endforeach
             </select>
         </div>
-        @include('livewire.admin.partials.package-group-grid', [
+        @include('livewire.admin.packages.partials.package-group-grid', [
             'groups' => $installedGroups,
             'groupLabelPrefix' => 'admin.extensions.categories.',
-            'cardPartial' => 'livewire.admin.partials.extension-card',
+            'cardPartial' => 'livewire.admin.packages.partials.extension-card',
             'emptyTitle' => __('admin.extensions.empty.installed_title'),
             'emptyText' => __('admin.extensions.empty.installed_text'),
         ])
@@ -37,16 +37,16 @@
                 @endforeach
             </select>
         </div>
-        @include('livewire.admin.partials.package-group-grid', [
+        @include('livewire.admin.packages.partials.package-group-grid', [
             'groups' => $availableGroups,
             'groupLabelPrefix' => 'admin.extensions.categories.',
-            'cardPartial' => 'livewire.admin.partials.extension-card',
+            'cardPartial' => 'livewire.admin.packages.partials.extension-card',
             'emptyTitle' => __('admin.extensions.empty.available_title'),
             'emptyText' => __('admin.extensions.empty.available_text'),
         ])
     @else
         @can('extensions.manage')
-            @include('livewire.admin.partials.package-zip-form', ['kind' => 'extension'])
+            @include('livewire.admin.packages.partials.package-zip-form', ['kind' => 'extension'])
         @endcan
     @endif
 

@@ -10,7 +10,7 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
-    @include('livewire.admin.partials.package-tabs', ['active' => $tab, 'tabs' => $tabs])
+    @include('livewire.admin.partials.tabs', ['active' => $tab, 'tabs' => $tabs])
 
     @if ($tab === 'installed')
         <section class="admin-panel">
@@ -27,7 +27,7 @@
                     <p class="ag-empty__text">{{ __('admin.modules.empty.installed_text') }}</p>
                 </div>
             @else
-                @include('livewire.admin.partials.installed-preset-board', [
+                @include('livewire.admin.packages.partials.installed-preset-board', [
                     'installedPresetRows' => $installedPresetRows,
                     'hasCustomModules' => $hasCustomModules,
                     'customModuleRows' => $customModuleRows,
@@ -36,13 +36,13 @@
             @endif
         </section>
     @elseif ($tab === 'available')
-        @include('livewire.admin.partials.preset-catalog', [
+        @include('livewire.admin.packages.partials.preset-catalog', [
             'availablePresets' => $availablePresets,
             'availableCustomPresetRow' => $availableCustomPresetRow,
         ])
     @else
         @can('modules.manage')
-            @include('livewire.admin.partials.package-zip-form', ['kind' => 'module'])
+            @include('livewire.admin.packages.partials.package-zip-form', ['kind' => 'module'])
         @endcan
     @endif
 
