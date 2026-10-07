@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Operations;
 
-use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Provisioning\Contracts\PollsProvisionedInstances;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Support\Carbon;
@@ -15,7 +15,6 @@ final class SchedulerHealth
     public const HEARTBEAT_KEY = 'agovena:scheduler:heartbeat';
 
     public function __construct(
-        private readonly ModuleManager $modules,
         private readonly SettingsRepository $settings,
     ) {}
 
@@ -35,7 +34,7 @@ final class SchedulerHealth
 
     public function isRequired(): bool
     {
-        if (app()->bound(ProcessesSubscriptionRenewals::class) || $this->modules->isEnabled('provisioning')) {
+        if (app()->bound(ProcessesSubscriptionRenewals::class) || app()->bound(PollsProvisionedInstances::class)) {
             return true;
         }
 

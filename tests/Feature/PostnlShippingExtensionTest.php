@@ -14,6 +14,7 @@ use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Orders\DeleteOrder;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
@@ -26,9 +27,12 @@ use App\Agovena\Shipping\ShippingCarrierRegistry;
 use App\Enums\OrderStatus;
 use App\Models\Customer;
 use App\Models\ExtensionSetting;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -424,6 +428,83 @@ test('core and modules do not import postnl types', function () {
                 ->not->toContain('Agovena\\Extensions\\Postnl\\')
                 ->not->toContain('PostnlCarrier')
                 ->not->toContain('api.postnl.nl');
+        }
+    }
+});
+
+function postnlCascadeMigration(): string
+{
+    $path = optionalExtensionRoot('shipping', 'postnl').'/database/migrations/2026_10_07_120000_cascade_postnl_shipments_with_orders.php';
+    if (! is_file($path)) {
+        // PostNL releases before 1.0.1 leave the row behind; the update removes it.
+        test()->markTestSkipped('This PostNL release does not link shipments to orders yet.');
+    }
+
+    return $path;
+}
+
+function postnlShipmentFor(Order $order): void
+{
+    DB::table('postnl_shipments')->insert([
+        'order_id' => $order->id,
+        'barcode' => '3SDEVC'.$order->id,
+        'created_at' => now(),
+        'updated_at' => now(),
+    ]);
+}
+
+test('deleting an order removes its postnl shipment while postnl is enabled', function () {
+    postnlCascadeMigration();
+    enablePostnl();
+    $order = Order::factory()->create();
+    postnlShipmentFor($order);
+
+    app(DeleteOrder::class)->handle($order, $this->createStaff([], ['orders.delete']));
+
+    expect(DB::table('postnl_shipments')->where('order_id', $order->id)->exists())->toBeFalse();
+});
+
+test('deleting an order removes its postnl shipment while postnl is disabled', function () {
+    postnlCascadeMigration();
+    enablePostnl();
+    app(ExtensionManager::class)->disable('postnl');
+    $order = Order::factory()->create();
+    postnlShipmentFor($order);
+
+    app(DeleteOrder::class)->handle($order, $this->createStaff([], ['orders.delete']));
+
+    expect(DB::table('postnl_shipments')->where('order_id', $order->id)->exists())->toBeFalse();
+});
+
+test('orders delete without postnl installed', function () {
+    $order = Order::factory()->create();
+
+    app(DeleteOrder::class)->handle($order, $this->createStaff([], ['orders.delete']));
+
+    expect(Schema::hasTable('postnl_shipments'))->toBeFalse()
+        ->and(Order::query()->whereKey($order->id)->exists())->toBeFalse();
+});
+
+test('updating postnl removes shipments of already deleted orders before linking shipments to orders', function () {
+    $migration = require postnlCascadeMigration();
+    enablePostnl();
+    $migration->down();
+    $kept = Order::factory()->create();
+    postnlShipmentFor($kept);
+    $deleted = Order::factory()->create();
+    postnlShipmentFor($deleted);
+    DB::table('orders')->where('id', $deleted->id)->delete();
+
+    $migration->up();
+
+    expect(DB::table('postnl_shipments')->pluck('order_id')->all())->toBe([$kept->id]);
+});
+
+test('core does not know about postnl', function () {
+    foreach (['app/Agovena', 'app/Http', 'app/Livewire', 'app/Models'] as $directory) {
+        foreach (File::allFiles(base_path($directory)) as $file) {
+            expect(stripos($file->getContents(), 'postnl'))
+                ->toBeFalse($file->getRelativePathname().' must not reference PostNL');
         }
     }
 });

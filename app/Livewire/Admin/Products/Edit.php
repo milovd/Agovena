@@ -14,6 +14,7 @@ use App\Agovena\Catalog\SyncProductCurrencyPrices;
 use App\Agovena\Catalog\UpdateProduct;
 use App\Agovena\Extensions\ExtensionSettingDefinition;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisionedProducts;
+use App\Agovena\Provisioning\Contracts\ConfiguresProvisioningServers;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Enums\ProductStatus;
 use App\Models\Category;
@@ -24,7 +25,6 @@ use App\Models\ProvisioningServer;
 use App\Support\MoneyFormatter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -493,7 +493,7 @@ final class Edit extends Component
             $rules['provisioningServerId'] = [
                 'required',
                 'integer',
-                Rule::exists('provisioning_servers', 'id')->where('provider_key', $this->providerKey)->where('is_active', true),
+                Rule::exists(ProvisioningServer::class, 'id')->where('provider_key', $this->providerKey)->where('is_active', true),
             ];
             $this->validate($rules);
         }
@@ -822,7 +822,8 @@ final class Edit extends Component
             'providerSettingDefinitions' => $this->providerSettingDefinitions(),
             'domainRegistrars' => $this->domainProviderOptions('Agovena\\Modules\\Domains\\DomainRegistrarRegistry'),
             'domainDnsProviders' => $this->domainProviderOptions('Agovena\\Modules\\Domains\\DomainDnsProviderRegistry'),
-            'provisioningServers' => Schema::hasTable('provisioning_servers')
+            'provisioningServers' => collect(app(ProvisionerRegistry::class)->all())
+                ->contains(static fn ($provisioner): bool => $provisioner instanceof ConfiguresProvisioningServers)
                 ? ProvisioningServer::query()->where('is_active', true)->orderBy('name')->get()
                 : collect(),
             'productTabs' => $productTabs,

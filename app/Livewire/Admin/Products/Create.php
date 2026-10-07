@@ -9,7 +9,6 @@ use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\CreateProduct;
 use App\Agovena\Extensions\ExtensionSettingDefinition;
-use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisionedProducts;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisioningServers;
 use App\Agovena\Provisioning\ProvisionerRegistry;
@@ -20,7 +19,6 @@ use App\Models\ProvisioningServer;
 use App\Support\MoneyFormatter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
@@ -160,7 +158,7 @@ final class Create extends Component
             $rules['provisioningServerId'] = [
                 'required',
                 'integer',
-                Rule::exists('provisioning_servers', 'id')->where('provider_key', $this->providerKey)->where('is_active', true),
+                Rule::exists(ProvisioningServer::class, 'id')->where('provider_key', $this->providerKey)->where('is_active', true),
             ];
             foreach ($this->providerSettingDefinitions() as $definition) {
                 $fieldRules = [$definition->required ? 'required' : 'nullable'];
@@ -229,10 +227,6 @@ final class Create extends Component
 
     private function canConfigureProvisioning(): bool
     {
-        if (! app(ModuleManager::class)->isEnabled('provisioning')) {
-            return false;
-        }
-
         foreach (app(ProvisionerRegistry::class)->all() as $provisioner) {
             if ($provisioner instanceof ConfiguresProvisioningServers) {
                 return true;
@@ -281,7 +275,7 @@ final class Create extends Component
             'availableCapabilities' => app(ProductCapabilityRegistry::class)->available(),
             'canConfigureProvisioning' => $this->canConfigureProvisioning(),
             'providerSettingDefinitions' => $this->providerSettingDefinitions(),
-            'provisioningServers' => Schema::hasTable('provisioning_servers')
+            'provisioningServers' => $this->canConfigureProvisioning()
                 ? ProvisioningServer::query()
                     ->where('is_active', true)
                     ->orderBy('name')

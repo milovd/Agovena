@@ -19,7 +19,6 @@ use App\Models\Refund;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 final class DeleteOrder
@@ -44,10 +43,6 @@ final class DeleteOrder
                 'invoice_ids' => $invoices->modelKeys(),
                 'payment_ids' => $payments->modelKeys(),
             ];
-
-            if (Schema::hasTable('postnl_shipments')) {
-                DB::table('postnl_shipments')->where('order_id', $locked->id)->delete();
-            }
 
             foreach ($invoices as $invoice) {
                 InvoiceItem::query()->where('invoice_id', $invoice->id)->delete();

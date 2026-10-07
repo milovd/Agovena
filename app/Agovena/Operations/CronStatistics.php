@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Operations;
 
-use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Provisioning\Contracts\PollsProvisionedInstances;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Console\Scheduling\Event;
@@ -17,7 +17,6 @@ final class CronStatistics
     public function __construct(
         private readonly CronStatisticsRecorder $recorder,
         private readonly SchedulerHealth $scheduler,
-        private readonly ModuleManager $modules,
         private readonly SettingsRepository $settings,
     ) {}
 
@@ -234,7 +233,7 @@ final class CronStatistics
     {
         return match ($taskId) {
             'subscription-renewals' => app()->bound(ProcessesSubscriptionRenewals::class),
-            'sync-provisioning' => $this->modules->isEnabled('provisioning'),
+            'sync-provisioning' => app()->bound(PollsProvisionedInstances::class),
             'cancel-unpaid-orders' => (int) $this->settings->get('store', 'unpaid_order_cancel_after_days', 0) > 0,
             'prune-logs' => true,
             default => true,

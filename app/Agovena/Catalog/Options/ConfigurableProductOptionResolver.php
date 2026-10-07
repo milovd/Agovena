@@ -14,7 +14,6 @@ use App\Models\ProductOption;
 use App\Models\ProvisioningServer;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 final class ConfigurableProductOptionResolver
@@ -208,7 +207,7 @@ final class ConfigurableProductOptionResolver
         $serverId = $configuration['config']['server_id'] ?? null;
 
         if ($serverId !== null && $serverId !== '') {
-            if (! Schema::hasTable('provisioning_servers') || ! is_numeric($serverId)) {
+            if (! is_numeric($serverId)) {
                 throw new ProductOptionChoicesUnavailable;
             }
 
