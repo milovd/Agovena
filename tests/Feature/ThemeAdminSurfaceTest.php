@@ -12,7 +12,7 @@ uses(CreatesStaff::class);
 test('default theme provides storefront and admin surfaces', function () {
     $theme = app(ThemeManager::class)->active();
 
-    $adminCss = file_get_contents(base_path($theme->adminCssEntry));
+    $adminCss = cssWithImports(base_path($theme->adminCssEntry));
 
     expect($theme->id)->toBe('default')
         ->and($theme->provides(ThemeSurface::Storefront))->toBeTrue()

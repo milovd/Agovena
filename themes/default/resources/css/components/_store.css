@@ -43,3 +43,8 @@
 
 /* Domain search */
 @import './store/_domains.css';
+
+/* Checkout, cookie consent and error pages */
+@import './store/_checkout.css';
+@import './store/_consent.css';
+@import './store/_error-page.css';

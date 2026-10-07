@@ -55,7 +55,7 @@ test('payment method assets do not include opaque white background layers', func
 });
 
 test('checkout payment icons keep their transparent surface', function (): void {
-    $css = file_get_contents(base_path('themes/default/resources/css/components/_checkout.css'));
+    $css = file_get_contents(base_path('themes/default/resources/css/components/store/_checkout.css'));
 
     Assert::assertIsString($css);
     Assert::assertMatchesRegularExpression(

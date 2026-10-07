@@ -12,6 +12,7 @@ use Tests\TestCase;
 use Tests\UpgradeTestCase;
 
 require_once __DIR__.'/Support/OptionalPackages.php';
+require_once __DIR__.'/Support/FrontendAssets.php';
 
 /**
  * @param  list<string>  $ids

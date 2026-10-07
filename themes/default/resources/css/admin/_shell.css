@@ -1,0 +1,28 @@
+.admin-theme-toggle {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ag-radius-md);
+  background: transparent;
+  color: var(--ag-color-text-muted);
+  cursor: pointer;
+  transition: background var(--ag-transition), color var(--ag-transition);
+}
+
+.admin-theme-toggle:hover {
+  background: var(--ag-color-surface-muted);
+  color: var(--ag-color-text);
+}
+
+.admin-theme-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.admin-theme-toggle__icon {
+  display: inline-grid;
+  place-items: center;
+}

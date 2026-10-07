@@ -8,7 +8,6 @@ use App\Models\NotificationTemplate;
 use App\Models\PushSubscription;
 use App\Models\User;
 use App\Models\UserNotification;
-use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
 
 it('shows an authenticated customer notification count on the account menu', function (): void {
@@ -126,9 +125,7 @@ it('disables customer notification switches for an explicit merchant-managed eve
 });
 
 it('keeps notification badges in the shared storefront chrome', function (): void {
-    $css = collect(File::files(base_path('themes/default/resources/css/components/store')))
-        ->map(fn ($file): string => File::get($file->getPathname()))
-        ->implode("\n");
+    $css = cssWithImports(base_path('themes/default/resources/css/components/_store.css'));
 
     expect($css)
         ->toContain('.store-header__account-count {')

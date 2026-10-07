@@ -43,7 +43,7 @@ test('error page puts the action below the illustration and keeps it viewport-sa
     $ledePosition = strpos($html, 'class="store-error__lede"');
     $descriptionPosition = strpos($html, 'class="store-error__description"');
     $actionsPosition = strpos($html, 'class="store-error__actions"');
-    $css = file_get_contents(base_path('themes/default/resources/css/components/_error-page.css'));
+    $css = file_get_contents(base_path('themes/default/resources/css/components/store/_error-page.css'));
 
     expect($artPosition)->toBeInt()
         ->and($ledePosition)->toBeInt()
