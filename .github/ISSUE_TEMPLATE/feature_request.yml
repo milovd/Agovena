@@ -1,26 +1,26 @@
 name: Feature request
-description: Suggest a new capability or an improvement.
+description: Suggest a new feature or an improvement to an existing one.
 labels: ["enhancement"]
 body:
   - type: textarea
-    id: problem
+    id: feature
     attributes:
-      label: Problem
-      description: What are you trying to do, and what makes it hard today?
+      label: What would you like to add or improve?
+      description: Describe the feature and how it should work for merchants, customers or developers.
     validations:
       required: true
   - type: textarea
-    id: solution
+    id: value
     attributes:
-      label: Proposed solution
-      description: How should it work for the merchant or customer?
+      label: Why would this be useful?
+      description: Who benefits and what it makes possible, for example a new way to sell, less manual work or support for another provider.
     validations:
       required: true
   - type: textarea
-    id: alternatives
+    id: use-case
     attributes:
-      label: Alternatives
-      description: Workarounds you use now or other approaches you considered.
+      label: Use case or current limitation
+      description: Optional. A concrete example from your store, or what is difficult or impossible today.
   - type: dropdown
     id: area
     attributes:
@@ -36,22 +36,27 @@ body:
         - API and webhooks
         - Installation and upgrades
         - Theme
-        - Module (name it below)
-        - Extension (name it below)
+        - Existing Module or Extension
+        - New Module or Extension
         - Documentation
         - Other
-        - New Module or Extension
     validations:
       required: true
+  - type: input
+    id: package
+    attributes:
+      label: Module, Extension or provider
+      description: Only when the request concerns a specific package or a provider that is not supported yet.
+      placeholder: Pterodactyl, Stripe, a new registrar
   - type: textarea
     id: context
     attributes:
       label: Additional context
-      description: Screenshots, links to provider documentation or examples from other platforms.
+      description: Screenshots, mockups, links to provider documentation or examples from other platforms.
   - type: checkboxes
     id: checks
     attributes:
       label: Before you submit
       options:
-        - label: I searched existing issues and discussions for this request.
+        - label: I searched existing issues for this request.
           required: true
