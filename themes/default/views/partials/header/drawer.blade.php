@@ -31,7 +31,7 @@
         </div>
         <div class="store-drawer__preferences">
             <p class="store-drawer__section-label">{{ __('storefront.preferences.aria') }}</p>
-            @include('theme::partials.header-preferences', ['isMobile' => true])
+            @include('theme::partials.header.preferences', ['isMobile' => true])
         </div>
         <nav class="store-drawer__nav" aria-label="{{ __('storefront.mobile_nav') }}">
             @include('theme::partials.header.drawer-categories')

@@ -48,7 +48,7 @@
                 aria-labelledby="store-account-menu-button"
                 @keydown.escape.stop="closeAndFocus()"
             >
-                @include('theme::partials.account-menu', [
+                @include('theme::partials.header.account-menu', [
                     'accountUser' => $accountUser,
                     'canOpenAdmin' => $canOpenAdmin,
                     'notificationUnreadCount' => $notificationUnreadCount,

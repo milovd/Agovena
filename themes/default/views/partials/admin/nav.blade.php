@@ -53,7 +53,7 @@
             @if (! $isOverview) x-show="open" @endif
         >
             @foreach ($nodes as $node)
-                @include('partials.admin-nav-node', ['node' => $node])
+                @include('partials.admin.nav-node', ['node' => $node])
             @endforeach
         </ul>
     </div>

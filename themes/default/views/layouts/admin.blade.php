@@ -68,7 +68,7 @@
             </div>
             <div class="admin-sidebar__scroll">
                 <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
-                    @include('partials.admin-nav')
+                    @include('partials.admin.nav')
                 </nav>
                 <div class="admin-sidebar__footer">
                 @php

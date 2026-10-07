@@ -19,11 +19,11 @@
                         <li class="store-usp__item">
                             @if ($usp['href'] !== '')
                                 <a class="store-usp__link" href="{{ $usp['href'] }}">
-                                    @include('theme::partials.usp-label', ['usp' => $usp])
+                                    @include('theme::partials.header.usp-label', ['usp' => $usp])
                                 </a>
                             @else
                                 <span class="store-usp__text">
-                                    @include('theme::partials.usp-label', ['usp' => $usp])
+                                    @include('theme::partials.header.usp-label', ['usp' => $usp])
                                 </span>
                             @endif
                         </li>
@@ -39,7 +39,7 @@
                         @endphp
                         <li class="store-usp__item store-usp__item--cta">
                             <a class="store-usp__cta" href="{{ $ctaHref }}">
-                                @include('theme::partials.usp-label', ['usp' => $usp])
+                                @include('theme::partials.header.usp-label', ['usp' => $usp])
                                 <span class="store-usp__chev" aria-hidden="true">›</span>
                             </a>
                         </li>

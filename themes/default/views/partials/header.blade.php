@@ -96,7 +96,7 @@
             @endif
 
             <div class="store-header__actions">
-                @include('theme::partials.header-preferences')
+                @include('theme::partials.header.preferences')
                 <a class="store-header__utility store-header__cart" href="{{ route('storefront.cart') }}" aria-label="{{ __('storefront.nav.cart') }}{{ ($cartCount ?? 0) > 0 ? ', '.trans_choice('storefront.cart.items', $cartCount, ['count' => $cartCount]) : '' }}">
                     @include('theme::partials.icon', ['name' => 'shopping-cart', 'size' => 20])
                     <span class="visually-hidden">{{ __('storefront.nav.cart') }}</span>
