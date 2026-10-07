@@ -495,9 +495,8 @@ test('paid provisioning reconciles missing quantity units idempotently', functio
         ->and(ServiceInstance::query()->where('order_item_id', $item->id)->pluck('unit_index')->sort()->values()->all())->toBe([0, 1]);
 });
 
-test('checkout rejects a malformed server selection instead of using global settings', function () {
+test('a malformed server selection is not orderable instead of using global settings', function () {
     enableStockPterodactyl();
-    $customer = Customer::factory()->create();
     $product = stockProduct();
     app(ProductCapabilityManager::class)->enable($product, 'provisionable', [
         'provider_key' => 'pterodactyl',
@@ -510,17 +509,9 @@ test('checkout rejects a malformed server selection instead of using global sett
             'disk' => '2048',
         ],
     ]);
-    app(CartService::class)->add($product->id, 1);
-    app(CustomerCreditLedger::class)->credit($customer, 100000, 'Provisioning stock fixture');
 
-    expect(fn () => app(PlaceOrder::class)->handle([
-        'customer_name' => $customer->name,
-        'customer_email' => $customer->email,
-        'customer_id' => $customer->id,
-        'billing' => stockBilling(),
-        'apply_credit' => true,
-        'payment_method' => 'account_balance',
-    ]))->toThrow(ValidationException::class)
+    expect(fn () => app(CartService::class)->add($product->id, 1))->toThrow(ValidationException::class)
+        ->and(app(CartService::class)->lines())->toBe([])
         ->and(Order::query()->count())->toBe(0)
         ->and(CapacityReservation::query()->count())->toBe(0);
 });

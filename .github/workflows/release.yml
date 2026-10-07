@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout optional packages at the same tag
+        uses: actions/checkout@v4
+        with:
+          repository: milovd/optional-packages
+          path: optional-packages
+          ref: ${{ github.ref_name }}
+
+      - name: Verify the tag matches config/agovena.php
+        run: |
+          set -euo pipefail
+          version="$(grep -oP "'version'\s*=>\s*'\K[^']+" config/agovena.php | head -n1)"
+          if [ "v${version}" != "${GITHUB_REF_NAME}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match config/agovena.php version ${version}" >&2
+            exit 1
+          fi
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, bcmath, zip, openssl, curl, xml, ctype, fileinfo, tokenizer
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Composer dependencies (build host)
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Build release archive
+        run: bash scripts/build-release.sh dist
+        env:
+          COMPOSER_PROCESS_TIMEOUT: "600"
+
+      - name: Smoke extracted release
+        run: bash scripts/smoke-extracted-release.sh "$(cat dist/latest-archive.txt)"
+
+      - name: Write checksum and release notes
+        run: |
+          set -euo pipefail
+          archive="$(basename "$(cat dist/latest-archive.txt)")"
+          sbom="${archive%.tar.gz}.sbom.cdx.json"
+          (cd dist && sha256sum "$archive" "$sbom" > checksum.txt)
+          awk -v heading="## ${GITHUB_REF_NAME}" '
+            index($0, heading) == 1 { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > dist/release-notes.md
+          if [ ! -s dist/release-notes.md ]; then
+            echo "CHANGELOG.md has no section for ${GITHUB_REF_NAME}" >&2
+            exit 1
+          fi
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          archive="$(cat dist/latest-archive.txt)"
+          gh release create "${GITHUB_REF_NAME}" "$archive" "${archive%.tar.gz}.sbom.cdx.json" dist/checksum.txt \
+            --verify-tag \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file dist/release-notes.md

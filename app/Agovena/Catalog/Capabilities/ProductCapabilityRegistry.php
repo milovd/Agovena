@@ -63,6 +63,27 @@ final class ProductCapabilityRegistry
         );
     }
 
+    /**
+     * A product is visible while every capability it carries is registered by an
+     * enabled Module. Provider readiness does not hide it; see productIsAvailable().
+     */
+    public function productIsVisible(Product $product): bool
+    {
+        $product->loadMissing('capabilities');
+
+        foreach ($product->capabilities as $capability) {
+            if ($this->get($capability->capability) === null || $capability->hasCorruptConfig()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * A product is orderable when it is visible and every capability reports its
+     * provider as ready, for example a configured provisioning connection.
+     */
     public function productIsAvailable(Product $product): bool
     {
         $product->loadMissing('capabilities');

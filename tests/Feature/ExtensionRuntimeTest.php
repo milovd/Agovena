@@ -100,9 +100,13 @@ test('products using a disabled module capability cannot be exposed or added to 
         ->toThrow(ValidationException::class, 'This product is not available for purchase.');
 });
 
-test('disabling a provider extension invalidates existing product use without deleting its configuration', function (): void {
+test('disabling a provider extension stops ordering without hiding the product or deleting its configuration', function (): void {
     installAndEnableModule('provisioning');
     installAndEnableExtension('pterodactyl');
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->set('pterodactyl', 'panel_url', 'https://panel.example.test');
+    $settings->set('pterodactyl', 'application_api_key', '[REDACTED]', secret: true);
+    $settings->set('pterodactyl', 'user_id', '1');
 
     $product = Product::factory()->active()->create(['name' => 'Provider-backed game server']);
     app(ProductCapabilityManager::class)->enable($product, 'provisionable', [
@@ -120,8 +124,8 @@ test('disabling a provider extension invalidates existing product use without de
             'provider_settings' => ['nest_id' => 1],
         ])
         ->and(app(CartService::class)->lines())->toBe([])
-        ->and(fn () => app(GetStorefrontProduct::class)->handle($product->slug))
-        ->toThrow(ModelNotFoundException::class);
+        ->and(app(GetStorefrontProduct::class)->handle($product->slug)->is($product))->toBeTrue()
+        ->and(fn () => app(CartService::class)->add($product->id))->toThrow(ValidationException::class);
 });
 
 test('extension manager discovers mollie payment extension', function () {

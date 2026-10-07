@@ -66,3 +66,10 @@ Attribution and license notes: [ATTRIBUTION.md](ATTRIBUTION.md).
 - Minimal dunning; no reserved seating; no OAuth/Admin API
 - Third-party Modules/Extensions are trusted code - only install code you trust (see `INSTALL.md` / Security)
 - Automatic tax covers EU standard VAT rates only (not reduced rates, not US sales tax)
+- One built-in invoice template; more templates are planned after v0.0.1
+- Imports use CSV mapping profiles; no direct Paymenter, WHMCS, WooCommerce or Shopify importers yet
+- No VPN, proxy, Tor or IP reputation detection yet
+- No bulk CSV/JSON/XML exports yet; only the audit log and per-customer data export
+- No Admin maintenance toggle yet; use `php artisan down --secret=<token>`
+
+See also https://agovena.com/docs/known-limitations

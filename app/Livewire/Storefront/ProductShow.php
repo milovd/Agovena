@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Storefront;
 
 use App\Agovena\Cart\CartService;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\Contracts\ProductStock;
 use App\Agovena\Catalog\GetStorefrontProduct;
 use App\Agovena\Catalog\ListStorefrontProducts;
@@ -81,8 +82,13 @@ final class ProductShow extends Component
         $this->redirect(route('storefront.checkout'), navigate: true);
     }
 
-    public function render(GetStorefrontProduct $get, ListStorefrontProducts $list, ThemeManager $themes, ProductOptionPricer $pricer)
-    {
+    public function render(
+        GetStorefrontProduct $get,
+        ListStorefrontProducts $list,
+        ThemeManager $themes,
+        ProductOptionPricer $pricer,
+        ProductCapabilityRegistry $capabilities,
+    ) {
         $theme = $themes->active();
         $config = $themes->config($theme);
         $product = $get->handle($this->slug);
@@ -118,6 +124,7 @@ final class ProductShow extends Component
             'configuredPrice' => $configuredPrice,
             'priceAvailable' => $configuredPrice !== null,
             'isOutOfStock' => $isOutOfStock,
+            'isOrderable' => $capabilities->productIsAvailable($product),
         ])->layout($theme->view('layouts.storefront'), [
             'title' => $product->name,
             'theme' => $theme,

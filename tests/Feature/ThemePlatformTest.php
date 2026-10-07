@@ -1,6 +1,7 @@
 <?php
 
 use App\Agovena\Catalog\ListStorefrontProducts;
+use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Media\ProductMedia;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\ThemeManager;
@@ -154,6 +155,10 @@ test('categories index page lists root categories', function () {
 
 test('product detail shows gallery nav and zero reviews', function () {
     Artisan::call('agovena:seed-demo', ['--force' => true, '--skip-accounts' => true]);
+    $pterodactyl = app(ExtensionSettingsRepository::class);
+    $pterodactyl->set('pterodactyl', 'panel_url', 'https://panel.example.test');
+    $pterodactyl->set('pterodactyl', 'application_api_key', '[REDACTED]', secret: true);
+    $pterodactyl->set('pterodactyl', 'user_id', '1');
     $heroImage = Product::query()->where('slug', 'minecraft-survival-server')->firstOrFail()->image_path;
 
     $this->get('/products/minecraft-survival-server')

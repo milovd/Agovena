@@ -306,6 +306,7 @@ return [
         'spec_available' => 'Leverbaar',
         'spec_unavailable' => 'Niet leverbaar',
         'not_available_in_currency' => 'Niet beschikbaar in jouw valuta',
+        'unavailable_to_order' => 'Momenteel niet te bestellen',
         'back_in_stock_title' => 'Ontvang een melding wanneer beschikbaar',
         'back_in_stock_text' => 'Vul je e-mailadres in. We laten je weten wanneer dit product weer op voorraad is.',
         'back_in_stock_email' => 'E-mailadres',

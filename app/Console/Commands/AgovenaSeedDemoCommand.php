@@ -218,17 +218,17 @@ final class AgovenaSeedDemoCommand extends Command
             $installer = app(PackageInstaller::class);
             $this->ensureDemoModules($installer);
             $phase = 'extensions';
-            $extensions = $this->ensureDemoExtensions($installer);
+            $this->ensureDemoExtensions($installer);
             $phase = 'reset';
             $this->resetLocalDemoState();
 
             $phase = 'seed';
-            DB::transaction(function () use ($passwords, $extensions): void {
-                $catalog = $this->seedCatalog($extensions);
+            DB::transaction(function () use ($passwords): void {
+                $catalog = $this->seedCatalog();
                 $customer = $this->seedAccounts($passwords);
                 $orders = $this->seedOrders($customer, $catalog);
                 $this->seedFulfilmentRecords($customer, $catalog, $orders);
-                $this->seedPagesAndMenus($extensions);
+                $this->seedPagesAndMenus();
                 $this->seedStoreSetup();
             });
         } catch (Throwable $exception) {
@@ -241,18 +241,7 @@ final class AgovenaSeedDemoCommand extends Command
             return self::FAILURE;
         }
 
-        $omitted = array_keys(array_filter($extensions, static fn (bool $available): bool => ! $available));
-        if ($omitted !== []) {
-            $this->warn('Agovena demo data seeded with unavailable optional Extensions: '.implode(', ', $omitted).'.');
-            if (! $extensions['pterodactyl']) {
-                $this->line('Omitted dependent product and journey: minecraft-survival-server.');
-            }
-            if (! $extensions['cloudflare-domain']) {
-                $this->line('The domain product remains available using the domains Module demo adapters.');
-            }
-        } else {
-            $this->info('Official Agovena demo data seeded: catalog, capabilities, customer journeys, orders, invoices, pages and menus.');
-        }
+        $this->info('Official Agovena demo data seeded: catalog, capabilities, customer journeys, orders, invoices, pages and menus.');
         if ($generatedPasswords && $passwords !== null) {
             $this->warn('Save these credentials in a password manager. They are shown once and replaced on the next reseed.');
             $this->newLine();
@@ -312,20 +301,11 @@ final class AgovenaSeedDemoCommand extends Command
         }
     }
 
-    /** @return array<string, bool> */
-    private function ensureDemoExtensions(PackageInstaller $installer): array
+    private function ensureDemoExtensions(PackageInstaller $installer): void
     {
         $manager = app(ExtensionManager::class);
-        $available = [];
 
         foreach (self::DEMO_EXTENSIONS as $extensionId) {
-            if (! app()->environment(['local', 'testing', 'demo'])) {
-                $available[$extensionId] = false;
-                $this->warn('Demo provider extension '.$extensionId.' is only seeded in local, testing or demo environments. Its stored lifecycle state is unchanged.');
-
-                continue;
-            }
-
             $phase = 'package retrieval';
             try {
                 if ($manager->manifest($extensionId) === null) {
@@ -351,23 +331,21 @@ final class AgovenaSeedDemoCommand extends Command
                     $manager->rebuildRuntime();
                 }
 
-                $available[$extensionId] = $manager->isEnabled($extensionId)
-                    && $manager->context($extensionId) !== null;
-                if (! $available[$extensionId] && $manager->isEnabled($extensionId)) {
-                    $manager->disable($extensionId);
+                if ($manager->context($extensionId) === null) {
+                    throw new \RuntimeException('Demo extension runtime is unavailable.');
                 }
-            } catch (\Exception) {
+            } catch (\Exception $exception) {
                 $installer->recover();
                 if ($manager->isEnabled($extensionId)) {
                     $manager->disable($extensionId);
                 }
 
-                $available[$extensionId] = false;
-                $this->warn('Optional demo extension '.$extensionId.' could not be prepared during '.$phase.'. Check private application logs and package source; only dependent products will be omitted.');
+                $this->warn('Required demo extension '.$extensionId.' could not be prepared during '.$phase
+                    .'. Configure AGOVENA_OPTIONAL_PACKAGES_PATH or AGOVENA_PACKAGES_MONOREPO_URL and check the private application log.');
+
+                throw new \RuntimeException('Required demo extension is not available: '.$extensionId, previous: $exception);
             }
         }
-
-        return $available;
     }
 
     private function installDemoPackage(PackageInstaller $installer, PackageKind $kind, string $packageId): void
@@ -416,10 +394,9 @@ final class AgovenaSeedDemoCommand extends Command
     }
 
     /**
-     * @param  array<string, bool>  $extensions
      * @return array{categories: array<string, Category>, products: array<string, Product>}
      */
-    private function seedCatalog(array $extensions): array
+    private function seedCatalog(): array
     {
         $categories = [];
         $categoryDefinitions = [
@@ -434,26 +411,20 @@ final class AgovenaSeedDemoCommand extends Command
             $categories[$definition['key']] = Category::query()->create([
                 'name' => $definition['name'],
                 'slug' => $definition['slug'],
-                'description' => $definition['key'] === 'provisioning' && ! $extensions['pterodactyl']
-                    ? 'Domain services with simulated registration and DNS lifecycles.'
-                    : $definition['description'],
-                'image_path' => $this->storeAsset($definition['key'] === 'provisioning' && ! $extensions['pterodactyl']
-                    ? 'domain-registration-and-dns-management'
-                    : $definition['asset']),
+                'description' => $definition['description'],
+                'image_path' => $this->storeAsset($definition['asset']),
                 'is_active' => true,
             ]);
         }
 
-        if ($extensions['pterodactyl']) {
-            $categories['game-hosting'] = Category::query()->create([
-                'parent_id' => $categories['provisioning']->id,
-                'name' => 'Game Hosting',
-                'slug' => 'game-hosting',
-                'description' => 'Game server plans that can be provisioned through a compatible provider.',
-                'image_path' => $this->storeAsset('minecraft-survival-server'),
-                'is_active' => true,
-            ]);
-        }
+        $categories['game-hosting'] = Category::query()->create([
+            'parent_id' => $categories['provisioning']->id,
+            'name' => 'Game Hosting',
+            'slug' => 'game-hosting',
+            'description' => 'Game server plans that can be provisioned through a compatible provider.',
+            'image_path' => $this->storeAsset('minecraft-survival-server'),
+            'is_active' => true,
+        ]);
 
         $categories['domain-services'] = Category::query()->create([
             'parent_id' => $categories['provisioning']->id,
@@ -621,10 +592,6 @@ final class AgovenaSeedDemoCommand extends Command
 
         $products = [];
         foreach ($definitions as $definition) {
-            if ($definition['key'] === 'minecraft' && ! $extensions['pterodactyl']) {
-                continue;
-            }
-
             $product = Product::query()->create([
                 'name' => $definition['name'],
                 'subtitle' => $definition['subtitle'],
@@ -1193,14 +1160,16 @@ final class AgovenaSeedDemoCommand extends Command
         ]);
     }
 
-    /** @param array<string, bool> $extensions */
-    private function seedPagesAndMenus(array $extensions): void
+    private function seedPagesAndMenus(): void
     {
-        $journeys = ['a download entitlement', 'a demo license', 'a physical shipment', 'an event ticket'];
-        if ($extensions['pterodactyl']) {
-            $journeys[] = 'a synthetic Pterodactyl service';
-        }
-        $journeys[] = 'a reserved .test domain';
+        $journeys = [
+            'a download entitlement',
+            'a demo license',
+            'a physical shipment',
+            'an event ticket',
+            'a synthetic Pterodactyl service',
+            'a reserved .test domain',
+        ];
 
         $about = Page::query()->firstOrCreate(['slug' => 'about'], [
             'title' => 'About Agovena',

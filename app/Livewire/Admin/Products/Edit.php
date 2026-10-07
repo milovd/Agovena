@@ -815,6 +815,8 @@ final class Edit extends Component
             'galleryImages' => $this->product->images,
             'isReferenced' => $delete->isReferencedByOrders($this->product),
             'availableCapabilities' => $capabilities->available(),
+            'isOrderable' => ! $this->product->status->isPurchasable()
+                || $capabilities->productIsAvailable($this->product->load('capabilities')),
             'provisioners' => $provisioners,
             'canConfigureProvisioning' => $provisioners !== [],
             'providerSettingDefinitions' => $this->providerSettingDefinitions(),

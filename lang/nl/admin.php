@@ -937,6 +937,7 @@ return [
             'save' => 'Capabilities opslaan',
         ],
         'form' => [
+            'not_orderable' => 'Dit product is zichtbaar in de winkel maar kan niet besteld worden: een provider waarvan het afhangt is niet klaar. Vul de instellingen van de provider-extensie aan of kies een actieve provisioning-server met alle verplichte verbindingsvelden.',
             'create_title' => 'Product aanmaken',
             'edit_title' => 'Product bewerken',
             'create_lede' => 'Voeg een product toe aan de catalogus. Foto’s kun je na het opslaan uploaden.',

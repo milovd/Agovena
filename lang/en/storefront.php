@@ -306,6 +306,7 @@ return [
         'spec_available' => 'Available',
         'spec_unavailable' => 'Unavailable',
         'not_available_in_currency' => 'Not available in your currency',
+        'unavailable_to_order' => 'Currently unavailable to order',
         'back_in_stock_title' => 'Get notified when available',
         'back_in_stock_text' => 'Enter your email and we will let you know when this product is back in stock.',
         'back_in_stock_email' => 'Email address',

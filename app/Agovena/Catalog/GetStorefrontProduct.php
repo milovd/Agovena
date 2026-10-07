@@ -26,7 +26,7 @@ final class GetStorefrontProduct
             throw (new ModelNotFoundException)->setModel(Product::class, [$slug]);
         }
 
-        if (! $this->capabilities->productIsAvailable($product)) {
+        if (! $this->capabilities->productIsVisible($product)) {
             throw (new ModelNotFoundException)->setModel(Product::class, [$slug]);
         }
 

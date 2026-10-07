@@ -43,6 +43,10 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
+    @if (($isOrderable ?? true) === false)
+        <p class="ag-alert ag-alert--warning" role="status">{{ __('admin.products.form.not_orderable') }}</p>
+    @endif
+
     @php
         $availableCapabilityKeys = collect($availableCapabilities ?? [])->pluck('key')->all();
     @endphp

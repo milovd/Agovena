@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Storefront;
 
 use App\Agovena\Cart\CartService;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Catalog\GetStorefrontProduct;
 use App\Agovena\Catalog\Options\ConfigurableProductOptionResolver;
 use App\Agovena\Catalog\Options\ProductOptionChoicesUnavailable;
@@ -33,6 +34,12 @@ final class ProductConfigure extends Component
         $this->intent = request()->query('intent') === 'checkout' ? 'checkout' : 'cart';
 
         $product = $get->handle($this->slug);
+        if (! app(ProductCapabilityRegistry::class)->productIsAvailable($product)) {
+            $this->redirect(route('storefront.product', ['slug' => $product->slug]), navigate: true);
+
+            return;
+        }
+
         foreach ($options->activeOptions($product) as $option) {
             $this->optionSelections[$option->key] = match ($option->type->value) {
                 'checkbox' => [],

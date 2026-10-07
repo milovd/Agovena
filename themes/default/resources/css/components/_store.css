@@ -4349,6 +4349,12 @@ a.store-cart-line__name:hover {
   margin-bottom: var(--theme-space-5);
 }
 
+.store-product__availability {
+  margin: 0 0 var(--theme-space-5);
+  color: var(--theme-color-text-muted);
+  font-weight: 600;
+}
+
 .store-product__price-row {
   border-top: 1px solid var(--theme-color-border);
   padding-top: var(--theme-space-5);

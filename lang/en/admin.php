@@ -939,6 +939,7 @@ return [
             'save' => 'Save capabilities',
         ],
         'form' => [
+            'not_orderable' => 'This product is visible on the storefront but cannot be ordered: a provider it depends on is not ready. Complete the provider Extension settings or select an active provisioning server with all required connection fields.',
             'create_title' => 'Create product',
             'edit_title' => 'Edit product',
             'create_lede' => 'Add a catalog product. Photos can be uploaded after saving.',

@@ -148,7 +148,7 @@
                 <p class="store-product__lede">{{ $lede }}</p>
             @endif
 
-            @if (($priceAvailable || $isDomainProduct) && ! $isOutOfStock)
+            @if (($priceAvailable || $isDomainProduct) && ! $isOutOfStock && $isOrderable)
             <form wire:submit="addToCart" class="store-product__form">
                 <div class="store-product__price-row">
                     @if ($isDomainProduct)
@@ -192,10 +192,13 @@
             @else
                 @if ($isDomainProduct)
                     <p class="store-product__price store-product__price--dynamic">{{ __('storefront.product.domain_price_dynamic') }}</p>
-                @elseif ($priceAvailable && ! $isOutOfStock)
+                @elseif ($priceAvailable)
                     <p class="store-product__price">{{ \App\Support\MoneyFormatter::format($configuredPrice) }}</p>
                 @else
                     <p class="store-product__price store-product__price--unavailable">{{ __('storefront.product.not_available_in_currency') }}</p>
+                @endif
+                @if (! $isOrderable)
+                    <p class="store-product__availability" role="status">{{ __('storefront.product.unavailable_to_order') }}</p>
                 @endif
             @endif
 
