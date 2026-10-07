@@ -136,6 +136,8 @@ final class OrderFulfillment extends Component
 
     public function render()
     {
+        $this->authorize('shipping.view');
+
         $shipments = Shipment::query()
             ->with(['items.orderItem'])
             ->where('order_id', $this->order->id)

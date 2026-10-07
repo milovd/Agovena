@@ -199,6 +199,8 @@ class Properties extends Component
 
     public function render(): View
     {
+        Gate::authorize('customers.manage');
+
         return view('livewire.admin.customers.properties', [
             'definitions' => CustomerPropertyDefinition::query()->ordered()->get(),
             'types' => CustomerPropertyType::cases(),

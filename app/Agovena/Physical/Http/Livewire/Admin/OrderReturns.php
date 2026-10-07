@@ -23,6 +23,8 @@ final class OrderReturns extends Component
 
     public function render()
     {
+        $this->authorize('returns.view');
+
         return view('livewire.admin.shipping.order-returns', [
             'returns' => ReturnRequest::query()
                 ->with('items.orderItem')

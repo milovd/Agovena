@@ -61,6 +61,8 @@ final class ZonesIndex extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('shipping.view');
+
         return view('livewire.admin.shipping.zones-index', [
             'zones' => ShippingZone::query()->orderBy('sort')->orderBy('name')->get(),
         ])->layout('layouts.admin', [

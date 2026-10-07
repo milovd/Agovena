@@ -54,6 +54,8 @@ final class StocksIndex extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('inventory.view');
+
         $query = Product::query()
             ->whereHas('capabilities', static fn ($q) => $q->where('capability', 'inventory'))
             ->orderBy('name');

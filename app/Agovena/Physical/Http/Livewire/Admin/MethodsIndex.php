@@ -96,6 +96,8 @@ final class MethodsIndex extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('shipping.view');
+
         return view('livewire.admin.shipping.methods-index', [
             'methods' => ShippingMethod::query()->with('zone')->orderBy('sort')->orderBy('id')->get(),
             'zones' => ShippingZone::query()->orderBy('sort')->orderBy('name')->get(),

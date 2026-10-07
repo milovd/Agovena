@@ -62,6 +62,8 @@ final class SubscriptionShow extends Component
 
     public function render(AdminRegistrar $admin, DescribesSubscriptionBilling $billing)
     {
+        $this->authorize('subscriptions.view');
+
         return view('livewire.admin.subscriptions.show', [
             'subscription' => $this->subscription,
             'billing' => $billing->describe($this->subscription),

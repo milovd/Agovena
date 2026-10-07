@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnforceAbusePolicy;
+use App\Http\Middleware\EnsureCanAccessAdmin;
+use App\Http\Middleware\EnsureCustomerEmailIsVerified;
+use App\Http\Middleware\EnsurePrivilegedTwoFactor;
 use App\Models\PersonalAccessToken;
 use Composer\CaBundle\CaBundle;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -11,6 +15,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Sanctum\Sanctum;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,6 +27,17 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         config(['livewire.csp_safe' => true]);
+
+        // Livewire update requests only re-run route middleware listed here. Without
+        // these, a suspended account, revoked Admin access, a lapsed privileged 2FA
+        // session or an unverified customer email would not stop components that are
+        // already open in a browser tab.
+        Livewire::addPersistentMiddleware([
+            EnforceAbusePolicy::class,
+            EnsureCanAccessAdmin::class,
+            EnsurePrivilegedTwoFactor::class,
+            EnsureCustomerEmailIsVerified::class,
+        ]);
 
         // WinGet/XAMPP PHP often ships without curl.cainfo; Composer's Mozilla
         // CA bundle keeps outbound HTTPS (Frankfurter, vatnode, etc.) verifiable.

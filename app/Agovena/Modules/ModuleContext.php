@@ -86,7 +86,8 @@ final class ModuleContext
     public function adminRoutes(callable $routes): void
     {
         Route::group([
-            'middleware' => ['web', 'auth', SyncStaffPermissions::class, 'admin.access'],
+            // Same guards as the core Admin route group in routes/web.php.
+            'middleware' => ['web', 'auth', 'abuse', SyncStaffPermissions::class, 'admin.access', 'admin.2fa'],
             'prefix' => 'admin',
             'as' => 'admin.',
         ], $routes);
@@ -103,7 +104,8 @@ final class ModuleContext
     public function customerRoutes(callable $routes): void
     {
         Route::group([
-            'middleware' => ['web', 'auth', 'customer.verified'],
+            // Same guards as the core verified customer account routes in routes/web.php.
+            'middleware' => ['web', 'auth', 'abuse', 'customer.verified'],
             'prefix' => 'account',
             'as' => 'customer.',
         ], $routes);

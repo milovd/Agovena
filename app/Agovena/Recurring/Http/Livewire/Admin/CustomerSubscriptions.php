@@ -23,6 +23,8 @@ final class CustomerSubscriptions extends Component
 
     public function render()
     {
+        $this->authorize('subscriptions.view');
+
         $subscriptions = Subscription::query()
             ->with('product')
             ->where('customer_id', $this->customer->id)

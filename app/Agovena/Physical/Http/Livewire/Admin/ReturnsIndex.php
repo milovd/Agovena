@@ -30,6 +30,8 @@ final class ReturnsIndex extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('returns.view');
+
         $query = ReturnRequest::query()
             ->with(['order', 'customer'])
             ->orderByDesc('id');

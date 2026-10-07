@@ -99,6 +99,8 @@ final class ReturnShow extends Component
 
     public function render(AdminRegistrar $admin, ReturnRequestService $returns)
     {
+        $this->authorize('returns.view');
+
         $status = $this->returnRequest->status;
 
         return view('livewire.admin.shipping.return-show', [

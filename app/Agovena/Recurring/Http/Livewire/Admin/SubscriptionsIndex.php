@@ -22,6 +22,8 @@ final class SubscriptionsIndex extends Component
 
     public function render(AdminRegistrar $admin)
     {
+        $this->authorize('subscriptions.view');
+
         $query = Subscription::query()->with('product')->orderByDesc('id');
         if ($this->status !== '') {
             $query->where('status', $this->status);
