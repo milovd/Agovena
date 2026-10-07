@@ -1,10 +1,10 @@
 @props([
     'active',
     'tabs',
-    'ariaLabel' => null,
+    'ariaLabel',
 ])
 
-<nav class="ag-product-tabs ag-package-tabs" role="tablist" aria-label="{{ $ariaLabel ?? __('admin.packages.tabs_aria') }}">
+<nav class="ag-product-tabs ag-section-tabs" role="tablist" aria-label="{{ $ariaLabel }}">
     @foreach ($tabs as $key => $label)
         <button
             type="button"

@@ -10,7 +10,7 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
-    @include('livewire.admin.partials.tabs', ['active' => $tab, 'tabs' => $tabs])
+    @include('livewire.admin.partials.tabs', ['active' => $tab, 'tabs' => $tabs, 'ariaLabel' => __('admin.packages.tabs_aria')])
 
     @if ($tab === 'installed')
         <section class="admin-panel">

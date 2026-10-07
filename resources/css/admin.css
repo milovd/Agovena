@@ -16,6 +16,8 @@
 @import './admin/components/_card.css';
 @import './admin/components/_stats.css';
 @import './admin/components/_patterns.css';
+@import './admin/screens/_dashboard.css';
+@import './admin/screens/_packages.css';
 @import './admin/screens/_audit-log.css';
 @import './admin/screens/_theme-customizer.css';
 @import './admin/screens/_notification-templates.css';
