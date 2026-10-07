@@ -1,0 +1,57 @@
+name: Feature request
+description: Suggest a new capability or an improvement.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what makes it hard today?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How should it work for the merchant or customer?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Workarounds you use now or other approaches you considered.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Storefront
+        - Cart and checkout
+        - Admin
+        - Customer account
+        - Orders, invoices and refunds
+        - Subscriptions and renewals
+        - Inventory and shipping
+        - API and webhooks
+        - Installation and upgrades
+        - Theme
+        - Module (name it below)
+        - Extension (name it below)
+        - Documentation
+        - Other
+        - New Module or Extension
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Screenshots, links to provider documentation or examples from other platforms.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched existing issues and discussions for this request.
+          required: true

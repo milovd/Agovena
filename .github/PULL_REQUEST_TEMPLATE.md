@@ -1,3 +1,5 @@
+<!-- Open pull requests against `dev`. `main` only receives reviewed work from `dev`. -->
+
 ## Summary
 
 Briefly explain what this PR changes and why.

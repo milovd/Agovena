@@ -2,18 +2,15 @@
 
 ## Supported versions
 
-Agovena is in early development. Security fixes will target the latest `main` branch until stable releases exist.
+Security fixes are released as patch versions of the latest release, for example `0.1.1` after `0.1.0`. Upgrade to the newest release to receive them. Older releases do not receive backports while Agovena is below 1.0.
 
 ## Reporting a vulnerability
 
-Please **do not** open a public GitHub issue for security problems.
+Do not open a public issue, discussion or pull request for a security problem.
 
-Prefer one of these:
+Report it privately through [GitHub private vulnerability reporting](https://github.com/milovd/Agovena/security/advisories/new). This also covers first-party Modules and Extensions from the [optional-packages](https://github.com/milovd/optional-packages) repository.
 
-1. [GitHub private vulnerability reporting](https://github.com/milovd/Agovena/security/advisories/new) (if enabled on this repository)
-2. Contact the maintainers privately once a security contact is published here
-
-Include as much detail as you can: what you found, how to reproduce it, and the impact. We will try to respond within a reasonable time and coordinate a fix before any public disclosure.
+Include the affected version, the steps to reproduce and the impact you expect. We aim to respond within 7 days. We agree on a disclosure date once a fix is available and credit you in the advisory unless you prefer otherwise.
 
 ## Account security (product)
 

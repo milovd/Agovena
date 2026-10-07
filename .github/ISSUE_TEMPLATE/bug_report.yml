@@ -1,0 +1,94 @@
+name: Bug report
+description: Something in Agovena does not work as documented.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Found a security problem? Do not open an issue. Report it privately through the security link on the previous page.
+
+        Remove API keys, passwords, tokens and customer data from everything you paste below.
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Storefront
+        - Cart and checkout
+        - Admin
+        - Customer account
+        - Orders, invoices and refunds
+        - Subscriptions and renewals
+        - Inventory and shipping
+        - API and webhooks
+        - Installation and upgrades
+        - Theme
+        - Module (name it below)
+        - Extension (name it below)
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: package
+    attributes:
+      label: Module or Extension
+      description: Only when the problem involves a package, for example Stripe or Pterodactyl.
+      placeholder: stripe 1.0.0
+  - type: input
+    id: version
+    attributes:
+      label: Agovena version
+      description: Shown under Admin → Updates.
+      placeholder: 0.0.1
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation method
+      options:
+        - Release archive
+        - Source checkout
+        - Docker
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      placeholder: Ubuntu 24.04, PHP 8.3, MariaDB 11.4
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: From storage/logs/laravel.log or the browser console, with secrets removed.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched existing issues and this has not been reported yet.
+          required: true
+        - label: I removed secrets and personal data from this report.
+          required: true
