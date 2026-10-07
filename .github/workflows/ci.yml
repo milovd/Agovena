@@ -89,6 +89,75 @@ jobs:
         if: matrix.php == '8.3'
         run: npm audit --audit-level=high
 
+  # The tests job above runs core against optional-packages main: the revision operators install by
+  # default, so it proves core still works with released packages. This job runs core against the
+  # optional-packages branch with the same name (dev -> dev, a PR from dev -> dev), falling back to
+  # main, so coordinated changes in both repositories are tested together before release.
+  coordinated-packages:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve coordinated optional packages ref
+        id: packages
+        run: |
+          branch="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          ref=main
+          if git ls-remote --exit-code --heads https://github.com/milovd/optional-packages "refs/heads/${branch}" > /dev/null; then
+            ref="$branch"
+          fi
+          echo "ref=${ref}" >> "$GITHUB_OUTPUT"
+          echo "Testing against optional-packages ${ref}"
+
+      - name: Checkout optional packages
+        uses: actions/checkout@v4
+        with:
+          repository: milovd/optional-packages
+          path: optional-packages
+          ref: ${{ steps.packages.outputs.ref }}
+
+      - name: Show optional packages revision
+        run: git -C optional-packages log -1 --format='%H %s'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, intl, pdo_sqlite, sqlite3, bcmath, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Install NPM dependencies
+        run: npm ci
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          touch database/database.sqlite
+          sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=sqlite/' .env
+          sed -i 's/^# DB_DATABASE=.*/DB_DATABASE=database\/database.sqlite/' .env
+          sed -i 's/^DB_DATABASE=.*/DB_DATABASE=database\/database.sqlite/' .env
+          php artisan migrate --force
+
+      - name: Tests
+        run: php artisan test
+        env:
+          AGOVENA_OPTIONAL_PACKAGES_PATH: optional-packages
+
   browser:
     runs-on: ubuntu-latest
     steps:

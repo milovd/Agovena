@@ -33,7 +33,7 @@ The frontend is server-rendered Blade + Livewire with small Alpine components; t
 | Homepage sections | `themes/default/views/sections/` |
 | Storefront chrome (header, footer, consent) | `themes/default/views/partials/`, header pieces in `partials/header/` |
 | Admin screen for a core domain | `resources/views/livewire/admin/<domain>/`, sections in `<domain>/partials/` |
-| Admin screen for an optional Module | the Module itself: `modules/<id>/resources/views/admin/`, rendered as `<id>::admin.<view>` |
+| Admin screen for an optional Module | the Module itself: `modules/<id>/resources/views/admin/`, rendered as `<id>::admin.<view>` (core keeps legacy copies of existing ones, see Contracts) |
 | Shared Admin partials (confirmation modal, tab bar) | `resources/views/livewire/admin/partials/` |
 | Storefront CSS | `themes/default/resources/css/components/store/_<domain>.css`, imported by `components/_store.css` |
 | Theme Admin skin CSS | `themes/default/resources/css/admin/_<area>.css`, imported by `admin.css` |
@@ -54,7 +54,8 @@ The frontend is server-rendered Blade + Livewire with small Alpine components; t
 | `layouts.admin` / `layouts.admin-guest` and their composer data | Public. Rendered by core and Modules; provided by a Theme with the `admin` capability. |
 | Views only included from inside the default Theme (its `partials/header/*`, `partials/admin/*`, `<domain>/partials/*`) | Private to that Theme. Another Theme never sees them; reorganise freely. |
 | `resources/views/livewire/admin/**` | Internal to core. A Theme with the `admin` capability can still shadow a path, so prefer adding partials over renaming. |
-| Module and Extension views | Owned by the package under its own namespace (`provisioning::admin.show`, `paypal::checkout`), registered with `loadViewsFrom()`. Never add package views to core. |
+| Module and Extension views | Owned by the package under its own namespace (`provisioning::admin.show`, `paypal::checkout`), registered with `loadViewsFrom()`. Never add new package views to core. |
+| Legacy Module Admin views (`livewire.admin.{digital,digital-delivery,domains,events,provisioning}.*`) | Compatibility copies for Modules released before they shipped their own views. Operators install optional-packages `main` by default and keep installed copies until they update, so these stay until every supported optional-packages release renders `<module>::admin.*`. `ModuleViewCompatibilityTest` keeps them identical to the Module copies. |
 | `<x-ag.*>`, `resources/js/storefront.js`, `resources/js/admin.js`, `theme.json` `css` / `admin_css` | Public building blocks for Themes and packages. |
 | `ModuleContext` / `AdminRegistrar` hooks, `module.json`, `extension.json`, `theme.json`, `settings.schema.php` | Public extension API. |
 
