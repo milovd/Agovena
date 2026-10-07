@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Agovena\Customer\Properties;
 
-use App\Agovena\Support\CountryList;
 use App\Enums\CustomerPropertyType;
 use App\Models\CustomerPropertyDefinition;
 use Illuminate\Validation\Rule;

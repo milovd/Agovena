@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Recurring;
 
-use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
+use App\Agovena\Recurring\Contracts\ProcessesSubscriptionRenewals;
 use Illuminate\Support\ServiceProvider;
 
 final class RecurringServiceProvider extends ServiceProvider

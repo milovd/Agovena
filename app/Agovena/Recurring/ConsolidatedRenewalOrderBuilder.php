@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Agovena\Billing;
+namespace App\Agovena\Recurring;
 
 use App\Agovena\Audit\AuditLogger;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;

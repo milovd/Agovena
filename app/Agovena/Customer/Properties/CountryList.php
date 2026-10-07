@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Agovena\Support;
+namespace App\Agovena\Customer\Properties;
 
 final class CountryList
 {

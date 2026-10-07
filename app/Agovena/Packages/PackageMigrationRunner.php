@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Agovena\Packages;
 
-use App\Agovena\Support\RecoversTestTransaction;
 use Closure;
 use Illuminate\Database\Migrations\Migrator;
 use Illuminate\Support\Facades\Cache;

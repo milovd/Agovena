@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Agovena\Recurring;
 
-use App\Agovena\Billing\ConsolidatedBillingLine;
-use App\Agovena\Billing\ConsolidatedRenewalOrderBuilder;
 use App\Agovena\Credits\CustomerCreditLedger;
 use App\Agovena\Invoices\IssueInvoiceFromOrder;
 use App\Agovena\Notifications\SendsCataloguedMail;
@@ -19,6 +17,7 @@ use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RecurringChargeOutcome;
 use App\Agovena\Payments\RecurringChargeResult;
 use App\Agovena\PlanChanges\ApplyPlanChange;
+use App\Agovena\Recurring\Contracts\ProcessesSubscriptionRenewals;
 use App\Agovena\Recurring\Enums\RenewalStatus;
 use App\Agovena\Recurring\Enums\SubscriptionInterval;
 use App\Agovena\Recurring\Enums\SubscriptionStatus;
@@ -27,7 +26,6 @@ use App\Agovena\Recurring\Events\SubscriptionEnded;
 use App\Agovena\Recurring\Models\Subscription;
 use App\Agovena\Recurring\Models\SubscriptionRenewal;
 use App\Agovena\Settings\SettingsRepository;
-use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentAttemptStatus;
 use App\Enums\PaymentStatus;

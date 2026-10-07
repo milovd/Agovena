@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Agovena\Billing\ConsolidatedBillingLine;
+use App\Agovena\Recurring\ConsolidatedBillingLine;
 use Carbon\CarbonImmutable;
 
 function billingLine(int $unitAmount = 1999, int $periodDays = 30, int $daysAlreadyPaid = 0): ConsolidatedBillingLine

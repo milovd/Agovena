@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Agovena\Support;
+namespace App\Agovena\Packages;
 
 use Illuminate\Support\Facades\DB;
 

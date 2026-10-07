@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Agovena\Customer\Properties;
 
 use App\Agovena\Customer\AddressData;
-use App\Agovena\Support\CountryList;
 use App\Enums\CustomerPropertyType;
 use App\Models\Customer;
 use App\Models\CustomerPropertyDefinition;

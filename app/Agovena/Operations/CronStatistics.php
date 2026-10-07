@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Agovena\Operations;
 
 use App\Agovena\Provisioning\Contracts\PollsProvisionedInstances;
+use App\Agovena\Recurring\Contracts\ProcessesSubscriptionRenewals;
 use App\Agovena\Settings\SettingsRepository;
-use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Carbon;

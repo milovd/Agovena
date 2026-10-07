@@ -1,7 +1,7 @@
 @php
     /** @var \Illuminate\Support\Collection<int, \App\Models\CustomerPropertyDefinition> $propertyDefinitions */
     $propertyDefinitions = $propertyDefinitions ?? collect();
-    $countries = $countries ?? \App\Agovena\Support\CountryList::options();
+    $countries = $countries ?? \App\Agovena\Customer\Properties\CountryList::options();
     $editable = $propertyEditable ?? true;
     $modelPrefix = $propertyModelPrefix ?? 'propertyValues';
 @endphp

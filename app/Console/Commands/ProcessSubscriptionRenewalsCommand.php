@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Agovena\Operations\CronStatisticsRecorder;
-use App\Agovena\Subscriptions\ProcessesSubscriptionRenewals;
+use App\Agovena\Recurring\Contracts\ProcessesSubscriptionRenewals;
 use Illuminate\Console\Command;
 
 final class ProcessSubscriptionRenewalsCommand extends Command

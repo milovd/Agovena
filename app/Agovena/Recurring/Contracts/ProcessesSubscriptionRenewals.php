@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Agovena\Subscriptions;
+namespace App\Agovena\Recurring\Contracts;
 
 use Carbon\CarbonImmutable;
 
