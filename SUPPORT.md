@@ -64,7 +64,7 @@ Attribution and license notes: [ATTRIBUTION.md](ATTRIBUTION.md).
 - Docker optional/unverified
 - No broad OS matrix beyond Ubuntu 24.04 CI
 - Minimal dunning; no reserved seating; no OAuth/Admin API
-- Third-party Modules/Extensions are trusted code - only install code you trust (see `INSTALL.md` / Security)
+- Third-party Modules/Extensions are trusted code - only install code you trust (see `SECURITY.md`)
 - Automatic tax covers EU standard VAT rates only (not reduced rates, not US sales tax)
 - One built-in invoice template; more templates are planned after v0.0.1
 - Imports use CSV mapping profiles; no direct Paymenter, WHMCS, WooCommerce or Shopify importers yet

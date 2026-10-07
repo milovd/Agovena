@@ -100,7 +100,6 @@ mkdir -p "$STAGING/deploy"
 cp -a "$ROOT/deploy/." "$STAGING/deploy/"
 cp -f "$ROOT/README.md" "$ROOT/LICENSE" "$ROOT/SECURITY.md" "$STAGING/" 2>/dev/null || true
 [[ -f "$ROOT/.env.example" ]] && cp -f "$ROOT/.env.example" "$STAGING/"
-[[ -f "$ROOT/INSTALL.md" ]] && cp -f "$ROOT/INSTALL.md" "$STAGING/"
 [[ -f "$ROOT/SUPPORT.md" ]] && cp -f "$ROOT/SUPPORT.md" "$STAGING/"
 [[ -f "$ROOT/agovena_banner.png" ]] && cp -f "$ROOT/agovena_banner.png" "$STAGING/"
 
