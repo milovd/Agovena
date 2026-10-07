@@ -56,16 +56,14 @@ it('requires every concrete Admin Livewire component to expose explicit server-s
         ->and($missing)->toBe([]);
 });
 
-it('re-checks authorization on every Livewire request for Admin components that render data', function (): void {
-    // mount() only runs on the first page load. Livewire update requests (refresh,
-    // property updates) only call render(), so a permission revoked while a tab is
-    // open is enforced only when render() authorizes too.
-    $roots = [dirname(__DIR__, 3).'/app/Livewire/Admin', ...glob(dirname(__DIR__, 3).'/app/Agovena/*/Http/Livewire/Admin') ?: []];
-    $packages = OptionalPackagesPath::root();
-    if ($packages !== null) {
-        $roots = [...$roots, ...glob($packages.'/{modules,extensions}/*/src/Http/Livewire/Admin', GLOB_BRACE) ?: [], ...glob($packages.'/extensions/*/*/src/Http/Livewire/Admin') ?: []];
-    }
-
+/**
+ * Admin components whose render() does not authorize.
+ *
+ * @param  list<string>  $roots
+ * @return array{checked: int, missing: list<string>}
+ */
+function adminComponentsWithoutRenderAuthorization(array $roots): array
+{
     $checked = 0;
     $missing = [];
     foreach ($roots as $root) {
@@ -85,6 +83,55 @@ it('re-checks authorization on every Livewire request for Admin components that 
         }
     }
 
-    expect($checked)->toBeGreaterThan(0)
-        ->and($missing)->toBe([]);
+    return ['checked' => $checked, 'missing' => $missing];
+}
+
+// mount() only runs on the first page load. Livewire update requests (refresh,
+// property updates) only call render(), so a permission revoked while a tab is
+// open is enforced only when render() authorizes too.
+it('re-checks authorization on every Livewire request for core Admin components that render data', function (): void {
+    $result = adminComponentsWithoutRenderAuthorization([
+        dirname(__DIR__, 3).'/app/Livewire/Admin',
+        ...glob(dirname(__DIR__, 3).'/app/Agovena/*/Http/Livewire/Admin') ?: [],
+    ]);
+
+    expect($result['checked'])->toBeGreaterThan(0)
+        ->and($result['missing'])->toBe([]);
+});
+
+it('re-checks authorization on every Livewire request for package Admin components that render data', function (): void {
+    $packages = OptionalPackagesPath::root();
+    if ($packages === null) {
+        $this->markTestSkipped('optional-packages is not available.');
+    }
+
+    // First releases that authorize in render(); CI also tests Core against older,
+    // released packages, which operators receive the fix for by updating.
+    $firstFixedRelease = ['module.json' => '1.1.0', 'extension.json' => '1.0.1'];
+    $roots = [];
+    $released = [];
+    foreach ([...glob($packages.'/modules/*', GLOB_ONLYDIR) ?: [], ...glob($packages.'/extensions/*/*', GLOB_ONLYDIR) ?: []] as $package) {
+        $admin = $package.'/src/Http/Livewire/Admin';
+        if (! is_dir($admin)) {
+            continue;
+        }
+        foreach ($firstFixedRelease as $manifestFile => $fixedIn) {
+            if (is_file($package.'/'.$manifestFile)) {
+                $manifest = json_decode((string) file_get_contents($package.'/'.$manifestFile), true);
+                if (version_compare((string) ($manifest['version'] ?? '0.0.0'), $fixedIn, '<')) {
+                    $released[] = $manifest['id'].' '.$manifest['version'];
+                } else {
+                    $roots[] = $admin;
+                }
+            }
+        }
+    }
+
+    $result = adminComponentsWithoutRenderAuthorization($roots);
+    expect($result['missing'])->toBe([]);
+
+    if ($released !== []) {
+        $this->markTestSkipped('Released packages predate render() authorization: '.implode(', ', $released));
+    }
+    expect($result['checked'])->toBeGreaterThan(0);
 });
