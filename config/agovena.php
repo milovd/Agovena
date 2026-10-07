@@ -71,7 +71,7 @@ return [
         'monorepo' => [
             'repository' => env('AGOVENA_PACKAGES_MONOREPO_URL', 'https://github.com/milovd/optional-packages'),
             // Use the latest optional-packages main branch by default. Operators can explicitly select an immutable ref for controlled releases.
-            'default_ref' => env('AGOVENA_PACKAGES_MONOREPO_REF', 'main'),
+            'default_ref' => env('AGOVENA_PACKAGES_MONOREPO_REF', 'v0.0.1'),
             'packages' => [
                 'downloads' => ['kind' => 'module', 'path' => 'modules/downloads'],
                 'digital-delivery' => ['kind' => 'module', 'path' => 'modules/digital-delivery'],
