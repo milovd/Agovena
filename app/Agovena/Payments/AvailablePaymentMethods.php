@@ -5,15 +5,26 @@ declare(strict_types=1);
 namespace App\Agovena\Payments;
 
 use App\Agovena\Payments\Contracts\OffersCheckoutMethods;
+use App\Agovena\Payments\Contracts\PaymentGateway;
 use App\Agovena\Payments\Gateways\DevelopmentPaymentGateway;
+use App\Models\ExtensionSetting;
+use Illuminate\Support\Facades\Cache;
 use Throwable;
 
 /**
  * Checkout-facing discovery of enabled PaymentGateway methods.
  * Account balance is offered separately in checkout UI (not a gateway).
+ *
+ * Gateway health can call the provider, so the result is reused within a request
+ * and cached briefly. The cache key changes as soon as the gateway settings change.
  */
 final class AvailablePaymentMethods
 {
+    private const HEALTH_TTL_SECONDS = 300;
+
+    /** @var array<string, bool> */
+    private array $health = [];
+
     public function __construct(
         private readonly PaymentGatewayRegistry $gateways,
     ) {}
@@ -33,11 +44,7 @@ final class AvailablePaymentMethods
     {
         $options = [];
         foreach ($this->gateways->all() as $gateway) {
-            try {
-                if (! $gateway->health()->ok) {
-                    continue;
-                }
-            } catch (Throwable) {
+            if (! $this->isHealthy($gateway)) {
                 continue;
             }
 
@@ -71,6 +78,32 @@ final class AvailablePaymentMethods
             $options,
             fn (array $option): bool => $this->isAvailableInCountry($option, $country),
         ));
+    }
+
+    private function isHealthy(PaymentGateway $gateway): bool
+    {
+        $id = $gateway->id();
+        if (array_key_exists($id, $this->health)) {
+            return $this->health[$id];
+        }
+
+        $settings = ExtensionSetting::query()
+            ->where('extension_id', $id)
+            ->selectRaw('count(*) as setting_count, max(updated_at) as last_updated_at')
+            ->first();
+        $fingerprint = sha1($id.'|'.($settings?->getAttribute('setting_count') ?? 0).'|'.($settings?->getAttribute('last_updated_at') ?? ''));
+
+        return $this->health[$id] = (bool) Cache::remember(
+            'agovena.payments.gateway_health.'.$fingerprint,
+            self::HEALTH_TTL_SECONDS,
+            static function () use ($gateway): bool {
+                try {
+                    return $gateway->health()->ok;
+                } catch (Throwable) {
+                    return false;
+                }
+            },
+        );
     }
 
     /**

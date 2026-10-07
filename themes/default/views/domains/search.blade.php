@@ -46,6 +46,9 @@
                     @endif
                 </div>
             </div>
+            @if (($requested['reason'] ?? null) === 'provider_unavailable')
+                <p class="store-domain-search__notice" role="status">{{ __('domains::storefront.provider_unavailable') }}</p>
+            @endif
 
             <div class="store-domain-search__alternatives">
                 <h2 class="store-subtitle">{{ __('domains::storefront.alternatives') }}</h2>

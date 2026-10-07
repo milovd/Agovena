@@ -7615,6 +7615,11 @@ a.store-order-card__item-title:focus-visible {
   gap: var(--theme-space-6);
 }
 
+.store-domain-search__notice {
+  margin: 0;
+  color: var(--theme-color-text-muted);
+}
+
 .store-domain-result,
 .store-domain-option,
 .store-domain-record {

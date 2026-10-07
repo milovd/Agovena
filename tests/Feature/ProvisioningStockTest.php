@@ -1320,3 +1320,44 @@ test('only providers with verified capacity adapters implement checkout stock ch
         expect($registry->get($provider))->not->toBeInstanceOf(ChecksProvisioningStock::class);
     }
 });
+
+test('account-based panel products can be ordered without a capacity reservation', function () {
+    app(ModuleManager::class)->discover();
+    app(ExtensionManager::class)->discover();
+    installAndEnableModule('provisioning');
+    installAndEnableExtension('cpanel');
+    $settings = app(ExtensionSettingsRepository::class);
+    $settings->set('cpanel', 'api_url', 'https://whm.example.test:2087');
+    $settings->set('cpanel', 'api_token', '[REDACTED]', secret: true);
+    $settings->set('cpanel', 'api_username', 'root');
+
+    $gateway = Mockery::mock(PaymentGateway::class);
+    $gateway->shouldReceive('id')->andReturn('pending-test');
+    $gateway->shouldReceive('label')->andReturn('Pending test');
+    $gateway->shouldReceive('health')->andReturn(HealthResult::ok());
+    $gateway->shouldReceive('capabilities')->andReturn(new PaymentGatewayCapabilities);
+    app(PaymentGatewayRegistry::class)->register($gateway);
+
+    $product = Product::factory()->active()->create(['price_amount' => 900]);
+    app(ProductCapabilityManager::class)->enable($product, 'provisionable', [
+        'provider_key' => 'cpanel',
+        'provider_settings' => ['package' => 'starter'],
+    ]);
+    $customer = Customer::factory()->create();
+    app(CartService::class)->add($product->id, 1);
+
+    $order = app(PlaceOrder::class)->handle([
+        'customer_name' => $customer->name,
+        'customer_email' => $customer->email,
+        'customer_id' => $customer->id,
+        'billing' => stockBilling(),
+        'payment_method' => 'pending-test',
+    ]);
+
+    $snapshot = $order->fresh('items')->items->firstOrFail()->options_snapshot['__provisioning'] ?? null;
+    expect($snapshot)->toBeArray()
+        ->and($snapshot['provider_key'] ?? null)->toBe('cpanel')
+        ->and($snapshot['provider_settings']['package'] ?? null)->toBe('starter')
+        ->and($snapshot['capacity_key'] ?? null)->toBeNull()
+        ->and(CapacityReservation::query()->count())->toBe(0);
+});

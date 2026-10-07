@@ -55,6 +55,7 @@ use App\Agovena\Packages\LockedMigrator;
 use App\Agovena\Packages\MonorepoCheckout;
 use App\Agovena\Packages\PackageMigrationRunner;
 use App\Agovena\Packages\ProcessComposerRunner;
+use App\Agovena\Payments\AvailablePaymentMethods;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Physical\ModuleShippingQuoteResolver;
 use App\Agovena\Physical\PhysicalCapability;
@@ -135,6 +136,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ExtensionSettingsRepository::class);
         $this->app->singleton(RuntimeRegistry::class);
         $this->app->singleton(PaymentGatewayRegistry::class);
+        $this->app->scoped(AvailablePaymentMethods::class);
         $this->app->singleton(ProvisionerRegistry::class);
         $this->app->singleton(ShippingCarrierRegistry::class);
         $this->app->singleton(ExtensionManager::class);

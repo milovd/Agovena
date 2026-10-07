@@ -31,6 +31,9 @@ First public release of Agovena, an open-source, self-hosted and modular commerc
 ### Provider readiness
 
 - Products that depend on a provider stay visible when that provider is not ready, but cannot be ordered. The product page shows "Currently unavailable to order" and Admin shows a warning on the product.
+- Account-based hosting panels accept orders without a capacity reservation; Pterodactyl and Proxmox VE check capacity at checkout.
+- Demo domain adapters are not loaded in production. A failing registrar shows a temporary notice in domain search.
+- Checkout reuses payment gateway connection checks for up to five minutes and refreshes them when gateway settings change.
 
 ### Release assets
 

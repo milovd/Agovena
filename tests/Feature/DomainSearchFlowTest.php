@@ -2,14 +2,19 @@
 
 declare(strict_types=1);
 
+use Agovena\Modules\Domains\Contracts\DomainRegistrar;
+use Agovena\Modules\Domains\DomainDnsProviderRegistry;
+use Agovena\Modules\Domains\DomainRegistrarRegistry;
 use Agovena\Modules\Domains\DomainSearchService;
 use Agovena\Modules\Domains\DomainService;
+use Agovena\Modules\Domains\DomainsServiceProvider;
 use Agovena\Modules\Domains\Enums\DomainRegistrationStatus;
 use Agovena\Modules\Domains\Http\Livewire\Storefront\DomainSearch;
 use Agovena\Modules\Domains\Models\DomainRegistration;
 use App\Agovena\Cart\CartService;
 use App\Agovena\Cart\PricedCartLine;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityManager;
+use App\Agovena\Catalog\Capabilities\ProductCapabilityRegistry;
 use App\Agovena\Money\Money;
 use App\Enums\ProductOptionType;
 use App\Events\OrderPreflight;
@@ -246,4 +251,54 @@ it('fulfills a paid demo domain and creates an isolated DNS zone', function (): 
         ->and($registration->provider_key)->toBe('demo-registrar')
         ->and(data_get($registration->meta, 'dns_zone.zone_reference'))->toStartWith('demo-zone-')
         ->and(app(DomainService::class)->dnsRecords($registration))->not->toBeEmpty();
+});
+
+it('shows a temporary notice instead of failing when the registrar throws', function (): void {
+    $registrar = Mockery::mock(DomainRegistrar::class);
+    $registrar->shouldReceive('key')->andReturn('broken-registrar');
+    $registrar->shouldReceive('checkAvailability')->andThrow(new RuntimeException('Registrar credentials are missing.'));
+    app(DomainRegistrarRegistry::class)->register($registrar);
+    $product = createDemoDomainProduct();
+    $capability = $product->capability('domain_registration');
+    $capability->config = array_merge($capability->runtimeConfig() ?? [], ['registrar_key' => 'broken-registrar']);
+    $capability->save();
+
+    $result = app(DomainSearchService::class)->search('agovena.test', $product->id);
+
+    expect($result['requested'])->toMatchArray(['available' => false, 'reason' => 'provider_unavailable']);
+
+    Livewire::test(DomainSearch::class, ['productId' => $product->id])
+        ->set('query', 'agovena.test')
+        ->call('search')
+        ->assertOk()
+        ->assertSee(__('domains::storefront.provider_unavailable'));
+});
+
+it('keeps a domain product visible but not orderable when its registrar is not available', function (): void {
+    $product = createDemoDomainProduct();
+    $capability = $product->capability('domain_registration');
+    $capability->config = array_merge($capability->runtimeConfig() ?? [], ['registrar_key' => 'missing-registrar']);
+    $capability->save();
+    $product = $product->fresh(['capabilities']);
+
+    expect(app(ProductCapabilityRegistry::class)->productIsVisible($product))->toBeTrue()
+        ->and(app(ProductCapabilityRegistry::class)->productIsAvailable($product))->toBeFalse();
+});
+
+it('does not register demo domain adapters in production', function (): void {
+    $previousEnvironment = app()->environment();
+    $registrars = new DomainRegistrarRegistry;
+    $dnsProviders = new DomainDnsProviderRegistry;
+    app()->instance(DomainRegistrarRegistry::class, $registrars);
+    app()->instance(DomainDnsProviderRegistry::class, $dnsProviders);
+    app()['env'] = 'production';
+
+    try {
+        (new DomainsServiceProvider(app()))->boot();
+
+        expect($registrars->has('demo-registrar'))->toBeFalse()
+            ->and($dnsProviders->get('demo-dns'))->toBeNull();
+    } finally {
+        app()['env'] = $previousEnvironment;
+    }
 });

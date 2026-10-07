@@ -21,6 +21,7 @@ use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
 use Livewire\Component;
+use Throwable;
 
 final class Index extends Component
 {
@@ -289,8 +290,16 @@ final class Index extends Component
             return;
         }
 
-        /** @var HealthResult $result */
-        $result = $callback();
+        try {
+            /** @var HealthResult $result */
+            $result = $callback();
+        } catch (Throwable $exception) {
+            report($exception);
+            session()->flash('error', __('admin.updates.provider_health_error'));
+
+            return;
+        }
+
         if ($result->ok) {
             session()->flash('status', __('admin.extensions.health.ok', ['message' => $result->message]));
         } else {
@@ -430,7 +439,7 @@ final class Index extends Component
             $this->settingsConnectionMessage = __('admin.extensions.settings_connection_ok', [
                 'count' => count($this->settingsMethodOptions),
             ]);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             $this->settingsConnectionState = 'error';
             $this->settingsConnectionMessage = __('admin.extensions.settings_connection_failed');
         } finally {
