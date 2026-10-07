@@ -203,7 +203,7 @@ test('every Blade include in core and the default Theme resolves to a view', fun
 });
 
 test('the default Theme provides every Theme entry view that core and optional packages render by name', function () {
-    $roots = [base_path('app')];
+    $roots = [base_path('app'), base_path('resources/views')];
     $packages = OptionalPackagesPath::root();
     if ($packages !== null) {
         $roots[] = $packages;
@@ -225,7 +225,7 @@ test('the default Theme provides every Theme entry view that core and optional p
         }
     }
 
-    expect($entries)->toHaveKeys(['layouts.storefront', 'layouts.checkout', 'layouts.admin', 'catalog.show', 'checkout.index']);
+    expect($entries)->toHaveKeys(['layouts.storefront', 'layouts.checkout', 'layouts.admin', 'catalog.show', 'checkout.index', 'checkout.partials.address-suggestions']);
 
     $missing = [];
     foreach ($entries as $view => $file) {

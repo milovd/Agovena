@@ -64,7 +64,7 @@ The frontend is server-rendered Blade + Livewire with small Alpine components; t
 | Admin JavaScript | `resources/js/admin/<area>.js`, registered from `resources/js/admin.js` |
 | Behaviour shared by both | `resources/js/shared/` |
 
-- Domain meaning wins over size: a product price, order summary or cart line stays in its domain even when it is small. `<x-ag.*>` must not know about orders, products, checkout or payments.
+- Domain meaning wins over size: a product price, order summary or cart line stays in its domain even when it is small. `<x-ag.*>` must not know about orders, products, checkout or payments. The one exception is `<x-ag.payment-method-icon>`, a public icon lookup shared by Themes and the Admin Extensions list.
 - A large page is a composition: the route view stays the entry point and includes sections from a `partials/` folder next to it. Keep `@php use ...` enums and nested `@livewire` components in the parent view.
 - The `@import` order in each CSS index is the cascade order. `tests/Feature/Architecture/FrontendArchitectureTest.php` fails when a CSS partial, script module or Alpine component is not wired to the entry that ships it.
 
@@ -72,9 +72,9 @@ The frontend is server-rendered Blade + Livewire with small Alpine components; t
 
 | Contract | Status |
 | --- | --- |
-| Theme entry views: every `theme::` view that core or a Module renders by name (`layouts.storefront`, `layouts.checkout`, `layouts.error`, `account.*`, `catalog.*`, `cart.index`, `checkout.index`, `domains.search`, `invoices.document`, `errors.*`, `account.partials.nav`, ...) | Public. A Theme replaces the whole `theme::` namespace (there is no per-view fallback), so renaming one breaks every third-party Theme. Keep these names. |
+| Theme entry views: every `theme::` view that core or a Module renders by name (`layouts.storefront`, `layouts.checkout`, `layouts.error`, `account.*`, `catalog.*`, `cart.index`, `checkout.index`, `domains.search`, `invoices.document`, `errors.*`, `account.partials.nav`, `checkout.partials.address-suggestions`, ...) | Public. A Theme replaces the whole `theme::` namespace (there is no per-view fallback), so renaming one breaks every third-party Theme. Keep these names. |
 | `layouts.admin` / `layouts.admin-guest` and their composer data | Public. Rendered by core and Modules; provided by a Theme with the `admin` capability. |
-| Views only included from inside the default Theme (its `partials/header/*`, `partials/admin/*`, `<domain>/partials/*`) | Private to that Theme. Another Theme never sees them; reorganise freely. |
+| Views only included from inside the default Theme (its `partials/header/*`, `partials/admin/*`, `<domain>/partials/*`) | Private to that Theme, unless core or a Module includes them by `theme::` name; those are entry views (above). Another Theme never sees the private ones; reorganise freely. |
 | `resources/views/livewire/admin/**` | Internal to core. A Theme with the `admin` capability can still shadow a path, so prefer adding partials over renaming. |
 | `livewire.admin.partials.confirm-password-modal` with `App\Livewire\Concerns\RequiresRecentPassword` | Public. Module Admin screens include the modal and use the trait for re-authentication (Provisioning). Keep the view name and the trait's properties and methods. |
 | Module and Extension views | Owned by the package under its own namespace (`provisioning::admin.show`, `paypal::checkout`), registered with `loadViewsFrom()`. Never add new package views to core. |
