@@ -538,6 +538,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'exports',
+            label: 'admin.nav.exports',
+            group: 'admin.nav_groups.system',
+            href: '/admin/exports',
+            icon: 'download',
+            sort: 124,
+            permission: 'data.export',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'roles',
             label: 'admin.nav.roles',
             group: 'admin.nav_groups.system',
@@ -740,6 +750,7 @@ class AgovenaServiceProvider extends ServiceProvider
             'api.tokens',
             'backups.view',
             'backups.manage',
+            'data.export',
         ] as $ability) {
             $admin->permission($ability, 'admin.permissions.'.$ability);
         }

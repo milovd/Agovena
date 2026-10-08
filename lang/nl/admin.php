@@ -78,6 +78,7 @@ return [
         'failed_jobs' => 'Mislukte jobs',
         'cron_statistics' => 'Cron-statistieken',
         'backups' => 'Databaseback-ups',
+        'exports' => 'Exports',
         'themes' => 'Thema’s',
         'customize' => 'Aanpassen',
         'navigation' => 'Navigatie',
@@ -261,6 +262,9 @@ return [
         'backups' => [
             'view' => 'Databaseback-ups bekijken',
             'manage' => 'Databaseback-ups maken',
+        ],
+        'data' => [
+            'export' => 'Gegevens exporteren',
         ],
     ],
 
@@ -2585,5 +2589,38 @@ return [
         'option_not_configured' => ':label (niet geconfigureerd)',
         'picker_hint' => 'Bij opties met "niet geconfigureerd" ontbreken verplichte instellingen. Producten die ze gebruiken, zijn pas bestelbaar als die instellingen compleet zijn.',
         'open_extension_settings' => 'Extensie-instellingen openen',
+    ],
+
+    // Data exports (Admin > Systeem > Exports).
+    'exports' => [
+        'title' => 'Exports',
+        'lede' => 'Download winkelgegevens als CSV, JSON of XML. Je ziet alleen de gegevens die je rol mag bekijken.',
+        'form_title' => 'Nieuwe export',
+        'form_description' => 'Kies wat je wilt exporteren en beperk de export eventueel tot records die in een bepaalde periode zijn aangemaakt.',
+        'entity' => 'Gegevens',
+        'format' => 'Formaat',
+        'created_from' => 'Aangemaakt vanaf',
+        'created_to' => 'Aangemaakt tot en met',
+        'date_help' => 'Beide datums tellen mee en gebruiken UTC. Laat ze leeg om alle records te exporteren.',
+        'download' => 'Export downloaden',
+        'columns_title' => 'Kolommen',
+        'columns_help' => 'De volgorde van de kolommen staat vast, zodat spreadsheets en scripts blijven werken. Bedragen zijn decimale getallen in de valuta van het record; datums volgen ISO 8601 in UTC.',
+        'privacy_note' => 'Exports bevatten nooit wachtwoorden, geheimen voor tweestapsverificatie, API-tokens, gegevens van betaalproviders of leveringsgeheimen. Elke export wordt vastgelegd in het auditlogboek.',
+        'empty_title' => 'Niets om te exporteren',
+        'empty_text' => 'Je rol mag gegevens exporteren, maar geen van de exporteerbare records bekijken. Vraag een eigenaar om het bijbehorende leesrecht.',
+        'entities' => [
+            'customers' => 'Klanten',
+            'products' => 'Producten',
+            'orders' => 'Bestellingen',
+            'invoices' => 'Facturen en creditnota’s',
+            'payments' => 'Betalingen',
+            'subscriptions' => 'Abonnementen',
+            'inventory' => 'Voorraad',
+        ],
+        'formats' => [
+            'csv' => 'CSV (Excel, UTF-8)',
+            'json' => 'JSON',
+            'xml' => 'XML',
+        ],
     ],
 ];

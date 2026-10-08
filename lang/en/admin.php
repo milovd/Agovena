@@ -78,6 +78,7 @@ return [
         'failed_jobs' => 'Failed jobs',
         'cron_statistics' => 'Cron statistics',
         'backups' => 'Database backups',
+        'exports' => 'Exports',
         'themes' => 'Themes',
         'customize' => 'Customize',
         'navigation' => 'Navigation',
@@ -261,6 +262,9 @@ return [
         'backups' => [
             'view' => 'View database backups',
             'manage' => 'Create database backups',
+        ],
+        'data' => [
+            'export' => 'Export data',
         ],
     ],
 
@@ -2586,5 +2590,38 @@ return [
         'option_not_configured' => ':label (not configured)',
         'picker_hint' => 'Options marked "not configured" are missing required settings. Products that use them cannot be ordered until those settings are complete.',
         'open_extension_settings' => 'Open Extension settings',
+    ],
+
+    // Data exports (Admin > System > Exports).
+    'exports' => [
+        'title' => 'Exports',
+        'lede' => 'Download store data as CSV, JSON or XML. You only see the data your role is allowed to view.',
+        'form_title' => 'New export',
+        'form_description' => 'Choose what to export and, optionally, limit it to records created in a date range.',
+        'entity' => 'Data',
+        'format' => 'Format',
+        'created_from' => 'Created from',
+        'created_to' => 'Created up to and including',
+        'date_help' => 'Both dates are included and use UTC. Leave them empty to export every record.',
+        'download' => 'Download export',
+        'columns_title' => 'Columns',
+        'columns_help' => 'The column order is fixed, so spreadsheets and scripts keep working. Amounts are decimal numbers in the currency of the record; dates use ISO 8601 in UTC.',
+        'privacy_note' => 'Exports never contain passwords, two-factor secrets, API tokens, payment provider data or delivery secrets. Every export is recorded in the audit log.',
+        'empty_title' => 'Nothing to export',
+        'empty_text' => 'Your role may export data but cannot view any of the exportable records. Ask an owner for the matching view permission.',
+        'entities' => [
+            'customers' => 'Customers',
+            'products' => 'Products',
+            'orders' => 'Orders',
+            'invoices' => 'Invoices and credit notes',
+            'payments' => 'Payments',
+            'subscriptions' => 'Subscriptions',
+            'inventory' => 'Inventory',
+        ],
+        'formats' => [
+            'csv' => 'CSV (Excel, UTF-8)',
+            'json' => 'JSON',
+            'xml' => 'XML',
+        ],
     ],
 ];

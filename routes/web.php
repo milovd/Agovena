@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AuditExportController;
+use App\Http\Controllers\Admin\DataExportController;
 use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
@@ -30,6 +31,7 @@ use App\Livewire\Admin\Customers\Properties as CustomerProperties;
 use App\Livewire\Admin\Customers\Show as CustomersShow;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Discounts\Index as DiscountsIndex;
+use App\Livewire\Admin\Exports\Index as ExportsIndex;
 use App\Livewire\Admin\Extensions\Index as ExtensionsIndex;
 use App\Livewire\Admin\Invoices\Edit as InvoicesEdit;
 use App\Livewire\Admin\Invoices\Index as InvoicesIndex;
@@ -236,6 +238,8 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
     Route::get('/referrals', AdminReferralsIndex::class)->name('referrals.index');
     Route::get('/cron-statistics', SystemCronStatistics::class)->name('cron-statistics');
     Route::get('/backups', SystemBackups::class)->name('backups');
+    Route::get('/exports', ExportsIndex::class)->name('exports.index');
+    Route::get('/exports/download', DataExportController::class)->name('exports.download');
     Route::get('/updates', SystemUpdates::class)->name('updates');
     Route::get('/api-tokens', SystemApiTokens::class)->name('api-tokens');
     Route::get('/notifications', NotificationTemplatesIndex::class)->name('notifications');
