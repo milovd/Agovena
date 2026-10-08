@@ -37,7 +37,7 @@
             @php
                 $groupKeys = match ($tab) {
                     'header' => ['header'],
-                    'storefront' => ['footer', 'catalog'],
+                    'storefront' => ['footer', 'catalog', 'invoices'],
                     default => ['appearance', 'branding'],
                 };
             @endphp
@@ -75,8 +75,13 @@
                                                     <label class="ag-field__label" for="{{ $fieldId }}">{{ $translate($field->label) }}</label>
                                                     <select id="{{ $fieldId }}" class="ag-select" wire:model="values.{{ $field->key }}">
                                                         @foreach ($field->options ?? [] as $option)
+                                                            @php $optionLabelKey = 'admin.appearance.theme_options.'.$field->key.'.'.$option; @endphp
                                                             <option value="{{ $option }}">
-                                                                {{ $field->key === 'appearance.default_color_mode' ? __('admin.appearance.customize.color_modes.'.$option) : $option }}
+                                                                @if ($field->key === 'appearance.default_color_mode')
+                                                                    {{ __('admin.appearance.customize.color_modes.'.$option) }}
+                                                                @else
+                                                                    {{ Lang::has($optionLabelKey) ? __($optionLabelKey) : $option }}
+                                                                @endif
                                                             </option>
                                                         @endforeach
                                                     </select>

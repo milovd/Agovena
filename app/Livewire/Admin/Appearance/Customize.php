@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Appearance;
 
 use App\Agovena\Theme\ThemeManager;
 use Illuminate\Support\Arr;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 final class Customize extends Component
@@ -43,10 +44,16 @@ final class Customize extends Component
         $schema = $themes->schemaFor($themes->active());
         $flat = Arr::dot($this->values);
 
-        $this->validate([
+        $rules = [
             'values.appearance.default_color_mode' => ['required', 'in:system,light,dark'],
             'values.colors.*' => ['nullable', 'regex:/^#[0-9a-fA-F]{6}$/'],
-        ]);
+        ];
+        foreach ($schema->fields as $field) {
+            if ($field->type === 'select' && $field->options !== null) {
+                $rules['values.'.$field->key] ??= ['nullable', Rule::in(array_map('strval', $field->options))];
+            }
+        }
+        $this->validate($rules);
 
         foreach ($schema->fields as $field) {
             if (in_array($field->key, ['homepage.sections', 'header.usp_items'], true)) {

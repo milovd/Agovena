@@ -16,4 +16,9 @@ return [
         'paid' => 'Betaald',
         'void' => 'Vervallen',
     ],
+
+    // Factuursjablonen: documentkoppen.
+    'document_title' => 'Factuur',
+    'status_label' => 'Status',
+    'details' => 'Gegevens',
 ];

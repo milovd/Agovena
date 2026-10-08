@@ -16,4 +16,9 @@ return [
         'paid' => 'Paid',
         'void' => 'Void',
     ],
+
+    // Invoice templates: document headings.
+    'document_title' => 'Invoice',
+    'status_label' => 'Status',
+    'details' => 'Details',
 ];

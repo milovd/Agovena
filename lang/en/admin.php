@@ -583,8 +583,8 @@ return [
             'tab_help_design' => 'Set the shared visual language for light and dark storefront surfaces.',
             'tab_heading_header' => 'Header and navigation',
             'tab_help_header' => 'Control the storefront header without changing its structural components.',
-            'tab_heading_storefront' => 'Catalog and footer',
-            'tab_help_storefront' => 'Keep product presentation and footer copy aligned with the active theme.',
+            'tab_heading_storefront' => 'Catalog, footer and invoices',
+            'tab_help_storefront' => 'Keep product presentation, footer copy and invoice layout aligned with the active theme.',
             'tab_heading_homepage' => 'Homepage composition',
             'tab_help_homepage' => 'Reorder the homepage and maintain the benefits strip from the same workspace.',
             'active_theme' => 'Active storefront theme',
@@ -602,6 +602,7 @@ return [
                 'footer' => 'Footer',
                 'catalog' => 'Catalog',
                 'homepage' => 'Homepage',
+                'invoices' => 'Invoices',
             ],
 
             'usp' => [
@@ -707,6 +708,9 @@ return [
             'homepage' => [
                 'sections' => 'Homepage sections',
             ],
+            'invoices' => [
+                'template' => 'Invoice template',
+            ],
         ],
 
         'theme_field_help' => [
@@ -722,6 +726,21 @@ return [
                 'usp_items' => 'Benefits on the left; tick “CTA button” for a right-side call to action (for example Shop now).',
                 'show_discovery_bar' => 'Secondary bar for menu links and category discovery.',
                 'custom_nav_items' => 'Enter a number of custom desktop navigation items, or “infinite” to show all items. Categories is always shown separately.',
+            ],
+            'invoices' => [
+                'template' => 'Layout for invoice and credit note documents, including printouts and PDFs. Every template shows the same invoice data.',
+            ],
+        ],
+
+        // Invoice templates: option labels for the invoices.template select.
+        'theme_options' => [
+            'invoices' => [
+                'template' => [
+                    'classic' => 'Classic',
+                    'modern' => 'Modern',
+                    'minimal' => 'Minimal',
+                    'compact' => 'Compact',
+                ],
             ],
         ],
     ],

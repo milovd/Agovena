@@ -583,8 +583,8 @@ return [
             'tab_help_design' => 'Stel de gedeelde visuele taal in voor lichte en donkere webshopoppervlakken.',
             'tab_heading_header' => 'Header en navigatie',
             'tab_help_header' => 'Beheer de webshopheader zonder de structurele componenten te wijzigen.',
-            'tab_heading_storefront' => 'Catalogus en footer',
-            'tab_help_storefront' => 'Houd productpresentatie en footercopy in lijn met het actieve thema.',
+            'tab_heading_storefront' => 'Catalogus, footer en facturen',
+            'tab_help_storefront' => 'Houd productpresentatie, footercopy en factuuropmaak in lijn met het actieve thema.',
             'tab_heading_homepage' => 'Homepagecompositie',
             'tab_help_homepage' => 'Herschik de homepage en beheer de voordelenbalk vanuit dezelfde werkruimte.',
             'active_theme' => 'Actief webshopthema',
@@ -602,6 +602,7 @@ return [
                 'footer' => 'Footer',
                 'catalog' => 'Catalogus',
                 'homepage' => 'Homepage',
+                'invoices' => 'Facturen',
             ],
 
             'usp' => [
@@ -707,6 +708,9 @@ return [
             'homepage' => [
                 'sections' => 'Secties op de homepage',
             ],
+            'invoices' => [
+                'template' => 'Factuursjabloon',
+            ],
         ],
 
         'theme_field_help' => [
@@ -722,6 +726,21 @@ return [
                 'usp_items' => 'Voordelen links; vink “CTA-knop” aan voor een actie aan de rechterkant (bijvoorbeeld Nu shoppen).',
                 'show_discovery_bar' => 'Tweede balk voor menulinks en het ontdekken van categorieën.',
                 'custom_nav_items' => 'Vul een aantal aangepaste desktop-navigatie-items in, of “infinite” om alle items te tonen. Categories blijft apart zichtbaar.',
+            ],
+            'invoices' => [
+                'template' => 'Opmaak van facturen en creditnota’s, ook bij afdrukken en als pdf. Elk sjabloon toont dezelfde factuurgegevens.',
+            ],
+        ],
+
+        // Factuursjablonen: namen van de opties voor invoices.template.
+        'theme_options' => [
+            'invoices' => [
+                'template' => [
+                    'classic' => 'Klassiek',
+                    'modern' => 'Modern',
+                    'minimal' => 'Minimalistisch',
+                    'compact' => 'Compact',
+                ],
             ],
         ],
     ],
