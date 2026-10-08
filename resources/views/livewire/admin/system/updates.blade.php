@@ -46,13 +46,23 @@
                     <div wire:key="provider-health-{{ $provider['id'] }}">
                         <dt>{{ $provider['name'] }}</dt>
                         <dd>
-                            @if ($provider['ok'])
-                                {{ __('admin.updates.providers_ok') }}
+                            @if ($provider['configured'])
+                                <x-ag.badge variant="success">{{ __('admin.provider_status.configured') }}</x-ag.badge>
+                                @if ($provider['ok'])
+                                    {{ __('admin.updates.providers_ok') }}
+                                @else
+                                    {{ __('admin.updates.providers_fail') }}
+                                @endif
+                                @if ($provider['message'] !== '')
+                                    - {{ $provider['message'] }}
+                                @endif
                             @else
-                                {{ __('admin.updates.providers_fail') }}
-                            @endif
-                            @if ($provider['message'] !== '')
-                                - {{ $provider['message'] }}
+                                <x-ag.badge variant="warning">{{ __('admin.provider_status.not_configured') }}</x-ag.badge>
+                                @if ($provider['missing'] !== [])
+                                    {{ __('admin.provider_status.missing', ['fields' => implode(', ', $provider['missing'])]) }}
+                                @endif
+                                <span class="ag-muted">{{ __('admin.provider_status.not_checked') }}</span>
+                                <a href="{{ route('admin.extensions.index') }}">{{ __('admin.provider_status.open_extension_settings') }}</a>
                             @endif
                         </dd>
                     </div>

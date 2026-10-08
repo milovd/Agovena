@@ -4,16 +4,22 @@ declare(strict_types=1);
 
 namespace App\Agovena\Operations;
 
+use App\Agovena\Extensions\ExtensionConfigurationStatus;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Payments\HealthResult;
 use Throwable;
 
 final class ProviderHealthSummary
 {
-    public function __construct(private readonly ExtensionManager $extensions) {}
+    public function __construct(
+        private readonly ExtensionManager $extensions,
+        private readonly ExtensionConfigurationStatus $configuration,
+    ) {}
 
     /**
-     * @return list<array{id: string, name: string, category: string, ok: bool, message: string}>
+     * Providers missing required settings are reported as not configured and are not probed.
+     *
+     * @return list<array{id: string, name: string, category: string, configured: bool, missing: list<string>, checked: bool, ok: bool, message: string}>
      */
     public function rows(): array
     {
@@ -28,6 +34,24 @@ final class ProviderHealthSummary
                 continue;
             }
 
+            $configuration = $this->configuration->for($manifest->id);
+            $row = [
+                'id' => $manifest->id,
+                'name' => $manifest->name,
+                'category' => $manifest->category->value,
+                'configured' => $configuration?->configured() ?? true,
+                'missing' => $configuration->missingLabels ?? [],
+                'checked' => false,
+                'ok' => false,
+                'message' => '',
+            ];
+
+            if (! $row['configured']) {
+                $rows[] = $row;
+
+                continue;
+            }
+
             try {
                 $result = $callback();
             } catch (Throwable $exception) {
@@ -35,13 +59,10 @@ final class ProviderHealthSummary
                 $result = HealthResult::fail(__('admin.updates.provider_health_error'));
             }
 
-            $rows[] = [
-                'id' => $manifest->id,
-                'name' => $manifest->name,
-                'category' => $manifest->category->value,
-                'ok' => $result->ok,
-                'message' => $this->sanitize($result->message),
-            ];
+            $row['checked'] = true;
+            $row['ok'] = $result->ok;
+            $row['message'] = $this->sanitize($result->message);
+            $rows[] = $row;
         }
 
         return $rows;

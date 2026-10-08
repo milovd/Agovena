@@ -2576,4 +2576,14 @@ return [
             'tokens_revoke' => 'Trekt het gebruikte API-token in.',
         ],
     ],
+    // Configuratiestatus van providers: Operations-health en providerkeuzes in Admin.
+    'provider_status' => [
+        'configured' => 'Geconfigureerd',
+        'not_configured' => 'Niet geconfigureerd',
+        'missing' => 'Ontbreekt: :fields',
+        'not_checked' => 'De verbinding wordt gecontroleerd zodra de verplichte instellingen zijn ingevuld.',
+        'option_not_configured' => ':label (niet geconfigureerd)',
+        'picker_hint' => 'Bij opties met "niet geconfigureerd" ontbreken verplichte instellingen. Producten die ze gebruiken, zijn pas bestelbaar als die instellingen compleet zijn.',
+        'open_extension_settings' => 'Extensie-instellingen openen',
+    ],
 ];

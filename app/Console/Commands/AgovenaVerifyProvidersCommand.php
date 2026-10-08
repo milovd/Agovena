@@ -60,6 +60,14 @@ final class AgovenaVerifyProvidersCommand extends Command
 
         $failed = 0;
         foreach ($rows as $row) {
+            if (! $row['checked']) {
+                $missing = $row['missing'] !== [] ? ' - missing: '.implode(', ', $row['missing']) : '';
+                $this->line("<comment>NOT CONFIGURED</comment> {$row['id']} ({$row['category']}){$missing}");
+                $failed++;
+
+                continue;
+            }
+
             $status = $row['ok'] ? '<info>OK</info>' : '<error>FAIL</error>';
             $this->line("{$status} {$row['id']} ({$row['category']}) - {$row['message']}");
             if (! $row['ok']) {

@@ -2577,4 +2577,14 @@ return [
             'tokens_revoke' => 'Revokes the API token currently being used.',
         ],
     ],
+    // Provider configuration status: Operations health and Admin provider pickers.
+    'provider_status' => [
+        'configured' => 'Configured',
+        'not_configured' => 'Not configured',
+        'missing' => 'Missing: :fields',
+        'not_checked' => 'The connection is checked once the required settings are filled in.',
+        'option_not_configured' => ':label (not configured)',
+        'picker_hint' => 'Options marked "not configured" are missing required settings. Products that use them cannot be ordered until those settings are complete.',
+        'open_extension_settings' => 'Open Extension settings',
+    ],
 ];
