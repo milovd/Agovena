@@ -21,6 +21,9 @@
     </style>
 </head>
 <body>
+    @php
+        $document = \App\Agovena\Invoices\InvoiceDocumentData::fromInvoice($invoice);
+    @endphp
     @if ($printable)
         <p class="no-print muted"><button type="button" onclick="window.print()">{{ __('invoices.print') }}</button></p>
     @endif
@@ -31,6 +34,9 @@
                 <h1>{{ $invoice->number }}</h1>
                 <p class="muted">{{ __('invoices.status.'.$invoice->status->value) }}</p>
                 <p>{{ __('invoices.issued') }}: {{ $invoice->issued_at?->format('Y-m-d') }}</p>
+                @if ($document->dueOn)
+                    <p>{{ __('invoices.due_on') }}: {{ $document->dueOn }}</p>
+                @endif
                 @if ($invoice->paid_at)
                     <p>{{ __('invoices.paid_on') }}: {{ $invoice->paid_at->format('Y-m-d') }}</p>
                 @endif
@@ -41,6 +47,9 @@
                 @if ($invoice->merchant_address)
                     <p>{!! nl2br(e($invoice->merchant_address)) !!}</p>
                 @endif
+                @foreach ($document->sellerIdentifiers() as $identifier)
+                    <p>{{ $identifier['label'] }}: {{ $identifier['value'] }}</p>
+                @endforeach
             </td>
         </tr>
         <tr>
@@ -78,6 +87,7 @@
             <tr>
                 <th>{{ __('invoices.item') }}</th>
                 <th class="num">{{ __('invoices.qty') }}</th>
+                <th class="num">{{ __('invoices.unit_price') }}</th>
                 <th class="num">{{ __('invoices.amount') }}</th>
             </tr>
         </thead>
@@ -88,6 +98,7 @@
                         ? $item->kind
                         : \App\Enums\InvoiceItemKind::Product;
                     $formatted = \App\Support\MoneyFormatter::format((int) $item->line_total_amount, $item->currency);
+                    $formattedUnit = \App\Support\MoneyFormatter::format((int) $item->unit_amount, $item->currency);
                 @endphp
                 <tr>
                     <td>
@@ -101,6 +112,7 @@
                         @endif
                     </td>
                     <td class="num">{{ $item->quantity }}</td>
+                    <td class="num">{{ $kind->isAdjustment() ? '−'.$formattedUnit : $formattedUnit }}</td>
                     <td class="num">{{ $kind->isAdjustment() ? '−'.$formatted : $formatted }}</td>
                 </tr>
             @endforeach
@@ -125,7 +137,7 @@
             </tr>
         @endif
         <tr>
-            <td>{{ $invoice->tax_rate_name ?: __('common.tax') }}</td>
+            <td>{{ $document->taxLabel }}</td>
             <td class="num">{{ \App\Support\MoneyFormatter::format($invoice->tax_amount, $invoice->currency) }}</td>
         </tr>
         <tr class="total">

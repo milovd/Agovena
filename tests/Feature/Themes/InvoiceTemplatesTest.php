@@ -40,11 +40,14 @@ function invoiceTemplateInvoice(): Invoice
         'billing_country' => 'NL',
         'billing_phone' => '+31 20 555 0101',
         'merchant_name' => 'Seller Trading BV',
-        'merchant_address' => "Seller Street 9\n3511 AA Utrecht\nVAT NL123456789B01\nCoC 87654321",
+        'merchant_address' => "Seller Street 9\n3511 AA Utrecht",
+        'merchant_vat_number' => 'NL123456789B01',
+        'merchant_company_number' => '87654321',
         'custom_properties_snapshot' => [
             ['key' => 'vat_number', 'label' => 'VAT number', 'value' => 'NL999999999B09'],
         ],
         'issued_at' => '2026-03-14',
+        'due_at' => '2026-03-28',
         'paid_at' => '2026-03-16 10:00:00',
         'subtotal_amount' => 12500,
         'discount_amount' => 1500,
@@ -106,6 +109,8 @@ function invoiceTemplateCreditNote(): CreditNote
         'billing_phone' => $invoice->billing_phone,
         'merchant_name' => $invoice->merchant_name,
         'merchant_address' => $invoice->merchant_address,
+        'merchant_vat_number' => $invoice->merchant_vat_number,
+        'merchant_company_number' => $invoice->merchant_company_number,
         'custom_properties_snapshot' => $invoice->custom_properties_snapshot,
         'issued_at' => '2026-04-02',
         'reason' => 'Returned within 14 days',
@@ -167,12 +172,14 @@ test('every invoice template renders all invoice data and a printable A4 pdf', f
         __('invoices.status.paid'),
         __('invoices.issued'), '2026-03-14',
         __('invoices.paid_on'), '2026-03-16',
-        __('invoices.seller'), 'Seller Trading BV', 'Seller Street 9', 'VAT NL123456789B01', 'CoC 87654321',
+        __('invoices.due_on'), '2026-03-28',
+        __('invoices.seller'), 'Seller Trading BV', 'Seller Street 9',
+        __('invoices.seller_vat_number').': NL123456789B01', __('invoices.seller_company_number').': 87654321',
         __('invoices.bill_to'), 'Billing Person', 'Buyer Holding BV', 'Keizersgracht 1', 'Floor 4',
         '1015 CJ Amsterdam', 'Noord-Holland', 'NL', '+31 20 555 0101', 'buyer@example.test',
         'VAT number: NL999999999B09',
-        __('invoices.item'), __('invoices.qty'), __('invoices.amount'),
-        'Managed VPS', 'RAM: 8 GB', 'Setup service', 'Spring promotion',
+        __('invoices.item'), __('invoices.qty'), __('invoices.unit_price'), __('invoices.amount'),
+        'Managed VPS', 'RAM: 8 GB', '€50.00', '€100.00', 'Setup service', 'Spring promotion',
         '−€15.00',
         __('common.subtotal'), '€125.00',
         __('common.discount'), '−€15.00',
@@ -208,11 +215,12 @@ test('every invoice template renders all credit note data and a printable A4 pdf
         __('invoices.issued'), '2026-04-02',
         __('credit_notes.related_invoice'), 'INV-TPL-00042',
         __('credit_notes.reason'), 'Returned within 14 days',
-        __('invoices.seller'), 'Seller Trading BV', 'Seller Street 9', 'VAT NL123456789B01', 'CoC 87654321',
+        __('invoices.seller'), 'Seller Trading BV', 'Seller Street 9',
+        __('invoices.seller_vat_number').': NL123456789B01', __('invoices.seller_company_number').': 87654321',
         __('invoices.bill_to'), 'Billing Person', 'Buyer Holding BV', 'Keizersgracht 1', 'Floor 4',
         '1015 CJ Amsterdam', 'Noord-Holland', 'NL', '+31 20 555 0101', 'buyer@example.test',
         'VAT number: NL999999999B09',
-        __('invoices.item'), __('invoices.qty'), __('invoices.amount'),
+        __('invoices.item'), __('invoices.qty'), __('invoices.unit_price'), __('invoices.amount'),
         'Managed VPS',
         __('common.subtotal'), '€50.00',
         'VAT 21%', '€10.50',
@@ -222,6 +230,7 @@ test('every invoice template renders all credit note data and a printable A4 pdf
     }
 
     expect($text)->not->toContain(__('invoices.paid_on'))
+        ->and($text)->not->toContain(__('invoices.due_on'))
         ->and(substr(app(RenderCreditNoteDocument::class)->pdf($creditNote), 0, 5))->toBe('%PDF-');
 
     if ($template !== 'classic') {
@@ -335,3 +344,34 @@ test('invoice preview requires theme permission', function () {
         ->get(route('admin.appearance.invoice-preview'))
         ->assertForbidden();
 });
+
+test('every invoice template shows the tax rate and whether prices already include it', function (string $template) {
+    selectInvoiceTemplate($template);
+
+    $invoice = invoiceTemplateInvoice();
+    $invoice->forceFill(['tax_rate_name' => 'VAT'])->save();
+    $exclusiveText = textOf(app(RenderInvoiceDocument::class)->html($invoice->fresh()));
+
+    expect($exclusiveText)->toContain('VAT 21%')
+        ->and($exclusiveText)->not->toContain(__('invoices.tax_included', ['label' => 'VAT 21%']));
+
+    // Same lines, but the total no longer adds the tax on top: the prices already contained it.
+    $invoice->forceFill(['total_amount' => 10300])->save();
+    $inclusiveText = textOf(app(RenderInvoiceDocument::class)->html($invoice->fresh()));
+
+    expect($inclusiveText)->toContain(__('invoices.tax_included', ['label' => 'VAT 21%']))
+        ->and($inclusiveText)->toContain('€103.00');
+})->with('invoice templates');
+
+test('invoice documents omit seller identifiers and due date that were not recorded', function (string $template) {
+    selectInvoiceTemplate($template);
+    $invoice = invoiceTemplateInvoice();
+    $invoice->forceFill(['merchant_vat_number' => null, 'merchant_company_number' => null, 'due_at' => null])->save();
+
+    $text = textOf(app(RenderInvoiceDocument::class)->html($invoice->fresh()));
+
+    expect($text)->not->toContain('NL123456789B01')
+        ->and($text)->not->toContain(__('invoices.seller_company_number'))
+        ->and($text)->not->toContain(__('invoices.due_on'))
+        ->and($text)->not->toContain('2026-03-28');
+})->with('invoice templates');

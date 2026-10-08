@@ -126,6 +126,7 @@ test('partial credit note and partial refund leave the issued invoice unchanged'
 
 test('full credit and full refund mark the payment refunded', function () {
     [$order, $invoice, $customer, $staff] = placePaidCustomerOrder();
+    $invoice->forceFill(['merchant_vat_number' => 'BE0123456789', 'merchant_company_number' => '0123.456.789'])->save();
 
     $creditNote = app(IssueCreditNote::class)->handle($invoice, $staff, 'Full cancellation');
     $refund = app(RecordRefund::class)->handle(
@@ -137,6 +138,8 @@ test('full credit and full refund mark the payment refunded', function () {
     );
 
     expect($creditNote->total_amount)->toBe($invoice->total_amount)
+        ->and($creditNote->merchant_vat_number)->toBe('BE0123456789')
+        ->and($creditNote->merchant_company_number)->toBe('0123.456.789')
         ->and($invoice->fresh()->remainingCreditable())->toBe(0)
         ->and($refund->amount)->toBe($order->payment->amount)
         ->and($order->payment->fresh()->status)->toBe(PaymentStatus::Refunded)

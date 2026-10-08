@@ -24,6 +24,8 @@ use RuntimeException;
  * @property int $payment_fee_amount
  * @property array<string, int|string|bool>|null $payment_fee_snapshot
  * @property int|null $customer_id
+ * @property string|null $merchant_vat_number
+ * @property string|null $merchant_company_number
  * @property Carbon|null $due_at
  * @property Carbon|null $paid_at
  * @property Carbon|null $issued_at
@@ -48,6 +50,8 @@ use RuntimeException;
     'billing_phone',
     'merchant_name',
     'merchant_address',
+    'merchant_vat_number',
+    'merchant_company_number',
     'issued_at',
     'due_at',
     'subtotal_amount',

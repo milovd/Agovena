@@ -17,6 +17,7 @@ use App\Enums\ProductOptionType;
 use App\Livewire\Admin\Invoices\Edit as AdminInvoiceEdit;
 use App\Livewire\Admin\Invoices\Index as AdminInvoicesIndex;
 use App\Livewire\Admin\Invoices\Show as AdminInvoiceShow;
+use App\Livewire\Admin\Settings\Hub as AdminSettingsHub;
 use App\Livewire\Customer\Account\CreditNoteShow;
 use App\Livewire\Customer\Account\InvoiceShow;
 use App\Models\CreditNote;
@@ -393,6 +394,8 @@ test('invoices with credit notes cannot be deleted', function () {
 test('invoice snapshots seller identity product options and stays immutable', function () {
     app(SettingsRepository::class)->set('store', 'seller_name', 'Snapshot Merchant');
     app(SettingsRepository::class)->set('store', 'seller_address', "Street 9\nAmsterdam");
+    app(SettingsRepository::class)->set('store', 'seller_vat_number', 'NL123456789B01');
+    app(SettingsRepository::class)->set('store', 'seller_company_number', '87654321');
 
     $product = Product::factory()->active()->create(['name' => 'VPS', 'price_amount' => 2000]);
     ProductOption::query()->create([
@@ -437,14 +440,18 @@ test('invoice snapshots seller identity product options and stays immutable', fu
     expect($invoice)->not->toBeNull()
         ->and($invoice->merchant_name)->toBe('Snapshot Merchant')
         ->and($invoice->merchant_address)->toBe("Street 9\nAmsterdam")
+        ->and($invoice->merchant_vat_number)->toBe('NL123456789B01')
+        ->and($invoice->merchant_company_number)->toBe('87654321')
         ->and($invoice->paid_at)->not->toBeNull()
         ->and($invoice->items->first()->options_snapshot)->not->toBeEmpty();
 
     $product->update(['name' => 'Changed later']);
     app(SettingsRepository::class)->set('store', 'seller_name', 'New Merchant');
+    app(SettingsRepository::class)->set('store', 'seller_vat_number', 'NL000000000B00');
 
     $invoice->refresh();
     expect($invoice->merchant_name)->toBe('Snapshot Merchant')
+        ->and($invoice->merchant_vat_number)->toBe('NL123456789B01')
         ->and($invoice->items->first()->label)->toBe('VPS');
 
     $this->actingAs($customer->user)
@@ -456,5 +463,36 @@ test('invoice snapshots seller identity product options and stays immutable', fu
         ->get(route('admin.invoices.print', $invoice))
         ->assertOk()
         ->assertSee('Snapshot Merchant', false)
+        ->assertSee('NL123456789B01', false)
         ->assertSee('8 GB', false);
+});
+
+test('staff set the seller VAT and company number in the store settings', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(AdminSettingsHub::class)
+        ->set('tab', 'store')
+        ->assertSeeInOrder([
+            __('admin.settings.fields.seller_address'),
+            __('admin.settings.fields.seller_vat_number'),
+            __('admin.settings.fields.seller_company_number'),
+        ])
+        ->set('values.seller_vat_number', 'BE0123456789')
+        ->set('values.seller_company_number', '0123.456.789')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $settings = app(SettingsRepository::class);
+    expect($settings->get('store', 'seller_vat_number'))->toBe('BE0123456789')
+        ->and($settings->get('store', 'seller_company_number'))->toBe('0123.456.789');
+
+    Livewire::actingAs($staff)
+        ->test(AdminSettingsHub::class)
+        ->set('tab', 'store')
+        ->set('values.seller_vat_number', str_repeat('X', 256))
+        ->call('save')
+        ->assertHasErrors(['values.seller_vat_number']);
+
+    expect($settings->get('store', 'seller_vat_number'))->toBe('BE0123456789');
 });

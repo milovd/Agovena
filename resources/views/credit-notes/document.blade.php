@@ -20,6 +20,9 @@
     </style>
 </head>
 <body>
+    @php
+        $document = \App\Agovena\Invoices\InvoiceDocumentData::fromCreditNote($creditNote);
+    @endphp
     @if ($printable)
         <p class="no-print muted"><button type="button" onclick="window.print()">{{ __('invoices.print') }}</button></p>
     @endif
@@ -40,6 +43,9 @@
                 @if ($creditNote->merchant_address)
                     <p>{!! nl2br(e($creditNote->merchant_address)) !!}</p>
                 @endif
+                @foreach ($document->sellerIdentifiers() as $identifier)
+                    <p>{{ $identifier['label'] }}: {{ $identifier['value'] }}</p>
+                @endforeach
             </td>
         </tr>
         <tr>
@@ -80,6 +86,7 @@
             <tr>
                 <th>{{ __('invoices.item') }}</th>
                 <th class="num">{{ __('invoices.qty') }}</th>
+                <th class="num">{{ __('invoices.unit_price') }}</th>
                 <th class="num">{{ __('invoices.amount') }}</th>
             </tr>
         </thead>
@@ -90,10 +97,12 @@
                         ? $item->kind
                         : \App\Enums\InvoiceItemKind::Product;
                     $formatted = \App\Support\MoneyFormatter::format((int) $item->line_total_amount, $item->currency);
+                    $formattedUnit = \App\Support\MoneyFormatter::format((int) $item->unit_amount, $item->currency);
                 @endphp
                 <tr>
                     <td>{{ $item->label }}</td>
                     <td class="num">{{ $item->quantity }}</td>
+                    <td class="num">{{ $kind->isAdjustment() ? '−'.$formattedUnit : $formattedUnit }}</td>
                     <td class="num">{{ $kind->isAdjustment() ? '−'.$formatted : $formatted }}</td>
                 </tr>
             @endforeach
@@ -106,7 +115,7 @@
             <td class="num">{{ \App\Support\MoneyFormatter::format($creditNote->subtotal_amount, $creditNote->currency) }}</td>
         </tr>
         <tr>
-            <td>{{ $creditNote->tax_rate_name ?: __('common.tax') }}</td>
+            <td>{{ $document->taxLabel }}</td>
             <td class="num">{{ \App\Support\MoneyFormatter::format($creditNote->tax_amount, $creditNote->currency) }}</td>
         </tr>
         <tr class="total">

@@ -24,6 +24,8 @@ use RuntimeException;
  * @property int|null $customer_id
  * @property int|null $created_by
  * @property array<int, array{key: string, label: string, value: string}>|null $custom_properties_snapshot
+ * @property string|null $merchant_vat_number
+ * @property string|null $merchant_company_number
  * @property Carbon $issued_at
  * @property-read Collection<int, CreditNoteItem> $items
  * @property-read Invoice $invoice
@@ -48,6 +50,8 @@ use RuntimeException;
     'billing_phone',
     'merchant_name',
     'merchant_address',
+    'merchant_vat_number',
+    'merchant_company_number',
     'issued_at',
     'reason',
     'subtotal_amount',

@@ -82,6 +82,8 @@ final class IssueCreditNote
                 'billing_phone' => $locked->billing_phone,
                 'merchant_name' => $locked->merchant_name,
                 'merchant_address' => $locked->merchant_address,
+                'merchant_vat_number' => $locked->merchant_vat_number,
+                'merchant_company_number' => $locked->merchant_company_number,
                 'issued_at' => now()->toDateString(),
                 'reason' => $reason,
                 'subtotal_amount' => $allocation['subtotal'],

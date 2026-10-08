@@ -23,6 +23,8 @@ final class SampleInvoice
         $currency = strtoupper((string) $this->settings->get('general', 'base_currency', 'EUR'));
         $sellerName = trim((string) $this->settings->get('store', 'seller_name', ''));
         $sellerAddress = trim((string) $this->settings->get('store', 'seller_address', ''));
+        $sellerVatNumber = trim((string) $this->settings->get('store', 'seller_vat_number', ''));
+        $sellerCompanyNumber = trim((string) $this->settings->get('store', 'seller_company_number', ''));
 
         $invoice = new Invoice([
             'number' => 'PREVIEW-0001',
@@ -39,10 +41,13 @@ final class SampleInvoice
                 ? $sellerName
                 : (string) $this->settings->get('general', 'site_name', config('app.name')),
             'merchant_address' => $sellerAddress !== '' ? $sellerAddress : null,
+            'merchant_vat_number' => $sellerVatNumber !== '' ? $sellerVatNumber : null,
+            'merchant_company_number' => $sellerCompanyNumber !== '' ? $sellerCompanyNumber : null,
             'custom_properties_snapshot' => [
                 ['key' => 'vat_number', 'label' => __('invoices.preview.vat_label'), 'value' => 'NL000000000B00'],
             ],
             'issued_at' => now()->toDateString(),
+            'due_at' => now()->addDays(14)->toDateString(),
             'paid_at' => now(),
             'subtotal_amount' => 14000,
             'discount_amount' => 1000,

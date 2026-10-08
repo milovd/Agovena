@@ -63,6 +63,8 @@ final class IssueInvoiceFromOrder
                 'merchant_name' => $this->nullableString($this->settings->get('store', 'seller_name'))
                     ?? (string) $this->settings->get('general', 'site_name', config('app.name')),
                 'merchant_address' => $this->nullableString($this->settings->get('store', 'seller_address')),
+                'merchant_vat_number' => $this->nullableString($this->settings->get('store', 'seller_vat_number')),
+                'merchant_company_number' => $this->nullableString($this->settings->get('store', 'seller_company_number')),
                 'issued_at' => now()->toDateString(),
                 'paid_at' => $status === InvoiceStatus::Paid ? ($locked->payment->paid_at ?? now()) : null,
                 'due_at' => $locked->due_at?->toDateString(),

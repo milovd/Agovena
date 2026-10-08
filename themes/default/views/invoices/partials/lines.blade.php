@@ -3,6 +3,7 @@
         <tr>
             <th scope="col">{{ __('invoices.item') }}</th>
             <th scope="col" class="invoice-doc__num">{{ __('invoices.qty') }}</th>
+            <th scope="col" class="invoice-doc__num">{{ __('invoices.unit_price') }}</th>
             <th scope="col" class="invoice-doc__num">{{ __('invoices.amount') }}</th>
         </tr>
     </thead>
@@ -20,6 +21,7 @@
                     @endif
                 </td>
                 <td class="invoice-doc__num">{{ $line['quantity'] }}</td>
+                <td class="invoice-doc__num">{{ $line['unitAmount'] }}</td>
                 <td class="invoice-doc__num">{{ $line['amount'] }}</td>
             </tr>
         @endforeach

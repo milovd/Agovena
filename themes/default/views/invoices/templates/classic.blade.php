@@ -34,6 +34,9 @@
                 <h1>{{ $document->number }}</h1>
                 <p class="muted">{{ $document->statusLabel }}</p>
                 <p>{{ __('invoices.issued') }}: {{ $document->issuedOn }}</p>
+                @if ($document->dueOn)
+                    <p>{{ __('invoices.due_on') }}: {{ $document->dueOn }}</p>
+                @endif
                 @if ($document->paidOn)
                     <p>{{ __('invoices.paid_on') }}: {{ $document->paidOn }}</p>
                 @endif
@@ -47,6 +50,9 @@
                 @if ($document->sellerAddress)
                     <p>{!! nl2br(e($document->sellerAddress)) !!}</p>
                 @endif
+                @foreach ($document->sellerIdentifiers() as $identifier)
+                    <p>{{ $identifier['label'] }}: {{ $identifier['value'] }}</p>
+                @endforeach
             </td>
         </tr>
         <tr>
@@ -91,6 +97,7 @@
             <tr>
                 <th>{{ __('invoices.item') }}</th>
                 <th class="num">{{ __('invoices.qty') }}</th>
+                <th class="num">{{ __('invoices.unit_price') }}</th>
                 <th class="num">{{ __('invoices.amount') }}</th>
             </tr>
         </thead>
@@ -108,6 +115,7 @@
                         @endif
                     </td>
                     <td class="num">{{ $line['quantity'] }}</td>
+                    <td class="num">{{ $line['unitAmount'] }}</td>
                     <td class="num">{{ $line['amount'] }}</td>
                 </tr>
             @endforeach

@@ -991,6 +991,24 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
         $admin->settingsField(new SettingsField(
             group: 'store',
+            key: 'seller_vat_number',
+            label: 'admin.settings.fields.seller_vat_number',
+            type: 'string',
+            default: '',
+            help: 'admin.settings.field_help.seller_vat_number',
+            sort: 28,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
+            key: 'seller_company_number',
+            label: 'admin.settings.fields.seller_company_number',
+            type: 'string',
+            default: '',
+            help: 'admin.settings.field_help.seller_company_number',
+            sort: 28,
+        ));
+        $admin->settingsField(new SettingsField(
+            group: 'store',
             key: 'unpaid_order_cancel_after_days',
             label: 'admin.settings.fields.unpaid_order_cancel_after_days',
             type: 'integer',
