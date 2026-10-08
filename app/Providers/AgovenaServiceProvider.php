@@ -45,6 +45,7 @@ use App\Agovena\Installation\InstallationRequirements;
 use App\Agovena\Installation\InstallationState;
 use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Mail\ApplyMailSettings;
+use App\Agovena\Maintenance\MaintenanceMode;
 use App\Agovena\Modules\ModuleContext;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Money\CurrencyCatalog;
@@ -269,6 +270,11 @@ class AgovenaServiceProvider extends ServiceProvider
             $view->with('siteName', $brand->siteName());
             $view->with('brandingLogoUrl', $brand->logoUrl());
             $view->with('brandingFaviconUrl', $brand->faviconUrl());
+        });
+
+        View::composer(['theme::layouts.storefront', 'theme::layouts.checkout'], function ($view): void {
+            // Staff bypass storefront maintenance; the Theme shows them a notice instead.
+            $view->with('maintenanceNotice', $this->app->make(MaintenanceMode::class)->staffNotice(auth()->user()));
         });
 
         View::composer(['theme::layouts.storefront', 'theme::layouts.checkout', 'theme::layouts.error', 'layouts.error'], function ($view): void {
@@ -548,6 +554,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'maintenance',
+            label: 'admin.nav.maintenance',
+            group: 'admin.nav_groups.system',
+            href: '/admin/maintenance',
+            icon: 'circle-alert',
+            sort: 125,
+            permission: 'maintenance.manage',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'roles',
             label: 'admin.nav.roles',
             group: 'admin.nav_groups.system',
@@ -751,6 +767,7 @@ class AgovenaServiceProvider extends ServiceProvider
             'backups.view',
             'backups.manage',
             'data.export',
+            'maintenance.manage',
         ] as $ability) {
             $admin->permission($ability, 'admin.permissions.'.$ability);
         }

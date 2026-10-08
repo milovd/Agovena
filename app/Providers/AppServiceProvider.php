@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Middleware\EnforceAbusePolicy;
+use App\Http\Middleware\EnforceStorefrontMaintenance;
 use App\Http\Middleware\EnsureCanAccessAdmin;
 use App\Http\Middleware\EnsureCustomerEmailIsVerified;
 use App\Http\Middleware\EnsurePrivilegedTwoFactor;
@@ -37,6 +38,7 @@ class AppServiceProvider extends ServiceProvider
             EnsureCanAccessAdmin::class,
             EnsurePrivilegedTwoFactor::class,
             EnsureCustomerEmailIsVerified::class,
+            EnforceStorefrontMaintenance::class,
         ]);
 
         // WinGet/XAMPP PHP often ships without curl.cainfo; Composer's Mozilla

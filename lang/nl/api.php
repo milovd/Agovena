@@ -24,4 +24,5 @@ return [
         '422' => 'Het verzoek kon niet worden verwerkt.',
         '429' => 'Te veel verzoeken. Probeer het zo opnieuw.',
     ],
+    'maintenance' => 'De winkel is tijdelijk gesloten voor onderhoud. Probeer het later opnieuw.',
 ];

@@ -155,6 +155,15 @@ return [
         'alert_email' => env('AGOVENA_BACKUP_ALERT_EMAIL'),
     ],
 
+    /*
+     * Storefront maintenance (Admin > System > Maintenance, or `php artisan agovena:maintenance`).
+     * The Admin, staff sign-in, webhooks and callbacks always stay open. Add extra request
+     * path patterns (for example 'partner/feed/*') that must stay reachable while it is on.
+     */
+    'maintenance' => [
+        'except' => [],
+    ],
+
     'retention' => [
         'email_logs_days' => (int) env('AGOVENA_EMAIL_LOG_RETENTION', 90),
         'audit_logs_days' => (int) env('AGOVENA_AUDIT_LOG_RETENTION', 365),

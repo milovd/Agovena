@@ -392,4 +392,9 @@ return [
     ],
 
     'account_coming_soon' => 'Customer accounts will be available when the customer portal ships',
+
+    'maintenance_notice' => [
+        'text' => 'Maintenance mode is on, customers see the maintenance page.',
+        'manage' => 'Turn off maintenance mode',
+    ],
 ];

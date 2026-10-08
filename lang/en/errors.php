@@ -54,4 +54,10 @@ return [
         'heading' => 'You are moving a little fast',
         'lede' => 'Give the store a moment, then try again.',
     ],
+    'maintenance' => [
+        'title' => 'Down for maintenance',
+        'heading' => 'We are working on the shop',
+        'lede' => 'The shop is closed for maintenance for a little while. Please come back soon.',
+        'back_by' => 'We expect to be back by :time.',
+    ],
 ];

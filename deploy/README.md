@@ -72,6 +72,27 @@ Admin → Updates shows the current application version and whether schema migra
 
 Installation and upgrade steps are on [agovena.com](https://agovena.com/docs/installation). See also [SUPPORT.md](../SUPPORT.md), and [ATTRIBUTION.md](../ATTRIBUTION.md) for remote FX/VAT data sources.
 
+## Storefront maintenance mode
+
+Admin → System → Maintenance mode (permission `maintenance.manage`, recent password required) closes the storefront for customers without `php artisan down`. While it is on:
+
+- Storefront pages, cart and checkout, customer account pages and the public storefront API (`/api/*`) answer HTTP 503 with a `Retry-After` header (seconds until the optional expected end time, otherwise 600), `Cache-Control: no-store` and `X-Robots-Tag: noindex`. HTML requests get the Theme page `errors.maintenance` with the merchant message; API requests get a JSON error with code `maintenance`.
+- Always reachable: `/admin/*`, staff sign-in, two-factor, password reset and logout, OAuth callbacks, `/webhooks/*` and any route whose name contains `webhook` or `callback` (including package routes), payment return and order confirmation pages, `/up`, `robots.txt`, the Livewire endpoint for Admin components, and static files. Add extra path patterns in `config/agovena.php` → `maintenance.except`.
+- Signed-in staff with Admin access browse the storefront normally and see a notice bar.
+- It does not end automatically at the expected end time.
+
+The state is stored in the `settings` table (group `maintenance`), so it survives `cache:clear`, and storefront requests read it from one cache entry (also when it was never set). If it cannot be read (for example the database is down) the storefront is treated as open. The recovery route works without the Admin:
+
+```
+php artisan agovena:maintenance status
+php artisan agovena:maintenance on --message="Back after the stock count" --until="2026-10-08 18:00"
+php artisan agovena:maintenance off
+```
+
+`on` keeps the previous message and end time unless `--message` or `--until` is given. Every change is written to the audit log (`maintenance.enabled`, `maintenance.updated`, `maintenance.disabled`), and the command drops the cached copy before and after it runs.
+
+Use `php artisan down` only for deploys that must stop every request, including the Admin and payment webhooks.
+
 ## Queue and Redis
 
 Baseline: `QUEUE_CONNECTION=database` and `CACHE_STORE=database` (or `file` sessions). Payment lifecycle locks use `AGOVENA_PAYMENT_LOCK_STORE=database` by default and require the migrated `cache_locks` table. Redis is recommended for multi-node cache/queue/locks, not mandatory for a single VPS.

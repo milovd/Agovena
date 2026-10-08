@@ -26,6 +26,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="color-scheme" content="light dark">
+    <meta name="robots" content="noindex, nofollow">
     <title>@yield('title', __('errors.500.title')) | {{ config('app.name', 'Agovena') }}</title>
     <link rel="icon" href="/{{ \App\Agovena\Theme\StorefrontBrand::BUNDLED_LOGO }}" type="image/png">
     <script>

@@ -6,6 +6,7 @@ use App\Agovena\Installation\ApplicationSchemaStatus;
 use App\Agovena\Theme\ThemeErrorRenderer;
 use App\Http\Middleware\EnforceAbusePolicy;
 use App\Http\Middleware\EnforceApiIpAllowlist;
+use App\Http\Middleware\EnforceStorefrontMaintenance;
 use App\Http\Middleware\EnsureAgovenaInstalled;
 use App\Http\Middleware\EnsureApiTokenAbility;
 use App\Http\Middleware\EnsureCanAccessAdmin;
@@ -77,6 +78,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             SetLocale::class,
             SecurityHeaders::class,
+            EnforceStorefrontMaintenance::class,
         ]);
         $middleware->api(prepend: [
             EnsureAgovenaInstalled::class,
@@ -85,6 +87,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         $middleware->api(append: [
             SecurityHeaders::class,
+            EnforceStorefrontMaintenance::class,
         ]);
         $middleware->alias([
             'api.ability' => EnsureApiTokenAbility::class,

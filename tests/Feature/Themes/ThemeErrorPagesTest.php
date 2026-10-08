@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Agovena\Theme\Theme;
+use App\Agovena\Theme\ThemeErrorRenderer;
 use App\Agovena\Theme\ThemeManager;
 use Illuminate\Support\Facades\Route;
 
@@ -80,4 +82,24 @@ test('default theme owns the supported http error pages', function () {
         expect($theme->errorView($status))->toBe('errors.'.$status)
             ->and(view()->exists($theme->errorView($status)))->toBeTrue();
     }
+});
+
+test('default theme provides the maintenance entry view rendered with the error layout', function () {
+    $themes = app(ThemeManager::class);
+    $default = $themes->find('default');
+
+    expect($default)->not->toBeNull()
+        ->and($default->hasMaintenancePage())->toBeTrue()
+        ->and($themes->maintenanceTheme()?->hasMaintenancePage())->toBeTrue()
+        ->and(view()->exists(Theme::MAINTENANCE_VIEW))->toBeTrue();
+
+    $html = (string) app(ThemeErrorRenderer::class)
+        ->renderMaintenance("Line one\nLine <two>", now()->addDay())
+        ?->getContent();
+
+    expect($html)->toContain('data-error-status="maintenance"')
+        ->and($html)->toContain('Line &lt;two&gt;')
+        ->and($html)->not->toContain('Line <two>')
+        ->and($html)->toContain('<meta name="robots" content="noindex, nofollow">')
+        ->and($html)->toContain(__('errors.maintenance.heading'));
 });

@@ -1,0 +1,54 @@
+/* Storefront maintenance: staff notice bar and the maintenance page message */
+
+.store-maintenance-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--theme-space-2) var(--theme-space-4);
+  padding: var(--theme-space-2) var(--theme-space-4);
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-color-warning) 45%, transparent);
+  background: color-mix(in srgb, var(--theme-color-warning) 14%, var(--theme-color-surface));
+  color: var(--theme-color-text);
+  font-size: 0.875rem;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.store-maintenance-notice__text {
+  margin: 0;
+  font-weight: 600;
+}
+
+.store-maintenance-notice__link {
+  color: var(--theme-color-text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.store-maintenance-notice__link:focus-visible {
+  border-radius: var(--theme-radius-sm);
+  outline: none;
+  box-shadow: var(--theme-focus);
+}
+
+.store-error__message {
+  position: relative;
+  z-index: 2;
+  max-width: 38rem;
+  margin: var(--theme-space-4) 0 0;
+  color: var(--theme-color-text);
+  font-size: clamp(1rem, 1.5vw, 1.15rem);
+  line-height: 1.55;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.store-error__meta {
+  position: relative;
+  z-index: 2;
+  margin: var(--theme-space-3) 0 0;
+  color: var(--theme-color-text-muted);
+  font-size: 0.95rem;
+}

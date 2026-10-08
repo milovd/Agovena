@@ -55,6 +55,7 @@ use App\Livewire\Admin\System\ApiTokens as SystemApiTokens;
 use App\Livewire\Admin\System\Backups as SystemBackups;
 use App\Livewire\Admin\System\CronStatistics as SystemCronStatistics;
 use App\Livewire\Admin\System\FailedJobs as SystemFailedJobs;
+use App\Livewire\Admin\System\Maintenance as SystemMaintenance;
 use App\Livewire\Admin\System\Updates as SystemUpdates;
 use App\Livewire\Admin\Taxes\Index as TaxesIndex;
 use App\Livewire\Admin\Tickets\Index as TicketsIndex;
@@ -240,6 +241,7 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
     Route::get('/backups', SystemBackups::class)->name('backups');
     Route::get('/exports', ExportsIndex::class)->name('exports.index');
     Route::get('/exports/download', DataExportController::class)->name('exports.download');
+    Route::get('/maintenance', SystemMaintenance::class)->name('maintenance');
     Route::get('/updates', SystemUpdates::class)->name('updates');
     Route::get('/api-tokens', SystemApiTokens::class)->name('api-tokens');
     Route::get('/notifications', NotificationTemplatesIndex::class)->name('notifications');

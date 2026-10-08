@@ -87,6 +87,22 @@ final class ThemeManager
 
     public function errorTheme(int $status): ?Theme
     {
+        return $this->firstErrorTheme(static fn (Theme $theme): bool => $theme->hasErrorPage($status));
+    }
+
+    /**
+     * The active Theme when it ships a maintenance page, otherwise the default Theme.
+     */
+    public function maintenanceTheme(): ?Theme
+    {
+        return $this->firstErrorTheme(static fn (Theme $theme): bool => $theme->hasMaintenancePage());
+    }
+
+    /**
+     * @param  callable(Theme): bool  $provides
+     */
+    private function firstErrorTheme(callable $provides): ?Theme
+    {
         $candidates = [];
 
         try {
@@ -107,7 +123,7 @@ final class ThemeManager
             }
             $seen[$theme->id] = true;
 
-            if ($theme->hasErrorPage($status)) {
+            if ($provides($theme)) {
                 return $theme;
             }
         }

@@ -392,4 +392,9 @@ return [
     ],
 
     'account_coming_soon' => 'Klantaccounts komen beschikbaar wanneer het klantenportaal live gaat',
+
+    'maintenance_notice' => [
+        'text' => 'De onderhoudsmodus staat aan, klanten zien de onderhoudspagina.',
+        'manage' => 'Onderhoudsmodus uitschakelen',
+    ],
 ];

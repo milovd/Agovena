@@ -152,6 +152,10 @@
 >
     <a class="store-skip" href="#main">{{ __('storefront.skip_to_content') }}</a>
 
+    @if (! empty($maintenanceNotice))
+        @include('theme::partials.maintenance-notice', ['maintenanceNotice' => $maintenanceNotice])
+    @endif
+
     @include('theme::partials.header', ['themeConfig' => $config])
 
     <main id="main" class="store-main" tabindex="-1">

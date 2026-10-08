@@ -10,6 +10,11 @@ namespace App\Agovena\Theme;
 final class Theme
 {
     /**
+     * Storefront maintenance page, rendered by name with the error layout.
+     */
+    public const MAINTENANCE_VIEW = 'errors.maintenance';
+
+    /**
      * @param  list<string>  $capabilities
      */
     public function __construct(
@@ -39,6 +44,13 @@ final class Theme
     {
         return is_file(
             $this->viewsPath.DIRECTORY_SEPARATOR.'errors'.DIRECTORY_SEPARATOR.$status.'.blade.php',
+        );
+    }
+
+    public function hasMaintenancePage(): bool
+    {
+        return is_file(
+            $this->viewsPath.DIRECTORY_SEPARATOR.'errors'.DIRECTORY_SEPARATOR.'maintenance.blade.php',
         );
     }
 

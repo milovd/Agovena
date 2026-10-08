@@ -7,10 +7,12 @@ use App\Agovena\Cart\CartService;
 use App\Agovena\Checkout\PlaceOrder;
 use App\Agovena\Customer\AddressData;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
+use App\Agovena\Maintenance\MaintenanceMode;
 use App\Agovena\Payments\RecordManualPayment;
 use App\Livewire\Admin\CreditNotes\Create as AdminCreditNoteCreate;
 use App\Livewire\Admin\Extensions\Index as AdminExtensionsIndex;
 use App\Livewire\Admin\System\ApiTokens as AdminApiTokens;
+use App\Livewire\Admin\System\Maintenance as AdminMaintenance;
 use App\Models\Customer;
 use App\Models\ExtensionSetting;
 use App\Models\Invoice;
@@ -32,6 +34,7 @@ uses(CreatesStaff::class);
  * - disable/regenerate 2FA
  * - extension secret credential saves (Mollie/Stripe/PostNL/Pterodactyl keys)
  * - admin API token create/revoke
+ * - storefront maintenance mode on/off and maintenance page changes
  *
  * Does NOT require recent password:
  * - ordinary product/CMS/theme customize edits
@@ -148,4 +151,27 @@ test('admin API token create requires a recent password', function () {
         ->assertSet('showingPasswordConfirmation', false);
 
     expect($staff->fresh()->tokens()->count())->toBe(1);
+});
+
+test('turning storefront maintenance mode on requires a recent password', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(AdminMaintenance::class)
+        ->call('enable')
+        ->assertSet('showingPasswordConfirmation', true);
+
+    expect(app(MaintenanceMode::class)->state()->enabled)->toBeFalse();
+
+    session([
+        ConfirmsRecentPassword::SESSION_KEY => time(),
+        ConfirmsRecentPassword::SESSION_USER_KEY => $staff->id,
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(AdminMaintenance::class)
+        ->call('enable')
+        ->assertSet('showingPasswordConfirmation', false);
+
+    expect(app(MaintenanceMode::class)->state()->enabled)->toBeTrue();
 });

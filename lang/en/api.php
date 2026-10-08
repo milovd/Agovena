@@ -24,4 +24,5 @@ return [
         'invalid' => 'Those credentials do not match our records.',
         'unavailable' => 'This account cannot use the API.',
     ],
+    'maintenance' => 'The store is temporarily closed for maintenance. Try again later.',
 ];

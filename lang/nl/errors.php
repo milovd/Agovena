@@ -54,4 +54,10 @@ return [
         'heading' => 'Je gaat iets te snel',
         'lede' => 'Geef de winkel even de tijd en probeer het daarna opnieuw.',
     ],
+    'maintenance' => [
+        'title' => 'Onderhoud',
+        'heading' => 'We werken aan de winkel',
+        'lede' => 'De winkel is even gesloten voor onderhoud. Kom snel terug.',
+        'back_by' => 'We verwachten rond :time weer open te zijn.',
+    ],
 ];
