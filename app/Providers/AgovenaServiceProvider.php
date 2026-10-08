@@ -32,6 +32,7 @@ use App\Agovena\Checkout\ShippingQuoteResolver;
 use App\Agovena\Content\MenuResolver;
 use App\Agovena\Customer\CustomerAccountNav;
 use App\Agovena\Customer\CustomerAccountOverview;
+use App\Agovena\Extensions\ExtensionConfigurationStatus;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Extensions\RuntimeRegistry;
@@ -140,6 +141,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ProvisionerRegistry::class);
         $this->app->singleton(ShippingCarrierRegistry::class);
         $this->app->singleton(ExtensionManager::class);
+        $this->app->scoped(ExtensionConfigurationStatus::class);
         $this->app->singleton(ShippingQuoteResolver::class, NullShippingQuoteResolver::class);
         $this->app->singleton(OrderFulfillmentPresenter::class, NullOrderFulfillmentPresenter::class);
         $this->app->singleton(ShippingQuoteResolver::class, ModuleShippingQuoteResolver::class);

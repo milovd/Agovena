@@ -328,6 +328,31 @@ final class ExtensionManager
         return $this->contexts[$extensionId] ?? null;
     }
 
+    /**
+     * The discovered Extension whose code defines this runtime object (a gateway, carrier,
+     * provisioner or module provider), matched on the Extension's PSR-4 namespace. Lets Core
+     * relate a registered provider back to its Extension without naming either.
+     */
+    public function ownerOf(object $runtime): ?string
+    {
+        $class = $runtime::class;
+        $owner = null;
+        $longest = 0;
+        foreach ($this->discover() as $manifest) {
+            foreach (array_keys($this->autoloadMap($manifest)) as $prefix) {
+                $prefix = trim($prefix, '\\');
+                if ($prefix === '' || ! str_starts_with($class, $prefix.'\\') || strlen($prefix) <= $longest) {
+                    continue;
+                }
+
+                $owner = $manifest->id;
+                $longest = strlen($prefix);
+            }
+        }
+
+        return $owner;
+    }
+
     private function bootManifest(ExtensionManifest $manifest): void
     {
         if (isset($this->booted[$manifest->id])) {

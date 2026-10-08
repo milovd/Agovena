@@ -56,6 +56,50 @@ final class ExtensionSettingsRepository
         return $row !== null || $this->envOverride($extensionId, $key) !== null;
     }
 
+    /**
+     * The given keys that hold a non-empty value, stored or from an environment override, in one query.
+     * A secret is only checked for emptiness in memory (installs store an encrypted empty default);
+     * no value ever leaves this method.
+     *
+     * @param  list<string>  $keys
+     * @return list<string>
+     */
+    public function filledKeys(string $extensionId, array $keys): array
+    {
+        if ($keys === []) {
+            return [];
+        }
+
+        $rows = ExtensionSetting::query()
+            ->where('extension_id', $extensionId)
+            ->whereIn('key', $keys)
+            ->get()
+            ->keyBy('key');
+
+        $filled = [];
+        foreach ($keys as $key) {
+            $row = $rows->get($key);
+            $present = $row instanceof ExtensionSetting
+                ? $this->storedValueIsFilled($row)
+                : $this->envOverride($extensionId, $key) !== null;
+            if ($present) {
+                $filled[] = $key;
+            }
+        }
+
+        return $filled;
+    }
+
+    public static function valueIsFilled(mixed $value): bool
+    {
+        return match (true) {
+            $value === null => false,
+            is_string($value) => trim($value) !== '',
+            is_array($value) => $value !== [],
+            default => true,
+        };
+    }
+
     public function set(string $extensionId, string $key, mixed $value, bool $secret = false): void
     {
         $stored = $secret
@@ -142,6 +186,25 @@ final class ExtensionSettingsRepository
                 'is_corrupt' => false,
             ]);
         }
+    }
+
+    private function storedValueIsFilled(ExtensionSetting $row): bool
+    {
+        if ($row->is_corrupt || $row->value === null || $row->value === '') {
+            return false;
+        }
+
+        if ($row->is_secret) {
+            try {
+                return trim(Crypt::decryptString($row->value)) !== '';
+            } catch (\Throwable) {
+                return false;
+            }
+        }
+
+        $decoded = json_decode($row->value, true);
+
+        return self::valueIsFilled(json_last_error() === JSON_ERROR_NONE ? $decoded : $row->value);
     }
 
     private function envOverride(string $extensionId, string $key): mixed
