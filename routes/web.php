@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditExportController;
 use App\Http\Controllers\Admin\DataExportController;
+use App\Http\Controllers\Admin\InvoiceTemplatePreviewController;
 use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
@@ -253,6 +254,7 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');
     Route::get('/appearance/themes', AppearanceThemes::class)->name('appearance.themes');
     Route::get('/appearance/customize', AppearanceCustomize::class)->name('appearance.customize');
+    Route::get('/appearance/invoice-preview', InvoiceTemplatePreviewController::class)->name('appearance.invoice-preview');
     Route::get('/appearance/pages', ContentPages::class)->name('appearance.pages');
     Route::get('/appearance/navigation', ContentNavigation::class)->name('appearance.navigation');
 });

@@ -21,4 +21,19 @@ return [
     'document_title' => 'Invoice',
     'status_label' => 'Status',
     'details' => 'Details',
+
+    // Sample invoice for the template preview in Admin.
+    'preview' => [
+        'customer' => 'Sample Customer',
+        'company' => 'Sample Company Ltd',
+        'street' => 'Example Street 1',
+        'city' => 'Amsterdam',
+        'vat_label' => 'VAT number',
+        'tax_name' => 'VAT 21%',
+        'item' => 'Sample product',
+        'option_label' => 'Size',
+        'option_value' => 'Large',
+        'service' => 'Installation service',
+        'discount' => 'Welcome discount',
+    ],
 ];

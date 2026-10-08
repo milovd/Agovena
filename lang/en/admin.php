@@ -596,6 +596,10 @@ return [
             'save_heading' => 'Ready to update the storefront?',
             'save_help' => 'Your changes stay in this theme configuration.',
 
+            // Invoice templates
+            'invoice_preview' => 'Preview invoice',
+            'invoice_preview_help' => 'Opens a sample invoice with fictional customer data in a new tab, using the template selected above.',
+
             'groups' => [
                 'branding' => 'Branding',
                 'header' => 'Header',

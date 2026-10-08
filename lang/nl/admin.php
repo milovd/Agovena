@@ -596,6 +596,10 @@ return [
             'save_heading' => 'Klaar om de webshop bij te werken?',
             'save_help' => 'Je wijzigingen blijven in deze themaconfiguratie staan.',
 
+            // Factuursjablonen
+            'invoice_preview' => 'Voorbeeldfactuur bekijken',
+            'invoice_preview_help' => 'Opent in een nieuw tabblad een voorbeeldfactuur met fictieve klantgegevens, in het sjabloon dat hierboven is gekozen.',
+
             'groups' => [
                 'branding' => 'Huisstijl',
                 'header' => 'Header',

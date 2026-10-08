@@ -267,6 +267,7 @@ test('merchant selects the invoice template in the theme customizer and document
         ->set('tab', 'storefront')
         ->assertSee(__('admin.appearance.theme_fields.invoices.template'))
         ->assertSee(__('admin.appearance.theme_options.invoices.template.modern'))
+        ->assertSee(route('admin.appearance.invoice-preview'), false)
         ->set('values.invoices.template', 'minimal')
         ->call('save')
         ->assertHasNoErrors();
@@ -306,4 +307,31 @@ test('a third party theme that provides its own invoice document is unaffected b
     } finally {
         File::deleteDirectory($views);
     }
+});
+
+test('staff can preview a sample invoice in each template without touching real invoices', function (string $template) {
+    $staff = $this->createStaff(permissions: ['admin.access', 'theme.view']);
+    $before = Invoice::query()->count();
+
+    $response = $this->actingAs($staff)
+        ->get(route('admin.appearance.invoice-preview', ['template' => $template]))
+        ->assertOk()
+        ->assertSee('PREVIEW-0001')
+        ->assertSee(__('invoices.preview.customer'))
+        ->assertSee(__('invoices.preview.item'));
+
+    if ($template !== 'classic') {
+        $response->assertSee('invoice-doc--'.$template, false);
+    }
+
+    expect(Invoice::query()->count())->toBe($before)
+        ->and(app(ThemeManager::class)->config()->string('invoices.template'))->toBe('classic');
+})->with('invoice templates');
+
+test('invoice preview requires theme permission', function () {
+    $staff = $this->createStaff(permissions: ['admin.access']);
+
+    $this->actingAs($staff)
+        ->get(route('admin.appearance.invoice-preview'))
+        ->assertForbidden();
 });

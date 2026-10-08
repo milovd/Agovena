@@ -21,4 +21,19 @@ return [
     'document_title' => 'Factuur',
     'status_label' => 'Status',
     'details' => 'Gegevens',
+
+    // Voorbeeldfactuur voor de sjabloonweergave in Admin.
+    'preview' => [
+        'customer' => 'Voorbeeldklant',
+        'company' => 'Voorbeeldbedrijf B.V.',
+        'street' => 'Voorbeeldstraat 1',
+        'city' => 'Amsterdam',
+        'vat_label' => 'Btw-nummer',
+        'tax_name' => 'Btw 21%',
+        'item' => 'Voorbeeldproduct',
+        'option_label' => 'Maat',
+        'option_value' => 'Groot',
+        'service' => 'Installatieservice',
+        'discount' => 'Welkomstkorting',
+    ],
 ];
