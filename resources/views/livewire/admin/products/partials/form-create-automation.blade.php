@@ -18,11 +18,13 @@
                         <select id="create-provisioning-server" class="ag-select" wire:model.live="provisioningServerId" required>
                             <option value="">{{ __('admin.products.automation.select_server') }}</option>
                             @foreach ($provisioningServers ?? [] as $server)
-                                <option value="{{ $server->id }}">{{ $server->name }}</option>
+                                <option value="{{ $server->id }}">{{ in_array($server->id, $unconfiguredServerIds ?? [], true) ? __('admin.provider_status.option_not_configured', ['label' => $server->name]) : $server->name }}</option>
                             @endforeach
                         </select>
                         @if (($provisioningServers ?? collect())->isEmpty())
                             <p class="ag-field__hint"><a href="{{ route('admin.provisioning.servers') }}">{{ __('admin.products.automation.configure_server_first') }}</a></p>
+                        @elseif (($unconfiguredServerIds ?? []) !== [])
+                            <p class="ag-field__hint">{{ __('admin.provider_status.picker_hint') }} <a href="{{ route('admin.provisioning.servers') }}">{{ __('admin.products.automation.manage_servers') }}</a></p>
                         @endif
                         @error('provisioningServerId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>

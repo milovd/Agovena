@@ -12,10 +12,12 @@ use App\Agovena\Catalog\Contracts\ProductStock;
 use App\Agovena\Catalog\DeleteProduct;
 use App\Agovena\Catalog\SyncProductCurrencyPrices;
 use App\Agovena\Catalog\UpdateProduct;
+use App\Agovena\Extensions\ExtensionConfigurationStatus;
 use App\Agovena\Extensions\ExtensionSettingDefinition;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisionedProducts;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisioningServers;
 use App\Agovena\Provisioning\ProvisionerRegistry;
+use App\Agovena\Provisioning\ProvisioningServerConfiguration;
 use App\Enums\ProductStatus;
 use App\Models\Category;
 use App\Models\Currency;
@@ -807,6 +809,10 @@ final class Edit extends Component
             $admin->productTabs(),
             static fn ($tab): bool => $tab->permission === null || auth()->user()?->can($tab->permission) === true,
         ));
+        $provisioningServers = collect(app(ProvisionerRegistry::class)->all())
+            ->contains(static fn ($provisioner): bool => $provisioner instanceof ConfiguresProvisioningServers)
+            ? ProvisioningServer::query()->where('is_active', true)->orderBy('name')->get()
+            : collect();
 
         return view('livewire.admin.products.form', [
             'categories' => Category::query()->orderBy('name')->get(),
@@ -822,10 +828,8 @@ final class Edit extends Component
             'providerSettingDefinitions' => $this->providerSettingDefinitions(),
             'domainRegistrars' => $this->domainProviderOptions('Agovena\\Modules\\Domains\\DomainRegistrarRegistry'),
             'domainDnsProviders' => $this->domainProviderOptions('Agovena\\Modules\\Domains\\DomainDnsProviderRegistry'),
-            'provisioningServers' => collect(app(ProvisionerRegistry::class)->all())
-                ->contains(static fn ($provisioner): bool => $provisioner instanceof ConfiguresProvisioningServers)
-                ? ProvisioningServer::query()->where('is_active', true)->orderBy('name')->get()
-                : collect(),
+            'provisioningServers' => $provisioningServers,
+            'unconfiguredServerIds' => app(ProvisioningServerConfiguration::class)->unconfiguredIds($provisioningServers),
             'productTabs' => $productTabs,
         ])->layout('layouts.admin', [
             'title' => __('admin.products.form.edit_title'),
@@ -833,17 +837,20 @@ final class Edit extends Component
         ]);
     }
 
-    /** @return list<array{key: string, capabilities: list<string>}> */
+    /** @return list<array{key: string, capabilities: list<string>, configured: bool}> */
     private function domainProviderOptions(string $registryClass): array
     {
         if (! class_exists($registryClass) || ! app()->bound($registryClass)) {
             return [];
         }
 
+        $configuration = app(ExtensionConfigurationStatus::class);
+
         return collect(app($registryClass)->all())
             ->map(static fn (object $provider): array => [
                 'key' => (string) $provider->key(),
                 'capabilities' => array_values(array_map('strval', $provider->capabilities())),
+                'configured' => $configuration->runtimeIsConfigured($provider),
             ])
             ->values()
             ->all();

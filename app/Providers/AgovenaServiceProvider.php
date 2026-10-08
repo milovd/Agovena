@@ -63,6 +63,7 @@ use App\Agovena\Physical\PhysicalCapability;
 use App\Agovena\Physical\PhysicalServiceProvider;
 use App\Agovena\Physical\ShippingOrderFulfillmentPresenter;
 use App\Agovena\Provisioning\ProvisionerRegistry;
+use App\Agovena\Provisioning\ProvisioningServerConfiguration;
 use App\Agovena\Recurring\RecurringCapability;
 use App\Agovena\Recurring\RecurringServiceProvider;
 use App\Agovena\Settings\SettingsRepository;
@@ -142,6 +143,7 @@ class AgovenaServiceProvider extends ServiceProvider
         $this->app->singleton(ShippingCarrierRegistry::class);
         $this->app->singleton(ExtensionManager::class);
         $this->app->scoped(ExtensionConfigurationStatus::class);
+        $this->app->scoped(ProvisioningServerConfiguration::class);
         $this->app->singleton(ShippingQuoteResolver::class, NullShippingQuoteResolver::class);
         $this->app->singleton(OrderFulfillmentPresenter::class, NullOrderFulfillmentPresenter::class);
         $this->app->singleton(ShippingQuoteResolver::class, ModuleShippingQuoteResolver::class);

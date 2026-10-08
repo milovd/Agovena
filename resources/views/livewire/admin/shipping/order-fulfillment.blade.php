@@ -51,9 +51,12 @@
                                     <label class="ag-field__label">{{ __('shipping::admin.carrier_provider') }}</label>
                                     <select class="ag-input" wire:model="carrier_id">
                                         @foreach ($carriers as $carrier)
-                                            <option value="{{ $carrier['id'] }}">{{ $carrier['label'] }}</option>
+                                            <option value="{{ $carrier['id'] }}">{{ $carrier['configured'] ? $carrier['label'] : __('admin.provider_status.option_not_configured', ['label' => $carrier['label']]) }}</option>
                                         @endforeach
                                     </select>
+                                    @if (collect($carriers)->contains(fn (array $carrier): bool => ! $carrier['configured']))
+                                        <p class="ag-field__hint">{{ __('admin.provider_status.picker_hint') }} <a href="{{ route('admin.extensions.index') }}">{{ __('admin.provider_status.open_extension_settings') }}</a></p>
+                                    @endif
                                 </div>
                                 <button type="button" class="ag-btn ag-btn--primary" wire:click="createCarrierShipment({{ $shipment->id }})">
                                     {{ __('shipping::admin.create_carrier_shipment') }}

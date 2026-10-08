@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Agovena\Physical\Http\Livewire\Admin;
 
+use App\Agovena\Extensions\ExtensionConfigurationStatus;
 use App\Agovena\Physical\Enums\ShipmentStatus;
 use App\Agovena\Physical\Models\Shipment;
 use App\Agovena\Physical\ShipmentService;
@@ -165,10 +166,11 @@ final class OrderFulfillment extends Component
     }
 
     /**
-     * @return list<array{id: string, label: string}>
+     * @return list<array{id: string, label: string, configured: bool}>
      */
     private function availableCarriers(): array
     {
+        $configuration = app(ExtensionConfigurationStatus::class);
         $out = [];
         foreach (app(ShippingCarrierRegistry::class)->all() as $carrier) {
             if (! $carrier instanceof CreatesCarrierShipments) {
@@ -178,6 +180,7 @@ final class OrderFulfillment extends Component
             $out[] = [
                 'id' => $carrier->id(),
                 'label' => Lang::has($label) ? (string) __($label) : $label,
+                'configured' => $configuration->runtimeIsConfigured($carrier),
             ];
         }
 

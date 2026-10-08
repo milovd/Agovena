@@ -12,6 +12,7 @@ use App\Agovena\Extensions\ExtensionSettingDefinition;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisionedProducts;
 use App\Agovena\Provisioning\Contracts\ConfiguresProvisioningServers;
 use App\Agovena\Provisioning\ProvisionerRegistry;
+use App\Agovena\Provisioning\ProvisioningServerConfiguration;
 use App\Enums\ProductStatus;
 use App\Models\Category;
 use App\Models\Currency;
@@ -266,6 +267,12 @@ final class Create extends Component
     public function render(AdminRegistrar $admin)
     {
         $this->authorize('products.create');
+        $provisioningServers = $this->canConfigureProvisioning()
+            ? ProvisioningServer::query()
+                ->where('is_active', true)
+                ->orderBy('name')
+                ->get()
+            : collect();
 
         return view('livewire.admin.products.form', [
             'categories' => Category::query()->orderBy('name')->get(),
@@ -275,12 +282,8 @@ final class Create extends Component
             'availableCapabilities' => app(ProductCapabilityRegistry::class)->available(),
             'canConfigureProvisioning' => $this->canConfigureProvisioning(),
             'providerSettingDefinitions' => $this->providerSettingDefinitions(),
-            'provisioningServers' => $this->canConfigureProvisioning()
-                ? ProvisioningServer::query()
-                    ->where('is_active', true)
-                    ->orderBy('name')
-                    ->get()
-                : collect(),
+            'provisioningServers' => $provisioningServers,
+            'unconfiguredServerIds' => app(ProvisioningServerConfiguration::class)->unconfiguredIds($provisioningServers),
             'productTabs' => [],
         ])->layout('layouts.admin', [
             'title' => __('admin.products.form.create_title'),

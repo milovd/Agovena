@@ -127,20 +127,28 @@
                                 <select id="domainRegistrarKey" class="ag-select" wire:model="domainRegistrarKey">
                                     <option value="">{{ __('admin.products.automation.select_provider') }}</option>
                                     @foreach ($domainRegistrars ?? [] as $provider)
-                                        <option value="{{ $provider['key'] }}">{{ $provider['key'] }} ({{ implode(', ', $provider['capabilities']) }})</option>
+                                        @php($providerLabel = $provider['key'].' ('.implode(', ', $provider['capabilities']).')')
+                                        <option value="{{ $provider['key'] }}">{{ ($provider['configured'] ?? true) ? $providerLabel : __('admin.provider_status.option_not_configured', ['label' => $providerLabel]) }}</option>
                                     @endforeach
                                 </select>
                                 <p class="ag-field__hint">{{ __('admin.products.capabilities.domain_registrar_hint') }}</p>
+                                @if (collect($domainRegistrars ?? [])->contains(fn (array $provider): bool => ! ($provider['configured'] ?? true)))
+                                    <p class="ag-field__hint">{{ __('admin.provider_status.picker_hint') }} <a href="{{ route('admin.extensions.index') }}">{{ __('admin.provider_status.open_extension_settings') }}</a></p>
+                                @endif
                             </div>
                             <div class="ag-field">
                                 <label class="ag-field__label" for="domainDnsProviderKey">{{ __('admin.products.capabilities.domain_dns_provider') }}</label>
                                 <select id="domainDnsProviderKey" class="ag-select" wire:model="domainDnsProviderKey">
                                     <option value="">{{ __('admin.products.automation.select_provider') }}</option>
                                     @foreach ($domainDnsProviders ?? [] as $provider)
-                                        <option value="{{ $provider['key'] }}">{{ $provider['key'] }} ({{ implode(', ', $provider['capabilities']) }})</option>
+                                        @php($providerLabel = $provider['key'].' ('.implode(', ', $provider['capabilities']).')')
+                                        <option value="{{ $provider['key'] }}">{{ ($provider['configured'] ?? true) ? $providerLabel : __('admin.provider_status.option_not_configured', ['label' => $providerLabel]) }}</option>
                                     @endforeach
                                 </select>
                                 <p class="ag-field__hint">{{ __('admin.products.capabilities.domain_dns_provider_hint') }}</p>
+                                @if (collect($domainDnsProviders ?? [])->contains(fn (array $provider): bool => ! ($provider['configured'] ?? true)))
+                                    <p class="ag-field__hint">{{ __('admin.provider_status.picker_hint') }} <a href="{{ route('admin.extensions.index') }}">{{ __('admin.provider_status.open_extension_settings') }}</a></p>
+                                @endif
                             </div>
                             <div class="ag-field">
                                 <label class="ag-field__label" for="domainName">{{ __('admin.products.capabilities.domain_name') }}</label>
@@ -173,9 +181,13 @@
                             <select id="provisioningServerId" class="ag-select" wire:model.live="provisioningServerId">
                                 <option value="">{{ __('admin.products.automation.select_server') }}</option>
                                 @foreach ($provisioningServers ?? [] as $server)
-                                    <option value="{{ $server->id }}">{{ $server->name }} - {{ $server->provider_key }}</option>
+                                    @php($serverLabel = $server->name.' - '.$server->provider_key)
+                                    <option value="{{ $server->id }}">{{ in_array($server->id, $unconfiguredServerIds ?? [], true) ? __('admin.provider_status.option_not_configured', ['label' => $serverLabel]) : $serverLabel }}</option>
                                 @endforeach
                             </select>
+                            @if (($unconfiguredServerIds ?? []) !== [])
+                                <p class="ag-field__hint">{{ __('admin.provider_status.picker_hint') }}</p>
+                            @endif
                             <p class="ag-field__hint"><a href="{{ route('admin.provisioning.servers') }}">{{ __('admin.products.automation.manage_servers') }}</a></p>
                             @error('provisioningServerId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                         </div>

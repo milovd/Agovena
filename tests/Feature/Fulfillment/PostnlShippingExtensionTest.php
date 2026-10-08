@@ -20,6 +20,7 @@ use App\Agovena\Payments\RecordRefund;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Physical\Enums\ShipmentStatus;
 use App\Agovena\Physical\Enums\ShippingMethodType;
+use App\Agovena\Physical\Http\Livewire\Admin\OrderFulfillment;
 use App\Agovena\Physical\Models\Shipment;
 use App\Agovena\Physical\Models\ShippingMethod;
 use App\Agovena\Physical\ShipmentService;
@@ -37,6 +38,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 use Tests\Support\FakePostnlApi;
 
@@ -365,6 +367,29 @@ test('rate unavailable returns no quotes so manual shipping methods remain', fun
     $api->rateUnavailable = true;
     $shipment = paidShippableOrder();
     expect(app(PostnlCarrier::class)->quote($shipment->order))->toBe([]);
+});
+
+test('the carrier picker labels a carrier whose extension is not configured', function () {
+    enablePostnl();
+    $shipment = paidShippableOrder();
+    app(ExtensionSettingsRepository::class)->forget('postnl', 'customer_number');
+    $component = fn () => Livewire::actingAs($this->createStaff())
+        ->test(OrderFulfillment::class, ['order' => $shipment->order]);
+
+    expect($shipment->status)->toBe(ShipmentStatus::Pending);
+    $component()
+        ->assertSee(__('admin.provider_status.option_not_configured', ['label' => 'PostNL']))
+        ->assertSee(__('admin.provider_status.picker_hint'))
+        ->assertSee(route('admin.extensions.index'), false)
+        ->assertDontSee('test-postnl-key-not-real');
+
+    app(ExtensionSettingsRepository::class)->set('postnl', 'customer_number', '12345678');
+    app()->forgetScopedInstances();
+
+    $component()
+        ->assertSee('PostNL')
+        ->assertDontSee(__('admin.provider_status.option_not_configured', ['label' => 'PostNL']))
+        ->assertDontSee(__('admin.provider_status.picker_hint'));
 });
 
 test('checkout composes merchant rates with live carrier quotes and keeps manual fallback', function () {
