@@ -127,7 +127,8 @@ test('web installation creates owner settings currency theme and lock', function
         ->and($owner->hasRole('owner'))->toBeTrue()
         ->and($owner->can('users.view'))->toBeTrue()
         ->and($owner->can('roles.view'))->toBeTrue()
-        ->and(Hash::check('Secret-Pass-123', $owner->password))->toBeTrue();
+        ->and(Hash::check('Secret-Pass-123', $owner->password))->toBeTrue()
+        ->and($owner->hasVerifiedEmail())->toBeTrue();
 
     $settings = app(SettingsRepository::class);
     expect($settings->get('general', 'site_name'))->toBe('Demo Shop')
@@ -237,7 +238,7 @@ test('cli installation succeeds', function () {
     ])->assertSuccessful();
 
     expect(app(InstallationState::class)->installed())->toBeTrue();
-    expect(User::query()->where('email', 'cli@example.com')->exists())->toBeTrue();
+    expect(User::query()->where('email', 'cli@example.com')->first()?->hasVerifiedEmail())->toBeTrue();
     expect(app(SettingsRepository::class)->get('general', 'base_currency'))->toBe('GBP');
 });
 
