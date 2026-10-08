@@ -51,6 +51,14 @@ final class MaintenanceMode
             }
         }
 
+        return $this->decode($encoded);
+    }
+
+    /**
+     * A cache entry written by something else, or corrupted, counts as off.
+     */
+    private function decode(mixed $encoded): MaintenanceState
+    {
         if (! is_string($encoded)) {
             return MaintenanceState::off();
         }
