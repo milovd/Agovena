@@ -42,7 +42,7 @@ test('core physical navigation is grouped under fulfillment', function () {
 
     expect($inventory)->not->toBeNull()
         ->and($inventory->group)->toBe('admin.nav_groups.fulfillment')
-        ->and(__('admin.nav_groups.fulfillment'))->toBe('Stock & delivery');
+        ->and(__('admin.nav_groups.fulfillment'))->toBe('Fulfillment');
 });
 
 test('core availability preserves inventory stock rows', function () {

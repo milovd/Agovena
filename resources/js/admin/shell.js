@@ -8,6 +8,7 @@ export function registerShellComponents(Alpine) {
             const active = this.$root.dataset.active === 'true';
             const stored = key ? localStorage.getItem(key) : null;
             if (active) this.open = true;
+            else if (stored === '1') this.open = true;
             else if (stored === '0') this.open = false;
             if (key) this.$watch('open', (value) => localStorage.setItem(key, value ? '1' : '0'));
         },

@@ -1,7 +1,7 @@
 <div class="admin-page">
     <div class="admin-page__header">
         <div>
-            <h2 class="admin-page__heading">{{ __('admin.roles.title') }}</h2>
+            <h1 class="admin-page__heading">{{ __('admin.roles.title') }}</h1>
             <p class="admin-page__lede">{{ __('admin.roles.lede') }}</p>
         </div>
         @can('roles.create')
@@ -11,7 +11,7 @@
 
     @if ($showForm)
         <form wire:submit="save" class="admin-panel ag-form" novalidate>
-            <h3 class="admin-panel__title">{{ $editingId ? __('admin.roles.edit') : __('admin.roles.new') }}</h3>
+            <h2 class="admin-panel__title">{{ $editingId ? __('admin.roles.edit') : __('admin.roles.new') }}</h2>
 
             <div class="ag-field">
                 <label class="ag-field__label" for="role-name">{{ __('admin.roles.name') }}</label>

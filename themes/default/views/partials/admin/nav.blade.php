@@ -17,40 +17,33 @@
 @foreach ($groups as $group => $nodes)
     @php
         $groupSlug = \Illuminate\Support\Str::slug($group);
-        $isOverview = $group === 'admin.nav_groups.overview';
         $groupHasActive = $nodes->contains(fn (AdminNavigationNode $node) => $node->isActive());
     @endphp
     <div
         class="admin-nav__section"
-        @if (! $isOverview)
-            x-data="agAdminNavGroup"
-            data-nav-key="agovena.admin.nav.v6.{{ $groupSlug }}"
-            data-open="true"
-            data-active="{{ $groupHasActive ? 'true' : 'false' }}"
-            :class="{ 'admin-nav__section--collapsed': !open }"
-        @endif
+        x-data="agAdminNavGroup"
+        data-nav-key="agovena.admin.nav.v6.{{ $groupSlug }}"
+        data-open="{{ in_array($group, ['admin.nav_groups.overview', 'admin.nav_groups.catalog'], true) ? 'true' : 'false' }}"
+        data-active="{{ $groupHasActive ? 'true' : 'false' }}"
+        :class="{ 'admin-nav__section--collapsed': !open }"
     >
-        @if ($isOverview)
-            <p class="admin-nav__group admin-nav__group--static" id="nav-group-{{ $groupSlug }}">{{ __($group) }}</p>
-        @else
-            <button
-                type="button"
-                class="admin-nav__group"
-                id="nav-group-{{ $groupSlug }}"
-                @click="toggle()"
-                :aria-expanded="open.toString()"
-                aria-controls="nav-group-panel-{{ $groupSlug }}"
-            >
-                <span class="admin-nav__group-label">{{ __($group) }}</span>
-                <x-ag.icon name="chevron-down" class="admin-nav__group-chevron" :size="14" />
-            </button>
-        @endif
+        <button
+            type="button"
+            class="admin-nav__group"
+            id="nav-group-{{ $groupSlug }}"
+            @click="toggle()"
+            :aria-expanded="open.toString()"
+            aria-controls="nav-group-panel-{{ $groupSlug }}"
+        >
+            <span class="admin-nav__group-label">{{ __($group) }}</span>
+            <x-ag.icon name="chevron-down" class="admin-nav__group-chevron" :size="14" />
+        </button>
         <ul
             id="nav-group-panel-{{ $groupSlug }}"
             class="admin-nav__list"
             role="list"
             aria-labelledby="nav-group-{{ $groupSlug }}"
-            @if (! $isOverview) x-show="open" @endif
+            x-show="open"
         >
             @foreach ($nodes as $node)
                 @include('partials.admin.nav-node', ['node' => $node])

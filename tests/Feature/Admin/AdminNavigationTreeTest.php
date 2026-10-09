@@ -97,11 +97,83 @@ test('admin sidebar renders grouped collapsible sections with sibling links', fu
         ->assertSee(__('admin.nav.categories'), false)
         ->assertSee(__('admin.nav_groups.catalog'), false)
         ->assertSee(__('admin.nav_groups.sales'), false)
-        ->assertSee(__('admin.nav_groups.appearance'), false)
+        ->assertSee(__('admin.nav_groups.online_store'), false)
         ->getContent();
 
     expect($html)->toContain('agovena.admin.nav.v6.')
+        ->and($html)->toMatch('/<button[^>]*id="nav-group-[^"]*overview"/s')
+        ->and($html)->not->toContain('admin-nav__group--static')
         ->and($html)->not->toContain('admin-nav__toggle');
+});
+
+test('the first Admin visit shows overview and catalog and keeps the other groups folded', function () {
+    $html = $this->actingAs($this->createStaff())
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->getContent();
+
+    expect($html)->toMatch('/data-nav-key="agovena\.admin\.nav\.v6\.adminnav-groupsoverview"\s+data-open="true"/s')
+        ->and($html)->toMatch('/data-nav-key="agovena\.admin\.nav\.v6\.adminnav-groupscatalog"\s+data-open="true"/s')
+        ->and($html)->toMatch('/data-nav-key="agovena\.admin\.nav\.v6\.adminnav-groupssales"\s+data-open="false"/s');
+});
+
+test('the real Admin groups registered destinations into the approved nine sections', function () {
+    $items = collect(app(AdminRegistrar::class)->navigationItems());
+    $groups = AdminNavigation::groupedTree($items);
+
+    expect(AdminNavigation::groupOrder())->toBe([
+        'admin.nav_groups.overview',
+        'admin.nav_groups.catalog',
+        'admin.nav_groups.sales',
+        'admin.nav_groups.customers',
+        'admin.nav_groups.fulfillment',
+        'admin.nav_groups.online_store',
+        'admin.nav_groups.integrations',
+        'admin.nav_groups.monitoring',
+        'admin.nav_groups.system',
+    ])->and($groups->keys()->all())->toBe(AdminNavigation::groupOrder())
+        ->and($groups->flatten(1)->pluck('item.id')->sort()->values()->all())
+        ->toBe($items->pluck('id')->sort()->values()->all())
+        ->and($groups->get('admin.nav_groups.customers')->pluck('item.id'))->toContain('tickets')
+        ->and($groups->get('admin.nav_groups.integrations')->pluck('item.id'))->toContain('modules', 'webhooks')
+        ->and($groups->get('admin.nav_groups.monitoring')->pluck('item.id'))->toContain('audit', 'failed-jobs')
+        ->and($groups->get('admin.nav_groups.online_store')->pluck('item.id'))->toContain('pages');
+});
+
+test('legacy Module group keys resolve before grouping without rewriting their registrations', function () {
+    $items = collect([
+        new NavigationItem(id: 'third-party-service', label: 'Service', group: 'admin.nav_groups.operations', href: '/admin/service'),
+        new NavigationItem(id: 'third-party-settings', label: 'Settings', group: 'admin.nav_groups.configuration', href: '/admin/settings'),
+        new NavigationItem(id: 'third-party-support', label: 'Support', group: 'admin.nav_groups.support', href: '/admin/support'),
+        new NavigationItem(id: 'third-party-store', label: 'Store', group: 'admin.nav_groups.appearance', href: '/admin/store'),
+    ]);
+    $groups = AdminNavigation::groupedTree($items);
+
+    expect($groups->keys()->all())->toBe([
+        'admin.nav_groups.customers',
+        'admin.nav_groups.fulfillment',
+        'admin.nav_groups.online_store',
+        'admin.nav_groups.system',
+    ])->and($groups->flatten(1)->pluck('item.id')->sort()->values()->all())
+        ->toBe($items->pluck('id')->sort()->values()->all())
+        ->and($items[0]->group)->toBe('admin.nav_groups.operations');
+});
+
+test('new navigation groups have real English and Dutch labels', function () {
+    expect(__('admin.nav_groups.fulfillment', [], 'en'))->toBe('Fulfillment')
+        ->and(__('admin.nav_groups.fulfillment', [], 'nl'))->toBe('Levering')
+        ->and(__('admin.nav_groups.online_store', [], 'en'))->toBe('Online store')
+        ->and(__('admin.nav_groups.online_store', [], 'nl'))->toBe('Webshop')
+        ->and(__('admin.nav_groups.integrations', [], 'en'))->toBe('Integrations')
+        ->and(__('admin.nav_groups.integrations', [], 'nl'))->toBe('Integraties')
+        ->and(__('admin.nav_groups.monitoring', [], 'en'))->toBe('Logs & monitoring')
+        ->and(__('admin.nav_groups.monitoring', [], 'nl'))->toBe('Logs & monitoring');
+});
+
+test('a custom third-party group stays visible under its own key', function () {
+    $item = new NavigationItem(id: 'third-party-custom', label: 'Special', group: 'module::admin.custom_group', href: '/admin/custom');
+
+    expect(AdminNavigation::groupedTree(collect([$item]))->keys()->all())->toBe(['module::admin.custom_group']);
 });
 
 test('core commerce links remain in the sidebar without retired module rows', function () {

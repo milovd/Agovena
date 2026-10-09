@@ -424,12 +424,40 @@ body {
   box-shadow: var(--ag-focus-ring);
 }
 
-.admin-topbar__title {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 650;
-  letter-spacing: -0.02em;
+.admin-topbar__breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+  min-width: 0;
+  font-size: var(--ag-font-size-sm);
   color: var(--ag-color-text-muted);
+}
+
+.admin-topbar__breadcrumb a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.admin-topbar__breadcrumb a:hover {
+  color: var(--ag-color-primary);
+  text-decoration: underline;
+}
+
+.admin-topbar__breadcrumb a:focus-visible {
+  outline: 2px solid var(--ag-color-primary);
+  outline-offset: 2px;
+}
+
+.admin-topbar__breadcrumb .ag-icon {
+  flex-shrink: 0;
+}
+
+.admin-topbar__breadcrumb [aria-current="page"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--ag-color-text);
 }
 
 .admin-topbar__actions {

@@ -103,7 +103,11 @@
         <div class="admin-main">
             <header class="admin-topbar">
                 <div class="admin-topbar__start">
-                    <h1 class="admin-topbar__title">{{ $title ?? __('admin.fallback_title') }}</h1>
+                    <nav class="admin-topbar__breadcrumb" aria-label="{{ __('admin.breadcrumb_aria') }}">
+                        <a href="{{ route('admin.dashboard') }}">{{ __('admin.fallback_title') }}</a>
+                        <x-ag.icon name="chevron-right" :size="14" />
+                        <span aria-current="page">{{ $title ?? __('admin.fallback_title') }}</span>
+                    </nav>
                 </div>
                 <div class="admin-topbar__actions">
                     <div

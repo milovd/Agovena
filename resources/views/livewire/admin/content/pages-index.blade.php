@@ -1,7 +1,7 @@
 <div class="admin-page">
     <header class="admin-page__header">
         <div>
-            <h2 class="admin-page__heading">{{ __('admin.content.pages.title') }}</h2>
+            <h1 class="admin-page__heading">{{ __('admin.content.pages.title') }}</h1>
             <p class="admin-page__lede">{{ __('admin.content.pages.lede') }}</p>
         </div>
     </header>
@@ -12,7 +12,7 @@
 
     <div class="ag-split">
         <div class="admin-panel">
-            <h3 class="admin-panel__title">{{ $editingId ? __('admin.content.pages.edit') : __('admin.content.pages.new') }}</h3>
+            <h2 class="admin-panel__title">{{ $editingId ? __('admin.content.pages.edit') : __('admin.content.pages.new') }}</h2>
             <form class="ag-form" wire:submit="save">
                 <div class="ag-field">
                     <label class="ag-field__label" for="page-title">{{ __('common.title') }}</label>

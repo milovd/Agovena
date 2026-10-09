@@ -37,6 +37,38 @@ final class AdminNavigation
         'plan-changes',
     ];
 
+    /** @var array<string, string> */
+    private const DISPLAY_GROUP_BY_ID = [
+        'inventory-stocks' => 'catalog',
+        'subscriptions' => 'sales',
+        'plan-changes' => 'sales',
+        'tickets' => 'customers',
+        'provisioning' => 'fulfillment',
+        'domains' => 'fulfillment',
+        'events' => 'fulfillment',
+        'events-checkin' => 'fulfillment',
+        'modules' => 'integrations',
+        'extensions' => 'integrations',
+        'webhooks' => 'integrations',
+        'api-tokens' => 'integrations',
+        'audit' => 'monitoring',
+        'email-log' => 'monitoring',
+        'cron-statistics' => 'monitoring',
+        'failed-jobs' => 'monitoring',
+        'notification-templates' => 'system',
+    ];
+
+    /** @var array<string, string> */
+    private const LEGACY_GROUPS = [
+        'admin.nav_groups.appearance' => 'online_store',
+        'admin.nav_groups.operations' => 'fulfillment',
+        'admin.nav_groups.commerce' => 'catalog',
+        'admin.nav_groups.services' => 'fulfillment',
+        'admin.nav_groups.support' => 'customers',
+        'admin.nav_groups.configuration' => 'system',
+        'admin.nav_groups.administration' => 'system',
+    ];
+
     /**
      * Canonical sidebar group order (translation keys).
      *
@@ -50,15 +82,10 @@ final class AdminNavigation
             'admin.nav_groups.sales',
             'admin.nav_groups.customers',
             'admin.nav_groups.fulfillment',
-            'admin.nav_groups.operations',
-            'admin.nav_groups.appearance',
+            'admin.nav_groups.online_store',
+            'admin.nav_groups.integrations',
+            'admin.nav_groups.monitoring',
             'admin.nav_groups.system',
-            // Legacy aliases kept so older Module registrations still sort sensibly.
-            'admin.nav_groups.commerce',
-            'admin.nav_groups.services',
-            'admin.nav_groups.support',
-            'admin.nav_groups.configuration',
-            'admin.nav_groups.administration',
         ];
     }
 
@@ -95,7 +122,7 @@ final class AdminNavigation
         $order = array_flip(self::groupOrder());
 
         return self::nest($items)->groupBy(
-            static fn (AdminNavigationNode $node): string => $node->item->group,
+            static fn (AdminNavigationNode $node): string => self::displayGroup($node->item),
         )->sortBy(function (Collection $nodes, string $group) use ($order): int {
             return $order[$group] ?? (1000 + $nodes->min(
                 static fn (AdminNavigationNode $node): int => $node->item->sort,
@@ -134,12 +161,23 @@ final class AdminNavigation
      */
     public static function groupItems(Collection $items): Collection
     {
-        $grouped = $items->groupBy(fn (NavigationItem $item): string => $item->group);
+        $grouped = $items->groupBy(fn (NavigationItem $item): string => self::displayGroup($item));
         $order = array_flip(self::groupOrder());
 
         return $grouped->sortBy(function (Collection $groupItems, string $group) use ($order): int {
             return $order[$group] ?? (1000 + $groupItems->min(fn (NavigationItem $item): int => $item->sort));
         });
+    }
+
+    private static function displayGroup(NavigationItem $item): string
+    {
+        if (isset(self::DISPLAY_GROUP_BY_ID[$item->id])) {
+            return 'admin.nav_groups.'.self::DISPLAY_GROUP_BY_ID[$item->id];
+        }
+
+        $legacyGroup = self::LEGACY_GROUPS[$item->group] ?? null;
+
+        return $legacyGroup === null ? $item->group : 'admin.nav_groups.'.$legacyGroup;
     }
 
     public static function isActive(?string $href): bool

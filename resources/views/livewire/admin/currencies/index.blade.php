@@ -1,7 +1,7 @@
 <div class="admin-page">
     <div class="admin-page__header">
         <div>
-            <h2 class="admin-page__heading">{{ __('admin.currencies.title') }}</h2>
+            <h1 class="admin-page__heading">{{ __('admin.currencies.title') }}</h1>
             <p class="admin-page__lede">
                 {{ __('admin.currencies.lede') }}
                 {{ __('admin.currencies.base_currency') }}
@@ -30,7 +30,7 @@
 
     @if ($showForm)
         <form wire:submit="save" class="admin-panel ag-form" novalidate>
-            <h3 class="admin-panel__title">{{ $editingId ? __('admin.currencies.edit') : __('admin.currencies.new') }}</h3>
+            <h2 class="admin-panel__title">{{ $editingId ? __('admin.currencies.edit') : __('admin.currencies.new') }}</h2>
             <div class="ag-field">
                 <label class="ag-field__label" for="currency-code">{{ __('admin.currencies.code') }}</label>
                 <input id="currency-code" class="ag-input" type="text" maxlength="3" wire:model="code" required @disabled($editingId !== null)>

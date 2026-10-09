@@ -22,6 +22,25 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
+test('Admin pages have one content H1 and the topbar acts as a breadcrumb', function () {
+    $staff = $this->createStaff();
+
+    foreach (['admin.dashboard', 'admin.appearance.pages', 'admin.appearance.navigation', 'admin.currencies.index', 'admin.roles.index', 'admin.referrals.index'] as $name) {
+        $html = $this->actingAs($staff)->get(route($name))->assertOk()->getContent();
+
+        expect($html)->toMatch('/<nav\s+class="admin-topbar__breadcrumb"[^>]*>/s')
+            ->and($html)->toMatch('/<main\b[^>]*>.*?<h1\b[^>]*class="admin-page__heading"/s')
+            ->and(preg_match_all('/<h1\b/i', $html))->toBe(1);
+    }
+});
+
+test('Admin breadcrumb has a dedicated responsive shell style', function () {
+    $css = file_get_contents(resource_path('css/admin/components/_admin-shell.css'));
+
+    expect($css)->toContain('.admin-topbar__breadcrumb {')
+        ->and($css)->toContain('.admin-topbar__breadcrumb [aria-current="page"] {');
+});
+
 test('admin shell uses account icon trigger and leave admin action', function () {
     $staff = $this->createStaff();
 

@@ -13,7 +13,7 @@
                 {{ $back }}
             </div>
         @endisset
-        <h2 class="admin-page__heading">{{ $heading }}</h2>
+        <h1 class="admin-page__heading">{{ $heading }}</h1>
         @if ($lede || ! $slot->isEmpty())
             <div class="admin-page__intro">
                 @if ($lede)

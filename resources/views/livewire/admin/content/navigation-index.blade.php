@@ -11,7 +11,7 @@
 <div class="admin-page">
     <header class="admin-page__header">
         <div>
-            <h2 class="admin-page__heading">{{ __('admin.content.navigation.title') }}</h2>
+            <h1 class="admin-page__heading">{{ __('admin.content.navigation.title') }}</h1>
             <p class="admin-page__lede">{{ __('admin.content.navigation.lede') }}</p>
         </div>
     </header>
@@ -32,7 +32,7 @@
 
     <div class="ag-split">
         <div class="admin-panel">
-            <h3 class="admin-panel__title">{{ __('admin.content.navigation.add_item_to', ['menu' => $menuName($menu)]) }}</h3>
+            <h2 class="admin-panel__title">{{ __('admin.content.navigation.add_item_to', ['menu' => $menuName($menu)]) }}</h2>
             <form class="ag-form" wire:submit="addItem">
                 <div class="ag-field">
                     <label class="ag-field__label" for="nav-label">{{ __('admin.content.navigation.label') }}</label>
