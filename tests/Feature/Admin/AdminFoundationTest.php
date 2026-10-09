@@ -20,6 +20,7 @@ use App\Models\Product;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Livewire\Features\SupportLockedProperties\CannotUpdateLockedPropertyException;
 use Livewire\Livewire;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\Support\CreatesStaff;
@@ -175,6 +176,34 @@ test('api token completion handlers cannot bypass recent password confirmation',
     expect($staff->fresh()->tokens()->where('name', 'bypass-create')->exists())->toBeFalse()
         ->and($staff->fresh()->tokens()->whereKey($token->id)->exists())->toBeTrue()
         ->and($creation->get('pendingPasswordAction'))->toBe('completeTokenCreation');
+});
+
+test('the browser cannot replace the pending password action', function () {
+    $staff = $this->createStaff([], ['api.tokens']);
+
+    expect(fn () => Livewire::actingAs($staff)
+        ->test(ApiTokens::class)
+        ->set('token_name', 'pending-create')
+        ->call('createToken')
+        ->set('pendingPasswordAction', 'completeTokenRevocation'))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+
+    expect($staff->fresh()->tokens()->where('name', 'pending-create')->exists())->toBeFalse();
+});
+
+test('the browser cannot replace the pending password action arguments', function () {
+    $staff = $this->createStaff([], ['api.tokens']);
+    $original = $staff->createToken('original')->accessToken;
+    $other = $staff->createToken('other')->accessToken;
+
+    expect(fn () => Livewire::actingAs($staff)
+        ->test(ApiTokens::class)
+        ->call('revokeToken', $original->id)
+        ->set('pendingPasswordArgs.tokenId', $other->id))
+        ->toThrow(CannotUpdateLockedPropertyException::class);
+
+    expect($staff->fresh()->tokens()->whereKey($original->id)->exists())->toBeTrue()
+        ->and($staff->fresh()->tokens()->whereKey($other->id)->exists())->toBeTrue();
 });
 
 test('api token revocation completes after recent password confirmation', function () {

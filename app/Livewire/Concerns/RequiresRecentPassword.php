@@ -8,6 +8,7 @@ use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 
 trait RequiresRecentPassword
 {
@@ -15,9 +16,11 @@ trait RequiresRecentPassword
 
     public string $recentPassword = '';
 
+    #[Locked]
     public ?string $pendingPasswordAction = null;
 
     /** @var array<string, mixed> */
+    #[Locked]
     public array $pendingPasswordArgs = [];
 
     /**
