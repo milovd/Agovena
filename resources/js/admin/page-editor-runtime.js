@@ -12,6 +12,6 @@ export function pageEditorExtensions() {
         horizontalRule: false,
         strike: false,
         underline: false,
-        link: { openOnClick: false, autolink: false, defaultProtocol: 'https' },
+        link: { openOnClick: false, autolink: false, defaultProtocol: 'https', HTMLAttributes: { target: null } },
     }), Image.configure({ allowBase64: false })];
 }

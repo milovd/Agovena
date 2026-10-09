@@ -53,10 +53,19 @@ export function registerPageEditorComponents(Alpine) {
         setLink() {
             const url = window.prompt(this.$root.dataset.linkPrompt);
             if (!url) return;
-            this.editor.chain().focus().setLink({ href: url, target: '_blank' }).run();
+            const newTab = window.confirm(this.$root.dataset.linkNewTabPrompt);
+            this.editor.chain().focus().setLink({ href: url, target: newTab ? '_blank' : null }).run();
         },
         insertImage(url, alt) {
             if (!/^\/storage\/pages\/[A-Za-z0-9]{40}\.(?:jpg|jpeg|png|webp|gif)$/.test(url) || !alt) return;
+            if (this.mode === 'html') {
+                const escapedAlt = alt.replace(/[&<>"']/g, (char) => ({
+                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+                })[char]);
+                this.content += `<img src="${url}" alt="${escapedAlt}">`;
+                this.$wire.set('body', this.content, false);
+                return;
+            }
             this.editor.chain().focus().setImage({ src: url, alt }).run();
         },
     }));

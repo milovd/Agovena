@@ -38,7 +38,19 @@ final class PageBodySanitizer
 
     public function sanitize(string $html): string
     {
-        return $this->sanitizer->sanitize($html);
+        $safe = $this->sanitizer->sanitize($html);
+
+        // The allowlist filters attributes, but it cannot require both a source and descriptive alt text.
+        return preg_replace_callback('~<img\\b[^>]*>~i', static function (array $match): string {
+            if (preg_match('~\\bsrc="/storage/pages/[A-Za-z0-9]{40}\\.(?:jpg|jpeg|png|webp|gif)"~i', $match[0]) !== 1
+                || preg_match('~\\balt="([^"]*)"~i', $match[0], $alt) !== 1) {
+                return '';
+            }
+
+            $description = html_entity_decode($alt[1], ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+            return preg_match('/[^\\p{Z}\\p{C}]/u', $description) === 1 ? $match[0] : '';
+        }, $safe) ?? '';
     }
 
     public function fromPlainText(string $text): string

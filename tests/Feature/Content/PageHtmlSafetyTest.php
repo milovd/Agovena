@@ -29,6 +29,19 @@ it('allows only uploaded local page images and preserves their alt text', functi
         ->not->toContain('width=', 'evil.example', '../secrets.png');
 });
 
+it('removes images missing an accessible description or a safe source after sanitization', function (): void {
+    $valid = '/storage/pages/'.str_repeat('a', 40).'.png';
+    $safe = app(PageBodySanitizer::class)->sanitize('<p>Keep this</p>'
+        .'<img src="'.$valid.'">'
+        .'<img src="'.$valid.'" alt="  ">'
+        .'<img src="'.$valid.'" alt="&nbsp;">'
+        .'<img src="https://example.com/track.png" alt="Tracker">'
+        .'<img src="'.$valid.'" alt="An accessible chart">');
+    expect($safe)->toContain('<p>Keep this</p>', 'alt="An accessible chart"')
+        ->not->toContain('Tracker', 'alt="  "', 'alt="&nbsp;"');
+    expect(substr_count($safe, '<img'))->toBe(1);
+});
+
 it('keeps existing plain text escaped and sanitizes only explicitly marked HTML on the storefront', function (): void {
     $plain = Page::query()->create([
         'title' => 'Plain', 'slug' => 'plain', 'body' => '<script>alert(1)</script>'."\n".'Second line', 'status' => 'published',

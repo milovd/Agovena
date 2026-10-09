@@ -17,6 +17,10 @@ final class PagesIndex extends Component
 {
     use WithPagination;
 
+    public string $search = '';
+
+    public string $publicationFilter = '';
+
     public string $title = '';
 
     public string $slug = '';
@@ -26,6 +30,16 @@ final class PagesIndex extends Component
     public string $status = 'draft';
 
     public ?int $editingId = null;
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPublicationFilter(): void
+    {
+        $this->resetPage();
+    }
 
     public function create(): void
     {
@@ -86,8 +100,16 @@ final class PagesIndex extends Component
     {
         $this->authorize('pages.view');
 
+        $search = trim($this->search);
+
         return view('livewire.admin.content.pages-index', [
-            'pages' => Page::query()->orderBy('title')->paginate(20),
+            'pages' => Page::query()
+                ->when($search !== '', fn ($query) => $query->where(fn ($match) => $match
+                    ->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('slug', 'like', '%'.$search.'%')))
+                ->when(in_array($this->publicationFilter, ['draft', 'published'], true),
+                    fn ($query) => $query->where('status', $this->publicationFilter))
+                ->orderBy('title')->orderBy('id')->paginate(20),
         ])->layout('layouts.admin', [
             'title' => __('admin.content.pages.title'),
         ]);
