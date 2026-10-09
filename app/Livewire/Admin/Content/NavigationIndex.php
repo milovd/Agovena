@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Content;
 
+use App\Agovena\Content\MenuLinkTarget;
 use App\Models\Category;
 use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\Page;
+use Closure;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
@@ -45,7 +47,17 @@ final class NavigationIndex extends Component
         $data = $this->validate([
             'label' => ['required', 'string', 'max:120'],
             'type' => ['required', Rule::in(['url', 'page', 'category'])],
-            'url' => ['nullable', 'required_if:type,url', 'string', 'max:500'],
+            'url' => [
+                'nullable',
+                'required_if:type,url',
+                'string',
+                'max:500',
+                function (string $attribute, mixed $value, Closure $fail): void {
+                    if ($this->type === 'url' && is_string($value) && $value !== '' && ! MenuLinkTarget::isAllowed($value)) {
+                        $fail(__('admin.content.navigation.url_unsafe'));
+                    }
+                },
+            ],
             'page_id' => ['nullable', 'required_if:type,page', 'exists:pages,id'],
             'category_id' => ['nullable', 'required_if:type,category', 'exists:categories,id'],
         ]);

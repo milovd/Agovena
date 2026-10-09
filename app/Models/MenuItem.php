@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Agovena\Content\MenuLinkTarget;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -61,7 +62,7 @@ class MenuItem extends Model
     public function resolvedUrl(): ?string
     {
         return match ($this->type) {
-            'url' => $this->url,
+            'url' => MenuLinkTarget::isAllowed((string) $this->url) ? $this->url : null,
             'page' => $this->page?->isPublished()
                 ? route('storefront.page', $this->page->slug)
                 : null,

@@ -761,6 +761,7 @@ return [
             'target' => 'Target',
             'url' => 'URL',
             'url_placeholder' => '/ or https://…',
+            'url_unsafe' => 'Use a path starting with /, an #anchor, an http(s) address, mailto: or tel:.',
             'add_item' => 'Add item',
             'item_added' => 'Menu item added.',
             'item_removed' => 'Menu item removed.',

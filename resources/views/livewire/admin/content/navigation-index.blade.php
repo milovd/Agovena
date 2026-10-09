@@ -37,6 +37,7 @@
                 <div class="ag-field">
                     <label class="ag-field__label" for="nav-label">{{ __('admin.content.navigation.label') }}</label>
                     <input id="nav-label" class="ag-input" type="text" wire:model="label" required>
+                    @error('label') <p class="ag-field__error">{{ $message }}</p> @enderror
                 </div>
                 <div class="ag-field">
                     <label class="ag-field__label" for="nav-type">{{ __('admin.content.navigation.type') }}</label>
@@ -50,6 +51,7 @@
                     <div class="ag-field">
                         <label class="ag-field__label" for="nav-url">{{ __('admin.content.navigation.url') }}</label>
                         <input id="nav-url" class="ag-input" type="text" wire:model="url" placeholder="{{ __('admin.content.navigation.url_placeholder') }}">
+                        @error('url') <p class="ag-field__error">{{ $message }}</p> @enderror
                     </div>
                 @elseif ($type === 'page')
                     <div class="ag-field">
@@ -60,6 +62,7 @@
                                 <option value="{{ $page->id }}">{{ $page->title }}</option>
                             @endforeach
                         </select>
+                        @error('page_id') <p class="ag-field__error">{{ $message }}</p> @enderror
                     </div>
                 @else
                     <div class="ag-field">
@@ -70,6 +73,7 @@
                                 <option value="{{ $category->id }}">{{ $category->name }}</option>
                             @endforeach
                         </select>
+                        @error('category_id') <p class="ag-field__error">{{ $message }}</p> @enderror
                     </div>
                 @endif
                 <button type="submit" class="ag-btn ag-btn--primary">{{ __('admin.content.navigation.add_item') }}</button>

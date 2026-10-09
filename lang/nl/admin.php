@@ -761,6 +761,7 @@ return [
             'target' => 'Doel',
             'url' => 'URL',
             'url_placeholder' => '/ of https://…',
+            'url_unsafe' => 'Gebruik een pad dat met / begint, een #anker, een http(s)-adres, mailto: of tel:.',
             'add_item' => 'Item toevoegen',
             'item_added' => 'Menu-item toegevoegd.',
             'item_removed' => 'Menu-item verwijderd.',
