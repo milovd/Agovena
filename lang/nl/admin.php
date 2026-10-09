@@ -317,6 +317,8 @@ return [
         'breadcrumb_aria' => 'Kruimelpad',
         'group_title' => 'Instellingen: :group',
         'saved' => 'Instellingen voor :group opgeslagen.',
+        'secret_configured' => 'Er is een waarde opgeslagen. Laat dit veld leeg om ze te behouden.',
+        'secret_clear' => 'Opgeslagen waarde verwijderen',
         'save' => 'Instellingen opslaan',
         'read_only' => 'Je kunt deze instellingen bekijken maar niet wijzigen.',
         'favicon_updated' => 'Favicon bijgewerkt vanaf het logo.',

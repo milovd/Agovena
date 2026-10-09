@@ -98,6 +98,15 @@
             @if ($field->help)
                 <p class="ag-field__help">{{ __($field->help) }}</p>
             @endif
+            @if ($field->type === 'password' && ($configuredSecrets[$field->key] ?? false))
+                <p class="ag-field__help">{{ __('admin.settings.secret_configured') }}</p>
+                <x-ag.checkbox
+                    id="setting-{{ $field->key }}-clear"
+                    wire:model="clearSecrets.{{ $field->key }}"
+                    :disabled="! $canUpdate"
+                    :label="__('admin.settings.secret_clear')"
+                />
+            @endif
             @error('values.'.$field->key) <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
         </div>
     @endforeach

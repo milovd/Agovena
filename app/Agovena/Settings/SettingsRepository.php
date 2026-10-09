@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Agovena\Settings;
 
 use App\Models\Setting;
+use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Crypt;
 
 final class SettingsRepository
 {
     private const CACHE_PREFIX = 'agovena.settings.';
+
+    /** Marks a stored value as an encrypted secret; values without it are legacy plain text. */
+    public const SECRET_PREFIX = 'encrypted:';
 
     public function get(string $group, string $key, mixed $default = null): mixed
     {
@@ -32,6 +37,43 @@ final class SettingsRepository
         );
 
         Cache::forever($this->cacheKey($group, $key), $encoded);
+    }
+
+    /**
+     * Store a secret encrypted with the application key. An empty value clears it.
+     */
+    public function setSecret(string $group, string $key, ?string $value): void
+    {
+        if ($value === null || $value === '') {
+            $this->set($group, $key, null);
+
+            return;
+        }
+
+        $this->set($group, $key, self::SECRET_PREFIX.Crypt::encryptString($value));
+    }
+
+    /**
+     * Read a secret. Plain text stored before encryption existed is returned as is.
+     */
+    public function getSecret(string $group, string $key): ?string
+    {
+        $stored = $this->get($group, $key);
+        if (! is_string($stored) || $stored === '') {
+            return null;
+        }
+
+        if (! str_starts_with($stored, self::SECRET_PREFIX)) {
+            return $stored;
+        }
+
+        try {
+            $value = Crypt::decryptString(substr($stored, strlen(self::SECRET_PREFIX)));
+        } catch (DecryptException) {
+            return null;
+        }
+
+        return $value === '' ? null : $value;
     }
 
     /**

@@ -15,6 +15,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\In;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -32,6 +33,18 @@ final class Hub extends Component
 
     /** @var array<string, mixed> */
     public array $uploads = [];
+
+    /**
+     * Which password fields already hold a stored secret. Secrets themselves are never
+     * hydrated into $values, so they never reach the browser.
+     *
+     * @var array<string, bool>
+     */
+    #[Locked]
+    public array $configuredSecrets = [];
+
+    /** @var array<string, bool> Password fields the user asked to clear on save. */
+    public array $clearSecrets = [];
 
     public bool $useLogoAsFavicon = true;
 
@@ -104,6 +117,12 @@ final class Hub extends Component
                 continue;
             }
 
+            if ($field->type === 'password') {
+                $this->saveSecret($settings, $field);
+
+                continue;
+            }
+
             $value = $this->values[$field->key] ?? $field->default;
             if ($field->type === 'boolean') {
                 $value = filter_var($value, FILTER_VALIDATE_BOOLEAN);
@@ -126,6 +145,25 @@ final class Hub extends Component
         }
 
         session()->flash('status', __('admin.settings.saved', ['group' => __($definition->label)]));
+    }
+
+    /**
+     * Empty input keeps the stored secret; only the explicit clear option removes it.
+     */
+    private function saveSecret(SettingsRepository $settings, SettingsField $field): void
+    {
+        $value = $this->values[$field->key] ?? '';
+        $value = is_string($value) ? trim($value) : '';
+
+        if ($this->clearSecrets[$field->key] ?? false) {
+            $settings->setSecret($field->group, $field->key, null);
+        } elseif ($value !== '') {
+            $settings->setSecret($field->group, $field->key, $value);
+        }
+
+        $this->values[$field->key] = '';
+        $this->clearSecrets[$field->key] = false;
+        $this->configuredSecrets[$field->key] = $settings->getSecret($field->group, $field->key) !== null;
     }
 
     public function useCurrentLogoAsFavicon(SettingsRepository $settings): void
@@ -208,7 +246,16 @@ final class Hub extends Component
 
         $repo = app(SettingsRepository::class);
         $this->values = [];
+        $this->configuredSecrets = [];
+        $this->clearSecrets = [];
         foreach ($admin->settingsFieldsFor($this->tab) as $field) {
+            if ($field->type === 'password') {
+                $this->values[$field->key] = '';
+                $this->configuredSecrets[$field->key] = $repo->getSecret($field->group, $field->key) !== null;
+
+                continue;
+            }
+
             $stored = $repo->get($field->group, $field->key, $field->default);
             $this->values[$field->key] = $this->normalizeForForm($field, $stored);
         }

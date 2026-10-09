@@ -98,7 +98,7 @@ final class AddressAutocomplete
             return trim($fromEnv);
         }
 
-        $fromSettings = $this->settings->get('store', 'google_places_api_key', '');
+        $fromSettings = $this->settings->getSecret('store', 'google_places_api_key');
         if (is_string($fromSettings) && trim($fromSettings) !== '') {
             return trim($fromSettings);
         }

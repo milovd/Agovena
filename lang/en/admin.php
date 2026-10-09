@@ -317,6 +317,8 @@ return [
         'breadcrumb_aria' => 'Breadcrumb',
         'group_title' => ':group settings',
         'saved' => ':group settings saved.',
+        'secret_configured' => 'A value is saved. Leave this field empty to keep it.',
+        'secret_clear' => 'Remove the saved value',
         'save' => 'Save settings',
         'read_only' => 'You can view these settings but cannot change them.',
         'favicon_updated' => 'Favicon updated from logo.',
