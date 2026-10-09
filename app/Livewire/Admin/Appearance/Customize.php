@@ -110,6 +110,28 @@ final class Customize extends Component
         array_splice($this->sections, $index, 1);
     }
 
+    public function addTrustItem(int $sectionIndex): void
+    {
+        if (($this->sections[$sectionIndex]['type'] ?? null) !== 'trust_strip'
+            || ! is_array($this->sections[$sectionIndex]['items'] ?? null)
+            || count($this->sections[$sectionIndex]['items']) >= 6) {
+            return;
+        }
+
+        $this->sections[$sectionIndex]['items'][] = ['title' => '', 'text' => ''];
+    }
+
+    public function removeTrustItem(int $sectionIndex, int $itemIndex): void
+    {
+        if (($this->sections[$sectionIndex]['type'] ?? null) !== 'trust_strip'
+            || ! is_array($this->sections[$sectionIndex]['items'] ?? null)
+            || ! isset($this->sections[$sectionIndex]['items'][$itemIndex])) {
+            return;
+        }
+
+        array_splice($this->sections[$sectionIndex]['items'], $itemIndex, 1);
+    }
+
     public function addSection(string $type): void
     {
         $this->sections[] = match ($type) {

@@ -109,6 +109,49 @@
                         @endif
                     @endforeach
                 </div>
+                @if ($tab === 'header')
+                    <div class="theme-customizer__subpanel">
+                        <div class="theme-customizer__subpanel-heading">
+                            <div>
+                                <p class="theme-customizer__eyebrow">{{ __('admin.appearance.customize.usp.legend') }}</p>
+                                <h3>{{ __('admin.appearance.customize.usp.heading') }}</h3>
+                                <p>{{ __('admin.appearance.customize.usp.help') }}</p>
+                            </div>
+                            <button type="button" class="ag-btn ag-btn--secondary" wire:click="addUspItem">
+                                <x-ag.icon name="plus" :size="16" />
+                                {{ __('admin.appearance.customize.usp.add') }}
+                            </button>
+                        </div>
+
+                        <div class="theme-customizer__repeaters">
+                            @forelse ($uspItems as $index => $usp)
+                                <article class="theme-customizer__repeater" wire:key="usp-{{ $index }}">
+                                    <header class="theme-customizer__repeater-heading">
+                                        <div class="theme-customizer__repeater-number">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</div>
+                                        <div>
+                                            <h3>{{ __('admin.appearance.customize.usp.item', ['number' => $index + 1]) }}</h3>
+                                            <p>{{ $usp['text'] ?: __('admin.appearance.customize.usp.empty_item') }}</p>
+                                        </div>
+                                        <div class="theme-customizer__repeater-actions">
+                                            <button type="button" class="ag-icon-btn" wire:click="moveUspItem({{ $index }}, 'up')" title="{{ __('common.up') }}" aria-label="{{ __('common.up') }}"><x-ag.icon name="chevron-up" :size="16" /></button>
+                                            <button type="button" class="ag-icon-btn" wire:click="moveUspItem({{ $index }}, 'down')" title="{{ __('common.down') }}" aria-label="{{ __('common.down') }}"><x-ag.icon name="chevron-down" :size="16" /></button>
+                                            <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="removeUspItem({{ $index }})" title="{{ __('common.remove') }}" aria-label="{{ __('common.remove') }}"><x-ag.icon name="trash" :size="16" /></button>
+                                        </div>
+                                    </header>
+                                    <div class="theme-customizer__repeater-fields">
+                                        <div class="ag-field"><label class="ag-field__label" for="usp-text-{{ $index }}">{{ __('admin.appearance.customize.usp.text') }}</label><input id="usp-text-{{ $index }}" class="ag-input" type="text" wire:model="uspItems.{{ $index }}.text"></div>
+                                        <div class="ag-field"><label class="ag-field__label" for="usp-short-{{ $index }}">{{ __('admin.appearance.customize.usp.short') }}</label><input id="usp-short-{{ $index }}" class="ag-input" type="text" wire:model="uspItems.{{ $index }}.short" placeholder="{{ __('admin.appearance.customize.usp.short_placeholder') }}"></div>
+                                        <div class="ag-field"><label class="ag-field__label" for="usp-emphasis-{{ $index }}">{{ __('admin.appearance.customize.usp.emphasis') }}</label><input id="usp-emphasis-{{ $index }}" class="ag-input" type="text" wire:model="uspItems.{{ $index }}.emphasis" placeholder="{{ __('admin.appearance.customize.usp.emphasis_placeholder') }}"></div>
+                                        <div class="ag-field"><label class="ag-field__label" for="usp-link-{{ $index }}">{{ __('admin.appearance.customize.usp.link') }}</label><input id="usp-link-{{ $index }}" class="ag-input" type="text" wire:model="uspItems.{{ $index }}.href" placeholder="/shipping"></div>
+                                    </div>
+                                    <x-ag.switch id="usp-highlight-{{ $index }}" wire:model="uspItems.{{ $index }}.highlight" value="1" :label="__('admin.appearance.customize.usp.highlight')" />
+                                </article>
+                            @empty
+                                <div class="theme-customizer__empty">{{ __('admin.appearance.customize.usp.empty') }}</div>
+                            @endforelse
+                        </div>
+                    </div>
+                @endif
             </section>
         @endif
 
@@ -129,48 +172,6 @@
                         <button type="button" class="ag-btn ag-btn--secondary" wire:click="addSection('trust_strip')">{{ __('admin.appearance.customize.sections.add_trust_strip') }}</button>
                     </div>
                 </header>
-
-                <div class="theme-customizer__subpanel">
-                    <div class="theme-customizer__subpanel-heading">
-                        <div>
-                            <p class="theme-customizer__eyebrow">{{ __('admin.appearance.customize.usp.legend') }}</p>
-                            <h3>{{ __('admin.appearance.customize.usp.heading') }}</h3>
-                            <p>{{ __('admin.appearance.customize.usp.help') }}</p>
-                        </div>
-                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="addUspItem">
-                            <x-ag.icon name="plus" :size="16" />
-                            {{ __('admin.appearance.customize.usp.add') }}
-                        </button>
-                    </div>
-
-                    <div class="theme-customizer__repeaters">
-                        @forelse ($uspItems as $index => $usp)
-                            <article class="theme-customizer__repeater" wire:key="usp-{{ $index }}">
-                                <header class="theme-customizer__repeater-heading">
-                                    <div class="theme-customizer__repeater-number">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</div>
-                                    <div>
-                                        <h3>{{ __('admin.appearance.customize.usp.item', ['number' => $index + 1]) }}</h3>
-                                        <p>{{ $usp['text'] ?: __('admin.appearance.customize.usp.empty_item') }}</p>
-                                    </div>
-                                    <div class="theme-customizer__repeater-actions">
-                                        <button type="button" class="ag-icon-btn" wire:click="moveUspItem({{ $index }}, 'up')" title="{{ __('common.up') }}" aria-label="{{ __('common.up') }}"><x-ag.icon name="chevron-up" :size="16" /></button>
-                                        <button type="button" class="ag-icon-btn" wire:click="moveUspItem({{ $index }}, 'down')" title="{{ __('common.down') }}" aria-label="{{ __('common.down') }}"><x-ag.icon name="chevron-down" :size="16" /></button>
-                                        <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="removeUspItem({{ $index }})" title="{{ __('common.remove') }}" aria-label="{{ __('common.remove') }}"><x-ag.icon name="trash" :size="16" /></button>
-                                    </div>
-                                </header>
-                                <div class="theme-customizer__repeater-fields">
-                                    <div class="ag-field"><label class="ag-field__label" for="usp-text-{{ $index }}">{{ __('admin.appearance.customize.usp.text') }}</label><input id="usp-text-{{ $index }}" class="ag-input" type="text" wire:model="uspItems.{{ $index }}.text"></div>
-                                    <div class="ag-field"><label class="ag-field__label" for="usp-short-{{ $index }}">{{ __('admin.appearance.customize.usp.short') }}</label><input id="usp-short-{{ $index }}" class="ag-input" type="text" wire:model="uspItems.{{ $index }}.short" placeholder="{{ __('admin.appearance.customize.usp.short_placeholder') }}"></div>
-                                    <div class="ag-field"><label class="ag-field__label" for="usp-emphasis-{{ $index }}">{{ __('admin.appearance.customize.usp.emphasis') }}</label><input id="usp-emphasis-{{ $index }}" class="ag-input" type="text" wire:model="uspItems.{{ $index }}.emphasis" placeholder="{{ __('admin.appearance.customize.usp.emphasis_placeholder') }}"></div>
-                                    <div class="ag-field"><label class="ag-field__label" for="usp-link-{{ $index }}">{{ __('admin.appearance.customize.usp.link') }}</label><input id="usp-link-{{ $index }}" class="ag-input" type="text" wire:model="uspItems.{{ $index }}.href" placeholder="/shipping"></div>
-                                </div>
-                                <x-ag.switch id="usp-highlight-{{ $index }}" wire:model="uspItems.{{ $index }}.highlight" value="1" :label="__('admin.appearance.customize.usp.highlight')" />
-                            </article>
-                        @empty
-                            <div class="theme-customizer__empty">{{ __('admin.appearance.customize.usp.empty') }}</div>
-                        @endforelse
-                    </div>
-                </div>
 
                 <div class="theme-customizer__subpanel">
                     <div class="theme-customizer__subpanel-heading">
@@ -201,20 +202,40 @@
                                 </header>
                                 <div class="theme-customizer__repeater-fields">
                                     @if ($sectionType === 'hero')
+                                        <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-eyebrow">{{ __('admin.appearance.customize.sections.eyebrow') }}</label><input id="section-{{ $index }}-eyebrow" class="ag-input" type="text" wire:model="sections.{{ $index }}.eyebrow"></div>
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-title">{{ __('common.title') }}</label><input id="section-{{ $index }}-title" class="ag-input" type="text" wire:model="sections.{{ $index }}.title"></div>
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-lede">{{ __('admin.appearance.customize.sections.lede') }}</label><input id="section-{{ $index }}-lede" class="ag-input" type="text" wire:model="sections.{{ $index }}.lede"></div>
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-cta">{{ __('admin.appearance.customize.sections.cta_label') }}</label><input id="section-{{ $index }}-cta" class="ag-input" type="text" wire:model="sections.{{ $index }}.cta_label"></div>
+                                        <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-cta-href">{{ __('admin.appearance.customize.sections.cta_href') }}</label><input id="section-{{ $index }}-cta-href" class="ag-input" type="text" wire:model="sections.{{ $index }}.cta_href"></div>
                                     @elseif ($sectionType === 'featured_products')
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-title">{{ __('common.title') }}</label><input id="section-{{ $index }}-title" class="ag-input" type="text" wire:model="sections.{{ $index }}.title"></div>
+                                        <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-lede">{{ __('admin.appearance.customize.sections.lede') }}</label><input id="section-{{ $index }}-lede" class="ag-input" type="text" wire:model="sections.{{ $index }}.lede"></div>
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-limit">{{ __('admin.appearance.customize.sections.limit') }}</label><input id="section-{{ $index }}-limit" class="ag-input" type="number" min="1" max="24" wire:model="sections.{{ $index }}.limit"></div>
+                                    @elseif ($sectionType === 'featured_categories')
+                                        <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-title">{{ __('common.title') }}</label><input id="section-{{ $index }}-title" class="ag-input" type="text" wire:model="sections.{{ $index }}.title"></div>
+                                        <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-lede">{{ __('admin.appearance.customize.sections.lede') }}</label><input id="section-{{ $index }}-lede" class="ag-input" type="text" wire:model="sections.{{ $index }}.lede"></div>
                                     @elseif ($sectionType === 'promo_split')
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-title">{{ __('common.title') }}</label><input id="section-{{ $index }}-title" class="ag-input" type="text" wire:model="sections.{{ $index }}.title"></div>
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-body">{{ __('admin.appearance.customize.sections.body') }}</label><textarea id="section-{{ $index }}-body" class="ag-input" rows="3" wire:model="sections.{{ $index }}.body"></textarea></div>
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-cta">{{ __('admin.appearance.customize.sections.cta_label') }}</label><input id="section-{{ $index }}-cta" class="ag-input" type="text" wire:model="sections.{{ $index }}.cta_label"></div>
+                                        <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-cta-href">{{ __('admin.appearance.customize.sections.cta_href') }}</label><input id="section-{{ $index }}-cta-href" class="ag-input" type="text" wire:model="sections.{{ $index }}.cta_href"></div>
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-image">{{ __('admin.appearance.customize.sections.image') }}</label><input id="section-{{ $index }}-image" class="ag-input" type="text" wire:model="sections.{{ $index }}.image"></div>
                                     @elseif ($sectionType === 'rich_text')
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-title">{{ __('common.title') }}</label><input id="section-{{ $index }}-title" class="ag-input" type="text" wire:model="sections.{{ $index }}.title"></div>
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-body">{{ __('admin.appearance.customize.sections.body') }}</label><textarea id="section-{{ $index }}-body" class="ag-input" rows="3" wire:model="sections.{{ $index }}.body"></textarea></div>
+                                    @elseif ($sectionType === 'trust_strip')
+                                        @php $trustItems = is_array($section['items'] ?? null) ? $section['items'] : []; @endphp
+                                        @foreach ($trustItems as $itemIndex => $item)
+                                            <fieldset class="theme-customizer__trust-item" wire:key="trust-{{ $index }}-{{ $itemIndex }}">
+                                                <legend class="theme-customizer__card-title">{{ __('admin.appearance.customize.sections.trust_item', ['number' => $itemIndex + 1]) }}</legend>
+                                                <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-item-{{ $itemIndex }}-title">{{ __('common.title') }}</label><input id="section-{{ $index }}-item-{{ $itemIndex }}-title" class="ag-input" type="text" wire:model="sections.{{ $index }}.items.{{ $itemIndex }}.title"></div>
+                                                <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-item-{{ $itemIndex }}-text">{{ __('admin.appearance.customize.sections.trust_text') }}</label><input id="section-{{ $index }}-item-{{ $itemIndex }}-text" class="ag-input" type="text" wire:model="sections.{{ $index }}.items.{{ $itemIndex }}.text"></div>
+                                                <button type="button" class="ag-btn ag-btn--secondary" wire:click="removeTrustItem({{ $index }}, {{ $itemIndex }})">{{ __('common.remove') }}</button>
+                                            </fieldset>
+                                        @endforeach
+                                        @if (count($trustItems) < 6)
+                                            <button type="button" class="ag-btn ag-btn--secondary" wire:click="addTrustItem({{ $index }})">{{ __('admin.appearance.customize.sections.add_trust_item') }}</button>
+                                        @endif
                                     @else
                                         <div class="ag-field"><label class="ag-field__label" for="section-{{ $index }}-title">{{ __('common.title') }}</label><input id="section-{{ $index }}-title" class="ag-input" type="text" wire:model="sections.{{ $index }}.title"></div>
                                     @endif

@@ -254,6 +254,158 @@ test('theme customize exposes shared tabs and both color mode palettes', functio
         ->and($config->string('colors.dark_accent'))->toBe('#93C5FD');
 });
 
+test('homepage editor exposes persisted section fields and reloads edited values without losing siblings', function () {
+    $staff = $this->createStaff();
+    $config = app(ThemeManager::class)->config();
+    $sections = $config->sections();
+
+    $editor = Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->set('tab', 'homepage')
+        ->assertSee('wire:model="sections.0.eyebrow"', false)
+        ->assertSee('wire:model="sections.0.cta_href"', false)
+        ->assertSee('wire:model="sections.1.lede"', false)
+        ->assertSee('wire:model="sections.2.lede"', false)
+        ->assertSee('wire:model="sections.3.cta_href"', false)
+        ->assertSet('sections.0.eyebrow', $sections[0]['eyebrow'])
+        ->assertSet('sections.3.cta_href', $sections[3]['cta_href']);
+
+    $editor->set('sections.0.eyebrow', 'A new introduction')
+        ->set('sections.0.cta_href', '/featured')
+        ->set('sections.1.lede', 'Category introduction')
+        ->set('sections.2.lede', 'Product introduction')
+        ->set('sections.3.cta_href', 'javascript:alert(1)')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $saved = $config->sections();
+    expect($saved[0]['eyebrow'])->toBe('A new introduction')
+        ->and($saved[0]['cta_href'])->toBe('/featured')
+        ->and($saved[0]['title'])->toBe($sections[0]['title'])
+        ->and($saved[1]['lede'])->toBe('Category introduction')
+        ->and($saved[2]['lede'])->toBe('Product introduction')
+        ->and($saved[3]['cta_href'])->toBe('')
+        ->and($saved[3]['title'])->toBe($sections[3]['title']);
+
+    Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->assertSet('sections.0.eyebrow', 'A new introduction')
+        ->assertSet('sections.0.cta_href', '/featured')
+        ->assertSet('sections.1.lede', 'Category introduction')
+        ->assertSet('sections.2.lede', 'Product introduction')
+        ->assertSet('sections.3.cta_href', '');
+});
+
+test('trust strip edits stored items rather than an ignored section title', function () {
+    $staff = $this->createStaff();
+    $config = app(ThemeManager::class)->config();
+    $original = $config->sections()[4]['items'];
+
+    $editor = Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->set('tab', 'homepage')
+        ->assertSee('wire:model="sections.4.items.0.title"', false)
+        ->assertSee('wire:model="sections.4.items.0.text"', false)
+        ->assertSee('wire:click="addTrustItem(4)"', false)
+        ->assertDontSee('wire:model="sections.4.title"', false)
+        ->assertSet('sections.4.items.0.title', $original[0]['title']);
+
+    $editor->set('sections.4.items.0.title', '<b>Protected</b> checkout')
+        ->set('sections.4.items.0.text', 'Clear terms')
+        ->call('addTrustItem', 4)
+        ->set('sections.4.items.4.title', 'New benefit')
+        ->set('sections.4.items.4.text', 'New detail')
+        ->call('removeTrustItem', 4, 1)
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $items = $config->sections()[4]['items'];
+    expect($items)->toHaveCount(4)
+        ->and($items[0])->toBe(['title' => 'Protected checkout', 'text' => 'Clear terms'])
+        ->and($items[1])->toBe($original[2])
+        ->and($items[3])->toBe(['title' => 'New benefit', 'text' => 'New detail']);
+
+    Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->assertSet('sections.4.items', $items);
+    $this->get('/')->assertOk()
+        ->assertSeeText('Protected checkout')
+        ->assertSeeText('New detail')
+        ->assertDontSee('<b>Protected</b>', false);
+});
+
+test('header owns USP editing without duplicating its controls on homepage', function () {
+    $staff = $this->createStaff();
+    $config = app(ThemeManager::class)->config();
+    $before = $config->uspItems();
+
+    Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->set('tab', 'header')
+        ->assertSee('wire:model="uspItems.0.text"', false)
+        ->assertSee('wire:click="addUspItem"', false)
+        ->set('uspItems.0.text', 'Header benefit')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($config->uspItems()[0]['text'])->toBe('Header benefit')
+        ->and($config->uspItems()[1])->toBe($before[1]);
+
+    Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->set('tab', 'header')
+        ->assertSet('uspItems.0.text', 'Header benefit');
+    Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->set('tab', 'homepage')
+        ->assertDontSee('wire:model="uspItems.0.text"', false)
+        ->assertSee('wire:model="sections.4.items.0.title"', false);
+});
+
+test('homepage retains every stored section field when saving from Header', function () {
+    $staff = $this->createStaff();
+    $config = app(ThemeManager::class)->config();
+    $sections = [
+        ['type' => 'hero', 'eyebrow' => 'Existing eyebrow', 'title' => 'Existing hero', 'lede' => 'Existing intro', 'cta_label' => 'Enter', 'cta_href' => '/shop'],
+        ['type' => 'featured_products', 'title' => 'Existing products', 'lede' => 'Product copy', 'limit' => 12],
+        ['type' => 'featured_categories', 'title' => 'Existing categories', 'lede' => 'Category copy'],
+        ['type' => 'promo_split', 'title' => 'Existing promo', 'body' => 'Promo copy', 'cta_label' => 'Learn', 'cta_href' => 'https://example.test/promo', 'image' => 'demo/promo.png'],
+        ['type' => 'trust_strip', 'items' => [['title' => 'Existing trust', 'text' => 'Trust detail']]],
+        ['type' => 'rich_text', 'title' => 'Existing text', 'body' => 'Body copy'],
+    ];
+    $config->set('homepage.sections', $sections);
+
+    Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->assertSet('sections', $sections)
+        ->set('tab', 'header')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($config->sections())->toBe($sections);
+    Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->set('tab', 'homepage')
+        ->assertSet('sections', $sections)
+        ->assertSee('wire:model="sections.5.body"', false);
+});
+
+test('trust strip add action respects the six item limit and section boundary', function () {
+    $staff = $this->createStaff();
+    $editor = Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->call('addTrustItem', 0)
+        ->assertSet('sections.0.items', null)
+        ->call('removeTrustItem', 0, 0)
+        ->assertCount('sections.4.items', 4)
+        ->call('addTrustItem', 4)
+        ->call('addTrustItem', 4)
+        ->assertCount('sections.4.items', 6)
+        ->assertDontSee('wire:click="addTrustItem(4)"', false)
+        ->call('addTrustItem', 4)
+        ->assertCount('sections.4.items', 6);
+});
+
+test('trust strip actions ignore malformed client item payloads', function () {
+    $staff = $this->createStaff();
+    Livewire\Livewire::actingAs($staff)->test(Customize::class)
+        ->set('tab', 'homepage')
+        ->set('sections.4.items', 'invalid')
+        ->call('addTrustItem', 4)
+        ->call('removeTrustItem', 4, 0)
+        ->assertSet('sections.4.items', 'invalid');
+});
+
 test('theme customize normalizes section content and link destinations', function () {
     $config = app(ThemeManager::class)->config();
     $config->set('homepage.sections', [
