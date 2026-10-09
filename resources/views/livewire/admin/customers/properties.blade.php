@@ -25,6 +25,8 @@
             </x-slot:actions>
         </x-ag.page-header>
 
+        @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
+
         <form wire:submit="save" class="ag-section ag-form ag-form--constrained" novalidate>
             <div class="ag-section__body">
                 <div class="ag-grid ag-grid--2">
@@ -130,6 +132,8 @@
                 </button>
             </x-slot:actions>
         </x-ag.page-header>
+
+        @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
 
         @if ($definitions->isEmpty())
             <p class="ag-muted">{{ __('admin.customer_properties.empty_text') }}</p>

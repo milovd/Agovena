@@ -1808,6 +1808,7 @@ return [
     ],
     'customers' => [
         'title' => 'Customers',
+        'tabs_label' => 'Customer sections',
         'lede' => 'Customer accounts, Admin access, privacy status, credits, and commerce activity.',
         'add_user' => 'Add customer account',
         'new_user' => 'New customer account',

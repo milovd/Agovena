@@ -4,11 +4,10 @@
             @can('users.create')
                 <button type="button" class="ag-btn ag-btn--primary" wire:click="createUser">{{ __('admin.customers.add_user') }}</button>
             @endcan
-            @can('customers.manage')
-                <a class="ag-btn ag-btn--secondary" href="{{ route('admin.customers.properties') }}">{{ __('admin.customer_properties.title') }}</a>
-            @endcan
         </x-slot:actions>
     </x-ag.page-header>
+
+    @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'customers'])
 
     @if ($showUserForm)
         <section class="admin-panel">

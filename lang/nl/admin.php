@@ -1806,6 +1806,7 @@ return [
     ],
     'customers' => [
         'title' => 'Klanten',
+        'tabs_label' => 'Klantonderdelen',
         'lede' => 'Klantaccounts, Admin-toegang, privacystatus, tegoed en handelsactiviteit.',
         'add_user' => 'Klantaccount toevoegen',
         'new_user' => 'Nieuw klantaccount',
