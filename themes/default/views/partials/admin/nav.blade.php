@@ -3,21 +3,17 @@
     use App\Agovena\Admin\AdminNavigationNode;
     use App\Agovena\Modules\ModuleManager;
 
-    $staff = auth()->user();
-    $nav = AdminNavigation::filterVisible(collect($navigation ?? []), app(ModuleManager::class))
-        ->filter(function ($item) use ($staff) {
-        $authorized = $item->permission === null
-            || ($staff !== null && $staff->can($item->permission));
-
-        return $authorized && is_string($item->href) && $item->href !== '';
-    });
+    $nav = AdminNavigation::filterForStaff(
+        AdminNavigation::filterVisible(collect($navigation ?? []), app(ModuleManager::class)),
+        auth()->user(),
+    );
     $groups = AdminNavigation::groupedTree($nav);
 @endphp
 
 @foreach ($groups as $group => $nodes)
     @php
         $groupSlug = \Illuminate\Support\Str::slug($group);
-        $groupHasActive = $nodes->contains(fn (AdminNavigationNode $node) => $node->isActive());
+        $groupHasActive = $nodes->contains(fn (AdminNavigationNode $node) => $node->isActive($nav));
     @endphp
     <div
         class="admin-nav__section"

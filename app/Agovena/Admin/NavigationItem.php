@@ -16,5 +16,6 @@ final class NavigationItem
         public readonly int $sort = 0,
         public readonly ?string $parent = null,
         public readonly ?string $moduleId = null,
+        public readonly ?string $hideWhenPermission = null,
     ) {}
 }

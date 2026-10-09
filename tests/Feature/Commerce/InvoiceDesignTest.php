@@ -411,12 +411,12 @@ test('the invoice design page requires the invoices.design permission', function
     $this->actingAs($owner)->get(route('admin.invoices.design'))->assertOk();
 });
 
-test('only the invoice design item is active on the design page', function () {
+test('the invoice section is highlighted but only the design tab claims the current page', function () {
     $staff = $this->createStaff();
 
     $html = $this->actingAs($staff)->get(route('admin.invoices.design'))->assertOk()->getContent();
 
     preg_match_all('/<a[^>]*href="[^"]*\/admin\/invoices(\/design)?"[^>]*aria-current="page"/', (string) $html, $active);
-    expect($active[0])->toHaveCount(2)
-        ->and(implode('', $active[0]))->not->toMatch('/href="[^"]*\/admin\/invoices"[^>]*aria-current/');
+    expect($active[0])->toHaveCount(1)
+        ->and(implode('', $active[0]))->toMatch('/href="[^"]*\/admin\/invoices\/design"[^>]*aria-current/');
 });

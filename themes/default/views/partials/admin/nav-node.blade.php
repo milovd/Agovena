@@ -4,8 +4,8 @@
 
     /** @var AdminNavigationNode $node */
     $item = $node->item;
-    $active = AdminNavigation::isActive($item->href);
-    $branchActive = $node->childIsActive();
+    $active = AdminNavigation::isActive($item->href, $nav);
+    $branchActive = $node->childIsActive($nav);
     $openByDefault = $node->hasChildren();
 @endphp
 
@@ -18,7 +18,7 @@
         x-data="agAdminNavGroup"
         data-nav-key="agovena.admin.nav.item.v5.{{ $item->id }}"
         data-open="{{ $openByDefault ? 'true' : 'false' }}"
-        data-active="{{ $node->isActive() ? 'true' : 'false' }}"
+        data-active="{{ $node->isActive($nav) ? 'true' : 'false' }}"
         :class="{ 'admin-nav__item--open': open }"
     @endif
 >
@@ -30,7 +30,7 @@
                 'admin-nav__link--branch-active' => $branchActive && ! $active,
             ])
             href="{{ $item->href }}"
-            @if ($active) aria-current="page" @endif
+            @if (AdminNavigation::isCurrentPage($item->href)) aria-current="page" @endif
         >
             @if ($item->icon)
                 <x-ag.icon :name="$item->icon" class="admin-nav__icon" :size="18" />
@@ -58,7 +58,7 @@
             x-show="open"
         >
             @foreach ($node->children as $child)
-                @php $childActive = AdminNavigation::isActive($child->href); @endphp
+                @php $childActive = AdminNavigation::isActive($child->href, $nav); @endphp
                 <li>
                     <a
                         @class([
@@ -67,7 +67,7 @@
                             'admin-nav__link--active' => $childActive,
                         ])
                         href="{{ $child->href }}"
-                        @if ($childActive) aria-current="page" @endif
+                        @if (AdminNavigation::isCurrentPage($child->href)) aria-current="page" @endif
                     >
                         @if ($child->icon)
                             <x-ag.icon :name="$child->icon" class="admin-nav__icon" :size="16" />

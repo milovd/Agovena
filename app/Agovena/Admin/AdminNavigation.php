@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Admin;
 
 use App\Agovena\Modules\ModuleManager;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Collection;
@@ -136,6 +137,17 @@ final class AdminNavigation
 
     /**
      * @param  Collection<int, NavigationItem>  $items
+     * @return Collection<int, NavigationItem>
+     */
+    public static function filterForStaff(Collection $items, ?User $staff): Collection
+    {
+        return $items->filter(static fn (NavigationItem $item): bool => ($item->permission === null || $staff?->can($item->permission))
+            && ($item->hideWhenPermission === null || ! $staff?->can($item->hideWhenPermission))
+        )->values();
+    }
+
+    /**
+     * @param  Collection<int, NavigationItem>  $items
      * @return Collection<string, Collection<int, NavigationItem>>
      */
     public static function groupItems(Collection $items): Collection
@@ -155,7 +167,8 @@ final class AdminNavigation
         return $legacyGroup === null ? $item->group : 'admin.nav_groups.'.$legacyGroup;
     }
 
-    public static function isActive(?string $href): bool
+    /** @param  Collection<int, NavigationItem>|null  $visibleItems */
+    public static function isActive(?string $href, ?Collection $visibleItems = null): bool
     {
         if ($href === null || $href === '' || $href === '#') {
             return false;
@@ -171,8 +184,8 @@ final class AdminNavigation
             return false;
         }
 
-        // A more specific item that also matches wins, so Invoices is not active on Invoices > Design.
-        foreach (app(AdminRegistrar::class)->navigationItems() as $other) {
+        // More specific visible links win; hidden tabs still belong to their visible section.
+        foreach ($visibleItems ?? app(AdminRegistrar::class)->navigationItems() as $other) {
             $otherPath = trim((string) (parse_url((string) $other->href, PHP_URL_PATH) ?? ''), '/');
             if (strlen($otherPath) > strlen($path) && str_starts_with($otherPath, $path.'/') && self::matches($otherPath)) {
                 return false;
@@ -180,6 +193,17 @@ final class AdminNavigation
         }
 
         return true;
+    }
+
+    public static function isCurrentPage(?string $href): bool
+    {
+        if ($href === null || $href === '') {
+            return false;
+        }
+
+        $path = trim((string) (parse_url($href, PHP_URL_PATH) ?? ''), '/');
+
+        return $path !== '' && request()->is($path);
     }
 
     private static function matches(string $path): bool

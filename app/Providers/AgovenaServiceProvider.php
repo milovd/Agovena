@@ -431,6 +431,7 @@ class AgovenaServiceProvider extends ServiceProvider
             icon: 'palette',
             sort: 26,
             permission: 'invoices.design',
+            hideWhenPermission: 'invoices.view',
         ));
 
         $admin->navigation(new NavigationItem(

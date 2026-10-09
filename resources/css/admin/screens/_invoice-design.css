@@ -1,39 +1,5 @@
 /* Admin > Invoices > Design: settings column and a sticky A4 preview. */
 
-/* Invoices | Design switch, shared by the invoice list and the design page */
-
-.invoice-tabs {
-  display: flex;
-  gap: var(--ag-space-1);
-  margin: calc(var(--ag-space-2) * -1) 0 0;
-  border-bottom: 1px solid var(--ag-color-border);
-}
-
-.invoice-tabs__tab {
-  margin-bottom: -1px;
-  padding: 0.6rem 0.9rem;
-  border-bottom: 2px solid transparent;
-  color: var(--ag-color-text-muted);
-  font-size: var(--ag-font-size-sm);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.invoice-tabs__tab:hover {
-  color: var(--ag-color-text);
-}
-
-.invoice-tabs__tab:focus-visible {
-  outline: 2px solid var(--ag-color-primary);
-  outline-offset: -2px;
-  border-radius: var(--ag-radius-sm);
-}
-
-.invoice-tabs__tab.is-active {
-  border-bottom-color: var(--ag-color-primary);
-  color: var(--ag-color-text);
-}
-
 .invoice-design__layout {
   display: grid;
   gap: var(--ag-space-5);

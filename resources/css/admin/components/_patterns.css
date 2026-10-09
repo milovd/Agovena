@@ -98,6 +98,7 @@
   font: inherit;
   font-size: var(--ag-font-size-sm);
   font-weight: 600;
+  text-decoration: none;
   padding: 0.45rem 0.85rem;
   border-radius: var(--ag-radius-sm);
   cursor: pointer;

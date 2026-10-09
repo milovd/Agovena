@@ -17,12 +17,7 @@
         </x-slot:actions>
     </x-ag.page-header>
 
-    <nav class="invoice-tabs" aria-label="{{ __('admin.invoice_design.tabs_label') }}">
-        @can('invoices.view')
-            <a class="invoice-tabs__tab" href="{{ route('admin.invoices.index') }}" wire:navigate>{{ __('admin.invoice_design.tab_invoices') }}</a>
-        @endcan
-        <a class="invoice-tabs__tab is-active" href="{{ route('admin.invoices.design') }}" aria-current="page">{{ __('admin.invoice_design.tab_design') }}</a>
-    </nav>
+    @include('livewire.admin.invoices.partials.tabs', ['activeTab' => 'design'])
 
     @if (session('status'))
         <div class="ag-alert ag-alert--success" role="status" aria-live="polite">

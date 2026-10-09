@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Agovena\Admin;
 
+use Illuminate\Support\Collection;
+
 final class AdminNavigationNode
 {
     /**
@@ -19,19 +21,21 @@ final class AdminNavigationNode
         return $this->children !== [];
     }
 
-    public function isActive(): bool
+    /** @param  Collection<int, NavigationItem>|null  $visibleItems */
+    public function isActive(?Collection $visibleItems = null): bool
     {
-        if (AdminNavigation::isActive($this->item->href)) {
+        if (AdminNavigation::isActive($this->item->href, $visibleItems)) {
             return true;
         }
 
-        return $this->childIsActive();
+        return $this->childIsActive($visibleItems);
     }
 
-    public function childIsActive(): bool
+    /** @param  Collection<int, NavigationItem>|null  $visibleItems */
+    public function childIsActive(?Collection $visibleItems = null): bool
     {
         foreach ($this->children as $child) {
-            if (AdminNavigation::isActive($child->href)) {
+            if (AdminNavigation::isActive($child->href, $visibleItems)) {
                 return true;
             }
         }
