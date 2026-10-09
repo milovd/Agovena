@@ -1151,6 +1151,7 @@ return [
         ],
         'search_label' => 'Search orders',
         'search_placeholder' => 'Search number, name, email',
+        'loading' => 'Loading orders…',
         'status_label' => 'Order status',
         'status_all' => 'All order statuses',
         'payment_status_label' => 'Payment status',

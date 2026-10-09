@@ -1149,6 +1149,7 @@ return [
         ],
         'search_label' => 'Bestellingen zoeken',
         'search_placeholder' => 'Zoek op nummer, naam of e-mail',
+        'loading' => 'Bestellingen laden…',
         'status_label' => 'Bestelstatus',
         'status_all' => 'Alle bestelstatussen',
         'payment_status_label' => 'Betaalstatus',

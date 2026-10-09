@@ -1,14 +1,6 @@
 <div class="admin-page">
     <x-ag.page-header :heading="__('admin.orders.title')" :lede="__('admin.orders.lede')" />
 
-    @if (session('status'))
-        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
-    @endif
-
-    @if (session('error'))
-        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
-    @endif
-
     <div class="ag-toolbar ag-toolbar--filters">
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">
@@ -36,6 +28,10 @@
         </div>
     </div>
 
+    <div wire:loading.flex class="ag-loading" wire:target="search,status,paymentStatus,gotoPage,previousPage,nextPage">
+        <span class="ag-loading__text">{{ __('admin.orders.loading') }}</span>
+    </div>
+
     @if ($orders->isEmpty())
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ $search || $status || $paymentStatus ? __('admin.orders.empty.filtered_title') : __('admin.orders.empty.title') }}</p>
@@ -44,7 +40,7 @@
             </p>
         </div>
     @else
-        <div class="ag-table-wrap">
+        <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search,status,paymentStatus">
             <table class="ag-table ag-table--orders">
                 <thead>
                     <tr>
@@ -60,7 +56,7 @@
                 <tbody>
                     @foreach ($orders as $order)
                         <tr wire:key="order-{{ $order->id }}">
-                            <td><span class="ag-table__name">{{ $order->number }}</span></td>
+                            <td><a class="ag-table__name" href="{{ route('admin.orders.show', $order) }}">{{ $order->number }}</a></td>
                             <td>
                                 <div class="ag-table__primary">
                                     <span>{{ $order->customer_name }}</span>
