@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Admin\AuditExportController;
 use App\Http\Controllers\Admin\DataExportController;
-use App\Http\Controllers\Admin\InvoiceTemplatePreviewController;
 use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
@@ -34,6 +33,7 @@ use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Discounts\Index as DiscountsIndex;
 use App\Livewire\Admin\Exports\Index as ExportsIndex;
 use App\Livewire\Admin\Extensions\Index as ExtensionsIndex;
+use App\Livewire\Admin\Invoices\Design as InvoicesDesign;
 use App\Livewire\Admin\Invoices\Edit as InvoicesEdit;
 use App\Livewire\Admin\Invoices\Index as InvoicesIndex;
 use App\Livewire\Admin\Invoices\Show as InvoicesShow;
@@ -214,6 +214,7 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
     Route::get('/orders/{order}/edit', OrdersEdit::class)->name('orders.edit');
     Route::get('/orders/{order}', OrdersShow::class)->name('orders.show');
     Route::get('/invoices', InvoicesIndex::class)->name('invoices.index');
+    Route::get('/invoices/design', InvoicesDesign::class)->name('invoices.design');
     Route::get('/invoices/{invoice}/edit', InvoicesEdit::class)->name('invoices.edit');
     Route::get('/invoices/{invoice}', InvoicesShow::class)->name('invoices.show');
     Route::get('/invoices/{invoice}/credit', CreditNotesCreate::class)->name('invoices.credit');
@@ -254,7 +255,6 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');
     Route::get('/appearance/themes', AppearanceThemes::class)->name('appearance.themes');
     Route::get('/appearance/customize', AppearanceCustomize::class)->name('appearance.customize');
-    Route::get('/appearance/invoice-preview', InvoiceTemplatePreviewController::class)->name('appearance.invoice-preview');
     Route::get('/appearance/pages', ContentPages::class)->name('appearance.pages');
     Route::get('/appearance/navigation', ContentNavigation::class)->name('appearance.navigation');
 });

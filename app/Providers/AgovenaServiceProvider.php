@@ -424,6 +424,16 @@ class AgovenaServiceProvider extends ServiceProvider
         ));
 
         $admin->navigation(new NavigationItem(
+            id: 'invoice-design',
+            label: 'admin.nav.invoice_design',
+            group: 'admin.nav_groups.sales',
+            href: '/admin/invoices/design',
+            icon: 'palette',
+            sort: 26,
+            permission: 'invoices.design',
+        ));
+
+        $admin->navigation(new NavigationItem(
             id: 'discounts',
             label: 'admin.nav.discounts',
             group: 'admin.nav_groups.sales',
@@ -722,6 +732,7 @@ class AgovenaServiceProvider extends ServiceProvider
             'invoices.manage',
             'invoices.credit',
             'invoices.void',
+            'invoices.design',
             'discounts.view',
             'discounts.manage',
             'taxes.view',

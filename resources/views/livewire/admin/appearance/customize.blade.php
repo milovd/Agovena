@@ -37,7 +37,7 @@
             @php
                 $groupKeys = match ($tab) {
                     'header' => ['header'],
-                    'storefront' => ['footer', 'catalog', 'invoices'],
+                    'storefront' => ['footer', 'catalog'],
                     default => ['appearance', 'branding'],
                 };
             @endphp
@@ -104,21 +104,6 @@
                                             </div>
                                         @endif
                                     @endforeach
-                                    @if ($groupKey === 'invoices')
-                                        <div class="ag-field" x-data>
-                                            <a
-                                                class="ag-btn ag-btn--secondary"
-                                                href="{{ route('admin.appearance.invoice-preview') }}"
-                                                x-bind:href="'{{ route('admin.appearance.invoice-preview') }}?template=' + encodeURIComponent($wire.values?.invoices?.template ?? '')"
-                                                target="_blank"
-                                                rel="noopener"
-                                            >
-                                                <x-ag.icon name="external-link" :size="16" />
-                                                {{ __('admin.appearance.customize.invoice_preview') }}
-                                            </a>
-                                            <p class="ag-field__help">{{ __('admin.appearance.customize.invoice_preview_help') }}</p>
-                                        </div>
-                                    @endif
                                 </div>
                             </fieldset>
                         @endif

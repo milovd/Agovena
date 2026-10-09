@@ -1,6 +1,13 @@
 <div class="admin-page">
     <x-ag.page-header :heading="__('admin.invoices.title')" :lede="__('admin.invoices.lede')" />
 
+    @can('invoices.design')
+        <nav class="invoice-tabs" aria-label="{{ __('admin.invoice_design.tabs_label') }}">
+            <a class="invoice-tabs__tab is-active" href="{{ route('admin.invoices.index') }}" aria-current="page">{{ __('admin.invoice_design.tab_invoices') }}</a>
+            <a class="invoice-tabs__tab" href="{{ route('admin.invoices.design') }}" wire:navigate>{{ __('admin.invoice_design.tab_design') }}</a>
+        </nav>
+    @endcan
+
     <div class="ag-toolbar ag-toolbar--filters">
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">

@@ -41,6 +41,7 @@ return [
     ],
 
     'nav' => [
+        'invoice_design' => 'Invoice design',
         'dashboard' => 'Dashboard',
         'products' => 'Products',
         'categories' => 'Categories',
@@ -140,6 +141,7 @@ return [
             'manage' => 'Manage invoices',
             'credit' => 'Issue credit notes',
             'void' => 'Void unpaid invoices',
+            'design' => 'Design invoice layout',
         ],
         'discounts' => [
             'view' => 'View discount codes',
@@ -601,8 +603,6 @@ return [
             'save_help' => 'Your changes stay in this theme configuration.',
 
             // Invoice templates
-            'invoice_preview' => 'Preview invoice',
-            'invoice_preview_help' => 'Opens a sample invoice with fictional customer data in a new tab, using the template selected above.',
 
             'groups' => [
                 'branding' => 'Branding',
@@ -610,7 +610,6 @@ return [
                 'footer' => 'Footer',
                 'catalog' => 'Catalog',
                 'homepage' => 'Homepage',
-                'invoices' => 'Invoices',
             ],
 
             'usp' => [
@@ -716,9 +715,6 @@ return [
             'homepage' => [
                 'sections' => 'Homepage sections',
             ],
-            'invoices' => [
-                'template' => 'Invoice template',
-            ],
         ],
 
         'theme_field_help' => [
@@ -734,21 +730,6 @@ return [
                 'usp_items' => 'Benefits on the left; tick “CTA button” for a right-side call to action (for example Shop now).',
                 'show_discovery_bar' => 'Secondary bar for menu links and category discovery.',
                 'custom_nav_items' => 'Enter a number of custom desktop navigation items, or “infinite” to show all items. Categories is always shown separately.',
-            ],
-            'invoices' => [
-                'template' => 'Layout for invoice and credit note documents, including printouts and PDFs. Every template shows the same invoice data.',
-            ],
-        ],
-
-        // Invoice templates: option labels for the invoices.template select.
-        'theme_options' => [
-            'invoices' => [
-                'template' => [
-                    'classic' => 'Classic',
-                    'modern' => 'Modern',
-                    'minimal' => 'Minimal',
-                    'compact' => 'Compact',
-                ],
             ],
         ],
     ],
@@ -2657,6 +2638,71 @@ return [
     ],
 
     // Storefront maintenance mode (Admin > System > Maintenance mode)
+    'invoice_design' => [
+        'title' => 'Invoice design',
+        'lede' => 'Choose how invoices and credit notes look and what they show. Changes apply to every document you print or download, including ones issued earlier.',
+        'tabs_label' => 'Invoices',
+        'tab_invoices' => 'Invoices',
+        'tab_design' => 'Design',
+        'save' => 'Save design',
+        'discard' => 'Discard changes',
+        'saved' => 'Invoice design saved.',
+        'download_pdf' => 'Preview as PDF',
+        'theme_override' => 'The active theme ships its own invoice layout, so documents use the theme instead of this design.',
+        'template_title' => 'Template',
+        'template_description' => 'Every template shows the same invoice data.',
+        'templates' => [
+            'clean' => ['name' => 'Clean', 'description' => 'Calm and minimal, with a large amount due.'],
+            'business' => ['name' => 'Business', 'description' => 'Compact, with a summary block and a legal footer.'],
+            'bold' => ['name' => 'Bold', 'description' => 'Large heading with curved shapes at the bottom.'],
+            'banner' => ['name' => 'Banner', 'description' => 'Colored header band with numbered lines.'],
+            'angle' => ['name' => 'Angle', 'description' => 'Diagonal shapes at the top and bottom, totals bar.'],
+        ],
+        'color_title' => 'Brand color',
+        'color_description' => 'Used for headings, table headers and decorations. Text on the color switches to dark or light automatically.',
+        'color_picker' => 'Pick a color',
+        'custom_color' => 'Custom color',
+        'color_help' => 'A hex color such as #1F3A5F.',
+        'details_title' => 'Show on the invoice',
+        'details_description' => 'Turn details on or off. Details that are not filled in are never printed.',
+        'no_logo' => 'No store logo is set yet.',
+        'no_logo_link' => 'Add a logo in Branding',
+        'seller_note' => 'Seller name, address, VAT number and company number come from the store settings (:name).',
+        'seller_fallback' => 'not set yet',
+        'seller_link' => 'Edit store settings',
+        'content_title' => 'Contact, payment and notes',
+        'content_description' => 'Printed on every invoice. Leave a field empty to leave it out.',
+        'fields' => [
+            'template' => 'Template',
+            'accent_color' => 'Brand color',
+            'show_logo' => 'Logo',
+            'show_seller_address' => 'Seller address',
+            'show_vat_number' => 'VAT number',
+            'show_company_number' => 'Company number',
+            'show_contact' => 'Contact details',
+            'show_buyer_properties' => 'Customer details such as their VAT number',
+            'show_payment_details' => 'Payment details',
+            'show_notes' => 'Notes',
+            'contact_email' => 'Contact email',
+            'contact_phone' => 'Contact phone',
+            'website' => 'Website',
+            'payment_details' => 'Payment details',
+            'notes' => 'Notes',
+            'footer_text' => 'Footer text',
+        ],
+        'help' => [
+            'payment_details' => 'For example your IBAN and BIC. Printed on invoices, not on credit notes.',
+            'notes' => 'For example payment terms or a thank you.',
+            'footer_text' => 'One short line at the bottom of the document.',
+        ],
+        'preview_title' => 'Preview',
+        'preview_document' => 'Preview document',
+        'preview_invoice' => 'Invoice',
+        'preview_credit_note' => 'Credit note',
+        'preview_frame' => 'Invoice preview',
+        'preview_note' => 'Sample data with a fictional customer. Unsaved changes are shown live; real invoices are not touched.',
+        'updating' => 'Updating',
+    ],
     'maintenance' => [
         'title' => 'Maintenance mode',
         'lede' => 'Close the storefront, customer accounts and the public API for customers while you work on the shop. Staff keep full access.',

@@ -227,6 +227,11 @@ test('the default Theme provides every Theme entry view that core and optional p
 
     expect($entries)->toHaveKeys(['layouts.storefront', 'layouts.checkout', 'layouts.admin', 'catalog.show', 'checkout.index', 'checkout.partials.address-suggestions']);
 
+    // Optional overrides: core renders its own document when a Theme does not ship these.
+    foreach (['invoices.document', 'invoices.credit-note'] as $optional) {
+        unset($entries[$optional]);
+    }
+
     $missing = [];
     foreach ($entries as $view => $file) {
         if (! is_file(base_path('themes/default/views/'.str_replace('.', '/', $view).'.blade.php'))) {

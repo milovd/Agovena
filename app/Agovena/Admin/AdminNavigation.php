@@ -154,6 +154,23 @@ final class AdminNavigation
             return request()->is('admin');
         }
 
+        if (! self::matches($path)) {
+            return false;
+        }
+
+        // A more specific item that also matches wins, so Invoices is not active on Invoices > Design.
+        foreach (app(AdminRegistrar::class)->navigationItems() as $other) {
+            $otherPath = trim((string) (parse_url((string) $other->href, PHP_URL_PATH) ?? ''), '/');
+            if (strlen($otherPath) > strlen($path) && str_starts_with($otherPath, $path.'/') && self::matches($otherPath)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static function matches(string $path): bool
+    {
         return request()->is($path) || request()->is($path.'/*');
     }
 

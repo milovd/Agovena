@@ -6,6 +6,10 @@ namespace App\Agovena\Invoices;
 
 use App\Agovena\Theme\ThemeManager;
 
+/**
+ * Core renders invoices with the merchant's invoice design. An active Theme that ships its own
+ * `invoices.document` view still replaces it, which keeps the Theme contract of earlier releases.
+ */
 final class InvoiceDocumentView
 {
     private ?string $override = null;
@@ -23,17 +27,14 @@ final class InvoiceDocumentView
             return $this->override;
         }
 
-        foreach ([$this->themes->active(), $this->themes->find('default')] as $theme) {
-            if ($theme === null) {
-                continue;
-            }
+        return $this->themeOverride() ?? 'invoices.document';
+    }
 
-            $name = $theme->view('invoices.document');
-            if (view()->exists($name)) {
-                return $name;
-            }
-        }
+    /** The active Theme's own invoice view, when it ships one. */
+    public function themeOverride(): ?string
+    {
+        $name = $this->themes->active()->view('invoices.document');
 
-        return 'invoices.document';
+        return view()->exists($name) ? $name : null;
     }
 }

@@ -41,6 +41,7 @@ return [
     ],
 
     'nav' => [
+        'invoice_design' => 'Factuurontwerp',
         'dashboard' => 'Dashboard',
         'products' => 'Producten',
         'categories' => 'Categorieën',
@@ -140,6 +141,7 @@ return [
             'manage' => 'Facturen beheren',
             'credit' => 'Creditnota’s uitgeven',
             'void' => 'Onbetaalde facturen vervallen',
+            'design' => 'Factuuropmaak ontwerpen',
         ],
         'discounts' => [
             'view' => 'Kortingscodes bekijken',
@@ -601,8 +603,6 @@ return [
             'save_help' => 'Je wijzigingen blijven in deze themaconfiguratie staan.',
 
             // Factuursjablonen
-            'invoice_preview' => 'Voorbeeldfactuur bekijken',
-            'invoice_preview_help' => 'Opent in een nieuw tabblad een voorbeeldfactuur met fictieve klantgegevens, in het sjabloon dat hierboven is gekozen.',
 
             'groups' => [
                 'branding' => 'Huisstijl',
@@ -610,7 +610,6 @@ return [
                 'footer' => 'Footer',
                 'catalog' => 'Catalogus',
                 'homepage' => 'Homepage',
-                'invoices' => 'Facturen',
             ],
 
             'usp' => [
@@ -716,9 +715,6 @@ return [
             'homepage' => [
                 'sections' => 'Secties op de homepage',
             ],
-            'invoices' => [
-                'template' => 'Factuursjabloon',
-            ],
         ],
 
         'theme_field_help' => [
@@ -734,21 +730,6 @@ return [
                 'usp_items' => 'Voordelen links; vink “CTA-knop” aan voor een actie aan de rechterkant (bijvoorbeeld Nu shoppen).',
                 'show_discovery_bar' => 'Tweede balk voor menulinks en het ontdekken van categorieën.',
                 'custom_nav_items' => 'Vul een aantal aangepaste desktop-navigatie-items in, of “infinite” om alle items te tonen. Categories blijft apart zichtbaar.',
-            ],
-            'invoices' => [
-                'template' => 'Opmaak van facturen en creditnota’s, ook bij afdrukken en als pdf. Elk sjabloon toont dezelfde factuurgegevens.',
-            ],
-        ],
-
-        // Factuursjablonen: namen van de opties voor invoices.template.
-        'theme_options' => [
-            'invoices' => [
-                'template' => [
-                    'classic' => 'Klassiek',
-                    'modern' => 'Modern',
-                    'minimal' => 'Minimalistisch',
-                    'compact' => 'Compact',
-                ],
             ],
         ],
     ],
@@ -2656,6 +2637,71 @@ return [
     ],
 
     // Onderhoudsmodus van de webshop (Admin > Systeem > Onderhoudsmodus)
+    'invoice_design' => [
+        'title' => 'Factuurontwerp',
+        'lede' => 'Kies hoe facturen en creditnota\'s eruitzien en wat erop staat. Wijzigingen gelden voor elk document dat je afdrukt of downloadt, ook eerder uitgegeven documenten.',
+        'tabs_label' => 'Facturen',
+        'tab_invoices' => 'Facturen',
+        'tab_design' => 'Ontwerp',
+        'save' => 'Ontwerp opslaan',
+        'discard' => 'Wijzigingen ongedaan maken',
+        'saved' => 'Factuurontwerp opgeslagen.',
+        'download_pdf' => 'Bekijken als pdf',
+        'theme_override' => 'Het actieve theme levert een eigen factuuropmaak. Documenten gebruiken daarom het theme in plaats van dit ontwerp.',
+        'template_title' => 'Sjabloon',
+        'template_description' => 'Elk sjabloon toont dezelfde factuurgegevens.',
+        'templates' => [
+            'clean' => ['name' => 'Strak', 'description' => 'Rustig en minimalistisch, met een groot te betalen bedrag.'],
+            'business' => ['name' => 'Zakelijk', 'description' => 'Compact, met een overzichtsblok en een juridische voetregel.'],
+            'bold' => ['name' => 'Krachtig', 'description' => 'Grote titel met golvende vormen onderaan.'],
+            'banner' => ['name' => 'Banner', 'description' => 'Gekleurde kopbalk en genummerde regels.'],
+            'angle' => ['name' => 'Schuin', 'description' => 'Schuine vormen boven en onder, met een totaalbalk.'],
+        ],
+        'color_title' => 'Merkkleur',
+        'color_description' => 'Voor titels, tabelkoppen en decoratie. Tekst op de kleur wordt automatisch donker of licht.',
+        'color_picker' => 'Kies een kleur',
+        'custom_color' => 'Eigen kleur',
+        'color_help' => 'Een hexkleur zoals #1F3A5F.',
+        'details_title' => 'Tonen op de factuur',
+        'details_description' => 'Zet gegevens aan of uit. Gegevens die niet zijn ingevuld, worden nooit afgedrukt.',
+        'no_logo' => 'Er is nog geen winkellogo ingesteld.',
+        'no_logo_link' => 'Logo toevoegen bij Huisstijl',
+        'seller_note' => 'Naam, adres, btw-nummer en ondernemingsnummer van de verkoper komen uit de winkelinstellingen (:name).',
+        'seller_fallback' => 'nog niet ingesteld',
+        'seller_link' => 'Winkelinstellingen bewerken',
+        'content_title' => 'Contact, betaling en opmerkingen',
+        'content_description' => 'Komt op elke factuur. Laat een veld leeg om het weg te laten.',
+        'fields' => [
+            'template' => 'Sjabloon',
+            'accent_color' => 'Merkkleur',
+            'show_logo' => 'Logo',
+            'show_seller_address' => 'Adres van de verkoper',
+            'show_vat_number' => 'Btw-nummer',
+            'show_company_number' => 'Ondernemingsnummer',
+            'show_contact' => 'Contactgegevens',
+            'show_buyer_properties' => 'Klantgegevens zoals hun btw-nummer',
+            'show_payment_details' => 'Betaalgegevens',
+            'show_notes' => 'Opmerkingen',
+            'contact_email' => 'Contact-e-mail',
+            'contact_phone' => 'Contacttelefoon',
+            'website' => 'Website',
+            'payment_details' => 'Betaalgegevens',
+            'notes' => 'Opmerkingen',
+            'footer_text' => 'Voettekst',
+        ],
+        'help' => [
+            'payment_details' => 'Bijvoorbeeld je IBAN en BIC. Staat op facturen, niet op creditnota\'s.',
+            'notes' => 'Bijvoorbeeld betalingsvoorwaarden of een bedankje.',
+            'footer_text' => 'Eén korte regel onderaan het document.',
+        ],
+        'preview_title' => 'Voorbeeld',
+        'preview_document' => 'Voorbeelddocument',
+        'preview_invoice' => 'Factuur',
+        'preview_credit_note' => 'Creditnota',
+        'preview_frame' => 'Voorbeeld van de factuur',
+        'preview_note' => 'Voorbeeldgegevens met een fictieve klant. Niet-opgeslagen wijzigingen zie je meteen; echte facturen worden niet aangeraakt.',
+        'updating' => 'Bijwerken',
+    ],
     'maintenance' => [
         'title' => 'Onderhoudsmodus',
         'lede' => 'Sluit de webshop, klantaccounts en de publieke API voor klanten terwijl je aan de winkel werkt. Medewerkers houden volledige toegang.',

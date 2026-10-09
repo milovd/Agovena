@@ -5,10 +5,14 @@ declare(strict_types=1);
 namespace App\Agovena\Invoices;
 
 use App\Agovena\Settings\SettingsRepository;
+use App\Enums\CreditNoteStatus;
 use App\Enums\InvoiceItemKind;
 use App\Enums\InvoiceStatus;
+use App\Models\CreditNote;
+use App\Models\CreditNoteItem;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
+use App\Models\Order;
 
 /**
  * Unsaved invoice with fictional buyer data for previewing invoice templates.
@@ -58,6 +62,7 @@ final class SampleInvoice
             'currency' => $currency,
         ]);
 
+        $invoice->setRelation('order', (new Order)->forceFill(['number' => 'ORD-10042']));
         $invoice->setRelation('items', collect([
             $this->item(InvoiceItemKind::Product, __('invoices.preview.item'), 2, 5000, $currency, [
                 ['key' => 'size', 'label' => __('invoices.preview.option_label'), 'display' => __('invoices.preview.option_value')],
@@ -67,6 +72,52 @@ final class SampleInvoice
         ]));
 
         return $invoice;
+    }
+
+    /** Unsaved credit note for the first product line of the sample invoice. */
+    public function makeCreditNote(): CreditNote
+    {
+        $invoice = $this->make();
+        $currency = (string) $invoice->currency;
+
+        $creditNote = new CreditNote([
+            'number' => 'PREVIEW-CN-0001',
+            'status' => CreditNoteStatus::Issued,
+            'customer_name' => $invoice->customer_name,
+            'customer_email' => $invoice->customer_email,
+            'billing_name' => $invoice->billing_name,
+            'billing_company' => $invoice->billing_company,
+            'billing_line1' => $invoice->billing_line1,
+            'billing_city' => $invoice->billing_city,
+            'billing_postal_code' => $invoice->billing_postal_code,
+            'billing_country' => $invoice->billing_country,
+            'merchant_name' => $invoice->merchant_name,
+            'merchant_address' => $invoice->merchant_address,
+            'merchant_vat_number' => $invoice->merchant_vat_number,
+            'merchant_company_number' => $invoice->merchant_company_number,
+            'custom_properties_snapshot' => $invoice->custom_properties_snapshot,
+            'issued_at' => now()->toDateString(),
+            'reason' => __('invoices.preview.credit_reason'),
+            'subtotal_amount' => 5000,
+            'tax_amount' => 1050,
+            'tax_rate_name' => $invoice->tax_rate_name,
+            'tax_rate_bps' => $invoice->tax_rate_bps,
+            'total_amount' => 6050,
+            'currency' => $currency,
+        ]);
+        $creditNote->setRelation('invoice', $invoice);
+        $creditNote->setRelation('items', collect([
+            new CreditNoteItem([
+                'kind' => InvoiceItemKind::Product,
+                'label' => __('invoices.preview.item'),
+                'quantity' => 1,
+                'unit_amount' => 5000,
+                'line_total_amount' => 5000,
+                'currency' => $currency,
+            ]),
+        ]));
+
+        return $creditNote;
     }
 
     /** @param list<array<string, string>> $options */

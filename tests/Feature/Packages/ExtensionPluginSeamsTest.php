@@ -14,7 +14,6 @@ use App\Agovena\Invoices\InvoiceDocumentView;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Provisioning\ProvisionerRegistry;
 use App\Agovena\Shipping\ShippingCarrierRegistry;
-use App\Agovena\Theme\ThemeManager;
 
 test('extensions can register admin navigation without patching core', function () {
     $context = extensionPluginContext();
@@ -48,16 +47,17 @@ test('extensions can contribute cart requirements through a public seam', functi
     expect($requirements->has(CartRequirement::ShippingAddress))->toBeTrue();
 });
 
-test('invoice document view comes from the active theme and can be overridden by an extension', function () {
+test('invoice documents use the core invoice design and can be overridden by an extension', function () {
     $view = app(InvoiceDocumentView::class);
 
-    expect($view->name())->toBe(app(ThemeManager::class)->active()->view('invoices.document'))
+    expect($view->name())->toBe('invoices.document')
+        ->and($view->themeOverride())->toBeNull()
         ->and(view()->exists($view->name()))->toBeTrue();
 
     $context = extensionPluginContext();
-    $context->invoiceDocument('theme::invoices.document');
+    $context->invoiceDocument('invoice-layout::document');
 
-    expect($view->name())->toBe('theme::invoices.document');
+    expect($view->name())->toBe('invoice-layout::document');
 });
 
 function extensionPluginContext(): ExtensionContext

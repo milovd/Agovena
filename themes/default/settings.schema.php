@@ -263,16 +263,6 @@ return new ThemeSettingsSchema([
         sort: 30,
     ),
     new ThemeSettingField(
-        key: 'invoices.template',
-        label: 'admin.appearance.theme_fields.invoices.template',
-        type: 'select',
-        default: 'classic',
-        group: 'invoices',
-        options: ['classic', 'modern', 'minimal', 'compact'],
-        help: 'admin.appearance.theme_field_help.invoices.template',
-        sort: 10,
-    ),
-    new ThemeSettingField(
         key: 'homepage.sections',
         label: 'admin.appearance.theme_fields.homepage.sections',
         type: 'sections',

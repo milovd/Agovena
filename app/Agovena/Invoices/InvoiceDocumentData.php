@@ -25,6 +25,7 @@ final readonly class InvoiceDocumentData
         public bool $isCreditNote,
         public string $documentTitle,
         public string $number,
+        public ?string $orderNumber,
         public string $statusLabel,
         public ?string $issuedOn,
         public ?string $dueOn,
@@ -53,6 +54,7 @@ final readonly class InvoiceDocumentData
         public string $taxLabel,
         public string $tax,
         public string $total,
+        public string $netTotal,
     ) {}
 
     public static function fromInvoice(Invoice $invoice): self
@@ -63,6 +65,7 @@ final readonly class InvoiceDocumentData
             isCreditNote: false,
             documentTitle: __('invoices.document_title'),
             number: (string) $invoice->number,
+            orderNumber: self::orderNumber($invoice),
             statusLabel: __('invoices.status.'.$invoice->status->value),
             issuedOn: $invoice->issued_at?->format('Y-m-d'),
             dueOn: $invoice->due_at?->format('Y-m-d'),
@@ -95,6 +98,7 @@ final readonly class InvoiceDocumentData
             ),
             tax: MoneyFormatter::format((int) $invoice->tax_amount, $currency),
             total: MoneyFormatter::format((int) $invoice->total_amount, $currency),
+            netTotal: MoneyFormatter::format((int) $invoice->total_amount - (int) $invoice->tax_amount, $currency),
         );
     }
 
@@ -106,6 +110,7 @@ final readonly class InvoiceDocumentData
             isCreditNote: true,
             documentTitle: __('credit_notes.document_title'),
             number: (string) $creditNote->number,
+            orderNumber: null,
             statusLabel: __('credit_notes.document_title'),
             issuedOn: $creditNote->issued_at->format('Y-m-d'),
             dueOn: null,
@@ -138,6 +143,7 @@ final readonly class InvoiceDocumentData
             ),
             tax: MoneyFormatter::format((int) $creditNote->tax_amount, $currency),
             total: MoneyFormatter::format((int) $creditNote->total_amount, $currency),
+            netTotal: MoneyFormatter::format((int) $creditNote->total_amount - (int) $creditNote->tax_amount, $currency),
         );
     }
 
@@ -182,6 +188,11 @@ final readonly class InvoiceDocumentData
         ));
     }
 
+    public function isPaid(): bool
+    {
+        return $this->paidOn !== null;
+    }
+
     /**
      * Seller identifiers below the seller address, labelled, in display order.
      *
@@ -215,6 +226,16 @@ final readonly class InvoiceDocumentData
             'unitAmount' => $sign.MoneyFormatter::format((int) $item->unit_amount, $item->currency),
             'amount' => $sign.MoneyFormatter::format((int) $item->line_total_amount, $item->currency),
         ];
+    }
+
+    private static function orderNumber(Invoice $invoice): ?string
+    {
+        $order = $invoice->relationLoaded('order') ? $invoice->getRelation('order') : null;
+        if ($order === null && $invoice->order_id !== null) {
+            $order = $invoice->order()->first(['id', 'number']);
+        }
+
+        return $order === null ? null : self::filled($order->number);
     }
 
     /** Tax rate name with its percentage, marked as included when the prices already contained it. */
