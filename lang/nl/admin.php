@@ -1018,6 +1018,7 @@ return [
         ],
         'validation' => [
             'referenced' => 'Dit product staat op eerdere bestellingen en kan niet definitief worden verwijderd. Zet het in plaats daarvan op Concept.',
+            'status_invalid' => 'Kies een geldige productstatus.',
             'price_required' => 'Prijs is verplicht.',
             'price_invalid' => 'Voer een geldige prijs in, bijvoorbeeld 45 of 45,00.',
             'price_no_decimals' => 'Deze valuta staat geen decimalen toe.',

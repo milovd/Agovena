@@ -1020,6 +1020,7 @@ return [
         ],
         'validation' => [
             'referenced' => 'This product appears on historical orders and cannot be permanently deleted. Set it to Draft instead.',
+            'status_invalid' => 'Choose a valid product status.',
             'price_required' => 'Price is required.',
             'price_invalid' => 'Enter a valid price such as 45 or 45.00.',
             'price_no_decimals' => 'This currency does not allow decimal places.',

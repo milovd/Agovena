@@ -6,7 +6,7 @@ namespace App\Livewire\Admin\Products;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\DeleteProduct;
-use App\Enums\ProductStatus;
+use App\Agovena\Catalog\SetProductStatus;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -59,9 +59,7 @@ final class Index extends Component
         $this->authorize('products.update');
 
         $product = Product::query()->findOrFail($productId);
-        $product->forceFill([
-            'status' => ProductStatus::from($status),
-        ])->save();
+        app(SetProductStatus::class)->handle($product, $status);
 
         session()->flash('status', __('admin.products.flash.status_updated'));
     }
