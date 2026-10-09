@@ -6,11 +6,13 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\DashboardMetrics;
 use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
+use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\StorefrontBrand;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Livewire\Admin\Customers\Index as CustomersIndex;
 use App\Livewire\Admin\Dashboard;
+use App\Models\Currency;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Ticket;
@@ -116,6 +118,26 @@ test('dashboard chart renders filled revenue bars and selected line markers', fu
         ->and($script)->toContain('barBackgroundColor')
         ->and($script)->toContain('Intl.NumberFormat')
         ->and($script)->toContain('pointHitRadius');
+});
+
+test('dashboard revenue chart uses the display currency and its minor-unit precision', function () {
+    Currency::query()->updateOrCreate(
+        ['code' => 'JPY'],
+        ['name' => 'Japanese yen', 'prefix' => '¥', 'suffix' => '', 'precision' => 0, 'exchange_rate' => '1.00000000', 'is_active' => true],
+    );
+    app(SettingsRepository::class)->set('general', 'base_currency', 'JPY');
+    $staff = $this->createStaff();
+
+    $series = app(DashboardMetrics::class)->build('14')['revenueSeries'];
+    $html = Livewire::actingAs($staff)->test(Dashboard::class)->html();
+    $script = file_get_contents(resource_path('js/admin/chart.js'));
+
+    expect($series['currency'])->toBe('JPY')
+        ->and($series['precision'])->toBe(0)
+        ->and($html)->toContain('&quot;currency&quot;:&quot;JPY&quot;')
+        ->and($html)->toContain('&quot;currencyPrecision&quot;:0')
+        ->and($html)->not->toContain('&quot;currency&quot;:&quot;EUR&quot;')
+        ->and($script)->toContain('config.currencyPrecision');
 });
 
 test('admin charts read their config from the chart root without double escaping', function () {

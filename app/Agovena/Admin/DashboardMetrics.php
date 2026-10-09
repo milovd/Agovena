@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Agovena\Admin;
 
 use App\Agovena\Modules\ModuleManager;
+use App\Agovena\Money\CurrencyCatalog;
 use App\Agovena\Money\CurrencyConverter;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -36,7 +37,7 @@ final class DashboardMetrics
     /**
      * @return array{
      *     metrics: list<array{id: string, label: string, value: string, hint: ?string, href: ?string}>,
-     *     revenueSeries: array{labels: list<string>, values: list<int>, currency: string},
+     *     revenueSeries: array{labels: list<string>, values: list<int>, currency: string, precision: int},
      *     orderSeries: array{labels: list<string>, values: list<int>},
      *     supportTicketCount: int,
      *     supportTickets: EloquentCollection<int, Ticket>,
@@ -249,7 +250,10 @@ final class DashboardMetrics
     }
 
     /**
-     * @return array{labels: list<string>, values: list<int>, currency: string}
+     * Daily paid revenue in minor units of the display currency, with that currency's precision
+     * so a chart can render major amounts without floats on the server.
+     *
+     * @return array{labels: list<string>, values: list<int>, currency: string, precision: int}
      */
     private function dailyPaidRevenue(CarbonImmutable $from, int $days, string $displayCurrency): array
     {
@@ -276,7 +280,10 @@ final class DashboardMetrics
             $byDay[$day] = (int) ($byDay[$day] ?? 0) + $converted;
         }
 
-        return $this->fillDailySeries($from, $days, $byDay, $displayCurrency);
+        return [
+            ...$this->fillDailySeries($from, $days, $byDay, $displayCurrency),
+            'precision' => app(CurrencyCatalog::class)->find($displayCurrency)?->normalizedPrecision() ?? 2,
+        ];
     }
 
     /**

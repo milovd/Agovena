@@ -75,12 +75,22 @@ export function registerChartComponents(Alpine) {
             const text = cssToken('--ag-color-text', '#0f172a');
             const surface = cssToken('--ag-color-surface', '#ffffff');
             const locale = document.documentElement.lang || 'en-US';
+            // Money series arrive in integer minor units; currencyPrecision is the currency's exponent.
+            const hasMinorUnits = Number.isInteger(config.currencyPrecision) && config.currencyPrecision >= 0;
+            const fractionDigits = hasMinorUnits ? config.currencyPrecision : 2;
+            const minorUnitScale = hasMinorUnits ? 10 ** config.currencyPrecision : 1;
             const currencyFormatter = new Intl.NumberFormat(locale, {
                 style: 'currency',
                 currency: config.currency || 'EUR',
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                minimumFractionDigits: fractionDigits,
+                maximumFractionDigits: fractionDigits,
             });
+            const currencyAxisFormatter = new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: config.currency || 'EUR',
+                maximumFractionDigits: 0,
+            });
+            const formatMoney = (value) => currencyFormatter.format(Number(value) / minorUnitScale);
             const numberFormatter = new Intl.NumberFormat(locale);
             const isBarChart = config.type === 'bar';
             const scaleDefaults = {
@@ -97,6 +107,12 @@ export function registerChartComponents(Alpine) {
                 ? {
                     y: {
                         ...scaleDefaults,
+                        ticks: {
+                            ...scaleDefaults.ticks,
+                            callback: (value) => (hasMinorUnits
+                                ? currencyAxisFormatter.format(Number(value) / minorUnitScale)
+                                : value),
+                        },
                         title: {
                             display: true,
                             color: muted,
@@ -208,7 +224,7 @@ export function registerChartComponents(Alpine) {
                                     }
 
                                     const formattedValue = context.dataset.yAxisID === 'y'
-                                        ? currencyFormatter.format(value)
+                                        ? formatMoney(value)
                                         : numberFormatter.format(value);
 
                                     return `${context.dataset.label}: ${formattedValue}`;

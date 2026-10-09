@@ -95,7 +95,8 @@
                     'type' => $chartType,
                     'showLegend' => true,
                     'dualAxis' => true,
-                    'currency' => 'EUR',
+                    'currency' => $revenueSeries['currency'],
+                    'currencyPrecision' => $revenueSeries['precision'],
                     'labels' => $revenueSeries['labels'],
                     'axisLabels' => [
                         'revenue' => __('admin.dashboard.charts.revenue_axis'),
