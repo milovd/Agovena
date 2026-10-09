@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Content;
 
+use App\Agovena\Content\PageSlug;
 use App\Models\Page;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -55,9 +56,8 @@ final class PagesIndex extends Component
                 'required',
                 'string',
                 'max:255',
-                'alpha_dash',
+                'regex:'.PageSlug::VALIDATION_PATTERN,
                 Rule::unique('pages', 'slug')->ignore($this->editingId),
-                Rule::notIn(['admin', 'cart', 'checkout', 'products', 'categories', 'orders', 'install']),
             ],
             'body' => ['nullable', 'string'],
             'status' => ['required', Rule::in(['draft', 'published'])],

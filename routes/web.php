@@ -1,5 +1,6 @@
 <?php
 
+use App\Agovena\Content\PageSlug;
 use App\Http\Controllers\Admin\AuditExportController;
 use App\Http\Controllers\Admin\DataExportController;
 use App\Http\Controllers\Auth\OAuthController;
@@ -260,5 +261,5 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
 });
 
 Route::get('/{slug}', ContentPage::class)
-    ->where('slug', '^(?!admin$|install$|cart$|checkout$|products$|categories$|orders$|account$|login$|register$)[A-Za-z0-9\-]+$')
+    ->where('slug', PageSlug::ROUTE_PATTERN)
     ->name('storefront.page');
