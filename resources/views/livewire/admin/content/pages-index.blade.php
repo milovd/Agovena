@@ -28,16 +28,33 @@
         <span class="ag-loading__text">{{ __('admin.content.pages.loading') }}</span>
     </div>
 
+    @if ($bulkResult !== null)
+        <div class="ag-alert {{ $bulkResult['failed'] || $bulkResult['skipped'] ? 'ag-alert--danger' : 'ag-alert--success' }}" role="status" aria-live="polite" tabindex="-1">
+            {{ __('admin.content.pages.bulk_result', $bulkResult) }}
+        </div>
+    @endif
+
     @if ($pages->isEmpty())
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ $search !== '' || $publicationFilter !== '' ? __('admin.content.pages.filtered_empty_title') : __('admin.content.pages.empty_title') }}</p>
             <p class="ag-empty__text">{{ $search !== '' || $publicationFilter !== '' ? __('admin.content.pages.filtered_empty_text') : __('admin.content.pages.empty_text') }}</p>
         </div>
     @else
+    @can('pages.manage')
+        <div class="ag-toolbar" role="region" aria-label="{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}">
+            <button type="button" class="ag-btn" wire:click="selectCurrentPage">{{ __('admin.content.pages.bulk_select_page') }}</button>
+            <span aria-live="polite">{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}</span>
+            <button type="button" class="ag-btn" wire:click="bulkSetStatus('published')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_publish') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_publish') }}</button>
+            <button type="button" class="ag-btn" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_draft') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_draft') }}</button>
+        </div>
+        @error('selectedPageIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
+        @error('bulkStatus') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
+    @endcan
     <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search,publicationFilter">
         <table class="ag-table">
                 <thead>
                     <tr>
+                        @can('pages.manage')<th scope="col"><span class="visually-hidden">{{ __('admin.content.pages.bulk_select_page') }}</span></th>@endcan
                         <th scope="col">{{ __('common.title') }}</th>
                         <th scope="col">{{ __('common.status') }}</th>
                         <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
@@ -46,6 +63,9 @@
                 <tbody>
                     @foreach ($pages as $page)
                         <tr wire:key="page-{{ $page->id }}">
+                            @can('pages.manage')
+                                <td><x-ag.checkbox id="page-select-{{ $page->id }}" wire:model.live="selectedPageIds" value="{{ $page->id }}" aria-label="{{ __('admin.content.pages.bulk_select_row', ['title' => $page->title]) }}" /></td>
+                            @endcan
                             <td>
                                 <div class="ag-table__primary">
                                     @if ($page->status === 'published')
