@@ -566,6 +566,7 @@ return [
             'active' => 'Actief',
             'installed' => 'Geïnstalleerd',
             'activate' => 'Activeren',
+            'confirm_activate' => ':name activeren als webshopthema? Dit wijzigt de actieve webshop.',
             'activated' => 'Thema geactiveerd.',
             'empty_title' => 'Geen thema’s gevonden',
             'empty_text' => 'Voeg een pakket toe onder :path met :file.',

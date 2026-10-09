@@ -566,6 +566,7 @@ return [
             'active' => 'Active',
             'installed' => 'Installed',
             'activate' => 'Activate',
+            'confirm_activate' => 'Activate :name as the storefront Theme? This changes the active storefront.',
             'activated' => 'Theme activated.',
             'empty_title' => 'No Themes found',
             'empty_text' => 'Add a package under :path with :file.',

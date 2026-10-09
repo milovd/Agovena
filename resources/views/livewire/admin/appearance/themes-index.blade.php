@@ -1,13 +1,11 @@
 <div class="admin-page">
     <x-ag.page-header :heading="__('admin.appearance.themes.title')" :lede="__('admin.appearance.themes.lede')">
         <x-slot:actions>
-            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.appearance.customize') }}">{{ __('admin.appearance.themes.customize_active') }}</a>
+            @can('theme.manage')
+                <a class="ag-btn ag-btn--secondary" href="{{ route('admin.appearance.customize') }}">{{ __('admin.appearance.themes.customize_active') }}</a>
+            @endcan
         </x-slot:actions>
     </x-ag.page-header>
-
-    @if (session('status'))
-        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
-    @endif
 
     <div class="ag-table-wrap">
         <table class="ag-table">
@@ -46,9 +44,11 @@
                             @endif
                         </td>
                         <td>
-                            @if ($theme->id !== $activeId)
-                                <button type="button" class="ag-btn ag-btn--primary" wire:click="activate('{{ $theme->id }}')">{{ __('admin.appearance.themes.activate') }}</button>
-                            @endif
+                            @can('theme.manage')
+                                @if ($theme->id !== $activeId)
+                                    <button type="button" class="ag-btn ag-btn--primary" wire:click="activate('{{ $theme->id }}')" wire:confirm="{{ __('admin.appearance.themes.confirm_activate', ['name' => $theme->name]) }}">{{ __('admin.appearance.themes.activate') }}</button>
+                                @endif
+                            @endcan
                         </td>
                     </tr>
                 @empty
