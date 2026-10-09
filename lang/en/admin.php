@@ -1264,6 +1264,7 @@ return [
         'print' => 'Print invoice',
         'download_pdf' => 'Download PDF',
         'search_label' => 'Search invoices',
+        'loading' => 'Loading invoices…',
         'search_placeholder' => 'Number, customer…',
         'status_label' => 'Status',
         'status_all' => 'All statuses',
@@ -1295,6 +1296,8 @@ return [
         'empty' => [
             'title' => 'No invoices yet',
             'text' => 'Invoices are created when an order is placed.',
+            'filtered_title' => 'No matching invoices',
+            'filtered_text' => 'Try another search or status.',
         ],
     ],
 

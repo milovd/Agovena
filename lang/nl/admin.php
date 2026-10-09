@@ -1262,6 +1262,7 @@ return [
         'print' => 'Factuur afdrukken',
         'download_pdf' => 'PDF downloaden',
         'search_label' => 'Facturen zoeken',
+        'loading' => 'Facturen laden…',
         'search_placeholder' => 'Nummer, klant…',
         'status_label' => 'Status',
         'status_all' => 'Alle statussen',
@@ -1293,6 +1294,8 @@ return [
         'empty' => [
             'title' => 'Nog geen facturen',
             'text' => 'Facturen worden aangemaakt wanneer een bestelling wordt geplaatst.',
+            'filtered_title' => 'Geen overeenkomende facturen',
+            'filtered_text' => 'Probeer een andere zoekterm of status.',
         ],
     ],
 

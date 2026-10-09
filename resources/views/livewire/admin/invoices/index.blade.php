@@ -26,21 +26,17 @@
         </div>
     </div>
 
-    @if (session('status'))
-        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
-    @endif
-
-    @if (session('error'))
-        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
-    @endif
+    <div wire:loading.flex class="ag-loading" wire:target="search,status,gotoPage,previousPage,nextPage">
+        <span class="ag-loading__text">{{ __('admin.invoices.loading') }}</span>
+    </div>
 
     @if ($invoices->isEmpty())
         <div class="ag-empty" role="status">
-            <p class="ag-empty__title">{{ __('admin.invoices.empty.title') }}</p>
-            <p class="ag-empty__text">{{ __('admin.invoices.empty.text') }}</p>
+            <p class="ag-empty__title">{{ $search || $status ? __('admin.invoices.empty.filtered_title') : __('admin.invoices.empty.title') }}</p>
+            <p class="ag-empty__text">{{ $search || $status ? __('admin.invoices.empty.filtered_text') : __('admin.invoices.empty.text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap">
+        <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search,status">
             <table class="ag-table ag-table--invoices">
                 <thead>
                     <tr>
@@ -94,7 +90,7 @@
                                         class="ag-icon-btn"
                                         href="{{ route('admin.invoices.pdf', $invoice) }}"
                                         title="{{ __('admin.invoices.download_pdf') }}"
-                                        aria-label="{{ __('admin.invoices.download_pdf') }}"
+                                        aria-label="{{ __('admin.invoices.download_pdf') }} {{ $invoice->number }}"
                                     >
                                         <x-ag.icon name="download" :size="16" />
                                     </a>
