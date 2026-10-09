@@ -34,14 +34,14 @@ test('core registers physical and availability capabilities without optional mod
         ->and(app(ProductCapabilityRegistry::class)->has('availability'))->toBeTrue();
 });
 
-test('core physical navigation is grouped under fulfillment', function () {
+test('core physical inventory navigation is grouped under catalog', function () {
     enableAvailabilityCapability();
 
     $inventory = collect(app(AdminRegistrar::class)->navigationItems())
         ->firstWhere('id', 'inventory-stocks');
 
     expect($inventory)->not->toBeNull()
-        ->and($inventory->group)->toBe('admin.nav_groups.fulfillment')
+        ->and($inventory->group)->toBe('admin.nav_groups.catalog')
         ->and(__('admin.nav_groups.fulfillment'))->toBe('Fulfillment');
 });
 

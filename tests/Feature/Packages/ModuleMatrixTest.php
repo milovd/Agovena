@@ -112,7 +112,7 @@ test('events are configured inside products while check in remains an operations
         ->and($tabs)->toHaveKey('events')
         ->and($items->get('events-checkin')?->group)->toBe('admin.nav_groups.operations')
         ->and($items->get('events-checkin')?->parent)->toBeNull()
-        ->and($items->get('tickets')?->group)->toBe('admin.nav_groups.operations');
+        ->and($items->get('tickets')?->group)->toBe('admin.nav_groups.customers');
 });
 
 test('all first-party modules together expose admin and account surfaces', function () {

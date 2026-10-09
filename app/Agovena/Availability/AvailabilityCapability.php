@@ -46,7 +46,7 @@ final class AvailabilityCapability
         $context->admin()->navigation(new NavigationItem(
             id: 'inventory-stocks',
             label: 'admin.nav.inventory',
-            group: 'admin.nav_groups.fulfillment',
+            group: 'admin.nav_groups.catalog',
             href: '/admin/inventory',
             icon: 'warehouse',
             sort: 18,

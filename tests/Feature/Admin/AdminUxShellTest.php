@@ -264,7 +264,7 @@ test('core physical commerce keeps fulfillment navigation available', function (
     expect($ids)->toContain('inventory-stocks');
 });
 
-test('enabled subscriptions appear under operations navigation', function () {
+test('enabled subscriptions appear under sales navigation', function () {
     installAndEnableModule('subscriptions');
     app(SyncRegisteredPermissions::class)(force: true);
 
@@ -272,7 +272,7 @@ test('enabled subscriptions appear under operations navigation', function () {
         ->firstWhere('id', 'subscriptions');
 
     expect($item)->not->toBeNull()
-        ->and($item->group)->toBe('admin.nav_groups.operations');
+        ->and($item->group)->toBe('admin.nav_groups.sales');
 });
 
 test('admin navigation groups are collapsible and fulfillment icons are distinct', function () {

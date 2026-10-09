@@ -44,7 +44,10 @@ test('core admin items are grouped as sibling links instead of nested parents', 
         ->and($byId->get('theme-customize')?->parent)->toBeNull()
         ->and($byId->get('navigation')?->parent)->toBeNull()
         ->and($byId->get('pages')?->parent)->toBeNull()
-        ->and($byId->get('themes')?->group)->toBe('admin.nav_groups.appearance')
+        ->and($byId->get('themes')?->group)->toBe('admin.nav_groups.online_store')
+        ->and($byId->get('tickets')?->group)->toBe('admin.nav_groups.customers')
+        ->and($byId->get('modules')?->group)->toBe('admin.nav_groups.integrations')
+        ->and($byId->get('audit')?->group)->toBe('admin.nav_groups.monitoring')
         ->and($byId->get('extensions')?->parent)->toBeNull()
         ->and($byId->get('modules')?->parent)->toBeNull()
         ->and($byId->get('roles')?->parent)->toBeNull()
@@ -174,6 +177,12 @@ test('a custom third-party group stays visible under its own key', function () {
     $item = new NavigationItem(id: 'third-party-custom', label: 'Special', group: 'module::admin.custom_group', href: '/admin/custom');
 
     expect(AdminNavigation::groupedTree(collect([$item]))->keys()->all())->toBe(['module::admin.custom_group']);
+});
+
+test('a Module-owned item keeps its registered custom group even when its ID matches a first-party capability', function () {
+    $item = new NavigationItem(id: 'events', label: 'Events', group: 'module::admin.events', href: '/admin/events');
+
+    expect(AdminNavigation::groupedTree(collect([$item]))->keys()->all())->toBe(['module::admin.events']);
 });
 
 test('core commerce links remain in the sidebar without retired module rows', function () {

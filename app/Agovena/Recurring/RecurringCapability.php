@@ -48,7 +48,7 @@ final class RecurringCapability
         $context->admin()->navigation(new NavigationItem(
             id: 'subscriptions',
             label: 'admin.nav.subscriptions',
-            group: 'admin.nav_groups.operations',
+            group: 'admin.nav_groups.sales',
             href: '/admin/subscriptions',
             icon: 'package',
             sort: 16,
@@ -58,7 +58,7 @@ final class RecurringCapability
         $context->admin()->navigation(new NavigationItem(
             id: 'plan-changes',
             label: 'admin.nav.plan_changes',
-            group: 'admin.nav_groups.operations',
+            group: 'admin.nav_groups.sales',
             href: '/admin/plan-changes',
             icon: 'repeat',
             sort: 18,

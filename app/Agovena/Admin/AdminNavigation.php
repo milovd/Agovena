@@ -38,27 +38,6 @@ final class AdminNavigation
     ];
 
     /** @var array<string, string> */
-    private const DISPLAY_GROUP_BY_ID = [
-        'inventory-stocks' => 'catalog',
-        'subscriptions' => 'sales',
-        'plan-changes' => 'sales',
-        'tickets' => 'customers',
-        'provisioning' => 'fulfillment',
-        'domains' => 'fulfillment',
-        'events' => 'fulfillment',
-        'events-checkin' => 'fulfillment',
-        'modules' => 'integrations',
-        'extensions' => 'integrations',
-        'webhooks' => 'integrations',
-        'api-tokens' => 'integrations',
-        'audit' => 'monitoring',
-        'email-log' => 'monitoring',
-        'cron-statistics' => 'monitoring',
-        'failed-jobs' => 'monitoring',
-        'notification-templates' => 'system',
-    ];
-
-    /** @var array<string, string> */
     private const LEGACY_GROUPS = [
         'admin.nav_groups.appearance' => 'online_store',
         'admin.nav_groups.operations' => 'fulfillment',
@@ -171,10 +150,6 @@ final class AdminNavigation
 
     private static function displayGroup(NavigationItem $item): string
     {
-        if (isset(self::DISPLAY_GROUP_BY_ID[$item->id])) {
-            return 'admin.nav_groups.'.self::DISPLAY_GROUP_BY_ID[$item->id];
-        }
-
         $legacyGroup = self::LEGACY_GROUPS[$item->group] ?? null;
 
         return $legacyGroup === null ? $item->group : 'admin.nav_groups.'.$legacyGroup;
