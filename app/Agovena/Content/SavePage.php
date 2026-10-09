@@ -10,20 +10,23 @@ use Illuminate\Support\Facades\DB;
 
 final class SavePage
 {
-    public function __construct(private readonly AuditLogger $audit) {}
+    public function __construct(
+        private readonly AuditLogger $audit,
+        private readonly PageBodySanitizer $sanitizer,
+    ) {}
 
-    /** @param array{title: string, slug: string, body?: string|null, status: string} $data */
+    /** @param array{title: string, slug: string, body?: string|null, body_format?: string, status: string} $data */
     public function create(array $data): Page
     {
         return DB::transaction(function () use ($data): Page {
-            $page = Page::query()->create($data);
+            $page = Page::query()->create($this->sanitizeHtmlBody($data, 'plain'));
             $this->audit->log('page.created', $page, after: $page->only(['title', 'slug', 'status']));
 
             return $page;
         });
     }
 
-    /** @param array{title: string, slug: string, body?: string|null, status: string} $data */
+    /** @param array{title: string, slug: string, body?: string|null, body_format?: string, status: string} $data */
     public function update(int $id, array $data): ?Page
     {
         return DB::transaction(function () use ($id, $data): ?Page {
@@ -33,7 +36,7 @@ final class SavePage
             }
 
             $before = $page->only(['title', 'slug', 'status']);
-            $page->fill($data);
+            $page->fill($this->sanitizeHtmlBody($data, $page->body_format));
 
             if ($page->isDirty()) {
                 $page->save();
@@ -42,5 +45,18 @@ final class SavePage
 
             return $page;
         });
+    }
+
+    /**
+     * @param  array{title: string, slug: string, body?: string|null, body_format?: string, status: string}  $data
+     * @return array{title: string, slug: string, body?: string|null, body_format?: string, status: string}
+     */
+    private function sanitizeHtmlBody(array $data, string $existingFormat): array
+    {
+        if (($data['body_format'] ?? $existingFormat) === 'html' && isset($data['body'])) {
+            $data['body'] = $this->sanitizer->sanitize($data['body']);
+        }
+
+        return $data;
     }
 }

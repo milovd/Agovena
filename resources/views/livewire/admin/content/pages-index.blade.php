@@ -4,53 +4,20 @@
             <h1 class="admin-page__heading">{{ __('admin.content.pages.title') }}</h1>
             <p class="admin-page__lede">{{ __('admin.content.pages.lede') }}</p>
         </div>
+        @can('pages.manage')
+            <a class="ag-btn ag-btn--primary" href="{{ route('admin.appearance.pages.create') }}">{{ __('admin.content.pages.new') }}</a>
+        @endcan
     </header>
 
-    @if (session('status'))
-        <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
-    @endif
-
-    <div class="ag-split">
-        <div class="admin-panel">
-            <h2 class="admin-panel__title">{{ $editingId ? __('admin.content.pages.edit') : __('admin.content.pages.new') }}</h2>
-            <form class="ag-form" wire:submit="save">
-                <div class="ag-field">
-                    <label class="ag-field__label" for="page-title">{{ __('common.title') }}</label>
-                    <input id="page-title" class="ag-input" type="text" wire:model="title" required>
-                    @error('title') <p class="ag-field__error">{{ $message }}</p> @enderror
-                </div>
-                <div class="ag-field">
-                    <label class="ag-field__label" for="page-slug">{{ __('admin.content.pages.slug') }}</label>
-                    <input id="page-slug" class="ag-input" type="text" wire:model="slug">
-                    @error('slug') <p class="ag-field__error">{{ $message }}</p> @enderror
-                </div>
-                <div class="ag-field">
-                    <label class="ag-field__label" for="page-body">{{ __('admin.content.pages.body') }}</label>
-                    <textarea id="page-body" class="ag-input" rows="8" wire:model="body"></textarea>
-                </div>
-                <div class="ag-field">
-                    <label class="ag-field__label" for="page-status">{{ __('common.status') }}</label>
-                    <select id="page-status" class="ag-select" wire:model="status">
-                        <option value="draft">{{ __('admin.content.pages.draft') }}</option>
-                        <option value="published">{{ __('admin.content.pages.published') }}</option>
-                    </select>
-                </div>
-                <div class="ag-toolbar">
-                    <button type="submit" class="ag-btn ag-btn--primary">{{ __('common.save') }}</button>
-                    @if ($editingId)
-                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="create">{{ __('common.cancel') }}</button>
-                    @endif
-                </div>
-            </form>
-        </div>
-
-        <div class="ag-table-wrap">
-            <table class="ag-table">
+    <div class="ag-table-wrap">
+        <table class="ag-table">
                 <thead>
                     <tr>
                         <th>{{ __('common.title') }}</th>
                         <th>{{ __('common.status') }}</th>
-                        <th></th>
+                        @can('pages.manage')
+                            <th scope="col">{{ __('common.actions') }}</th>
+                        @endcan
                     </tr>
                 </thead>
                 <tbody>
@@ -61,14 +28,16 @@
                                 <div class="ag-muted">/{{ $page->slug }}</div>
                             </td>
                             <td><span class="ag-badge">{{ __('admin.content.pages.'.$page->status) }}</span></td>
-                            <td>
-                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="edit({{ $page->id }})">{{ __('common.edit') }}</button>
-                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="delete({{ $page->id }})" wire:confirm="{{ __('admin.content.pages.delete_confirm') }}">{{ __('common.delete') }}</button>
-                            </td>
+                            @can('pages.manage')
+                                <td>
+                                    <a class="ag-btn ag-btn--ghost" href="{{ route('admin.appearance.pages.edit', $page) }}">{{ __('common.edit') }}</a>
+                                    <button type="button" class="ag-btn ag-btn--ghost" wire:click="delete({{ $page->id }})" wire:confirm="{{ __('admin.content.pages.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                </td>
+                            @endcan
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="3">
+                            <td colspan="{{ auth()->user()->can('pages.manage') ? 3 : 2 }}">
                                 <div class="ag-empty" role="status">
                                     <p class="ag-empty__title">{{ __('admin.content.pages.empty_title') }}</p>
                                     <p class="ag-empty__text">{{ __('admin.content.pages.empty_text') }}</p>
@@ -77,8 +46,7 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
-            {{ $pages->links() }}
-        </div>
+        </table>
+        {{ $pages->links() }}
     </div>
 </div>

@@ -19,7 +19,8 @@
         "mollie/mollie-api-php": "^3.13",
         "pragmarx/google2fa": "^8.0",
         "spatie/laravel-permission": "^6.0",
-        "stripe/stripe-php": "^17.0"
+        "stripe/stripe-php": "^17.0",
+        "symfony/html-sanitizer": "~7.4.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

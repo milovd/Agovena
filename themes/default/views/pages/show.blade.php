@@ -6,6 +6,10 @@
     </nav>
     <h1 class="store-title">{{ $page->title }}</h1>
     <div class="store-page__body">
-        {!! nl2br(e($page->body ?? '')) !!}
+        @if ($page->body_format === 'html')
+            {!! app(\App\Agovena\Content\PageBodySanitizer::class)->sanitize((string) $page->body) !!}
+        @else
+            {!! nl2br(e($page->body ?? '')) !!}
+        @endif
     </div>
 </article>

@@ -23,6 +23,7 @@ use App\Livewire\Admin\Audit\Index as AuditIndex;
 use App\Livewire\Admin\Audit\Show as AuditShow;
 use App\Livewire\Admin\Categories\Index as CategoriesIndex;
 use App\Livewire\Admin\Content\NavigationIndex as ContentNavigation;
+use App\Livewire\Admin\Content\PageForm as ContentPageForm;
 use App\Livewire\Admin\Content\PagesIndex as ContentPages;
 use App\Livewire\Admin\CreditNotes\Create as CreditNotesCreate;
 use App\Livewire\Admin\CreditNotes\Show as CreditNotesShow;
@@ -257,6 +258,8 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
     Route::get('/appearance/themes', AppearanceThemes::class)->name('appearance.themes');
     Route::get('/appearance/customize', AppearanceCustomize::class)->name('appearance.customize');
     Route::get('/appearance/pages', ContentPages::class)->name('appearance.pages');
+    Route::get('/appearance/pages/create', ContentPageForm::class)->name('appearance.pages.create');
+    Route::get('/appearance/pages/{page}/edit', ContentPageForm::class)->name('appearance.pages.edit');
     Route::get('/appearance/navigation', ContentNavigation::class)->name('appearance.navigation');
 });
 

@@ -13,5 +13,10 @@
         "chart.js": "^4.5.1",
         "laravel-vite-plugin": "^3.1",
         "vite": "^8.0.0"
+    },
+    "dependencies": {
+        "@tiptap/core": "^3.31.4",
+        "@tiptap/extension-image": "^3.31.4",
+        "@tiptap/starter-kit": "^3.31.4"
     }
 }

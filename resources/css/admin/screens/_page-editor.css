@@ -1,0 +1,54 @@
+.ag-page-editor {
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+  overflow: hidden;
+}
+
+.ag-page-editor__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-1);
+  padding: var(--ag-space-2);
+  border-bottom: 1px solid var(--ag-color-border);
+}
+
+.ag-page-editor__canvas .tiptap {
+  min-height: 18rem;
+  padding: var(--ag-space-4);
+  outline: 0;
+  line-height: 1.65;
+}
+
+.ag-page-editor__canvas .tiptap:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--ag-color-border-strong);
+}
+
+.ag-page-editor__canvas :is(h2, h3, h4) {
+  margin: 1em 0 0.45em;
+  line-height: 1.3;
+}
+
+.ag-page-editor__canvas :is(p, ul, ol, blockquote) {
+  margin: 0.5em 0;
+}
+
+.ag-page-editor__upload {
+  display: grid;
+  gap: var(--ag-space-3);
+  margin-top: var(--ag-space-3);
+}
+
+.ag-page-editor__upload .ag-btn {
+  justify-self: start;
+}
+
+.ag-page-editor__source {
+  width: 100%;
+  min-height: 18rem;
+  border: 0;
+  border-radius: 0;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 0.9rem;
+}

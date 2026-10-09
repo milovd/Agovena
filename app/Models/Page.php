@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Page extends Model
 {
-    protected $fillable = ['title', 'slug', 'body', 'status'];
+    protected $fillable = ['title', 'slug', 'body', 'body_format', 'status'];
 
     public function isPublished(): bool
     {

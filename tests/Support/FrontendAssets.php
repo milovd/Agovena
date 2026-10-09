@@ -33,13 +33,15 @@ function cssImports(string $path): array
 }
 
 /**
- * Relative ES module import specifiers of a JavaScript file, in order.
+ * Relative static and literal dynamic ES module imports of a JavaScript file.
  *
  * @return list<string>
  */
 function jsRelativeImports(string $path): array
 {
-    preg_match_all("/^import\\s+[^;]*?from\\s+'(\\.[^']+)';$/m", (string) file_get_contents($path), $matches);
+    $source = (string) file_get_contents($path);
+    preg_match_all("/^import\\s+[^;]*?from\\s+'(\\.[^']+)';$/m", $source, $static);
+    preg_match_all("/\\bimport\\(\\s*'(\\.[^']+)'\\s*\\)/", $source, $dynamic);
 
-    return $matches[1];
+    return [...$static[1], ...$dynamic[1]];
 }
