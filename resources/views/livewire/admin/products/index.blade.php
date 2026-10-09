@@ -57,6 +57,12 @@
         <span class="ag-loading__text">{{ __('admin.products.loading') }}</span>
     </div>
 
+    @if ($bulkResult !== null)
+        <div class="ag-alert {{ $bulkResult['failed'] || $bulkResult['skipped'] ? 'ag-alert--danger' : 'ag-alert--success' }}" role="status" aria-live="polite" tabindex="-1">
+            {{ __('admin.products.bulk_result', $bulkResult) }}
+        </div>
+    @endif
+
     @if ($products->isEmpty())
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ $search || $status || $category ? __('admin.products.empty.filtered_title') : __('admin.products.empty.title') }}</p>
@@ -76,10 +82,21 @@
             @endcan
         </div>
     @else
+        @can('products.update')
+            <div class="ag-toolbar" role="region" aria-label="{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}">
+                <button type="button" class="ag-btn" wire:click="selectCurrentPage">{{ __('admin.products.bulk_select_page') }}</button>
+                <span aria-live="polite">{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}</span>
+                <button type="button" class="ag-btn" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
+                <button type="button" class="ag-btn" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
+            </div>
+            @error('selectedProductIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
+            @error('bulkStatus') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
+        @endcan
         <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search,status,category,sort">
             <table class="ag-table ag-table--products">
                 <thead>
                     <tr>
+                        @can('products.update')<th scope="col"><span class="visually-hidden">{{ __('admin.products.bulk_select_page') }}</span></th>@endcan
                         <th scope="col" class="ag-table__thumb-col"><span class="visually-hidden">{{ __('common.image') }}</span></th>
                         <th scope="col">{{ __('common.product') }}</th>
                         <th scope="col" class="ag-table__col--md">{{ __('common.category') }}</th>
@@ -92,6 +109,9 @@
                 <tbody>
                     @foreach ($products as $product)
                         <tr wire:key="product-{{ $product->id }}">
+                            @can('products.update')
+                                <td><x-ag.checkbox id="product-select-{{ $product->id }}" wire:model.live="selectedProductIds" value="{{ $product->id }}" aria-label="{{ __('admin.products.bulk_select_row', ['name' => $product->name]) }}" /></td>
+                            @endcan
                             <td class="ag-table__thumb-col">
                                 @php $thumbUrl = \App\Agovena\Media\PublicMedia::url($product->image_path); @endphp
                                 @if ($thumbUrl)

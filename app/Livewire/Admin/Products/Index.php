@@ -7,10 +7,13 @@ namespace App\Livewire\Admin\Products;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\DeleteProduct;
 use App\Agovena\Catalog\SetProductStatus;
+use App\Agovena\Catalog\SetSelectedProductStatus;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
+use Livewire\Attributes\Locked;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -29,29 +32,78 @@ final class Index extends Component
 
     public ?int $confirmingDeleteId = null;
 
+    /** @var array<int, mixed> */
+    public array $selectedProductIds = [];
+
+    /** @var array{updated: int, unchanged: int, skipped: int, failed: int}|null */
+    #[Locked]
+    public ?array $bulkResult = null;
+
+    private const MAX_BULK_SELECTION = 500;
+
     public function mount(): void
     {
         $this->authorize('products.view');
     }
 
-    public function updatingSearch(): void
+    public function updatedSearch(): void
     {
+        $this->selectedProductIds = [];
         $this->resetPage();
     }
 
-    public function updatingStatus(): void
+    public function updatedStatus(): void
     {
+        $this->selectedProductIds = [];
         $this->resetPage();
     }
 
-    public function updatingCategory(): void
+    public function updatedCategory(): void
     {
+        $this->selectedProductIds = [];
         $this->resetPage();
     }
 
-    public function updatingSort(): void
+    public function updatedSort(): void
     {
+        $this->selectedProductIds = [];
         $this->resetPage();
+    }
+
+    public function updatedPaginators(): void
+    {
+        $this->selectedProductIds = [];
+    }
+
+    public function selectCurrentPage(): void
+    {
+        $this->authorize('products.update');
+        $this->selectedProductIds = $this->visibleProducts()->getCollection()->pluck('id')->all();
+    }
+
+    public function bulkSetStatus(string $status): void
+    {
+        $this->authorize('products.update');
+        if (! in_array($status, ['draft', 'active'], true)) {
+            throw ValidationException::withMessages(['bulkStatus' => __('admin.products.bulk_invalid_status')]);
+        }
+        // Check the raw count before deduplicating hostile Livewire state.
+        if (count($this->selectedProductIds) > self::MAX_BULK_SELECTION) {
+            throw ValidationException::withMessages(['selectedProductIds' => __('admin.products.bulk_limit')]);
+        }
+        $requested = array_unique(array_map(
+            static fn (mixed $id): string => is_int($id) || is_string($id) ? (string) $id : '',
+            $this->selectedProductIds,
+        ));
+        if ($requested === [] || $requested === ['']) {
+            throw ValidationException::withMessages(['selectedProductIds' => __('admin.products.bulk_empty')]);
+        }
+        $visibleIds = $this->visibleProducts()->getCollection()->pluck('id')->all();
+        $ids = array_values(array_filter($visibleIds, static fn (int $id): bool => in_array((string) $id, $requested, true)));
+        $result = app(SetSelectedProductStatus::class)->handle($ids, $status);
+        $result['skipped'] += count($requested) - count($ids);
+        $this->selectedProductIds = [];
+        $this->bulkResult = $result;
     }
 
     public function setStatus(int $productId, string $status): void
@@ -105,6 +157,25 @@ final class Index extends Component
     public function render(AdminRegistrar $admin, DeleteProduct $delete)
     {
         $this->authorize('products.view');
+        $products = $this->visibleProducts();
+        $confirming = $this->confirmingDeleteId
+            ? Product::query()->find($this->confirmingDeleteId)
+            : null;
+
+        return view('livewire.admin.products.index', [
+            'products' => $products,
+            'categories' => Category::query()->orderBy('name')->get(['id', 'name']),
+            'confirmingProduct' => $confirming,
+            'confirmingReferenced' => $confirming ? $delete->isReferencedByOrders($confirming) : false,
+        ])->layout('layouts.admin', [
+            'title' => __('admin.products.title'),
+            'navigation' => $admin->navigationItems(),
+        ]);
+    }
+
+    /** @return LengthAwarePaginator<int, Product> */
+    private function visibleProducts(): LengthAwarePaginator
+    {
         $query = Product::query()->with('category');
 
         if ($this->search !== '') {
@@ -132,20 +203,6 @@ final class Index extends Component
             default => $query->orderByDesc('id'),
         };
 
-        $products = $query->paginate(15);
-
-        $confirming = $this->confirmingDeleteId
-            ? Product::query()->find($this->confirmingDeleteId)
-            : null;
-
-        return view('livewire.admin.products.index', [
-            'products' => $products,
-            'categories' => Category::query()->orderBy('name')->get(['id', 'name']),
-            'confirmingProduct' => $confirming,
-            'confirmingReferenced' => $confirming ? $delete->isReferencedByOrders($confirming) : false,
-        ])->layout('layouts.admin', [
-            'title' => __('admin.products.title'),
-            'navigation' => $admin->navigationItems(),
-        ]);
+        return $query->paginate(15);
     }
 }
