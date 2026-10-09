@@ -81,12 +81,14 @@ final class PhysicalCapability
             id: 'shipping-fulfillment',
             component: OrderFulfillment::class,
             sort: 40,
+            permission: 'shipping.view',
         ));
 
         $context->admin()->orderDetailSection(new OrderDetailSection(
             id: 'shipping-returns',
             component: OrderReturns::class,
             sort: 45,
+            permission: 'returns.view',
         ));
 
         $context->customerAccountNav(new AccountNavItem(

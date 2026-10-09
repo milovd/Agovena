@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Orders;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\InMemoryAdminRegistrar;
+use App\Agovena\Admin\OrderDetailSection;
 use App\Agovena\Invoices\LinkInvoiceToOrder;
 use App\Agovena\Invoices\UnlinkInvoiceFromOrder;
 use App\Agovena\Orders\CancelUnpaidOrder;
@@ -187,7 +188,11 @@ final class Show extends Component
             'canCancelUnpaid' => $canCancelUnpaid,
             'canManageInvoices' => $canManageInvoices,
             'invoiceCandidates' => $invoiceCandidates,
-            'orderDetailSections' => $admin->orderDetailSections(),
+            'orderDetailSections' => array_values(array_filter(
+                $admin->orderDetailSections(),
+                fn (OrderDetailSection $section): bool => $section->permission === null
+                    || (auth()->user()?->can($section->permission) ?? false),
+            )),
             'navigation' => $admin->navigationItems(),
             'paymentGatewayLabel' => $this->paymentGatewayLabel(),
         ])->layout('layouts.admin', [
