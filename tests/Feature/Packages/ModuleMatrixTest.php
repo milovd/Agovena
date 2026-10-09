@@ -32,6 +32,8 @@ test('core admin and account work with zero optional modules enabled', function 
         ->and($nav)->not->toContain('digital-delivery-secrets')
         ->and($nav)->toContain('subscriptions')
         ->and($nav)->not->toContain('provisioning')
+        ->and($nav)->not->toContain('events')
+        ->and($nav)->not->toContain('events-checkin')
         ->and(app(ModuleManager::class)->isEnabled('inventory'))->toBeFalse();
 
     $this->actingAs($staff)
@@ -102,17 +104,58 @@ test('each first-party module admin screen renders when that module is enabled a
     'events' => ['events', '/admin/events'],
 ]);
 
-test('events are configured inside products while check in remains an operations workflow', function () {
+test('events navigation belongs to fulfillment while product setup and check in stay distinct', function () {
     enableFirstPartyModules(['events']);
 
     $items = collect(app(AdminRegistrar::class)->navigationItems())->keyBy('id');
     $tabs = collect(app(AdminRegistrar::class)->productTabs())->keyBy('id');
 
-    expect($items)->not->toHaveKey('events')
-        ->and($tabs)->toHaveKey('events')
+    expect($items->get('events')?->label)->toBe('admin.nav.events')
+        ->and($items->get('events')?->group)->toBe('admin.nav_groups.fulfillment')
+        ->and($items->get('events')?->href)->toBe('/admin/events')
+        ->and($items->get('events')?->permission)->toBe('events.view')
+        ->and($items->get('events')?->parent)->toBeNull()
+        ->and($tabs->get('events')?->permission)->toBe('events.view')
         ->and($items->get('events-checkin')?->group)->toBe('admin.nav_groups.operations')
+        ->and($items->get('events-checkin')?->href)->toBe('/admin/events/check-in')
+        ->and($items->get('events-checkin')?->permission)->toBe('events.checkin')
         ->and($items->get('events-checkin')?->parent)->toBeNull()
         ->and($items->get('tickets')?->group)->toBe('admin.nav_groups.customers');
+});
+
+test('events and check in sidebar links and routes follow separate staff permissions', function () {
+    enableFirstPartyModules(['events']);
+
+    $eventStaff = $this->createStaff(permissions: ['dashboard.view', 'events.view']);
+    $this->actingAs($eventStaff)
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('href="/admin/events"', false)
+        ->assertDontSee('href="/admin/events/check-in"', false);
+    $this->get('/admin/events')->assertOk();
+    $this->get('/admin/events/check-in')->assertForbidden();
+
+    $checkInStaff = $this->createStaff(permissions: ['dashboard.view', 'events.checkin']);
+    $this->actingAs($checkInStaff)
+        ->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('href="/admin/events/check-in"', false)
+        ->assertDontSee('href="/admin/events"', false);
+    $this->get('/admin/events/check-in')->assertOk();
+    $this->get('/admin/events')->assertForbidden();
+});
+
+test('disabled events module removes both sidebar destinations without touching other modules', function () {
+    enableFirstPartyModules(['events']);
+    app(ModuleManager::class)->disable('events');
+
+    $items = AdminNavigation::filterVisible(
+        collect(app(AdminRegistrar::class)->navigationItems()),
+        app(ModuleManager::class),
+    )->pluck('id');
+
+    expect($items)->not->toContain('events', 'events-checkin')
+        ->and($items)->toContain('shipping-methods');
 });
 
 test('all first-party modules together expose admin and account surfaces', function () {
@@ -126,7 +169,7 @@ test('all first-party modules together expose admin and account surfaces', funct
         ->and($nav)->toContain('digital-delivery-secrets')
         ->and($nav)->toContain('subscriptions')
         ->and($nav)->toContain('provisioning')
-        ->and($nav)->not->toContain('events')
+        ->and($nav)->toContain('events')
         ->and($nav)->toContain('events-checkin');
 
     expect(collect(app(AdminRegistrar::class)->productTabs())->pluck('id'))->toContain('events');
