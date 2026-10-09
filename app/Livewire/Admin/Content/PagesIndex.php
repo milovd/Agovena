@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Content;
 
+use App\Agovena\Content\DeletePage;
 use App\Agovena\Content\PageSlug;
+use App\Agovena\Content\SavePage;
 use App\Models\Page;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -64,9 +66,9 @@ final class PagesIndex extends Component
         ]);
 
         if ($this->editingId !== null) {
-            Page::query()->whereKey($this->editingId)->update($data);
+            app(SavePage::class)->update($this->editingId, $data);
         } else {
-            Page::query()->create($data);
+            app(SavePage::class)->create($data);
         }
 
         $this->resetForm();
@@ -76,7 +78,7 @@ final class PagesIndex extends Component
     public function delete(int $id): void
     {
         $this->authorize('pages.manage');
-        Page::query()->whereKey($id)->delete();
+        app(DeletePage::class)->handle($id);
         session()->flash('status', __('admin.content.pages.deleted'));
     }
 

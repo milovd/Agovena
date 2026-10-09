@@ -188,7 +188,7 @@ final class AuditLogger
         $prefix = strtolower((string) str($action)->before('.'));
 
         return match ($prefix) {
-            'admin', 'appearance', 'settings', 'module', 'extension', 'role', 'user' => 'admin',
+            'admin', 'appearance', 'settings', 'module', 'extension', 'role', 'user', 'page' => 'admin',
             'auth', 'login', 'password', 'two_factor', 'api_token' => 'auth',
             'order', 'cart', 'checkout', 'invoice', 'credit_note', 'product', 'inventory' => 'commerce',
             'payment' => 'payment',
