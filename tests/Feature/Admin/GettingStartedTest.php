@@ -38,7 +38,7 @@ test('dashboard summary shows progress without a duplicate checklist status', fu
     $html = view('livewire.admin.dashboard', [
         'gettingStarted' => [$item],
         'metrics' => [],
-        'revenueSeries' => ['labels' => [], 'values' => []],
+        'revenueSeries' => ['labels' => [], 'values' => [], 'currency' => 'EUR', 'precision' => 2],
         'orderSeries' => ['labels' => [], 'values' => []],
         'chartRange' => '14',
         'chartType' => 'line',
