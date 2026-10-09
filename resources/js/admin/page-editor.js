@@ -57,12 +57,22 @@ export function registerPageEditorComponents(Alpine) {
             this.editor.chain().focus().setLink({ href: url, target: newTab ? '_blank' : null }).run();
         },
         insertImage(url, alt) {
-            if (!/^\/storage\/pages\/[A-Za-z0-9]{40}\.(?:jpg|jpeg|png|webp|gif)$/.test(url) || !alt) return;
+            const escapeAttribute = (value) => value.replace(/[&<>"']/g, (char) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+            })[char]);
+            const isStored = /^\/storage\/pages\/[A-Za-z0-9]{40}\.(?:jpg|jpeg|png|webp|gif)$/.test(url);
+            let isPreview = false;
+            if (!isStored && typeof window !== 'undefined') {
+                try {
+                    const preview = new URL(url, window.location.origin);
+                    isPreview = preview.origin === window.location.origin
+                        && /^\/livewire(?:-[a-f0-9]+)?\/preview-file\/[^/?#]+$/.test(preview.pathname)
+                        && preview.searchParams.has('expires') && preview.searchParams.has('signature');
+                } catch { /* Ignore malformed image sources. */ }
+            }
+            if ((!isStored && !isPreview) || !alt) return;
             if (this.mode === 'html') {
-                const escapedAlt = alt.replace(/[&<>"']/g, (char) => ({
-                    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-                })[char]);
-                this.content += `<img src="${url}" alt="${escapedAlt}">`;
+                this.content += `<img src="${escapeAttribute(url)}" alt="${escapeAttribute(alt)}">`;
                 this.$wire.set('body', this.content, false);
                 return;
             }

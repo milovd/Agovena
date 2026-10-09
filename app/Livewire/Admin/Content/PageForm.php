@@ -6,7 +6,7 @@ namespace App\Livewire\Admin\Content;
 
 use App\Agovena\Content\PageBodySanitizer;
 use App\Agovena\Content\PageSlug;
-use App\Agovena\Content\SavePage;
+use App\Agovena\Content\SavePageWithImages;
 use App\Models\Page;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -34,6 +34,10 @@ final class PageForm extends Component
 
     #[Locked]
     public ?int $pageId = null;
+
+    /** @var array<string, string> Signed preview URL to Livewire temporary filename. */
+    #[Locked]
+    public array $stagedImages = [];
 
     public function mount(?Page $page = null): void
     {
@@ -66,12 +70,7 @@ final class PageForm extends Component
         ]);
 
         $data['body_format'] = 'html';
-
-        if ($this->pageId === null) {
-            app(SavePage::class)->create($data);
-        } else {
-            abort_if(app(SavePage::class)->update($this->pageId, $data) === null, 404);
-        }
+        app(SavePageWithImages::class)->handle($this->pageId, $data, $this->stagedImages);
         session()->flash('status', __('admin.content.pages.saved'));
         $this->redirectRoute('admin.appearance.pages');
     }
@@ -90,12 +89,9 @@ final class PageForm extends Component
             return;
         }
 
-        $path = $this->image->store('pages', 'public');
-        if (! is_string($path) || preg_match('~\Apages/[A-Za-z0-9]{40}\.(?:jpg|jpeg|png|webp|gif)\z~i', $path) !== 1) {
-            throw new \RuntimeException('Page image storage failed.');
-        }
-
-        $this->dispatch('page-image-uploaded', url: '/storage/'.$path, alt: $this->imageAlt);
+        $preview = $this->image->temporaryUrl();
+        $this->stagedImages[$preview] = $this->image->getFilename();
+        $this->dispatch('page-image-uploaded', url: $preview, alt: $this->imageAlt);
         $this->reset('image', 'imageAlt');
     }
 

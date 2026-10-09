@@ -16,6 +16,23 @@ test('image insertion ignores non-local and uncaptioned sources', () => {
     assert.deepEqual(images, [{ src: '/storage/pages/' + 'a'.repeat(40) + '.png', alt: 'Diagram' }]);
 });
 
+test('a same-origin signed Livewire preview is inserted without allowing external previews', () => {
+    let factory;
+    registerPageEditorComponents({ data(name, callback) { if (name === 'agPageEditor') factory = callback; } });
+    const state = factory('');
+    const images = [];
+    state.editor = { chain: () => ({ focus: () => ({ setImage: (image) => ({ run: () => images.push(image) }) }) }) };
+    const previousWindow = globalThis.window;
+    try {
+        globalThis.window = { location: { origin: 'https://store.example' } };
+        state.insertImage('https://evil.example/livewire-be2c024c/preview-file/chart?expires=1&signature=abc', 'External');
+        state.insertImage('https://store.example/livewire-be2c024c/preview-file/chart?expires=1&signature=abc', 'Chart');
+    } finally {
+        globalThis.window = previousWindow;
+    }
+    assert.deepEqual(images, [{ src: 'https://store.example/livewire-be2c024c/preview-file/chart?expires=1&signature=abc', alt: 'Chart' }]);
+});
+
 test('image insertion in HTML mode preserves unsaved source edits and escapes alt text', () => {
     let factory;
     registerPageEditorComponents({ data(name, callback) { if (name === 'agPageEditor') factory = callback; } });
@@ -31,6 +48,25 @@ test('image insertion in HTML mode preserves unsaved source edits and escapes al
 
     assert.equal(visualInsertion, 0);
     assert.equal(state.content, '<p>new unsaved source</p><img src="/storage/pages/' + 'a'.repeat(40) + '.png" alt="A &quot;quoted&quot; image">');
+    assert.deepEqual(updates, [['body', state.content]]);
+});
+
+test('signed preview insertion in HTML mode keeps unsaved source and escapes its URL and alt', () => {
+    let factory;
+    registerPageEditorComponents({ data(name, callback) { if (name === 'agPageEditor') factory = callback; } });
+    const state = factory('old');
+    state.mode = 'html';
+    state.content = '<p>unsaved</p>';
+    const updates = [];
+    state.$wire = { set(key, value) { updates.push([key, value]); } };
+    const previousWindow = globalThis.window;
+    try {
+        globalThis.window = { location: { origin: 'https://store.example' } };
+        state.insertImage('https://store.example/livewire-be2c024c/preview-file/chart?expires=1&signature=abc', 'A "chart"');
+    } finally {
+        globalThis.window = previousWindow;
+    }
+    assert.equal(state.content, '<p>unsaved</p><img src="https://store.example/livewire-be2c024c/preview-file/chart?expires=1&amp;signature=abc" alt="A &quot;chart&quot;">');
     assert.deepEqual(updates, [['body', state.content]]);
 });
 

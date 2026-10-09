@@ -109,7 +109,7 @@ test('the pages list shows the shared success notice only once', function (): vo
     expect(substr_count($response->getContent(), 'Saved once'))->toBe(1);
 });
 
-test('image insertion requires a managed image and alt text before publishing a local media URL', function (): void {
+test('image insertion requires a managed image and alt text before staging a signed preview', function (): void {
     Storage::fake('public');
     $staff = $this->createStaff([], ['pages.view', 'pages.manage']);
 
@@ -128,7 +128,7 @@ test('image insertion requires a managed image and alt text before publishing a 
         ->assertHasErrors(['image']);
     expect(Storage::disk('public')->files('pages'))->toBe([]);
 
-    Livewire::actingAs($staff)
+    $form = Livewire::actingAs($staff)
         ->test(PageForm::class)
         ->set('imageAlt', 'Sales chart')
         ->set('image', UploadedFile::fake()->image('chart.png'))
@@ -136,7 +136,6 @@ test('image insertion requires a managed image and alt text before publishing a 
         ->assertHasNoErrors()
         ->assertDispatched('page-image-uploaded');
 
-    $paths = Storage::disk('public')->files('pages');
-    expect($paths)->toHaveCount(1);
-    Storage::disk('public')->assertExists($paths[0]);
+    expect(Storage::disk('public')->files('pages'))->toBe([]);
+    expect($form->get('stagedImages'))->toHaveCount(1);
 });
