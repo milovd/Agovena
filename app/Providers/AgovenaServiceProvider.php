@@ -669,7 +669,7 @@ class AgovenaServiceProvider extends ServiceProvider
             href: '/admin/appearance/customize',
             icon: 'palette',
             sort: 310,
-            permission: 'theme.view',
+            permission: 'theme.manage',
         ));
         $admin->navigation(new NavigationItem(
             id: 'navigation',

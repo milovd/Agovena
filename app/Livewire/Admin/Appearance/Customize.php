@@ -159,7 +159,7 @@ final class Customize extends Component
 
     public function render(ThemeManager $themes)
     {
-        $this->authorize('theme.view');
+        $this->authorize('theme.manage');
         $theme = $themes->active();
         $schema = $themes->schemaFor($theme);
         $groups = $schema->grouped();

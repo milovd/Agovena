@@ -57,6 +57,27 @@ test('core admin items are grouped as sibling links instead of nested parents', 
         ->and($byId->get('notification-templates')?->parent)->toBeNull();
 });
 
+test('every core navigation item opens for staff holding only its permission', function () {
+    $items = collect(app(AdminRegistrar::class)->navigationItems())
+        ->filter(fn (NavigationItem $item): bool => $item->permission !== null
+            && $item->href !== null
+            && str_starts_with($item->href, '/admin'));
+
+    expect($items)->not->toBeEmpty();
+
+    $forbidden = [];
+    foreach ($items as $item) {
+        $staff = $this->createStaff(permissions: [$item->permission]);
+        $status = $this->actingAs($staff)->get($item->href)->getStatusCode();
+
+        if ($status === 403) {
+            $forbidden[] = "{$item->id} ({$item->permission})";
+        }
+    }
+
+    expect($forbidden)->toBe([]);
+});
+
 test('database backups has one system navigation item', function () {
     $byId = collect(app(AdminRegistrar::class)->navigationItems())->keyBy('id');
 
