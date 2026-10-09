@@ -121,7 +121,7 @@
                                 <button type="button" class="ag-btn ag-btn--ghost" wire:click="edit({{ $currency->id }})">{{ __('common.edit') }}</button>
                             @endcan
                             @if ($canSetBase && $currency->is_active && $currency->code !== $baseCurrency)
-                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="setAsBase({{ $currency->id }})">{{ __('admin.currencies.set_base') }}</button>
+                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="setAsBase({{ $currency->id }})" wire:confirm="{{ __('admin.currencies.set_base_confirm', ['code' => $currency->code]) }}">{{ __('admin.currencies.set_base') }}</button>
                             @endif
                         </td>
                     </tr>

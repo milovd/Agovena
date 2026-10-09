@@ -1646,6 +1646,7 @@ return [
         'preview_label' => 'Preview:',
         'base_badge' => 'Base',
         'set_base' => 'Set as base',
+        'set_base_confirm' => 'Set :code as the base currency? Review exchange rates after this change. Existing order and invoice currencies remain unchanged.',
         'flash' => [
             'created' => 'Currency created.',
             'updated' => 'Currency updated.',

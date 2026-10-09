@@ -1644,6 +1644,7 @@ return [
         'preview_label' => 'Voorbeeld:',
         'base_badge' => 'Basis',
         'set_base' => 'Als basis instellen',
+        'set_base_confirm' => ':code als basisvaluta instellen? Controleer hierna de wisselkoersen. Valuta van bestaande bestellingen en facturen blijft ongewijzigd.',
         'flash' => [
             'created' => 'Valuta aangemaakt.',
             'updated' => 'Valuta bijgewerkt.',

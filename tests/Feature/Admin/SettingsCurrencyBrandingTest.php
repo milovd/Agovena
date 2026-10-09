@@ -97,6 +97,15 @@ test('owner can set base currency from currencies admin', function () {
     expect(app(SettingsRepository::class)->get('general', 'base_currency'))->toBe('USD');
 });
 
+test('setting an active currency as the base requires an explicit confirmation', function () {
+    $staff = $this->createStaff();
+    $usd = Currency::query()->where('code', 'USD')->firstOrFail();
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->assertSee('wire:click="setAsBase('.$usd->id.')" wire:confirm="'.__('admin.currencies.set_base_confirm', ['code' => $usd->code]).'"', false);
+});
+
 test('branding page can set favicon from logo path without merging settings keys', function () {
     $staff = $this->createStaff();
     $settings = app(SettingsRepository::class);
