@@ -42,10 +42,24 @@ final class InventoryService
     public function setQuantity(Product $product, int $quantity, bool $trackStock = true, bool $allowOversell = false): InventoryStock
     {
         $stock = $this->ensureStockRow($product);
-        $previousQuantity = $stock->quantity;
-        $stock->quantity = max(0, $quantity);
         $stock->track_stock = $trackStock;
         $stock->allow_oversell = $allowOversell;
+
+        return $this->writeQuantity($product, $stock, $quantity);
+    }
+
+    /**
+     * Change only the quantity and keep the product's stock policy (track_stock, allow_oversell).
+     */
+    public function setQuantityKeepingPolicy(Product $product, int $quantity): InventoryStock
+    {
+        return $this->writeQuantity($product, $this->ensureStockRow($product), $quantity);
+    }
+
+    private function writeQuantity(Product $product, InventoryStock $stock, int $quantity): InventoryStock
+    {
+        $previousQuantity = $stock->quantity;
+        $stock->quantity = max(0, $quantity);
         $stock->save();
 
         if ($previousQuantity !== $stock->quantity) {

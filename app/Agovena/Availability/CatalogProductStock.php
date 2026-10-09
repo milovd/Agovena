@@ -18,6 +18,6 @@ final class CatalogProductStock implements ProductStock
 
     public function setQuantity(Product $product, int $quantity): void
     {
-        $this->inventory->setQuantity($product, $quantity);
+        $this->inventory->setQuantityKeepingPolicy($product, $quantity);
     }
 }
