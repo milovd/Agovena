@@ -185,14 +185,20 @@ test('every Alpine component used in Blade is registered by the entry that loads
 
 test('every Blade include in core and the default Theme resolves to a view', function () {
     $themeViews = base_path('themes/default/views');
+    $moduleViews = OptionalPackagesPath::modulesRoot();
     $missing = [];
 
     foreach ([...frontendFiles(resource_path('views'), '.blade.php'), ...frontendFiles($themeViews, '.blade.php')] as $file) {
-        preg_match_all("/@include(?:If|When|Unless|First)?\\(\\s*'([a-z0-9._:-]+)'/", (string) file_get_contents($file), $matches);
-        foreach ($matches[1] as $view) {
+        preg_match_all("/@(include(?:If|When|Unless|First)?)\\(\\s*'([a-z0-9._:-]+)'/", (string) file_get_contents($file), $matches);
+        foreach ($matches[2] as $index => $view) {
             $resolves = str_starts_with($view, 'theme::')
                 ? is_file($themeViews.'/'.str_replace('.', '/', substr($view, 7)).'.blade.php')
                 : view()->exists($view);
+            if (! $resolves && $matches[1][$index] === 'includeIf' && str_contains($view, '::')) {
+                [$namespace, $name] = explode('::', $view, 2);
+                // A disabled optional Module has no registered view namespace, even when its partial exists.
+                $resolves = $moduleViews === null || is_file($moduleViews.'/'.$namespace.'/resources/views/'.str_replace('.', '/', $name).'.blade.php');
+            }
             if (! $resolves) {
                 $missing[] = "{$view} (in {$file})";
             }

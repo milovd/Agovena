@@ -7,6 +7,8 @@ use Agovena\Modules\Digital\Models\DigitalEntitlement;
 use Agovena\Modules\Events\Enums\EventStatus;
 use Agovena\Modules\Events\Enums\EventTicketStatus;
 use Agovena\Modules\Events\EventService;
+use Agovena\Modules\Events\Http\Livewire\Admin\CheckIn;
+use Agovena\Modules\Events\Http\Livewire\Admin\EventsIndex;
 use Agovena\Modules\Events\Http\Livewire\Admin\ProductEventTab;
 use Agovena\Modules\Events\Models\Event;
 use Agovena\Modules\Events\Models\EventPerformance;
@@ -84,6 +86,42 @@ function makePublishedTicketProduct(int $capacity = 4): array
 
     return compact('event', 'performance', 'type', 'product');
 }
+
+test('event tabs keep the active destination after Livewire updates', function () {
+    enableEventsModule();
+    $staff = $this->createStaff(permissions: ['events.view', 'events.checkin']);
+
+    $index = Livewire::actingAs($staff)->test(EventsIndex::class)
+        ->set('name', 'New event');
+    $checkin = Livewire::actingAs($staff)->test(CheckIn::class)
+        ->set('code', 'PENDING');
+
+    foreach ([[$index->html(), route('admin.events.index')], [$checkin->html(), route('admin.events.checkin')]] as [$html, $href]) {
+        $document = new DOMDocument;
+        @$document->loadHTML($html);
+        $xpath = new DOMXPath($document);
+        expect($xpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a[@href="'.$href.'" and @aria-current="page"]'))->toHaveCount(1);
+    }
+});
+
+test('check-in-only staff can submit while events-only staff cannot', function () {
+    enableEventsModule();
+
+    Livewire::actingAs($this->createStaff(permissions: ['events.checkin']))
+        ->test(CheckIn::class)
+        ->call('submit')
+        ->assertHasErrors(['code' => 'required']);
+
+    Livewire::actingAs($this->createStaff(permissions: ['events.view']))
+        ->test(CheckIn::class)
+        ->assertForbidden();
+});
+
+test('event tab navigation has English and Dutch labels', function () {
+    enableEventsModule();
+    expect(__('events::admin.tabs_label', [], 'en'))->toBe('Event sections')
+        ->and(__('events::admin.tabs_label', [], 'nl'))->toBe('Evenementonderdelen');
+});
 
 test('event and ticket setup is managed from the product tab', function () {
     enableEventsModule();

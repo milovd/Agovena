@@ -116,9 +116,10 @@ test('events navigation belongs to fulfillment while product setup and check in 
         ->and($items->get('events')?->permission)->toBe('events.view')
         ->and($items->get('events')?->parent)->toBeNull()
         ->and($tabs->get('events')?->permission)->toBe('events.view')
-        ->and($items->get('events-checkin')?->group)->toBe('admin.nav_groups.operations')
+        ->and($items->get('events-checkin')?->group)->toBe('admin.nav_groups.fulfillment')
         ->and($items->get('events-checkin')?->href)->toBe('/admin/events/check-in')
         ->and($items->get('events-checkin')?->permission)->toBe('events.checkin')
+        ->and($items->get('events-checkin')?->moduleId)->toBe('events')
         ->and($items->get('events-checkin')?->parent)->toBeNull()
         ->and($items->get('tickets')?->group)->toBe('admin.nav_groups.customers');
 });
@@ -143,6 +144,52 @@ test('events and check in sidebar links and routes follow separate staff permiss
         ->assertDontSee('href="/admin/events"', false);
     $this->get('/admin/events/check-in')->assertOk();
     $this->get('/admin/events')->assertForbidden();
+});
+
+test('events and check-in tabs keep separate permissions and a single usable fulfillment sidebar link', function (array $permissions, int $eventsStatus, int $checkinStatus, string $sidebarHref, int $tabCount) {
+    enableFirstPartyModules(['events']);
+    $staff = $this->createStaff(permissions: $permissions);
+    $this->actingAs($staff);
+
+    $events = $this->get('/admin/events')->assertStatus($eventsStatus);
+    $checkin = $this->get('/admin/events/check-in')->assertStatus($checkinStatus);
+    $page = $eventsStatus === 200 ? $events : $checkin;
+
+    $document = new DOMDocument;
+    @$document->loadHTML($page->getContent());
+    $xpath = new DOMXPath($document);
+    $sidebar = $xpath->query('//div[contains(@class, "admin-nav__section") and contains(@data-nav-key, "nav-groupsfulfillment")]//a[@href="/admin/events" or @href="/admin/events/check-in"]');
+    expect($sidebar)->toHaveCount(1)
+        ->and($sidebar->item(0)->getAttribute('href'))->toBe($sidebarHref);
+
+    $tabs = $xpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a');
+    expect($tabs)->toHaveCount($tabCount)
+        ->and($xpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a[@aria-current="page"]'))->toHaveCount(1);
+
+    if ($eventsStatus === 200 && $checkinStatus === 200) {
+        $checkinDocument = new DOMDocument;
+        @$checkinDocument->loadHTML($checkin->getContent());
+        $checkinXpath = new DOMXPath($checkinDocument);
+        expect($checkinXpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a[@href="'.route('admin.events.checkin').'" and @aria-current="page"]'))->toHaveCount(1);
+        expect($checkinXpath->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events" and contains(@class, "admin-nav__link--active") and not(@aria-current)]'))->toHaveCount(1);
+    }
+})->with([
+    'view only' => [['events.view'], 200, 403, '/admin/events', 1],
+    'checkin only' => [['events.checkin'], 403, 200, '/admin/events/check-in', 1],
+    'both' => [['events.view', 'events.checkin'], 200, 200, '/admin/events', 2],
+]);
+
+test('staff without Events permissions sees neither destination and cannot open either route', function () {
+    enableFirstPartyModules(['events']);
+    $staff = $this->createStaff(permissions: ['dashboard.view']);
+    $html = $this->actingAs($staff)->get(route('admin.dashboard'))->assertOk()->getContent();
+
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new DOMXPath($document);
+    expect($xpath->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events" or @href="/admin/events/check-in"]'))->toHaveCount(0);
+    $this->get('/admin/events')->assertForbidden();
+    $this->get('/admin/events/check-in')->assertForbidden();
 });
 
 test('disabled events module removes both sidebar destinations without touching other modules', function () {
