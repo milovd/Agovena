@@ -1073,6 +1073,7 @@ return [
         'edit' => 'Edit category',
         'search_label' => 'Search categories',
         'search_placeholder' => 'Search name or slug',
+        'loading' => 'Loading categories…',
         'preview' => 'Preview category',
         'preview_disabled' => 'Activate the category to preview on the storefront',
         'parent' => 'Parent category',

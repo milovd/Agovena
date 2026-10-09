@@ -1071,6 +1071,7 @@ return [
         'edit' => 'Categorie bewerken',
         'search_label' => 'Categorieën zoeken',
         'search_placeholder' => 'Zoek op naam of slug',
+        'loading' => 'Categorieën laden…',
         'preview' => 'Categorie bekijken',
         'preview_disabled' => 'Activeer de categorie om deze in de webshop te bekijken',
         'parent' => 'Hoofdcategorie',

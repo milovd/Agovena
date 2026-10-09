@@ -7,10 +7,6 @@
         </x-slot:actions>
     </x-ag.page-header>
 
-    @if (session('error'))
-        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
-    @endif
-
     <div class="ag-toolbar ag-toolbar--filters">
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">
@@ -95,13 +91,17 @@
         </form>
     @endif
 
+    <div wire:loading.flex class="ag-loading" wire:target="search,gotoPage,previousPage,nextPage">
+        <span class="ag-loading__text">{{ __('admin.categories.loading') }}</span>
+    </div>
+
     @if ($categories->isEmpty())
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ $search ? __('admin.categories.empty.filtered_title') : __('admin.categories.empty.title') }}</p>
             <p class="ag-empty__text">{{ $search ? __('admin.categories.empty.filtered_text') : __('admin.categories.empty.text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap">
+        <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search">
             <table class="ag-table ag-table--categories">
                 <thead>
                     <tr>
