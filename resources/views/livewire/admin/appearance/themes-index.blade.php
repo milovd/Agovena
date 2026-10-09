@@ -23,8 +23,19 @@
                 @forelse ($themes as $theme)
                     <tr wire:key="theme-{{ $theme->id }}">
                         <td>
-                            <strong>{{ $theme->name }}</strong>
-                            <div class="ag-muted">{{ $theme->description }}</div>
+                            <div class="ag-theme-listing">
+                                <span class="ag-theme-listing__preview" aria-hidden="true">
+                                    @if (app(\App\Agovena\Packages\PackageArtwork::class)->resolve($theme->basePath, $theme->previewReference, themePreview: true))
+                                        <img src="{{ route('admin.appearance.themes.preview', ['id' => $theme->id]) }}" alt="" width="72" height="54" loading="lazy" decoding="async">
+                                    @else
+                                        <x-ag.icon name="layout-template" :size="24" />
+                                    @endif
+                                </span>
+                                <span>
+                                    <strong>{{ $theme->name }}</strong>
+                                    <span class="ag-muted">{{ $theme->description }}</span>
+                                </span>
+                            </div>
                         </td>
                         <td>{{ $theme->version }}</td>
                         <td>

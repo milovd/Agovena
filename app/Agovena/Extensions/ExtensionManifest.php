@@ -27,6 +27,7 @@ final readonly class ExtensionManifest
         public array $settings = [],
         public array $autoloadPsr4 = [],
         public bool $productionReady = false,
+        public ?string $logo = null,
     ) {}
 
     /**
@@ -107,6 +108,7 @@ final readonly class ExtensionManifest
             settings: $normalizedSettings,
             autoloadPsr4: $psr4,
             productionReady: $productionReady,
+            logo: is_string($data['logo'] ?? null) ? $data['logo'] : null,
         );
     }
 }

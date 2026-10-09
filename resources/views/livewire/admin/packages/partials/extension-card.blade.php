@@ -4,9 +4,12 @@
 @endphp
 <article class="ag-package-card" wire:key="extension-{{ $manifest->id }}">
     <div class="ag-package-card__top">
-        <div>
-            <h3 class="ag-package-card__title">{{ $manifest->name }}</h3>
-            <p class="ag-muted">{{ $manifest->id }} · v{{ $manifest->version }}</p>
+        <div class="ag-package-card__identity">
+            <x-ag.package-mark :manifest="$manifest" kind="extension" :on-disk="$row['on_disk']" />
+            <div>
+                <h3 class="ag-package-card__title">{{ $manifest->name }}</h3>
+                <p class="ag-muted">{{ $manifest->id }} · v{{ $manifest->version }}</p>
+            </div>
         </div>
         <span @class([
             'ag-badge',

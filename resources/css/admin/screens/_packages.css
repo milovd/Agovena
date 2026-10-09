@@ -23,6 +23,33 @@
   gap: var(--ag-space-3);
 }
 
+.ag-package-card__identity,
+.ag-preset-module-row__intro {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  min-width: 0;
+}
+
+.ag-package-mark {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex: 0 0 2.5rem;
+  overflow: hidden;
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+  color: var(--ag-color-text-muted);
+}
+
+.ag-package-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .ag-package-card__title {
   margin: 0;
   font-size: 1rem;

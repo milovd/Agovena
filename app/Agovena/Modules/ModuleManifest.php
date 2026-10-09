@@ -22,6 +22,7 @@ final readonly class ModuleManifest
         public string $author = 'Agovena',
         public array $autoloadPsr4 = [],
         public string $group = 'other',
+        public ?string $logo = null,
     ) {}
 
     /**
@@ -56,6 +57,7 @@ final readonly class ModuleManifest
             author: (string) ($data['author'] ?? 'Agovena'),
             autoloadPsr4: $psr4,
             group: (string) ($data['group'] ?? 'other'),
+            logo: is_string($data['logo'] ?? null) ? $data['logo'] : null,
         );
     }
 }

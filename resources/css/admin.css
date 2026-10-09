@@ -18,6 +18,7 @@
 @import './admin/components/_patterns.css';
 @import './admin/screens/_dashboard.css';
 @import './admin/screens/_packages.css';
+@import './admin/screens/_themes.css';
 @import './admin/screens/_page-editor.css';
 @import './admin/screens/_audit-log.css';
 @import './admin/screens/_theme-customizer.css';

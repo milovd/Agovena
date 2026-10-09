@@ -222,6 +222,7 @@ final class ThemeManager
             capabilities: $manifest->capabilities,
             basePath: $dir,
             adminCssEntry: $manifest->adminCssEntry,
+            previewReference: $manifest->preview,
         );
     }
 }

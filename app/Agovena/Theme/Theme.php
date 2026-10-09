@@ -28,6 +28,7 @@ final class Theme
         public readonly array $capabilities = [],
         public readonly string $basePath = '',
         public readonly ?string $adminCssEntry = null,
+        public readonly ?string $previewReference = null,
     ) {}
 
     public function view(string $name): string

@@ -3,6 +3,8 @@
 use App\Agovena\Content\PageSlug;
 use App\Http\Controllers\Admin\AuditExportController;
 use App\Http\Controllers\Admin\DataExportController;
+use App\Http\Controllers\Admin\PackageArtworkController;
+use App\Http\Controllers\Admin\ThemePreviewController;
 use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\CreditNoteDocumentController;
 use App\Http\Controllers\Customer\EmailVerificationController;
@@ -253,9 +255,16 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
     Route::get('/notifications/{key}/edit', NotificationTemplatesForm::class)->name('notifications.edit');
     Route::get('/modules', ModulesIndex::class)->name('modules.index');
     Route::get('/extensions', ExtensionsIndex::class)->name('extensions.index');
+    Route::get('/packages/artwork/{kind}/{id}', PackageArtworkController::class)
+        ->whereIn('kind', ['module', 'extension'])
+        ->where('id', '[A-Za-z0-9][A-Za-z0-9._-]{0,127}')
+        ->name('packages.artwork');
     Route::get('/settings', SettingsHub::class)->name('settings.index');
     Route::get('/settings/{group}', SettingsEditGroup::class)->name('settings.edit');
     Route::get('/appearance/themes', AppearanceThemes::class)->name('appearance.themes');
+    Route::get('/appearance/themes/{id}/preview', ThemePreviewController::class)
+        ->where('id', '[A-Za-z0-9][A-Za-z0-9._-]{0,127}')
+        ->name('appearance.themes.preview');
     Route::get('/appearance/customize', AppearanceCustomize::class)->name('appearance.customize');
     Route::get('/appearance/pages', ContentPages::class)->name('appearance.pages');
     Route::get('/appearance/pages/create', ContentPageForm::class)->name('appearance.pages.create');
