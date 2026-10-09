@@ -53,6 +53,7 @@ final class RecurringCapability
             icon: 'package',
             sort: 16,
             permission: 'subscriptions.view',
+            activeForPaths: ['/admin/plan-changes'],
         ));
 
         $context->admin()->navigation(new NavigationItem(
@@ -63,6 +64,7 @@ final class RecurringCapability
             icon: 'repeat',
             sort: 18,
             permission: 'plan-changes.view',
+            hideWhenPermission: 'subscriptions.view',
         ));
 
         $context->customerAccountNav(new AccountNavItem(

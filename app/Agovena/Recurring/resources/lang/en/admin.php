@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'title' => 'Subscriptions',
     'lede' => 'Manage recurring subscriptions created from paid orders.',
+    'tabs_label' => 'Subscription sections',
     'empty' => 'No subscriptions yet.',
     'number' => 'Number',
     'customer' => 'Customer',

@@ -180,12 +180,17 @@ final class AdminNavigation
             return request()->is('admin');
         }
 
+        $items = $visibleItems ?? collect(app(AdminRegistrar::class)->navigationItems());
         if (! self::matches($path)) {
-            return false;
+            $item = $items->first(static fn (NavigationItem $candidate): bool => $candidate->href === $href);
+
+            return $item !== null && collect($item->activeForPaths)->contains(
+                static fn (string $alias): bool => trim($alias, '/') === trim(request()->path(), '/'),
+            );
         }
 
         // More specific visible links win; hidden tabs still belong to their visible section.
-        foreach ($visibleItems ?? app(AdminRegistrar::class)->navigationItems() as $other) {
+        foreach ($items as $other) {
             $otherPath = trim((string) (parse_url((string) $other->href, PHP_URL_PATH) ?? ''), '/');
             if (strlen($otherPath) > strlen($path) && str_starts_with($otherPath, $path.'/') && self::matches($otherPath)) {
                 return false;

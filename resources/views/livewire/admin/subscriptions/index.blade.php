@@ -1,5 +1,6 @@
 <div class="admin-page">
     <x-ag.page-header :heading="__('subscriptions::admin.title')" :lede="__('subscriptions::admin.lede')" />
+    @include('livewire.admin.subscriptions.partials.tabs', ['activeTab' => 'subscriptions'])
 
     <div class="ag-toolbar" style="margin-bottom: 1rem;">
         <select class="ag-select" wire:model.live="status" aria-label="{{ __('subscriptions::admin.filter_status') }}">

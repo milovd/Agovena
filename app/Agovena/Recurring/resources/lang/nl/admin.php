@@ -5,6 +5,7 @@ declare(strict_types=1);
 return [
     'title' => 'Abonnementen',
     'lede' => 'Beheer terugkerende abonnementen uit betaalde bestellingen.',
+    'tabs_label' => 'Abonnementsonderdelen',
     'empty' => 'Nog geen abonnementen.',
     'number' => 'Nummer',
     'customer' => 'Klant',

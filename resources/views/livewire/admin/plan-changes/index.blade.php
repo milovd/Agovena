@@ -1,5 +1,6 @@
 <div class="admin-page">
     <x-ag.page-header :heading="__('admin.plan_changes.title')" :lede="__('admin.plan_changes.lede')" />
+    @include('livewire.admin.subscriptions.partials.tabs', ['activeTab' => 'plan-changes'])
 
     @if (session('status'))
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>

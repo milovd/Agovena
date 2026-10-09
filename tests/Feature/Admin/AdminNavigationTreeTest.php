@@ -196,5 +196,9 @@ test('core commerce links remain in the sidebar without retired module rows', fu
         ->assertSee('href="/admin/shipping/methods"', false)
         ->assertSee('href="/admin/shipping/returns"', false)
         ->assertSee('href="/admin/subscriptions"', false)
-        ->assertSee('href="/admin/plan-changes"', false);
+        ->assertDontSee('href="/admin/plan-changes"', false);
+
+    $this->get(route('admin.plan-changes.index'))
+        ->assertOk()
+        ->assertSee('href="'.route('admin.plan-changes.index').'"', false);
 });

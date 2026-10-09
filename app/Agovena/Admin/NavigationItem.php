@@ -17,5 +17,7 @@ final class NavigationItem
         public readonly ?string $parent = null,
         public readonly ?string $moduleId = null,
         public readonly ?string $hideWhenPermission = null,
+        /** @var list<string> */
+        public readonly array $activeForPaths = [],
     ) {}
 }
