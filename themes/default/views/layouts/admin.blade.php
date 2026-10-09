@@ -47,7 +47,16 @@
     >
         <div class="admin-shell__backdrop" x-show="navOpen" x-cloak @click="closeNav()"></div>
 
-        <aside class="admin-sidebar" id="admin-sidebar" aria-label="{{ __('admin.sidebar_aria') }}">
+        <aside
+            class="admin-sidebar"
+            id="admin-sidebar"
+            aria-label="{{ __('admin.sidebar_aria') }}"
+            x-ref="sidebar"
+            :role="navOpen && isMobile ? 'dialog' : null"
+            :aria-modal="navOpen && isMobile ? 'true' : null"
+            :inert="isMobile && !navOpen"
+            @keydown.tab="trapNavFocus($event)"
+        >
             <div class="admin-sidebar__brand">
                 <img class="admin-sidebar__logo-img" src="/{{ \App\Agovena\Theme\StorefrontBrand::BUNDLED_LOGO }}" alt="{{ __('admin.product_name') }}">
                 <span class="admin-sidebar__brand-text">
@@ -58,7 +67,7 @@
                 </span>
                 <button
                     type="button"
-                    class="admin-sidebar__close"
+                    class="admin-sidebar__close js-admin-drawer-close"
                     @click="closeNav()"
                     aria-controls="admin-sidebar"
                 >
@@ -100,7 +109,7 @@
             </div>
         </aside>
 
-        <div class="admin-main">
+        <div class="admin-main" :inert="isMobile && navOpen">
             <header class="admin-topbar">
                 <div class="admin-topbar__start">
                     <nav class="admin-topbar__breadcrumb" aria-label="{{ __('admin.breadcrumb_aria') }}">

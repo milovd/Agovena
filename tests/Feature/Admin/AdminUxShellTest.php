@@ -41,6 +41,18 @@ test('Admin breadcrumb has a dedicated responsive shell style', function () {
         ->and($css)->toContain('.admin-topbar__breadcrumb [aria-current="page"] {');
 });
 
+test('mobile Admin drawer exposes modal semantics and keeps background inert only while open', function () {
+    $staff = $this->createStaff();
+    $html = $this->actingAs($staff)->get(route('admin.dashboard'))->assertOk()->getContent();
+
+    expect($html)->toContain('x-ref="sidebar"')
+        ->and($html)->toContain(":role=\"navOpen && isMobile ? 'dialog' : null\"")
+        ->and($html)->toContain(":aria-modal=\"navOpen && isMobile ? 'true' : null\"")
+        ->and($html)->toContain(':inert="isMobile && !navOpen"')
+        ->and($html)->toContain(':inert="isMobile && navOpen"')
+        ->and($html)->toContain('@keydown.tab="trapNavFocus($event)"');
+});
+
 test('admin shell uses account icon trigger and leave admin action', function () {
     $staff = $this->createStaff();
 
