@@ -1,0 +1,165 @@
+.c-inventory__toolbar .ag-toolbar__filters {
+  width: 100%;
+}
+
+.c-inventory__toolbar .ag-field {
+  width: 100%;
+  max-width: 24rem;
+  min-width: 0;
+}
+
+.c-inventory__table-wrap {
+  max-width: 100%;
+}
+
+.c-inventory__table tbody td {
+  vertical-align: middle;
+}
+
+.c-inventory__table th:first-child {
+  width: 42%;
+}
+
+.c-inventory__identity {
+  min-width: 0;
+}
+
+.c-inventory__name,
+.c-inventory__sku {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.c-inventory__sku {
+  margin-top: var(--ag-space-1);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+}
+
+.c-inventory__quantity .ag-input {
+  width: 7.5rem;
+  max-width: 100%;
+}
+
+.c-inventory__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+}
+
+.c-inventory__check input {
+  flex: 0 0 auto;
+  accent-color: var(--ag-color-primary);
+}
+
+.c-inventory__field-label,
+.c-inventory__check-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.c-inventory__actions {
+  text-align: right;
+}
+
+.c-inventory__empty .ag-empty__icon {
+  color: var(--ag-color-primary);
+}
+
+@media (max-width: 720px) {
+  .c-inventory__toolbar .ag-field {
+    max-width: none;
+  }
+
+  .c-inventory__table-wrap {
+    max-width: 100%;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    contain: none;
+  }
+
+  .c-inventory__table,
+  .c-inventory__table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .c-inventory__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .c-inventory__table tbody {
+    display: grid;
+    gap: var(--ag-space-3);
+  }
+
+  .c-inventory__table tbody tr {
+    display: grid;
+    gap: var(--ag-space-3);
+    min-width: 0;
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface);
+  }
+
+  .c-inventory__table tbody td {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .c-inventory__table tbody td.c-inventory__identity {
+    padding-bottom: var(--ag-space-2);
+    border-bottom: 1px solid var(--ag-color-border);
+  }
+
+  .c-inventory__table tbody td.c-inventory__quantity {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(7rem, 48%);
+    gap: var(--ag-space-3);
+    align-items: center;
+  }
+
+  .c-inventory__field-label,
+  .c-inventory__check-label {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+    color: var(--ag-color-text);
+    font-size: var(--ag-font-size-sm);
+    font-weight: 600;
+  }
+
+  .c-inventory__quantity .ag-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .c-inventory__check {
+    min-height: 2rem;
+  }
+
+  .c-inventory__table tbody td.c-inventory__actions {
+    padding-top: var(--ag-space-3);
+    border-top: 1px solid var(--ag-color-border);
+  }
+}
