@@ -1,10 +1,11 @@
 export function registerPageEditorComponents(Alpine) {
-    Alpine.data('agPageEditor', (initialBody) => ({
+    Alpine.data('agPageEditor', () => ({
         mode: 'visual',
-        content: initialBody,
+        content: '',
         editor: null,
         disposed: false,
         async init() {
+            this.content = this.$root.dataset.initialBody ?? '';
             this.$wire.set('body', this.content, false);
             const { Editor, pageEditorExtensions } = await import('./page-editor-runtime.js');
             if (this.disposed) return;

@@ -17,6 +17,11 @@
   line-height: 1.3;
 }
 
+.admin-dashboard .ag-metric .ag-icon-tile {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
 .admin-dashboard .ag-metric__value {
   font-size: 1.3rem;
 }
@@ -365,6 +370,17 @@ a.ag-dashboard-list__title:focus-visible {
   .admin-content:has(> .admin-dashboard) {
     max-width: none;
     padding: var(--ag-space-7) 2.75rem;
+  }
+
+  .admin-dashboard .ag-dashboard-grid > .ag-dashboard-stack:first-child > .ag-chart-card {
+    flex: 1;
+  }
+
+  .admin-dashboard .ag-chart-card__canvas {
+    flex: 0 0 auto;
+    height: 15rem;
+    min-height: 0;
+    margin-top: auto;
   }
 }
 

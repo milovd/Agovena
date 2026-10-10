@@ -4,6 +4,7 @@
   --ag-color-primary: #155eef;
   --ag-color-primary-hover: #1249c7;
   --ag-color-primary-soft: rgb(21 94 239 / 0.12);
+  --ag-package-hero-background: #edf4ff;
   --ag-color-bg: #f1f4f9;
   --ag-color-surface: #ffffff;
   --ag-color-surface-muted: #eef2f7;
@@ -51,6 +52,7 @@
   --ag-color-primary: #60a5fa;
   --ag-color-primary-hover: #93c5fd;
   --ag-color-primary-soft: rgb(96 165 250 / 0.16);
+  --ag-package-hero-background: #112341;
   --ag-color-bg: #0b1220;
   --ag-color-surface: #111827;
   --ag-color-surface-muted: #1f2937;

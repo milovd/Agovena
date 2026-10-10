@@ -6,8 +6,8 @@
 @endphp
 <span {{ $attributes->class(['ag-package-mark']) }} aria-hidden="true">
     @if ($imagePath)
-        <img src="{{ route('admin.packages.artwork', ['kind' => $kind, 'id' => $manifest->id]) }}" alt="" width="40" height="40" loading="lazy" decoding="async">
+        <img src="{{ route('admin.packages.artwork', ['kind' => $kind, 'id' => $manifest->id]) }}" alt="" width="40" height="40" loading="eager" decoding="async">
     @else
-        <x-ag.icon name="package" :size="22" />
+        <x-ag.icon :name="$kind === 'extension' ? 'puzzle' : 'package'" :size="22" />
     @endif
 </span>

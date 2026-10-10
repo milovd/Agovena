@@ -91,7 +91,8 @@ test('shared package mark uses the secured image endpoint and falls back for uns
 
     expect($render($manifest))
         ->toContain('src="'.route('admin.packages.artwork', ['kind' => 'module', 'id' => 'sample']).'"')
-        ->toContain('alt=""');
+        ->toContain('alt=""')
+        ->toContain('loading="eager"');
 
     $remote = Blade::render('<x-ag.package-mark :manifest="$manifest" kind="module" :on-disk="false" />', [
         'manifest' => $manifest,

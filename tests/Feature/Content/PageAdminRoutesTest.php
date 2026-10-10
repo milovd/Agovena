@@ -23,7 +23,8 @@ test('page managers can open a dedicated creation form from the page list', func
     $this->get(route('admin.appearance.pages.create'))
         ->assertOk()
         ->assertSee('wire:submit="save"', false)
-        ->assertSee('agPageEditor(', false)
+        ->assertSee('x-data="agPageEditor"', false)
+        ->assertSee('data-initial-body=', false)
         ->assertSee('wire:ignore', false)
         ->assertSee('wire:model="image"', false)
         ->assertSee('wire:click="uploadImage"', false);

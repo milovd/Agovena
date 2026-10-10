@@ -1,5 +1,7 @@
 <div class="admin-page">
-    <x-ag.page-header :heading="__('admin.extensions.title')" :lede="__('admin.extensions.lede')" />
+    <x-ag.package-hero>
+        <x-ag.page-header :heading="__('admin.extensions.title')" :lede="__('admin.extensions.lede')" />
+    </x-ag.package-hero>
 
     @if (session('status'))
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>

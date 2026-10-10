@@ -13,7 +13,7 @@
     </div>
 @else
     @foreach ($groups as $group => $items)
-        <section class="admin-panel">
+        <section class="ag-package-section">
             <h2 class="admin-panel__title">{{ __($groupLabelPrefix.$group) }}</h2>
             <div class="ag-package-grid">
                 @foreach ($items as $row)

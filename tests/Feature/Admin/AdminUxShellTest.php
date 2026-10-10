@@ -115,6 +115,63 @@ test('dashboard presents six permission-aware KPI cards with themed icon tiles',
         ->and($html)->toContain('data-tone="cyan"');
 });
 
+test('products list retains every filter and bulk action while presenting a visual category cell', function () {
+    $source = file_get_contents(resource_path('views/livewire/admin/products/index.blade.php'));
+    expect($source)->toContain('ag-table__category')
+        ->and($source)->toContain('<x-ag.icon-tile')
+        ->and($source)->toContain('ag-toolbar--bulk')
+        ->and($source)->toContain('ag-table__mobile-meta')
+        ->and($source)->toContain('wire:model.live.debounce.300ms="search"');
+
+    foreach (['wire:model.live="status"', 'wire:model.live="category"', 'wire:model.live="sort"', 'selectCurrentPage', "bulkSetStatus('active')", "bulkSetStatus('draft')", 'confirmDelete('] as $action) {
+        expect($source)->toContain($action);
+    }
+});
+
+test('package pages share a decorative hero without changing their tab controls', function () {
+    foreach (['extensions', 'modules'] as $kind) {
+        $source = file_get_contents(resource_path("views/livewire/admin/{$kind}/index.blade.php"));
+        expect($source)->toContain('<x-ag.package-hero')
+            ->and($source)->toContain('<x-ag.page-header')
+            ->and($source)->toContain("@include('livewire.admin.partials.tabs'");
+    }
+});
+
+test('extension package fallback icon uses a supported puzzle glyph', function () {
+    $source = file_get_contents(resource_path('views/components/ag/icon.blade.php'));
+    expect($source)->toContain("'puzzle' =>");
+});
+
+test('package groups own headings without nesting cards inside a second panel', function () {
+    $source = file_get_contents(resource_path('views/livewire/admin/packages/partials/package-group-grid.blade.php'));
+    expect($source)->toContain('class="ag-package-section"')
+        ->and($source)->not->toContain('class="admin-panel"');
+});
+
+test('extension cards retain lifecycle actions in a horizontal media layout', function () {
+    $source = file_get_contents(resource_path('views/livewire/admin/packages/partials/extension-card.blade.php'));
+    expect($source)->toContain('ag-package-card__media')
+        ->and($source)->toContain('ag-package-card__body')
+        ->and($source)->toContain('ag-package-card__controls')
+        ->and($source)->toContain('aria-label="{{ __(\'admin.extensions.actions.settings\') }}"');
+
+    foreach (['installFromMonorepo', 'install(', 'disable(', 'openSettings(', 'runHealth(', 'uninstallPackage(', 'enable(', 'updatePackage(', 'purgePackage('] as $action) {
+        expect($source)->toContain($action);
+    }
+});
+
+test('dashboard KPI icon tiles use a legible glyph without enlarging unrelated tiles', function () {
+    $html = Livewire::actingAs($this->createStaff())->test(Dashboard::class)->html();
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $icons = (new DOMXPath($document))->query('//*[contains(concat(" ", normalize-space(@class), " "), " ag-metric ")]//*[contains(concat(" ", normalize-space(@class), " "), " ag-icon-tile ")]/svg');
+
+    expect($icons->length)->toBe(6);
+    foreach ($icons as $icon) {
+        expect($icon->getAttribute('width'))->toBe('24');
+    }
+});
+
 test('dashboard keeps six focused metrics and one configurable chart', function () {
     $component = Livewire::actingAs($this->createStaff())
         ->test(Dashboard::class)

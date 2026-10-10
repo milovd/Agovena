@@ -15,7 +15,7 @@
                 <input id="page-slug" class="ag-input" type="text" wire:model="slug">
                 @error('slug') <p class="ag-field__error">{{ $message }}</p> @enderror
             </div>
-            <div class="ag-field" x-data="agPageEditor(@js($body))" x-on:page-image-uploaded.window="insertImage($event.detail.url, $event.detail.alt)" data-link-prompt="{{ __('admin.content.pages.editor.link_prompt') }}" data-link-new-tab-prompt="{{ __('admin.content.pages.editor.link_new_tab_prompt') }}">
+            <div class="ag-field" x-data="agPageEditor" data-initial-body="{{ $body }}" x-on:page-image-uploaded.window="insertImage($event.detail.url, $event.detail.alt)" data-link-prompt="{{ __('admin.content.pages.editor.link_prompt') }}" data-link-new-tab-prompt="{{ __('admin.content.pages.editor.link_new_tab_prompt') }}">
                 <span class="ag-field__label" id="page-editor-label">{{ __('admin.content.pages.body') }}</span>
                 <div class="ag-page-editor">
                     <div class="ag-page-editor__toolbar" x-show="editor" x-cloak role="toolbar" aria-label="{{ __('admin.content.pages.editor.toolbar') }}">

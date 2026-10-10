@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page ag-list-page">
     <x-ag.page-header :heading="__('admin.products.title')" :lede="__('admin.products.lede')">
         <x-slot:actions>
             @can('products.create')
@@ -83,25 +83,27 @@
         </div>
     @else
         @can('products.update')
-            <x-ag.table-toolbar role="region" aria-label="{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}">
+            <x-ag.table-toolbar class="ag-toolbar--bulk" role="region" aria-label="{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}">
                 <button type="button" class="ag-btn" wire:click="selectCurrentPage">{{ __('admin.products.bulk_select_page') }}</button>
                 <span aria-live="polite">{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}</span>
-                <button type="button" class="ag-btn" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
-                <button type="button" class="ag-btn" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
+                <span class="ag-toolbar__actions">
+                    <button type="button" class="ag-btn" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
+                    <button type="button" class="ag-btn" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
+                </span>
             </x-ag.table-toolbar>
             @error('selectedProductIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
             @error('bulkStatus') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
         @endcan
-        <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search,status,category,sort">
+        <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.products.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status,category,sort">
             <table class="ag-table ag-table--products">
                 <thead>
                     <tr>
-                        @can('products.update')<th scope="col"><span class="visually-hidden">{{ __('admin.products.bulk_select_page') }}</span></th>@endcan
+                        @can('products.update')<th scope="col" class="ag-table__select-col"><span class="visually-hidden">{{ __('admin.products.bulk_select_page') }}</span></th>@endcan
                         <th scope="col" class="ag-table__thumb-col"><span class="visually-hidden">{{ __('common.image') }}</span></th>
                         <th scope="col">{{ __('common.product') }}</th>
                         <th scope="col" class="ag-table__col--md">{{ __('common.category') }}</th>
-                        <th scope="col">{{ __('common.price') }}</th>
-                        <th scope="col">{{ __('common.status') }}</th>
+                        <th scope="col" class="ag-table__price-col">{{ __('common.price') }}</th>
+                        <th scope="col" class="ag-table__status-col">{{ __('common.status') }}</th>
                         <th scope="col" class="ag-table__col--lg">{{ __('common.updated') }}</th>
                         <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
                     </tr>
@@ -110,7 +112,7 @@
                     @foreach ($products as $product)
                         <tr wire:key="product-{{ $product->id }}">
                             @can('products.update')
-                                <td><x-ag.checkbox id="product-select-{{ $product->id }}" wire:model.live="selectedProductIds" value="{{ $product->id }}" aria-label="{{ __('admin.products.bulk_select_row', ['name' => $product->name]) }}" /></td>
+                                <td class="ag-table__select-col"><x-ag.checkbox id="product-select-{{ $product->id }}" wire:model.live="selectedProductIds" value="{{ $product->id }}" aria-label="{{ __('admin.products.bulk_select_row', ['name' => $product->name]) }}" /></td>
                             @endcan
                             <td class="ag-table__thumb-col">
                                 @php $thumbUrl = \App\Agovena\Media\PublicMedia::url($product->image_path); @endphp
@@ -137,11 +139,25 @@
                                             {{ $product->slug }}
                                         @endif
                                     </span>
+                                    <span class="ag-table__mobile-meta">
+                                        {{ \App\Support\MoneyFormatter::formatProduct($product) ?? \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}
+                                        <x-ag.badge :variant="$product->status->value === 'active' ? 'success' : 'muted'">{{ $product->status->value === 'active' ? __('common.active') : __('common.draft') }}</x-ag.badge>
+                                        @if ($product->category)<span>{{ $product->category->name }}</span>@endif
+                                    </span>
                                 </div>
                             </td>
-                            <td class="ag-table__col--md">{{ $product->category?->name ?? __('common.em_dash') }}</td>
-                            <td>{{ \App\Support\MoneyFormatter::formatProduct($product) ?? \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</td>
-                            <td>
+                            <td class="ag-table__col--md">
+                                <span class="ag-table__category">
+                                    @if ($product->category)
+                                        <x-ag.icon-tile name="package" :tone="['blue', 'cyan', 'amber', 'emerald', 'violet', 'indigo'][$product->category->id % 6]" :size="16" />
+                                        {{ $product->category->name }}
+                                    @else
+                                        {{ __('common.em_dash') }}
+                                    @endif
+                                </span>
+                            </td>
+                            <td class="ag-table__price-col">{{ \App\Support\MoneyFormatter::formatProduct($product) ?? \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</td>
+                            <td class="ag-table__status-col">
                                 <x-ag.badge :variant="$product->status->value === 'active' ? 'success' : 'muted'">{{ $product->status->value === 'active' ? __('common.active') : __('common.draft') }}</x-ag.badge>
                             </td>
                             <td class="ag-table__col--lg">

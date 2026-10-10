@@ -1,7 +1,9 @@
 <div class="admin-page">
-    <x-ag.page-header :heading="__('admin.modules.title')" :lede="__('admin.modules.lede')">
-        <p class="admin-page__note">{{ __('admin.modules.disable_preserves_data') }}</p>
-    </x-ag.page-header>
+    <x-ag.package-hero icon="package">
+        <x-ag.page-header :heading="__('admin.modules.title')" :lede="__('admin.modules.lede')">
+            <p class="admin-page__note">{{ __('admin.modules.disable_preserves_data') }}</p>
+        </x-ag.page-header>
+    </x-ag.package-hero>
 
     @if (session('status'))
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
