@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page ag-list-page admin-page--categories">
     <x-ag.page-header :heading="__('admin.categories.title')" :lede="__('admin.categories.lede')">
         <x-slot:actions>
             @can('categories.create')
@@ -7,20 +7,21 @@
         </x-slot:actions>
     </x-ag.page-header>
 
-    <div class="ag-toolbar ag-toolbar--filters">
+    <x-ag.table-toolbar filters>
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">
                 <label class="visually-hidden" for="category-search">{{ __('admin.categories.search_label') }}</label>
                 <input id="category-search" class="ag-input ag-input--search" type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.categories.search_placeholder') }}">
             </div>
         </div>
-    </div>
+    </x-ag.table-toolbar>
 
     @if ($showForm)
-        <form wire:submit="save" class="ag-section ag-form ag-form--constrained" novalidate>
-            <header class="ag-section__header" style="display:flex; justify-content:space-between; gap:1rem; flex-wrap:wrap; align-items:flex-start;">
-                <div>
-                    <h3 class="ag-section__title">{{ $editingId ? __('admin.categories.edit') : __('admin.categories.new') }}</h3>
+        <form wire:submit="save" class="ag-section ag-form ag-form--constrained ag-catalog-form" novalidate>
+            <header class="ag-section__header ag-catalog-form__header">
+                <div class="ag-catalog-form__heading">
+                    <x-ag.icon-tile name="folders" tone="blue" />
+                    <h2 class="ag-section__title">{{ $editingId ? __('admin.categories.edit') : __('admin.categories.new') }}</h2>
                 </div>
                 @if ($editingId)
                     @if ($is_active && filled($slug))
@@ -64,7 +65,7 @@
                         <p class="ag-field__hint">{{ __('admin.categories.parent_hint') }}</p>
                         @error('parent_id') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
-                    <div class="ag-field" style="display:flex; align-items:flex-end;">
+                    <div class="ag-field ag-catalog-form__switch">
                         <x-ag.switch id="category-active" wire:model="is_active" :label="__('common.active')" />
                     </div>
                     <div class="ag-field ag-grid__span-2">
@@ -101,7 +102,7 @@
             <p class="ag-empty__text">{{ $search ? __('admin.categories.empty.filtered_text') : __('admin.categories.empty.text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search">
+        <div class="ag-table-wrap ag-catalog-table-wrap" role="region" aria-label="{{ __('admin.categories.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search">
             <table class="ag-table ag-table--categories">
                 <thead>
                     <tr>
@@ -125,14 +126,17 @@
                                     <span class="ag-thumb ag-thumb--empty" aria-hidden="true"></span>
                                 @endif
                             </td>
-                            <td><span class="ag-table__name">{{ $category->name }}</span></td>
-                            <td class="ag-table__col--md">{{ $category->parent?->name ?? __('common.em_dash') }}</td>
-                            <td class="ag-table__col--lg"><span class="ag-muted">{{ $category->slug }}</span></td>
-                            <td>{{ $category->products_count }}</td>
-                            <td>
-                                <span @class(['ag-badge', 'ag-badge--success' => $category->is_active, 'ag-badge--muted' => ! $category->is_active])>
-                                    {{ $category->is_active ? __('common.active') : __('common.inactive') }}
-                                </span>
+                            <td class="ag-catalog-cell--identity">
+                                <div class="ag-table__primary">
+                                    <span class="ag-table__name">{{ $category->name }}</span>
+                                    <span class="ag-muted ag-catalog-mobile-slug">{{ $category->slug }}</span>
+                                </div>
+                            </td>
+                            <td class="ag-table__col--md ag-catalog-cell--detail" data-label="{{ __('admin.categories.parent_column') }}">{{ $category->parent?->name ?? __('common.em_dash') }}</td>
+                            <td class="ag-table__col--lg ag-catalog-cell--slug"><span class="ag-muted">{{ $category->slug }}</span></td>
+                            <td class="ag-catalog-cell--detail" data-label="{{ __('common.products') }}">{{ $category->products_count }}</td>
+                            <td class="ag-catalog-cell--detail" data-label="{{ __('common.status') }}">
+                                <x-ag.badge :variant="$category->is_active ? 'success' : 'muted'">{{ $category->is_active ? __('common.active') : __('common.inactive') }}</x-ag.badge>
                             </td>
                             <td class="ag-table__actions">
                                 <div class="ag-row-actions">

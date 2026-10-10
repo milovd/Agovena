@@ -1,0 +1,197 @@
+/* Categories and discount codes follow the shared Admin list and form patterns. */
+.admin-page--categories .ag-toolbar__filters,
+.admin-page--categories .ag-toolbar__filters > .ag-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.admin-page--categories .ag-toolbar__filters > .ag-field {
+  max-width: 24rem;
+}
+
+.ag-catalog-form {
+  max-width: 56rem;
+  margin-bottom: var(--ag-space-6);
+}
+
+.ag-catalog-form__header,
+.ag-catalog-form__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-3);
+}
+
+.ag-catalog-form__header {
+  justify-content: space-between;
+}
+
+.ag-catalog-form__heading {
+  min-width: 0;
+}
+
+.ag-catalog-form .ag-grid > .ag-field {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.ag-catalog-form .ag-input,
+.ag-catalog-form .ag-select {
+  min-width: 0;
+  max-width: none;
+}
+
+.ag-catalog-form__switch {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.ag-catalog-form .ag-form__actions {
+  padding-top: var(--ag-space-4);
+  border-top: 1px solid var(--ag-color-border);
+}
+
+.ag-table--categories tbody td,
+.ag-table--discounts tbody td {
+  vertical-align: middle;
+}
+
+.ag-table--categories .ag-table__primary,
+.ag-table--discounts .ag-table__primary {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: var(--ag-space-1);
+  overflow-wrap: anywhere;
+}
+
+.ag-table--categories .ag-catalog-mobile-slug {
+  display: none;
+}
+
+.ag-table--categories .ag-catalog-cell--slug {
+  overflow-wrap: anywhere;
+}
+
+.ag-table--discounts .ag-catalog-cell--identity code {
+  font: inherit;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .ag-catalog-form .ag-section__header,
+  .ag-catalog-form .ag-section__body {
+    padding-inline: var(--ag-space-4);
+  }
+
+  .ag-catalog-table-wrap {
+    max-width: 100%;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    contain: none;
+  }
+
+  .ag-catalog-table-wrap .ag-table,
+  .ag-catalog-table-wrap tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .ag-catalog-table-wrap thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .ag-catalog-table-wrap tbody {
+    display: grid;
+    gap: var(--ag-space-3);
+  }
+
+  .ag-catalog-table-wrap tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ag-space-2);
+    min-width: 0;
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface);
+  }
+
+  .ag-catalog-table-wrap tbody td {
+    display: flex;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ag-catalog-table-wrap .ag-catalog-cell--detail {
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ag-space-3);
+    font-size: var(--ag-font-size-sm);
+  }
+
+  .ag-catalog-table-wrap .ag-catalog-cell--detail::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    color: var(--ag-color-text-muted);
+    font-weight: 600;
+  }
+
+  .ag-catalog-table-wrap .ag-table__actions {
+    justify-content: flex-end;
+    width: 100%;
+    padding-top: var(--ag-space-2);
+    border-top: 1px solid var(--ag-color-border);
+  }
+
+  .ag-table--categories tbody tr {
+    grid-template-columns: 2.75rem minmax(0, 1fr);
+  }
+
+  .ag-table--categories .ag-table__thumb-col {
+    width: auto;
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ag-table--categories .ag-thumb {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .ag-table--categories .ag-catalog-cell--identity {
+    grid-column: 2;
+    grid-row: 1;
+    align-items: center;
+  }
+
+  .ag-table--categories .ag-catalog-cell--detail,
+  .ag-table--categories .ag-table__actions {
+    grid-column: 1 / -1;
+  }
+
+  .ag-table--categories .ag-catalog-cell--slug {
+    display: none;
+  }
+
+  .ag-table--categories .ag-catalog-mobile-slug {
+    display: block;
+    margin: 0;
+    font-size: var(--ag-font-size-xs);
+    font-weight: 400;
+  }
+
+  .ag-table--discounts .ag-catalog-cell--identity {
+    padding-bottom: var(--ag-space-1);
+  }
+}
