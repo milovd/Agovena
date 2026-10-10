@@ -97,7 +97,10 @@ final class NavigationIndex extends Component
 
         return view('livewire.admin.content.navigation-index', [
             'menu' => $menu,
-            'menus' => Menu::query()->orderBy('name')->get(),
+            'menus' => Menu::query()
+                ->orderByRaw("CASE handle WHEN 'header' THEN 0 WHEN 'footer' THEN 1 WHEN 'footer_legal' THEN 2 ELSE 3 END")
+                ->orderBy('name')
+                ->get(),
             'pages' => Page::query()->orderBy('title')->get(),
             'categories' => Category::query()->orderBy('name')->get(),
         ])->layout('layouts.admin', [

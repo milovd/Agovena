@@ -8,7 +8,7 @@
     };
 @endphp
 
-<div class="admin-page">
+<div class="admin-page c-navigation">
     <header class="admin-page__header">
         <div>
             <h1 class="admin-page__heading">{{ __('admin.content.navigation.title') }}</h1>
@@ -20,19 +20,24 @@
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
     @endif
 
-    <div class="ag-toolbar" role="tablist" aria-label="{{ __('admin.content.navigation.menus_aria') }}">
+    <nav class="c-navigation__tabs" aria-label="{{ __('admin.content.navigation.menus_aria') }}">
         @foreach ($menus as $m)
             <button
                 type="button"
-                class="ag-btn {{ $m->handle === $selectedHandle ? 'ag-btn--primary' : '' }}"
+                class="ag-btn c-navigation__tab {{ $m->handle === $selectedHandle ? 'ag-btn--primary' : '' }}"
                 wire:click="selectMenu('{{ $m->handle }}')"
+                @if ($m->handle === $selectedHandle) aria-current="true" @endif
             >{{ $menuName($m) }}</button>
         @endforeach
-    </div>
+    </nav>
 
-    <div class="ag-split">
-        <div class="admin-panel">
-            <h2 class="admin-panel__title">{{ __('admin.content.navigation.add_item_to', ['menu' => $menuName($menu)]) }}</h2>
+    <div class="c-navigation__layout">
+        @can('navigation.manage')
+        <section class="admin-panel c-navigation__form-panel" aria-labelledby="nav-form-heading">
+            <div class="c-navigation__panel-heading">
+                <x-ag.icon name="plus" :size="24" aria-hidden="true" />
+                <h2 id="nav-form-heading" class="admin-panel__title">{{ __('admin.content.navigation.add_item_to', ['menu' => $menuName($menu)]) }}</h2>
+            </div>
             <form class="ag-form" wire:submit="addItem">
                 <div class="ag-field">
                     <label class="ag-field__label" for="nav-label">{{ __('admin.content.navigation.label') }}</label>
@@ -76,26 +81,32 @@
                         @error('category_id') <p class="ag-field__error">{{ $message }}</p> @enderror
                     </div>
                 @endif
-                <button type="submit" class="ag-btn ag-btn--primary">{{ __('admin.content.navigation.add_item') }}</button>
+                <button type="submit" class="ag-btn ag-btn--primary"><x-ag.icon name="plus" :size="18" aria-hidden="true" />{{ __('admin.content.navigation.add_item') }}</button>
             </form>
-        </div>
+        </section>
+        @endcan
 
-        <div class="ag-table-wrap">
-            <table class="ag-table">
+        <section class="admin-panel c-navigation__structure-panel" aria-labelledby="nav-structure-heading">
+            <div class="c-navigation__panel-heading">
+                <x-ag.icon name="menu" :size="24" aria-hidden="true" />
+                <h2 id="nav-structure-heading" class="admin-panel__title">{{ __('admin.content.navigation.menus_aria') }}: {{ $menuName($menu) }}</h2>
+            </div>
+            <div class="ag-table-wrap c-navigation__table-wrap">
+            <table class="ag-table c-navigation__table">
                 <thead>
                     <tr>
-                        <th>{{ __('admin.content.navigation.label') }}</th>
-                        <th>{{ __('admin.content.navigation.type') }}</th>
-                        <th>{{ __('admin.content.navigation.target') }}</th>
-                        <th></th>
+                        <th scope="col">{{ __('admin.content.navigation.label') }}</th>
+                        <th scope="col">{{ __('admin.content.navigation.type') }}</th>
+                        <th scope="col">{{ __('admin.content.navigation.target') }}</th>
+                        @can('navigation.manage') <th scope="col"><span class="ag-visually-hidden">{{ __('common.remove') }}</span></th> @endcan
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($menu->allItems as $item)
                         <tr wire:key="menu-item-{{ $item->id }}">
-                            <td>{{ $item->label }}</td>
-                            <td>{{ __('admin.content.navigation.types.'.$item->type) }}</td>
-                            <td class="ag-muted">
+                            <td class="c-navigation__label" data-label="{{ __('admin.content.navigation.label') }}">{{ $item->label }}</td>
+                            <td data-label="{{ __('admin.content.navigation.type') }}">{{ __('admin.content.navigation.types.'.$item->type) }}</td>
+                            <td class="c-navigation__target ag-muted" data-label="{{ __('admin.content.navigation.target') }}">
                                 @if ($item->type === 'url')
                                     {{ $item->url }}
                                 @elseif ($item->type === 'page')
@@ -104,13 +115,15 @@
                                     {{ $item->category?->name ?? __('common.em_dash') }}
                                 @endif
                             </td>
-                            <td>
-                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="deleteItem({{ $item->id }})" wire:confirm="{{ __('admin.content.navigation.remove_confirm') }}">{{ __('common.remove') }}</button>
-                            </td>
+                            @can('navigation.manage')
+                                <td class="c-navigation__actions">
+                                    <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="deleteItem({{ $item->id }})" wire:confirm="{{ __('admin.content.navigation.remove_confirm') }}"><x-ag.icon name="trash" :size="16" aria-hidden="true" />{{ __('common.remove') }}</button>
+                                </td>
+                            @endcan
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="4">
+                        <tr class="c-navigation__empty-row">
+                            <td colspan="{{ auth()->user()->can('navigation.manage') ? 4 : 3 }}">
                                 <div class="ag-empty" role="status">
                                     <p class="ag-empty__title">{{ __('admin.content.navigation.empty_title') }}</p>
                                     <p class="ag-empty__text">{{ __('admin.content.navigation.empty_text') }}</p>
@@ -120,6 +133,7 @@
                     @endforelse
                 </tbody>
             </table>
-        </div>
+            </div>
+        </section>
     </div>
 </div>
