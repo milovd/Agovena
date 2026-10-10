@@ -1,0 +1,219 @@
+.c-events {
+  min-width: 0;
+}
+
+.c-events > .ag-tabs {
+  align-self: flex-start;
+}
+
+.c-events__section,
+.c-events__form,
+.c-events__fields,
+.c-events__fields > .ag-field {
+  min-width: 0;
+}
+
+.c-events__heading,
+.c-events__identity-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  min-width: 0;
+}
+
+.c-events__heading {
+  margin-bottom: var(--ag-space-5);
+}
+
+.c-events__heading .admin-panel__title {
+  margin: 0;
+}
+
+.c-events__form {
+  max-width: 60rem;
+}
+
+.c-events__fields,
+.c-events__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ag-space-4);
+  max-width: 60rem;
+}
+
+.c-events__fields > .ag-field {
+  margin: 0;
+}
+
+.c-events__field--wide {
+  grid-column: 1 / -1;
+}
+
+.c-events__fields :is(.ag-input, .ag-select),
+.c-events__scan .ag-input {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.c-events__fields textarea {
+  min-height: 7.5rem;
+  resize: vertical;
+}
+
+.c-events__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-3);
+  margin-top: var(--ag-space-5);
+  padding-top: var(--ag-space-4);
+  border-top: 1px solid var(--ag-color-border);
+}
+
+.c-events__facts {
+  margin: 0;
+}
+
+.c-events__facts > div {
+  min-width: 0;
+  padding-block: var(--ag-space-2);
+}
+
+.c-events__facts dt {
+  margin-bottom: var(--ag-space-2);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.c-events__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+
+.c-events__identity-inner .ag-table__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.c-events__table tbody td {
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.c-events__section .c-events__table-wrap {
+  margin-top: var(--ag-space-5);
+  border: 0;
+  border-top: 1px solid var(--ag-color-border);
+  border-radius: 0;
+}
+
+.c-events__scan .ag-field {
+  max-width: 32rem;
+  margin: 0;
+}
+
+.c-events__scan .c-events__actions {
+  max-width: 32rem;
+}
+
+@media (max-width: 720px) {
+  .c-events > .ag-tabs {
+    display: flex;
+    align-self: stretch;
+  }
+
+  .c-events > .ag-tabs .ag-tabs__tab {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .c-events__fields,
+  .c-events__facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .c-events__field--wide {
+    grid-column: 1;
+  }
+
+  .c-events__table-wrap {
+    max-width: 100%;
+    overflow: visible;
+    contain: none;
+    border: 0;
+    background: transparent;
+  }
+
+  .c-events__table,
+  .c-events__table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .c-events__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .c-events__table tbody {
+    display: grid;
+    gap: var(--ag-space-3);
+  }
+
+  .c-events__table tbody tr {
+    display: grid;
+    min-width: 0;
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface);
+  }
+
+  .c-events__section .c-events__table tbody tr {
+    background: var(--ag-color-surface-muted);
+  }
+
+  .c-events__table tbody td {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    padding: var(--ag-space-2) 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .c-events__table tbody td.c-events__identity {
+    padding-top: 0;
+    padding-bottom: var(--ag-space-3);
+    border-bottom: 1px solid var(--ag-color-border);
+    font-weight: 650;
+  }
+
+  .c-events__table tbody td.c-events__detail {
+    display: grid;
+    grid-template-columns: minmax(5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--ag-space-2);
+  }
+
+  .c-events__detail::before {
+    content: attr(data-label);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .c-events__detail .ag-badge {
+    justify-self: start;
+  }
+}
