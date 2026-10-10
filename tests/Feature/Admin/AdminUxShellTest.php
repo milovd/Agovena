@@ -91,6 +91,30 @@ test('dashboard renders real metrics without fake trends', function () {
         ->assertSee(__('admin.dashboard.charts.revenue'), false);
 });
 
+test('shared Atomic Design wrappers compose existing list and package controls', function () {
+    $products = file_get_contents(resource_path('views/livewire/admin/products/index.blade.php'));
+    $extension = file_get_contents(resource_path('views/livewire/admin/packages/partials/extension-card.blade.php'));
+
+    expect($products)->toContain('<x-ag.table-toolbar')
+        ->and($products)->toContain('<x-ag.row-actions')
+        ->and($products)->toContain('<x-ag.badge')
+        ->and($extension)->toContain('<x-ag.package-card');
+});
+
+test('dashboard presents six permission-aware KPI cards with themed icon tiles', function () {
+    $staff = $this->createStaff([], ['dashboard.view']);
+    $html = Livewire::actingAs($staff)->test(Dashboard::class)->html();
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $xpath = new DOMXPath($document);
+
+    expect($xpath->query('//div[contains(concat(" ", normalize-space(@class), " "), " ag-metrics ")]/article[contains(concat(" ", normalize-space(@class), " "), " ag-metric ")]'))->toHaveCount(6)
+        ->and($xpath->query('//article[contains(concat(" ", normalize-space(@class), " "), " ag-metric ")]/div[contains(@class, "ag-metric__heading")]/span[contains(@class, "ag-icon-tile")]/svg'))->toHaveCount(6)
+        ->and($xpath->query('//article[contains(@class, "ag-metric")]/a[contains(@class, "ag-metric__link")]'))->toHaveCount(0)
+        ->and($html)->toContain('data-tone="emerald"')
+        ->and($html)->toContain('data-tone="cyan"');
+});
+
 test('dashboard keeps six focused metrics and one configurable chart', function () {
     $component = Livewire::actingAs($this->createStaff())
         ->test(Dashboard::class)
@@ -125,6 +149,29 @@ test('dashboard normalizes unsupported chart state before rendering', function (
         ->assertSet('chartRange', '14')
         ->set('chartType', 'scatter')
         ->assertSet('chartType', 'line');
+});
+
+test('dashboard support empty state keeps a centered icon and real availability message', function () {
+    $html = Livewire::actingAs($this->createStaff())->test(Dashboard::class)->html();
+    expect($html)->toContain('ag-dashboard-widget__empty')
+        ->and($html)->toContain(__('admin.dashboard.support.empty_title'), false);
+});
+
+test('dashboard session heading matches the approved language in both locales', function () {
+    expect(__('admin.dashboard.active_users.title', [], 'en'))->toBe('Current sessions')
+        ->and(__('admin.dashboard.active_users.title', [], 'nl'))->toBe('Huidige sessies');
+});
+
+test('dashboard default chart composes revenue bars with an orders line while keeping bar view', function () {
+    $component = Livewire::actingAs($this->createStaff())->test(Dashboard::class);
+    foreach (['line' => ['bar', 'line'], 'bar' => ['bar', 'bar']] as $selected => $expected) {
+        $component->set('chartType', $selected);
+        $document = new DOMDocument;
+        @$document->loadHTML($component->html());
+        $chart = (new DOMXPath($document))->query('//*[@data-chart-config]')->item(0);
+        $config = json_decode($chart->getAttribute('data-chart-config'), true, flags: JSON_THROW_ON_ERROR);
+        expect(array_column($config['datasets'], 'type'))->toBe($expected);
+    }
 });
 
 test('dashboard chart ranges return the requested number of daily points', function () {

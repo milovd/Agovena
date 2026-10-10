@@ -1,5 +1,25 @@
 /* Metric cards, tabs, chart cards, identity cells */
 
+.ag-icon-tile {
+  --ag-tile-color: var(--ag-color-primary);
+  --ag-tile-bg: var(--ag-color-primary-soft);
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-tile-bg);
+  color: var(--ag-tile-color);
+}
+
+.ag-icon-tile[data-tone="emerald"] { --ag-tile-color: var(--ag-color-tile-emerald, var(--ag-color-success)); --ag-tile-bg: var(--ag-color-tile-emerald-soft, var(--ag-color-success-soft)); }
+.ag-icon-tile[data-tone="blue"] { --ag-tile-color: var(--ag-color-tile-blue, var(--ag-color-primary)); --ag-tile-bg: var(--ag-color-tile-blue-soft, var(--ag-color-primary-soft)); }
+.ag-icon-tile[data-tone="violet"] { --ag-tile-color: var(--ag-color-tile-violet, var(--ag-color-primary)); --ag-tile-bg: var(--ag-color-tile-violet-soft, var(--ag-color-primary-soft)); }
+.ag-icon-tile[data-tone="amber"] { --ag-tile-color: var(--ag-color-tile-amber, var(--ag-color-warning)); --ag-tile-bg: var(--ag-color-tile-amber-soft, var(--ag-color-warning-soft)); }
+.ag-icon-tile[data-tone="indigo"] { --ag-tile-color: var(--ag-color-tile-indigo, var(--ag-color-primary)); --ag-tile-bg: var(--ag-color-tile-indigo-soft, var(--ag-color-primary-soft)); }
+.ag-icon-tile[data-tone="cyan"] { --ag-tile-color: var(--ag-color-tile-cyan, var(--ag-color-info)); --ag-tile-bg: var(--ag-color-tile-cyan-soft, var(--ag-color-info-soft)); }
+
 .ag-metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(11.5rem, 1fr));
@@ -21,6 +41,13 @@
 
 .ag-metric:has(.ag-metric__link):hover {
   border-color: color-mix(in srgb, var(--ag-color-primary) 38%, var(--ag-color-border));
+}
+
+.ag-metric__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+  min-width: 0;
 }
 
 .ag-metric__label {
@@ -47,6 +74,10 @@
 }
 
 .ag-metric__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-1);
+  align-self: flex-start;
   margin-top: auto;
   font-size: var(--ag-font-size-sm);
   font-weight: 600;

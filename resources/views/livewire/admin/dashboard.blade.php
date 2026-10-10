@@ -32,8 +32,9 @@
                     :aria-label="open ? @js(__('admin.dashboard.getting_started.collapse')) : @js(__('admin.dashboard.getting_started.expand'))"
                 >
                     <span class="ag-checklist__toggle-icon" aria-hidden="true">
-                        <x-ag.icon name="chevron-down" :size="20" />
+                        <x-ag.icon name="chevron-down" :size="16" />
                     </span>
+                    <x-ag.icon-tile name="file-text" tone="blue" />
                     <span class="ag-checklist__toggle-text">
                         <span id="getting-started-heading" class="ag-checklist__title">{{ __('admin.dashboard.getting_started.title') }}</span>
                         <span class="ag-checklist__progress">{{ __('admin.dashboard.getting_started.progress', ['done' => $gettingStartedDone, 'total' => $gettingStartedTotal]) }}</span>
@@ -69,18 +70,28 @@
         </section>
     @endif
 
+    @php
+        $metricAppearance = [
+            'revenue' => ['icon' => 'coins', 'tone' => 'emerald'],
+            'orders' => ['icon' => 'shopping-bag', 'tone' => 'blue'],
+            'customers' => ['icon' => 'users', 'tone' => 'violet'],
+            'aov' => ['icon' => 'banknote', 'tone' => 'amber'],
+            'products' => ['icon' => 'package', 'tone' => 'indigo'],
+            'services' => ['icon' => 'server', 'tone' => 'cyan'],
+        ];
+    @endphp
     <div class="ag-metrics" role="list">
         @foreach ($metrics as $metric)
-            <article class="ag-metric" role="listitem" wire:key="metric-{{ $metric['id'] }}">
-                <p class="ag-metric__label">{{ $metric['label'] }}</p>
-                <p class="ag-metric__value">{{ $metric['value'] }}</p>
-                @if ($metric['hint'])
-                    <p class="ag-metric__hint">{{ $metric['hint'] }}</p>
-                @endif
-                @if ($metric['href'])
-                    <a class="ag-metric__link" href="{{ $metric['href'] }}">{{ __('admin.dashboard.view_details') }}</a>
-                @endif
-            </article>
+            <x-ag.metric-card
+                wire:key="metric-{{ $metric['id'] }}"
+                :label="$metric['label']"
+                :value="$metric['value']"
+                :hint="$metric['hint']"
+                :href="$metric['href']"
+                :link-label="__('admin.dashboard.view_details')"
+                :icon="$metricAppearance[$metric['id']]['icon'] ?? 'package'"
+                :tone="$metricAppearance[$metric['id']]['tone'] ?? 'blue'"
+            />
         @endforeach
     </div>
 
@@ -104,6 +115,7 @@
                     ],
                     'datasets' => [
                         [
+                            'type' => 'bar',
                             'label' => __('admin.dashboard.charts.revenue'),
                             'data' => $revenueSeries['values'],
                             'yAxisID' => 'y',
@@ -121,30 +133,34 @@
                             'pointHoverBackgroundColor' => 'var(--ag-color-chart-1)',
                         ],
                         [
+                            'type' => $chartType === 'line' ? 'line' : 'bar',
                             'label' => __('admin.dashboard.charts.orders'),
                             'data' => $orderSeries['values'],
                             'yAxisID' => 'y1',
-                            'borderColor' => 'var(--ag-color-chart-4)',
-                            'backgroundColor' => 'var(--ag-color-chart-4)',
+                            'borderColor' => 'var(--ag-color-chart-2)',
+                            'backgroundColor' => 'var(--ag-color-chart-2)',
                             'barBackgroundColor' => 'var(--ag-color-chart-4)',
                             'barBorderColor' => 'var(--ag-color-chart-4)',
-                            'pointBackgroundColor' => 'var(--ag-color-chart-4)',
+                            'pointBackgroundColor' => 'var(--ag-color-chart-2)',
                             'fill' => false,
                             'tension' => 0.3,
                             'borderWidth' => 2.5,
                             'pointMarkerRadius' => 3,
                             'pointHoverRadius' => 5,
                             'pointHitRadius' => 10,
-                            'pointHoverBackgroundColor' => 'var(--ag-color-chart-4)',
+                            'pointHoverBackgroundColor' => 'var(--ag-color-chart-2)',
                         ],
                     ],
                 ]) }}"
             >
                 <header class="ag-chart-card__header">
-                    <div>
-                        <p class="ag-chart-card__eyebrow">{{ __('admin.dashboard.charts.eyebrow') }}</p>
-                        <h2 id="dashboard-chart-title" class="ag-chart-card__title">{{ __('admin.dashboard.charts.overview') }}</h2>
-                        <p class="ag-chart-card__lede">{{ __('admin.dashboard.charts.overview_lede') }}</p>
+                    <div class="ag-chart-card__heading">
+                        <x-ag.icon name="layout-dashboard" :size="18" />
+                        <div>
+                            <p class="ag-chart-card__eyebrow">{{ __('admin.dashboard.charts.eyebrow') }}</p>
+                            <h2 id="dashboard-chart-title" class="ag-chart-card__title">{{ __('admin.dashboard.charts.overview') }}</h2>
+                            <p class="ag-chart-card__lede">{{ __('admin.dashboard.charts.overview_lede') }}</p>
+                        </div>
                     </div>
                     <div class="ag-chart-card__toolbar">
                         <div class="ag-chart-control">
@@ -196,11 +212,12 @@
             <section class="admin-panel ag-dashboard-widget" aria-labelledby="support-heading">
                 <header class="ag-dashboard-widget__header">
                     <div>
-                        <h2 id="support-heading" class="admin-panel__title">
-                            {{ __('admin.dashboard.support.title') }}
+                        <h2 id="support-heading" class="admin-panel__title ag-dashboard-widget__title">
+                            <x-ag.icon name="ticket" :size="18" />
+                            <span>{{ __('admin.dashboard.support.title') }}
                             @if ($supportTicketsAvailable)
                                 ({{ number_format($supportTicketCount) }})
-                            @endif
+                            @endif</span>
                         </h2>
                         <p class="ag-dashboard-widget__lede">{{ __('admin.dashboard.support.lede') }}</p>
                     </div>
@@ -217,7 +234,8 @@
                         <p class="ag-empty__text">{{ __('admin.dashboard.support.unavailable_text') }}</p>
                     </div>
                 @elseif ($supportTickets->isEmpty())
-                    <div class="ag-empty--soft" role="status">
+                    <div class="ag-empty--soft ag-dashboard-widget__empty" role="status">
+                        <x-ag.icon name="ticket" :size="20" class="ag-empty__icon" />
                         <p class="ag-empty__title">{{ __('admin.dashboard.support.empty_title') }}</p>
                         <p class="ag-empty__text">{{ __('admin.dashboard.support.empty_text') }}</p>
                     </div>
@@ -249,11 +267,12 @@
             <section class="admin-panel ag-dashboard-widget" aria-labelledby="active-users-heading">
                 <header class="ag-dashboard-widget__header">
                     <div>
-                        <h2 id="active-users-heading" class="admin-panel__title">
-                            {{ __('admin.dashboard.active_users.title') }}
+                        <h2 id="active-users-heading" class="admin-panel__title ag-dashboard-widget__title">
+                            <x-ag.icon name="users" :size="18" />
+                            <span>{{ __('admin.dashboard.active_users.title') }}
                             @if ($activeUsersAvailable)
                                 ({{ number_format($activeUserCount) }})
-                            @endif
+                            @endif</span>
                         </h2>
                         <p class="ag-dashboard-widget__lede">{{ __('admin.dashboard.active_users.lede') }}</p>
                     </div>

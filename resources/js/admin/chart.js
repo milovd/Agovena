@@ -151,13 +151,14 @@ export function registerChartComponents(Alpine) {
                 data: {
                     labels: config.labels || [],
                     datasets: (config.datasets || []).map((dataset) => {
-                        const backgroundColor = isBarChart
+                        const datasetIsBar = dataset.type === 'bar' || (!dataset.type && isBarChart);
+                        const backgroundColor = datasetIsBar
                             ? dataset.barBackgroundColor ?? dataset.backgroundColor
                             : dataset.backgroundColor;
-                        const borderColor = isBarChart
+                        const borderColor = datasetIsBar
                             ? dataset.barBorderColor ?? dataset.borderColor
                             : dataset.borderColor;
-                        const pointRadius = isBarChart
+                        const pointRadius = datasetIsBar
                             ? 0
                             : buildLinePointRadii(dataset.data, dataset.pointMarkerRadius ?? 3);
 
@@ -165,16 +166,18 @@ export function registerChartComponents(Alpine) {
                             ...dataset,
                             borderColor: resolveCssColor(borderColor),
                             backgroundColor: resolveCssColor(backgroundColor),
+                            barBackgroundColor: resolveCssColor(dataset.barBackgroundColor),
+                            barBorderColor: resolveCssColor(dataset.barBorderColor),
                             pointBackgroundColor: resolveCssColor(dataset.pointBackgroundColor),
                             pointBorderColor: resolveCssColor(dataset.pointBorderColor),
                             pointHoverBackgroundColor: resolveCssColor(dataset.pointHoverBackgroundColor),
                             pointHoverBorderColor: resolveCssColor(dataset.pointHoverBorderColor),
-                            borderWidth: isBarChart ? dataset.barBorderWidth ?? 0 : dataset.borderWidth ?? 2,
+                            borderWidth: datasetIsBar ? dataset.barBorderWidth ?? 0 : dataset.borderWidth ?? 2,
                             pointRadius,
-                            pointHoverRadius: isBarChart ? 0 : dataset.pointHoverRadius ?? 5,
-                            pointHitRadius: isBarChart ? 0 : dataset.pointHitRadius ?? 10,
-                            borderRadius: isBarChart ? dataset.barBorderRadius ?? 0 : dataset.borderRadius,
-                            borderSkipped: isBarChart ? false : dataset.borderSkipped,
+                            pointHoverRadius: datasetIsBar ? 0 : dataset.pointHoverRadius ?? 5,
+                            pointHitRadius: datasetIsBar ? 0 : dataset.pointHitRadius ?? 10,
+                            borderRadius: datasetIsBar ? dataset.barBorderRadius ?? 0 : dataset.borderRadius,
+                            borderSkipped: datasetIsBar ? false : dataset.borderSkipped,
                         };
                     }),
                 },

@@ -11,7 +11,7 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
-    <div class="ag-toolbar ag-toolbar--filters">
+    <x-ag.table-toolbar filters>
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">
                 <label class="visually-hidden" for="product-search">{{ __('admin.products.search_label') }}</label>
@@ -51,7 +51,7 @@
                 </select>
             </div>
         </div>
-    </div>
+    </x-ag.table-toolbar>
 
     <div wire:loading.flex class="ag-loading" wire:target="search,status,category,sort,gotoPage,previousPage,nextPage">
         <span class="ag-loading__text">{{ __('admin.products.loading') }}</span>
@@ -83,12 +83,12 @@
         </div>
     @else
         @can('products.update')
-            <div class="ag-toolbar" role="region" aria-label="{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}">
+            <x-ag.table-toolbar role="region" aria-label="{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}">
                 <button type="button" class="ag-btn" wire:click="selectCurrentPage">{{ __('admin.products.bulk_select_page') }}</button>
                 <span aria-live="polite">{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}</span>
                 <button type="button" class="ag-btn" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
                 <button type="button" class="ag-btn" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
-            </div>
+            </x-ag.table-toolbar>
             @error('selectedProductIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
             @error('bulkStatus') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
         @endcan
@@ -142,11 +142,7 @@
                             <td class="ag-table__col--md">{{ $product->category?->name ?? __('common.em_dash') }}</td>
                             <td>{{ \App\Support\MoneyFormatter::formatProduct($product) ?? \App\Support\MoneyFormatter::format($product->price_amount, $product->currency) }}</td>
                             <td>
-                                <span @class([
-                                    'ag-badge',
-                                    'ag-badge--success' => $product->status->value === 'active',
-                                    'ag-badge--muted' => $product->status->value === 'draft',
-                                ])>{{ $product->status->value === 'active' ? __('common.active') : __('common.draft') }}</span>
+                                <x-ag.badge :variant="$product->status->value === 'active' ? 'success' : 'muted'">{{ $product->status->value === 'active' ? __('common.active') : __('common.draft') }}</x-ag.badge>
                             </td>
                             <td class="ag-table__col--lg">
                                 <span class="ag-muted" title="{{ $product->updated_at?->toDateTimeString() }}">
@@ -154,7 +150,7 @@
                                 </span>
                             </td>
                             <td class="ag-table__actions">
-                                <div class="ag-row-actions">
+                                <x-ag.row-actions>
                                     @can('products.update')
                                         <a
                                             class="ag-icon-btn"
@@ -198,7 +194,7 @@
                                             @endcan
                                         </div>
                                     </div>
-                                </div>
+                                </x-ag.row-actions>
                             </td>
                         </tr>
                     @endforeach

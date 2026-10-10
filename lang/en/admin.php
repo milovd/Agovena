@@ -453,8 +453,8 @@ return [
         ],
 
         'active_users' => [
-            'title' => 'Active users',
-            'lede' => 'Users with a session active within the configured session lifetime.',
+            'title' => 'Current sessions',
+            'lede' => 'Signed-in users active within the configured session lifetime.',
             'empty_title' => 'No active users',
             'empty_text' => 'No signed-in users have an active session right now.',
             'unavailable_title' => 'Active users unavailable',

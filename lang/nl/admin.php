@@ -453,8 +453,8 @@ return [
         ],
 
         'active_users' => [
-            'title' => 'Actieve gebruikers',
-            'lede' => 'Gebruikers met een actieve sessie binnen de ingestelde sessieduur.',
+            'title' => 'Huidige sessies',
+            'lede' => 'Ingelogde gebruikers met een sessie binnen de ingestelde sessieduur.',
             'empty_title' => 'Geen actieve gebruikers',
             'empty_text' => 'Er zijn nu geen ingelogde gebruikers met een actieve sessie.',
             'unavailable_title' => 'Actieve gebruikers niet beschikbaar',

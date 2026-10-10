@@ -7,18 +7,18 @@
 }
 
 .ag-badge--success {
-  background: rgb(5 150 105 / 0.12);
+  background: var(--ag-color-success-soft);
   color: var(--ag-color-success);
 }
 
 .ag-badge--info {
-  background: rgb(2 132 199 / 0.12);
+  background: var(--ag-color-info-soft);
   color: var(--ag-color-info);
 }
 
 .ag-badge--warning {
-  background: rgb(217 119 6 / 0.14);
-  color: #b45309;
+  background: var(--ag-color-warning-soft);
+  color: var(--ag-color-warning);
 }
 
 .ag-badge--muted {
@@ -27,6 +27,6 @@
 }
 
 .ag-badge--danger {
-  background: rgb(220 38 38 / 0.12);
-  color: #b91c1c;
+  background: var(--ag-color-danger-soft);
+  color: var(--ag-color-danger);
 }

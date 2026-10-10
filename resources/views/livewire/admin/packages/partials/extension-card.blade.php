@@ -2,7 +2,7 @@
     /** @var \App\Agovena\Extensions\ExtensionManifest $manifest */
     $manifest = $row['manifest'];
 @endphp
-<article class="ag-package-card" wire:key="extension-{{ $manifest->id }}">
+<x-ag.package-card wire:key="extension-{{ $manifest->id }}">
     <div class="ag-package-card__top">
         <div class="ag-package-card__identity">
             <x-ag.package-mark :manifest="$manifest" kind="extension" :on-disk="$row['on_disk']" />
@@ -88,4 +88,4 @@
             @endif
         @endcan
     </div>
-</article>
+</x-ag.package-card>
