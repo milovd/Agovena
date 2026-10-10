@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page ag-list-page admin-page--invoices">
     <x-ag.page-header :heading="__('admin.invoices.title')" :lede="__('admin.invoices.lede')" />
 
     @include('livewire.admin.invoices.partials.tabs', ['activeTab' => 'invoices'])
@@ -31,7 +31,7 @@
             <p class="ag-empty__text">{{ $search || $status ? __('admin.invoices.empty.filtered_text') : __('admin.invoices.empty.text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search,status">
+        <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.invoices.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status">
             <table class="ag-table ag-table--invoices">
                 <thead>
                     <tr>
@@ -47,7 +47,20 @@
                     @foreach ($invoices as $invoice)
                         <tr wire:key="invoice-{{ $invoice->id }}">
                             <td>
-                                <a class="ag-table__name" href="{{ route('admin.invoices.show', $invoice) }}">{{ $invoice->number }}</a>
+                                <div class="ag-table__primary">
+                                    <a class="ag-table__name" href="{{ route('admin.invoices.show', $invoice) }}">{{ $invoice->number }}</a>
+                                    <span class="ag-table__mobile-meta">
+                                        <span class="ag-table__mobile-customer">{{ $invoice->customer_name }} · {{ $invoice->customer_email }}</span>
+                                        <span class="ag-table__mobile-amount">{{ \App\Support\MoneyFormatter::format($invoice->total_amount, $invoice->currency) }}</span>
+                                        <span @class([
+                                            'ag-badge',
+                                            'ag-badge--success' => $invoice->status->value === 'paid',
+                                            'ag-badge--info' => $invoice->status->value === 'issued',
+                                            'ag-badge--danger' => $invoice->status->value === 'void',
+                                        ])>{{ __('admin.invoices.status.'.$invoice->status->value) }}</span>
+                                        <span class="ag-muted" title="{{ $invoice->issued_at?->toDateTimeString() }}">{{ $invoice->issued_at?->format('Y-m-d') }}</span>
+                                    </span>
+                                </div>
                             </td>
                             <td>
                                 <div class="ag-table__primary">

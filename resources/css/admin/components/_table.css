@@ -761,6 +761,8 @@ a.ag-table__name:focus-visible {
 .ag-table--products tbody td { vertical-align: middle; }
 .ag-table--products .ag-table__mobile-meta { display: none; }
 @media (max-width: 720px) {
+  /* Contain wide tables without disabling their own keyboard scrolling. */
+  .ag-table-wrap { contain: paint; }
   .ag-table--orders { min-width: 42rem; }
   .ag-table--orders .ag-table__primary .ag-table__mobile-meta {
     display: flex;

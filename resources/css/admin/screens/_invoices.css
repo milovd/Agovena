@@ -1,0 +1,205 @@
+/* Invoice screens share the Admin list and detail primitives. */
+.admin-page--invoices .ag-toolbar__filters {
+  width: 100%;
+}
+
+.admin-page--invoices .ag-toolbar__filters > .ag-field:first-child {
+  flex: 1 1 20rem;
+  min-width: 0;
+}
+
+.admin-page--invoices .ag-toolbar__filters > .ag-field:last-child {
+  flex: 0 1 12rem;
+}
+
+.ag-table--invoices tbody td {
+  vertical-align: middle;
+}
+
+.ag-table--invoices .ag-table__primary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+  font-weight: inherit;
+}
+
+.ag-table--invoices .ag-table__primary .ag-muted {
+  margin: 0;
+  font-size: var(--ag-font-size-xs);
+  overflow-wrap: anywhere;
+}
+
+.ag-table--invoices .ag-table__mobile-meta {
+  display: none;
+}
+
+.admin-invoice .admin-page__header-text {
+  min-width: 0;
+}
+
+.admin-invoice .admin-page__heading {
+  overflow-wrap: anywhere;
+  font-size: clamp(1.5rem, 2vw, 1.875rem);
+}
+
+.admin-invoice__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-2) var(--ag-space-4);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+}
+
+.admin-invoice__summary > span:last-child {
+  color: var(--ag-color-text);
+  font-weight: 700;
+}
+
+.admin-invoice__documents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-2);
+}
+
+.admin-invoice .ag-order-layout,
+.admin-invoice .ag-order-layout__main,
+.admin-invoice .ag-order-layout__side {
+  min-width: 0;
+}
+
+.admin-invoice .ag-order-layout__main,
+.admin-invoice .ag-order-layout__side {
+  display: grid;
+  align-content: start;
+  gap: var(--ag-space-5);
+}
+
+.admin-invoice .ag-order-layout .ag-section {
+  min-width: 0;
+  max-width: 100%;
+  margin-bottom: 0;
+}
+
+.admin-invoice .ag-order-layout .ag-table-wrap {
+  max-width: 100%;
+}
+
+.admin-invoice__items .ag-table th:last-child,
+.admin-invoice__items .ag-table td:last-child {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin-invoice__items .ag-dl--totals {
+  margin-left: auto;
+  max-width: 20rem;
+}
+
+.admin-invoice__items .ag-dl--totals > div {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.admin-invoice__items .ag-dl--totals dd {
+  text-align: right;
+}
+
+.admin-invoice__items .ag-section__body > .ag-muted {
+  margin-top: var(--ag-space-4);
+  line-height: 1.5;
+}
+
+.admin-invoice__details .ag-dl > div {
+  grid-template-columns: minmax(7rem, 0.8fr) minmax(0, 1.2fr);
+}
+
+.admin-invoice__details .ag-dl dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-invoice__details .ag-dl dd .ag-muted {
+  display: block;
+}
+
+.admin-invoice__financial-actions .ag-confirm {
+  margin-top: 0;
+}
+
+@media (min-width: 960px) {
+  .admin-invoice .ag-order-layout {
+    grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 0.75fr);
+    align-items: start;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-page--invoices .ag-toolbar__filters > .ag-field:last-child {
+    flex: 1 1 100%;
+  }
+
+  .ag-table--invoices {
+    table-layout: fixed;
+  }
+
+  .ag-table--invoices th,
+  .ag-table--invoices td {
+    padding: var(--ag-space-3) var(--ag-space-2);
+  }
+
+  .ag-table--invoices th:nth-child(n + 2):not(:last-child),
+  .ag-table--invoices td:nth-child(n + 2):not(:last-child) {
+    display: none;
+  }
+
+  .ag-table--invoices th:last-child,
+  .ag-table--invoices td:last-child {
+    width: 7.5rem;
+    text-align: right;
+  }
+
+  .ag-table--invoices .ag-table__name {
+    overflow-wrap: anywhere;
+  }
+
+  .ag-table--invoices .ag-table__mobile-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ag-space-1) var(--ag-space-2);
+    font-size: var(--ag-font-size-xs);
+  }
+
+  .ag-table--invoices .ag-table__mobile-customer {
+    width: 100%;
+    color: var(--ag-color-text-muted);
+    overflow-wrap: anywhere;
+  }
+
+  .ag-table--invoices .ag-table__mobile-amount {
+    font-weight: 700;
+  }
+
+  .ag-table--invoices .ag-row-actions {
+    gap: 0;
+  }
+
+  .admin-invoice .admin-page__actions,
+  .admin-invoice__documents {
+    width: 100%;
+  }
+
+  .admin-invoice__documents .ag-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+
+  .admin-invoice__documents .ag-btn--primary {
+    flex-basis: 100%;
+  }
+
+  .admin-invoice__details .ag-dl > div {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+}

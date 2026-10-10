@@ -1,7 +1,6 @@
-<div class="admin-page admin-invoice">
+<div class="admin-page admin-invoice admin-page--invoice-show">
     <x-ag.page-header
         :heading="$invoice->number"
-        :lede="__('admin.invoices.show_lede')"
     >
         <x-slot:breadcrumbs>
             <x-ag.breadcrumbs :items="[
@@ -13,18 +12,31 @@
         <x-slot:back>
             <x-ag.back :href="route('admin.invoices.index')" :label="__('admin.invoices.title')" />
         </x-slot:back>
+        <div class="admin-invoice__summary">
+            <span @class([
+                'ag-badge',
+                'ag-badge--success' => $invoice->status->value === 'paid',
+                'ag-badge--info' => $invoice->status->value === 'issued',
+                'ag-badge--danger' => $invoice->status->value === 'void',
+            ])>{{ __('admin.invoices.status.'.$invoice->status->value) }}</span>
+            <span>{{ __('admin.invoices.issued') }} {{ $invoice->issued_at?->format('Y-m-d') }}</span>
+            <span>{{ \App\Support\MoneyFormatter::format($invoice->total_amount, $invoice->currency) }}</span>
+        </div>
+        <p class="admin-page__lede">{{ __('admin.invoices.show_lede') }}</p>
         <x-slot:actions>
-            @can('invoices.update')
-                <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.edit', $invoice) }}">
-                    {{ __('admin.invoices.edit_action') }}
+            <div class="admin-invoice__documents">
+                @can('invoices.update')
+                    <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.edit', $invoice) }}">
+                        {{ __('admin.invoices.edit_action') }}
+                    </a>
+                @endcan
+                <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.print', $invoice) }}">
+                    {{ __('admin.invoices.print') }}
                 </a>
-            @endcan
-            <a class="ag-btn ag-btn--secondary" href="{{ route('admin.invoices.print', $invoice) }}">
-                {{ __('admin.invoices.print') }}
-            </a>
-            <a class="ag-btn ag-btn--primary" href="{{ route('admin.invoices.pdf', $invoice) }}">
-                {{ __('admin.invoices.download_pdf') }}
-            </a>
+                <a class="ag-btn ag-btn--primary" href="{{ route('admin.invoices.pdf', $invoice) }}">
+                    {{ __('admin.invoices.download_pdf') }}
+                </a>
+            </div>
         </x-slot:actions>
     </x-ag.page-header>
 
@@ -44,7 +56,7 @@
 
     <div class="ag-order-layout">
         <div class="ag-order-layout__main">
-            <section class="ag-section" aria-labelledby="invoice-items-heading">
+            <section class="ag-section admin-invoice__items" aria-labelledby="invoice-items-heading">
                 <header class="ag-section__header">
                     <h2 id="invoice-items-heading" class="ag-section__title">{{ __('admin.invoices.items') }}</h2>
                 </header>
@@ -142,7 +154,7 @@
         </div>
 
         <aside class="ag-order-layout__side">
-            <section class="ag-section" aria-labelledby="invoice-details-heading">
+            <section class="ag-section admin-invoice__details" aria-labelledby="invoice-details-heading">
                 <header class="ag-section__header">
                     <h2 id="invoice-details-heading" class="ag-section__title">{{ __('admin.invoices.details') }}</h2>
                 </header>
@@ -225,7 +237,7 @@
             </section>
 
             @if ($canVoid || $canCredit || $canRefund || $canDelete)
-                <section class="ag-section" aria-labelledby="invoice-actions-heading">
+                <section class="ag-section admin-invoice__financial-actions" aria-labelledby="invoice-actions-heading">
                     <header class="ag-section__header">
                         <h2 id="invoice-actions-heading" class="ag-section__title">{{ __('admin.invoices.actions') }}</h2>
                     </header>

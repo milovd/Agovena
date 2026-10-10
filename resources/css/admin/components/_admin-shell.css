@@ -920,10 +920,12 @@ body {
     transform: translateX(105%);
     transition: transform var(--ag-transition);
     overflow-y: auto;
+    visibility: hidden;
   }
 
   .admin-shell--nav-open .admin-sidebar {
     transform: translateX(0);
+    visibility: visible;
   }
 
   .admin-shell__backdrop {
