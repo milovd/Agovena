@@ -162,6 +162,11 @@ test('dashboard session heading matches the approved language in both locales', 
         ->and(__('admin.dashboard.active_users.title', [], 'nl'))->toBe('Huidige sessies');
 });
 
+test('dashboard combo chart mode has a truthful label in both locales', function () {
+    expect(__('admin.dashboard.charts.types.line', [], 'en'))->toBe('Bars + line')
+        ->and(__('admin.dashboard.charts.types.line', [], 'nl'))->toBe('Balken + lijn');
+});
+
 test('dashboard default chart composes revenue bars with an orders line while keeping bar view', function () {
     $component = Livewire::actingAs($this->createStaff())->test(Dashboard::class);
     foreach (['line' => ['bar', 'line'], 'bar' => ['bar', 'bar']] as $selected => $expected) {

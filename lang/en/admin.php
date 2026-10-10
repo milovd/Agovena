@@ -500,7 +500,7 @@ return [
                 '90' => '90 days',
             ],
             'types' => [
-                'line' => 'Line',
+                'line' => 'Bars + line',
                 'bar' => 'Bars',
             ],
             'empty_title' => 'No data yet',

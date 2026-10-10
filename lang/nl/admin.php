@@ -500,7 +500,7 @@ return [
                 '90' => '90 dagen',
             ],
             'types' => [
-                'line' => 'Lijn',
+                'line' => 'Balken + lijn',
                 'bar' => 'Balken',
             ],
             'empty_title' => 'Nog geen data',
