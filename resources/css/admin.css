@@ -29,6 +29,7 @@
 @import './admin/screens/_backups.css';
 @import './admin/screens/_customer-workspace.css';
 @import './admin/screens/_customers-list.css';
+@import './admin/screens/_tickets.css';
 @import './admin/screens/_catalog-operations.css';
 @import './admin/screens/_invoice-design.css';
 @import './admin/components/_print.css';
