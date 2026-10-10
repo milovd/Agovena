@@ -6,6 +6,7 @@
         "build": "vite build",
         "dev": "vite",
         "test:e2e": "playwright test",
+        "test:js": "node --test tests/js/*.test.mjs",
         "test:e2e:review": "node e2e/capture-review.mjs"
     },
     "devDependencies": {
