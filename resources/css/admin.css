@@ -22,6 +22,7 @@
 @import './admin/screens/_themes.css';
 @import './admin/screens/_settings.css';
 @import './admin/screens/_page-editor.css';
+@import './admin/screens/_pages.css';
 @import './admin/screens/_audit-log.css';
 @import './admin/screens/_theme-customizer.css';
 @import './admin/screens/_notification-templates.css';
