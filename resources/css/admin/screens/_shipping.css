@@ -1,0 +1,137 @@
+/* Shipping methods and zones share the Admin form and list composition. */
+.c-shipping__form {
+  max-width: 64rem;
+}
+
+.c-shipping__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+}
+
+.c-shipping__form .ag-field {
+  min-width: 0;
+  margin: 0;
+}
+
+.c-shipping__form :is(.ag-input, .ag-select) {
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+}
+
+.c-shipping__active {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+}
+
+.c-shipping__actions {
+  padding-top: var(--ag-space-4);
+  border-top: 1px solid var(--ag-color-border);
+}
+
+.c-shipping__table tbody td {
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.c-shipping__identity {
+  min-width: 0;
+}
+
+.c-shipping__name,
+.c-shipping__code {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.c-shipping__name {
+  font-weight: 650;
+}
+
+.c-shipping__code {
+  margin-top: var(--ag-space-1);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+}
+
+@media (max-width: 720px) {
+  .c-shipping__form .ag-section__header,
+  .c-shipping__form .ag-section__body {
+    padding-inline: var(--ag-space-4);
+  }
+
+  .c-shipping__table-wrap {
+    max-width: 100%;
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    contain: none;
+  }
+
+  .c-shipping__table,
+  .c-shipping__table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .c-shipping__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .c-shipping__table tbody {
+    display: grid;
+    gap: var(--ag-space-3);
+  }
+
+  .c-shipping__table tbody tr {
+    display: grid;
+    gap: var(--ag-space-2);
+    min-width: 0;
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface);
+  }
+
+  .c-shipping__table tbody td {
+    display: block;
+    min-width: 0;
+    width: auto;
+    padding: 0;
+    border: 0;
+    white-space: normal;
+  }
+
+  .c-shipping__table tbody .c-shipping__detail {
+    display: grid;
+    grid-template-columns: minmax(5rem, 32%) minmax(0, 1fr);
+    gap: var(--ag-space-2);
+    align-items: center;
+  }
+
+  .c-shipping__detail::before {
+    content: attr(data-label);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .c-shipping__detail .ag-badge {
+    justify-self: start;
+  }
+
+  .c-shipping__table tbody .c-shipping__row-actions {
+    width: 100%;
+    text-align: right;
+    padding-top: var(--ag-space-2);
+    border-top: 1px solid var(--ag-color-border);
+  }
+}
