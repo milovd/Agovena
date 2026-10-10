@@ -30,14 +30,14 @@
 
             @include('livewire.admin.orders.partials.show-addresses')
 
-            @if (($order->custom_properties_snapshot ?? []) !== [])
+            @if ($displayableProperties !== [])
                 <section class="ag-section" aria-labelledby="order-properties-heading">
                     <header class="ag-section__header">
                         <h3 id="order-properties-heading" class="ag-section__title">{{ __('admin.customer_properties.values_heading') }}</h3>
                     </header>
                     <div class="ag-section__body">
                         <dl class="ag-dl">
-                            @foreach ($order->custom_properties_snapshot as $property)
+                            @foreach ($displayableProperties as $property)
                                 <div>
                                     <dt>{{ $property['label'] ?? $property['key'] }}</dt>
                                     <dd>{{ $property['value'] ?? '' }}</dd>

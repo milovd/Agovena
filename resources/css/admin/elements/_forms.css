@@ -155,6 +155,29 @@ select.ag-input::-ms-expand {
   max-width: 72rem;
 }
 
+.admin-page--product-form {
+  --ag-product-form-width: 60rem;
+  padding-bottom: var(--ag-space-6);
+}
+
+.admin-page--product-form :is(.ag-product-tabs, .ag-form--product, .ag-form__sticky--page, [role="tabpanel"]) {
+  max-width: var(--ag-product-form-width);
+}
+
+.admin-page--product-form .ag-section__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ag-space-3);
+}
+
+.admin-page--product-form .ag-section__heading > div {
+  min-width: 0;
+}
+
+.admin-page--product-form .ag-grid > .ag-field {
+  margin-bottom: 0;
+}
+
 .ag-form__row {
   display: grid;
   gap: var(--ag-space-4);

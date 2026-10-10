@@ -41,7 +41,7 @@
 
             @if ($order->payment->attempts->isNotEmpty())
                 <h4 class="ag-section__title" style="margin-top:1rem;">{{ __('admin.orders.show.attempts') }}</h4>
-                <div class="ag-table-wrap">
+                <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.attempts') }}" tabindex="0">
                     <table class="ag-table">
                         <thead>
                             <tr>

@@ -1,9 +1,14 @@
 {{-- Product form: details tab (basics, description, storefront cards). Part of livewire.admin.products.form. --}}
 <div id="product-tab-details" role="tabpanel" x-cloak x-show="activeTab === 'details'">
 <section class="ag-section" aria-labelledby="section-basic">
-    <header class="ag-section__header">
-        <h3 id="section-basic" class="ag-section__title">{{ __('admin.products.form.basic') }}</h3>
-        <p class="ag-section__lede">{{ __('admin.products.form.basic_lede') }}</p>
+    <header class="ag-section__header ag-section__header--icon">
+        <div class="ag-section__heading">
+            <x-ag.icon-tile name="package" tone="blue" />
+            <div>
+                <h3 id="section-basic" class="ag-section__title">{{ __('admin.products.form.basic') }}</h3>
+                <p class="ag-section__lede">{{ __('admin.products.form.basic_lede') }}</p>
+            </div>
+        </div>
     </header>
     <div class="ag-section__body">
         <div class="ag-grid ag-grid--2">
@@ -48,9 +53,14 @@
 </section>
 
 <section class="ag-section" aria-labelledby="section-description">
-    <header class="ag-section__header">
-        <h3 id="section-description" class="ag-section__title">{{ __('admin.products.form.description') }}</h3>
-        <p class="ag-section__lede">{{ __('admin.products.form.description_lede') }}</p>
+    <header class="ag-section__header ag-section__header--icon">
+        <div class="ag-section__heading">
+            <x-ag.icon-tile name="file-text" tone="violet" />
+            <div>
+                <h3 id="section-description" class="ag-section__title">{{ __('admin.products.form.description') }}</h3>
+                <p class="ag-section__lede">{{ __('admin.products.form.description_lede') }}</p>
+            </div>
+        </div>
     </header>
     <div class="ag-section__body">
         <div class="ag-field">
@@ -87,9 +97,14 @@
     </div>
 </section>
 <section class="ag-section" aria-labelledby="section-storefront-cards">
-    <header class="ag-section__header">
-        <h3 id="section-storefront-cards" class="ag-section__title">{{ __('admin.products.form.storefront_cards') }}</h3>
-        <p class="ag-section__lede">{{ __('admin.products.form.storefront_cards_lede') }}</p>
+    <header class="ag-section__header ag-section__header--icon">
+        <div class="ag-section__heading">
+            <x-ag.icon-tile name="store" tone="amber" />
+            <div>
+                <h3 id="section-storefront-cards" class="ag-section__title">{{ __('admin.products.form.storefront_cards') }}</h3>
+                <p class="ag-section__lede">{{ __('admin.products.form.storefront_cards_lede') }}</p>
+            </div>
+        </div>
     </header>
     <div class="ag-section__body">
         <div class="ag-grid ag-grid--2">

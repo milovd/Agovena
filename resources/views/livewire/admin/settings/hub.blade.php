@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page admin-page--settings">
     <x-ag.page-header
         :heading="__('admin.settings.title')"
         :lede="$groupDefinition?->description ? __($groupDefinition->description) : __('admin.settings.lede')"
@@ -21,7 +21,7 @@
         ])
 
         @if ($externalGroups->isNotEmpty())
-            <div class="ag-toolbar" style="margin-bottom: 1rem;">
+            <div class="ag-toolbar ag-settings-links">
                 @foreach ($externalGroups as $external)
                     <a class="ag-btn ag-btn--secondary ag-btn--sm" href="{{ $external->resolveHref() }}" wire:key="settings-external-{{ $external->id }}">
                         {{ __($external->label) }}

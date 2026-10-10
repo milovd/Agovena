@@ -1,7 +1,7 @@
-<div class="admin-page">
+<div class="admin-page ag-list-page admin-page--orders">
     <x-ag.page-header :heading="__('admin.orders.title')" :lede="__('admin.orders.lede')" />
 
-    <div class="ag-toolbar ag-toolbar--filters">
+    <x-ag.table-toolbar filters>
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">
                 <label class="visually-hidden" for="order-search">{{ __('admin.orders.search_label') }}</label>
@@ -26,7 +26,7 @@
                 </select>
             </div>
         </div>
-    </div>
+    </x-ag.table-toolbar>
 
     <div wire:loading.flex class="ag-loading" wire:target="search,status,paymentStatus,gotoPage,previousPage,nextPage">
         <span class="ag-loading__text">{{ __('admin.orders.loading') }}</span>
@@ -40,7 +40,7 @@
             </p>
         </div>
     @else
-        <div class="ag-table-wrap" wire:loading.class="is-loading" wire:target="search,status,paymentStatus">
+        <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status,paymentStatus">
             <table class="ag-table ag-table--orders">
                 <thead>
                     <tr>
@@ -56,7 +56,20 @@
                 <tbody>
                     @foreach ($orders as $order)
                         <tr wire:key="order-{{ $order->id }}">
-                            <td><a class="ag-table__name" href="{{ route('admin.orders.show', $order) }}">{{ $order->number }}</a></td>
+                            <td>
+                                <div class="ag-table__primary">
+                                    <a class="ag-table__name" href="{{ route('admin.orders.show', $order) }}">{{ $order->number }}</a>
+                                    <span class="ag-table__mobile-meta">
+                                        <span>{{ \App\Support\MoneyFormatter::formatDisplay($order->total_amount, $order->currency) }}</span>
+                                        <span @class([
+                                            'ag-badge',
+                                            'ag-badge--success' => $order->status->value === 'paid',
+                                            'ag-badge--warning' => $order->status->value === 'pending',
+                                            'ag-badge--muted' => $order->status->value === 'cancelled',
+                                        ])>{{ __('admin.orders.status.'.$order->status->value) }}</span>
+                                    </span>
+                                </div>
+                            </td>
                             <td>
                                 <div class="ag-table__primary">
                                     <span>{{ $order->customer_name }}</span>
@@ -90,7 +103,7 @@
                                 </span>
                             </td>
                             <td class="ag-table__actions">
-                                <div class="ag-row-actions">
+                                <x-ag.row-actions>
                                     @can('orders.update')
                                         <a
                                             class="ag-icon-btn"
@@ -101,26 +114,21 @@
                                             <x-ag.icon name="pencil" :size="16" />
                                         </a>
                                     @endcan
-                                    <a
-                                        class="ag-icon-btn"
-                                        href="{{ route('admin.orders.show', $order) }}"
-                                        title="{{ __('admin.orders.open') }}"
-                                        aria-label="{{ __('admin.orders.open_aria', ['number' => $order->number]) }}"
-                                    >
-                                        <x-ag.icon name="external-link" :size="16" />
-                                    </a>
-                                    @can('orders.delete')
-                                        <button
-                                            type="button"
-                                            class="ag-icon-btn ag-icon-btn--danger"
-                                            wire:click="confirmDelete({{ $order->id }})"
-                                            title="{{ __('admin.orders.actions.delete') }}"
-                                            aria-label="{{ __('admin.orders.actions.delete_aria', ['number' => $order->number]) }}"
-                                        >
-                                            <x-ag.icon name="trash" :size="16" />
+                                    <div class="ag-menu" x-data="agDisclosure" @keydown.escape.window="close()" @click.outside="close()">
+                                        <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-haspopup="menu" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}: {{ $order->number }}">
+                                            <x-ag.icon name="more-horizontal" :size="16" />
                                         </button>
-                                    @endcan
-                                </div>
+                                        <div class="ag-menu__panel" x-show="open" x-cloak role="menu">
+                                            <a class="ag-menu__item" role="menuitem" href="{{ route('admin.orders.show', $order) }}">{{ __('admin.orders.open') }}</a>
+                                            @can('orders.update')
+                                                <a class="ag-menu__item" role="menuitem" href="{{ route('admin.orders.edit', $order) }}">{{ __('admin.orders.actions.edit') }}</a>
+                                            @endcan
+                                            @can('orders.delete')
+                                                <button type="button" class="ag-menu__item ag-menu__item--danger" role="menuitem" wire:click="confirmDelete({{ $order->id }})">{{ __('admin.orders.actions.delete') }}</button>
+                                            @endcan
+                                        </div>
+                                    </div>
+                                </x-ag.row-actions>
                             </td>
                         </tr>
                     @endforeach

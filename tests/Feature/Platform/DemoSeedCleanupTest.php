@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Category;
+use App\Models\Order;
 use App\Models\Product;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -51,6 +52,20 @@ it('removes legacy demo catalog and menu records during a forced reseed', functi
         ->and(DB::table('pages')->where('slug', 'terms')->exists())->toBeFalse()
         ->and(DB::table('menu_items')->where('label', 'Terms')->exists())->toBeFalse()
         ->and(DB::table('menu_items')->where('label', 'Demo Terms')->exists())->toBeTrue();
+});
+
+it('seeds orders without storing demo metadata as customer properties', function (): void {
+    expect(Artisan::call('agovena:seed-demo', [
+        '--force' => true,
+        '--skip-accounts' => true,
+    ]))->toBe(0, Artisan::output());
+
+    $orders = Order::query()->where('number', 'like', 'DEMO-%')->get();
+
+    expect($orders)->not->toBeEmpty();
+    foreach ($orders as $order) {
+        expect($order->custom_properties_snapshot)->toBe([]);
+    }
 });
 
 it('removes legacy orphaned product option choices during a forced reseed', function (): void {

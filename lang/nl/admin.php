@@ -327,7 +327,7 @@ return [
         'favicon_updated' => 'Favicon bijgewerkt vanaf het logo.',
         'no_currencies' => 'Geen actieve valuta - voeg er een toe onder Valuta',
         'currency_help' => 'Codes, prefixes en suffixes beheer je onder',
-        'image_hint' => 'PNG, JPG, WebP of SVG aanbevolen.',
+        'image_hint' => 'PNG, JPG of WebP aanbevolen.',
         'use_logo_as_favicon' => 'Gebruik dit logo ook als favicon',
         'use_current_logo_as_favicon' => 'Huidig logo als favicon gebruiken',
 
@@ -389,7 +389,7 @@ return [
             'site_name' => 'Wordt getoond in Admin en in de header van de standaardwebshop.',
             'base_currency' => 'Standaardvaluta van de catalogus. Valuta met prefix/suffix maak je aan onder Configuratie → Valuta.',
             'auto_currency_conversion' => 'Indien ingeschakeld worden producten zonder handmatige prijs in de bezoekersvaluta omgerekend via Admin-wisselkoersen (sync Frankfurter / ECB-koersen onder Valuta). Indien uitgeschakeld tonen die producten “niet beschikbaar in jouw valuta”.',
-            'logo_path' => 'PNG, JPG, WebP of SVG. Max. 2 MB. Je kunt het ook als favicon gebruiken.',
+            'logo_path' => 'PNG, JPG of WebP. Max. 2 MB. Je kunt het ook als favicon gebruiken.',
             'favicon_path' => 'Optioneel. Laat leeg en zet “logo als favicon gebruiken” aan, of upload een apart icoon.',
             'customer_registration' => 'Sta klanten toe accounts te maken. Gastafrekenen blijft mogelijk tenzij registratie verplicht is.',
             'google_places_api_key' => 'Voor adressuggesties in checkout en accountadressen (Places API New). Gebruik bij voorkeur GOOGLE_PLACES_API_KEY in .env; deze setting is een storefront-fallback.',

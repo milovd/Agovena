@@ -1,6 +1,11 @@
-<form wire:submit="save" class="admin-panel ag-form ag-form--constrained" novalidate>
+<form wire:submit="save" class="admin-panel ag-form ag-form--constrained ag-settings-form" novalidate>
+    <div class="ag-settings-form__header">
+        <x-ag.icon-tile name="settings" tone="blue" />
+        <h2 class="ag-settings-form__title">{{ __('admin.settings.group_title', ['group' => __($groupDefinition->label)]) }}</h2>
+    </div>
+    <div class="ag-settings-form__fields">
     @foreach ($fields as $field)
-        <div class="ag-field" wire:key="field-{{ $field->key }}">
+        <div class="ag-field ag-field--{{ $field->type }}" wire:key="field-{{ $field->key }}">
             @if ($field->type !== 'boolean' && $field->type !== 'image')
                 <label class="ag-field__label" for="setting-{{ $field->key }}">{{ __($field->label) }}</label>
             @endif
@@ -110,6 +115,7 @@
             @error('values.'.$field->key) <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
         </div>
     @endforeach
+    </div>
 
     @if ($canUpdate)
         <div class="ag-form__actions">

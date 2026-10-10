@@ -15,6 +15,7 @@ test('product create hides provisioning ui when provisioning module is disabled'
     Livewire::actingAs($this->createStaff())
         ->test(Create::class)
         ->assertDontSee(__('admin.products.automation.enable_provisioning'))
+        ->assertDontSee('aria-controls="product-tab-automation"', false)
         ->assertDontSee('wire:model="configureProvisioning"', false)
         ->assertDontSee('wire:model="provisioningServerId"', false)
         ->assertDontSee(__('admin.products.capabilities.provisionable'));

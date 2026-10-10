@@ -1,8 +1,24 @@
+@media (min-width: 721px) {
+  .admin-page--orders .ag-toolbar__filters > .ag-field:first-child {
+    flex: 0 1 22rem;
+  }
+}
+
+.admin-page--order .ag-order-layout {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .admin-page--order .ag-order-layout__main,
 .admin-page--order .ag-order-layout__side {
   display: grid;
   align-content: start;
+  min-width: 0;
   gap: var(--ag-space-5);
+}
+
+.admin-page--order .ag-order-layout :is(.ag-section, .ag-table-wrap) {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .admin-page--order .ag-order-layout__main > .ag-section,

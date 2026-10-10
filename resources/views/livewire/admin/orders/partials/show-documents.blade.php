@@ -6,7 +6,7 @@
         </header>
         <div class="ag-section__body">
             @if ($order->invoices->isNotEmpty())
-                <div class="ag-table-wrap">
+                <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.documents') }}" tabindex="0">
                     <table class="ag-table">
                         <caption class="visually-hidden">{{ __('admin.orders.show.documents') }}</caption>
                         <thead>
@@ -48,7 +48,7 @@
                             <h4 id="link-invoice-heading" class="ag-section__title">{{ __('admin.orders.show.link_invoice') }}</h4>
                             <label class="ag-field__label" for="invoice-search">{{ __('admin.invoices.search_label') }}</label>
                             <input id="invoice-search" class="ag-input" type="search" wire:model.live.debounce.300ms="invoiceSearch" placeholder="{{ __('admin.invoices.search_placeholder') }}" autocomplete="off">
-                            <div class="ag-table-wrap">
+                            <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.link_invoice') }}" tabindex="0">
                                 <table class="ag-table">
                                     <thead>
                                         <tr>

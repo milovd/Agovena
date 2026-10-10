@@ -5,7 +5,7 @@
         <p class="ag-section__lede">{{ __('admin.orders.show.items_lede') }}</p>
     </header>
     <div class="ag-section__body">
-        <div class="ag-table-wrap">
+        <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.items') }}" tabindex="0">
             <table class="ag-table">
                 <thead>
                     <tr>

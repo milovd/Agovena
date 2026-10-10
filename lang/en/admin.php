@@ -327,7 +327,7 @@ return [
         'favicon_updated' => 'Favicon updated from logo.',
         'no_currencies' => 'No active currencies - add one under Currencies',
         'currency_help' => 'Manage codes, prefixes and suffixes under',
-        'image_hint' => 'PNG, JPG, WebP, or SVG recommended.',
+        'image_hint' => 'PNG, JPG or WebP recommended.',
         'use_logo_as_favicon' => 'Also use this logo as the favicon',
         'use_current_logo_as_favicon' => 'Use current logo as favicon',
 
@@ -389,7 +389,7 @@ return [
             'site_name' => 'Shown in Admin and the default storefront header.',
             'base_currency' => 'Default catalog currency. Create currencies with prefix/suffix under Configuration → Currencies.',
             'auto_currency_conversion' => 'When enabled, products without a manual price in the shopper currency are converted using Admin exchange rates (sync Frankfurter / ECB rates under Currencies). When disabled, those products show as not available in that currency.',
-            'logo_path' => 'PNG, JPG, WebP or SVG. Max 2 MB. You can also use it as the favicon.',
+            'logo_path' => 'PNG, JPG or WebP. Max 2 MB. You can also use it as the favicon.',
             'favicon_path' => 'Optional. Leave empty and enable “use logo as favicon”, or upload a separate icon.',
             'customer_registration' => 'Allow customers to create accounts. Guest checkout stays available unless registration is required.',
             'google_places_api_key' => 'Powers address suggestions in checkout and account addresses (Places API New). Prefer GOOGLE_PLACES_API_KEY in .env for production; this setting is a storefront fallback.',

@@ -738,12 +738,36 @@ a.ag-table__name:focus-visible {
   font-weight: 400;
   overflow-wrap: anywhere;
 }
+.ag-table--orders .ag-table__primary {
+  display: flex;
+  flex-direction: column;
+  gap: .125rem;
+  min-width: 0;
+  font-weight: inherit;
+}
+.ag-table--orders .ag-table__primary .ag-muted {
+  font-size: .75rem;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.ag-table--orders .ag-table__mobile-meta { display: none; }
+.ag-table--orders tbody tr:nth-last-child(-n + 2) .ag-menu__panel {
+  top: auto;
+  bottom: calc(100% + var(--ag-space-1));
+}
 .ag-table--products .ag-table__category { display: flex; align-items: center; gap: var(--ag-space-2); }
 .ag-table--products .ag-table__category .ag-icon-tile { flex: 0 0 2rem; width: 2rem; height: 2rem; }
 .ag-table--products .ag-thumb { width: 2.75rem; height: 2.75rem; }
 .ag-table--products tbody td { vertical-align: middle; }
 .ag-table--products .ag-table__mobile-meta { display: none; }
 @media (max-width: 720px) {
+  .ag-table--orders { min-width: 42rem; }
+  .ag-table--orders .ag-table__primary .ag-table__mobile-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    font-size: var(--ag-font-size-xs);
+  }
   .ag-list-page .ag-toolbar--bulk .ag-toolbar__actions { width: 100%; margin-left: 0; }
   .ag-list-page .ag-toolbar--bulk .ag-btn { font-size: var(--ag-font-size-xs); }
   .ag-list-page .ag-table-wrap { max-width: 100%; }

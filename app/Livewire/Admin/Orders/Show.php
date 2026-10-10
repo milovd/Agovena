@@ -185,6 +185,12 @@ final class Show extends Component
 
         return view('livewire.admin.orders.show', [
             'canRecord' => $canRecord,
+            'displayableProperties' => array_values(array_filter(
+                $this->order->custom_properties_snapshot ?? [],
+                static fn (mixed $property): bool => is_array($property)
+                    && is_scalar($property['label'] ?? $property['key'] ?? null)
+                    && is_scalar($property['value'] ?? null),
+            )),
             'canCancelUnpaid' => $canCancelUnpaid,
             'canManageInvoices' => $canManageInvoices,
             'invoiceCandidates' => $invoiceCandidates,

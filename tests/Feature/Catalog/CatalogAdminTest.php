@@ -57,10 +57,20 @@ test('product form uses task focused tabs instead of one long page', function ()
         ->assertSee('role="tablist"', false)
         ->assertSee(__('admin.products.tabs.details'))
         ->assertSee(__('admin.products.tabs.pricing'))
-        ->assertSee(__('admin.products.tabs.automation'))
+        ->assertDontSee('aria-controls="product-tab-automation"', false)
         ->assertSee(__('admin.products.form.storefront_cards'))
         ->assertSee(__('admin.products.form.show_delivery_card'))
         ->assertSee(__('admin.products.form.show_returns_card'));
+});
+
+test('product form sections share contextual icon headings without losing the fields', function () {
+    Livewire::actingAs($this->createStaff())
+        ->test(Create::class)
+        ->assertSee('ag-section__heading', false)
+        ->assertSee('data-tone="blue"', false)
+        ->assertSee('data-tone="emerald"', false)
+        ->assertSee('id="name"', false)
+        ->assertSee('id="price"', false);
 });
 
 test('staff without create permission cannot create products', function () {

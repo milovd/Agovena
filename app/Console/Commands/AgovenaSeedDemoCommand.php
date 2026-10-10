@@ -807,7 +807,7 @@ final class AgovenaSeedDemoCommand extends Command
             'total_amount' => $total,
             'currency' => 'EUR',
             'due_at' => $invoiceStatus === InvoiceStatus::Issued->value ? $now->copy()->addDays(14) : null,
-            'custom_properties_snapshot' => ['demo' => true],
+            'custom_properties_snapshot' => [],
         ]);
 
         $item = OrderItem::query()->create([

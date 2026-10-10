@@ -117,6 +117,38 @@ test('order detail keeps the important information in a compact address section'
         ->assertSee('Market street 1', false);
 });
 
+test('order detail tables remain keyboard scrollable on narrow screens', function () {
+    $staff = $this->createStaff();
+    $order = Order::factory()->create();
+    app(IssueInvoiceFromOrder::class)->handle($order);
+
+    $this->actingAs($staff)
+        ->get(route('admin.orders.show', $order))
+        ->assertOk()
+        ->assertSee('role="region" aria-label="'.__('admin.orders.show.items').'" tabindex="0"', false)
+        ->assertSee('role="region" aria-label="'.__('admin.orders.show.documents').'" tabindex="0"', false);
+});
+
+test('order detail ignores metadata snapshots without hiding real customer properties', function () {
+    $staff = $this->createStaff();
+    $order = Order::factory()->create(['custom_properties_snapshot' => ['demo' => true]]);
+
+    $this->actingAs($staff)
+        ->get(route('admin.orders.show', $order))
+        ->assertOk()
+        ->assertDontSee('order-properties-heading', false);
+
+    $order->update(['custom_properties_snapshot' => [
+        ['key' => 'department', 'label' => 'Department', 'value' => 'Support'],
+    ]]);
+
+    $this->actingAs($staff)
+        ->get(route('admin.orders.show', $order))
+        ->assertOk()
+        ->assertSee('Department')
+        ->assertSee('Support');
+});
+
 test('an order can have multiple invoices and mutable invoices can be linked and unlinked', function () {
     $staff = $this->createStaff([], ['orders.view', 'invoices.view', 'invoices.manage']);
     $order = Order::factory()->create([

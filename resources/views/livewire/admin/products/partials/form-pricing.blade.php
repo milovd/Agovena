@@ -1,9 +1,14 @@
 {{-- Product form: pricing tab. Part of livewire.admin.products.form. --}}
 <div id="product-tab-pricing" role="tabpanel" x-cloak x-show="activeTab === 'pricing'">
 <section class="ag-section" aria-labelledby="section-pricing">
-    <header class="ag-section__header">
-        <h3 id="section-pricing" class="ag-section__title">{{ __('admin.products.form.pricing') }}</h3>
-        <p class="ag-section__lede">{{ __('admin.products.form.pricing_lede') }}</p>
+    <header class="ag-section__header ag-section__header--icon">
+        <div class="ag-section__heading">
+            <x-ag.icon-tile name="credit-card" tone="emerald" />
+            <div>
+                <h3 id="section-pricing" class="ag-section__title">{{ __('admin.products.form.pricing') }}</h3>
+                <p class="ag-section__lede">{{ __('admin.products.form.pricing_lede') }}</p>
+            </div>
+        </div>
     </header>
     <div class="ag-section__body">
         <div class="ag-grid ag-grid--2">

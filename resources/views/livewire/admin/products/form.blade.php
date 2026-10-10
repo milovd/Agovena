@@ -1,4 +1,4 @@
-<div class="admin-page admin-page--form" x-data="agProductTabs">
+<div class="admin-page admin-page--form admin-page--product-form" x-data="agProductTabs">
     <x-ag.page-header
         :heading="$mode === 'create' ? __('admin.products.form.create_title') : __('admin.products.form.edit_title')"
         :lede="$mode === 'create' ? __('admin.products.form.create_lede') : __('admin.products.form.edit_lede')"
@@ -66,7 +66,7 @@
         @if ($mode === 'edit')
             <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'media' }" role="tab" :aria-selected="(activeTab === 'media').toString()" aria-controls="product-tab-media" @click="selectTab('media')">{{ __('admin.products.tabs.media') }}</button>
         @endif
-        @if ($availableCapabilityKeys !== [])
+        @if ($mode === 'edit' ? $availableCapabilityKeys !== [] : ($canConfigureProvisioning ?? false))
             <button type="button" class="ag-product-tabs__tab" :class="{ 'is-active': activeTab === 'automation' }" role="tab" :aria-selected="(activeTab === 'automation').toString()" aria-controls="product-tab-automation" @click="selectTab('automation')">{{ __('admin.products.tabs.automation') }}</button>
         @endif
         @if ($mode === 'edit')
