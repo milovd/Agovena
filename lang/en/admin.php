@@ -2567,6 +2567,7 @@ return [
         'timings' => ['immediate' => 'Immediate', 'next_period' => 'Next period'],
         'saved' => 'Plan change saved.',
         'deleted' => 'Plan change deleted.',
+        'delete_confirm' => 'Delete this plan change? Customers will no longer be offered this switch.',
         'empty' => 'No plan changes configured.',
     ],
     'api_tokens' => [

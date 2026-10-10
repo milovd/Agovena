@@ -1,0 +1,241 @@
+.c-subscriptions {
+  min-width: 0;
+}
+
+.c-subscriptions > .ag-tabs {
+  margin-bottom: var(--ag-space-5);
+}
+
+.c-subscriptions__filters {
+  margin-bottom: var(--ag-space-5);
+}
+
+.c-subscriptions__filters .ag-toolbar__filters,
+.c-subscriptions__filters .ag-field {
+  width: 100%;
+  min-width: 0;
+}
+
+.c-subscriptions__filters .ag-field {
+  max-width: 18rem;
+}
+
+.c-subscriptions__filters .ag-select {
+  width: 100%;
+}
+
+.c-subscriptions__identity-inner,
+.c-subscriptions__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-3);
+  min-width: 0;
+}
+
+.c-subscriptions__identity-inner .ag-table__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.c-subscriptions__table tbody td,
+.c-subscriptions__plan-table tbody td,
+.c-subscriptions__renewals-table tbody td {
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+}
+
+.c-subscriptions__table .ag-icon-btn,
+.c-subscriptions__plan-table .ag-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.c-subscriptions__section {
+  min-width: 0;
+}
+
+.c-subscriptions__facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ag-space-4) var(--ag-space-6);
+  margin: 0;
+}
+
+.c-subscriptions__facts > div {
+  min-width: 0;
+  padding: var(--ag-space-3) 0;
+  border-bottom: 1px solid var(--ag-color-border);
+}
+
+.c-subscriptions__facts dt {
+  margin-bottom: var(--ag-space-2);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.c-subscriptions__facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 600;
+}
+
+.c-subscriptions__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-3);
+}
+
+.c-subscriptions__plan-form {
+  max-width: 64rem;
+}
+
+.c-subscriptions__plan-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ag-space-4);
+}
+
+.c-subscriptions__plan-fields .ag-field {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+.c-subscriptions__plan-fields .ag-select {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.c-subscriptions__plan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-4);
+  margin-top: var(--ag-space-5);
+  padding-top: var(--ag-space-4);
+  border-top: 1px solid var(--ag-color-border);
+}
+
+@media (max-width: 720px) {
+  .c-subscriptions > .ag-tabs {
+    display: flex;
+    width: 100%;
+  }
+
+  .c-subscriptions > .ag-tabs .ag-tabs__tab {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+  }
+
+  .c-subscriptions__filters .ag-field {
+    max-width: none;
+  }
+
+  .c-subscriptions__facts,
+  .c-subscriptions__plan-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .c-subscriptions__table-wrap,
+  .c-subscriptions__plan-table-wrap,
+  .c-subscriptions__renewals-wrap {
+    max-width: 100%;
+    overflow: visible;
+    contain: none;
+    border: 0;
+    background: transparent;
+  }
+
+  .c-subscriptions__table,
+  .c-subscriptions__plan-table,
+  .c-subscriptions__renewals-table,
+  .c-subscriptions__table tbody,
+  .c-subscriptions__plan-table tbody,
+  .c-subscriptions__renewals-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .c-subscriptions__table thead,
+  .c-subscriptions__plan-table thead,
+  .c-subscriptions__renewals-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .c-subscriptions__table tbody,
+  .c-subscriptions__plan-table tbody,
+  .c-subscriptions__renewals-table tbody {
+    display: grid;
+    gap: var(--ag-space-3);
+  }
+
+  .c-subscriptions__table tbody tr,
+  .c-subscriptions__plan-table tbody tr,
+  .c-subscriptions__renewals-table tbody tr {
+    display: grid;
+    min-width: 0;
+    padding: var(--ag-space-4);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface);
+  }
+
+  .c-subscriptions__table tbody td,
+  .c-subscriptions__plan-table tbody td,
+  .c-subscriptions__renewals-table tbody td {
+    display: block;
+    min-width: 0;
+    width: 100%;
+    padding: var(--ag-space-2) 0;
+    border: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .c-subscriptions__table tbody td.c-subscriptions__identity,
+  .c-subscriptions__plan-table tbody td.c-subscriptions__identity {
+    padding-top: 0;
+    padding-bottom: var(--ag-space-3);
+    border-bottom: 1px solid var(--ag-color-border);
+  }
+
+  .c-subscriptions__table tbody td.c-subscriptions__detail,
+  .c-subscriptions__plan-table tbody td.c-subscriptions__detail,
+  .c-subscriptions__renewals-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(5rem, 38%) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--ag-space-2);
+  }
+
+  .c-subscriptions__detail::before,
+  .c-subscriptions__renewals-table tbody td::before {
+    content: attr(data-label);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .c-subscriptions__detail .ag-badge,
+  .c-subscriptions__renewals-table .ag-badge {
+    justify-self: start;
+  }
+
+  .c-subscriptions__table tbody td.c-subscriptions__row-actions,
+  .c-subscriptions__plan-table tbody td.c-subscriptions__row-actions {
+    padding-bottom: 0;
+    border-top: 1px solid var(--ag-color-border);
+    text-align: right;
+  }
+}

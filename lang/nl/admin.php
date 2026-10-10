@@ -2566,6 +2566,7 @@ return [
         'timings' => ['immediate' => 'Direct', 'next_period' => 'Volgende periode'],
         'saved' => 'Planwijziging opgeslagen.',
         'deleted' => 'Planwijziging verwijderd.',
+        'delete_confirm' => 'Deze planwijziging verwijderen? Klanten krijgen deze overstap niet meer aangeboden.',
         'empty' => 'Geen planwijzigingen geconfigureerd.',
     ],
     'api_tokens' => [
