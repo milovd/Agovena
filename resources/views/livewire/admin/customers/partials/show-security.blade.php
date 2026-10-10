@@ -1,6 +1,7 @@
 {{-- Customer workspace sidebar: security card. Part of livewire.admin.customers.show. --}}
 <section class="customer-workspace__card" aria-labelledby="security-heading">
     <header class="customer-workspace__section-header">
+        <x-ag.icon name="shield" :size="20" class="customer-workspace__section-icon" />
         <div>
             <p class="customer-workspace__eyebrow">{{ __('admin.customers.security_eyebrow') }}</p>
             <h2 id="security-heading" class="customer-workspace__section-title">{{ __('admin.customers.security_heading') }}</h2>

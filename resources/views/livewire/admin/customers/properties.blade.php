@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page ag-list-page admin-page--customer-properties">
     @if ($showForm)
         <nav class="admin-page__crumb" aria-label="{{ __('admin.settings.breadcrumb_aria') }}">
             <button type="button" class="admin-page__crumb-link" wire:click="cancel">
@@ -27,9 +27,9 @@
 
         @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
 
-        <form wire:submit="save" class="ag-section ag-form ag-form--constrained" novalidate>
+        <form wire:submit="save" class="ag-section ag-form ag-form--constrained ag-customer-form" novalidate>
             <div class="ag-section__body">
-                <div class="ag-grid ag-grid--2">
+                <div class="ag-grid ag-grid--2 ag-customer-form__fields">
                     <div class="ag-field">
                         <label class="ag-field__label" for="property-label">{{ __('admin.customer_properties.field_label') }}</label>
                         <input id="property-label" type="text" class="ag-input" wire:model="label" required>
@@ -59,7 +59,7 @@
                     @endif
                 </div>
 
-                <div class="ag-field">
+                <div class="ag-field ag-customer-form__description">
                     <label class="ag-field__label" for="property-description">{{ __('admin.customer_properties.description') }}</label>
                     <textarea id="property-description" class="ag-input" rows="3" wire:model="description"></textarea>
                     @error('description') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
@@ -70,12 +70,12 @@
                         <label class="ag-field__label">{{ __('admin.customer_properties.options') }}</label>
                         <div class="ag-stack">
                             @foreach ($options as $index => $option)
-                                <div class="ag-grid ag-grid--2" wire:key="option-{{ $index }}" style="align-items: end;">
-                                    <input type="text" class="ag-input" placeholder="{{ __('admin.customer_properties.option_value') }}" wire:model="options.{{ $index }}.value">
-                                    <div style="display:flex; gap: 0.5rem; align-items: center;">
-                                        <input type="text" class="ag-input" placeholder="{{ __('admin.customer_properties.option_label') }}" wire:model="options.{{ $index }}.label">
-                                        <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="removeOption({{ $index }})">
-                                            {{ __('common.remove') }}
+                                <div class="ag-grid ag-grid--2 ag-customer-form__option" wire:key="option-{{ $index }}">
+                                    <input type="text" class="ag-input" aria-label="{{ __('admin.customer_properties.option_value') }}" placeholder="{{ __('admin.customer_properties.option_value') }}" wire:model="options.{{ $index }}.value">
+                                    <div class="ag-customer-form__option-label">
+                                        <input type="text" class="ag-input" aria-label="{{ __('admin.customer_properties.option_label') }}" placeholder="{{ __('admin.customer_properties.option_label') }}" wire:model="options.{{ $index }}.label">
+                                        <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="removeOption({{ $index }})" title="{{ __('common.remove') }}" aria-label="{{ __('common.remove') }}: {{ $index + 1 }}">
+                                            <x-ag.icon name="trash" :size="16" />
                                         </button>
                                     </div>
                                 </div>
@@ -90,9 +90,9 @@
                     </div>
                 @endif
 
-                <fieldset class="ag-field">
-                    <legend class="ag-field__label">{{ __('admin.customer_properties.surfaces') }}</legend>
-                    <div class="ag-switch-row">
+                <fieldset class="ag-customer-form__group">
+                    <legend class="ag-customer-form__legend"><x-ag.icon name="eye" :size="18" />{{ __('admin.customer_properties.surfaces') }}</legend>
+                    <div class="ag-customer-form__switches">
                         <x-ag.switch wire:model="show_on_registration" :label="__('admin.customer_properties.show_on_registration')" />
                         <x-ag.switch wire:model="show_on_checkout" :label="__('admin.customer_properties.show_on_checkout')" />
                         <x-ag.switch wire:model="show_on_account" :label="__('admin.customer_properties.show_on_account')" />
@@ -100,9 +100,9 @@
                     </div>
                 </fieldset>
 
-                <fieldset class="ag-field">
-                    <legend class="ag-field__label">{{ __('admin.customer_properties.behavior') }}</legend>
-                    <div class="ag-switch-row">
+                <fieldset class="ag-customer-form__group">
+                    <legend class="ag-customer-form__legend"><x-ag.icon name="settings" :size="18" />{{ __('admin.customer_properties.behavior') }}</legend>
+                    <div class="ag-customer-form__switches">
                         <x-ag.switch wire:model="is_required" :label="__('admin.customer_properties.required')" />
                         <x-ag.switch wire:model="customer_editable" :label="__('admin.customer_properties.customer_editable')" />
                         <x-ag.switch wire:model="staff_editable" :label="__('admin.customer_properties.staff_editable')" />
@@ -136,9 +136,9 @@
         @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
 
         @if ($definitions->isEmpty())
-            <p class="ag-muted">{{ __('admin.customer_properties.empty_text') }}</p>
+            <div class="ag-empty" role="status"><p class="ag-empty__text">{{ __('admin.customer_properties.empty_text') }}</p></div>
         @else
-            <div class="ag-table-wrap">
+            <div class="ag-table-wrap ag-customer-table-wrap" role="region" aria-label="{{ __('admin.customer_properties.title') }}" tabindex="0">
                 <table class="ag-table ag-table--properties">
                     <thead>
                         <tr>
@@ -154,15 +154,15 @@
                     <tbody>
                         @foreach ($definitions as $definition)
                             <tr wire:key="property-{{ $definition->id }}">
-                                <td>
+                                <td class="ag-property-cell--identity">
                                     <span class="ag-table__primary">{{ $definition->label }}</span>
                                     @if ($definition->description)
                                         <span class="ag-table__muted">{{ Str::limit($definition->description, 60) }}</span>
                                     @endif
                                 </td>
-                                <td><code>{{ $definition->key }}</code></td>
-                                <td>{{ __('admin.customer_properties.types.'.$definition->type->value) }}</td>
-                                <td class="ag-table__col-toggle">
+                                <td class="ag-property-cell--key" data-label="{{ __('admin.customer_properties.key') }}"><code>{{ $definition->key }}</code></td>
+                                <td class="ag-property-cell--type" data-label="{{ __('admin.customer_properties.type') }}">{{ __('admin.customer_properties.types.'.$definition->type->value) }}</td>
+                                <td class="ag-table__col-toggle" data-label="{{ __('admin.customer_properties.non_editable') }}">
                                     <x-ag.switch
                                         class="ag-switch--table"
                                         :checked="! $definition->customer_editable"
@@ -170,7 +170,7 @@
                                         :aria-label="__('admin.customer_properties.non_editable')"
                                     />
                                 </td>
-                                <td class="ag-table__col-toggle">
+                                <td class="ag-table__col-toggle" data-label="{{ __('admin.customer_properties.required') }}">
                                     <x-ag.switch
                                         class="ag-switch--table"
                                         :checked="$definition->is_required"
@@ -178,7 +178,7 @@
                                         :aria-label="__('admin.customer_properties.required')"
                                     />
                                 </td>
-                                <td class="ag-table__col-toggle">
+                                <td class="ag-table__col-toggle" data-label="{{ __('admin.customer_properties.show_on_invoice') }}">
                                     <x-ag.switch
                                         class="ag-switch--table"
                                         :checked="$definition->show_on_invoice"
@@ -187,8 +187,8 @@
                                     />
                                 </td>
                                 <td class="ag-table__col-actions">
-                                    <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="edit({{ $definition->id }})">
-                                        {{ __('common.edit') }}
+                                    <button type="button" class="ag-icon-btn" wire:click="edit({{ $definition->id }})" title="{{ __('common.edit') }}" aria-label="{{ __('common.edit') }}: {{ $definition->label }}">
+                                        <x-ag.icon name="pencil" :size="16" />
                                     </button>
                                 </td>
                             </tr>

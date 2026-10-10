@@ -2,6 +2,7 @@
 @can('customers.manage')
     <section class="customer-workspace__card customer-workspace__card--danger" aria-labelledby="actions-heading">
         <header class="customer-workspace__section-header">
+            <x-ag.icon name="lock" :size="20" class="customer-workspace__section-icon" />
             <div>
                 <p class="customer-workspace__eyebrow">{{ __('admin.customers.actions_eyebrow') }}</p>
                 <h2 id="actions-heading" class="customer-workspace__section-title">{{ __('admin.customers.actions_heading') }}</h2>

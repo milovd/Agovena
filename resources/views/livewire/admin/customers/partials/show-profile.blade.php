@@ -1,6 +1,7 @@
 {{-- Customer workspace: profile card. Part of livewire.admin.customers.show. --}}
 <section class="customer-workspace__card customer-workspace__card--profile" aria-labelledby="profile-heading">
     <header class="customer-workspace__section-header">
+        <x-ag.icon name="user" :size="20" class="customer-workspace__section-icon" />
         <div>
             <p class="customer-workspace__eyebrow">{{ __('admin.customers.profile_eyebrow') }}</p>
             <h2 id="profile-heading" class="customer-workspace__section-title">{{ __('admin.customers.workspace_profile') }}</h2>

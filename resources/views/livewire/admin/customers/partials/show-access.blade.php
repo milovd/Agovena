@@ -1,6 +1,7 @@
 {{-- Customer workspace sidebar: login access card. Part of livewire.admin.customers.show. --}}
 <section class="customer-workspace__card" aria-labelledby="access-heading">
     <header class="customer-workspace__section-header">
+        <x-ag.icon name="key" :size="20" class="customer-workspace__section-icon" />
         <div>
             <p class="customer-workspace__eyebrow">{{ __('admin.customers.access_eyebrow') }}</p>
             <h2 id="access-heading" class="customer-workspace__section-title">{{ __('admin.customers.access_heading') }}</h2>

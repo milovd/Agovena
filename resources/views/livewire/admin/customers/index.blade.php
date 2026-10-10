@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page ag-list-page admin-page--customers">
     <x-ag.page-header :heading="__('admin.customers.title')" :lede="__('admin.customers.lede')">
         <x-slot:actions>
             @can('users.create')
@@ -10,39 +10,44 @@
     @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'customers'])
 
     @if ($showUserForm)
-        <section class="admin-panel">
-            <h2 class="admin-panel__title">{{ __('admin.customers.new_user') }}</h2>
-            <form wire:submit="saveUser" class="ag-form" novalidate>
-                <div class="ag-grid ag-grid--2">
-                    <div class="ag-field">
-                        <label class="ag-field__label" for="customer-user-name">{{ __('common.name') }}</label>
-                        <input id="customer-user-name" class="ag-input" type="text" wire:model="userName" required autocomplete="name">
-                        @error('userName') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+        <section class="ag-section ag-form ag-form--constrained ag-customer-form" aria-labelledby="customer-account-heading">
+            <header class="ag-section__header ag-customer-form__heading">
+                <x-ag.icon-tile name="users" tone="blue" />
+                <h2 id="customer-account-heading" class="ag-section__title">{{ __('admin.customers.new_user') }}</h2>
+            </header>
+            <form wire:submit="saveUser" novalidate>
+                <div class="ag-section__body">
+                    <div class="ag-grid ag-grid--2">
+                        <div class="ag-field">
+                            <label class="ag-field__label" for="customer-user-name">{{ __('common.name') }}</label>
+                            <input id="customer-user-name" class="ag-input" type="text" wire:model="userName" required autocomplete="name">
+                            @error('userName') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="ag-field">
+                            <label class="ag-field__label" for="customer-user-email">{{ __('common.email') }}</label>
+                            <input id="customer-user-email" class="ag-input" type="email" wire:model="userEmail" required autocomplete="username">
+                            @error('userEmail') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="ag-field">
+                            <label class="ag-field__label" for="customer-user-password">{{ __('common.password') }}</label>
+                            <input id="customer-user-password" class="ag-input" type="password" wire:model="userPassword" required autocomplete="new-password">
+                            @error('userPassword') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        </div>
+                        <div class="ag-field">
+                            <label class="ag-field__label" for="customer-user-role">{{ __('admin.customers.roles') }}</label>
+                            <select id="customer-user-role" class="ag-select" wire:model="userRole" required>
+                                @foreach ($roles as $roleOption)
+                                    <option value="{{ $roleOption->name }}">{{ $roleOption->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="ag-field__help">{{ __('admin.customers.role_help') }}</p>
+                            @error('userRole') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        </div>
                     </div>
-                    <div class="ag-field">
-                        <label class="ag-field__label" for="customer-user-email">{{ __('common.email') }}</label>
-                        <input id="customer-user-email" class="ag-input" type="email" wire:model="userEmail" required autocomplete="username">
-                        @error('userEmail') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                    <div class="ag-form__actions">
+                        <button type="submit" class="ag-btn ag-btn--primary">{{ __('admin.customers.add_user') }}</button>
+                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelUser">{{ __('common.cancel') }}</button>
                     </div>
-                    <div class="ag-field">
-                        <label class="ag-field__label" for="customer-user-password">{{ __('common.password') }}</label>
-                        <input id="customer-user-password" class="ag-input" type="password" wire:model="userPassword" required autocomplete="new-password">
-                        @error('userPassword') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                    </div>
-                    <div class="ag-field">
-                        <label class="ag-field__label" for="customer-user-role">{{ __('admin.customers.roles') }}</label>
-                        <select id="customer-user-role" class="ag-select" wire:model="userRole" required>
-                            @foreach ($roles as $roleOption)
-                                <option value="{{ $roleOption->name }}">{{ $roleOption->name }}</option>
-                            @endforeach
-                        </select>
-                        <p class="ag-field__help">{{ __('admin.customers.role_help') }}</p>
-                        @error('userRole') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                    </div>
-                </div>
-                <div class="ag-form__actions">
-                    <button type="submit" class="ag-btn ag-btn--primary">{{ __('admin.customers.add_user') }}</button>
-                    <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelUser">{{ __('common.cancel') }}</button>
                 </div>
             </form>
         </section>
@@ -78,8 +83,8 @@
             <p class="ag-empty__text">{{ $search || $status ? __('admin.customers.empty_filtered_text') : __('admin.customers.empty_text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap">
-            <table class="ag-table">
+        <div class="ag-table-wrap ag-customer-table-wrap" role="region" aria-label="{{ __('admin.customers.title') }}" tabindex="0">
+            <table class="ag-table ag-table--customers">
                 <thead>
                     <tr>
                         <th scope="col">{{ __('admin.customers.customer_column') }}</th>
@@ -107,7 +112,7 @@
                             $creditBalance = (int) ($customer->creditAccount?->balance_minor ?? 0);
                         @endphp
                         <tr wire:key="customer-row-{{ $customer->id }}">
-                            <td>
+                            <td class="ag-customer-cell ag-customer-cell--identity">
                                 <div class="ag-identity">
                                     <span class="ag-identity__avatar" aria-hidden="true">{{ $initials }}</span>
                                     <div class="ag-identity__text">
@@ -118,17 +123,17 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ number_format((int) $customer->orders_count) }}</td>
-                            <td>{{ \App\Support\MoneyFormatter::format((int) ($customer->paid_orders_total ?? 0), $creditCurrency) }}</td>
-                            <td>{{ \App\Support\MoneyFormatter::format($creditBalance, $creditCurrency) }}</td>
-                            <td>
+                            <td class="ag-customer-cell ag-customer-cell--metric" data-label="{{ __('admin.orders.title') }}">{{ number_format((int) $customer->orders_count) }}</td>
+                            <td class="ag-customer-cell ag-customer-cell--metric" data-label="{{ __('admin.customers.spent_column') }}">{{ \App\Support\MoneyFormatter::format((int) ($customer->paid_orders_total ?? 0), $creditCurrency) }}</td>
+                            <td class="ag-customer-cell ag-customer-cell--metric" data-label="{{ __('admin.customers.credit_heading') }}">{{ \App\Support\MoneyFormatter::format($creditBalance, $creditCurrency) }}</td>
+                            <td class="ag-customer-cell ag-customer-cell--detail" data-label="{{ __('admin.customers.roles') }}">
                                 @forelse (($customer->user?->roles ?? collect()) as $role)
                                     <span class="ag-badge">{{ $role->name }}</span>
                                 @empty
                                     <span class="ag-muted">{{ __('admin.customers.no_roles') }}</span>
                                 @endforelse
                             </td>
-                            <td>
+                            <td class="ag-customer-cell ag-customer-cell--detail" data-label="{{ __('common.status') }}">
                                 @if ($customer->anonymized_at)
                                     <span class="ag-badge">{{ __('admin.customers.anonymized_badge') }}</span>
                                 @elseif ($customer->deletion_requested_at)
@@ -137,7 +142,7 @@
                                     <span class="ag-badge ag-badge--success">{{ __('admin.customers.status_active') }}</span>
                                 @endif
                             </td>
-                            <td>
+                            <td class="ag-customer-cell ag-customer-cell--detail" data-label="{{ __('common.created') }}">
                                 <span class="ag-muted" title="{{ $customer->created_at?->toDateTimeString() }}">
                                     {{ $customer->created_at?->toFormattedDateString() }}
                                 </span>
@@ -146,19 +151,22 @@
                                 <div class="ag-row-actions">
                                     @can('customers.view')
                                         <a
-                                            class="ag-btn ag-btn--ghost ag-btn--sm"
+                                            class="ag-icon-btn"
                                             href="{{ route('admin.customers.show', ['customer' => $customer, 'panel' => 'profile']) }}"
+                                            title="{{ __('common.edit') }}"
                                             aria-label="{{ __('admin.customers.edit_aria', ['name' => $customer->name]) }}"
-                                        >{{ __('common.edit') }}</a>
+                                        ><x-ag.icon name="pencil" :size="16" /></a>
                                     @endcan
                                     @can('customers.manage')
                                         @if (! $customer->anonymized_at)
                                             <button
                                                 type="button"
-                                                class="ag-btn ag-btn--danger ag-btn--sm"
+                                                class="ag-icon-btn ag-icon-btn--danger"
                                                 wire:click="delete({{ $customer->id }})"
                                                 wire:confirm="{{ __('admin.customers.delete_confirm') }}"
-                                            >{{ __('common.delete') }}</button>
+                                                title="{{ __('common.delete') }}"
+                                                aria-label="{{ __('common.delete') }}: {{ $customer->name }}"
+                                            ><x-ag.icon name="trash" :size="16" /></button>
                                         @endif
                                     @endcan
                                 </div>

@@ -1,6 +1,7 @@
 {{-- Customer workspace sidebar: store credit card. Part of livewire.admin.customers.show. --}}
 <section class="customer-workspace__card" aria-labelledby="credits-heading">
     <header class="customer-workspace__section-header">
+        <x-ag.icon name="wallet" :size="20" class="customer-workspace__section-icon" />
         <div>
             <p class="customer-workspace__eyebrow">{{ __('admin.customers.credits_eyebrow') }}</p>
             <h2 id="credits-heading" class="customer-workspace__section-title">{{ __('admin.customers.credit_heading') }}</h2>

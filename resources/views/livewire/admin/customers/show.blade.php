@@ -34,12 +34,11 @@
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
     @endif
 
-    <section class="customer-workspace__hero" aria-labelledby="customer-workspace-title">
+    <section class="customer-workspace__hero" aria-label="{{ __('admin.customers.workspace_eyebrow') }}">
         <div class="customer-workspace__identity">
             <span class="customer-workspace__avatar" aria-hidden="true">{{ $initials ?: '?' }}</span>
             <div>
                 <p class="customer-workspace__eyebrow">{{ __('admin.customers.workspace_eyebrow') }}</p>
-                <h2 id="customer-workspace-title" class="customer-workspace__name">{{ $customer->name }}</h2>
                 <p class="customer-workspace__meta">
                     {{ __('admin.customers.customer_since', ['date' => $customer->created_at?->format('d M Y')]) }}
                     <span aria-hidden="true">·</span>
@@ -55,21 +54,25 @@
 
     <div class="customer-workspace__metrics" aria-label="{{ __('admin.customers.summary_aria') }}">
         <article class="customer-workspace__metric">
+            <x-ag.icon-tile name="shopping-bag" tone="blue" :size="18" class="customer-workspace__metric-icon" />
             <span class="customer-workspace__metric-label">{{ __('admin.orders.title') }}</span>
             <strong class="customer-workspace__metric-value">{{ $stats['orders'] }}</strong>
             <span class="customer-workspace__metric-note">{{ __('admin.customers.summary_orders') }}</span>
         </article>
         <article class="customer-workspace__metric">
+            <x-ag.icon-tile name="file-text" tone="violet" :size="18" class="customer-workspace__metric-icon" />
             <span class="customer-workspace__metric-label">{{ __('admin.invoices.title') }}</span>
             <strong class="customer-workspace__metric-value">{{ $stats['invoices'] }}</strong>
             <span class="customer-workspace__metric-note">{{ __('admin.customers.summary_invoices') }}</span>
         </article>
         <article class="customer-workspace__metric">
+            <x-ag.icon-tile name="ticket" tone="amber" :size="18" class="customer-workspace__metric-icon" />
             <span class="customer-workspace__metric-label">{{ __('admin.tickets.title') }}</span>
             <strong class="customer-workspace__metric-value">{{ $stats['tickets'] }}</strong>
             <span class="customer-workspace__metric-note">{{ __('admin.customers.summary_tickets') }}</span>
         </article>
-        <article class="customer-workspace__metric customer-workspace__metric--accent">
+        <article class="customer-workspace__metric">
+            <x-ag.icon-tile name="wallet" tone="emerald" :size="18" class="customer-workspace__metric-icon" />
             <span class="customer-workspace__metric-label">{{ __('admin.customers.credit_heading') }}</span>
             <strong class="customer-workspace__metric-value">{{ $formatMoney($balanceAmount, $currency) }}</strong>
             <span class="customer-workspace__metric-note">{{ __('admin.customers.summary_credit') }}</span>
@@ -84,6 +87,7 @@
 
             <section class="customer-workspace__card" aria-labelledby="capabilities-heading">
                 <header class="customer-workspace__section-header">
+                    <x-ag.icon name="puzzle" :size="20" class="customer-workspace__section-icon" />
                     <div>
                         <p class="customer-workspace__eyebrow">{{ __('admin.customers.capabilities_eyebrow') }}</p>
                         <h2 id="capabilities-heading" class="customer-workspace__section-title">{{ __('admin.customers.capabilities_heading') }}</h2>
