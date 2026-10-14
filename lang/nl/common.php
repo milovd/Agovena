@@ -24,6 +24,8 @@ return [
     'em_dash' => '-',
     'confirm' => 'Bevestigen',
     'confirm_external_action' => ':action voor :name bevestigen? Dit kan kosten met zich meebrengen.',
+    'confirm_irreversible_delete' => ':name verwijderen? Dit kan niet ongedaan worden gemaakt.',
+    'confirm_consequential_action' => ':action voor :name bevestigen? Dit kan gevolgen hebben voor klanten.',
     'status' => 'Status',
     'image' => 'Afbeelding',
     'price' => 'Prijs',

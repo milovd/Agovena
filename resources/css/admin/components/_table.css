@@ -95,6 +95,12 @@
     width: 100%;
     border-top: 1px solid var(--ag-color-border);
   }
+  .ag-table--mobile-cards tbody tr.ag-table__form-row td {
+    display: block;
+    width: 100%;
+    padding: 0;
+  }
+  .ag-table--mobile-cards tbody tr.ag-table__form-row td::before { content: none; }
   .ag-table--mobile-cards tbody td.ag-table__actions .ag-icon-btn {
     justify-self: start;
     width: auto;

@@ -24,6 +24,8 @@ return [
     'em_dash' => '-',
     'confirm' => 'Confirm',
     'confirm_external_action' => 'Confirm :action for :name? This may incur charges.',
+    'confirm_irreversible_delete' => 'Delete :name? This cannot be undone.',
+    'confirm_consequential_action' => 'Confirm :action for :name? This may affect customers.',
     'status' => 'Status',
     'image' => 'Image',
     'price' => 'Price',
