@@ -40,6 +40,7 @@
             </p>
         </div>
     @else
+        @php($displayCurrency = \App\Support\MoneyFormatter::preferredDisplayCurrency())
         <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status,paymentStatus">
             <table class="ag-table ag-table--orders">
                 <thead>
@@ -55,12 +56,13 @@
                 </thead>
                 <tbody>
                     @foreach ($orders as $order)
+                        @php($formattedTotal = \App\Support\MoneyFormatter::formatDisplay($order->total_amount, $order->currency, $displayCurrency))
                         <tr wire:key="order-{{ $order->id }}">
                             <td>
                                 <div class="ag-table__primary">
                                     <a class="ag-table__name" href="{{ route('admin.orders.show', $order) }}">{{ $order->number }}</a>
                                     <span class="ag-table__mobile-meta">
-                                        <span>{{ \App\Support\MoneyFormatter::formatDisplay($order->total_amount, $order->currency) }}</span>
+                                        <span>{{ $formattedTotal }}</span>
                                         <span @class([
                                             'ag-badge',
                                             'ag-badge--success' => $order->status->value === 'paid',
@@ -76,7 +78,7 @@
                                     <span class="ag-muted">{{ $order->customer_email }}</span>
                                 </div>
                             </td>
-                            <td>{{ \App\Support\MoneyFormatter::formatDisplay($order->total_amount, $order->currency) }}</td>
+                            <td>{{ $formattedTotal }}</td>
                             <td>
                                 <span @class([
                                     'ag-badge',
