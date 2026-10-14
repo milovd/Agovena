@@ -137,6 +137,24 @@ test('package pages share a decorative hero without changing their tab controls'
     }
 });
 
+test('extension catalogue uses one two-column grid with manifest category tags and a brand hero', function () {
+    $source = file_get_contents(resource_path('views/livewire/admin/extensions/index.blade.php'));
+    $card = file_get_contents(resource_path('views/livewire/admin/packages/partials/extension-card.blade.php'));
+    $hero = file_get_contents(resource_path('views/components/ag/package-hero.blade.php'));
+    $css = file_get_contents(resource_path('css/admin/screens/_packages.css'));
+
+    expect($source)->toContain("@include('livewire.admin.packages.partials.extension-catalog'")
+        ->and($card)->toContain('ag-package-card__tags')
+        ->and($hero)->toContain('ag-package-hero__tile--center')
+        ->and($hero)->not->toContain('ag-package-hero__piece')
+        ->and($css)->toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
+});
+
+test('extension search uses a supported magnifier icon', function () {
+    $source = file_get_contents(resource_path('views/components/ag/icon.blade.php'));
+    expect($source)->toContain("'search' =>");
+});
+
 test('extension package fallback icon uses a supported puzzle glyph', function () {
     $source = file_get_contents(resource_path('views/components/ag/icon.blade.php'));
     expect($source)->toContain("'puzzle' =>");

@@ -1589,9 +1589,11 @@ return [
 
     'extensions' => [
         'title' => 'Extensions',
-        'lede' => 'Discover and manage provider Extensions. Disable preserves configuration. Install from the catalog, upload a ZIP, or pull from the optional-packages monorepo.',
+        'lede' => 'Manage provider integrations for your store. Install from the catalogue or add your own package.',
         'filter_category' => 'Filter by category',
-        'all_categories' => 'All categories',
+        'all_categories' => 'All',
+        'search_label' => 'Search extensions',
+        'search_placeholder' => 'Search extensions...',
         'column_name' => 'Extension',
         'column_category' => 'Category',
         'column_version' => 'Version',
@@ -1654,6 +1656,7 @@ return [
             'installed_text' => 'Switch to Available to install from the catalog.',
             'available_title' => 'No Extensions available',
             'available_text' => 'All catalog Extensions are already installed.',
+            'filtered_text' => 'Try another search or category.',
         ],
         'categories' => [
             'payment_gateway' => 'Payments',

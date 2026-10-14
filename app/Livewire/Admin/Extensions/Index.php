@@ -18,6 +18,7 @@ use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Enums\PackageKind;
 use App\Livewire\Admin\Concerns\InstallsRemotePackages;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -32,6 +33,8 @@ final class Index extends Component
     public string $tab = 'installed';
 
     public string $category = '';
+
+    public string $search = '';
 
     public ?string $settingsExtensionId = null;
 
@@ -546,13 +549,15 @@ final class Index extends Component
     public function render(AdminRegistrar $admin, PackageCatalog $catalog)
     {
         $this->authorize('extensions.view');
-        $groups = $this->orderGroups($this->groupExtensions($catalog->extensions()));
+        $rows = $catalog->extensions();
+        $categoriesOnDisk = array_unique(array_map(fn (array $row): string => $row['manifest']->category->value, $rows));
+        $groups = $this->orderGroups($this->groupExtensions($rows));
 
         return view('livewire.admin.extensions.index', [
             'groups' => $groups,
             'installedGroups' => $this->filterGroups($groups, fn (array $row): bool => $row['installed']),
             'availableGroups' => $this->filterGroups($groups, fn (array $row): bool => ! $row['installed']),
-            'categories' => ExtensionCategory::cases(),
+            'categories' => array_values(array_filter(ExtensionCategory::cases(), fn (ExtensionCategory $category): bool => in_array($category->value, $categoriesOnDisk, true))),
             'settingsExtensionId' => $this->settingsExtensionId,
             'tabs' => [
                 'installed' => __('admin.extensions.tabs.installed'),
@@ -574,6 +579,14 @@ final class Index extends Component
         $grouped = [];
         foreach ($rows as $row) {
             if ($this->category !== '' && $row['manifest']->category->value !== $this->category) {
+                continue;
+            }
+            if (trim($this->search) !== '' && ! Str::contains(implode(' ', [
+                $row['manifest']->name,
+                $row['manifest']->id,
+                $row['manifest']->description,
+                $row['manifest']->author,
+            ]), trim($this->search), true)) {
                 continue;
             }
             $group = $row['manifest']->category->value;

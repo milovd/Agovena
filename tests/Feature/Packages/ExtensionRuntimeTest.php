@@ -292,6 +292,23 @@ test('admin extensions page lists mollie', function () {
         ->assertSee('Mollie');
 });
 
+test('admin extension catalogue searches manifests and keeps the category filter', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(ExtensionsIndex::class)
+        ->set('tab', 'available')
+        ->assertSee('Mollie')
+        ->assertSee(__('admin.extensions.search_label'))
+        ->set('search', 'mOlLiE')
+        ->assertSee('Mollie')
+        ->assertDontSee('Stripe')
+        ->set('category', 'provisioning')
+        ->assertDontSee('Mollie')
+        ->set('category', '')
+        ->assertSee('Mollie');
+});
+
 test('core payment contracts do not import vendor SDKs', function () {
     $files = glob(base_path('app/Agovena/Payments/**/*.php')) ?: [];
     $files = array_merge($files, glob(base_path('app/Agovena/Payments/*.php')) ?: []);

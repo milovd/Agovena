@@ -20,6 +20,9 @@
             ])>{{ __($row['lifecycle']->labelKey()) }}</span>
         </div>
         <p class="ag-package-card__text">{{ $manifest->description }}</p>
+        <div class="ag-package-card__tags">
+            <span class="ag-package-card__tag">{{ __($manifest->category->labelKey()) }}</span>
+        </div>
     @if (! $manifest->productionReady && ! app()->environment(['local', 'testing']))
         <p class="ag-field__error">{{ __('admin.extensions.not_production_ready', ['extension' => $manifest->id]) }}</p>
     @endif

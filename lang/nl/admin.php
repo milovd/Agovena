@@ -1587,9 +1587,11 @@ return [
 
     'extensions' => [
         'title' => 'Extensies',
-        'lede' => 'Ontdek en beheer provider-Extensies. Uitschakelen bewaart configuratie. Installeer uit de catalogus, upload een ZIP, of haal ze uit de optional-packages monorepo.',
+        'lede' => 'Beheer providerintegraties voor je winkel. Installeer uit de catalogus of voeg je eigen pakket toe.',
         'filter_category' => 'Filter op categorie',
-        'all_categories' => 'Alle categorieën',
+        'all_categories' => 'Alles',
+        'search_label' => 'Extensies zoeken',
+        'search_placeholder' => 'Extensies zoeken...',
         'column_name' => 'Extensie',
         'column_category' => 'Categorie',
         'column_version' => 'Versie',
@@ -1652,6 +1654,7 @@ return [
             'installed_text' => 'Ga naar Beschikbaar om te installeren uit de catalogus.',
             'available_title' => 'Geen Extensies beschikbaar',
             'available_text' => 'Alle catalogus-Extensies zijn al geïnstalleerd.',
+            'filtered_text' => 'Probeer een andere zoekterm of categorie.',
         ],
         'categories' => [
             'payment_gateway' => 'Betalingen',

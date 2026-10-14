@@ -12,39 +12,37 @@
 
     @include('livewire.admin.partials.tabs', ['active' => $tab, 'tabs' => $tabs, 'ariaLabel' => __('admin.packages.tabs_aria')])
 
-    @if ($tab === 'installed')
-        <div class="ag-toolbar" style="margin-bottom: 1rem;">
-            <select class="ag-select" wire:model.live="category" aria-label="{{ __('admin.extensions.filter_category') }}">
-                <option value="">{{ __('admin.extensions.all_categories') }}</option>
+    @if (in_array($tab, ['installed', 'available'], true))
+        <div class="ag-package-filters" role="group" aria-label="{{ __('admin.extensions.filter_category') }}">
+            <div class="ag-package-filters__search">
+                <x-ag.icon name="search" :size="18" />
+                <label class="visually-hidden" for="extension-search">{{ __('admin.extensions.search_label') }}</label>
+                <input id="extension-search" type="search" class="ag-input" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.extensions.search_placeholder') }}" autocomplete="off">
+            </div>
+            <div class="ag-package-filters__categories" aria-label="{{ __('admin.extensions.filter_category') }}">
+                <button type="button" class="ag-package-filter{{ $category === '' ? ' is-active' : '' }}" aria-pressed="{{ $category === '' ? 'true' : 'false' }}" wire:click="$set('category', '')">{{ __('admin.extensions.all_categories') }}</button>
                 @foreach ($categories as $cat)
-                    <option value="{{ $cat->value }}">{{ __($cat->labelKey()) }}</option>
+                    <button type="button" class="ag-package-filter{{ $category === $cat->value ? ' is-active' : '' }}" aria-pressed="{{ $category === $cat->value ? 'true' : 'false' }}" wire:key="extension-filter-{{ $cat->value }}" wire:click="$set('category', '{{ $cat->value }}')">{{ __($cat->labelKey()) }}</button>
                 @endforeach
-            </select>
+            </div>
         </div>
-        @include('livewire.admin.packages.partials.package-group-grid', [
+    @endif
+
+    @if ($tab === 'installed')
+        @include('livewire.admin.packages.partials.extension-catalog', [
             'groups' => $installedGroups,
-            'groupLabelPrefix' => 'admin.extensions.categories.',
-            'cardPartial' => 'livewire.admin.packages.partials.extension-card',
+            'title' => __('admin.extensions.tabs.installed'),
             'emptyTitle' => __('admin.extensions.empty.installed_title'),
-            'emptyText' => __('admin.extensions.empty.installed_text'),
+            'emptyText' => $category !== '' || trim($search) !== '' ? __('admin.extensions.empty.filtered_text') : __('admin.extensions.empty.installed_text'),
         ])
         <p class="ag-muted">{{ __('admin.extensions.disable_preserves_data') }}</p>
         <p class="ag-muted">{{ __('admin.packages.uninstall_vs_purge') }}</p>
     @elseif ($tab === 'available')
-        <div class="ag-toolbar" style="margin-bottom: 1rem;">
-            <select class="ag-select" wire:model.live="category" aria-label="{{ __('admin.extensions.filter_category') }}">
-                <option value="">{{ __('admin.extensions.all_categories') }}</option>
-                @foreach ($categories as $cat)
-                    <option value="{{ $cat->value }}">{{ __($cat->labelKey()) }}</option>
-                @endforeach
-            </select>
-        </div>
-        @include('livewire.admin.packages.partials.package-group-grid', [
+        @include('livewire.admin.packages.partials.extension-catalog', [
             'groups' => $availableGroups,
-            'groupLabelPrefix' => 'admin.extensions.categories.',
-            'cardPartial' => 'livewire.admin.packages.partials.extension-card',
+            'title' => __('admin.extensions.tabs.available'),
             'emptyTitle' => __('admin.extensions.empty.available_title'),
-            'emptyText' => __('admin.extensions.empty.available_text'),
+            'emptyText' => $category !== '' || trim($search) !== '' ? __('admin.extensions.empty.filtered_text') : __('admin.extensions.empty.available_text'),
         ])
     @else
         @can('extensions.manage')
