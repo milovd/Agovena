@@ -1750,6 +1750,8 @@ return [
         'all_countries' => 'All countries',
         'empty' => 'No country rates yet',
         'empty_text' => 'With automatic tax rates on, checkout still uses remote VAT rates. Add a row only to override a country, disable tax for a country, or (when automatic is off) define the rates that apply.',
+        'empty_tax_disabled' => 'Tax is off. Checkout will not apply tax until you enable it. You can add country rates now for later.',
+        'empty_manual' => 'Automatic rates are off. Add a country rate or global fallback before checkout can apply tax.',
         'created' => 'Tax rate created.',
         'updated' => 'Tax rate updated.',
         'deleted' => 'Tax rate deleted.',

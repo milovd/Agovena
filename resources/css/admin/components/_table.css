@@ -112,6 +112,18 @@
     color: var(--ag-color-text);
   }
   .ag-table--mobile-cards .ag-table__action-label { display: inline; font-weight: 600; }
+  .ag-table--taxes tbody td.ag-table__actions { grid-template-columns: minmax(0, 1fr); }
+  .ag-table--taxes tbody td.ag-table__actions .ag-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .ag-table--taxes tbody td.ag-table__actions .ag-row-actions .ag-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
 
 .ag-muted {

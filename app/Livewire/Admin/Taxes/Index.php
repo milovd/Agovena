@@ -131,6 +131,7 @@ final class Index extends Component
 
     public function updatedCountry(AutomaticTaxRateProvider $rates): void
     {
+        $this->authorize('taxes.manage');
         $country = strtoupper(trim($this->country));
         if ($this->editingId !== null || strlen($country) !== 2 || $this->is_disabled) {
             return;

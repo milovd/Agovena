@@ -31,11 +31,11 @@
         @endcan
         <p class="ag-field__help" style="margin-top: 1rem;">{{ __('admin.taxes.workflow_help') }}</p>
         @if ($automatic_tax_rates && $tax_enabled)
-            <p class="ag-field__help">{{ __('admin.taxes.list_help') }} ({{ __('admin.settings.fields.automatic_tax_rates') }} · {{ $automaticSourceLabel }} · {{ $automaticVersion }})</p>
+            <p class="ag-field__help">{{ __('admin.taxes.sources.automatic') }}: {{ $automaticSourceLabel }} ({{ $automaticVersion }})</p>
         @endif
     </div>
 
-    @if ($showForm)
+    @if ($showForm && auth()->user()?->can('taxes.manage'))
         <form wire:submit="save" class="admin-panel ag-form" novalidate>
             <h3 class="admin-panel__title">{{ $editingId ? __('admin.taxes.edit') : __('admin.taxes.new') }}</h3>
             <div class="ag-field">
@@ -71,69 +71,83 @@
     @endif
 
     <h3 class="admin-panel__title">{{ __('admin.taxes.list_title') }}</h3>
-    <p class="ag-field__help">{{ __('admin.taxes.list_help') }}</p>
+    @if ($rates->isNotEmpty() || $filter !== '')
+        <p class="ag-field__help">{{ __('admin.taxes.list_help') }}</p>
+    @endif
 
-    @if ($rates->isNotEmpty())
+    @if ($rates->isNotEmpty() || $filter !== '')
         <div class="ag-field" style="max-width: 20rem;">
             <label class="ag-field__label" for="tax-filter">{{ __('admin.taxes.filter') }}</label>
             <input id="tax-filter" class="ag-input" wire:model.live.debounce.300ms="filter" placeholder="{{ __('admin.taxes.filter_placeholder') }}">
         </div>
     @endif
 
-    <div class="ag-table-wrap">
-        <table class="ag-table">
-            <thead><tr>
-                <th>{{ __('admin.taxes.country') }}</th>
-                <th>{{ __('common.name') }}</th>
-                <th>{{ __('admin.taxes.rate') }}</th>
-                <th>{{ __('admin.taxes.source') }}</th>
-                <th>{{ __('admin.taxes.shipping') }}</th>
-                <th>{{ __('common.status') }}</th>
-                <th><span class="visually-hidden">{{ __('common.actions') }}</span></th>
-            </tr></thead>
-            <tbody>
-                @forelse ($rates as $rate)
-                    <tr wire:key="tax-rate-{{ $rate->id }}">
-                        <td>{{ $rate->country ?: __('admin.taxes.fallback_badge') }}</td>
-                        <td>{{ $rate->name }}</td>
-                        <td>
-                            @if ($rate->is_disabled)
-                                {{ __('admin.taxes.no_tax') }}
-                            @else
-                                {{ number_format($rate->rate_bps / 100, 2) }}%
-                            @endif
-                        </td>
-                        <td>
-                            <span class="ag-badge">
+    @if ($rates->isEmpty())
+        <div class="ag-empty" role="status">
+            <p class="ag-empty__title">{{ $filter !== '' ? __('admin.taxes.filter_empty') : __('admin.taxes.empty') }}</p>
+            @if ($filter === '')
+                <p class="ag-empty__text">
+                    @if (! $tax_enabled)
+                        {{ __('admin.taxes.empty_tax_disabled') }}
+                    @elseif (! $automatic_tax_rates)
+                        {{ __('admin.taxes.empty_manual') }}
+                    @else
+                        {{ __('admin.taxes.empty_text') }}
+                    @endif
+                </p>
+            @endif
+        </div>
+    @else
+        <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.taxes.list_title') }}" tabindex="0">
+            <table class="ag-table ag-table--mobile-cards ag-table--taxes">
+                <thead><tr>
+                    <th>{{ __('admin.taxes.country') }}</th>
+                    <th>{{ __('common.name') }}</th>
+                    <th>{{ __('admin.taxes.rate') }}</th>
+                    <th>{{ __('admin.taxes.source') }}</th>
+                    <th>{{ __('admin.taxes.shipping') }}</th>
+                    <th>{{ __('common.status') }}</th>
+                    @can('taxes.manage')
+                        <th><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                    @endcan
+                </tr></thead>
+                <tbody>
+                    @foreach ($rates as $rate)
+                        <tr wire:key="tax-rate-{{ $rate->id }}">
+                            <td data-label="{{ __('admin.taxes.country') }}">{{ $rate->country ?: __('admin.taxes.fallback_badge') }}</td>
+                            <td data-label="{{ __('common.name') }}">{{ $rate->name }}</td>
+                            <td data-label="{{ __('admin.taxes.rate') }}">
                                 @if ($rate->is_disabled)
-                                    {{ __('admin.taxes.sources.disabled') }}
-                                @elseif ($rate->country === null)
-                                    {{ __('admin.taxes.sources.fallback') }}
+                                    {{ __('admin.taxes.no_tax') }}
                                 @else
-                                    {{ __('admin.taxes.sources.override') }}
+                                    {{ number_format($rate->rate_bps / 100, 2) }}%
                                 @endif
-                            </span>
-                        </td>
-                        <td>{{ $rate->applies_to_shipping ? __('common.yes') : __('common.no') }}</td>
-                        <td><span class="ag-badge">{{ $rate->is_active ? __('common.active') : __('common.inactive') }}</span></td>
-                        <td>
+                            </td>
+                            <td data-label="{{ __('admin.taxes.source') }}">
+                                <span class="ag-badge">
+                                    @if ($rate->is_disabled)
+                                        {{ __('admin.taxes.sources.disabled') }}
+                                    @elseif ($rate->country === null)
+                                        {{ __('admin.taxes.sources.fallback') }}
+                                    @else
+                                        {{ __('admin.taxes.sources.override') }}
+                                    @endif
+                                </span>
+                            </td>
+                            <td data-label="{{ __('admin.taxes.shipping') }}">{{ $rate->applies_to_shipping ? __('common.yes') : __('common.no') }}</td>
+                            <td data-label="{{ __('common.status') }}"><span class="ag-badge {{ $rate->is_active ? 'ag-badge--success' : 'ag-badge--muted' }}">{{ $rate->is_active ? __('common.active') : __('common.inactive') }}</span></td>
                             @can('taxes.manage')
-                                <button class="ag-btn ag-btn--ghost" type="button" wire:click="edit({{ $rate->id }})">{{ __('common.edit') }}</button>
-                                <button class="ag-btn ag-btn--ghost" type="button" wire:click="delete({{ $rate->id }})" wire:confirm="{{ __('admin.taxes.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
+                                    <span class="ag-row-actions">
+                                        <button class="ag-btn ag-btn--ghost" type="button" wire:click="edit({{ $rate->id }})">{{ __('common.edit') }}</button>
+                                        <button class="ag-btn ag-btn--ghost" type="button" wire:click="delete({{ $rate->id }})" wire:confirm="{{ __('admin.taxes.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                    </span>
+                                </td>
                             @endcan
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7">
-                            {{ $filter !== '' ? __('admin.taxes.filter_empty') : __('admin.taxes.empty') }}
-                            @if ($filter === '')
-                                <span class="ag-field__help">{{ __('admin.taxes.empty_text') }}</span>
-                            @endif
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 </div>

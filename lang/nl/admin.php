@@ -1748,6 +1748,8 @@ return [
         'all_countries' => 'Alle landen',
         'empty' => 'Nog geen landtarieven',
         'empty_text' => 'Met automatische belastingtarieven aan gebruikt checkout nog steeds externe btw-tarieven. Voeg alleen een rij toe om een land te overschrijven, btw voor een land uit te schakelen, of (wanneer automatisch uit staat) de geldende tarieven vast te leggen.',
+        'empty_tax_disabled' => 'Belasting staat uit. Checkout berekent geen belasting totdat je deze inschakelt. Je kunt nu alvast landtarieven toevoegen.',
+        'empty_manual' => 'Automatische tarieven staan uit. Voeg een landtarief of globale terugval toe voordat checkout belasting kan berekenen.',
         'created' => 'Btw-tarief aangemaakt.',
         'updated' => 'Btw-tarief bijgewerkt.',
         'deleted' => 'Btw-tarief verwijderd.',
