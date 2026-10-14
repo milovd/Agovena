@@ -20,6 +20,8 @@
 .admin-dashboard .ag-metric .ag-icon-tile {
   width: 2.75rem;
   height: 2.75rem;
+  background: var(--ag-tile-color);
+  color: var(--ag-color-surface);
 }
 
 .admin-dashboard .ag-metric__value {

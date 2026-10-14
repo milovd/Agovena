@@ -190,7 +190,7 @@ export function registerChartComponents(Alpine) {
                             right: 4,
                         },
                     },
-                    animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                    animation: config.animate === false || window.matchMedia('(prefers-reduced-motion: reduce)').matches
                         ? false
                         : { duration: 220 },
                     interaction: {

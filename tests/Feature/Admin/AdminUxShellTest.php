@@ -172,6 +172,11 @@ test('dashboard KPI icon tiles use a legible glyph without enlarging unrelated t
     }
 });
 
+test('dashboard KPI tiles keep a full contextual color in both themes', function () {
+    $css = file_get_contents(resource_path('css/admin/screens/_dashboard.css'));
+    expect($css)->toMatch('/\\.admin-dashboard \\.ag-metric \\.ag-icon-tile\\s*\\{[^}]*background: var\\(--ag-tile-color\\)/s');
+});
+
 test('dashboard keeps six focused metrics and one configurable chart', function () {
     $component = Livewire::actingAs($this->createStaff())
         ->test(Dashboard::class)
@@ -219,21 +224,38 @@ test('dashboard session heading matches the approved language in both locales', 
         ->and(__('admin.dashboard.active_users.title', [], 'nl'))->toBe('Huidige sessies');
 });
 
-test('dashboard combo chart mode has a truthful label in both locales', function () {
-    expect(__('admin.dashboard.charts.types.line', [], 'en'))->toBe('Bars + line')
-        ->and(__('admin.dashboard.charts.types.line', [], 'nl'))->toBe('Balken + lijn');
+test('dashboard chart modes have distinct labels in both locales', function () {
+    expect(__('admin.dashboard.charts.types.line', [], 'en'))->toBe('Line')
+        ->and(__('admin.dashboard.charts.types.line', [], 'nl'))->toBe('Lijn')
+        ->and(__('admin.dashboard.charts.types.bar', [], 'en'))->toBe('Bar')
+        ->and(__('admin.dashboard.charts.types.bar', [], 'nl'))->toBe('Balk');
 });
 
-test('dashboard default chart composes revenue bars with an orders line while keeping bar view', function () {
+test('dashboard renders both revenue and orders as separate straight line or bar series', function () {
     $component = Livewire::actingAs($this->createStaff())->test(Dashboard::class);
-    foreach (['line' => ['bar', 'line'], 'bar' => ['bar', 'bar']] as $selected => $expected) {
+    foreach (['line', 'bar'] as $selected) {
         $component->set('chartType', $selected);
         $document = new DOMDocument;
         @$document->loadHTML($component->html());
         $chart = (new DOMXPath($document))->query('//*[@data-chart-config]')->item(0);
         $config = json_decode($chart->getAttribute('data-chart-config'), true, flags: JSON_THROW_ON_ERROR);
-        expect(array_column($config['datasets'], 'type'))->toBe($expected);
+        expect($config['type'])->toBe($selected)
+            ->and(array_column($config['datasets'], 'type'))->toBe([$selected, $selected])
+            ->and(array_column($config['datasets'], 'yAxisID'))->toBe(['y', 'y1'])
+            ->and(array_column($config['datasets'], 'tension'))->toBe([0, 0])
+            ->and(array_column($config['datasets'], 'fill'))->toBe([false, false]);
     }
+});
+
+test('dashboard chart disables animations during Livewire and theme replacement', function () {
+    $html = Livewire::actingAs($this->createStaff())->test(Dashboard::class)->html();
+    $document = new DOMDocument;
+    @$document->loadHTML($html);
+    $chart = (new DOMXPath($document))->query('//*[@data-chart-config]')->item(0);
+    $config = json_decode($chart->getAttribute('data-chart-config'), true, flags: JSON_THROW_ON_ERROR);
+    $script = file_get_contents(resource_path('js/admin/chart.js'));
+    expect($config['animate'] ?? null)->toBeFalse()
+        ->and($script)->toContain('config.animate === false');
 });
 
 test('dashboard chart ranges return the requested number of daily points', function () {

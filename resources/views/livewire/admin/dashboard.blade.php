@@ -105,6 +105,7 @@
                 data-chart-config="{{ json_encode([
                     'type' => $chartType,
                     'showLegend' => true,
+                    'animate' => false,
                     'dualAxis' => true,
                     'currency' => $revenueSeries['currency'],
                     'currencyPrecision' => $revenueSeries['precision'],
@@ -115,7 +116,7 @@
                     ],
                     'datasets' => [
                         [
-                            'type' => 'bar',
+                            'type' => $chartType,
                             'label' => __('admin.dashboard.charts.revenue'),
                             'data' => $revenueSeries['values'],
                             'yAxisID' => 'y',
@@ -124,8 +125,8 @@
                             'barBackgroundColor' => 'var(--ag-color-chart-1)',
                             'barBorderColor' => 'var(--ag-color-chart-1)',
                             'pointBackgroundColor' => 'var(--ag-color-chart-1)',
-                            'fill' => true,
-                            'tension' => 0.3,
+                            'fill' => false,
+                            'tension' => 0,
                             'borderWidth' => 2.5,
                             'pointMarkerRadius' => 3,
                             'pointHoverRadius' => 5,
@@ -133,7 +134,7 @@
                             'pointHoverBackgroundColor' => 'var(--ag-color-chart-1)',
                         ],
                         [
-                            'type' => $chartType === 'line' ? 'line' : 'bar',
+                            'type' => $chartType,
                             'label' => __('admin.dashboard.charts.orders'),
                             'data' => $orderSeries['values'],
                             'yAxisID' => 'y1',
@@ -143,7 +144,7 @@
                             'barBorderColor' => 'var(--ag-color-chart-4)',
                             'pointBackgroundColor' => 'var(--ag-color-chart-2)',
                             'fill' => false,
-                            'tension' => 0.3,
+                            'tension' => 0,
                             'borderWidth' => 2.5,
                             'pointMarkerRadius' => 3,
                             'pointHoverRadius' => 5,

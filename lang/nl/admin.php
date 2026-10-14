@@ -500,8 +500,8 @@ return [
                 '90' => '90 dagen',
             ],
             'types' => [
-                'line' => 'Balken + lijn',
-                'bar' => 'Balken',
+                'line' => 'Lijn',
+                'bar' => 'Balk',
             ],
             'empty_title' => 'Nog geen data',
             'empty_overview' => 'Betaalde omzet en nieuwe bestellingen verschijnen hier zodra er activiteit is.',

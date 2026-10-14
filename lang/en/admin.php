@@ -500,8 +500,8 @@ return [
                 '90' => '90 days',
             ],
             'types' => [
-                'line' => 'Bars + line',
-                'bar' => 'Bars',
+                'line' => 'Line',
+                'bar' => 'Bar',
             ],
             'empty_title' => 'No data yet',
             'empty_overview' => 'Paid revenue and new orders will appear here as activity comes in.',
