@@ -82,6 +82,38 @@ it('queues failed deliveries for a controlled retry', function (): void {
     Queue::assertPushed(DeliverWebhook::class, fn (DeliverWebhook $job): bool => $job->deliveryId === $delivery->id);
 });
 
+it('keeps endpoint and failed delivery facts visible without webhook management controls', function (): void {
+    $staff = $this->createStaff([], ['webhooks.view']);
+    $endpoint = WebhookEndpoint::query()->create([
+        'name' => 'Read-only endpoint',
+        'url' => 'https://example.com/readonly',
+        'secret' => 'test-only-placeholder',
+        'events' => ['order.created'],
+        'active' => true,
+    ]);
+    $delivery = WebhookDelivery::query()->create([
+        'delivery_id' => 'delivery-viewer',
+        'webhook_endpoint_id' => $endpoint->id,
+        'event_type' => 'order.created',
+        'payload' => ['type' => 'order.created'],
+        'status' => 'failed',
+        'attempt_count' => 1,
+    ]);
+
+    Livewire::actingAs($staff)
+        ->test(Index::class)
+        ->assertSee('Read-only endpoint')
+        ->assertSee('delivery-viewer')
+        ->assertDontSee('wire:submit="save"', false)
+        ->assertDontSee('wire:click="edit(', false)
+        ->assertDontSee('wire:click="toggleActive(', false)
+        ->assertDontSee('wire:click="delete(', false)
+        ->assertDontSee('wire:click="retryDelivery(', false);
+
+    Livewire::actingAs($staff)->test(Index::class)->call('retryDelivery', $delivery->id)->assertForbidden();
+    expect($delivery->fresh()->status)->toBe('failed');
+});
+
 it('does not expose webhook management to staff without the view permission', function (): void {
     $staff = $this->createStaff([], []);
     $this->actingAs($staff);

@@ -11,26 +11,33 @@
             <p class="ag-empty__text">{{ __('admin.failed_jobs.empty_text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap">
-            <table class="ag-table">
+        <div class="ag-table-wrap" role="region" tabindex="0" aria-label="{{ __('admin.failed_jobs.title') }}">
+            <table class="ag-table c-system-table">
+                <caption class="visually-hidden">{{ __('admin.failed_jobs.title') }}</caption>
                 <thead>
                     <tr>
                         <th>{{ __('admin.failed_jobs.time') }}</th>
                         <th>{{ __('admin.failed_jobs.queue') }}</th>
                         <th>{{ __('admin.failed_jobs.exception') }}</th>
-                        <th><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                        @can('jobs.manage')
+                            <th><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                        @endcan
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($jobs as $job)
                         <tr wire:key="failed-job-{{ $job->id }}">
-                            <td>{{ $job->failed_at }}</td>
-                            <td><code>{{ $job->queue }}</code></td>
-                            <td>{{ $job->exception_preview }}</td>
-                            <td>
-                                <button class="ag-btn ag-btn--secondary ag-btn--sm" type="button" wire:click="retry('{{ $job->uuid }}')">{{ __('admin.failed_jobs.retry') }}</button>
-                                <button class="ag-btn ag-btn--danger-outline ag-btn--sm" type="button" wire:click="forget({{ $job->id }})" wire:confirm="{{ __('admin.failed_jobs.delete_confirm') }}">{{ __('common.delete') }}</button>
-                            </td>
+                            <td data-label="{{ __('admin.failed_jobs.time') }}">{{ $job->failed_at }}</td>
+                            <td data-label="{{ __('admin.failed_jobs.queue') }}"><code>{{ $job->queue }}</code></td>
+                            <td data-label="{{ __('admin.failed_jobs.exception') }}">{{ $job->exception_preview }}</td>
+                            @can('jobs.manage')
+                                <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
+                                    <div class="ag-row-actions">
+                                        <button class="ag-btn ag-btn--secondary ag-btn--sm" type="button" wire:click="retry('{{ $job->uuid }}')">{{ __('admin.failed_jobs.retry') }}</button>
+                                        <button class="ag-btn ag-btn--danger-outline ag-btn--sm" type="button" wire:click="forget({{ $job->id }})" wire:confirm="{{ __('admin.failed_jobs.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                    </div>
+                                </td>
+                            @endcan
                         </tr>
                     @endforeach
                 </tbody>

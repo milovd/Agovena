@@ -1,0 +1,70 @@
+/* System lists retain table semantics on desktop and readable labelled rows on mobile. */
+@media (max-width: 720px) {
+  .c-system-table {
+    display: block;
+    width: 100%;
+  }
+
+  .c-system-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+
+  .c-system-table tbody {
+    display: grid;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3);
+  }
+
+  .c-system-table tbody tr {
+    display: block;
+    min-width: 0;
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-sm);
+  }
+
+  .c-system-table tbody td {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, 35%) minmax(0, 1fr);
+    gap: var(--ag-space-2);
+    min-width: 0;
+    width: 100%;
+    padding: var(--ag-space-2) 0;
+    border: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .c-system-table tbody td::before {
+    content: attr(data-label);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .c-system-table tbody td .ag-badge {
+    justify-self: start;
+  }
+
+  .c-system-table tbody td.ag-table__actions {
+    display: block;
+    border-top: 1px solid var(--ag-color-border);
+  }
+
+  .c-system-table tbody td.ag-table__actions::before {
+    display: block;
+    margin-bottom: var(--ag-space-2);
+  }
+
+  .c-system-table .ag-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ag-space-2);
+  }
+}

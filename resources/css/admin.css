@@ -38,6 +38,7 @@
 @import './admin/screens/_returns.css';
 @import './admin/screens/_subscriptions.css';
 @import './admin/screens/_events.css';
+@import './admin/screens/_system.css';
 @import './admin/screens/_invoice-design.css';
 @import './admin/components/_print.css';
 @import './admin/utilities/_a11y.css';
