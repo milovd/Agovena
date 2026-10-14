@@ -1689,6 +1689,12 @@ return [
 
     'currencies' => [
         'title' => 'Valuta',
+        'empty' => 'Nog geen valuta ingesteld',
+        'empty_text' => 'Voeg een valuta toe om het symbool, de decimalen en de wisselkoers in te stellen.',
+        'empty_viewer_text' => 'Er zijn geen valuta om weer te geven.',
+        'empty_page' => 'Geen valuta op deze pagina',
+        'empty_page_text' => 'Ga naar de eerste pagina om de ingestelde valuta te bekijken.',
+        'first_page' => 'Ga naar de eerste pagina',
         'lede' => 'Stel ISO-codes, symbolen, decimalen en wisselkoersen in voor weergaveconversie. Koersen synchroniseren haalt mid-market data op via Frankfurter (ECB euro-referentiekoersen) ter controle. Checkout en facturen blijven in hun eigen valuta.',
         'base_currency' => 'Basisvaluta:',
         'add' => 'Valuta toevoegen',

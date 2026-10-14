@@ -1691,6 +1691,12 @@ return [
 
     'currencies' => [
         'title' => 'Currencies',
+        'empty' => 'No currencies configured yet',
+        'empty_text' => 'Add a currency to set its symbol, precision and exchange rate.',
+        'empty_viewer_text' => 'There are no currencies to display.',
+        'empty_page' => 'No currencies on this page',
+        'empty_page_text' => 'Go to the first page to view configured currencies.',
+        'first_page' => 'Go to first page',
         'lede' => 'Configure ISO codes, symbols, decimal precision, and exchange rates used for display conversion. Sync rates pulls mid-market data from Frankfurter (ECB euro reference rates) for review. Checkout and invoices keep each record’s native currency.',
         'base_currency' => 'Base currency:',
         'add' => 'Add currency',

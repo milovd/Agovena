@@ -28,7 +28,7 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
-    @if ($showForm)
+    @if ($showForm && ($editingId === null ? auth()->user()?->can('currencies.create') : auth()->user()?->can('currencies.update')))
         <form wire:submit="save" class="admin-panel ag-form" novalidate>
             <h2 class="admin-panel__title">{{ $editingId ? __('admin.currencies.edit') : __('admin.currencies.new') }}</h2>
             <div class="ag-field">
@@ -85,8 +85,20 @@
         </form>
     @endif
 
-    <div class="ag-table-wrap">
-        <table class="ag-table">
+    @if ($currencies->total() === 0)
+        <div class="ag-empty" role="status">
+            <p class="ag-empty__title">{{ __('admin.currencies.empty') }}</p>
+            <p class="ag-empty__text">{{ auth()->user()?->can('currencies.create') ? __('admin.currencies.empty_text') : __('admin.currencies.empty_viewer_text') }}</p>
+        </div>
+    @elseif ($currencies->isEmpty())
+        <div class="ag-empty" role="status">
+            <p class="ag-empty__title">{{ __('admin.currencies.empty_page') }}</p>
+            <p class="ag-empty__text">{{ __('admin.currencies.empty_page_text') }}</p>
+            <button type="button" class="ag-btn ag-btn--ghost" wire:click="resetPage">{{ __('admin.currencies.first_page') }}</button>
+        </div>
+    @else
+    <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.currencies.title') }}" tabindex="0">
+        <table class="ag-table ag-table--mobile-cards">
             <thead>
                 <tr>
                     <th scope="col">{{ __('admin.currencies.code') }}</th>
@@ -97,37 +109,44 @@
                     <th scope="col">{{ __('admin.currencies.exchange_rate_column') }}</th>
                     <th scope="col">{{ __('common.preview') }}</th>
                     <th scope="col">{{ __('common.status') }}</th>
-                    <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                    @if (auth()->user()?->can('currencies.update') || $canSetBase)
+                        <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
                 @foreach ($currencies as $currency)
                     <tr wire:key="currency-{{ $currency->id }}">
-                        <td>
+                        <td data-label="{{ __('admin.currencies.code') }}">
                             {{ $currency->code }}
                             @if ($currency->code === $baseCurrency)
                                 <span class="ag-badge">{{ __('admin.currencies.base_badge') }}</span>
                             @endif
                         </td>
-                        <td>{{ $currency->name }}</td>
-                        <td><code>{{ $currency->prefix !== '' ? $currency->prefix : __('common.em_dash') }}</code></td>
-                        <td><code>{{ $currency->suffix !== '' ? $currency->suffix : __('common.em_dash') }}</code></td>
-                        <td>{{ $currency->normalizedPrecision() }}</td>
-                        <td><code>{{ bcadd((string) ($currency->exchange_rate ?? '1'), '0', 8) }}</code></td>
-                        <td>{{ $currency->previewSample() }}</td>
-                        <td><span class="ag-badge">{{ $currency->is_active ? __('common.active') : __('common.inactive') }}</span></td>
-                        <td>
-                            @can('currencies.update')
-                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="edit({{ $currency->id }})">{{ __('common.edit') }}</button>
-                            @endcan
-                            @if ($canSetBase && $currency->is_active && $currency->code !== $baseCurrency)
-                                <button type="button" class="ag-btn ag-btn--ghost" wire:click="setAsBase({{ $currency->id }})" wire:confirm="{{ __('admin.currencies.set_base_confirm', ['code' => $currency->code]) }}">{{ __('admin.currencies.set_base') }}</button>
-                            @endif
-                        </td>
+                        <td data-label="{{ __('common.name') }}">{{ $currency->name }}</td>
+                        <td data-label="{{ __('admin.currencies.prefix_column') }}"><code>{{ $currency->prefix !== '' ? $currency->prefix : __('common.em_dash') }}</code></td>
+                        <td data-label="{{ __('admin.currencies.suffix') }}"><code>{{ $currency->suffix !== '' ? $currency->suffix : __('common.em_dash') }}</code></td>
+                        <td data-label="{{ __('admin.currencies.precision_column') }}">{{ $currency->normalizedPrecision() }}</td>
+                        <td data-label="{{ __('admin.currencies.exchange_rate_column') }}"><code>{{ bcadd((string) ($currency->exchange_rate ?? '1'), '0', 8) }}</code></td>
+                        <td data-label="{{ __('common.preview') }}">{{ $currency->previewSample() }}</td>
+                        <td data-label="{{ __('common.status') }}"><x-ag.badge :variant="$currency->is_active ? 'success' : 'muted'">{{ $currency->is_active ? __('common.active') : __('common.inactive') }}</x-ag.badge></td>
+                        @if (auth()->user()?->can('currencies.update') || $canSetBase)
+                            <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
+                                <span class="ag-row-actions">
+                                    @can('currencies.update')
+                                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="edit({{ $currency->id }})">{{ __('common.edit') }}</button>
+                                    @endcan
+                                    @if ($canSetBase && $currency->is_active && $currency->code !== $baseCurrency)
+                                        <button type="button" class="ag-btn ag-btn--ghost" wire:click="setAsBase({{ $currency->id }})" wire:confirm="{{ __('admin.currencies.set_base_confirm', ['code' => $currency->code]) }}">{{ __('admin.currencies.set_base') }}</button>
+                                    @endif
+                                </span>
+                            </td>
+                        @endif
                     </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
+    @endif
     {{ $currencies->links() }}
 </div>
