@@ -1,4 +1,8 @@
-<form wire:submit="save" class="admin-panel ag-form ag-form--constrained ag-settings-form" novalidate>
+@if ($canUpdate)
+    <form wire:submit="save" class="admin-panel ag-form ag-form--constrained ag-settings-form" novalidate>
+@else
+    <div class="admin-panel ag-form ag-form--constrained ag-settings-form">
+@endif
     <div class="ag-settings-form__header">
         <x-ag.icon-tile name="settings" tone="blue" />
         <h2 class="ag-settings-form__title">{{ __('admin.settings.group_title', ['group' => __($groupDefinition->label)]) }}</h2>
@@ -16,7 +20,7 @@
                     class="ag-input"
                     rows="4"
                     wire:model="values.{{ $field->key }}"
-                    @disabled(! $canUpdate)
+                    @readonly(! $canUpdate)
                 ></textarea>
             @elseif ($field->type === 'boolean')
                 <x-ag.switch
@@ -94,7 +98,7 @@
                     class="ag-input"
                     type="{{ $field->type === 'email' ? 'email' : (in_array($field->type, ['integer', 'percentage'], true) ? 'number' : ($field->type === 'password' ? 'password' : 'text')) }}"
                     wire:model="values.{{ $field->key }}"
-                    @disabled(! $canUpdate)
+                    @if ($field->type === 'password') @disabled(! $canUpdate) @else @readonly(! $canUpdate) @endif
                     @if (in_array($field->type, ['integer', 'percentage'], true)) min="{{ $field->min ?? 0 }}" max="{{ $field->max ?? ($field->type === 'percentage' ? 100 : 365) }}" step="1" @endif
                     @if ($field->type === 'password') autocomplete="new-password" @endif
                 >
@@ -124,4 +128,8 @@
     @else
         <p class="ag-field__help" role="status">{{ __('admin.settings.read_only') }}</p>
     @endif
-</form>
+@if ($canUpdate)
+    </form>
+@else
+    </div>
+@endif

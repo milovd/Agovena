@@ -21,7 +21,9 @@
     $triggerLabel = $hasPreview
         ? ($replaceLabel ?? __('common.replace'))
         : ($buttonLabel ?? __('common.upload'));
-    $defaultEmptyLabel = $hasPreview ? __('common.current_image') : ($emptyLabel ?? __('common.no_file_selected'));
+    $defaultEmptyLabel = $hasPreview
+        ? __('common.current_image')
+        : ($emptyLabel ?? ($disabled ? __('common.no_image') : __('common.no_file_selected')));
 @endphp
 
 <div
@@ -31,7 +33,11 @@
     @change="onChange($event)"
 >
     @if ($label)
-        <label class="ag-field__label" for="{{ $id }}">{{ $label }}</label>
+        @if ($disabled)
+            <span class="ag-field__label">{{ $label }}</span>
+        @else
+            <label class="ag-field__label" for="{{ $id }}">{{ $label }}</label>
+        @endif
     @endif
 
     <div class="ag-file-upload__surface">
@@ -52,34 +58,35 @@
             @endif
         </div>
 
-        <div class="ag-file-upload__actions">
-            <input
-                type="file"
-                id="{{ $id }}"
-                class="ag-file-upload__input"
-                accept="{{ $accept }}"
-                @if ($multiple) multiple @endif
-                @disabled($disabled)
-                {{ $attributes->except(['id', 'class', 'accept'])->merge(['accept' => $accept]) }}
-            >
-            <label for="{{ $id }}" class="ag-btn ag-btn--secondary ag-btn--sm ag-file-upload__trigger">
-                <x-ag.icon name="upload" :size="16" />
-                <span>{{ $triggerLabel }}</span>
-            </label>
-
-            @if ($removeWireClick && $hasPreview && ! $disabled)
-                <button
-                    type="button"
-                    class="ag-btn ag-btn--ghost ag-btn--sm"
-                    wire:click="{{ $removeWireClick }}"
+        @unless ($disabled)
+            <div class="ag-file-upload__actions">
+                <input
+                    type="file"
+                    id="{{ $id }}"
+                    class="ag-file-upload__input"
+                    accept="{{ $accept }}"
+                    @if ($multiple) multiple @endif
+                    {{ $attributes->except(['id', 'class', 'accept'])->merge(['accept' => $accept]) }}
                 >
-                    {{ __('common.remove') }}
-                </button>
-            @endif
-        </div>
+                <label for="{{ $id }}" class="ag-btn ag-btn--secondary ag-btn--sm ag-file-upload__trigger">
+                    <x-ag.icon name="upload" :size="16" />
+                    <span>{{ $triggerLabel }}</span>
+                </label>
+
+                @if ($removeWireClick && $hasPreview)
+                    <button
+                        type="button"
+                        class="ag-btn ag-btn--ghost ag-btn--sm"
+                        wire:click="{{ $removeWireClick }}"
+                    >
+                        {{ __('common.remove') }}
+                    </button>
+                @endif
+            </div>
+        @endunless
     </div>
 
-    @if ($loadingTarget)
+    @if ($loadingTarget && ! $disabled)
         <div wire:loading wire:target="{{ $loadingTarget }}" class="ag-file-upload__loading" role="status">{{ __('common.uploading') }}</div>
     @endif
 

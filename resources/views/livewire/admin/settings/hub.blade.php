@@ -14,11 +14,13 @@
             <p class="ag-empty__text">{{ __('admin.settings.empty_text') }}</p>
         </div>
     @else
-        @include('livewire.admin.partials.tabs', [
-            'active' => $tab,
-            'tabs' => $tabs,
-            'ariaLabel' => __('admin.settings.tabs_aria'),
-        ])
+        <div x-data="agSettingsTabScroller">
+            @include('livewire.admin.partials.tabs', [
+                'active' => $tab,
+                'tabs' => $tabs,
+                'ariaLabel' => __('admin.settings.tabs_aria'),
+            ])
+        </div>
 
         @if ($externalGroups->isNotEmpty())
             <div class="ag-toolbar ag-settings-links">

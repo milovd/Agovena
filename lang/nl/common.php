@@ -68,6 +68,7 @@ return [
     'uploading' => 'Uploaden…',
     'current_image' => 'Huidige afbeelding',
     'no_file_selected' => 'Geen bestand gekozen',
+    'no_image' => 'Geen afbeelding beschikbaar',
     'files_selected' => ':count bestanden geselecteerd',
     'select_placeholder' => 'Kiezen…',
     'danger_zone' => 'Gevaarzone',

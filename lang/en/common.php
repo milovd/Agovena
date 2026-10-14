@@ -68,6 +68,7 @@ return [
     'uploading' => 'Uploading…',
     'current_image' => 'Current image',
     'no_file_selected' => 'No file selected',
+    'no_image' => 'No image available',
     'files_selected' => ':count files selected',
     'select_placeholder' => 'Select…',
     'danger_zone' => 'Danger zone',
