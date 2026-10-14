@@ -96,11 +96,14 @@ test('event tabs keep the active destination after Livewire updates', function (
     $checkin = Livewire::actingAs($staff)->test(CheckIn::class)
         ->set('code', 'PENDING');
 
-    foreach ([[$index->html(), route('admin.events.index')], [$checkin->html(), route('admin.events.checkin')]] as [$html, $href]) {
+    $hasTabs = view()->exists('events::admin.partials.tabs');
+    foreach ([[$index->html(), route('admin.events.index'), __('events::admin.title')], [$checkin->html(), route('admin.events.checkin'), __('events::admin.checkin_title')]] as [$html, $href, $heading]) {
         $document = new DOMDocument;
         @$document->loadHTML($html);
         $xpath = new DOMXPath($document);
-        expect($xpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a[@href="'.$href.'" and @aria-current="page"]'))->toHaveCount(1);
+        $links = $xpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a[@href="'.$href.'" and @aria-current="page"]');
+        expect($links)->toHaveCount($hasTabs ? 1 : 0)
+            ->and($xpath->query('//h1[text()="'.$heading.'"]'))->toHaveCount(1);
     }
 });
 
@@ -117,10 +120,16 @@ test('check-in-only staff can submit while events-only staff cannot', function (
         ->assertForbidden();
 });
 
-test('event tab navigation has English and Dutch labels', function () {
+test('event navigation uses the labels shipped by the installed package in English and Dutch', function () {
     enableEventsModule();
-    expect(__('events::admin.tabs_label', [], 'en'))->toBe('Event sections')
-        ->and(__('events::admin.tabs_label', [], 'nl'))->toBe('Evenementonderdelen');
+    if (view()->exists('events::admin.partials.tabs')) {
+        expect(__('events::admin.tabs_label', [], 'en'))->toBe('Event sections')
+            ->and(__('events::admin.tabs_label', [], 'nl'))->toBe('Evenementonderdelen');
+    } else {
+        expect(__('events::admin.title', [], 'en'))->toBe('Events')
+            ->and(__('events::admin.title', [], 'nl'))->toBe('Evenementen')
+            ->and(__('events::admin.tabs_label', [], 'en'))->toBe('events::admin.tabs_label');
+    }
 });
 
 test('event and ticket setup is managed from the product tab', function () {

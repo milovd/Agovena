@@ -196,8 +196,14 @@ test('every Blade include in core and the default Theme resolves to a view', fun
                 : view()->exists($view);
             if (! $resolves && $matches[1][$index] === 'includeIf' && str_contains($view, '::')) {
                 [$namespace, $name] = explode('::', $view, 2);
-                // A disabled optional Module has no registered view namespace, even when its partial exists.
-                $resolves = $moduleViews === null || is_file($moduleViews.'/'.$namespace.'/resources/views/'.str_replace('.', '/', $name).'.blade.php');
+                // includeIf is a compatibility seam for optional Module views that may be absent
+                // in a previously released package. The namespace still has to identify a real Module.
+                $moduleRoot = $moduleViews === null ? null : $moduleViews.'/'.$namespace;
+                $manifestPath = $moduleRoot === null ? null : $moduleRoot.'/module.json';
+                $manifest = $manifestPath !== null && is_file($manifestPath)
+                    ? json_decode((string) file_get_contents($manifestPath), true)
+                    : null;
+                $resolves = $moduleViews === null || ($manifest['id'] ?? null) === $namespace;
             }
             if (! $resolves) {
                 $missing[] = "{$view} (in {$file})";

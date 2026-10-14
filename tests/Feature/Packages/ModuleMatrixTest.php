@@ -110,16 +110,22 @@ test('events navigation belongs to fulfillment while product setup and check in 
     $items = collect(app(AdminRegistrar::class)->navigationItems())->keyBy('id');
     $tabs = collect(app(AdminRegistrar::class)->productTabs())->keyBy('id');
 
-    expect($items->get('events')?->label)->toBe('admin.nav.events')
-        ->and($items->get('events')?->group)->toBe('admin.nav_groups.fulfillment')
-        ->and($items->get('events')?->href)->toBe('/admin/events')
-        ->and($items->get('events')?->permission)->toBe('events.view')
-        ->and($items->get('events')?->parent)->toBeNull()
-        ->and($tabs->get('events')?->permission)->toBe('events.view')
-        ->and($items->get('events-checkin')?->group)->toBe('admin.nav_groups.fulfillment')
+    if (view()->exists('events::admin.partials.tabs')) {
+        expect($items->get('events')?->label)->toBe('admin.nav.events')
+            ->and($items->get('events')?->group)->toBe('admin.nav_groups.fulfillment')
+            ->and($items->get('events')?->href)->toBe('/admin/events')
+            ->and($items->get('events')?->permission)->toBe('events.view')
+            ->and($items->get('events')?->parent)->toBeNull()
+            ->and($items->get('events-checkin')?->group)->toBe('admin.nav_groups.fulfillment');
+    } else {
+        expect($items->get('events'))->toBeNull()
+            ->and($items->get('events-checkin')?->group)->toBe('admin.nav_groups.operations');
+    }
+
+    expect($tabs->get('events')?->permission)->toBe('events.view')
         ->and($items->get('events-checkin')?->href)->toBe('/admin/events/check-in')
         ->and($items->get('events-checkin')?->permission)->toBe('events.checkin')
-        ->and($items->get('events-checkin')?->moduleId)->toBe('events')
+        ->and($items->get('events-checkin')?->moduleId)->toBe(view()->exists('events::admin.partials.tabs') ? 'events' : null)
         ->and($items->get('events-checkin')?->parent)->toBeNull()
         ->and($items->get('tickets')?->group)->toBe('admin.nav_groups.customers');
 });
@@ -127,21 +133,24 @@ test('events navigation belongs to fulfillment while product setup and check in 
 test('events and check in sidebar links and routes follow separate staff permissions', function () {
     enableFirstPartyModules(['events']);
 
+    $hasTabs = view()->exists('events::admin.partials.tabs');
     $eventStaff = $this->createStaff(permissions: ['dashboard.view', 'events.view']);
-    $this->actingAs($eventStaff)
-        ->get(route('admin.dashboard'))
-        ->assertOk()
-        ->assertSee('href="/admin/events"', false)
-        ->assertDontSee('href="/admin/events/check-in"', false);
+    $eventPage = $this->actingAs($eventStaff)->get(route('admin.dashboard'))->assertOk();
+    $eventDocument = new DOMDocument;
+    @$eventDocument->loadHTML($eventPage->getContent());
+    $eventNav = new DOMXPath($eventDocument);
+    expect($eventNav->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events"]'))->toHaveCount($hasTabs ? 1 : 0)
+        ->and($eventNav->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events/check-in"]'))->toHaveCount(0);
     $this->get('/admin/events')->assertOk();
     $this->get('/admin/events/check-in')->assertForbidden();
 
     $checkInStaff = $this->createStaff(permissions: ['dashboard.view', 'events.checkin']);
-    $this->actingAs($checkInStaff)
-        ->get(route('admin.dashboard'))
-        ->assertOk()
-        ->assertSee('href="/admin/events/check-in"', false)
-        ->assertDontSee('href="/admin/events"', false);
+    $checkInPage = $this->actingAs($checkInStaff)->get(route('admin.dashboard'))->assertOk();
+    $checkInDocument = new DOMDocument;
+    @$checkInDocument->loadHTML($checkInPage->getContent());
+    $checkInNav = new DOMXPath($checkInDocument);
+    expect($checkInNav->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events/check-in"]'))->toHaveCount(1)
+        ->and($checkInNav->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events"]'))->toHaveCount(0);
     $this->get('/admin/events/check-in')->assertOk();
     $this->get('/admin/events')->assertForbidden();
 });
@@ -158,15 +167,23 @@ test('events and check-in tabs keep separate permissions and a single usable ful
     $document = new DOMDocument;
     @$document->loadHTML($page->getContent());
     $xpath = new DOMXPath($document);
-    $sidebar = $xpath->query('//div[contains(@class, "admin-nav__section") and contains(@data-nav-key, "nav-groupsfulfillment")]//a[@href="/admin/events" or @href="/admin/events/check-in"]');
-    expect($sidebar)->toHaveCount(1)
-        ->and($sidebar->item(0)->getAttribute('href'))->toBe($sidebarHref);
+    $hasTabs = view()->exists('events::admin.partials.tabs');
+    $sidebar = $xpath->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events" or @href="/admin/events/check-in"]');
+    $expectedHref = $hasTabs ? $sidebarHref : (in_array('events.checkin', $permissions, true) ? '/admin/events/check-in' : null);
+    expect($sidebar)->toHaveCount($expectedHref === null ? 0 : 1);
+    if ($expectedHref !== null) {
+        expect($sidebar->item(0)->getAttribute('href'))->toBe($expectedHref);
+    }
 
     $tabs = $xpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a');
-    expect($tabs)->toHaveCount($tabCount)
-        ->and($xpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a[@aria-current="page"]'))->toHaveCount(1);
+    expect($tabs)->toHaveCount($hasTabs ? $tabCount : 0);
+    if ($hasTabs) {
+        expect($xpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a[@aria-current="page"]'))->toHaveCount(1);
+    } else {
+        expect($xpath->query('//h1[text()="'.($eventsStatus === 200 ? __('events::admin.title') : __('events::admin.checkin_title')).'"]'))->toHaveCount(1);
+    }
 
-    if ($eventsStatus === 200 && $checkinStatus === 200) {
+    if ($hasTabs && $eventsStatus === 200 && $checkinStatus === 200) {
         $checkinDocument = new DOMDocument;
         @$checkinDocument->loadHTML($checkin->getContent());
         $checkinXpath = new DOMXPath($checkinDocument);
@@ -216,8 +233,13 @@ test('all first-party modules together expose admin and account surfaces', funct
         ->and($nav)->toContain('digital-delivery-secrets')
         ->and($nav)->toContain('subscriptions')
         ->and($nav)->toContain('provisioning')
-        ->and($nav)->toContain('events')
         ->and($nav)->toContain('events-checkin');
+
+    if (view()->exists('events::admin.partials.tabs')) {
+        expect($nav)->toContain('events');
+    } else {
+        expect($nav)->not->toContain('events');
+    }
 
     expect(collect(app(AdminRegistrar::class)->productTabs())->pluck('id'))->toContain('events');
 

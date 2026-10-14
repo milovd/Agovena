@@ -31,14 +31,17 @@ it('renders page-only selection and confirmed status actions only to managers', 
 
 it('selects only server-visible filtered ids and clears selection on filter or page changes', function (): void {
     $staff = $this->createStaff([], ['pages.view', 'pages.manage']);
+    Page::query()->create(['title' => 'Earlier page', 'slug' => 'earlier-page', 'status' => 'draft'])->delete();
     foreach (range(1, 21) as $number) {
         Page::query()->create(['title' => sprintf('Page %02d', $number), 'slug' => 'page-'.$number, 'status' => 'draft']);
     }
 
+    $lastPage = Page::query()->where('slug', 'page-21')->firstOrFail();
+
     Livewire::actingAs($staff)->test(PagesIndex::class)
         ->set('search', 'Page 21')
         ->call('selectCurrentPage')
-        ->assertSet('selectedPageIds', [21])
+        ->assertSet('selectedPageIds', [$lastPage->id])
         ->set('search', '')
         ->assertSet('selectedPageIds', [])
         ->call('selectCurrentPage')
@@ -46,7 +49,7 @@ it('selects only server-visible filtered ids and clears selection on filter or p
         ->call('gotoPage', 2)
         ->assertSet('selectedPageIds', [])
         ->call('selectCurrentPage')
-        ->assertSet('selectedPageIds', [21])
+        ->assertSet('selectedPageIds', [$lastPage->id])
         ->set('publicationFilter', 'published')
         ->assertSet('selectedPageIds', []);
 });
