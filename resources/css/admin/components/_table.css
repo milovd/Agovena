@@ -43,6 +43,71 @@
   border-bottom: 0;
 }
 
+/* Opt-in labelled rows keep optional-package actions reachable on narrow screens. */
+@media (max-width: 720px) {
+  .ag-table-wrap--mobile-cards { overflow-x: visible; }
+  .ag-table--mobile-cards { display: block; width: 100%; }
+  .ag-table--mobile-cards thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip-path: inset(50%);
+  }
+  .ag-table--mobile-cards tbody {
+    display: grid;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-3);
+  }
+  .ag-table--mobile-cards tbody tr {
+    display: block;
+    min-width: 0;
+    padding: var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-sm);
+  }
+  .ag-table--mobile-cards tbody td {
+    display: grid;
+    grid-template-columns: minmax(5.5rem, 35%) minmax(0, 1fr);
+    gap: var(--ag-space-2);
+    min-width: 0;
+    width: 100%;
+    padding: var(--ag-space-2) 0;
+    border: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .ag-table--mobile-cards tbody td::before {
+    content: attr(data-label);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-xs);
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .ag-table--mobile-cards tbody td .ag-badge { justify-self: start; }
+  .ag-table--mobile-cards tbody td .ag-table__primary {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .ag-table--mobile-cards tbody td.ag-table__actions {
+    width: 100%;
+    border-top: 1px solid var(--ag-color-border);
+  }
+  .ag-table--mobile-cards tbody td.ag-table__actions .ag-icon-btn {
+    justify-self: start;
+    width: auto;
+    min-height: 2.5rem;
+    height: auto;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border-color: var(--ag-color-border);
+    color: var(--ag-color-text);
+  }
+  .ag-table--mobile-cards .ag-table__action-label { display: inline; font-weight: 600; }
+}
+
 .ag-muted {
   color: var(--ag-color-text-muted);
   font-size: 0.875rem;
@@ -706,6 +771,19 @@ a.ag-table__name:focus-visible {
   display: block;
   font-weight: 600;
 }
+
+.ag-table--mobile-cards .ag-table__primary {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: inherit;
+}
+.ag-table--mobile-cards .ag-table__primary .ag-muted {
+  font-size: .75rem;
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}
+.ag-table__action-label { display: none; }
 
 .ag-table__muted {
   display: block;

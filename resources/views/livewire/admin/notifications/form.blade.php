@@ -53,8 +53,12 @@
         ])
     </div>
 
-    <form id="notification-template-form" wire:submit="save" class="ag-form ag-form--product notification-templates__form-page" novalidate>
-        <fieldset id="notification-template-fields" @disabled(! $canManage) class="notification-templates__fields">
+    @if ($canManage)
+        <form id="notification-template-form" wire:submit="save" class="ag-form ag-form--product notification-templates__form-page" novalidate>
+    @else
+        <div class="ag-form ag-form--product notification-templates__form-page">
+    @endif
+        <fieldset id="notification-template-fields" class="notification-templates__fields">
         @if ($tab === 'mail')
             <section class="ag-section" aria-labelledby="notification-mail-heading">
                 <header class="ag-section__header">
@@ -62,26 +66,30 @@
                     <p class="ag-section__lede">{{ __('admin.notifications.mail_help_short') }}</p>
                 </header>
                 <div class="ag-section__body">
-                    <x-ag.switch id="tpl-mail-enabled" wire:model="mailEnabled" value="1" :label="__('admin.notifications.mail_enabled')" />
+                    <x-ag.switch id="tpl-mail-enabled" wire:model="mailEnabled" value="1" :disabled="! $canManage" :label="__('admin.notifications.mail_enabled')" />
 
                     <div class="ag-grid ag-grid--2">
                         <div class="ag-field">
                             <label class="ag-field__label" for="tpl-mail-format">{{ __('admin.notifications.mail_format') }}</label>
-                            <select id="tpl-mail-format" class="ag-select" wire:model="mailFormat">
-                                @foreach (__('admin.notifications.formats') as $value => $label)
-                                    <option value="{{ $value }}">{{ $label }}</option>
-                                @endforeach
-                            </select>
+                            @if ($canManage)
+                                <select id="tpl-mail-format" class="ag-select" wire:model="mailFormat">
+                                    @foreach (__('admin.notifications.formats') as $value => $label)
+                                        <option value="{{ $value }}">{{ $label }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <input id="tpl-mail-format" class="ag-input" value="{{ __('admin.notifications.formats.'.$mailFormat) }}" readonly>
+                            @endif
                             @error('mailFormat') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                         </div>
                         <div class="ag-field">
                             <label class="ag-field__label" for="tpl-subject">{{ __('admin.notifications.subject') }}</label>
-                            <input id="tpl-subject" class="ag-input" wire:model="subject" required>
+                            <input id="tpl-subject" class="ag-input" wire:model="subject" required @readonly(! $canManage)>
                             @error('subject') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                         </div>
                         <div class="ag-field ag-grid__span-2">
                             <label class="ag-field__label" for="tpl-body">{{ __('admin.notifications.body') }}</label>
-                            <textarea id="tpl-body" class="ag-input notification-templates__body" rows="16" wire:model="body" required></textarea>
+                            <textarea id="tpl-body" class="ag-input notification-templates__body" rows="16" wire:model="body" required @readonly(! $canManage)></textarea>
                             @error('body') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -97,15 +105,15 @@
                     <div class="ag-grid ag-grid--2">
                         <div class="ag-field">
                             <label class="ag-field__label" for="tpl-notification-title">{{ __('admin.notifications.notification_title') }}</label>
-                            <input id="tpl-notification-title" class="ag-input" wire:model="notificationTitle" placeholder="{{ __('admin.notifications.notification_title_placeholder') }}">
+                            <input id="tpl-notification-title" class="ag-input" wire:model="notificationTitle" placeholder="{{ __('admin.notifications.notification_title_placeholder') }}" @readonly(! $canManage)>
                             @error('notificationTitle') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                         </div>
                         <div class="ag-field notification-templates__switch-field">
-                            <x-ag.switch id="tpl-notification-enabled" wire:model="notificationEnabled" value="1" :label="__('admin.notifications.notification_enabled')" />
+                            <x-ag.switch id="tpl-notification-enabled" wire:model="notificationEnabled" value="1" :disabled="! $canManage" :label="__('admin.notifications.notification_enabled')" />
                         </div>
                         <div class="ag-field ag-grid__span-2">
                             <label class="ag-field__label" for="tpl-notification-body">{{ __('admin.notifications.notification_body') }}</label>
-                            <textarea id="tpl-notification-body" class="ag-input" rows="6" wire:model="notificationBody" placeholder="{{ __('admin.notifications.notification_body_placeholder') }}"></textarea>
+                            <textarea id="tpl-notification-body" class="ag-input" rows="6" wire:model="notificationBody" placeholder="{{ __('admin.notifications.notification_body_placeholder') }}" @readonly(! $canManage)></textarea>
                             @error('notificationBody') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -113,18 +121,22 @@
                     <div class="notification-templates__channel-list">
                         <div class="notification-templates__channel-row">
                             <strong>{{ __('admin.notifications.push_short') }}</strong>
-                            <x-ag.switch id="tpl-push-enabled" wire:model="pushEnabled" value="1" :label="__('admin.notifications.push_enabled')" />
+                            <x-ag.switch id="tpl-push-enabled" wire:model="pushEnabled" value="1" :disabled="! $canManage" :label="__('admin.notifications.push_enabled')" />
                         </div>
                         <div class="notification-templates__channel-row notification-templates__channel-row--choice">
                             <strong>{{ __('admin.notifications.user_choice') }}</strong>
-                            <x-ag.switch id="tpl-user-choice" wire:model="userChoice" value="1" :label="__('admin.notifications.user_choice_enabled')" />
+                            <x-ag.switch id="tpl-user-choice" wire:model="userChoice" value="1" :disabled="! $canManage" :label="__('admin.notifications.user_choice_enabled')" />
                         </div>
                     </div>
                 </div>
             </section>
         @endif
         </fieldset>
-    </form>
+    @if ($canManage)
+        </form>
+    @else
+        </div>
+    @endif
 
     <div class="ag-form__sticky ag-form__sticky--page notification-templates__actions" role="group" aria-label="{{ __('admin.notifications.form_actions_aria') }}">
         <a class="ag-btn ag-btn--secondary" href="{{ route('admin.notifications') }}">{{ $canManage ? __('common.cancel') : __('common.back') }}</a>

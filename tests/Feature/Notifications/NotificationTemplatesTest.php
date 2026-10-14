@@ -60,6 +60,9 @@ test('view-only staff can inspect templates without editing or creating them', f
         ->get('/admin/notifications')
         ->assertOk()
         ->assertSee(__('admin.notifications.view_aria', ['name' => __('admin.notifications.keys.order_placed')]))
+        ->assertSee('ag-table--mobile-cards', false)
+        ->assertSee('data-label="'.__('admin.notifications.source').'"', false)
+        ->assertSee('class="ag-table__action-label"', false)
         ->assertDontSee(__('admin.notifications.edit_aria', ['name' => __('admin.notifications.keys.order_placed')]));
     $this->actingAs($viewer)
         ->get('/admin/notifications/create')
@@ -68,13 +71,18 @@ test('view-only staff can inspect templates without editing or creating them', f
         ->get('/admin/notifications/order_placed/edit')
         ->assertOk()
         ->assertSee('Readable subject')
-        ->assertSee('id="notification-template-fields" disabled', false)
+        ->assertSee('id="notification-template-fields"', false)
+        ->assertSee('id="tpl-subject" class="ag-input" wire:model="subject" required readonly', false)
+        ->assertSee('id="tpl-body" class="ag-input notification-templates__body" rows="16" wire:model="body" required readonly', false)
+        ->assertDontSee('wire:submit="save"', false)
         ->assertDontSee('type="submit"', false);
 
     Livewire::actingAs($viewer)
         ->test(Templates::class, ['key' => 'order_placed'])
         ->set('tab', 'notifications')
-        ->assertSee('id="notification-template-fields" disabled', false)
+        ->assertSee('id="tpl-notification-title" class="ag-input" wire:model="notificationTitle"', false)
+        ->assertSee('readonly', false)
+        ->assertDontSee('wire:submit="save"', false)
         ->assertDontSee('type="submit"', false)
         ->call('save')
         ->assertForbidden();
@@ -93,7 +101,7 @@ test('managers keep editable notification templates', function () {
         ->get('/admin/notifications/order_placed/edit')
         ->assertOk()
         ->assertSee('id="notification-template-fields"', false)
-        ->assertDontSee('id="notification-template-fields" disabled', false)
+        ->assertSee('wire:submit="save"', false)
         ->assertSee('type="submit"', false);
 });
 

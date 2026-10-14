@@ -26,8 +26,8 @@
             <span class="notification-templates__count">{{ count($definitions) }}</span>
         </div>
 
-        <div class="ag-table-wrap">
-            <table class="ag-table notification-templates__table">
+        <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.notifications.list_heading') }}" tabindex="0">
+            <table class="ag-table ag-table--mobile-cards notification-templates__table">
                 <thead>
                     <tr>
                         <th scope="col">{{ __('admin.notifications.event') }}</th>
@@ -46,26 +46,26 @@
                             $pushEnabled = $template?->push_enabled ?? true;
                         @endphp
                         <tr wire:key="notification-template-{{ $definition->key }}">
-                            <td>
+                            <td data-label="{{ __('admin.notifications.event') }}">
                                 <div class="ag-table__primary">
                                     <span class="ag-table__name">{{ __($definition->label) }}</span>
                                     <span class="ag-muted">{{ $definition->key }}</span>
                                 </div>
                             </td>
-                            <td>
+                            <td data-label="{{ __('admin.notifications.channels') }}">
                                 <div class="notification-templates__channel-badges" aria-label="{{ __('admin.notifications.channels') }}">
                                     <span @class(['ag-badge', 'ag-badge--success' => $mailEnabled, 'ag-badge--muted' => ! $mailEnabled])>{{ __('admin.notifications.mail_short') }}</span>
                                     <span @class(['ag-badge', 'ag-badge--success' => $inAppEnabled, 'ag-badge--muted' => ! $inAppEnabled])>{{ __('admin.notifications.in_app_short') }}</span>
                                     <span @class(['ag-badge', 'ag-badge--success' => $pushEnabled, 'ag-badge--muted' => ! $pushEnabled])>{{ __('admin.notifications.push_short') }}</span>
                                 </div>
                             </td>
-                            <td>{{ $template?->mail_format ? __('admin.notifications.formats.'.$template->mail_format) : __('admin.notifications.default_format') }}</td>
-                            <td>
+                            <td data-label="{{ __('admin.notifications.format') }}">{{ $template?->mail_format ? __('admin.notifications.formats.'.$template->mail_format) : __('admin.notifications.default_format') }}</td>
+                            <td data-label="{{ __('admin.notifications.source') }}">
                                 <span @class(['ag-badge', 'ag-badge--success' => $template, 'ag-badge--muted' => ! $template])>
                                     {{ $template ? __('admin.notifications.customized') : __('admin.notifications.default') }}
                                 </span>
                             </td>
-                            <td class="ag-table__actions">
+                            <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
                                 <div class="ag-row-actions">
                                     @can('notifications.manage')
                                         <a
@@ -75,6 +75,7 @@
                                             aria-label="{{ __('admin.notifications.edit_aria', ['name' => __($definition->label)]) }}"
                                         >
                                             <x-ag.icon name="pencil" :size="16" />
+                                            <span class="ag-table__action-label">{{ __('common.edit') }}</span>
                                         </a>
                                         @if ($template)
                                             <button
@@ -85,6 +86,7 @@
                                                 aria-label="{{ __('admin.notifications.remove_aria', ['name' => __($definition->label)]) }}"
                                             >
                                                 <x-ag.icon name="trash" :size="16" />
+                                                <span class="ag-table__action-label">{{ __('common.remove') }}</span>
                                             </button>
                                         @endif
                                     @else
@@ -95,6 +97,7 @@
                                             aria-label="{{ __('admin.notifications.view_aria', ['name' => __($definition->label)]) }}"
                                         >
                                             <x-ag.icon name="eye" :size="16" />
+                                            <span class="ag-table__action-label">{{ __('common.view') }}</span>
                                         </a>
                                     @endcan
                                 </div>

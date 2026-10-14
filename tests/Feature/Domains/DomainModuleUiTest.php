@@ -12,6 +12,7 @@ use App\Agovena\Admin\AdminRegistrar;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
+use Illuminate\Support\Facades\Lang;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -142,6 +143,62 @@ it('lets authorized staff execute registrar and DNS actions from the domain scre
     expect($updated?->status->value)->toBe('active')
         ->and($updated?->provider_reference)->toBe('provider-action-1')
         ->and($updated?->meta['dns_zone']['zone_reference'] ?? null)->toBe('zone-action-1');
+});
+
+it('confirms registrar operations while view-only staff keep the domain facts without actions', function (string $locale): void {
+    installAndEnableModules(['domains']);
+    app()->setLocale($locale);
+
+    foreach (['pending' => 'register.example.test', 'active' => 'renew.example.test'] as $status => $domain) {
+        DomainRegistration::query()->create([
+            'number' => 'DOM-'.strtoupper($status),
+            'domain_name' => $domain,
+            'status' => $status,
+        ]);
+    }
+
+    $confirmRegister = Lang::has('domains::admin.register_confirm')
+        ? __('domains::admin.register_confirm', ['domain' => 'register.example.test'])
+        : __('common.confirm_external_action', ['action' => __('domains::admin.register'), 'name' => 'register.example.test']);
+    $confirmRenew = Lang::has('domains::admin.renew_confirm')
+        ? __('domains::admin.renew_confirm', ['domain' => 'renew.example.test'])
+        : __('common.confirm_external_action', ['action' => __('domains::admin.renew'), 'name' => 'renew.example.test']);
+
+    $manager = $this->createStaff();
+    Livewire::actingAs($manager)
+        ->test(RegistrationsIndex::class)
+        ->assertSee('wire:confirm="'.$confirmRegister.'"', false)
+        ->assertSee('wire:confirm="'.$confirmRenew.'"', false)
+        ->assertDontSee('domains::admin.register_confirm', false)
+        ->assertDontSee('domains::admin.renew_confirm', false);
+
+    $viewer = $this->createStaff(permissions: ['domains.view']);
+    Livewire::actingAs($viewer)
+        ->test(RegistrationsIndex::class)
+        ->assertSee('register.example.test')
+        ->assertSee('renew.example.test')
+        ->assertDontSee('wire:click="register(', false)
+        ->assertDontSee('wire:click="renew(', false);
+})->with(['en', 'nl']);
+
+it('shows labelled domain status and provider facts on narrow screens without management actions for viewers', function (): void {
+    installAndEnableModules(['domains']);
+    $viewer = $this->createStaff(permissions: ['domains.view']);
+    DomainRegistration::query()->create([
+        'number' => 'DOM-MOBILE-001',
+        'domain_name' => 'mobile.example.test',
+        'registrar_key' => 'registrar-name',
+        'status' => 'active',
+    ]);
+
+    Livewire::actingAs($viewer)
+        ->test(RegistrationsIndex::class)
+        ->assertSee('ag-table--mobile-cards', false)
+        ->assertSee('data-label="'.__('domains::admin.status_label').'"', false)
+        ->assertSee('ag-badge--success', false)
+        ->assertSee('data-label="'.__('domains::admin.registrar').'"', false)
+        ->assertSee('registrar-name')
+        ->assertDontSee('wire:click="renew(', false);
 });
 
 it('denies domain operations to staff without domains.manage', function (): void {

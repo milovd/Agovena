@@ -23,6 +23,7 @@ return [
     'no' => 'No',
     'em_dash' => '-',
     'confirm' => 'Confirm',
+    'confirm_external_action' => 'Confirm :action for :name? This may incur charges.',
     'status' => 'Status',
     'image' => 'Image',
     'price' => 'Price',

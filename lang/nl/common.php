@@ -23,6 +23,7 @@ return [
     'no' => 'Nee',
     'em_dash' => '-',
     'confirm' => 'Bevestigen',
+    'confirm_external_action' => ':action voor :name bevestigen? Dit kan kosten met zich meebrengen.',
     'status' => 'Status',
     'image' => 'Afbeelding',
     'price' => 'Prijs',
