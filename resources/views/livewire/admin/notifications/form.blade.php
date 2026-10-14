@@ -1,7 +1,7 @@
 <div class="admin-page admin-page--form notification-templates notification-templates--form">
     <x-ag.page-header
-        :heading="$isCreate ? __('admin.notifications.create_title') : __('admin.notifications.edit_title')"
-        :lede="__('admin.notifications.form_lede')"
+        :heading="$isCreate ? __('admin.notifications.create_title') : ($canManage ? __('admin.notifications.edit_title') : __('admin.notifications.view_title'))"
+        :lede="$canManage ? __('admin.notifications.form_lede') : __('admin.notifications.view_lede')"
     >
         <x-slot:breadcrumbs>
             <x-ag.breadcrumbs :items="[
@@ -54,6 +54,7 @@
     </div>
 
     <form id="notification-template-form" wire:submit="save" class="ag-form ag-form--product notification-templates__form-page" novalidate>
+        <fieldset id="notification-template-fields" @disabled(! $canManage) class="notification-templates__fields">
         @if ($tab === 'mail')
             <section class="ag-section" aria-labelledby="notification-mail-heading">
                 <header class="ag-section__header">
@@ -122,13 +123,16 @@
                 </div>
             </section>
         @endif
+        </fieldset>
     </form>
 
     <div class="ag-form__sticky ag-form__sticky--page notification-templates__actions" role="group" aria-label="{{ __('admin.notifications.form_actions_aria') }}">
-        <a class="ag-btn ag-btn--secondary" href="{{ route('admin.notifications') }}">{{ __('common.cancel') }}</a>
-        <button type="submit" form="notification-template-form" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
-            <span wire:loading.remove wire:target="save">{{ $isCreate ? __('admin.notifications.create') : __('admin.notifications.save_changes') }}</span>
-            <span wire:loading wire:target="save">{{ __('common.saving') }}</span>
-        </button>
+        <a class="ag-btn ag-btn--secondary" href="{{ route('admin.notifications') }}">{{ $canManage ? __('common.cancel') : __('common.back') }}</a>
+        @if ($canManage)
+            <button type="submit" form="notification-template-form" class="ag-btn ag-btn--primary" wire:loading.attr="disabled" wire:target="save">
+                <span wire:loading.remove wire:target="save">{{ $isCreate ? __('admin.notifications.create') : __('admin.notifications.save_changes') }}</span>
+                <span wire:loading wire:target="save">{{ __('common.saving') }}</span>
+            </button>
+        @endif
     </div>
 </div>

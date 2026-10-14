@@ -87,6 +87,15 @@
                                                 <x-ag.icon name="trash" :size="16" />
                                             </button>
                                         @endif
+                                    @else
+                                        <a
+                                            class="ag-icon-btn"
+                                            href="{{ route('admin.notifications.edit', $definition->key) }}"
+                                            title="{{ __('common.view') }}"
+                                            aria-label="{{ __('admin.notifications.view_aria', ['name' => __($definition->label)]) }}"
+                                        >
+                                            <x-ag.icon name="eye" :size="16" />
+                                        </a>
                                     @endcan
                                 </div>
                             </td>

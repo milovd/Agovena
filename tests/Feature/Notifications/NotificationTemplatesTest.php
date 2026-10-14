@@ -49,6 +49,54 @@ test('notification templates use a list and separate form routes', function () {
         ->assertSee('tpl-body', false);
 });
 
+test('view-only staff can inspect templates without editing or creating them', function () {
+    $viewer = $this->createStaff(permissions: ['notifications.view']);
+    NotificationTemplate::query()->create([
+        'key' => 'order_placed', 'subject' => 'Readable subject',
+        'body' => 'Readable body', 'enabled' => true,
+    ]);
+
+    $this->actingAs($viewer)
+        ->get('/admin/notifications')
+        ->assertOk()
+        ->assertSee(__('admin.notifications.view_aria', ['name' => __('admin.notifications.keys.order_placed')]))
+        ->assertDontSee(__('admin.notifications.edit_aria', ['name' => __('admin.notifications.keys.order_placed')]));
+    $this->actingAs($viewer)
+        ->get('/admin/notifications/create')
+        ->assertForbidden();
+    $this->actingAs($viewer)
+        ->get('/admin/notifications/order_placed/edit')
+        ->assertOk()
+        ->assertSee('Readable subject')
+        ->assertSee('id="notification-template-fields" disabled', false)
+        ->assertDontSee('type="submit"', false);
+
+    Livewire::actingAs($viewer)
+        ->test(Templates::class, ['key' => 'order_placed'])
+        ->set('tab', 'notifications')
+        ->assertSee('id="notification-template-fields" disabled', false)
+        ->assertDontSee('type="submit"', false)
+        ->call('save')
+        ->assertForbidden();
+
+    app()->setLocale('nl');
+    $this->actingAs($viewer)
+        ->get('/admin/notifications/order_placed/edit')
+        ->assertOk()
+        ->assertSee(__('admin.notifications.view_title'))
+        ->assertSee(__('admin.notifications.view_lede'));
+});
+
+test('managers keep editable notification templates', function () {
+    $manager = $this->createStaff();
+    $this->actingAs($manager)
+        ->get('/admin/notifications/order_placed/edit')
+        ->assertOk()
+        ->assertSee('id="notification-template-fields"', false)
+        ->assertDontSee('id="notification-template-fields" disabled', false)
+        ->assertSee('type="submit"', false);
+});
+
 test('notification templates can remove a custom override and restore defaults', function () {
     $staff = $this->createStaff();
     NotificationTemplate::query()->create([

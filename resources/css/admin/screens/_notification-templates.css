@@ -132,6 +132,13 @@
   gap: var(--ag-space-5);
 }
 
+.notification-templates__fields {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
 .notification-templates__form-page .ag-section {
   margin: 0;
 }

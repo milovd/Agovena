@@ -46,6 +46,10 @@ final class Templates extends Component
         $this->authorize('notifications.view');
         $definitions = $catalog->all();
         $this->isCreate = request()->routeIs('admin.notifications.create');
+        if ($this->isCreate) {
+            $this->authorize('notifications.manage');
+        }
+
         $this->selected = $key ?? $definitions[0]->key;
         abort_unless($catalog->find($this->selected) !== null, 404);
         $this->loadSelected(app(RendersNotificationMail::class));
@@ -138,9 +142,11 @@ final class Templates extends Component
     {
         $this->authorize('notifications.view');
         $definition = $catalog->find($this->selected);
+        $canManage = auth()->user()->can('notifications.manage');
 
         return view('livewire.admin.notifications.form', [
             'definition' => $definition,
+            'canManage' => $canManage,
             'tabs' => [
                 'mail' => __('admin.notifications.tabs.mail'),
                 'notifications' => __('admin.notifications.tabs.notifications'),
@@ -150,7 +156,9 @@ final class Templates extends Component
                 : collect($definition->placeholders)->map(static fn (string $name): string => '{{'.$name.'}}')->implode(' '),
             'definitions' => $catalog->all(),
         ])->layout('layouts.admin', [
-            'title' => $this->isCreate ? __('admin.notifications.create_title') : __('admin.notifications.edit_title'),
+            'title' => $this->isCreate
+                ? __('admin.notifications.create_title')
+                : ($canManage ? __('admin.notifications.edit_title') : __('admin.notifications.view_title')),
             'navigation' => $admin->navigationItems(),
         ]);
     }
