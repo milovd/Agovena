@@ -93,13 +93,18 @@ return [
     'roles' => [
         'title' => 'Rollen',
         'lede' => 'Maak rollen aan en koppel rechten. De owner-rol krijgt altijd alle geregistreerde rechten.',
+        'lede_viewer' => 'Bekijk personeelsrollen en het aantal rechten per rol. De owner-rol wordt door het systeem beheerd.',
         'add' => 'Rol toevoegen',
         'new' => 'Nieuwe rol',
         'edit' => 'Rol bewerken',
         'created' => 'Rol aangemaakt.',
         'updated' => 'Rol bijgewerkt.',
         'deleted' => 'Rol verwijderd.',
-        'empty' => 'Nog geen aangepaste rollen',
+        'system' => 'Systeem',
+        'empty' => 'Geen rollen beschikbaar',
+        'empty_page' => 'Geen rollen op deze pagina',
+        'empty_page_text' => 'Ga terug naar de eerste pagina om de beschikbare rollen te zien.',
+        'first_page' => 'Terug naar de eerste pagina',
         'name' => 'Rolnaam',
         'name_help' => 'Alleen kleine letters, cijfers, koppeltekens en underscores (bijvoorbeeld manager of support).',
         'permissions' => 'Rechten',
@@ -108,7 +113,7 @@ return [
         'cannot_rename_owner' => 'De owner-rol kan niet worden hernoemd.',
         'in_use' => 'Deze rol is toegewezen aan een of meer gebruikers en kan niet worden verwijderd.',
         'users_count' => 'Gebruikers',
-        'delete_confirm' => 'Deze rol verwijderen? Gebruikers met deze rol behouden hun account maar verliezen deze roltoewijzing.',
+        'delete_confirm' => 'Deze rol verwijderen? Alleen rollen zonder toegewezen gebruikers kunnen worden verwijderd. Dit kan niet ongedaan worden gemaakt.',
     ],
 
     'permissions' => [

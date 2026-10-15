@@ -93,13 +93,18 @@ return [
     'roles' => [
         'title' => 'Roles',
         'lede' => 'Create roles and attach permissions. The owner role always receives every registered permission.',
+        'lede_viewer' => 'Review staff roles and their permission counts. The owner role is managed by the system.',
         'add' => 'Add role',
         'new' => 'New role',
         'edit' => 'Edit role',
         'created' => 'Role created.',
         'updated' => 'Role updated.',
         'deleted' => 'Role deleted.',
-        'empty' => 'No custom roles yet',
+        'system' => 'System',
+        'empty' => 'No roles available',
+        'empty_page' => 'No roles on this page',
+        'empty_page_text' => 'Return to the first page to see the available roles.',
+        'first_page' => 'Back to first page',
         'name' => 'Role name',
         'name_help' => 'Lowercase letters, numbers, hyphens, and underscores only (for example manager or support).',
         'permissions' => 'Permissions',
@@ -108,7 +113,7 @@ return [
         'cannot_rename_owner' => 'The owner role cannot be renamed.',
         'in_use' => 'This role is assigned to one or more users and cannot be deleted.',
         'users_count' => 'Users',
-        'delete_confirm' => 'Delete this role? Users with this role will keep their account but lose this role assignment.',
+        'delete_confirm' => 'Delete this role? Only roles without assigned users can be deleted. This cannot be undone.',
     ],
 
     'permissions' => [

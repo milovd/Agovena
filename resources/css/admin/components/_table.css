@@ -124,6 +124,19 @@
     flex-shrink: 0;
     white-space: nowrap;
   }
+  .ag-table--roles tbody td.ag-table__actions { grid-template-columns: minmax(0, 1fr); }
+  .ag-table--roles tbody td.ag-table__actions--unavailable { display: none; }
+  .ag-table--roles tbody td.ag-table__actions .ag-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .ag-table--roles tbody td.ag-table__actions .ag-icon-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
 }
 
 .ag-muted {

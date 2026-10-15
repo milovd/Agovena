@@ -60,19 +60,46 @@ final class AdminRoleAssignmentPolicy
                 ]);
             }
 
-            $lockedActor->load('roles');
-            $lockedTarget->load('roles');
-            $this->assertCanChangeRoles($lockedActor, $lockedTarget, $roleNames, $field);
-            $lockedTarget->syncRoles($roleNames);
+            $roleIdsByUser = DB::table(config('permission.table_names.model_has_roles'))
+                ->where('model_type', $actor->getMorphClass())
+                ->whereIn(config('permission.column_names.model_morph_key'), $lockedUsers->pluck('id')->all())
+                ->orderBy('role_id')
+                ->lockForUpdate()
+                ->get()
+                ->groupBy(config('permission.column_names.model_morph_key'));
+            $assignedRoleIds = $roleIdsByUser->flatten()->pluck('role_id')->unique();
+            $roles = Role::query()
+                ->where('guard_name', User::GUARD)
+                ->where(function ($query) use ($assignedRoleIds, $roleNames): void {
+                    $query->whereKey($assignedRoleIds->all())->orWhereIn('name', $roleNames);
+                })
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+            foreach ($roles as $role) {
+                $role->setRelation('permissions', $role->permissions()->lockForUpdate()->get());
+            }
+            foreach ($lockedUsers as $user) {
+                $ids = $roleIdsByUser->get($user->getKey(), collect())->pluck('role_id');
+                $user->setRelation('roles', $roles->filter(
+                    fn (Role $role): bool => $ids->contains($role->getKey()),
+                )->values());
+            }
+            $lockedActor->setRelation('permissions', $lockedActor->permissions()->lockForUpdate()->get());
+            $rolesByName = $roles->keyBy('name');
+            $ownerCount = $lockedUsers->filter(fn (User $user): bool => $user->hasRole('owner', User::GUARD))->count();
+            $this->assertCanChangeRoles($lockedActor, $lockedTarget, $rolesByName, $roleNames, $field, $ownerCount);
+            $lockedTarget->syncRoles(collect($roleNames)->map(fn (string $name): Role => $rolesByName->get($name))->all());
 
             return $lockedTarget->fresh(['roles']);
         });
     }
 
     /**
+     * @param  Collection<string, Role>  $roles
      * @param  list<string>  $roleNames
      */
-    private function assertCanChangeRoles(User $actor, User $target, array $roleNames, string $field): void
+    private function assertCanChangeRoles(User $actor, User $target, Collection $roles, array $roleNames, string $field, int $ownerCount): void
     {
         if ($actor->is($target)) {
             throw ValidationException::withMessages([
@@ -80,14 +107,8 @@ final class AdminRoleAssignmentPolicy
             ]);
         }
 
-        $target->load('roles');
+        $target->loadMissing('roles');
         $currentRoleNames = $target->getRoleNames()->all();
-        $roles = Role::query()
-            ->where('guard_name', User::GUARD)
-            ->whereIn('name', $roleNames)
-            ->with('permissions')
-            ->get()
-            ->keyBy('name');
 
         $targetIsOwner = in_array('owner', $currentRoleNames, true);
         $actorIsOwner = $actor->hasRole('owner', User::GUARD);
@@ -101,7 +122,9 @@ final class AdminRoleAssignmentPolicy
         foreach ($roleNames as $roleName) {
             $role = $roles->get($roleName);
             if (! $role instanceof Role) {
-                continue;
+                throw ValidationException::withMessages([
+                    $field => __('admin.customers.role_not_assignable'),
+                ]);
             }
 
             if (! $this->canGrantRole($actor, $role) && ! in_array($roleName, $currentRoleNames, true)) {
@@ -112,12 +135,6 @@ final class AdminRoleAssignmentPolicy
         }
 
         if ($targetIsOwner && ! in_array('owner', $roleNames, true)) {
-            $ownerCount = User::query()
-                ->whereHas('roles', fn ($query) => $query
-                    ->where('guard_name', User::GUARD)
-                    ->where('name', 'owner'))
-                ->count();
-
             if ($ownerCount <= 1) {
                 throw ValidationException::withMessages([
                     $field => __('admin.customers.last_owner'),
@@ -135,6 +152,8 @@ final class AdminRoleAssignmentPolicy
             ->whereHas('roles', fn ($query) => $query
                 ->where('guard_name', User::GUARD)
                 ->where('name', 'owner'))
+            ->orderBy('id')
+            ->lockForUpdate()
             ->pluck('id')
             ->push($actor->getKey())
             ->push($target->getKey())
@@ -149,6 +168,17 @@ final class AdminRoleAssignmentPolicy
             ->get();
     }
 
+    public function canManageRole(User $actor, Role $role): bool
+    {
+        $actor->loadMissing('roles');
+
+        if ($role->name === 'owner' || $actor->roles->contains($role)) {
+            return false;
+        }
+
+        return $this->canGrantRole($actor, $role);
+    }
+
     public function canGrantRole(User $actor, Role $role): bool
     {
         if ($role->name === 'owner') {
@@ -160,13 +190,29 @@ final class AdminRoleAssignmentPolicy
         }
 
         $role->loadMissing('permissions');
-
         foreach ($role->permissions as $permission) {
-            if (! $permission instanceof Permission || ! $actor->can($permission->name)) {
+            if (! $permission instanceof Permission || ! $this->hasEffectivePermission($actor, $permission->name)) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    public function hasEffectivePermission(User $actor, string $ability): bool
+    {
+        $actor->loadMissing(['roles.permissions', 'permissions']);
+
+        if ($actor->hasRole('owner', User::GUARD) || $actor->permissions->contains('name', $ability)) {
+            return true;
+        }
+
+        foreach ($actor->roles as $role) {
+            if ($role instanceof Role && $role->permissions->contains('name', $ability)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
