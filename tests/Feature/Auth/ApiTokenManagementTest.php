@@ -33,6 +33,30 @@ test('admin token editor renders create controls and every supported access grou
         ->assertSee('token-ip-allowlist', false);
 });
 
+test('admin token list does not label a scoped token as full access', function () {
+    $staff = $this->createStaff([], ['api.tokens']);
+    $scoped = $staff->createToken('Scoped integration', ['account.read'])->accessToken;
+    $unrestricted = $staff->createToken('Unrestricted integration', ['*'])->accessToken;
+
+    $html = Livewire::actingAs($staff)->test(ApiTokens::class)->html();
+    $document = new DOMDocument;
+    $previous = libxml_use_internal_errors(true);
+    try {
+        $document->loadHTML($html, LIBXML_NONET);
+    } finally {
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+    }
+
+    $xpath = new DOMXPath($document);
+    $scopedRow = $xpath->query('//tr[@*[name()="wire:key"]="pat-'.$scoped->id.'"]')->item(0);
+    $unrestrictedRow = $xpath->query('//tr[@*[name()="wire:key"]="pat-'.$unrestricted->id.'"]')->item(0);
+    expect($scopedRow)->not->toBeNull()
+        ->and($unrestrictedRow)->not->toBeNull()
+        ->and($scopedRow->textContent)->not->toContain(__('admin.api_tokens.ability_all'))
+        ->and($unrestrictedRow->textContent)->toContain(__('admin.api_tokens.ability_all'));
+});
+
 test('module api routes resolve to their token access permissions', function () {
     expect(ApiTokenAbilities::forRoute('api.v1.subscriptions.index'))->toBe(ApiTokenAbilities::SUBSCRIPTIONS_READ)
         ->and(ApiTokenAbilities::forRoute('api.v1.services.show'))->toBe(ApiTokenAbilities::SERVICES_READ)

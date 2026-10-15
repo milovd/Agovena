@@ -155,7 +155,9 @@
                                 <td>
                                     <div class="ag-table__primary">
                                         <span class="ag-table__name">{{ $token->name }}</span>
-                                        <span class="ag-muted">{{ __('admin.api_tokens.ability_all') }}</span>
+                                        @if ($hasFullAccess)
+                                            <span class="ag-muted">{{ __('admin.api_tokens.ability_all') }}</span>
+                                        @endif
                                     </div>
                                 </td>
                                 <td>
