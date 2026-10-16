@@ -11,6 +11,44 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
+it('offers and applies the localized manual review status filter', function (): void {
+    installAndEnableModule('provisioning');
+    app(SyncRegisteredPermissions::class)(force: true);
+    $viewer = $this->createStaff(permissions: ['provisioning.view']);
+
+    ServiceInstance::query()->create([
+        'number' => 'SVC-FILTER-REVIEW',
+        'status' => ServiceInstanceStatus::ManualReview,
+        'provider_key' => 'manual',
+        'customer_email' => 'review@example.test',
+    ]);
+    ServiceInstance::query()->create([
+        'number' => 'SVC-FILTER-ACTIVE',
+        'status' => ServiceInstanceStatus::Active,
+        'provider_key' => 'manual',
+        'customer_email' => 'active@example.test',
+    ]);
+
+    $originalLocale = app()->getLocale();
+    try {
+        foreach (['en', 'nl'] as $locale) {
+            app()->setLocale($locale);
+            $label = __('provisioning::status.manual_review');
+            expect($label)->not->toBe('provisioning::status.manual_review');
+            Livewire::actingAs($viewer)
+                ->test(InstancesIndex::class)
+                ->assertSee('<option value="manual_review">'.$label.'</option>', false)
+                ->assertSee('SVC-FILTER-REVIEW')
+                ->assertSee('SVC-FILTER-ACTIVE')
+                ->set('status', ServiceInstanceStatus::ManualReview->value)
+                ->assertSee('SVC-FILTER-REVIEW')
+                ->assertDontSee('SVC-FILTER-ACTIVE');
+        }
+    } finally {
+        app()->setLocale($originalLocale);
+    }
+});
+
 it('registers responsive table cards for optional Admin lists', function (): void {
     $css = file_get_contents(resource_path('css/admin/components/_table.css'));
     expect($css)->toContain('@media (max-width: 720px)')
