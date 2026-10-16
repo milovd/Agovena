@@ -20,6 +20,7 @@ use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Ticket;
 use App\Support\MoneyFormatter;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -342,7 +343,7 @@ test('dashboard chart data table localizes nonzero money and full dates', functi
 });
 
 test('dashboard chart data table distinguishes dates across a year boundary', function () {
-    $this->travelTo(\Carbon\CarbonImmutable::parse('2027-01-02 12:00:00'));
+    $this->travelTo(CarbonImmutable::parse('2027-01-02 12:00:00'));
     $staff = $this->createStaff();
     Order::factory()->create(['created_at' => now()]);
 
@@ -357,8 +358,8 @@ test('dashboard chart data table distinguishes dates across a year boundary', fu
         }
 
         expect($dates)->toHaveCount(14)
-            ->toContain(\Carbon\CarbonImmutable::parse('2026-12-31')->locale($locale)->isoFormat('LL'))
-            ->toContain(\Carbon\CarbonImmutable::parse('2027-01-01')->locale($locale)->isoFormat('LL'));
+            ->toContain(CarbonImmutable::parse('2026-12-31')->locale($locale)->isoFormat('LL'))
+            ->toContain(CarbonImmutable::parse('2027-01-01')->locale($locale)->isoFormat('LL'));
     }
 });
 
