@@ -7,6 +7,7 @@ use App\Agovena\Auth\ConfirmsRecentPassword;
 use App\Livewire\Admin\Roles\Index as RolesIndex;
 use App\Models\User;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\Grammars\MySqlGrammar;
 use Illuminate\Database\Query\Grammars\SQLiteGrammar;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -398,13 +399,16 @@ function traceRoleLocks(): array
     $connection = DB::connection();
     $originalGrammar = $connection->getQueryGrammar();
     // SQLite drops FOR UPDATE; preserve the requested lock as an inert SQL comment.
-    $connection->setQueryGrammar(new class($connection) extends SQLiteGrammar
-    {
-        protected function compileLock(Builder $query, $value)
+    // MySQL must retain its own grammar so this test traces real locking reads.
+    if ($connection->getDriverName() === 'sqlite') {
+        $connection->setQueryGrammar(new class($connection) extends SQLiteGrammar
         {
-            return $value ? ' /* locking read */' : '';
-        }
-    });
+            protected function compileLock(Builder $query, $value)
+            {
+                return $value ? ' /* locking read */' : '';
+            }
+        });
+    }
 
     $queries = new ArrayObject;
     $recording = new ArrayObject(['active' => true]);
@@ -421,6 +425,45 @@ function traceRoleLocks(): array
     }];
 }
 
+function tracedRoleTable(string $sql, string $table): bool
+{
+    return preg_match('/\bfrom\s+(["`])'.preg_quote($table, '/').'\1(?:\s|$)/i', $sql) === 1;
+}
+
+function tracedRoleColumnEqualsPlaceholder(string $sql, string $column): bool
+{
+    return preg_match('/(["`])'.preg_quote($column, '/').'\1\s*=\s*\?/', $sql) === 1;
+}
+
+function tracedRoleLock(string $sql): bool
+{
+    return str_contains($sql, '/* locking read */')
+        || preg_match('/\sfor update\s*$/i', $sql) === 1;
+}
+
+test('role lock tracing keeps native MySQL query grammar and lock syntax', function (): void {
+    $defaultConnection = DB::getDefaultConnection();
+    DB::setDefaultConnection('mysql');
+    try {
+        [, $stopTracing] = traceRoleLocks();
+        try {
+            $query = DB::table('users')->where('name', 'owner')->lockForUpdate();
+            $sql = $query->toSql();
+            expect(DB::connection()->getQueryGrammar())->toBeInstanceOf(MySqlGrammar::class)
+                ->and($sql)->toContain('`users`')->toContain('for update')
+                ->and(tracedRoleTable($sql, 'users'))->toBeTrue()
+                ->and(tracedRoleColumnEqualsPlaceholder($sql, 'name'))->toBeTrue()
+                ->and(tracedRoleLock($sql))->toBeTrue()
+                ->and(tracedRoleTable('select * from `users"', 'users'))->toBeFalse()
+                ->and(tracedRoleColumnEqualsPlaceholder('where `name" = ?', 'name'))->toBeFalse();
+        } finally {
+            $stopTracing();
+        }
+    } finally {
+        DB::setDefaultConnection($defaultConnection);
+    }
+});
+
 test('role assignment locks candidate permissions before deciding grantability', function (): void {
     $staff = $this->createStaff(permissions: ['users.update', 'roles.view']);
     $target = User::factory()->create();
@@ -436,12 +479,12 @@ test('role assignment locks candidate permissions before deciding grantability',
         $stopTracing();
     }
 
-    $roleRead = collect($queries)->first(fn (array $query): bool => str_contains($query['sql'], 'from "roles"')
+    $roleRead = collect($queries)->first(fn (array $query): bool => tracedRoleTable($query['sql'], 'roles')
         && in_array($candidate->name, $query['bindings'], true));
     $permissionRead = collect($queries)->first(fn (array $query): bool => str_contains($query['sql'], 'role_has_permissions')
         && in_array($candidate->id, $query['bindings'], true));
-    expect($roleRead['sql'] ?? '')->toContain('/* locking read */')
-        ->and($permissionRead['sql'] ?? '')->toContain('/* locking read */')
+    expect(tracedRoleLock($roleRead['sql'] ?? ''))->toBeTrue()
+        ->and(tracedRoleLock($permissionRead['sql'] ?? ''))->toBeTrue()
         ->and($target->fresh()->roles)->toHaveCount(0);
 });
 
@@ -457,10 +500,10 @@ test('role assignment uses the locked role identity without a later name lookup'
         $stopTracing();
     }
 
-    $unlockedNameLookups = collect($queries)->filter(fn (array $query): bool => str_contains($query['sql'], 'from "roles"')
-        && str_contains($query['sql'], '"name" = ?')
+    $unlockedNameLookups = collect($queries)->filter(fn (array $query): bool => tracedRoleTable($query['sql'], 'roles')
+        && tracedRoleColumnEqualsPlaceholder($query['sql'], 'name')
         && in_array($role->name, $query['bindings'], true)
-        && ! str_contains($query['sql'], '/* locking read */'));
+        && ! tracedRoleLock($query['sql']));
     expect($unlockedNameLookups)->toBeEmpty()
         ->and($target->fresh()->roles->pluck('name')->all())->toBe([$role->name]);
 });
@@ -478,10 +521,10 @@ test('the last owner guard counts locked role assignments instead of an old snap
     }
 
     $snapshotCounts = collect($queries)->filter(fn (array $query): bool => str_contains($query['sql'], 'count(*)')
-        && str_contains($query['sql'], 'from "users"')
-        && str_contains($query['sql'], '"name" = ?')
+        && tracedRoleTable($query['sql'], 'users')
+        && tracedRoleColumnEqualsPlaceholder($query['sql'], 'name')
         && in_array('owner', $query['bindings'], true)
-        && ! str_contains($query['sql'], '/* locking read */'));
+        && ! tracedRoleLock($query['sql']));
     expect($snapshotCounts)->toBeEmpty()
         ->and($target->fresh()->hasRole('owner'))->toBeFalse()
         ->and($actor->fresh()->hasRole('owner'))->toBeTrue();
@@ -503,11 +546,11 @@ test('role deletion locks assignment pivots before checking whether the role is 
         $stopTracing();
     }
 
-    $pivotReads = collect($queries)->filter(fn (array $query): bool => str_contains($query['sql'], 'from "model_has_roles"')
-        && str_contains($query['sql'], 'where "role_id" = ?')
+    $pivotReads = collect($queries)->filter(fn (array $query): bool => tracedRoleTable($query['sql'], 'model_has_roles')
+        && tracedRoleColumnEqualsPlaceholder($query['sql'], 'role_id')
         && str_starts_with($query['sql'], 'select')
         && in_array($role->id, $query['bindings'], true));
     expect($pivotReads)->not->toBeEmpty()
-        ->and(str_contains($pivotReads->first()['sql'], '/* locking read */'))->toBeTrue(json_encode($pivotReads->pluck('sql')->all()))
+        ->and(tracedRoleLock($pivotReads->first()['sql']))->toBeTrue(json_encode($pivotReads->pluck('sql')->all()))
         ->and(Role::query()->whereKey($role->id)->exists())->toBeFalse();
 });
