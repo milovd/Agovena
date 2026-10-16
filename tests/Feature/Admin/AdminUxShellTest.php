@@ -8,14 +8,18 @@ use App\Agovena\Modules\ModuleManager;
 use App\Agovena\Permissions\SyncRegisteredPermissions;
 use App\Agovena\Settings\SettingsRepository;
 use App\Agovena\Theme\StorefrontBrand;
+use App\Enums\PaymentStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Livewire\Admin\Customers\Index as CustomersIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Models\Currency;
 use App\Models\Customer;
+use App\Models\Order;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\Ticket;
+use App\Support\MoneyFormatter;
 use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -284,6 +288,77 @@ test('dashboard line series use the same contrasting colors as the bar series', 
                 ->and($dataset['pointBackgroundColor'])->toBe($dataset['barBackgroundColor'])
                 ->and($dataset['pointHoverBackgroundColor'])->toBe($dataset['barBackgroundColor']);
         }
+    }
+});
+
+test('dashboard chart exposes daily values in an accessible table without changing its canvas', function () {
+    $staff = $this->createStaff();
+    Order::factory()->create(['created_at' => now()]);
+    $series = app(DashboardMetrics::class)->build('14');
+    $document = new DOMDocument;
+    $component = Livewire::actingAs($staff)->test(Dashboard::class);
+    @$document->loadHTML('<?xml encoding="utf-8"?>'.$component->html());
+    $xpath = new DOMXPath($document);
+    $table = $xpath->query('//table[@id="dashboard-chart-data"]')->item(0);
+
+    expect($table)->not->toBeNull()
+        ->and($table->getAttribute('class'))->toContain('visually-hidden')
+        ->and($xpath->query('.//caption', $table)->item(0)->textContent)->toContain(__('admin.dashboard.charts.overview'))
+        ->and($xpath->query('.//tbody/tr', $table))->toHaveCount(14)
+        ->and($xpath->query('//canvas[@x-ref="canvas"]'))->toHaveCount(1);
+
+    $lastRow = $xpath->query('.//tbody/tr[last()]', $table)->item(0);
+    expect(trim($xpath->query('./th', $lastRow)->item(0)->textContent))->toBe(now()->locale(app()->getLocale())->isoFormat('LL'))
+        ->and(trim($xpath->query('./td[1]', $lastRow)->item(0)->textContent))->toBe(MoneyFormatter::format($series['revenueSeries']['values'][13], $series['revenueSeries']['currency']))
+        ->and(trim($xpath->query('./td[2]', $lastRow)->item(0)->textContent))->toBe('1');
+
+    $document = new DOMDocument;
+    @$document->loadHTML('<?xml encoding="utf-8"?>'.$component->set('chartRange', '90')->set('chartType', 'bar')->html());
+    expect((new DOMXPath($document))->query('//table[@id="dashboard-chart-data"]/tbody/tr'))->toHaveCount(90);
+});
+
+test('dashboard chart data table localizes nonzero money and full dates', function () {
+    $staff = $this->createStaff();
+    $order = Order::factory()->create(['created_at' => now()]);
+    Payment::factory()->create([
+        'order_id' => $order->id,
+        'status' => PaymentStatus::Paid,
+        'amount' => 123456,
+        'currency' => 'EUR',
+        'paid_at' => now(),
+    ]);
+
+    foreach (['en' => '1,234.56', 'nl' => '1.234,56'] as $locale => $amount) {
+        app()->setLocale($locale);
+        $document = new DOMDocument;
+        @$document->loadHTML('<?xml encoding="utf-8"?>'.Livewire::actingAs($staff)->test(Dashboard::class)->html());
+        $xpath = new DOMXPath($document);
+        $row = $xpath->query('//table[@id="dashboard-chart-data"]/tbody/tr[last()]')->item(0);
+        expect($row)->not->toBeNull()
+            ->and(trim($xpath->query('./th', $row)->item(0)->textContent))->toBe(now()->locale($locale)->isoFormat('LL'))
+            ->and(trim($xpath->query('./td[1]', $row)->item(0)->textContent))->toContain($amount)
+            ->and(trim($xpath->query('./td[2]', $row)->item(0)->textContent))->toBe('1');
+    }
+});
+
+test('dashboard chart data table distinguishes dates across a year boundary', function () {
+    $this->travelTo(\Carbon\CarbonImmutable::parse('2027-01-02 12:00:00'));
+    $staff = $this->createStaff();
+    Order::factory()->create(['created_at' => now()]);
+
+    foreach (['en', 'nl'] as $locale) {
+        app()->setLocale($locale);
+        $document = new DOMDocument;
+        @$document->loadHTML('<?xml encoding="utf-8"?>'.Livewire::actingAs($staff)->test(Dashboard::class)->html());
+        $xpath = new DOMXPath($document);
+        $dates = [];
+        foreach ($xpath->query('//table[@id="dashboard-chart-data"]/tbody/tr/th') as $heading) {
+            $dates[] = trim($heading->textContent);
+        }
+
+        expect($dates)->toHaveCount(14)
+            ->toContain(\Carbon\CarbonImmutable::parse('2026-12-31')->locale($locale)->isoFormat('LL'))
+            ->toContain(\Carbon\CarbonImmutable::parse('2027-01-01')->locale($locale)->isoFormat('LL'));
     }
 });
 

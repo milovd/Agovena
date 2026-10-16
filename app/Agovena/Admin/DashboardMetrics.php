@@ -37,7 +37,7 @@ final class DashboardMetrics
     /**
      * @return array{
      *     metrics: list<array{id: string, label: string, value: string, hint: ?string, href: ?string}>,
-     *     revenueSeries: array{labels: list<string>, values: list<int>, currency: string, precision: int},
+     *     revenueSeries: array{labels: list<string>, dates: list<string>, values: list<int>, currency: string, precision: int},
      *     orderSeries: array{labels: list<string>, values: list<int>},
      *     supportTicketCount: int,
      *     supportTickets: EloquentCollection<int, Ticket>,
@@ -253,7 +253,7 @@ final class DashboardMetrics
      * Daily paid revenue in minor units of the display currency, with that currency's precision
      * so a chart can render major amounts without floats on the server.
      *
-     * @return array{labels: list<string>, values: list<int>, currency: string, precision: int}
+     * @return array{labels: list<string>, dates: list<string>, values: list<int>, currency: string, precision: int}
      */
     private function dailyPaidRevenue(CarbonImmutable $from, int $days, string $displayCurrency): array
     {
@@ -313,21 +313,24 @@ final class DashboardMetrics
 
     /**
      * @param  Collection<string, int>  $rows
-     * @return array{labels: list<string>, values: list<int>, currency: string}
+     * @return array{labels: list<string>, dates: list<string>, values: list<int>, currency: string}
      */
     private function fillDailySeries(CarbonImmutable $from, int $days, Collection $rows, string $currency): array
     {
         $labels = [];
+        $dates = [];
         $values = [];
         for ($i = 0; $i < $days; $i++) {
             $day = $from->addDays($i);
             $key = $day->toDateString();
             $labels[] = $day->format('M j');
+            $dates[] = $key;
             $values[] = (int) ($rows[$key] ?? 0);
         }
 
         return [
             'labels' => $labels,
+            'dates' => $dates,
             'values' => $values,
             'currency' => $currency,
         ];

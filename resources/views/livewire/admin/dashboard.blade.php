@@ -202,8 +202,30 @@
                         <p class="ag-empty__text">{{ __('admin.dashboard.charts.empty_overview') }}</p>
                     </div>
                 @else
+                    @php
+                        $chartMoneyFormatter = new \App\Support\LocalizedCurrencyFormatter(app()->getLocale(), $revenueSeries['currency'], $revenueSeries['precision']);
+                    @endphp
                     <div class="ag-chart-card__canvas ag-chart-card__canvas--legend">
                         <canvas x-ref="canvas" role="img" aria-label="{{ __('admin.dashboard.charts.overview') }}"></canvas>
+                        <table id="dashboard-chart-data" class="visually-hidden">
+                            <caption>{{ __('admin.dashboard.charts.overview') }}</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">{{ __('admin.dashboard.charts.range_label') }}</th>
+                                    <th scope="col">{{ __('admin.dashboard.charts.revenue') }}</th>
+                                    <th scope="col">{{ __('admin.dashboard.charts.orders') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($revenueSeries['dates'] as $index => $date)
+                                    <tr>
+                                        <th scope="row">{{ \Carbon\CarbonImmutable::parse($date)->locale(app()->getLocale())->isoFormat('LL') }}</th>
+                                        <td>{{ $chartMoneyFormatter->format($revenueSeries['values'][$index]) }}</td>
+                                        <td>{{ number_format($orderSeries['values'][$index], 0, ',', app()->getLocale() === 'nl' ? '.' : ',') }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     </div>
                 @endif
             </section>
