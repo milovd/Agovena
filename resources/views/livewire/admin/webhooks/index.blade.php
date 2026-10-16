@@ -126,6 +126,9 @@
                         </table>
                     </div>
                 @endif
+                @if ($endpoints->hasPages())
+                    <div class="ag-pagination">{{ $endpoints->links() }}</div>
+                @endif
             </x-ag.card.content>
         </x-ag.card>
 
@@ -183,6 +186,9 @@
                             </tbody>
                         </table>
                     </div>
+                @endif
+                @if ($deliveries->hasPages())
+                    <div class="ag-pagination">{{ $deliveries->links() }}</div>
                 @endif
             </x-ag.card.content>
         </x-ag.card>

@@ -82,6 +82,121 @@ it('queues failed deliveries for a controlled retry', function (): void {
     Queue::assertPushed(DeliverWebhook::class, fn (DeliverWebhook $job): bool => $job->deliveryId === $delivery->id);
 });
 
+it('paginates endpoint and delivery histories independently instead of silently truncating them', function (): void {
+    $viewer = $this->createStaff([], ['webhooks.view']);
+    $firstEndpointId = $lastEndpointId = $firstDeliveryId = $lastDeliveryId = null;
+    foreach (range(1, 22) as $number) {
+        $endpoint = WebhookEndpoint::query()->create([
+            'name' => sprintf('History endpoint %02d', $number),
+            'url' => 'https://example.test/webhooks',
+            'secret' => 'test-only-placeholder',
+            'events' => ['order.created'],
+            'active' => true,
+        ]);
+        $delivery = WebhookDelivery::query()->create([
+            'delivery_id' => sprintf('history-delivery-%02d', $number),
+            'webhook_endpoint_id' => $endpoint->id,
+            'event_type' => 'order.created',
+            'payload' => ['type' => 'order.created'],
+            'status' => 'failed',
+            'attempt_count' => 1,
+        ]);
+        if ($number === 1) {
+            $firstEndpointId = $endpoint->id;
+            $firstDeliveryId = $delivery->id;
+        }
+        if ($number === 22) {
+            $lastEndpointId = $endpoint->id;
+            $lastDeliveryId = $delivery->id;
+        }
+    }
+
+    Livewire::actingAs($viewer)
+        ->test(Index::class)
+        ->assertSee('wire:key="webhook-endpoint-'.$lastEndpointId.'"', false)
+        ->assertDontSee('wire:key="webhook-endpoint-'.$firstEndpointId.'"', false)
+        ->assertSee('wire:key="webhook-delivery-'.$lastDeliveryId.'"', false)
+        ->assertDontSee('wire:key="webhook-delivery-'.$firstDeliveryId.'"', false)
+        ->call('gotoPage', 2, 'endpointsPage')
+        ->assertSee('wire:key="webhook-endpoint-'.$firstEndpointId.'"', false)
+        ->assertDontSee('wire:key="webhook-endpoint-'.$lastEndpointId.'"', false)
+        ->assertSee('wire:key="webhook-delivery-'.$lastDeliveryId.'"', false)
+        ->call('gotoPage', 2, 'deliveriesPage')
+        ->assertSee('wire:key="webhook-delivery-'.$firstDeliveryId.'"', false)
+        ->assertDontSee('wire:key="webhook-delivery-'.$lastDeliveryId.'"', false)
+        ->assertSee('wire:key="webhook-endpoint-'.$firstEndpointId.'"', false);
+
+    Livewire::actingAs($viewer);
+    Livewire::withQueryParams(['endpointsPage' => 2, 'deliveriesPage' => 2])
+        ->test(Index::class)
+        ->assertSee('wire:key="webhook-endpoint-'.$firstEndpointId.'"', false)
+        ->assertDontSee('wire:key="webhook-endpoint-'.$lastEndpointId.'"', false)
+        ->assertSee('wire:key="webhook-delivery-'.$firstDeliveryId.'"', false)
+        ->assertDontSee('wire:key="webhook-delivery-'.$lastDeliveryId.'"', false);
+});
+
+it('describes the paginated delivery history without a fixed last-fifty limit', function (): void {
+    foreach (['en', 'nl'] as $locale) {
+        $lede = __('admin.webhooks.delivery_log_lede', [], $locale);
+        expect($lede)->not->toBe('admin.webhooks.delivery_log_lede')
+            ->and($lede)->not->toContain('50');
+    }
+});
+
+it('recovers out-of-range webhook pages without claiming the histories are empty', function (): void {
+    $viewer = $this->createStaff([], ['webhooks.view']);
+    $endpoint = WebhookEndpoint::query()->create([
+        'name' => 'Persisted endpoint',
+        'url' => 'https://example.test/webhooks',
+        'secret' => 'test-only-placeholder',
+        'events' => ['order.created'],
+        'active' => true,
+    ]);
+    $delivery = WebhookDelivery::query()->create([
+        'delivery_id' => 'persisted-delivery',
+        'webhook_endpoint_id' => $endpoint->id,
+        'event_type' => 'order.created',
+        'payload' => ['type' => 'order.created'],
+        'status' => 'failed',
+        'attempt_count' => 1,
+    ]);
+
+    Livewire::actingAs($viewer)
+        ->test(Index::class)
+        ->call('gotoPage', 999, 'endpointsPage')
+        ->call('gotoPage', 999, 'deliveriesPage')
+        ->assertSee('wire:key="webhook-endpoint-'.$endpoint->id.'"', false)
+        ->assertSee('wire:key="webhook-delivery-'.$delivery->id.'"', false)
+        ->assertDontSee(__('admin.webhooks.empty'))
+        ->assertDontSee(__('admin.webhooks.no_deliveries'));
+});
+
+it('returns to a populated endpoint page after deleting its last row', function (): void {
+    $manager = $this->createStaff([], ['webhooks.view', 'webhooks.manage']);
+    $oldestId = null;
+    $newestId = null;
+    foreach (range(1, 21) as $number) {
+        $endpoint = WebhookEndpoint::query()->create([
+            'name' => sprintf('Deletion endpoint %02d', $number),
+            'url' => 'https://example.test/webhooks',
+            'secret' => 'test-only-placeholder',
+            'events' => ['order.created'],
+            'active' => true,
+        ]);
+        $oldestId ??= $endpoint->id;
+        $newestId = $endpoint->id;
+    }
+
+    Livewire::actingAs($manager)
+        ->test(Index::class)
+        ->call('gotoPage', 2, 'endpointsPage')
+        ->assertSee('wire:key="webhook-endpoint-'.$oldestId.'"', false)
+        ->call('delete', $oldestId)
+        ->assertSee('wire:key="webhook-endpoint-'.$newestId.'"', false)
+        ->assertDontSee(__('admin.webhooks.empty'));
+    expect(WebhookEndpoint::query()->count())->toBe(20);
+});
+
 it('keeps endpoint and failed delivery facts visible without webhook management controls', function (): void {
     $staff = $this->createStaff([], ['webhooks.view']);
     $endpoint = WebhookEndpoint::query()->create([
@@ -111,7 +226,12 @@ it('keeps endpoint and failed delivery facts visible without webhook management 
         ->assertDontSee('wire:click="retryDelivery(', false);
 
     Livewire::actingAs($staff)->test(Index::class)->call('retryDelivery', $delivery->id)->assertForbidden();
-    expect($delivery->fresh()->status)->toBe('failed');
+    Livewire::actingAs($staff)->test(Index::class)->call('edit', $endpoint->id)->assertForbidden();
+    Livewire::actingAs($staff)->test(Index::class)->call('toggleActive', $endpoint->id)->assertForbidden();
+    Livewire::actingAs($staff)->test(Index::class)->call('delete', $endpoint->id)->assertForbidden();
+    Livewire::actingAs($staff)->test(Index::class)->call('save')->assertForbidden();
+    expect($delivery->fresh()->status)->toBe('failed')
+        ->and($endpoint->fresh()->active)->toBeTrue();
 });
 
 it('does not expose webhook management to staff without the view permission', function (): void {

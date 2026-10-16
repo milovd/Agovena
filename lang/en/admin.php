@@ -2297,7 +2297,7 @@ return [
         'endpoints_lede' => 'Only active endpoints receive new events.',
         'empty' => 'No outbound webhooks yet.',
         'delivery_log' => 'Delivery log',
-        'delivery_log_lede' => 'The last 50 deliveries with status, attempt count, and controlled retry.',
+        'delivery_log_lede' => 'Delivery history with status, attempt count, and controlled retry.',
         'no_deliveries' => 'No webhook deliveries yet.',
         'delivery' => 'Delivery',
         'endpoint' => 'Endpoint',

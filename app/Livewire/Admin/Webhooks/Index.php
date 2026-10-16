@@ -14,10 +14,12 @@ use App\Models\WebhookEndpoint;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 final class Index extends Component
 {
     use AuthorizesRequests;
+    use WithPagination;
 
     public string $name = '';
 
@@ -172,9 +174,23 @@ final class Index extends Component
     {
         $this->authorize('webhooks.view');
 
+        $endpointQuery = WebhookEndpoint::query()->withCount('deliveries')->latest('id');
+        $endpoints = $endpointQuery->paginate(20, ['*'], 'endpointsPage');
+        if ($endpoints->isEmpty() && $endpoints->total() > 0) {
+            $this->setPage($endpoints->lastPage(), 'endpointsPage');
+            $endpoints = $endpointQuery->paginate(20, ['*'], 'endpointsPage');
+        }
+
+        $deliveryQuery = WebhookDelivery::query()->with('endpoint')->latest('id');
+        $deliveries = $deliveryQuery->paginate(20, ['*'], 'deliveriesPage');
+        if ($deliveries->isEmpty() && $deliveries->total() > 0) {
+            $this->setPage($deliveries->lastPage(), 'deliveriesPage');
+            $deliveries = $deliveryQuery->paginate(20, ['*'], 'deliveriesPage');
+        }
+
         return view('livewire.admin.webhooks.index', [
-            'endpoints' => WebhookEndpoint::query()->withCount('deliveries')->latest('id')->limit(100)->get(),
-            'deliveries' => WebhookDelivery::query()->with('endpoint')->latest('id')->limit(50)->get(),
+            'endpoints' => $endpoints,
+            'deliveries' => $deliveries,
             'eventCatalog' => $catalog->all(),
         ])->layout('layouts.admin', [
             'title' => __('admin.webhooks.title'),

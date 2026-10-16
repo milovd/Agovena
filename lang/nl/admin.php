@@ -2296,7 +2296,7 @@ return [
         'endpoints_lede' => 'Alleen actieve endpoints ontvangen nieuwe events.',
         'empty' => 'Nog geen outbound webhooks.',
         'delivery_log' => 'Deliverylog',
-        'delivery_log_lede' => 'De laatste 50 leveringen met status, pogingenteller en gecontroleerde retry.',
+        'delivery_log_lede' => 'Leveringsgeschiedenis met status, pogingen en gecontroleerd opnieuw proberen.',
         'no_deliveries' => 'Nog geen webhookleveringen.',
         'delivery' => 'Delivery',
         'endpoint' => 'Endpoint',
