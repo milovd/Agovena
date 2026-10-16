@@ -265,6 +265,28 @@ test('dashboard renders both revenue and orders as separate straight line or bar
     }
 });
 
+test('dashboard line series use the same contrasting colors as the bar series', function () {
+    $component = Livewire::actingAs($this->createStaff())->test(Dashboard::class);
+    foreach (['line', 'bar'] as $type) {
+        $component->set('chartType', $type);
+        $document = new DOMDocument;
+        @$document->loadHTML($component->html());
+        $chart = (new DOMXPath($document))->query('//*[@data-chart-config]')->item(0);
+        $datasets = json_decode($chart->getAttribute('data-chart-config'), true, flags: JSON_THROW_ON_ERROR)['datasets'];
+
+        expect(array_column($datasets, 'borderColor'))->toBe([
+            'var(--ag-color-chart-1)',
+            'var(--ag-color-chart-4)',
+        ]);
+        foreach ($datasets as $dataset) {
+            expect($dataset['borderColor'])->toBe($dataset['barBackgroundColor'])
+                ->and($dataset['backgroundColor'])->toBe($dataset['barBackgroundColor'])
+                ->and($dataset['pointBackgroundColor'])->toBe($dataset['barBackgroundColor'])
+                ->and($dataset['pointHoverBackgroundColor'])->toBe($dataset['barBackgroundColor']);
+        }
+    }
+});
+
 test('dashboard chart disables animations during Livewire and theme replacement', function () {
     $html = Livewire::actingAs($this->createStaff())->test(Dashboard::class)->html();
     $document = new DOMDocument;
