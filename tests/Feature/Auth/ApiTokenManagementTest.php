@@ -53,8 +53,106 @@ test('admin token list does not label a scoped token as full access', function (
     $unrestrictedRow = $xpath->query('//tr[@*[name()="wire:key"]="pat-'.$unrestricted->id.'"]')->item(0);
     expect($scopedRow)->not->toBeNull()
         ->and($unrestrictedRow)->not->toBeNull()
-        ->and($scopedRow->textContent)->not->toContain(__('admin.api_tokens.ability_all'))
-        ->and($unrestrictedRow->textContent)->toContain(__('admin.api_tokens.ability_all'));
+        ->and($xpath->query('./td[2]//span[contains(@class, "ag-badge")]', $scopedRow)->length)->toBe(0)
+        ->and($xpath->query('./td[2]//span[contains(@class, "ag-badge")]', $unrestrictedRow)->length)->toBe(1)
+        ->and($xpath->query('./td[2]', $unrestrictedRow)->item(0)->textContent)->toContain(__('admin.api_tokens.full_access'));
+});
+
+test('admin token list keeps token facts and named actions in accessible mobile rows', function () {
+    $staff = $this->createStaff([], ['api.tokens']);
+    $token = $staff->createToken('Scoped integration', ['account.read'])->accessToken;
+
+    $html = Livewire::actingAs($staff)->test(ApiTokens::class)->html();
+    $document = new DOMDocument;
+    $previous = libxml_use_internal_errors(true);
+    try {
+        $document->loadHTML($html, LIBXML_NONET);
+    } finally {
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+    }
+
+    $xpath = new DOMXPath($document);
+    $table = $xpath->query('//table[contains(@class, "ag-table--mobile-cards") and contains(@class, "ag-table--api-tokens")]')->item(0);
+    $row = $xpath->query('//tr[@*[name()="wire:key"]="pat-'.$token->id.'"]')->item(0);
+    expect($table)->not->toBeNull()
+        ->and($row)->not->toBeNull()
+        ->and($xpath->query('./td', $row)->length)->toBe(5)
+        ->and(array_map(static fn (DOMNode $cell): string => $cell->attributes->getNamedItem('data-label')?->nodeValue ?? '', iterator_to_array($xpath->query('./td', $row))))
+        ->toBe([
+            __('admin.api_tokens.name'),
+            __('admin.api_tokens.access'),
+            __('admin.api_tokens.ip_label'),
+            __('admin.api_tokens.last_used'),
+            __('common.actions'),
+        ])
+        ->and($xpath->query('./td[last()]//button[@aria-label]', $row)->length)->toBe(2);
+});
+
+test('admin token mobile labels and actions are localized in English and Dutch', function () {
+    $staff = $this->createStaff([], ['api.tokens']);
+    $staff->createToken('Scoped integration', ['account.read']);
+
+    $labelsByLocale = [];
+    foreach (['en', 'nl'] as $locale) {
+        app()->setLocale($locale);
+        $lastUsed = __('admin.api_tokens.last_used');
+        $actions = __('common.actions');
+        expect($lastUsed)->not->toBe('admin.api_tokens.last_used')
+            ->and($actions)->not->toBe('common.actions');
+        $labelsByLocale[$locale] = [$lastUsed, $actions];
+        $html = Livewire::actingAs($staff)->test(ApiTokens::class)->html();
+        $document = new DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        try {
+            $document->loadHTML($html, LIBXML_NONET);
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors($previous);
+        }
+        $xpath = new DOMXPath($document);
+        $row = $xpath->query('//section[contains(@class, "ag-api-token-list")]//tbody/tr')->item(0);
+        expect($row)->not->toBeNull()
+            ->and($xpath->query('./td[@data-label="'.__('admin.api_tokens.last_used').'" and @data-label!=""]', $row)->length)->toBe(1)
+            ->and($xpath->query('./td[@data-label="'.__('common.actions').'" and @data-label!=""]//button[@aria-label]', $row)->length)->toBe(2);
+    }
+    expect($labelsByLocale['nl'][0])->not->toBe($labelsByLocale['en'][0])
+        ->and($labelsByLocale['nl'][1])->not->toBe($labelsByLocale['en'][1]);
+});
+
+test('admin token list renders a standalone empty state without an empty table row', function () {
+    $staff = $this->createStaff([], ['api.tokens']);
+    $html = Livewire::actingAs($staff)->test(ApiTokens::class)->html();
+    $document = new DOMDocument;
+    $previous = libxml_use_internal_errors(true);
+    try {
+        $document->loadHTML($html, LIBXML_NONET);
+    } finally {
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+    }
+    $xpath = new DOMXPath($document);
+    expect($xpath->query('//section[contains(@class, "ag-api-token-list")]//div[contains(@class, "ag-empty") and @role="status"]')->length)->toBe(1)
+        ->and($xpath->query('//section[contains(@class, "ag-api-token-list")]//table')->length)->toBe(0);
+});
+
+test('full access is shown once in the access column rather than repeated below the token name', function () {
+    $staff = $this->createStaff([], ['api.tokens']);
+    $token = $staff->createToken('Full integration', ['*'])->accessToken;
+    $html = Livewire::actingAs($staff)->test(ApiTokens::class)->html();
+    $document = new DOMDocument;
+    $previous = libxml_use_internal_errors(true);
+    try {
+        $document->loadHTML($html, LIBXML_NONET);
+    } finally {
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+    }
+    $xpath = new DOMXPath($document);
+    $row = $xpath->query('//tr[@*[name()="wire:key"]="pat-'.$token->id.'"]')->item(0);
+    expect($row)->not->toBeNull()
+        ->and($xpath->query('./td[1]//span[contains(@class, "ag-muted")]', $row)->length)->toBe(0)
+        ->and($xpath->query('./td[2]//span[contains(@class, "ag-badge")]', $row)->length)->toBe(1);
 });
 
 test('module api routes resolve to their token access permissions', function () {

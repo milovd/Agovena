@@ -133,8 +133,13 @@
             <p class="ag-section__lede">{{ __('admin.api_tokens.list_lede') }}</p>
         </header>
         <div class="ag-section__body">
-            <div class="ag-table-wrap">
-                <table class="ag-table">
+            @if ($tokens->isEmpty())
+                <div class="ag-empty" role="status">
+                    <p class="ag-empty__title">{{ __('admin.api_tokens.empty') }}</p>
+                </div>
+            @else
+            <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-label="{{ __('admin.api_tokens.list_heading') }}">
+                <table class="ag-table ag-table--mobile-cards ag-table--api-tokens">
                     <thead>
                         <tr>
                             <th scope="col">{{ __('admin.api_tokens.name') }}</th>
@@ -145,37 +150,34 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($tokens as $token)
+                        @foreach ($tokens as $token)
                             @php
                                 $tokenAbilities = is_array($token->abilities) ? $token->abilities : [];
                                 $tokenIpAllowlist = is_array($token->ip_allowlist) ? $token->ip_allowlist : [];
                                 $hasFullAccess = in_array('*', $tokenAbilities, true);
                             @endphp
                             <tr wire:key="pat-{{ $token->id }}">
-                                <td>
+                                <td data-label="{{ __('admin.api_tokens.name') }}">
                                     <div class="ag-table__primary">
                                         <span class="ag-table__name">{{ $token->name }}</span>
-                                        @if ($hasFullAccess)
-                                            <span class="ag-muted">{{ __('admin.api_tokens.ability_all') }}</span>
-                                        @endif
                                     </div>
                                 </td>
-                                <td>
+                                <td data-label="{{ __('admin.api_tokens.access') }}">
                                     @if ($hasFullAccess)
                                         <span class="ag-badge ag-badge--success">{{ __('admin.api_tokens.full_access') }}</span>
                                     @else
                                         <span class="ag-muted">{{ trans_choice('admin.api_tokens.access_count', count($tokenAbilities), ['count' => count($tokenAbilities)]) }}</span>
                                     @endif
                                 </td>
-                                <td>
+                                <td data-label="{{ __('admin.api_tokens.ip_label') }}">
                                     @if ($tokenIpAllowlist === [])
                                         <span class="ag-muted">{{ __('admin.api_tokens.ip_all') }}</span>
                                     @else
                                         <span class="ag-muted">{{ __('admin.api_tokens.ip_restricted', ['count' => count($tokenIpAllowlist)]) }}</span>
                                     @endif
                                 </td>
-                                <td>{{ $token->last_used_at?->timezone(config('app.timezone'))->format('Y-m-d H:i') ?? __('admin.api_tokens.never') }}</td>
-                                <td class="ag-table__actions">
+                                <td data-label="{{ __('admin.api_tokens.last_used') }}">{{ $token->last_used_at?->timezone(config('app.timezone'))->format('Y-m-d H:i') ?? __('admin.api_tokens.never') }}</td>
+                                <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
                                     <div class="ag-row-actions">
                                         <button
                                             type="button"
@@ -185,22 +187,27 @@
                                             aria-label="{{ __('common.edit') }} {{ $token->name }}"
                                         >
                                             <x-ag.icon name="pencil" :size="16" />
+                                            <span class="ag-table__action-label">{{ __('common.edit') }}</span>
                                         </button>
                                         <button
                                             type="button"
-                                            class="ag-btn ag-btn--ghost ag-btn--sm"
+                                            class="ag-icon-btn ag-icon-btn--danger"
                                             wire:click="revokeToken({{ $token->id }})"
                                             wire:confirm="{{ __('admin.api_tokens.revoke_confirm') }}"
-                                        >{{ __('admin.api_tokens.revoke') }}</button>
+                                            title="{{ __('admin.api_tokens.revoke') }}"
+                                            aria-label="{{ __('admin.api_tokens.revoke') }}: {{ $token->name }}"
+                                        >
+                                            <x-ag.icon name="trash" :size="16" />
+                                            <span class="ag-table__action-label">{{ __('admin.api_tokens.revoke') }}</span>
+                                        </button>
                                     </div>
                                 </td>
                             </tr>
-                        @empty
-                            <tr><td colspan="5">{{ __('admin.api_tokens.empty') }}</td></tr>
-                        @endforelse
+                        @endforeach
                     </tbody>
                 </table>
             </div>
+            @endif
         </div>
     </section>
 
