@@ -41,11 +41,16 @@
         </div>
     @else
     @can('pages.manage')
-        <div class="ag-toolbar ag-page-list__bulk" role="region" aria-label="{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}">
-            <button type="button" class="ag-btn" wire:click="selectCurrentPage">{{ __('admin.content.pages.bulk_select_page') }}</button>
+        <div class="ag-toolbar ag-page-list__bulk ag-toolbar--bulk" role="region" aria-label="{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}">
+            <button type="button" class="ag-icon-btn" wire:click="selectCurrentPage" title="{{ __('admin.content.pages.bulk_select_page') }}" aria-label="{{ __('admin.content.pages.bulk_select_page') }}"><x-ag.icon name="check" :size="16" /></button>
             <span aria-live="polite">{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}</span>
-            <button type="button" class="ag-btn" wire:click="bulkSetStatus('published')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_publish') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_publish') }}</button>
-            <button type="button" class="ag-btn" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_draft') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_draft') }}</button>
+            <div class="ag-menu ag-toolbar__actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
+                <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="page-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedPageIds) === 0)><x-ag.icon name="more-horizontal" :size="16" /></button>
+                <div id="page-bulk-actions" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
+                    <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('published')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_publish') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_publish') }}</button>
+                    <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_draft') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_draft') }}</button>
+                </div>
+            </div>
         </div>
         @error('selectedPageIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
         @error('bulkStatus') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
@@ -82,18 +87,27 @@
                             <td class="ag-page-list__status" data-label="{{ __('common.status') }}"><span class="ag-badge {{ $page->status === 'published' ? 'ag-badge--success' : 'ag-badge--muted' }}">{{ __('admin.content.pages.'.$page->status) }}</span></td>
                             <td class="ag-table__actions ag-page-list__actions">
                                 <div class="ag-row-actions">
-                                    @if ($page->status === 'published')
-                                        <a class="ag-icon-btn" href="{{ route('storefront.page', ['slug' => $page->slug]) }}" title="{{ __('admin.content.pages.view') }}" aria-label="{{ __('admin.content.pages.view_aria', ['title' => $page->title]) }}">
-                                            <x-ag.icon name="eye" :size="16" />
-                                        </a>
-                                    @endif
                                     @can('pages.manage')
                                         <a class="ag-icon-btn" href="{{ route('admin.appearance.pages.edit', $page) }}" title="{{ __('common.edit') }}" aria-label="{{ __('admin.content.pages.edit_aria', ['title' => $page->title]) }}">
                                             <x-ag.icon name="pencil" :size="16" />
                                         </a>
-                                        <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="delete({{ $page->id }})" wire:confirm="{{ __('admin.content.pages.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('admin.content.pages.delete_aria', ['title' => $page->title]) }}">
-                                            <x-ag.icon name="trash" :size="16" />
-                                        </button>
+                                        <div class="ag-menu" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
+                                            <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="page-actions-{{ $page->id }}" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}: {{ $page->title }}">
+                                                <x-ag.icon name="more-horizontal" :size="16" />
+                                            </button>
+                                            <div id="page-actions-{{ $page->id }}" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
+                                                @if ($page->status === 'published')
+                                                    <a class="ag-menu__item" href="{{ route('storefront.page', ['slug' => $page->slug]) }}">{{ __('admin.content.pages.view') }}</a>
+                                                @endif
+                                                <button type="button" class="ag-menu__item ag-menu__item--danger" wire:click="delete({{ $page->id }})" wire:confirm="{{ __('admin.content.pages.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                            </div>
+                                        </div>
+                                    @else
+                                        @if ($page->status === 'published')
+                                            <a class="ag-icon-btn" href="{{ route('storefront.page', ['slug' => $page->slug]) }}" title="{{ __('admin.content.pages.view') }}" aria-label="{{ __('admin.content.pages.view_aria', ['title' => $page->title]) }}">
+                                                <x-ag.icon name="eye" :size="16" />
+                                            </a>
+                                        @endif
                                     @endcan
                                 </div>
                             </td>

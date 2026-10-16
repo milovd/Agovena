@@ -7,8 +7,10 @@ import { registerInvoiceComponents } from './admin/invoices.js';
 import { registerPageEditorComponents } from './admin/page-editor.js';
 import { registerProductComponents } from './admin/products.js';
 import { registerSettingsComponents } from './admin/settings.js';
-import { registerShellComponents } from './admin/shell.js';
+import { preserveAdminThemeAcrossNavigation, registerShellComponents } from './admin/shell.js';
 import { fileUploadState } from './shared/file-upload.js';
+
+preserveAdminThemeAcrossNavigation();
 
 document.addEventListener('alpine:init', () => {
     registerChartComponents(Alpine);

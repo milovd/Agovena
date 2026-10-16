@@ -27,8 +27,28 @@ test('pages list presents real rows with a responsive identity, publication stat
         ->assertSee('wire:click="delete('.$draft->id.')"', false)
         ->assertSee(route('admin.appearance.pages.edit', $draft), false)
         ->assertSee(route('storefront.page', ['slug' => $published->slug]), false)
+        ->assertSee('aria-controls="page-actions-'.$published->id.'"', false)
+        ->assertSee('aria-controls="page-actions-'.$draft->id.'"', false)
         ->assertSee('Private notes')
         ->assertSee('/private-notes');
+
+    $markup = $this->actingAs($manager)->get(route('admin.appearance.pages'))->assertOk()->getContent();
+    $dom = new DOMDocument;
+    @$dom->loadHTML($markup);
+    $xpath = new DOMXPath($dom);
+    foreach ([$published, $draft] as $page) {
+        $row = $xpath->query('//tr[@*[name()="wire:key"]="page-'.$page->id.'"]')->item(0);
+        expect($row)->not->toBeNull();
+        $actions = $xpath->query('.//td[contains(@class, "ag-page-list__actions")]', $row)->item(0);
+        expect($xpath->query('.//a[contains(@class, "ag-icon-btn")]', $actions))->toHaveCount(1)
+            ->and($xpath->query('.//div[@id="page-actions-'.$page->id.'"]//button[@*[name()="wire:confirm"]]', $actions))->toHaveCount(1);
+    }
+});
+
+test('page-row action menus are not clipped by their table wrapper', function (): void {
+    $css = file_get_contents(resource_path('css/admin/screens/_pages.css'));
+    expect($css)->toMatch('/\\.ag-page-list__wrap\\s*\\{[^}]*overflow:\\s*visible;[^}]*contain:\\s*none;/s')
+        ->and($css)->toContain('tr:nth-last-child(-n + 2):not(:first-child) .ag-menu__panel');
 });
 
 test('view-only staff retain the responsive page list without management controls', function (): void {
@@ -43,6 +63,7 @@ test('view-only staff retain the responsive page list without management control
         ->assertDontSee('ag-page-list__row--selectable', false)
         ->assertDontSee('wire:click="selectCurrentPage"', false)
         ->assertDontSee('wire:click="delete('.$draft->id.')"', false)
+        ->assertDontSee('page-actions-'.$draft->id, false)
         ->assertDontSee(route('admin.appearance.pages.edit', $draft), false);
 });
 

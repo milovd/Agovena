@@ -1,3 +1,12 @@
+/** Keep the chosen mode before Alpine initializes the next Livewire-navigated page. */
+export function preserveAdminThemeAcrossNavigation(page = document) {
+    page.addEventListener('livewire:navigating', (event) => {
+        const theme = page.documentElement.getAttribute('data-theme');
+        if (theme !== 'dark' && theme !== 'light') return;
+        event.detail.onSwap(() => page.documentElement.setAttribute('data-theme', theme));
+    });
+}
+
 /** Admin shell: navigation groups, colour scheme, account menu and disclosures (theme::layouts.admin). */
 export function registerShellComponents(Alpine) {
     Alpine.data('agAdminNavGroup', () => ({
@@ -88,8 +97,12 @@ export function registerShellComponents(Alpine) {
         toggle() {
             this.open = !this.open;
         },
-        close() {
+        close(restoreFocus = false) {
+            if (!this.open) return;
             this.open = false;
+            if (restoreFocus) {
+                this.$nextTick(() => this.$root.querySelector('button[aria-controls]')?.focus());
+            }
         },
     }));
 }

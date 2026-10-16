@@ -23,6 +23,11 @@
   font-size: var(--ag-font-size-sm);
 }
 
+.ag-page-list__wrap {
+  overflow: visible;
+  contain: none;
+}
+
 .ag-page-list__table tbody td {
   vertical-align: middle;
 }
@@ -57,6 +62,11 @@
 
 .ag-page-list__table .ag-icon-btn:hover {
   background: var(--ag-color-primary-soft);
+}
+
+.ag-page-list__table tbody tr:nth-last-child(-n + 2):not(:first-child) .ag-menu__panel {
+  top: auto;
+  bottom: calc(100% + var(--ag-space-1));
 }
 
 .ag-page-form {
@@ -259,6 +269,11 @@
     padding-top: var(--ag-space-2);
     border-top: 1px solid var(--ag-color-border);
     white-space: normal;
+  }
+
+  .ag-page-list__actions .ag-menu__panel {
+    left: 0;
+    right: auto;
   }
 
   .ag-page-form__metadata-fields {

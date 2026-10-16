@@ -27,12 +27,13 @@ test('user can sign in and reach admin dashboard when authorized', function () {
 
     $this->get('/admin')->assertRedirect(route('login'));
 
-    Livewire::test(Login::class)
+    $login = Livewire::test(Login::class)
         ->set('email', 'owner@example.com')
         ->set('password', 'password')
         ->call('login')
         ->assertRedirect(route('admin.dashboard'));
 
+    expect($login->effects)->not->toHaveKey('redirectUsingNavigate');
     $this->assertAuthenticatedAs($staff);
 
     $this->get('/admin')->assertRedirect(route('customer.security'));

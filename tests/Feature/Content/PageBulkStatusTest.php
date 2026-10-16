@@ -23,6 +23,20 @@ it('renders page-only selection and confirmed status actions only to managers', 
         ->assertSee('wire:click="bulkSetStatus(\'published\')"', false)
         ->assertSee('wire:confirm=', false);
 
+    $markup = Livewire::actingAs($manager)->test(PagesIndex::class)->html();
+    $dom = new DOMDocument;
+    @$dom->loadHTML($markup);
+    $xpath = new DOMXPath($dom);
+    $toolbar = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ag-page-list__bulk ")]');
+    expect($toolbar)->toHaveCount(1);
+    $select = $xpath->query('.//button[@*[name()="wire:click" and .="selectCurrentPage"] and @aria-label and @title]', $toolbar->item(0));
+    $more = $xpath->query('.//button[@aria-controls="page-bulk-actions" and @*[name()=":aria-expanded"] and @aria-label]', $toolbar->item(0));
+    expect($select)->toHaveCount(1)
+        ->and($more)->toHaveCount(1)
+        ->and(trim($select->item(0)->textContent))->toBe('')
+        ->and(trim($more->item(0)->textContent))->toBe('')
+        ->and($xpath->query('.//*[@id="page-bulk-actions"]//button[@*[name()="wire:confirm"]]', $toolbar->item(0)))->toHaveCount(2);
+
     $viewer = $this->createStaff([], ['pages.view']);
     Livewire::actingAs($viewer)->test(PagesIndex::class)
         ->assertDontSee('selectedPageIds', false)

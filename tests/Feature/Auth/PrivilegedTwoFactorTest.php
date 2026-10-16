@@ -96,11 +96,12 @@ test('valid totp code completes privileged login', function () {
         TotpTwoFactor::SESSION_PENDING_INTENDED => route('admin.dashboard'),
     ]);
 
-    Livewire::test(TwoFactorChallenge::class)
+    $challenge = Livewire::test(TwoFactorChallenge::class)
         ->set('code', totpCode($secret))
         ->call('authenticate')
         ->assertRedirect(route('admin.dashboard'));
 
+    expect($challenge->effects)->not->toHaveKey('redirectUsingNavigate');
     $this->assertAuthenticatedAs($staff);
 });
 

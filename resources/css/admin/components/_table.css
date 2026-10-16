@@ -846,6 +846,21 @@ a.ag-table__name:focus-visible {
   font-size: var(--ag-font-size-sm);
 }
 .ag-list-page .ag-toolbar--bulk .ag-toolbar__actions { margin-left: auto; }
+:is(.ag-list-page .ag-toolbar--bulk, .ag-page-list__bulk) .ag-icon-btn {
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-color: var(--ag-color-border);
+  background: var(--ag-color-surface);
+}
+:is(.ag-list-page .ag-toolbar--bulk, .ag-page-list__bulk) .ag-icon-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+:is(.ag-list-page .ag-toolbar--bulk, .ag-page-list__bulk) .ag-menu.ag-toolbar__actions {
+  display: inline-block;
+  margin-left: auto;
+}
 .ag-table--products .ag-table__primary {
   display: flex;
   flex-direction: column;
@@ -892,6 +907,7 @@ a.ag-table__name:focus-visible {
     font-size: var(--ag-font-size-xs);
   }
   .ag-list-page .ag-toolbar--bulk .ag-toolbar__actions { width: 100%; margin-left: 0; }
+  .ag-list-page .ag-toolbar--bulk .ag-menu.ag-toolbar__actions { width: auto; margin-left: auto; }
   .ag-list-page .ag-toolbar--bulk .ag-btn { font-size: var(--ag-font-size-xs); }
   .ag-list-page .ag-table-wrap { max-width: 100%; }
   .ag-table--products { table-layout: fixed; }

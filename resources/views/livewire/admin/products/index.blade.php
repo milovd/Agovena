@@ -84,12 +84,15 @@
     @else
         @can('products.update')
             <x-ag.table-toolbar class="ag-toolbar--bulk" role="region" aria-label="{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}">
-                <button type="button" class="ag-btn" wire:click="selectCurrentPage">{{ __('admin.products.bulk_select_page') }}</button>
+                <button type="button" class="ag-icon-btn" wire:click="selectCurrentPage" title="{{ __('admin.products.bulk_select_page') }}" aria-label="{{ __('admin.products.bulk_select_page') }}"><x-ag.icon name="check" :size="16" /></button>
                 <span aria-live="polite">{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}</span>
-                <span class="ag-toolbar__actions">
-                    <button type="button" class="ag-btn" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
-                    <button type="button" class="ag-btn" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
-                </span>
+                <div class="ag-menu ag-toolbar__actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
+                    <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="product-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedProductIds) === 0)><x-ag.icon name="more-horizontal" :size="16" /></button>
+                    <div id="product-bulk-actions" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
+                        <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
+                        <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
+                    </div>
+                </div>
             </x-ag.table-toolbar>
             @error('selectedProductIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
             @error('bulkStatus') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
@@ -181,7 +184,7 @@
                                     <div
                                         class="ag-menu"
                                         x-data="agDisclosure"
-                                        @keydown.escape.window="close()"
+                                        @keydown.escape.window="close(true)"
                                         @click.outside="close()"
                                     >
                                         <button

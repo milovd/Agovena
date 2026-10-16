@@ -69,7 +69,8 @@ final class TwoFactorChallenge extends Component
         session()->regenerate();
         $totp->markVerified($user);
 
-        $this->redirect($this->destination($user, $intended), navigate: true);
+        // Authentication can cross from the storefront layout into Admin; reload its assets.
+        $this->redirect($this->destination($user, $intended), navigate: false);
     }
 
     public function useRecovery(): void

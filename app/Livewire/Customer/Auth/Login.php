@@ -33,7 +33,7 @@ final class Login extends Component
         }
 
         if (Auth::check()) {
-            $this->redirect($this->destination(Auth::user()), navigate: true);
+            $this->redirect($this->destination(Auth::user()), navigate: false);
         }
     }
 
@@ -92,7 +92,8 @@ final class Login extends Component
             return;
         }
 
-        $this->redirect($this->destination($user), navigate: true);
+        // Authentication can cross from the storefront layout into Admin; reload its assets.
+        $this->redirect($this->destination($user), navigate: false);
     }
 
     public function render(
