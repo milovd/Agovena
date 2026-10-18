@@ -27,6 +27,7 @@
 @import './admin/screens/_audit-log.css';
 @import './admin/screens/_theme-customizer.css';
 @import './admin/screens/_notification-templates.css';
+@import './admin/screens/_email-log.css';
 @import './admin/screens/_api-tokens.css';
 @import './admin/screens/_backups.css';
 @import './admin/screens/_customer-workspace.css';

@@ -1,0 +1,51 @@
+/* Read-only delivery history uses the shared list surface. */
+.ag-table--email-log tbody td {
+  vertical-align: middle;
+}
+
+.ag-table--email-log .ag-email-log__time {
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+  white-space: nowrap;
+}
+
+.ag-table--email-log .ag-email-log__recipient {
+  color: var(--ag-color-text);
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+
+.ag-table--email-log .ag-email-log__subject {
+  overflow-wrap: anywhere;
+}
+
+.ag-table--email-log .ag-email-log__delivery-inner {
+  display: grid;
+  justify-items: start;
+  gap: var(--ag-space-2);
+  min-width: 0;
+}
+
+.ag-table--email-log .ag-email-log__error {
+  margin: 0;
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .ag-table--email-log tbody td {
+    grid-template-columns: minmax(4rem, 25%) minmax(0, 1fr);
+  }
+
+  .ag-table--email-log .ag-email-log__time {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 350px) {
+  .ag-table--email-log tbody td {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ag-space-1);
+  }
+}

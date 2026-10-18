@@ -19,19 +19,13 @@ final class LogFailedNotification
                 return;
             }
 
-            $error = null;
-            if (($event->data['exception'] ?? null) instanceof Throwable) {
-                $error = mb_substr($event->data['exception']->getMessage(), 0, 2000);
-            } elseif (is_string($event->data['message'] ?? null)) {
-                $error = mb_substr((string) $event->data['message'], 0, 2000);
-            }
-
             EmailLog::query()->create([
                 'to' => $to,
                 'subject' => null,
                 'notification_key' => class_basename($event->notification),
                 'status' => 'failed',
-                'error' => $error,
+                // Transport exceptions can contain credentials or customer data.
+                'error' => 'Mail delivery failed.',
                 'created_at' => now(),
             ]);
         } catch (Throwable) {
