@@ -2472,7 +2472,7 @@ return [
         'empty_page' => 'Geen e-mails op deze pagina',
         'empty_page_text' => 'Ga terug naar de eerste pagina om de beschikbare e-maillog te zien.',
         'first_page' => 'Terug naar de eerste pagina',
-        'error_hidden' => 'Technische leveringsdetails zijn verborgen omdat ze gevoelige informatie kunnen bevatten.',
+        'error_hidden' => 'Leveringsdetails verborgen.',
         'statuses' => [
             'sent' => 'Verzonden',
             'failed' => 'Mislukt',

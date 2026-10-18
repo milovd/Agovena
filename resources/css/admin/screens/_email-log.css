@@ -33,6 +33,11 @@
   overflow-wrap: anywhere;
 }
 
+@media (min-width: 721px) {
+  .ag-table--email-log .ag-email-log__recipient { min-width: 16rem; }
+  .ag-table--email-log .ag-email-log__delivery { width: 9rem; }
+}
+
 @media (max-width: 720px) {
   .ag-table--email-log tbody td {
     grid-template-columns: minmax(4rem, 25%) minmax(0, 1fr);

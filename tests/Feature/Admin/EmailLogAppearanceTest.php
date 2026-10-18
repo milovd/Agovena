@@ -31,6 +31,12 @@ test('email log presents sent and failed rows as labeled responsive records', fu
         ->and($xpath->query('.//tbody/tr[2]//span[contains(@class, "ag-badge--success")]', $table))->toHaveCount(1)
         ->and($html)->toContain(__('admin.email_log.error_hidden'))
         ->toContain('first@example.invalid');
+
+    foreach (['en' => 'Delivery details hidden.', 'nl' => 'Leveringsdetails verborgen.'] as $locale => $expected) {
+        app()->setLocale($locale);
+        $page = $this->actingAs($viewer)->get('/admin/email-log')->assertOk()->getContent();
+        expect($page)->toContain($expected);
+    }
 });
 
 test('email log preserves paginated order without exposing stored transport errors', function () {

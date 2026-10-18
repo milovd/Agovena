@@ -2473,7 +2473,7 @@ return [
         'empty_page' => 'No mail on this page',
         'empty_page_text' => 'Return to the first page to see the available email log.',
         'first_page' => 'Back to first page',
-        'error_hidden' => 'Technical delivery details are hidden because they may contain sensitive information.',
+        'error_hidden' => 'Delivery details hidden.',
         'statuses' => [
             'sent' => 'Sent',
             'failed' => 'Failed',
