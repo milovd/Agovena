@@ -155,6 +155,14 @@ test('extension catalogue uses one two-column grid with manifest category tags a
         ->and($css)->toContain('grid-template-columns: repeat(2, minmax(0, 1fr))');
 });
 
+test('module rows give package artwork a portrait well without enlarging generic package marks', function () {
+    $css = file_get_contents(resource_path('css/admin/screens/_packages.css'));
+
+    expect($css)->toContain('.ag-preset-module-row .ag-package-mark {')
+        ->toContain('width: 4.5rem;')
+        ->toContain('height: 5.625rem;');
+});
+
 test('extension search uses a supported magnifier icon', function () {
     $source = file_get_contents(resource_path('views/components/ag/icon.blade.php'));
     expect($source)->toContain("'search' =>");

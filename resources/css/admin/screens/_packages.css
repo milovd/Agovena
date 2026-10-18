@@ -127,6 +127,12 @@
   object-fit: contain;
 }
 
+.ag-preset-module-row .ag-package-mark {
+  width: 4.5rem;
+  height: 5.625rem;
+  flex: 0 0 4.5rem;
+}
+
 .ag-package-card__title {
   margin: 0;
   font-size: 1rem;
