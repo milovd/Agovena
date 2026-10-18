@@ -1,12 +1,12 @@
 @if ($canUpdate)
-    <form wire:submit="save" class="admin-panel ag-form ag-form--constrained ag-settings-form" novalidate>
+    <form wire:submit="save" class="ag-card ag-form ag-form--constrained ag-settings-form" aria-labelledby="settings-group-{{ $groupDefinition->id }}-heading" novalidate>
 @else
-    <div class="admin-panel ag-form ag-form--constrained ag-settings-form">
+    <div class="ag-card ag-form ag-form--constrained ag-settings-form" aria-labelledby="settings-group-{{ $groupDefinition->id }}-heading">
 @endif
-    <div class="ag-settings-form__header">
+    <header class="ag-settings-form__header">
         <x-ag.icon-tile name="settings" tone="blue" />
-        <h2 class="ag-settings-form__title">{{ __('admin.settings.group_title', ['group' => __($groupDefinition->label)]) }}</h2>
-    </div>
+        <h2 id="settings-group-{{ $groupDefinition->id }}-heading" class="ag-card__title ag-settings-form__title">{{ __('admin.settings.group_title', ['group' => __($groupDefinition->label)]) }}</h2>
+    </header>
     <div class="ag-settings-form__fields">
     @foreach ($fields as $field)
         <div class="ag-field ag-field--{{ $field->type }}" wire:key="field-{{ $field->key }}">
