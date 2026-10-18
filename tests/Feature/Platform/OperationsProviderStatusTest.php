@@ -6,6 +6,7 @@ use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Extensions\ExtensionSettingsRepository;
 use App\Agovena\Payments\HealthResult;
 use App\Livewire\Admin\System\Updates;
+use Illuminate\Support\Facades\Artisan;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
 
@@ -55,10 +56,24 @@ test('operations health probes a configured provider and shows its configured ba
         ->assertSee(__('admin.provider_status.configured'))
         ->assertDontSee(__('admin.provider_status.not_configured'))
         ->assertSee(__('admin.updates.providers_ok'))
-        ->assertSee('Probe reached the provider')
+        ->assertDontSee('Probe reached the provider')
         ->assertDontSee('test_configuredkey1234567890');
 
     expect($probe['probed'])->toBeTrue();
+});
+
+test('operations health does not expose arbitrary provider callback messages', function () {
+    installAndEnableExtension('mollie');
+    app(ExtensionSettingsRepository::class)->set('mollie', 'api_key', 'test_configuredkey1234567890', secret: true);
+    app(ExtensionManager::class)->context('mollie')?->health(static fn (): HealthResult => HealthResult::fail('provider detail test-only-sentinel'));
+
+    Livewire::actingAs($this->createStaff())
+        ->test(Updates::class)
+        ->assertSee(__('admin.updates.providers_fail'))
+        ->assertDontSee('test-only-sentinel');
+
+    expect(Artisan::call('agovena:verify-providers', ['extension' => 'mollie']))->toBe(1);
+    expect(Artisan::output())->not->toContain('test-only-sentinel');
 });
 
 test('provider verification reports an unconfigured provider without probing it', function () {

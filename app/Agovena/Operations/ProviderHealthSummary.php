@@ -7,6 +7,7 @@ namespace App\Agovena\Operations;
 use App\Agovena\Extensions\ExtensionConfigurationStatus;
 use App\Agovena\Extensions\ExtensionManager;
 use App\Agovena\Payments\HealthResult;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 final class ProviderHealthSummary
@@ -55,25 +56,19 @@ final class ProviderHealthSummary
             try {
                 $result = $callback();
             } catch (Throwable $exception) {
-                report($exception);
+                Log::warning('Provider health check failed.', [
+                    'provider_id' => $manifest->id,
+                    'exception_class' => $exception::class,
+                ]);
                 $result = HealthResult::fail(__('admin.updates.provider_health_error'));
             }
 
             $row['checked'] = true;
             $row['ok'] = $result->ok;
-            $row['message'] = $this->sanitize($result->message);
+            $row['message'] = $result->ok ? __('admin.updates.providers_ok') : __('admin.updates.providers_fail');
             $rows[] = $row;
         }
 
         return $rows;
-    }
-
-    private function sanitize(string $message): string
-    {
-        $message = preg_replace('/\b(sk|pk|rk|whsec)_[A-Za-z0-9]+/i', '[redacted]', $message) ?? $message;
-        $message = preg_replace('/\b(test|live)_[A-Za-z0-9]{10,}\b/', '[redacted]', $message) ?? $message;
-        $message = preg_replace('/\bBearer\s+[A-Za-z0-9._\-]+\b/i', 'Bearer [redacted]', $message) ?? $message;
-
-        return $message;
     }
 }

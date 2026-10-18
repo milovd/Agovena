@@ -53,9 +53,6 @@
                                 @else
                                     {{ __('admin.updates.providers_fail') }}
                                 @endif
-                                @if ($provider['message'] !== '')
-                                    - {{ $provider['message'] }}
-                                @endif
                             @else
                                 <x-ag.badge variant="warning">{{ __('admin.provider_status.not_configured') }}</x-ag.badge>
                                 @if ($provider['missing'] !== [])
