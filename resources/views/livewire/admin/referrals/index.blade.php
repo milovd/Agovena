@@ -22,77 +22,81 @@
 
     @can('referrals.manage')
         @if ($showCodeForm)
-            <section class="admin-panel" aria-labelledby="new-referral-code-heading">
-                <h2 id="new-referral-code-heading" class="admin-panel__title">{{ $editingCodeId !== null ? __('admin.referrals.edit_code') : __('admin.referrals.new_code') }}</h2>
-                <form wire:submit="saveCode" class="ag-form" novalidate>
-                    <div class="ag-grid ag-grid--2">
-                        @if ($editingCodeId !== null)
-                            <div class="ag-field">
+            <section class="ag-card" aria-labelledby="new-referral-code-heading">
+                <header class="ag-card__header">
+                    <h2 id="new-referral-code-heading" class="ag-card__title">{{ $editingCodeId !== null ? __('admin.referrals.edit_code') : __('admin.referrals.new_code') }}</h2>
+                </header>
+                <div class="ag-card__content">
+                    <form wire:submit="saveCode" class="ag-form" novalidate>
+                        <div class="ag-grid ag-grid--2">
+                            @if ($editingCodeId !== null)
+                                <div class="ag-field">
+                                    <label class="ag-field__label" for="referral-code-customer">{{ __('admin.referrals.customer') }}</label>
+                                    <div id="referral-code-customer" class="ag-input ag-input--static" role="status">{{ $customerSearch }}</div>
+                                </div>
+                            @else
+                                <div class="ag-field ag-combobox">
                                 <label class="ag-field__label" for="referral-code-customer">{{ __('admin.referrals.customer') }}</label>
-                                <div id="referral-code-customer" class="ag-input ag-input--static" role="status">{{ $customerSearch }}</div>
-                            </div>
-                        @else
-                            <div class="ag-field ag-combobox">
-                            <label class="ag-field__label" for="referral-code-customer">{{ __('admin.referrals.customer') }}</label>
-                            <div class="ag-combobox__control">
-                                <input id="referral-code-customer" class="ag-input" type="search" wire:model.live.debounce.300ms="customerSearch" role="combobox" aria-autocomplete="list" aria-controls="referral-customer-options" aria-expanded="{{ $customerId === null && $customers->isNotEmpty() ? 'true' : 'false' }}" placeholder="{{ __('admin.referrals.customer_placeholder') }}" autocomplete="off" required>
-                                @if ($customerId === null && $customers->isNotEmpty())
-                                    <div id="referral-customer-options" class="ag-combobox__options" role="listbox">
-                                        @foreach ($customers as $customer)
-                                            <button type="button" class="ag-combobox__option" role="option" wire:click="selectCustomer({{ $customer->id }})">
-                                                <span>{{ $customer->name }}</span>
-                                                <span class="ag-combobox__option-email">{{ $customer->email }}</span>
-                                            </button>
-                                        @endforeach
-                                    </div>
-                                @elseif ($customerSearch !== '' && $customerId === null)
-                                    <p class="ag-combobox__empty">{{ __('admin.referrals.no_customers') }}</p>
+                                <div class="ag-combobox__control">
+                                    <input id="referral-code-customer" class="ag-input" type="search" wire:model.live.debounce.300ms="customerSearch" role="combobox" aria-autocomplete="list" aria-controls="referral-customer-options" aria-expanded="{{ $customerId === null && $customers->isNotEmpty() ? 'true' : 'false' }}" placeholder="{{ __('admin.referrals.customer_placeholder') }}" autocomplete="off" required>
+                                    @if ($customerId === null && $customers->isNotEmpty())
+                                        <div id="referral-customer-options" class="ag-combobox__options" role="listbox">
+                                            @foreach ($customers as $customer)
+                                                <button type="button" class="ag-combobox__option" role="option" wire:click="selectCustomer({{ $customer->id }})">
+                                                    <span>{{ $customer->name }}</span>
+                                                    <span class="ag-combobox__option-email">{{ $customer->email }}</span>
+                                                </button>
+                                            @endforeach
+                                        </div>
+                                    @elseif ($customerSearch !== '' && $customerId === null)
+                                        <p class="ag-combobox__empty">{{ __('admin.referrals.no_customers') }}</p>
+                                    @endif
+                                </div>
+                                <p class="ag-field__help">{{ __('admin.referrals.customer_help') }}</p>
+                                @error('customerId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                                </div>
+                            @endif
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="referral-code-value">{{ __('admin.referrals.code') }}</label>
+                                @if ($editingCodeId !== null)
+                                    <div id="referral-code-value" class="ag-input ag-input--static" role="status">{{ $newCode }}</div>
+                                @else
+                                    <input id="referral-code-value" class="ag-input" type="text" wire:model="newCode" required maxlength="64" autocomplete="off">
+                                    <p class="ag-field__help">{{ __('admin.referrals.code_help') }}</p>
+                                    @error('newCode') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                                 @endif
                             </div>
-                            <p class="ag-field__help">{{ __('admin.referrals.customer_help') }}</p>
-                            @error('customerId') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="referral-code-reward-percentage">{{ __('admin.referrals.reward_percentage') }}</label>
+                                <input id="referral-code-reward-percentage" class="ag-input" type="number" min="0" max="100" step="1" wire:model.number="rewardPercentage">
+                                <p class="ag-field__help">{{ __('admin.referrals.reward_percentage_help', ['percentage' => $defaultRewardPercentage]) }}</p>
+                                @error('rewardPercentage') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                             </div>
-                        @endif
-                        <div class="ag-field">
-                            <label class="ag-field__label" for="referral-code-value">{{ __('admin.referrals.code') }}</label>
-                            @if ($editingCodeId !== null)
-                                <div id="referral-code-value" class="ag-input ag-input--static" role="status">{{ $newCode }}</div>
-                            @else
-                                <input id="referral-code-value" class="ag-input" type="text" wire:model="newCode" required maxlength="64" autocomplete="off">
-                                <p class="ag-field__help">{{ __('admin.referrals.code_help') }}</p>
-                                @error('newCode') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                            @endif
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="referral-code-window-days">{{ __('admin.referrals.window_days') }}</label>
+                                <input id="referral-code-window-days" class="ag-input" type="number" min="1" max="365" step="1" wire:model.number="windowDays">
+                                <p class="ag-field__help">{{ __('admin.referrals.window_days_help', ['days' => $defaultWindowDays]) }}</p>
+                                @error('windowDays') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="referral-code-max-uses">{{ __('admin.referrals.max_uses') }}</label>
+                                <input id="referral-code-max-uses" class="ag-input" type="number" min="1" wire:model.number="maxUses">
+                                <p class="ag-field__help">{{ __('admin.referrals.max_uses_help') }}</p>
+                                @error('maxUses') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                            </div>
+                            <div class="ag-field">
+                                <label class="ag-field__label" for="referral-code-expires-at">{{ __('admin.referrals.expires_at') }}</label>
+                                <input id="referral-code-expires-at" class="ag-input" type="datetime-local" wire:model="expiresAt">
+                                <p class="ag-field__help">{{ __('admin.referrals.expires_at_help') }}</p>
+                                @error('expiresAt') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                            </div>
                         </div>
-                        <div class="ag-field">
-                            <label class="ag-field__label" for="referral-code-reward-percentage">{{ __('admin.referrals.reward_percentage') }}</label>
-                            <input id="referral-code-reward-percentage" class="ag-input" type="number" min="0" max="100" step="1" wire:model.number="rewardPercentage">
-                            <p class="ag-field__help">{{ __('admin.referrals.reward_percentage_help', ['percentage' => $defaultRewardPercentage]) }}</p>
-                            @error('rewardPercentage') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
+                        <div class="ag-form__actions">
+                            <button type="submit" class="ag-btn ag-btn--primary">{{ __('common.save') }}</button>
+                            <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelCode">{{ __('common.cancel') }}</button>
                         </div>
-                        <div class="ag-field">
-                            <label class="ag-field__label" for="referral-code-window-days">{{ __('admin.referrals.window_days') }}</label>
-                            <input id="referral-code-window-days" class="ag-input" type="number" min="1" max="365" step="1" wire:model.number="windowDays">
-                            <p class="ag-field__help">{{ __('admin.referrals.window_days_help', ['days' => $defaultWindowDays]) }}</p>
-                            @error('windowDays') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="ag-field">
-                            <label class="ag-field__label" for="referral-code-max-uses">{{ __('admin.referrals.max_uses') }}</label>
-                            <input id="referral-code-max-uses" class="ag-input" type="number" min="1" wire:model.number="maxUses">
-                            <p class="ag-field__help">{{ __('admin.referrals.max_uses_help') }}</p>
-                            @error('maxUses') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                        </div>
-                        <div class="ag-field">
-                            <label class="ag-field__label" for="referral-code-expires-at">{{ __('admin.referrals.expires_at') }}</label>
-                            <input id="referral-code-expires-at" class="ag-input" type="datetime-local" wire:model="expiresAt">
-                            <p class="ag-field__help">{{ __('admin.referrals.expires_at_help') }}</p>
-                            @error('expiresAt') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
-                        </div>
-                    </div>
-                    <div class="ag-form__actions">
-                        <button type="submit" class="ag-btn ag-btn--primary">{{ __('common.save') }}</button>
-                        <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancelCode">{{ __('common.cancel') }}</button>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </section>
         @endif
     @endcan
@@ -131,15 +135,15 @@
             </div>
         </section>
 
-        <section class="ag-card" aria-labelledby="referral-codes-heading">
+        <section class="ag-card ag-card--flush" aria-labelledby="referral-codes-heading">
             <header class="ag-card__header">
                 <h2 id="referral-codes-heading" class="ag-card__title">{{ __('admin.referrals.codes_title') }}</h2>
                 <p class="ag-card__description">{{ __('admin.referrals.codes_description') }}</p>
             </header>
             <div class="ag-card__content">
-                <div class="ag-table-wrap">
-                    <table class="admin-table">
-                        <caption class="sr-only">{{ __('admin.referrals.codes_title') }}</caption>
+                <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-labelledby="referral-codes-heading">
+                    <table class="ag-table ag-table--mobile-cards ag-table--referrals">
+                        <caption class="visually-hidden">{{ __('admin.referrals.codes_title') }}</caption>
                         <thead>
                             <tr>
                                 <th scope="col">{{ __('admin.referrals.code') }}</th>
@@ -156,16 +160,18 @@
                         <tbody>
                             @forelse ($codes as $code)
                                 <tr>
-                                    <td>
-                                        <strong>{{ $code->code }}</strong>
-                                        <a href="{{ route('referrals.visit', ['code' => $code->code]) }}" target="_blank" rel="noreferrer" class="ag-muted">{{ __('admin.referrals.share_link') }}</a>
-                                        <span class="ag-muted">{{ $code->uses_count }}{{ $code->max_uses ? ' / '.$code->max_uses : '' }} {{ __('admin.referrals.uses') }}</span>
+                                    <td data-label="{{ __('admin.referrals.code') }}">
+                                        <div class="ag-table__primary">
+                                            <strong>{{ $code->code }}</strong>
+                                            <a href="{{ route('referrals.visit', ['code' => $code->code]) }}" target="_blank" rel="noreferrer" class="ag-muted">{{ __('admin.referrals.share_link') }}</a>
+                                            <span class="ag-muted">{{ $code->uses_count }}{{ $code->max_uses ? ' / '.$code->max_uses : '' }} {{ __('admin.referrals.uses') }}</span>
+                                        </div>
                                     </td>
-                                    <td>{{ $code->customer?->name ?? __('admin.referrals.not_available') }}</td>
-                                    <td>{{ $code->visits_sum_clicks_count ?? 0 }}</td>
-                                    <td>{{ $code->visits_count }}</td>
-                                    <td>{{ $code->paid_purchases_count }}</td>
-                                    <td>
+                                    <td data-label="{{ __('admin.referrals.customer') }}">{{ $code->customer?->name ?? __('admin.referrals.not_available') }}</td>
+                                    <td data-label="{{ __('admin.referrals.link_clicks') }}">{{ $code->visits_sum_clicks_count ?? 0 }}</td>
+                                    <td data-label="{{ __('admin.referrals.unique_visitors') }}">{{ $code->visits_count }}</td>
+                                    <td data-label="{{ __('admin.referrals.paid_purchases') }}">{{ $code->paid_purchases_count }}</td>
+                                    <td data-label="{{ __('admin.referrals.reward_percentage') }}">
                                         @if ($code->reward_percentage !== null)
                                             {{ $code->reward_percentage }}%
                                         @elseif ((int) $code->reward_amount > 0)
@@ -174,13 +180,13 @@
                                             <span class="ag-muted">{{ __('admin.referrals.store_default_percentage', ['percentage' => $defaultRewardPercentage]) }}</span>
                                         @endif
                                     </td>
-                                    <td>{{ $code->window_days ?? $defaultWindowDays }}</td>
-                                    <td>
+                                    <td data-label="{{ __('admin.referrals.window_days') }}">{{ $code->window_days ?? $defaultWindowDays }}</td>
+                                    <td data-label="{{ __('admin.referrals.status') }}">
                                         <span class="ag-badge {{ $code->is_active ? 'ag-badge--success' : 'ag-badge--muted' }}">
                                             {{ $code->is_active ? __('admin.referrals.active') : __('admin.referrals.inactive') }}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="ag-table__actions" data-label="{{ __('admin.referrals.actions') }}">
                                         @can('referrals.manage')
                                             <div class="admin-page__actions">
                                                 <button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="editCode({{ $code->id }})">
@@ -210,19 +216,19 @@
             </div>
         </section>
 
-        <section class="ag-card" aria-labelledby="referral-attributions-heading">
+        <section class="ag-card ag-card--flush" aria-labelledby="referral-attributions-heading">
             <header class="ag-card__header">
                 <h2 id="referral-attributions-heading" class="ag-card__title">{{ __('admin.referrals.attributions_title') }}</h2>
                 <p class="ag-card__description">{{ __('admin.referrals.attributions_description') }}</p>
             </header>
             <div class="ag-card__content">
-                <div class="ag-table-wrap">
-                    <table class="admin-table">
-                        <caption class="sr-only">{{ __('admin.referrals.attributions_title') }}</caption>
+                <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-labelledby="referral-attributions-heading">
+                    <table class="ag-table ag-table--mobile-cards ag-table--referrals">
+                        <caption class="visually-hidden">{{ __('admin.referrals.attributions_title') }}</caption>
                         <thead>
                             <tr>
                                 <th scope="col">{{ __('admin.referrals.code') }}</th>
-                                <th scope="col">{{ __('admin.referrals.order') }}</th>
+                                <th scope="col">{{ __('admin.invoices.order') }}</th>
                                 <th scope="col">{{ __('admin.referrals.reward') }}</th>
                                 <th scope="col">{{ __('admin.referrals.status') }}</th>
                                 <th scope="col">{{ __('admin.referrals.actions') }}</th>
@@ -239,18 +245,18 @@
                                     };
                                 @endphp
                                 <tr>
-                                    <td><strong>{{ $attribution->code_snapshot }}</strong></td>
-                                    <td>{{ $attribution->order?->number ?? __('admin.referrals.not_available') }}</td>
-                                    <td>
+                                    <td data-label="{{ __('admin.referrals.code') }}"><strong>{{ $attribution->code_snapshot }}</strong></td>
+                                    <td data-label="{{ __('admin.invoices.order') }}">{{ $attribution->order?->number ?? __('admin.referrals.not_available') }}</td>
+                                    <td data-label="{{ __('admin.referrals.reward') }}">
                                         {{ $attribution->reward_percentage !== null ? $attribution->reward_percentage.'%' : __('admin.referrals.not_available') }}
                                         <span class="ag-muted">({{ \App\Support\MoneyFormatter::format($attribution->reward_amount, $attribution->reward_currency ?? 'EUR') }})</span>
                                     </td>
-                                    <td>
+                                    <td data-label="{{ __('admin.referrals.status') }}">
                                         <span class="ag-badge {{ $statusClass }}">
                                             {{ __('admin.referrals.statuses.'.$attribution->status) }}
                                         </span>
                                     </td>
-                                    <td>
+                                    <td class="ag-table__actions" data-label="{{ __('admin.referrals.actions') }}">
                                         @can('referrals.manage')
                                             @if ($attribution->status === 'review')
                                                 <div class="admin-page__actions">

@@ -70,7 +70,11 @@ it('presents referral management with the shared admin card and stats primitives
         ->assertSee('referrals-overview', false)
         ->assertSee('ag-stats', false)
         ->assertSee('ag-card', false)
-        ->assertSee('ag-table-wrap', false)
+        ->assertSee('ag-table-wrap--mobile-cards', false)
+        ->assertSee('ag-table--referrals', false)
+        ->assertSee('data-label="'.__('admin.referrals.customer').'"', false)
+        ->assertSee('aria-labelledby="referral-attributions-heading"', false)
+        ->assertDontSee('admin.referrals.order', false)
         ->assertSee('ag-badge', false)
         ->assertSee('ag-btn ag-btn--secondary ag-btn--sm', false);
 });
@@ -101,6 +105,7 @@ it('lets referral managers create a referral code for a customer', function (): 
     Livewire::actingAs($staff)
         ->test(AdminReferrals::class)
         ->call('createCode')
+        ->assertSee('class="ag-card" aria-labelledby="new-referral-code-heading"', false)
         ->set('customerSearch', 'Milo')
         ->call('selectCustomer', $customer->id)
         ->assertSet('customerId', $customer->id)

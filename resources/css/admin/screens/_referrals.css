@@ -1,0 +1,20 @@
+@media (max-width: 720px) {
+  .ag-table--referrals tbody td[colspan] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ag-table--referrals tbody td[colspan]::before {
+    content: none;
+  }
+
+  .ag-table--referrals tbody td.ag-table__actions .admin-page__actions {
+    min-width: 0;
+    justify-self: start;
+  }
+
+  .ag-table--referrals tbody td.ag-table__actions .ag-btn {
+    min-height: 2.5rem;
+    max-width: 100%;
+    white-space: normal;
+  }
+}
