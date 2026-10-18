@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page admin-page--webhooks ag-list-page">
     <x-ag.page-header :heading="__('admin.webhooks.title')" :lede="__('admin.webhooks.lede')" />
 
     @if (session('status'))
@@ -80,8 +80,8 @@
                         <p class="ag-empty__text">{{ __('admin.webhooks.empty') }}</p>
                     </div>
                 @else
-                    <div class="ag-table-wrap" role="region" tabindex="0" aria-label="{{ __('admin.webhooks.endpoints') }}">
-                        <table class="ag-table c-system-table">
+                    <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-label="{{ __('admin.webhooks.endpoints') }}">
+                        <table class="ag-table ag-table--mobile-cards ag-table--webhooks c-system-table">
                             <caption class="visually-hidden">{{ __('admin.webhooks.endpoints') }}</caption>
                             <thead>
                                 <tr>
@@ -103,7 +103,8 @@
                                             <span class="ag-table__name">{{ $endpoint->name }}</span>
                                         </td>
                                         <td data-label="{{ __('admin.webhooks.destination') }}">{{ $endpoint->destination === 'discord' ? __('admin.webhooks.destination_discord') : __('admin.webhooks.destination_http') }}</td>
-                                        <td data-label="{{ __('admin.webhooks.url') }}"><code>{{ $endpoint->url }}</code></td>
+                                        @php($endpointHost = parse_url($endpoint->url, PHP_URL_HOST))
+                                        <td data-label="{{ __('admin.webhooks.url') }}"><code>{{ is_string($endpointHost) && $endpointHost !== '' ? 'https://'.$endpointHost : __('common.em_dash') }}</code></td>
                                         <td data-label="{{ __('admin.webhooks.events') }}">{{ implode(', ', $endpoint->events) }}</td>
                                         <td data-label="{{ __('admin.webhooks.status') }}">
                                             <span @class(['ag-badge', 'ag-badge--success' => $endpoint->active, 'ag-badge--muted' => ! $endpoint->active])>
@@ -114,9 +115,18 @@
                                         @can('webhooks.manage')
                                         <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
                                             <div class="ag-row-actions">
-                                                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="edit({{ $endpoint->id }})">{{ __('common.edit') }}</button>
-                                                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="toggleActive({{ $endpoint->id }})">{{ $endpoint->active ? __('admin.webhooks.disable') : __('admin.webhooks.enable') }}</button>
-                                                <button type="button" class="ag-btn ag-btn--danger ag-btn--sm" wire:click="delete({{ $endpoint->id }})" wire:confirm="{{ __('admin.webhooks.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                                <button type="button" class="ag-icon-btn" wire:click="edit({{ $endpoint->id }})" title="{{ __('common.edit') }}" aria-label="{{ __('common.edit') }}: {{ $endpoint->name }}">
+                                                    <x-ag.icon name="pencil" :size="16" />
+                                                    <span class="ag-table__action-label">{{ __('common.edit') }}</span>
+                                                </button>
+                                                <button type="button" class="ag-icon-btn" wire:click="toggleActive({{ $endpoint->id }})" title="{{ $endpoint->active ? __('admin.webhooks.disable') : __('admin.webhooks.enable') }}" aria-label="{{ $endpoint->active ? __('admin.webhooks.disable') : __('admin.webhooks.enable') }}: {{ $endpoint->name }}">
+                                                    <x-ag.icon :name="$endpoint->active ? 'x' : 'check'" :size="16" />
+                                                    <span class="ag-table__action-label">{{ $endpoint->active ? __('admin.webhooks.disable') : __('admin.webhooks.enable') }}</span>
+                                                </button>
+                                                <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="delete({{ $endpoint->id }})" wire:confirm="{{ __('admin.webhooks.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $endpoint->name }}">
+                                                    <x-ag.icon name="trash" :size="16" />
+                                                    <span class="ag-table__action-label">{{ __('common.delete') }}</span>
+                                                </button>
                                             </div>
                                         </td>
                                         @endcan
@@ -143,8 +153,8 @@
                         <p class="ag-empty__text">{{ __('admin.webhooks.no_deliveries') }}</p>
                     </div>
                 @else
-                    <div class="ag-table-wrap" role="region" tabindex="0" aria-label="{{ __('admin.webhooks.delivery_log') }}">
-                        <table class="ag-table c-system-table">
+                    <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-label="{{ __('admin.webhooks.delivery_log') }}">
+                        <table class="ag-table ag-table--mobile-cards ag-table--webhooks c-system-table">
                             <caption class="visually-hidden">{{ __('admin.webhooks.delivery_log') }}</caption>
                             <thead>
                                 <tr>
@@ -177,7 +187,10 @@
                                         @can('webhooks.manage')
                                         <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
                                             @if (in_array($delivery->status, ['failed', 'retrying'], true))
-                                                <button type="button" class="ag-btn ag-btn--ghost ag-btn--sm" wire:click="retryDelivery({{ $delivery->id }})">{{ __('admin.webhooks.retry') }}</button>
+                                                <button type="button" class="ag-icon-btn" wire:click="retryDelivery({{ $delivery->id }})" title="{{ __('admin.webhooks.retry') }}" aria-label="{{ __('admin.webhooks.retry') }}: {{ $delivery->delivery_id }}">
+                                                    <x-ag.icon name="rotate-ccw" :size="16" />
+                                                    <span class="ag-table__action-label">{{ __('admin.webhooks.retry') }}</span>
+                                                </button>
                                             @endif
                                         </td>
                                         @endcan

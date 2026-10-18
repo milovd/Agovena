@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Agovena\Audit\AuditLogExporter;
 use App\Agovena\Audit\AuditLogger;
 use App\Livewire\Admin\Audit\Index;
+use App\Models\AuditLog;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -127,6 +128,26 @@ test('audit query supports correlation and subject lookup', function (): void {
         ->assertSee('order.investigated')
         ->set('subjectId', (string) $order->id)
         ->assertSee('order.investigated');
+});
+
+test('historical webhook URLs are hidden in audit detail and export without rewriting records', function (): void {
+    $staff = $this->createStaff([], ['audit.view', 'audit.export']);
+    $this->actingAs($staff);
+    $entry = app(AuditLogger::class)->log('webhook.endpoint_created', null, ['name' => 'Legacy']);
+    $stored = 'https://example.com/private-path?reference=test-only-sentinel';
+    DB::table('audit_logs')->where('id', $entry->id)->update(['properties' => json_encode(['url' => $stored])]);
+
+    $this->get(route('admin.audit.show', $entry))
+        ->assertOk()
+        ->assertDontSee('test-only-sentinel')
+        ->assertDontSee('private-path');
+
+    $response = app(AuditLogExporter::class)->download(['category' => 'webhook']);
+    ob_start();
+    $response->sendContent();
+    $csv = (string) ob_get_clean();
+    expect($csv)->not->toContain('test-only-sentinel');
+    expect(AuditLog::query()->findOrFail($entry->id)->properties['url'])->toBe($stored);
 });
 
 test('retention command prunes expired audit entries without removing recent entries', function (): void {

@@ -15,7 +15,7 @@ it('keeps system table facts and actions labelled on narrow screens', function (
     $jobs = file_get_contents(resource_path('views/livewire/admin/system/failed-jobs.blade.php'));
     $entry = file_get_contents(resource_path('css/admin.css'));
 
-    expect($webhooks)->toContain('class="ag-table c-system-table"')
+    expect($webhooks)->toContain('class="ag-table ag-table--mobile-cards ag-table--webhooks c-system-table"')
         ->toContain('data-label="{{ __(\'admin.webhooks.url\') }}"')
         ->toContain('data-label="{{ __(\'admin.webhooks.attempts\') }}"')
         ->toContain('data-label="{{ __(\'common.actions\') }}"')

@@ -1,4 +1,9 @@
 /* System lists retain table semantics on desktop and readable labelled rows on mobile. */
+.ag-table--webhooks td code {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 @media (max-width: 720px) {
   .c-system-table {
     display: block;

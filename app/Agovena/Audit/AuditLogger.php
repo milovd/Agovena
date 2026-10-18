@@ -255,6 +255,10 @@ final class AuditLogger
 
     private function isSensitiveKey(string $key): bool
     {
+        if ($key === 'url' || str_ends_with($key, '_url')) {
+            return true;
+        }
+
         foreach ([
             'password', 'secret', 'token', 'authorization', 'cookie', 'api_key', 'apikey',
             'access_key', 'private_key', 'client_secret', 'connection_string', 'webhook_secret',

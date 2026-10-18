@@ -64,7 +64,6 @@ final class Index extends Component
             $before = [
                 'name' => $endpoint->name,
                 'destination' => $endpoint->destination,
-                'url' => $endpoint->url,
                 'events' => $endpoint->events,
                 'active' => $endpoint->active,
             ];
@@ -79,7 +78,6 @@ final class Index extends Component
             $audit->logChange('webhook.endpoint_updated', $endpoint, $before, [
                 'name' => $endpoint->name,
                 'destination' => $endpoint->destination,
-                'url' => $endpoint->url,
                 'events' => $endpoint->events,
                 'active' => $endpoint->active,
             ]);
@@ -96,7 +94,6 @@ final class Index extends Component
             $audit->log('webhook.endpoint_created', $endpoint, [
                 'name' => $endpoint->name,
                 'destination' => $endpoint->destination,
-                'url' => $endpoint->url,
                 'events' => $endpoint->events,
             ]);
             session()->flash('status', __('admin.webhooks.created'));
@@ -140,7 +137,6 @@ final class Index extends Component
         $endpoint = WebhookEndpoint::query()->findOrFail($id);
         $audit->log('webhook.endpoint_deleted', $endpoint, [
             'name' => $endpoint->name,
-            'url' => $endpoint->url,
         ]);
         $endpoint->delete();
     }

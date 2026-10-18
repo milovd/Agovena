@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Agovena\Webhooks\DeliverWebhook;
 use App\Livewire\Admin\Webhooks\Index;
+use App\Models\AuditLog;
 use App\Models\WebhookDelivery;
 use App\Models\WebhookEndpoint;
 use Illuminate\Support\Facades\Queue;
@@ -27,7 +28,8 @@ it('allows authorized staff to create and manage outbound webhook endpoints', fu
         ->assertSee('Order listener')
         ->assertSee('ag-form-stack', false)
         ->assertSee('ag-card__header', false)
-        ->assertSee('ag-btn--sm', false)
+        ->assertSee('ag-icon-btn', false)
+        ->assertSee('ag-table--webhooks', false)
         ->assertDontSee('ag-btn--small', false);
 
     $endpoint = WebhookEndpoint::query()->sole();
@@ -232,6 +234,61 @@ it('keeps endpoint and failed delivery facts visible without webhook management 
     Livewire::actingAs($staff)->test(Index::class)->call('save')->assertForbidden();
     expect($delivery->fresh()->status)->toBe('failed')
         ->and($endpoint->fresh()->active)->toBeTrue();
+});
+
+it('keeps webhook destination paths out of viewer markup and new audit records', function (): void {
+    $manager = $this->createStaff([], ['webhooks.view', 'webhooks.manage']);
+    $url = 'https://example.com/private-path?reference=test-only-sentinel';
+
+    Livewire::actingAs($manager)->test(Index::class)
+        ->set('name', 'Private endpoint')
+        ->set('url', $url)
+        ->set('secret', 'test-only-placeholder')
+        ->set('events', ['order.created'])
+        ->call('save')
+        ->assertHasNoErrors();
+
+    $endpoint = WebhookEndpoint::query()->sole();
+    expect($endpoint->url)->toBe($url);
+    expect(json_encode(AuditLog::query()->where('action', 'webhook.endpoint_created')->sole()->properties))
+        ->not->toContain('test-only-sentinel');
+
+    Livewire::actingAs($manager)->test(Index::class)
+        ->call('edit', $endpoint->id)
+        ->assertSet('editingId', $endpoint->id)
+        ->assertSet('url', $url);
+
+    $viewer = $this->createStaff([], ['webhooks.view']);
+    Livewire::actingAs($viewer)->test(Index::class)
+        ->assertSee('example.com')
+        ->assertDontSee('private-path')
+        ->assertDontSee('test-only-sentinel')
+        ->assertDontSee('wire:submit="save"', false);
+});
+
+it('keeps destination URLs out of update toggle and delete audit events', function (): void {
+    $manager = $this->createStaff([], ['webhooks.view', 'webhooks.manage']);
+    $endpoint = WebhookEndpoint::query()->create([
+        'name' => 'Private endpoint',
+        'url' => 'https://example.com/old-private-path',
+        'secret' => 'test-only-placeholder',
+        'events' => ['order.created'],
+        'active' => true,
+    ]);
+
+    Livewire::actingAs($manager)->test(Index::class)
+        ->call('edit', $endpoint->id)
+        ->set('url', 'https://example.com/new-private-path?reference=test-only-sentinel')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->call('toggleActive', $endpoint->id)
+        ->call('delete', $endpoint->id);
+
+    expect(WebhookEndpoint::query()->count())->toBe(0);
+    foreach (AuditLog::query()->where('action', 'like', 'webhook.endpoint_%')->get() as $entry) {
+        $recorded = json_encode([$entry->properties, $entry->before, $entry->after]);
+        expect($recorded)->not->toContain('private-path')->not->toContain('test-only-sentinel');
+    }
 });
 
 it('does not expose webhook management to staff without the view permission', function (): void {

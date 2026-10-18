@@ -99,7 +99,7 @@
                         <h3>{{ __('admin.audit.'.$label) }}</h3>
                         <span>{{ is_countable($auditLog->{$field}) ? count($auditLog->{$field}) : 0 }}</span>
                     </header>
-                    <pre>{{ json_encode($auditLog->{$field} ?? [], $jsonOptions) }}</pre>
+                    <pre>{{ json_encode(app(\App\Agovena\Audit\AuditLogger::class)->redactForOutput($auditLog->{$field} ?? []), $jsonOptions) }}</pre>
                 </section>
             @endforeach
         </div>
