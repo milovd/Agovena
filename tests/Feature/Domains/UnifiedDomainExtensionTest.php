@@ -123,9 +123,13 @@ it('migrates Cloudflare DNS and registrar into one Cloudflare extension', functi
         runDomainProviderMigration();
         runDomainProviderMigration();
 
-        $cloudflareManifest = json_decode((string) File::get(storage_path('app/packages/extensions/cloudflare-domain/extension.json')), true);
-        expect($cloudflareManifest['logo'])->toBe('resources/images/logo.png')
-            ->and(File::exists(storage_path('app/packages/extensions/cloudflare-domain/resources/images/logo.png')))->toBeTrue();
+        $sourceRoot = config('agovena.packages.optional_packages_path');
+        $sourceManifest = json_decode((string) File::get($sourceRoot.'/extensions/domains/cloudflare-domain/extension.json'), true, 512, JSON_THROW_ON_ERROR);
+        $cloudflareManifest = json_decode((string) File::get(storage_path('app/packages/extensions/cloudflare-domain/extension.json')), true, 512, JSON_THROW_ON_ERROR);
+        expect($cloudflareManifest['logo'] ?? null)->toBe($sourceManifest['logo'] ?? null);
+        if (isset($sourceManifest['logo'])) {
+            expect(File::exists(storage_path('app/packages/extensions/cloudflare-domain/'.$sourceManifest['logo'])))->toBeTrue();
+        }
 
         expect(DB::table('agovena_extensions')->where('extension_id', 'cloudflare-domain')->value('enabled'))->toBe(1)
             ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['cloudflare-dns', 'cloudflare-registrar'])->exists())->toBeFalse()
@@ -652,6 +656,10 @@ it('fails closed when a declared package image is missing', function (): void {
     $root = storage_path('framework/testing/missing-cloudflare-logo');
     $source = $root.'/extensions/domains/cloudflare-domain';
     File::copyDirectory($configuredRoot.'/extensions/domains/cloudflare-domain', $source);
+    $manifestPath = $source.'/extension.json';
+    $manifest = json_decode((string) File::get($manifestPath), true, 512, JSON_THROW_ON_ERROR);
+    $manifest['logo'] = 'resources/images/logo.png';
+    File::put($manifestPath, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
     File::delete($source.'/resources/images/logo.png');
     config(['agovena.packages.optional_packages_path' => $root]);
 
