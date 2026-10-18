@@ -12,6 +12,17 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
+test('operations overview uses labelled shared cards without hiding status details', function () {
+    Livewire::actingAs($this->createStaff())
+        ->test(Updates::class)
+        ->assertSee('class="ag-card"', false)
+        ->assertSee('aria-labelledby="operations-status-heading"', false)
+        ->assertSee('aria-labelledby="operations-providers-heading"', false)
+        ->assertSee('aria-labelledby="operations-packages-heading"', false)
+        ->assertSee(__('admin.updates.queue'))
+        ->assertSee(__('admin.updates.mail'));
+});
+
 /**
  * Replace the extension's connection check with a local probe that records whether it ran.
  *

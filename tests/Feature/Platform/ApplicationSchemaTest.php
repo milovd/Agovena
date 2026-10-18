@@ -55,6 +55,9 @@ test('admin updates shows pending migrations instead of a public takeover page',
         ->assertSee(__('admin.updates.pending_title'), false)
         ->assertSee('php artisan agovena:upgrade', false)
         ->assertSee('2026_08_13_090000_create_customer_custom_properties_tables', false)
+        ->assertSee('aria-labelledby="operations-command-heading"', false)
+        ->assertSee('aria-labelledby="operations-pending-heading"', false)
+        ->assertSee('class="ag-table-wrap" role="region" tabindex="0" aria-labelledby="operations-pending-heading"', false)
         ->assertDontSee('install-panel', false)
         ->assertDontSee('SQLSTATE', false);
 });
