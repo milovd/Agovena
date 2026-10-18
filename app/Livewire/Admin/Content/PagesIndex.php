@@ -120,7 +120,10 @@ final class PagesIndex extends Component
     public function selectCurrentPage(): void
     {
         $this->authorize('pages.manage');
-        $this->selectedPageIds = $this->visiblePages()->getCollection()->pluck('id')->all();
+        $visibleIds = $this->visiblePages()->getCollection()->pluck('id')->all();
+        $selectedIds = array_map(static fn (mixed $id): string => is_int($id) || is_string($id) ? (string) $id : '', $this->selectedPageIds);
+        $allSelected = $visibleIds !== [] && collect($visibleIds)->every(static fn (int $id): bool => in_array((string) $id, $selectedIds, true));
+        $this->selectedPageIds = $allSelected ? [] : $visibleIds;
     }
 
     public function bulkSetStatus(string $status): void

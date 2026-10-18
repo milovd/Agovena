@@ -124,7 +124,7 @@ test('products list retains every filter and bulk action while presenting a visu
     $source = file_get_contents(resource_path('views/livewire/admin/products/index.blade.php'));
     expect($source)->toContain('ag-table__category')
         ->and($source)->toContain('<x-ag.icon-tile')
-        ->and($source)->toContain('ag-toolbar--bulk')
+        ->and($source)->toContain('ag-bulk-selection__count')
         ->and($source)->toContain('ag-table__mobile-meta')
         ->and($source)->toContain('wire:model.live.debounce.300ms="search"');
 

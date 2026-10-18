@@ -40,13 +40,18 @@
             <p class="ag-empty__text">{{ $search !== '' || $publicationFilter !== '' ? __('admin.content.pages.filtered_empty_text') : __('admin.content.pages.empty_text') }}</p>
         </div>
     @else
+        @php
+            $visibleIds = $pages->getCollection()->pluck('id')->map(static fn ($id) => (string) $id)->all();
+            $selectedIds = array_map(static fn ($id) => is_int($id) || is_string($id) ? (string) $id : '', $selectedPageIds);
+            $allSelected = $visibleIds !== [] && array_diff($visibleIds, $selectedIds) === [];
+        @endphp
     @can('pages.manage')
-        <div class="ag-toolbar ag-page-list__bulk ag-toolbar--bulk" role="region" aria-label="{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}">
-            <button type="button" class="ag-icon-btn" wire:click="selectCurrentPage" title="{{ __('admin.content.pages.bulk_select_page') }}" aria-label="{{ __('admin.content.pages.bulk_select_page') }}"><x-ag.icon name="check" :size="16" /></button>
+        <div class="ag-toolbar ag-page-list__bulk-mobile" role="region" aria-label="{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}">
+            <button type="button" class="ag-bulk-selection__select" role="checkbox" aria-checked="{{ $allSelected ? 'true' : 'false' }}" wire:click="selectCurrentPage" title="{{ __($allSelected ? 'admin.content.pages.bulk_deselect_page' : 'admin.content.pages.bulk_select_page') }}" aria-label="{{ __($allSelected ? 'admin.content.pages.bulk_deselect_page' : 'admin.content.pages.bulk_select_page') }}">@if($allSelected)<x-ag.icon name="check" :size="13" />@endif</button>
             <span aria-live="polite">{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}</span>
-            <div class="ag-menu ag-toolbar__actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
-                <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="page-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedPageIds) === 0)><x-ag.icon name="more-horizontal" :size="16" /></button>
-                <div id="page-bulk-actions" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
+            <div class="ag-menu ag-bulk-selection__actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
+                <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="page-bulk-actions-mobile" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedPageIds) === 0)><x-ag.icon name="more-horizontal" :size="16" /></button>
+                <div id="page-bulk-actions-mobile" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
                     <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('published')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_publish') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_publish') }}</button>
                     <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_draft') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_draft') }}</button>
                 </div>
@@ -59,10 +64,22 @@
         <table class="ag-table ag-page-list__table">
                 <thead>
                     <tr>
-                        @can('pages.manage')<th scope="col"><span class="visually-hidden">{{ __('admin.content.pages.bulk_select_page') }}</span></th>@endcan
-                        <th scope="col">{{ __('common.title') }}</th>
+                        @can('pages.manage')<th scope="col"><button type="button" class="ag-bulk-selection__select" role="checkbox" aria-checked="{{ $allSelected ? 'true' : 'false' }}" wire:click="selectCurrentPage" title="{{ __($allSelected ? 'admin.content.pages.bulk_deselect_page' : 'admin.content.pages.bulk_select_page') }}" aria-label="{{ __($allSelected ? 'admin.content.pages.bulk_deselect_page' : 'admin.content.pages.bulk_select_page') }}">@if($allSelected)<x-ag.icon name="check" :size="13" />@endif</button></th>@endcan
+                        <th scope="col">{{ __('common.title') }} @can('pages.manage')<span class="ag-bulk-selection__count" aria-live="polite">{{ __('admin.content.pages.bulk_selected', ['count' => count($selectedPageIds)]) }}</span>@endcan</th>
                         <th scope="col">{{ __('common.status') }}</th>
-                        <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                        <th scope="col" class="ag-bulk-selection__header-actions">
+                            @can('pages.manage')
+                                <div class="ag-menu ag-bulk-selection__actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
+                                    <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="page-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedPageIds) === 0)><x-ag.icon name="more-horizontal" :size="16" /></button>
+                                    <div id="page-bulk-actions" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
+                                        <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('published')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_publish') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_publish') }}</button>
+                                        <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.content.pages.bulk_confirm_draft') }}" @disabled(count($selectedPageIds) === 0)>{{ __('admin.content.pages.bulk_draft') }}</button>
+                                    </div>
+                                </div>
+                            @else
+                                <span class="visually-hidden">{{ __('common.actions') }}</span>
+                            @endcan
+                        </th>
                     </tr>
                 </thead>
                 <tbody>

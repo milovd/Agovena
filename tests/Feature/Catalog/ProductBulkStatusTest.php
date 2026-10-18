@@ -29,20 +29,36 @@ it('renders confirmed bulk controls and accessible row selection only for produc
     $dom = new DOMDocument;
     @$dom->loadHTML($markup);
     $xpath = new DOMXPath($dom);
-    $toolbar = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ag-toolbar--bulk ")]');
-    expect($toolbar)->toHaveCount(1);
-    $select = $xpath->query('.//button[@*[name()="wire:click" and .="selectCurrentPage"] and @aria-label and @title]', $toolbar->item(0));
-    $more = $xpath->query('.//button[@aria-controls="product-bulk-actions" and @*[name()=":aria-expanded"] and @aria-label]', $toolbar->item(0));
+    $select = $xpath->query('//table[contains(@class, "ag-table--products")]/thead/tr/th[1]//button[@*[name()="wire:click" and .="selectCurrentPage"] and @role="checkbox" and @aria-checked="false" and @aria-label and @title]');
+    $count = $xpath->query('//table[contains(@class, "ag-table--products")]/thead/tr/th[3]//*[contains(@class, "ag-bulk-selection__count")][@aria-live="polite"]');
+    $actions = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ag-bulk-selection__floating-actions ")]');
+    $more = $xpath->query('.//button[@aria-controls="product-bulk-actions" and @*[name()=":aria-expanded"] and @aria-label]', $actions->item(0));
     expect($select)->toHaveCount(1)
+        ->and($count)->toHaveCount(1)
         ->and($more)->toHaveCount(1)
+        ->and($xpath->query('//*[contains(@class, "ag-table-wrap")]//*[@id="product-bulk-actions"]'))->toHaveCount(0)
+        ->and($xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ag-toolbar--bulk ")]'))->toHaveCount(0)
         ->and(trim($select->item(0)->textContent))->toBe('')
         ->and(trim($more->item(0)->textContent))->toBe('')
-        ->and($xpath->query('.//*[@id="product-bulk-actions"]//button[@*[name()="wire:confirm"]]', $toolbar->item(0)))->toHaveCount(2);
+        ->and($xpath->query('.//*[@id="product-bulk-actions"]//button[@*[name()="wire:confirm"]]', $actions->item(0)))->toHaveCount(2);
 
     $viewer = $this->createStaff([], ['products.view']);
     Livewire::actingAs($viewer)->test(Index::class)
         ->assertDontSee('selectedProductIds', false)
         ->assertDontSee('bulkSetStatus', false);
+});
+
+it('toggles select-all for the current product page', function (): void {
+    $staff = $this->createStaff([], ['products.view', 'products.update']);
+    Product::factory()->draft()->count(2)->create();
+
+    Livewire::actingAs($staff)->test(Index::class)
+        ->call('selectCurrentPage')
+        ->assertCount('selectedProductIds', 2)
+        ->assertSee('aria-checked="true"', false)
+        ->call('selectCurrentPage')
+        ->assertSet('selectedProductIds', [])
+        ->assertSee('aria-checked="false"', false);
 });
 
 it('publishes selected products without changing their catalog data and audits each change', function (): void {

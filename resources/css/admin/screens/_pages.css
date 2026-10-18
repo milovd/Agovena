@@ -12,16 +12,7 @@
   flex: 1 1 20rem;
 }
 
-.ag-page-list__bulk {
-  justify-content: flex-start;
-  gap: var(--ag-space-2) var(--ag-space-3);
-  color: var(--ag-color-text-muted);
-  font-size: var(--ag-font-size-sm);
-}
-
-.ag-page-list__bulk .ag-btn {
-  font-size: var(--ag-font-size-sm);
-}
+.ag-page-list__bulk-mobile { display: none; }
 
 .ag-page-list__wrap {
   overflow: visible;
@@ -183,9 +174,22 @@
     flex: 1 1 100%;
   }
 
-  .ag-page-list__bulk {
-    align-items: flex-start;
+  .ag-page-list__bulk-mobile {
+    display: flex;
+    justify-content: flex-start;
+    gap: var(--ag-space-3);
+    padding: var(--ag-space-2) var(--ag-space-3);
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface-muted);
+    color: var(--ag-color-text-muted);
+    font-size: var(--ag-font-size-sm);
   }
+  .ag-page-list__bulk-mobile .ag-bulk-selection__actions { margin-left: auto; }
+
+  /* Keep table headers accessible without leaving hidden controls in tab order. */
+  .ag-page-list__table thead .ag-bulk-selection__select,
+  .ag-page-list__table thead .ag-bulk-selection__actions { display: none; }
 
   .ag-page-list__wrap {
     max-width: 100%;

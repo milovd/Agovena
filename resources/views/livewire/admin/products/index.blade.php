@@ -82,33 +82,28 @@
             @endcan
         </div>
     @else
+        @php
+            $visibleIds = $products->getCollection()->pluck('id')->map(static fn ($id) => (string) $id)->all();
+            $selectedIds = array_map(static fn ($id) => is_int($id) || is_string($id) ? (string) $id : '', $selectedProductIds);
+            $allSelected = $visibleIds !== [] && array_diff($visibleIds, $selectedIds) === [];
+        @endphp
         @can('products.update')
-            <x-ag.table-toolbar class="ag-toolbar--bulk" role="region" aria-label="{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}">
-                <button type="button" class="ag-icon-btn" wire:click="selectCurrentPage" title="{{ __('admin.products.bulk_select_page') }}" aria-label="{{ __('admin.products.bulk_select_page') }}"><x-ag.icon name="check" :size="16" /></button>
-                <span aria-live="polite">{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}</span>
-                <div class="ag-menu ag-toolbar__actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
-                    <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="product-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedProductIds) === 0)><x-ag.icon name="more-horizontal" :size="16" /></button>
-                    <div id="product-bulk-actions" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
-                        <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
-                        <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
-                    </div>
-                </div>
-            </x-ag.table-toolbar>
             @error('selectedProductIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
             @error('bulkStatus') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
         @endcan
+        <div class="ag-bulk-selection__surface">
         <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.products.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status,category,sort">
             <table class="ag-table ag-table--products">
                 <thead>
                     <tr>
-                        @can('products.update')<th scope="col" class="ag-table__select-col"><span class="visually-hidden">{{ __('admin.products.bulk_select_page') }}</span></th>@endcan
+                        @can('products.update')<th scope="col" class="ag-table__select-col"><button type="button" class="ag-bulk-selection__select" role="checkbox" aria-checked="{{ $allSelected ? 'true' : 'false' }}" wire:click="selectCurrentPage" title="{{ __($allSelected ? 'admin.products.bulk_deselect_page' : 'admin.products.bulk_select_page') }}" aria-label="{{ __($allSelected ? 'admin.products.bulk_deselect_page' : 'admin.products.bulk_select_page') }}">@if($allSelected)<x-ag.icon name="check" :size="13" />@endif</button></th>@endcan
                         <th scope="col" class="ag-table__thumb-col"><span class="visually-hidden">{{ __('common.image') }}</span></th>
-                        <th scope="col">{{ __('common.product') }}</th>
+                        <th scope="col">{{ __('common.product') }} @can('products.update')<span class="ag-bulk-selection__count" aria-live="polite">{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}</span>@endcan</th>
                         <th scope="col" class="ag-table__col--md">{{ __('common.category') }}</th>
                         <th scope="col" class="ag-table__price-col">{{ __('common.price') }}</th>
                         <th scope="col" class="ag-table__status-col">{{ __('common.status') }}</th>
                         <th scope="col" class="ag-table__col--lg">{{ __('common.updated') }}</th>
-                        <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                        <th scope="col" class="ag-bulk-selection__header-actions"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -219,6 +214,16 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        @can('products.update')
+            <div class="ag-menu ag-bulk-selection__actions ag-bulk-selection__floating-actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
+                <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="product-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedProductIds) === 0)><x-ag.icon name="more-horizontal" :size="16" /></button>
+                <div id="product-bulk-actions" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
+                    <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
+                    <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
+                </div>
+            </div>
+        @endcan
         </div>
         <div class="ag-pagination">{{ $products->links() }}</div>
     @endif

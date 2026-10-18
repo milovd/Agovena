@@ -78,7 +78,10 @@ final class Index extends Component
     public function selectCurrentPage(): void
     {
         $this->authorize('products.update');
-        $this->selectedProductIds = $this->visibleProducts()->getCollection()->pluck('id')->all();
+        $visibleIds = $this->visibleProducts()->getCollection()->pluck('id')->all();
+        $selectedIds = array_map(static fn (mixed $id): string => is_int($id) || is_string($id) ? (string) $id : '', $this->selectedProductIds);
+        $allSelected = $visibleIds !== [] && collect($visibleIds)->every(static fn (int $id): bool => in_array((string) $id, $selectedIds, true));
+        $this->selectedProductIds = $allSelected ? [] : $visibleIds;
     }
 
     public function bulkSetStatus(string $status): void
