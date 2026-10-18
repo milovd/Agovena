@@ -358,6 +358,19 @@ test('staff without backup management permission cannot create a database backup
         ->assertForbidden();
 });
 
+test('view-only backup staff cannot change the displayed schedule', function () {
+    $staff = $this->createStaff([], ['backups.view']);
+
+    $component = Livewire::actingAs($staff)->test(Backups::class);
+
+    expect($component->html())->toMatch('/<select\b[^>]*\bid="backup-interval"[^>]*\bdisabled(?:\s|>)/');
+
+    $component
+        ->assertDontSee('wire:target="saveSchedule"', false)
+        ->call('saveSchedule')
+        ->assertForbidden();
+});
+
 test('database backups screen rechecks view permission during livewire refresh', function () {
     $staff = $this->createStaff([], ['backups.view']);
 

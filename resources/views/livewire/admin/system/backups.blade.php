@@ -52,7 +52,7 @@
                 <div class="ag-backup-schedule__grid">
                     <div class="ag-field ag-backup-schedule__interval">
                         <label class="ag-field__label" for="backup-interval">{{ __('admin.backups.interval_label') }}</label>
-                        <select id="backup-interval" class="ag-input" wire:model="backupInterval">
+                        <select id="backup-interval" class="ag-input" wire:model="backupInterval" @cannot('backups.manage') disabled @endcannot>
                             @foreach ($intervalOptions as $value => $label)
                                 <option value="{{ $value }}">{{ $label }}</option>
                             @endforeach
