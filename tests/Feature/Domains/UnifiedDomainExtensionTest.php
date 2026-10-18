@@ -123,6 +123,10 @@ it('migrates Cloudflare DNS and registrar into one Cloudflare extension', functi
         runDomainProviderMigration();
         runDomainProviderMigration();
 
+        $cloudflareManifest = json_decode((string) File::get(storage_path('app/packages/extensions/cloudflare-domain/extension.json')), true);
+        expect($cloudflareManifest['logo'])->toBe('resources/images/logo.png')
+            ->and(File::exists(storage_path('app/packages/extensions/cloudflare-domain/resources/images/logo.png')))->toBeTrue();
+
         expect(DB::table('agovena_extensions')->where('extension_id', 'cloudflare-domain')->value('enabled'))->toBe(1)
             ->and(DB::table('agovena_extensions')->whereIn('extension_id', ['cloudflare-dns', 'cloudflare-registrar'])->exists())->toBeFalse()
             ->and(DB::table('agovena_packages')->where('agovena_id', 'cloudflare-domain')->value('composer_name'))->toBeNull()
@@ -637,6 +641,27 @@ it('fails closed for unsupported legacy settings after source validation', funct
         File::deleteDirectory(storage_path('app/packages/extensions/cloudflare-domain'));
         File::deleteDirectory(storage_path('app/packages/extensions/.cloudflare-domain.staging'));
         File::deleteDirectory(storage_path('app/packages/extensions/.cloudflare-domain.backup'));
+        File::deleteDirectory($legacyPath);
+    }
+});
+
+it('fails closed when a declared package image is missing', function (): void {
+    insertLegacyDomainExtension('cloudflare-dns');
+    $legacyPath = insertLegacyDomainPackage('cloudflare-dns');
+    $configuredRoot = config('agovena.packages.optional_packages_path');
+    $root = storage_path('framework/testing/missing-cloudflare-logo');
+    $source = $root.'/extensions/domains/cloudflare-domain';
+    File::copyDirectory($configuredRoot.'/extensions/domains/cloudflare-domain', $source);
+    File::delete($source.'/resources/images/logo.png');
+    config(['agovena.packages.optional_packages_path' => $root]);
+
+    try {
+        expect(fn (): mixed => runDomainProviderMigration())->toThrow(RuntimeException::class)
+            ->and(DB::table('agovena_extensions')->where('extension_id', 'cloudflare-dns')->exists())->toBeTrue();
+    } finally {
+        config(['agovena.packages.optional_packages_path' => $configuredRoot]);
+        File::deleteDirectory($root);
+        File::deleteDirectory(storage_path('app/packages/extensions/cloudflare-domain'));
         File::deleteDirectory($legacyPath);
     }
 });

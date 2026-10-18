@@ -1356,9 +1356,8 @@ return new class extends Migration
         }
 
         $manifestData = json_decode((string) file_get_contents($manifestPath), true);
-        // production_ready, version and the supported Core range are release metadata,
-        // not package identity, so later releases of the same package must still be recognized.
-        $releaseMetadata = ['production_ready', 'version', 'agovena'];
+        // Release and presentation metadata do not define provider identity.
+        $releaseMetadata = ['production_ready', 'version', 'agovena', 'logo'];
         if (! is_array($manifestData)
             || ! is_bool($manifestData['production_ready'] ?? null)
             || ! is_string($manifestData['version'] ?? null)
@@ -1372,6 +1371,19 @@ return new class extends Migration
             ExtensionManifest::fromArray($manifestData, $directory);
         } catch (Throwable) {
             return false;
+        }
+        $logo = $manifestData['logo'] ?? null;
+        if ($logo !== null) {
+            if (! is_string($logo)
+                || preg_match('~\Aresources/images/[a-zA-Z0-9][a-zA-Z0-9._-]*\.(?:png|jpe?g|webp)\z~', $logo) !== 1) {
+                return false;
+            }
+            $logoPath = $directory.DIRECTORY_SEPARATOR.str_replace('/', DIRECTORY_SEPARATOR, $logo);
+            $resolvedLogo = realpath($logoPath);
+            if (is_link($logoPath) || $resolvedLogo === false || ! is_file($resolvedLogo)
+                || ! str_starts_with($this->normalize($resolvedLogo), $directory.DIRECTORY_SEPARATOR)) {
+                return false;
+            }
         }
 
         foreach ($definition['required_files'] as $relativePath) {
