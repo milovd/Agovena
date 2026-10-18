@@ -11,10 +11,7 @@
 }
 
 .audit-log__toolbar,
-.audit-log__results,
-.audit-log-detail__summary,
-.audit-log-detail__side .admin-panel,
-.audit-log-detail__payload {
+.audit-log__results {
   border: 1px solid var(--ag-color-border);
   border-radius: var(--ag-radius-lg, 1rem);
   background: var(--ag-color-surface);
@@ -187,9 +184,7 @@
   align-items: start;
 }
 
-.audit-log-detail__summary,
-.audit-log-detail__side .admin-panel,
-.audit-log-detail__payload {
+.audit-log-detail__summary {
   padding: var(--ag-space-5);
 }
 
@@ -260,14 +255,9 @@
   gap: var(--ag-space-5);
 }
 
-.audit-log-detail__side .admin-panel__title {
-  margin: 0;
-}
-
 .audit-log-detail__integrity {
   display: flex;
   gap: 0.7rem;
-  margin-top: var(--ag-space-4);
   padding: 0.85rem;
   border: 1px solid var(--ag-color-border);
   border-radius: var(--ag-radius-md);
@@ -301,6 +291,7 @@
 
 .audit-log-detail__compact-facts {
   gap: 0;
+  margin-top: 0;
 }
 
 .audit-log-detail__compact-facts > div {

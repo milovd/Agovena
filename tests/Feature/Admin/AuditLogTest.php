@@ -97,6 +97,12 @@ test('audit UI uses simple filters and opens a dedicated detail page', function 
     $detail = $this->get(route('admin.audit.show', $payment));
 
     $detail->assertOk()
+        ->assertSee('class="ag-card audit-log-detail__summary"', false)
+        ->assertSee('aria-labelledby="audit-summary-heading"', false)
+        ->assertSee('aria-labelledby="audit-integrity-heading"', false)
+        ->assertSee('aria-labelledby="audit-network-heading"', false)
+        ->assertSee('aria-labelledby="audit-payload-properties-heading"', false)
+        ->assertSee('aria-labelledby="audit-payload-context-heading"', false)
         ->assertSee('payment.captured')
         ->assertSee('txn_export')
         ->assertSee('REDACTED')

@@ -21,15 +21,15 @@
     </x-ag.page-header>
 
     <div class="audit-log-detail__layout">
-        <section class="admin-panel audit-log-detail__summary">
-            <div class="audit-log-detail__summary-top">
+        <section class="ag-card audit-log-detail__summary" aria-labelledby="audit-summary-heading">
+            <header class="audit-log-detail__summary-top">
                 <div>
                     <p class="audit-log__eyebrow">{{ __('admin.audit.detail_eyebrow') }}</p>
-                    <h2>{{ $auditLog->action }}</h2>
+                    <h2 id="audit-summary-heading" class="ag-card__title">{{ $auditLog->action }}</h2>
                     <p class="audit-log-detail__event-id"><code>{{ $auditLog->event_id }}</code></p>
                 </div>
                 <span class="audit-log-detail__status">{{ __('admin.audit.read_only') }}</span>
-            </div>
+            </header>
 
             <dl class="audit-log-detail__facts">
                 <div>
@@ -60,25 +60,33 @@
         </section>
 
         <aside class="audit-log-detail__side">
-            <section class="admin-panel">
-                <h2 class="admin-panel__title">{{ __('admin.audit.integrity') }}</h2>
-                <div class="audit-log-detail__integrity {{ $auditLog->integrityIsValid() ? 'is-valid' : 'is-legacy' }}">
-                    <span class="audit-log-detail__integrity-dot" aria-hidden="true"></span>
-                    <div>
-                        <strong>{{ $auditLog->integrityIsValid() ? __('admin.audit.integrity_valid') : __('admin.audit.integrity_unavailable') }}</strong>
-                        <p>{{ __('admin.audit.integrity_help') }}</p>
+            <section class="ag-card" aria-labelledby="audit-integrity-heading">
+                <header class="ag-card__header">
+                    <h2 id="audit-integrity-heading" class="ag-card__title">{{ __('admin.audit.integrity') }}</h2>
+                </header>
+                <div class="ag-card__content">
+                    <div class="audit-log-detail__integrity {{ $auditLog->integrityIsValid() ? 'is-valid' : 'is-legacy' }}">
+                        <span class="audit-log-detail__integrity-dot" aria-hidden="true"></span>
+                        <div>
+                            <strong>{{ $auditLog->integrityIsValid() ? __('admin.audit.integrity_valid') : __('admin.audit.integrity_unavailable') }}</strong>
+                            <p>{{ __('admin.audit.integrity_help') }}</p>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            <section class="admin-panel">
-                <h2 class="admin-panel__title">{{ __('admin.audit.network_context') }}</h2>
-                <dl class="audit-log-detail__compact-facts">
-                    <div><dt>{{ __('admin.audit.method') }}</dt><dd><code>{{ $auditLog->method ?: __('common.em_dash') }}</code></dd></div>
-                    <div><dt>{{ __('admin.audit.ip') }}</dt><dd><code>{{ $auditLog->ip ?: __('common.em_dash') }}</code></dd></div>
-                    <div><dt>{{ __('admin.audit.user_agent') }}</dt><dd>{{ $auditLog->user_agent ?: __('common.em_dash') }}</dd></div>
-                    <div><dt>{{ __('admin.audit.route') }}</dt><dd><code>{{ $auditLog->route ?: __('common.em_dash') }}</code></dd></div>
-                </dl>
+            <section class="ag-card" aria-labelledby="audit-network-heading">
+                <header class="ag-card__header">
+                    <h2 id="audit-network-heading" class="ag-card__title">{{ __('admin.audit.network_context') }}</h2>
+                </header>
+                <div class="ag-card__content">
+                    <dl class="audit-log-detail__compact-facts">
+                        <div><dt>{{ __('admin.audit.method') }}</dt><dd><code>{{ $auditLog->method ?: __('common.em_dash') }}</code></dd></div>
+                        <div><dt>{{ __('admin.audit.ip') }}</dt><dd><code>{{ $auditLog->ip ?: __('common.em_dash') }}</code></dd></div>
+                        <div><dt>{{ __('admin.audit.user_agent') }}</dt><dd>{{ $auditLog->user_agent ?: __('common.em_dash') }}</dd></div>
+                        <div><dt>{{ __('admin.audit.route') }}</dt><dd><code>{{ $auditLog->route ?: __('common.em_dash') }}</code></dd></div>
+                    </dl>
+                </div>
             </section>
         </aside>
     </div>
@@ -94,12 +102,14 @@
 
         <div class="audit-log-detail__payload-grid">
             @foreach (['properties' => 'properties', 'before' => 'before', 'after' => 'after', 'context' => 'context'] as $field => $label)
-                <section class="admin-panel audit-log-detail__payload">
-                    <header class="audit-log-detail__payload-heading">
-                        <h3>{{ __('admin.audit.'.$label) }}</h3>
+                <section class="ag-card audit-log-detail__payload" aria-labelledby="audit-payload-{{ $field }}-heading">
+                    <header class="ag-card__header audit-log-detail__payload-heading">
+                        <h3 id="audit-payload-{{ $field }}-heading" class="ag-card__title">{{ __('admin.audit.'.$label) }}</h3>
                         <span>{{ is_countable($auditLog->{$field}) ? count($auditLog->{$field}) : 0 }}</span>
                     </header>
-                    <pre>{{ json_encode(app(\App\Agovena\Audit\AuditLogger::class)->redactForOutput($auditLog->{$field} ?? []), $jsonOptions) }}</pre>
+                    <div class="ag-card__content">
+                        <pre>{{ json_encode(app(\App\Agovena\Audit\AuditLogger::class)->redactForOutput($auditLog->{$field} ?? []), $jsonOptions) }}</pre>
+                    </div>
                 </section>
             @endforeach
         </div>
