@@ -187,6 +187,19 @@ it('keeps referral code creation behind the manage permission', function (): voi
         ->assertForbidden();
 });
 
+it('does not expose the referral customer search by changing public form state as a viewer', function (): void {
+    $viewer = $this->createStaff([], ['referrals.view']);
+    Customer::factory()->create(['name' => 'Unique Referral Contact', 'email' => 'private@example.test']);
+
+    Livewire::actingAs($viewer)
+        ->test(AdminReferrals::class)
+        ->set('showCodeForm', true)
+        ->set('customerSearch', 'Unique Referral')
+        ->assertDontSee('private@example.test')
+        ->assertDontSee('referral-customer-options', false)
+        ->assertDontSee('wire:submit="saveCode"', false);
+});
+
 it('keeps customer search and selection inside one customer field', function (): void {
     $staff = $this->createStaff([], ['referrals.view', 'referrals.manage']);
     Customer::factory()->create(['name' => 'Milo Vandaele']);

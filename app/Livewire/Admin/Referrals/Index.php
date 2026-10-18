@@ -188,7 +188,7 @@ final class Index extends Component
                 ->latest('id')
                 ->limit(100)
                 ->get(),
-            'customers' => $this->showCodeForm && trim($this->customerSearch) !== ''
+            'customers' => auth()->user()?->can('referrals.manage') && $this->showCodeForm && trim($this->customerSearch) !== ''
                 ? Customer::query()
                     ->where(function ($query): void {
                         $term = '%'.trim($this->customerSearch).'%';
