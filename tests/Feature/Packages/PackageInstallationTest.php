@@ -250,9 +250,20 @@ test('admin modules custom tab shows zip upload install form', function () {
         ->test(ModulesIndex::class)
         ->set('tab', 'custom')
         ->assertOk()
+        ->assertSee('class="ag-card" aria-labelledby="package-zip-heading"', false)
+        ->assertSee('wire:submit="installFromZip"', false)
         ->assertSee(__('admin.packages.zip_title'))
         ->assertSee(__('admin.packages.actions.choose_zip'))
         ->assertDontSee(__('admin.packages.install_title'));
+});
+
+test('view-only module staff cannot access the custom package upload form', function () {
+    $viewer = $this->createStaff([], ['modules.view']);
+
+    Livewire::actingAs($viewer)
+        ->test(ModulesIndex::class)
+        ->set('tab', 'custom')
+        ->assertDontSee('wire:submit="installFromZip"', false);
 });
 
 test('malformed package manifests fail without breaking the application boot', function () {
