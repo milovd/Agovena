@@ -49,6 +49,19 @@ test('notification templates use a list and separate form routes', function () {
         ->assertSee('tpl-body', false);
 });
 
+test('notification list keeps event details and actions inside a labelled shared card', function () {
+    $staff = $this->createStaff();
+
+    $this->actingAs($staff)
+        ->get('/admin/notifications')
+        ->assertOk()
+        ->assertSee('class="ag-card ag-card--flush"', false)
+        ->assertSee('aria-labelledby="notification-templates-list-heading"', false)
+        ->assertSee('data-label="'.__('admin.notifications.channels').'"', false)
+        ->assertSee('data-label="'.__('common.actions').'"', false)
+        ->assertSee('href="'.route('admin.notifications.edit', 'order_placed').'"', false);
+});
+
 test('view-only staff can inspect templates without editing or creating them', function () {
     $viewer = $this->createStaff(permissions: ['notifications.view']);
     NotificationTemplate::query()->create([
