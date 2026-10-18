@@ -1,0 +1,44 @@
+.ag-preset-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.ag-preset-options {
+  display: grid;
+  gap: var(--ag-space-3);
+}
+
+.ag-preset-options .ag-check {
+  display: flex;
+  align-items: flex-start;
+  min-width: 0;
+  margin: 0;
+  padding: var(--ag-space-4);
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface-muted);
+}
+
+.ag-preset-options .ag-check:focus-within {
+  outline: 2px solid var(--ag-color-primary);
+  outline-offset: 2px;
+}
+
+.ag-preset-options .ag-check input {
+  flex: 0 0 auto;
+  margin-top: 0.25rem;
+}
+
+.ag-preset-options .ag-check > span {
+  display: grid;
+  min-width: 0;
+  gap: var(--ag-space-1);
+}
+
+@media (min-width: 900px) {
+  .ag-preset-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -149,3 +149,15 @@ test('staff can apply store presets from admin', function () {
         ->and(app(ModuleManager::class)->isEnabled('subscriptions'))->toBeFalse()
         ->and(app(ModuleManager::class)->isEnabled('domains'))->toBeTrue();
 });
+
+test('store presets keep module context and selection in labelled Admin cards', function () {
+    $staff = $this->createStaff();
+
+    Livewire::actingAs($staff)
+        ->test(StorePresets::class)
+        ->assertSee('aria-labelledby="store-presets-modules-heading"', false)
+        ->assertSee('aria-labelledby="store-presets-choose-heading"', false)
+        ->assertSee('href="'.route('admin.modules.index').'"', false)
+        ->assertSee('wire:submit="apply"', false)
+        ->assertSee(__('admin.store_presets.apply'), false);
+});
