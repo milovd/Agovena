@@ -42,9 +42,13 @@ final class FailedJobs extends Component
     public function render(AdminRegistrar $admin)
     {
         $this->authorize('jobs.view');
-        $jobs = DB::table('failed_jobs')->orderByDesc('id')->paginate(20);
+        $jobs = DB::table('failed_jobs')
+            ->select(['id', 'uuid', 'queue', 'failed_at', 'exception'])
+            ->orderByDesc('id')
+            ->paginate(20);
         $jobs->getCollection()->transform(function (object $job): object {
             $job->exception_preview = $this->preview((string) $job->exception);
+            unset($job->exception);
 
             return $job;
         });
@@ -59,8 +63,13 @@ final class FailedJobs extends Component
 
     private function preview(string $exception): string
     {
-        $line = strtok(str_replace(["\r\n", "\r"], "\n", $exception), "\n") ?: $exception;
+        $line = trim(strtok(str_replace(["\r\n", "\r"], "\n", $exception), "\n") ?: '');
 
-        return mb_substr($line, 0, 240);
+        if (preg_match('/\A([A-Za-z_\\\\][A-Za-z_0-9\\\\]{0,119})(?=[:\s]|$)/', $line, $matches)
+            && preg_match('/(?:Exception|Error)\z/', $matches[1])) {
+            return $matches[1];
+        }
+
+        return __('admin.failed_jobs.details_hidden');
     }
 }

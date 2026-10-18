@@ -24,10 +24,14 @@ it('shows failed job facts to viewers without retry or forget controls', functio
 
     Livewire::actingAs($viewer)
         ->test(FailedJobs::class)
-        ->assertSee('Fixture failure')
+        ->assertSee(__('admin.failed_jobs.details_hidden'))
+        ->assertSee(__('admin.failed_jobs.lede_viewer'))
+        ->assertDontSee('Retry or delete them here.')
+        ->assertDontSee('Fixture failure')
         ->assertDontSee('wire:click="retry(', false)
         ->assertDontSee('wire:click="forget(', false);
 
+    Livewire::actingAs($viewer)->test(FailedJobs::class)->call('retry', $uuid)->assertForbidden();
     Livewire::actingAs($viewer)->test(FailedJobs::class)->call('forget', $id)->assertForbidden();
     expect(DB::table('failed_jobs')->where('id', $id)->exists())->toBeTrue();
 });
@@ -47,4 +51,22 @@ it('keeps failed job controls available for managers', function (): void {
         ->test(FailedJobs::class)
         ->assertSee('wire:click="retry(', false)
         ->assertSee('wire:click="forget(', false);
+});
+
+it('shows only an exception type rather than its potentially sensitive message', function (): void {
+    DB::table('failed_jobs')->insert([
+        'uuid' => (string) Str::uuid(),
+        'connection' => 'database',
+        'queue' => 'default',
+        'payload' => '{}',
+        'exception' => "RuntimeException: private failure context marker\nTrace content marker",
+        'failed_at' => now(),
+    ]);
+    $manager = $this->createStaff([], ['jobs.view', 'jobs.manage']);
+
+    Livewire::actingAs($manager)
+        ->test(FailedJobs::class)
+        ->assertSee('RuntimeException')
+        ->assertDontSee('private failure context marker')
+        ->assertDontSee('Trace content marker');
 });

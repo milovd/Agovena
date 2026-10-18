@@ -2482,9 +2482,11 @@ return [
     'failed_jobs' => [
         'title' => 'Failed jobs',
         'lede' => 'Queue jobs that threw after they were retried by the worker. Retry or delete them here.',
+        'lede_viewer' => 'Review queued jobs that failed permanently.',
         'time' => 'Failed at',
         'queue' => 'Queue',
         'exception' => 'Exception',
+        'details_hidden' => 'Failure details hidden.',
         'retry' => 'Retry',
         'retried' => 'Job queued for retry.',
         'deleted' => 'Failed job deleted.',

@@ -2481,9 +2481,11 @@ return [
     'failed_jobs' => [
         'title' => 'Mislukte jobs',
         'lede' => 'Queue-jobs die na herpogingen van de worker zijn mislukt. Probeer ze hier opnieuw of verwijder ze.',
+        'lede_viewer' => 'Bekijk queue-jobs die definitief zijn mislukt.',
         'time' => 'Mislukt op',
         'queue' => 'Queue',
         'exception' => 'Exceptie',
+        'details_hidden' => 'Foutdetails verborgen.',
         'retry' => 'Opnieuw',
         'retried' => 'Job opnieuw in de queue gezet.',
         'deleted' => 'Mislukte job verwijderd.',

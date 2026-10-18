@@ -46,7 +46,8 @@ it('renders populated system cards with Dutch labels for view-only staff', funct
 
     $this->actingAs($viewer)->get('/admin/failed-jobs')
         ->assertOk()
-        ->assertSee('QA failure')
+        ->assertSee(__('admin.failed_jobs.details_hidden', [], 'nl'))
+        ->assertDontSee('QA failure')
         ->assertSee('data-label="'.__('admin.failed_jobs.exception', [], 'nl').'"', false)
         ->assertDontSee('wire:click="forget(', false);
 });

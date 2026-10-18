@@ -1,5 +1,5 @@
 <div class="admin-page">
-    <x-ag.page-header :heading="__('admin.failed_jobs.title')" :lede="__('admin.failed_jobs.lede')" />
+    <x-ag.page-header :heading="__('admin.failed_jobs.title')" :lede="auth()->user()?->can('jobs.manage') ? __('admin.failed_jobs.lede') : __('admin.failed_jobs.lede_viewer')" />
 
     @if (session('status'))
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
