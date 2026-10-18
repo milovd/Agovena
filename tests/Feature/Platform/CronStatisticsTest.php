@@ -27,6 +27,9 @@ test('cron statistics page shows scheduler status and setup command', function (
         ->get(route('admin.cron-statistics'))
         ->assertOk()
         ->assertSee(__('admin.cron_statistics.title'), false)
+        ->assertSee('class="ag-card ag-card--flush"', false)
+        ->assertSee('aria-labelledby="cron-tasks-heading"', false)
+        ->assertSee('aria-labelledby="cron-setup-heading"', false)
         ->assertSee(__('admin.cron_statistics.never'), false)
         ->assertSee('php artisan schedule:run', false)
         ->assertSee(__('admin.cron_statistics.metrics.subscription_renewals'), false);

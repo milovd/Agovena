@@ -62,44 +62,52 @@
         @endforeach
     </div>
 
-    <section class="admin-panel">
-        <h2 class="admin-panel__title">{{ __('admin.cron_statistics.tasks_title') }}</h2>
-        <p class="ag-muted">{{ __('admin.cron_statistics.tasks_lede') }}</p>
-        <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-label="{{ __('admin.cron_statistics.tasks_title') }}">
-            <table class="ag-table ag-table--mobile-cards">
-                <caption class="visually-hidden">{{ __('admin.cron_statistics.tasks_title') }}</caption>
-                <thead>
-                    <tr>
-                        <th scope="col">{{ __('admin.cron_statistics.task') }}</th>
-                        <th scope="col">{{ __('admin.cron_statistics.frequency') }}</th>
-                        <th scope="col">{{ __('admin.cron_statistics.last_run') }}</th>
-                        <th scope="col">{{ __('common.status') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($tasks as $task)
-                        <tr wire:key="cron-task-{{ $task['id'] }}">
-                            <td data-label="{{ __('admin.cron_statistics.task') }}">{{ $task['label'] }}</td>
-                            <td data-label="{{ __('admin.cron_statistics.frequency') }}">{{ $task['frequency'] }}</td>
-                            <td data-label="{{ __('admin.cron_statistics.last_run') }}">{{ $task['last_run'] }}</td>
-                            <td data-label="{{ __('common.status') }}">
-                                @if ($task['active'])
-                                    <span class="ag-badge ag-badge--success">{{ __('common.active') }}</span>
-                                @else
-                                    <span class="ag-badge ag-badge--muted">{{ __('admin.cron_statistics.inactive') }}</span>
-                                @endif
-                            </td>
+    <section class="ag-card ag-card--flush" aria-labelledby="cron-tasks-heading">
+        <header class="ag-card__header">
+            <h2 id="cron-tasks-heading" class="ag-card__title">{{ __('admin.cron_statistics.tasks_title') }}</h2>
+            <p class="ag-card__description">{{ __('admin.cron_statistics.tasks_lede') }}</p>
+        </header>
+        <div class="ag-card__content">
+            <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-labelledby="cron-tasks-heading">
+                <table class="ag-table ag-table--mobile-cards">
+                    <caption class="visually-hidden">{{ __('admin.cron_statistics.tasks_title') }}</caption>
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ __('admin.cron_statistics.task') }}</th>
+                            <th scope="col">{{ __('admin.cron_statistics.frequency') }}</th>
+                            <th scope="col">{{ __('admin.cron_statistics.last_run') }}</th>
+                            <th scope="col">{{ __('common.status') }}</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($tasks as $task)
+                            <tr wire:key="cron-task-{{ $task['id'] }}">
+                                <td data-label="{{ __('admin.cron_statistics.task') }}">{{ $task['label'] }}</td>
+                                <td data-label="{{ __('admin.cron_statistics.frequency') }}">{{ $task['frequency'] }}</td>
+                                <td data-label="{{ __('admin.cron_statistics.last_run') }}">{{ $task['last_run'] }}</td>
+                                <td data-label="{{ __('common.status') }}">
+                                    @if ($task['active'])
+                                        <span class="ag-badge ag-badge--success">{{ __('common.active') }}</span>
+                                    @else
+                                        <span class="ag-badge ag-badge--muted">{{ __('admin.cron_statistics.inactive') }}</span>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 
-    <section class="admin-panel">
-        <h2 class="admin-panel__title">{{ __('admin.cron_statistics.setup_title') }}</h2>
-        <p class="ag-muted">{{ __('admin.cron_statistics.setup_lede') }}</p>
-        <pre class="ag-code" tabindex="0"><code>{{ $cronCommand }}</code></pre>
-        <p class="ag-muted">{{ __('admin.cron_statistics.setup_hint') }}</p>
+    <section class="ag-card" aria-labelledby="cron-setup-heading">
+        <header class="ag-card__header">
+            <h2 id="cron-setup-heading" class="ag-card__title">{{ __('admin.cron_statistics.setup_title') }}</h2>
+            <p class="ag-card__description">{{ __('admin.cron_statistics.setup_lede') }}</p>
+        </header>
+        <div class="ag-card__content">
+            <pre class="ag-code" tabindex="0"><code>{{ $cronCommand }}</code></pre>
+            <p class="ag-muted">{{ __('admin.cron_statistics.setup_hint') }}</p>
+        </div>
     </section>
 </div>
