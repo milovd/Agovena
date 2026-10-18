@@ -118,6 +118,10 @@
   background: color-mix(in srgb, var(--ag-color-primary) 4%, var(--ag-color-surface));
 }
 
+.audit-log__cell-stack {
+  min-width: 0;
+}
+
 .audit-log__time,
 .audit-log__event-id,
 .audit-log__category,
@@ -409,12 +413,5 @@
 
   .audit-log-detail__facts {
     grid-template-columns: 1fr;
-  }
-
-  .audit-log__table th:nth-child(4),
-  .audit-log__table td:nth-child(4),
-  .audit-log__table th:nth-child(5),
-  .audit-log__table td:nth-child(5) {
-    display: none;
   }
 }

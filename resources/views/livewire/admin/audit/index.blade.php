@@ -77,8 +77,8 @@
                 <span class="audit-log__count">{{ $logs->total() }} {{ __('admin.audit.entries_count') }}</span>
             </div>
 
-            <div class="ag-table-wrap">
-                <table class="ag-table audit-log__table">
+            <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.audit.results_heading') }}" tabindex="0">
+                <table class="ag-table ag-table--mobile-cards audit-log__table">
                     <caption class="visually-hidden">{{ __('admin.audit.table_caption') }}</caption>
                     <thead>
                         <tr>
@@ -93,21 +93,27 @@
                     <tbody>
                         @foreach ($logs as $log)
                             <tr wire:key="audit-{{ $log->id }}">
-                                <td>
-                                    <time class="audit-log__time" datetime="{{ $log->created_at?->toIso8601String() }}">{{ $log->created_at?->translatedFormat('d M Y H:i') }}</time>
-                                    <span class="audit-log__event-id">{{ $log->event_id }}</span>
+                                <td data-label="{{ __('admin.audit.time') }}">
+                                    <div class="audit-log__cell-stack">
+                                        <time class="audit-log__time" datetime="{{ $log->created_at?->toIso8601String() }}">{{ $log->created_at?->translatedFormat('d M Y H:i') }}</time>
+                                        <span class="audit-log__event-id">{{ $log->event_id }}</span>
+                                    </div>
                                 </td>
-                                <td>
-                                    <strong class="audit-log__action">{{ $log->action }}</strong>
-                                    <span class="audit-log__category">{{ __('admin.audit.categories.'.$log->category) }}</span>
+                                <td data-label="{{ __('admin.audit.action') }}">
+                                    <div class="audit-log__cell-stack">
+                                        <strong class="audit-log__action">{{ $log->action }}</strong>
+                                        <span class="audit-log__category">{{ __('admin.audit.categories.'.$log->category) }}</span>
+                                    </div>
                                 </td>
-                                <td>
-                                    <span class="ag-badge ag-badge--{{ $log->severity === 'critical' ? 'danger' : ($log->severity === 'warning' ? 'warning' : 'muted') }}">{{ __('admin.audit.severities.'.$log->severity) }}</span>
-                                    <span class="audit-log__outcome">{{ __('admin.audit.outcomes.'.$log->outcome) }}</span>
+                                <td data-label="{{ __('admin.audit.outcome') }}">
+                                    <div class="audit-log__cell-stack">
+                                        <span class="ag-badge ag-badge--{{ $log->severity === 'critical' ? 'danger' : ($log->severity === 'warning' ? 'warning' : 'muted') }}">{{ __('admin.audit.severities.'.$log->severity) }}</span>
+                                        <span class="audit-log__outcome">{{ __('admin.audit.outcomes.'.$log->outcome) }}</span>
+                                    </div>
                                 </td>
-                                <td>{{ __('admin.audit.actor_types.'.$log->actor_type) }}{{ $log->actor_id ? ' #'.$log->actor_id : '' }}</td>
-                                <td>{{ $log->subject_type ? class_basename($log->subject_type).' #'.$log->subject_id : __('common.em_dash') }}</td>
-                                <td class="ag-table__actions">
+                                <td data-label="{{ __('admin.audit.actor') }}">{{ __('admin.audit.actor_types.'.$log->actor_type) }}{{ $log->actor_id ? ' #'.$log->actor_id : '' }}</td>
+                                <td data-label="{{ __('admin.audit.subject') }}">{{ $log->subject_type ? class_basename($log->subject_type).' #'.$log->subject_id : __('common.em_dash') }}</td>
+                                <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
                                     <a class="ag-btn ag-btn--secondary ag-btn--sm audit-log__details" href="{{ route('admin.audit.show', $log) }}">
                                         <x-ag.icon name="eye" :size="16" />
                                         {{ __('admin.audit.details') }}

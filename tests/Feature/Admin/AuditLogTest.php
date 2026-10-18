@@ -87,6 +87,9 @@ test('audit UI uses simple filters and opens a dedicated detail page', function 
         ->set('category', 'payment')
         ->assertSee('payment.captured')
         ->assertSee('audit-log__stack', false)
+        ->assertSee('ag-table--mobile-cards', false)
+        ->assertSee('data-label="'.__('admin.audit.actor').'"', false)
+        ->assertSee('data-label="'.__('admin.audit.subject').'"', false)
         ->assertDontSee('order.viewed')
         ->assertDontSee(__('admin.audit.advanced_filters'))
         ->assertSee(route('admin.audit.show', $payment));
