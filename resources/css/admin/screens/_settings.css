@@ -67,3 +67,55 @@
     width: 100%;
   }
 }
+
+.ag-tax-settings { max-width: 56rem; }
+.ag-tax-settings__field + .ag-tax-settings__field { margin-top: var(--ag-space-6); }
+.ag-tax-list__title {
+  margin: var(--ag-space-6) 0 var(--ag-space-2);
+  color: var(--ag-color-text);
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+.admin-page--taxes .ag-toolbar__filters,
+.admin-page--taxes .ag-toolbar__filters > .ag-field {
+  width: 100%;
+  min-width: 0;
+}
+.admin-page--taxes .ag-toolbar__filters > .ag-field { max-width: 24rem; }
+.ag-table--currencies tbody td,
+.ag-table--taxes tbody td { vertical-align: middle; }
+.ag-currency-identity { display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--ag-space-2); }
+.ag-table--currencies .ag-row-actions { gap: var(--ag-space-2); }
+.ag-role-permissions {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--ag-space-2);
+}
+.ag-role-permissions__item {
+  display: flex;
+  min-width: 0;
+  padding: var(--ag-space-3);
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+}
+.ag-role-permissions__item .ag-checkbox { width: 100%; }
+.ag-role-permissions__item:has(.ag-checkbox__input:checked) {
+  border-color: var(--ag-color-primary);
+}
+.ag-role-permissions__item:has(.ag-checkbox__input:focus-visible) {
+  outline: 2px solid var(--ag-color-primary);
+  outline-offset: 2px;
+}
+.admin-page--roles .ag-catalog-form { max-width: 64rem; }
+.admin-page--roles .ag-catalog-form > .ag-section__body > .ag-field:first-child { max-width: 28rem; }
+@media (max-width: 720px) {
+  .ag-table--currencies tbody td.ag-table__actions { grid-template-columns: minmax(0, 1fr); }
+  .ag-table--currencies .ag-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    justify-self: start;
+  }
+  .ag-table--currencies .ag-row-actions .ag-btn { flex-shrink: 0; white-space: nowrap; }
+}

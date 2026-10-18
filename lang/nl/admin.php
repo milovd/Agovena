@@ -1737,6 +1737,7 @@ return [
     ],
     'taxes' => [
         'title' => 'Belastingen',
+        'settings_title' => 'Belastinginstellingen',
         'lede' => 'Bepaal of checkout belasting toepast, en beheer daarna landoverrides. Automatische tarieven worden via jsDelivr CDN opgehaald uit de open vatnode-dataset (EC TEDB).',
         'workflow_help' => 'Zet Belasting inschakelen aan om bij het afrekenen belasting te heffen. Zet Automatische belastingtarieven aan om externe btw-tarieven (vatnode / EC TEDB, via jsDelivr) te gebruiken voor landen die je niet hebt overschreven. De rijen hieronder zijn alleen tarieven die jij toevoegt: overrides van het automatische tarief, of de enige tarieven wanneer automatisch uit staat. Je kunt belasting ook per land uitschakelen.',
         'add' => 'Btw-tarief toevoegen',

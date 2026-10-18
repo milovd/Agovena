@@ -172,7 +172,7 @@ test('currency sync updates rates from frankfurter market api', function () {
     });
 });
 
-test('currency sync surfaces frankfurter http failures', function () {
+test('currency sync shows a generic failure for frankfurter http errors', function () {
     $staff = $this->createStaff();
     Currency::query()->updateOrCreate(
         ['code' => 'EUR'],
@@ -192,9 +192,18 @@ test('currency sync surfaces frankfurter http failures', function () {
         ->test(Index::class)
         ->call('syncRates')
         ->assertHasNoErrors()
-        ->assertSee(__('admin.currencies.flash.rates_sync_failed_detail', [
-            'reason' => 'Could not fetch exchange rates (HTTP 503).',
-        ]), false);
+        ->assertSee(__('admin.currencies.flash.rates_sync_failed'), false)
+        ->assertDontSee('HTTP 503');
 
     expect(Currency::query()->where('code', 'USD')->value('exchange_rate'))->toBe('1.00000000');
+});
+
+test('currency sync does not render a transport exception message in the Admin', function (): void {
+    $staff = $this->createStaff();
+    Http::fake(static fn () => throw new RuntimeException('private upstream context marker'));
+
+    Livewire::actingAs($staff)->test(Index::class)
+        ->call('syncRates')
+        ->assertSee(__('admin.currencies.flash.rates_sync_failed'))
+        ->assertDontSee('private upstream context marker');
 });

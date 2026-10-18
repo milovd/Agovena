@@ -380,6 +380,21 @@ test('role facts remain labelled and keyboard reachable on narrow screens for vi
     }
 })->with([['en', 'System'], ['nl', 'Systeem']]);
 
+test('role manager keeps the shared Admin form and permissions matrix', function (): void {
+    $owner = $this->createStaff();
+
+    Livewire::actingAs($owner)->test(RolesIndex::class)
+        ->assertSee('admin-page--roles ag-list-page', false)
+        ->call('create')
+        ->assertSee('ag-catalog-form__heading', false)
+        ->assertSee('ag-role-permissions', false)
+        ->assertSee('ag-fieldset ag-field', false)
+        ->assertSee('ag-role-permissions__item', false)
+        ->assertSee('ag-checkbox__input', false)
+        ->assertSee('wire:model="selectedPermissions"', false)
+        ->assertSee('wire:model="name"', false);
+});
+
 test('an out-of-range roles page does not claim the role catalogue is empty', function (string $locale): void {
     app()->setLocale($locale);
     $viewer = $this->createStaff(permissions: ['roles.view']);

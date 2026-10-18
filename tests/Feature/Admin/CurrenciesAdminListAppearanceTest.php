@@ -135,3 +135,22 @@ test('currency status badges distinguish active and inactive rows', function ():
         ->assertSee('ag-badge--success', false)
         ->assertSee('ag-badge--muted', false);
 });
+
+test('currency list and form use the shared Admin hierarchy without dropping editing fields', function (): void {
+    $manager = $this->createStaff();
+
+    Livewire::actingAs($manager)->test(Index::class)
+        ->assertSee('admin-page--currencies ag-list-page', false)
+        ->assertSee('ag-table--currencies', false)
+        ->assertSee('ag-currency-identity', false)
+        ->call('create')
+        ->assertSee('ag-catalog-form__heading', false)
+        ->assertSee('ag-grid ag-grid--2', false)
+        ->assertSee('wire:model="code"', false)
+        ->assertSee('wire:model="name"', false)
+        ->assertSee('wire:model="prefix"', false)
+        ->assertSee('wire:model="suffix"', false)
+        ->assertSee('wire:model.number="precision"', false)
+        ->assertSee('wire:model="exchange_rate"', false)
+        ->assertSee('wire:model="is_active"', false);
+});

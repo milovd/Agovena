@@ -167,3 +167,24 @@ test('view-only tax staff cannot invoke protected edit or delete actions', funct
     Livewire::actingAs($viewer)->test(Index::class)->call('delete', $rate->id)->assertForbidden();
     expect(TaxRate::query()->find($rate->id))->not->toBeNull();
 });
+
+test('tax controls and overrides share the Admin section and form hierarchy', function (): void {
+    $manager = $this->createStaff();
+
+    Livewire::actingAs($manager)->test(Index::class)
+        ->assertSee('admin-page--taxes ag-list-page', false)
+        ->assertSee('ag-tax-settings', false)
+        ->assertSee('ag-tax-settings__field', false)
+        ->assertSee(__('admin.taxes.settings_title'))
+        ->assertDontSee(__('admin.taxes.workflow_help'))
+        ->call('create')
+        ->assertSee('ag-catalog-form__heading', false)
+        ->assertSee('ag-grid ag-grid--2', false)
+        ->assertSee('wire:model="name"', false)
+        ->assertSee('wire:model.number="rate_bps"', false)
+        ->assertSee('wire:model.live="country"', false)
+        ->assertSee('wire:model="region"', false)
+        ->assertSee('wire:model="applies_to_shipping"', false)
+        ->assertSee('wire:model.live="is_disabled"', false)
+        ->assertSee('wire:model="is_active"', false);
+});

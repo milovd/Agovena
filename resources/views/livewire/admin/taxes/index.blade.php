@@ -1,4 +1,4 @@
-<div class="admin-page">
+<div class="admin-page admin-page--taxes ag-list-page">
     <x-ag.page-header :heading="__('admin.taxes.title')" :lede="__('admin.taxes.lede')">
         <x-slot:actions>
             @can('taxes.manage')
@@ -7,18 +7,29 @@
         </x-slot:actions>
     </x-ag.page-header>
 
-    <div class="admin-panel">
+    <section class="ag-section ag-tax-settings" aria-labelledby="tax-settings-heading">
+        <header class="ag-section__header ag-catalog-form__header">
+            <div class="ag-catalog-form__heading">
+                <x-ag.icon-tile name="coins" tone="blue" />
+                <h2 id="tax-settings-heading" class="ag-section__title">{{ __('admin.taxes.settings_title') }}</h2>
+            </div>
+        </header>
+        <div class="ag-section__body">
         @can('taxes.manage')
-            <x-ag.switch id="tax-enabled" wire:model.live="tax_enabled" :label="__('admin.settings.fields.tax_enabled')" />
-            <p class="ag-field__help">{{ __('admin.settings.field_help.tax_enabled') }}</p>
+            <div class="ag-tax-settings__field">
+                <x-ag.switch id="tax-enabled" wire:model.live="tax_enabled" :label="__('admin.settings.fields.tax_enabled')" />
+                <p class="ag-field__help">{{ __('admin.settings.field_help.tax_enabled') }}</p>
+            </div>
 
-            <x-ag.switch
-                id="automatic-tax-rates"
-                wire:model.live="automatic_tax_rates"
-                :label="__('admin.settings.fields.automatic_tax_rates')"
-                :disabled="! $tax_enabled"
-            />
-            <p class="ag-field__help">{{ __('admin.settings.field_help.automatic_tax_rates') }}</p>
+            <div class="ag-tax-settings__field">
+                <x-ag.switch
+                    id="automatic-tax-rates"
+                    wire:model.live="automatic_tax_rates"
+                    :label="__('admin.settings.fields.automatic_tax_rates')"
+                    :disabled="! $tax_enabled"
+                />
+                <p class="ag-field__help">{{ __('admin.settings.field_help.automatic_tax_rates') }}</p>
+            </div>
         @else
             <p>
                 <strong>{{ __('admin.settings.fields.tax_enabled') }}:</strong>
@@ -29,15 +40,23 @@
                 {{ $automatic_tax_rates ? __('common.yes') : __('common.no') }}
             </p>
         @endcan
-        <p class="ag-field__help" style="margin-top: 1rem;">{{ __('admin.taxes.workflow_help') }}</p>
+
         @if ($automatic_tax_rates && $tax_enabled)
             <p class="ag-field__help">{{ __('admin.taxes.sources.automatic') }}: {{ $automaticSourceLabel }} ({{ $automaticVersion }})</p>
         @endif
-    </div>
+        </div>
+    </section>
 
     @if ($showForm && auth()->user()?->can('taxes.manage'))
-        <form wire:submit="save" class="admin-panel ag-form" novalidate>
-            <h3 class="admin-panel__title">{{ $editingId ? __('admin.taxes.edit') : __('admin.taxes.new') }}</h3>
+        <form wire:submit="save" class="ag-section ag-form ag-form--constrained ag-catalog-form" novalidate>
+            <header class="ag-section__header ag-catalog-form__header">
+                <div class="ag-catalog-form__heading">
+                    <x-ag.icon-tile name="globe" tone="teal" />
+                    <h2 class="ag-section__title">{{ $editingId ? __('admin.taxes.edit') : __('admin.taxes.new') }}</h2>
+                </div>
+            </header>
+            <div class="ag-section__body">
+            <div class="ag-grid ag-grid--2">
             <div class="ag-field">
                 <label class="ag-field__label" for="tax-name">{{ __('common.name') }}</label>
                 <input id="tax-name" class="ag-input" wire:model="name" required>
@@ -60,26 +79,32 @@
                 <input id="tax-region" class="ag-input" wire:model="region">
                 @error('region') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
             </div>
-            <x-ag.switch id="tax-shipping" wire:model="applies_to_shipping" :label="__('admin.taxes.applies_to_shipping')" />
-            <x-ag.switch id="tax-disabled" wire:model.live="is_disabled" :label="__('admin.taxes.disable_for_country')" />
-            <x-ag.switch id="tax-active" wire:model="is_active" :label="__('common.active')" />
+            <div class="ag-field"><x-ag.switch id="tax-shipping" wire:model="applies_to_shipping" :label="__('admin.taxes.applies_to_shipping')" /></div>
+            <div class="ag-field"><x-ag.switch id="tax-disabled" wire:model.live="is_disabled" :label="__('admin.taxes.disable_for_country')" /></div>
+            <div class="ag-field"><x-ag.switch id="tax-active" wire:model="is_active" :label="__('common.active')" /></div>
+            </div>
             <div class="ag-form__actions">
                 <button class="ag-btn ag-btn--primary" type="submit">{{ __('common.save') }}</button>
                 <button class="ag-btn ag-btn--secondary" type="button" wire:click="cancel">{{ __('common.cancel') }}</button>
             </div>
+            </div>
         </form>
     @endif
 
-    <h3 class="admin-panel__title">{{ __('admin.taxes.list_title') }}</h3>
+    <h2 class="ag-tax-list__title">{{ __('admin.taxes.list_title') }}</h2>
     @if ($rates->isNotEmpty() || $filter !== '')
         <p class="ag-field__help">{{ __('admin.taxes.list_help') }}</p>
     @endif
 
     @if ($rates->isNotEmpty() || $filter !== '')
-        <div class="ag-field" style="max-width: 20rem;">
-            <label class="ag-field__label" for="tax-filter">{{ __('admin.taxes.filter') }}</label>
-            <input id="tax-filter" class="ag-input" wire:model.live.debounce.300ms="filter" placeholder="{{ __('admin.taxes.filter_placeholder') }}">
-        </div>
+        <x-ag.table-toolbar filters>
+            <div class="ag-toolbar__filters">
+                <div class="ag-field ag-field--inline">
+                    <label class="visually-hidden" for="tax-filter">{{ __('admin.taxes.filter') }}</label>
+                    <input id="tax-filter" type="search" class="ag-input ag-input--search" wire:model.live.debounce.300ms="filter" placeholder="{{ __('admin.taxes.filter_placeholder') }}">
+                </div>
+            </div>
+        </x-ag.table-toolbar>
     @endif
 
     @if ($rates->isEmpty())
@@ -139,8 +164,8 @@
                             @can('taxes.manage')
                                 <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
                                     <span class="ag-row-actions">
-                                        <button class="ag-btn ag-btn--ghost" type="button" wire:click="edit({{ $rate->id }})">{{ __('common.edit') }}</button>
-                                        <button class="ag-btn ag-btn--ghost" type="button" wire:click="delete({{ $rate->id }})" wire:confirm="{{ __('admin.taxes.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                        <button class="ag-icon-btn" type="button" wire:click="edit({{ $rate->id }})" title="{{ __('common.edit') }}" aria-label="{{ __('common.edit') }}: {{ $rate->name }}"><x-ag.icon name="pencil" :size="16" /><span class="ag-table__action-label">{{ __('common.edit') }}</span></button>
+                                        <button class="ag-icon-btn ag-icon-btn--danger" type="button" wire:click="delete({{ $rate->id }})" wire:confirm="{{ __('admin.taxes.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $rate->name }}"><x-ag.icon name="trash" :size="16" /><span class="ag-table__action-label">{{ __('common.delete') }}</span></button>
                                     </span>
                                 </td>
                             @endcan

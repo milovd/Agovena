@@ -1,17 +1,21 @@
-<div class="admin-page">
-    <div class="admin-page__header">
-        <div>
-            <h1 class="admin-page__heading">{{ __('admin.roles.title') }}</h1>
-            <p class="admin-page__lede">{{ auth()->user()?->can('roles.create') ? __('admin.roles.lede') : __('admin.roles.lede_viewer') }}</p>
-        </div>
-        @can('roles.create')
-            <button type="button" class="ag-btn ag-btn--primary" wire:click="create">{{ __('admin.roles.add') }}</button>
-        @endcan
-    </div>
+<div class="admin-page admin-page--roles ag-list-page">
+    <x-ag.page-header :heading="__('admin.roles.title')" :lede="auth()->user()?->can('roles.create') ? __('admin.roles.lede') : __('admin.roles.lede_viewer')">
+        <x-slot:actions>
+            @can('roles.create')
+                <button type="button" class="ag-btn ag-btn--primary" wire:click="create">{{ __('admin.roles.add') }}</button>
+            @endcan
+        </x-slot:actions>
+    </x-ag.page-header>
 
     @if ($canShowForm)
-        <form wire:submit="save" class="admin-panel ag-form" novalidate>
-            <h2 class="admin-panel__title">{{ $editingId ? __('admin.roles.edit') : __('admin.roles.new') }}</h2>
+        <form wire:submit="save" class="ag-section ag-form ag-form--constrained ag-catalog-form" novalidate>
+            <header class="ag-section__header ag-catalog-form__header">
+                <div class="ag-catalog-form__heading">
+                    <x-ag.icon-tile name="shield" tone="violet" />
+                    <h2 class="ag-section__title">{{ $editingId ? __('admin.roles.edit') : __('admin.roles.new') }}</h2>
+                </div>
+            </header>
+            <div class="ag-section__body">
 
             <div class="ag-field">
                 <label class="ag-field__label" for="role-name">{{ __('admin.roles.name') }}</label>
@@ -27,14 +31,13 @@
                 @error('name') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
             </div>
 
-            <fieldset class="ag-field">
-                <legend class="ag-field__label">{{ __('admin.roles.permissions') }}</legend>
-                <div class="ag-check-grid" style="display:grid;gap:0.5rem;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));margin-top:0.5rem;">
+            <fieldset class="ag-fieldset ag-field">
+                <legend class="ag-fieldset__legend">{{ __('admin.roles.permissions') }}</legend>
+                <div class="ag-role-permissions">
                     @foreach ($allPermissions as $ability => $label)
-                        <label class="ag-check" wire:key="perm-{{ $ability }}">
-                            <input type="checkbox" value="{{ $ability }}" wire:model="selectedPermissions">
-                            <span>{{ __($label) }}</span>
-                        </label>
+                        <div class="ag-role-permissions__item" wire:key="perm-{{ $ability }}">
+                            <x-ag.checkbox :id="'perm-'.str_replace('.', '-', $ability)" :label="__($label)" :value="$ability" wire:model="selectedPermissions" />
+                        </div>
                     @endforeach
                 </div>
                 @error('selectedPermissions') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
@@ -46,6 +49,7 @@
                     {{ $editingId ? __('common.save') : __('admin.roles.add') }}
                 </button>
                 <button type="button" class="ag-btn ag-btn--secondary" wire:click="cancel">{{ __('common.cancel') }}</button>
+            </div>
             </div>
         </form>
     @endif

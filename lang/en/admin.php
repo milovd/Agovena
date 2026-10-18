@@ -1739,6 +1739,7 @@ return [
     ],
     'taxes' => [
         'title' => 'Taxes',
+        'settings_title' => 'Tax settings',
         'lede' => 'Control whether checkout applies tax, then manage country overrides. Automatic rates are fetched from the open vatnode dataset (EC TEDB) via jsDelivr CDN.',
         'workflow_help' => 'Turn on Enable tax to charge tax at checkout. Turn on Automatic tax rates to apply remote VAT rates (vatnode / EC TEDB, delivered via jsDelivr) for countries you have not overridden. Rows below are only rates you add: overrides of the automatic rate, or the only rates used when automatic is off. You can also disable tax for a specific country.',
         'add' => 'Add tax rate',
