@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Agovena\Extensions\ExtensionManifest;
 use App\Agovena\Modules\ModuleManifest;
+use App\Agovena\Packages\MonorepoCheckout;
+use App\Agovena\Packages\MonorepoPackageMap;
 use App\Agovena\Packages\PackageArtwork;
 use App\Agovena\Theme\ThemeManager;
 use App\Enums\PackageLifecycle;
@@ -11,6 +13,7 @@ use App\Enums\PackageSourceType;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\File;
 use Tests\Support\CreatesStaff;
+use Tests\Support\FakeMonorepoCheckout;
 
 uses(CreatesStaff::class);
 
@@ -94,10 +97,10 @@ test('shared package mark uses the secured image endpoint and falls back for uns
         ->toContain('alt=""')
         ->toContain('loading="eager"');
 
-    $remote = Blade::render('<x-ag.package-mark :manifest="$manifest" kind="module" :on-disk="false" />', [
+    $remote = Blade::render('<x-ag.package-mark :manifest="$manifest" kind="module" />', [
         'manifest' => $manifest,
     ]);
-    expect($remote)->not->toContain('<img');
+    expect($remote)->toContain('src="'.route('admin.packages.artwork', ['kind' => 'module', 'id' => 'sample']).'"');
 
     $unsafe = ModuleManifest::fromArray([
         'id' => 'bad', 'name' => 'Bad', 'provider' => 'Example\\Bad',
@@ -132,6 +135,45 @@ test('module and extension cards display the shared mark without changing their 
         'source' => PackageSourceType::Path, 'can_purge' => false, 'on_disk' => true,
     ]])->render();
     expect($html)->toContain('ag-package-mark')->toContain('Extension');
+});
+
+test('uninstalled catalog packages serve local cached artwork with the same view permission', function () {
+    $root = $this->artworkDirectory.'/monorepo';
+    $module = $root.'/modules/remote-module';
+    $extension = $root.'/extensions/remote-extension';
+    foreach ([$module => 'module', $extension => 'extension'] as $directory => $kind) {
+        File::ensureDirectoryExists($directory.'/resources/images');
+        File::copy(public_path('vendor/agovena/logo.png'), $directory.'/resources/images/logo.png');
+        File::put($directory.'/'.$kind.'.json', json_encode([
+            'id' => 'remote-'.$kind, 'name' => 'Remote '.$kind,
+            'provider' => 'Example\\Remote', 'category' => 'other',
+            'logo' => 'resources/images/logo.png',
+        ], JSON_THROW_ON_ERROR));
+    }
+
+    config([
+        'agovena.packages.optional_packages_path' => null,
+        'agovena.packages.monorepo.repository' => 'https://github.com/agovena/packages-fixture',
+        'agovena.packages.monorepo.packages' => [
+            'remote-module' => ['kind' => 'module', 'path' => 'modules/remote-module'],
+            'remote-extension' => ['kind' => 'extension', 'path' => 'extensions/remote-extension'],
+        ],
+    ]);
+    $fake = new FakeMonorepoCheckout(app(MonorepoPackageMap::class));
+    $fake->map('https://github.com/agovena/packages-fixture', $root);
+    app()->instance(MonorepoCheckout::class, $fake);
+
+    foreach (['module' => 'modules.view', 'extension' => 'extensions.view'] as $kind => $permission) {
+        $url = route('admin.packages.artwork', ['kind' => $kind, 'id' => 'remote-'.$kind]);
+        auth()->logout();
+        $this->get($url)->assertRedirect();
+        $this->actingAs($this->createStaff(permissions: ['admin.access']))->get($url)->assertForbidden();
+        $response = $this->actingAs($this->createStaff(permissions: ['admin.access', $permission]))->get($url)->assertOk();
+        expect($response->headers->get('Content-Type'))->toBe('image/png');
+    }
+
+    File::put($extension.'/resources/images/logo.png', 'invalid image');
+    $this->get(route('admin.packages.artwork', ['kind' => 'extension', 'id' => 'remote-extension']))->assertNotFound();
 });
 
 test('theme preview endpoint accepts only an installed theme and its safe optional png', function () {

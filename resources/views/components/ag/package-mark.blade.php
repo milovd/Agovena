@@ -1,8 +1,6 @@
-@props(['manifest', 'kind', 'onDisk' => true])
+@props(['manifest', 'kind'])
 @php
-    $imagePath = $onDisk
-        ? app(\App\Agovena\Packages\PackageArtwork::class)->resolve($manifest->path, $manifest->logo)
-        : null;
+    $imagePath = app(\App\Agovena\Packages\PackageArtwork::class)->resolve($manifest->path, $manifest->logo);
 @endphp
 <span {{ $attributes->class(['ag-package-mark']) }} aria-hidden="true">
     @if ($imagePath)

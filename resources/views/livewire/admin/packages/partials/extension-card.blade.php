@@ -4,7 +4,7 @@
 @endphp
 <x-ag.package-card wire:key="extension-{{ $manifest->id }}">
     <div class="ag-package-card__media">
-        <x-ag.package-mark :manifest="$manifest" kind="extension" :on-disk="$row['on_disk']" />
+        <x-ag.package-mark :manifest="$manifest" kind="extension" />
     </div>
     <div class="ag-package-card__body">
         <div class="ag-package-card__top">

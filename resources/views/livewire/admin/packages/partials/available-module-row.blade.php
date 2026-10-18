@@ -3,7 +3,7 @@
 @endphp
 <div class="ag-preset-module-row" wire:key="available-module-row-{{ $manifest->id }}">
     <div class="ag-preset-module-row__intro">
-        <x-ag.package-mark :manifest="$manifest" kind="module" :on-disk="$row['on_disk']" />
+        <x-ag.package-mark :manifest="$manifest" kind="module" />
         <div class="ag-preset-module-row__copy">
             <strong>{{ $manifest->name }}</strong>
             <span>{{ $manifest->description }}</span>
