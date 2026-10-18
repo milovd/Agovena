@@ -5,6 +5,7 @@ declare(strict_types=1);
 use App\Agovena\Operations\CronStatisticsRecorder;
 use App\Agovena\Operations\SchedulerHealth;
 use App\Livewire\Admin\System\CronStatistics;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Livewire;
 use Tests\Support\CreatesStaff;
@@ -29,6 +30,19 @@ test('cron statistics page shows scheduler status and setup command', function (
         ->assertSee(__('admin.cron_statistics.never'), false)
         ->assertSee('php artisan schedule:run', false)
         ->assertSee(__('admin.cron_statistics.metrics.subscription_renewals'), false);
+});
+
+test('unrecognized scheduler commands have a safe label and the task table remains readable on mobile', function () {
+    app(Schedule::class)->command('agovena:deliver-webhooks')->everyMinute();
+
+    $this->actingAs($this->createStaff())
+        ->get(route('admin.cron-statistics'))
+        ->assertOk()
+        ->assertDontSee('admin.cron_statistics.tasks.')
+        ->assertSee('Deliver webhooks')
+        ->assertSee('ag-table--mobile-cards', false)
+        ->assertSee('data-label="'.__('admin.cron_statistics.frequency').'"', false)
+        ->assertSee('data-label="'.__('admin.cron_statistics.last_run').'"', false);
 });
 
 test('scheduled commands record cron statistics', function () {

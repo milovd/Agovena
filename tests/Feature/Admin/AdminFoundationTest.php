@@ -381,6 +381,8 @@ test('database backups screen saves an interval and protects artifact actions', 
         ->assertSee(__('admin.backups.interval_label'), false)
         ->assertSee(__('admin.backups.delete_aria', ['name' => 'database-sqlite-test.enc']), false)
         ->assertSee(__('admin.backups.restore_aria', ['name' => 'database-sqlite-test.enc']), false)
+        ->assertSee('ag-table--backups', false)
+        ->assertSee('data-label="'.__('admin.backups.size').'"', false)
         ->set('backupInterval', 'hourly')
         ->call('saveSchedule')
         ->assertHasNoErrors()

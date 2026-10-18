@@ -11,6 +11,7 @@ use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Lang;
 
 final class CronStatistics
 {
@@ -163,10 +164,13 @@ final class CronStatistics
             ->filter(fn (Event $event): bool => filled($event->command))
             ->map(function (Event $event): array {
                 $id = $this->taskId($event);
+                $translation = "admin.cron_statistics.tasks.{$id}";
 
                 return [
                     'id' => $id,
-                    'label' => __("admin.cron_statistics.tasks.{$id}"),
+                    'label' => Lang::has($translation)
+                        ? __($translation)
+                        : (str_starts_with($id, 'task-') ? __('admin.cron_statistics.task') : ucfirst(str_replace('-', ' ', $id))),
                     'frequency' => $this->frequencyLabel($event),
                     'last_run' => $this->formatRunTime($this->recorder->lastRun($id)),
                     'active' => $this->taskIsActive($id),
@@ -209,7 +213,9 @@ final class CronStatistics
             str_contains($command, 'agovena:sync-provisioning') => 'sync-provisioning',
             str_contains($command, 'agovena:cancel-stale-unpaid-orders') => 'cancel-unpaid-orders',
             str_contains($command, 'agovena:prune-logs') => 'prune-logs',
-            default => str($event->description ?: $command)->slug()->toString(),
+            default => preg_match('/\bagovena:([a-z][a-z0-9-]*)\b/', $command, $matches) === 1
+                ? $matches[1]
+                : 'task-'.substr(hash('sha256', $event->description ?: $command), 0, 16),
         };
     }
 

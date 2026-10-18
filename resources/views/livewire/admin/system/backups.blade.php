@@ -136,9 +136,9 @@
             <p class="ag-card__description">{{ __('admin.backups.files_description') }}</p>
         </header>
         <div class="ag-card__content">
-            <div class="ag-table-wrap">
-                <table class="ag-table">
-                    <caption class="sr-only">{{ __('admin.backups.files_title') }}</caption>
+            <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-label="{{ __('admin.backups.files_title') }}">
+                <table class="ag-table ag-table--mobile-cards ag-table--backups">
+                    <caption class="visually-hidden">{{ __('admin.backups.files_title') }}</caption>
                     <thead>
                         <tr>
                             <th scope="col">{{ __('admin.backups.file') }}</th>
@@ -151,11 +151,11 @@
                     <tbody>
                         @forelse ($files as $file)
                             <tr wire:key="backup-{{ md5($file['path']) }}">
-                                <td><code>{{ $file['name'] }}</code></td>
-                                <td>{{ date('Y-m-d H:i', $file['modifiedAt']) }}</td>
-                                <td>{{ number_format($file['size'] / 1024, 1) }} KB</td>
-                                <td><span class="ag-badge ag-badge--success">{{ __('admin.backups.encrypted') }}</span></td>
-                                <td class="ag-table__actions">
+                                <td data-label="{{ __('admin.backups.file') }}"><code>{{ $file['name'] }}</code></td>
+                                <td data-label="{{ __('admin.backups.created_at') }}">{{ date('Y-m-d H:i', $file['modifiedAt']) }}</td>
+                                <td data-label="{{ __('admin.backups.size') }}">{{ number_format($file['size'] / 1024, 1) }} KB</td>
+                                <td data-label="{{ __('admin.backups.status') }}"><span class="ag-badge ag-badge--success">{{ __('admin.backups.encrypted') }}</span></td>
+                                <td class="ag-table__actions" data-label="{{ __('admin.backups.actions') }}">
                                     @can('backups.manage')
                                         <div class="ag-row-actions">
                                             <button
@@ -167,6 +167,7 @@
                                                 aria-label="{{ __('admin.backups.restore_aria', ['name' => $file['name']]) }}"
                                             >
                                                 <x-ag.icon name="rotate-ccw" :size="16" />
+                                                <span class="ag-table__action-label">{{ __('admin.backups.restore') }}</span>
                                             </button>
                                             <button
                                                 type="button"
@@ -177,6 +178,7 @@
                                                 aria-label="{{ __('admin.backups.delete_aria', ['name' => $file['name']]) }}"
                                             >
                                                 <x-ag.icon name="trash" :size="16" />
+                                                <span class="ag-table__action-label">{{ __('common.delete') }}</span>
                                             </button>
                                         </div>
                                     @endcan

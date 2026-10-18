@@ -1,10 +1,24 @@
 /* System lists retain table semantics on desktop and readable labelled rows on mobile. */
-.ag-table--webhooks td code {
+.ag-table--webhooks td code,
+.ag-table--backups td code {
   overflow-wrap: anywhere;
   white-space: normal;
 }
 
 @media (max-width: 720px) {
+  .ag-table--backups tbody td.ag-table__actions { grid-template-columns: minmax(0, 1fr); }
+  .ag-table--backups tbody td.ag-table__actions .ag-row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 0;
+    max-width: 100%;
+    justify-self: start;
+  }
+  .ag-table--backups tbody td.ag-table__actions .ag-icon-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
   .c-system-table {
     display: block;
     width: 100%;
