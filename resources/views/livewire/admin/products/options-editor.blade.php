@@ -33,8 +33,8 @@
                     <div class="ag-field">
                         <label class="ag-field__label" for="opt-type">{{ __('admin.product_options.type') }}</label>
                         <select id="opt-type" class="ag-select" wire:model.live="type" @disabled($selectedExtensionField?->lockType)>
-                            @foreach ($types as $type)
-                                <option value="{{ $type->value }}">{{ __('admin.product_options.types.'.$type->value) }}</option>
+                            @foreach ($types as $optionType)
+                                <option value="{{ $optionType->value }}">{{ __('admin.product_options.types.'.$optionType->value) }}</option>
                             @endforeach
                         </select>
                         @error('type') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
@@ -61,12 +61,14 @@
                         <label class="ag-field__label" for="opt-price">{{ __('admin.product_options.price_adjustment') }}</label>
                         <input id="opt-price" class="ag-input" type="number" min="0" wire:model.number="price_adjustment_amount">
                         <p class="ag-field__help">{{ __('admin.product_options.price_adjustment_help') }}</p>
+                        @error('price_adjustment_amount') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                 @endif
                 @if (in_array($type, ['text', 'textarea'], true))
                     <div class="ag-field">
                         <label class="ag-field__label" for="opt-max-length">{{ __('admin.product_options.max_length') }}</label>
                         <input id="opt-max-length" class="ag-input" type="number" min="1" max="5000" wire:model.number="max_length">
+                        @error('max_length') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                 @endif
                 <x-ag.switch id="opt-required" wire:model="is_required" :label="__('admin.product_options.required')" />

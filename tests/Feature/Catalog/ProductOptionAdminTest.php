@@ -183,3 +183,24 @@ test('staff without product update permission cannot open the product options ed
         ->test(OptionsEditor::class, ['productId' => $product->id])
         ->assertForbidden();
 });
+
+test('the option editor shows the inputs that belong to the selected option type', function (string $type, bool $choices, bool $price, bool $maxLength): void {
+    $product = Product::factory()->create();
+
+    $html = Livewire::actingAs($this->createStaff())
+        ->test(OptionsEditor::class, ['productId' => $product->id])
+        ->call('create')
+        ->set('type', $type)
+        ->html();
+
+    expect(str_contains($html, 'id="opt-choices"'))->toBe($choices, "{$type} choices")
+        ->and(str_contains($html, 'id="opt-price"'))->toBe($price, "{$type} price")
+        ->and(str_contains($html, 'id="opt-max-length"'))->toBe($maxLength, "{$type} max length");
+})->with([
+    'select' => ['select', true, false, false],
+    'radio' => ['radio', true, false, false],
+    'checkbox' => ['checkbox', true, false, false],
+    'text' => ['text', false, true, true],
+    'textarea' => ['textarea', false, true, true],
+    'number' => ['number', false, true, false],
+]);
