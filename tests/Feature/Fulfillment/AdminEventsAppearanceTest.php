@@ -119,6 +119,27 @@ test('managers retain the create form and all detail fields and actions', functi
     expect($detail->html())->toContain('c-events__section')->toContain('ag-empty');
 });
 
+test('event screens place every section on a labelled shared Admin card', function (): void {
+    $staff = $this->createStaff();
+    $event = Event::query()->create(['name' => 'Card concert', 'slug' => 'card-concert', 'status' => EventStatus::Draft]);
+
+    $index = Livewire::actingAs($staff)->test(EventsIndex::class)->html();
+    $detail = Livewire::actingAs($staff)->test(EventShow::class, ['event' => $event])->html();
+    $checkIn = Livewire::actingAs($staff)->test(CheckIn::class)->html();
+
+    expect($index)->toContain('class="ag-card c-events__section" aria-labelledby="event-create-heading"')
+        ->toContain('id="event-create-heading" class="ag-card__title"')
+        ->and($detail)->toContain('aria-labelledby="event-details-heading"')
+        ->toContain('aria-labelledby="event-performances-heading"')
+        ->toContain('aria-labelledby="event-ticket-types-heading"')
+        ->toContain('class="ag-card__header c-events__heading"')
+        ->and($checkIn)->toContain('class="ag-card c-events__section c-events__scan" aria-labelledby="event-checkin-heading"');
+
+    foreach ([$index, $detail, $checkIn] as $html) {
+        expect($html)->not->toContain('admin-panel');
+    }
+});
+
 test('check-in keeps its idle form and validation feedback in both locales', function (string $locale): void {
     app()->setLocale($locale);
     $page = Livewire::actingAs($this->createStaff(permissions: ['events.checkin']))->test(CheckIn::class);

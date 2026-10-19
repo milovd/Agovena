@@ -21,14 +21,6 @@
   min-width: 0;
 }
 
-.c-events__heading {
-  margin-bottom: var(--ag-space-5);
-}
-
-.c-events__heading .admin-panel__title {
-  margin: 0;
-}
-
 .c-events__form {
   max-width: 60rem;
 }
