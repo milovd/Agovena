@@ -1,0 +1,29 @@
+/* Token-based spacing helpers for one-off gaps between existing Admin components. */
+.ag-u-mt-3 {
+  margin-top: var(--ag-space-3);
+}
+
+.ag-u-mt-4 {
+  margin-top: var(--ag-space-4);
+}
+
+.ag-u-mb-4 {
+  margin-bottom: var(--ag-space-4);
+}
+
+.ag-u-mb-6 {
+  margin-bottom: var(--ag-space-6);
+}
+
+/* Wrapping row of actions or chips. */
+.ag-u-cluster {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-3);
+}
+
+/* Vertical group of fields with a small gap. */
+.ag-u-stack-3 {
+  display: grid;
+  gap: var(--ag-space-3);
+}

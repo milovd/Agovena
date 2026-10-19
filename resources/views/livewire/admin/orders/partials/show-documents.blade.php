@@ -40,7 +40,7 @@
             @endif
 
             @if ($canManageInvoices)
-                <div class="ag-stack" style="margin-top: var(--ag-space-4);">
+                <div class="ag-stack ag-u-mt-4">
                     @if (! $showInvoiceLinker)
                         <button type="button" class="ag-btn ag-btn--secondary" wire:click="startLinkInvoice">{{ __('admin.orders.show.link_invoice') }}</button>
                     @else
@@ -77,7 +77,7 @@
             @endif
 
             @if ($order->creditNotes->isNotEmpty())
-                <dl class="ag-dl" style="margin-top: var(--ag-space-4);">
+                <dl class="ag-dl ag-u-mt-4">
                 @foreach ($order->creditNotes as $note)
                     <div>
                         <dt>{{ __('admin.credit_notes.singular') }}</dt>

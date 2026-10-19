@@ -33,7 +33,7 @@
         </div>
 
         @if (! empty($capabilityEnabled['digital_secret']))
-            <div class="ag-preset-option ag-grid ag-grid--2" style="margin-top: 1rem;">
+            <div class="ag-preset-option ag-grid ag-grid--2 ag-u-mt-4">
                 <div class="ag-field">
                     <label class="ag-field__label" for="digital-secret-source">{{ __('admin.products.capabilities.digital_secret_source') }}</label>
                     <select id="digital-secret-source" class="ag-select" wire:model="digitalSecretSource">

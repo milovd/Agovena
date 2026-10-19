@@ -81,7 +81,7 @@
                 </x-ag.file-upload>
 
                 @if ($groupDefinition->id === 'branding' && $field->key === 'logo_path' && $canUpdate)
-                    <div style="margin-top: var(--ag-space-3); display: grid; gap: var(--ag-space-3);">
+                    <div class="ag-u-mt-3 ag-u-stack-3">
                         <x-ag.checkbox id="use-logo-as-favicon" wire:model="useLogoAsFavicon" :label="__('admin.settings.use_logo_as_favicon')" />
                         @if (! empty($values['logo_path']))
                             <div>

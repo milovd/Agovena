@@ -15,7 +15,7 @@
             <p class="ag-muted">{{ __('shipping::admin.no_shipments') }}</p>
         @else
             @foreach ($shipments as $shipment)
-                <div class="ag-stack" wire:key="shipment-{{ $shipment->id }}" style="margin-bottom: 1rem;">
+                <div class="ag-stack ag-u-mb-4" wire:key="shipment-{{ $shipment->id }}">
                     <p>
                         <strong>#{{ $shipment->id }}</strong>
                         - {{ __('shipping::status.'.$shipment->status->value) }}

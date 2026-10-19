@@ -40,7 +40,7 @@
             </dl>
 
             @if ($order->payment->attempts->isNotEmpty())
-                <h4 class="ag-section__title" style="margin-top:1rem;">{{ __('admin.orders.show.attempts') }}</h4>
+                <h4 class="ag-section__title ag-u-mt-4">{{ __('admin.orders.show.attempts') }}</h4>
                 <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.attempts') }}" tabindex="0">
                     <table class="ag-table">
                         <thead>
@@ -66,7 +66,7 @@
             @endif
 
             @if ($order->refunds->isNotEmpty())
-                <h4 class="ag-section__title" style="margin-top:1rem;">{{ __('admin.orders.show.refunds') }}</h4>
+                <h4 class="ag-section__title ag-u-mt-4">{{ __('admin.orders.show.refunds') }}</h4>
                 <ul class="ag-list">
                     @foreach ($order->refunds as $refund)
                         <li>
@@ -106,7 +106,7 @@
 
         @if ($canCancelUnpaid)
             @if (! $confirmingCancel)
-                <button type="button" class="ag-btn ag-btn--danger" wire:click="startCancelUnpaid" style="margin-top: var(--ag-space-3);">
+                <button type="button" class="ag-btn ag-btn--danger ag-u-mt-3" wire:click="startCancelUnpaid">
                     {{ __('admin.orders.show.cancel_unpaid') }}
                 </button>
             @else

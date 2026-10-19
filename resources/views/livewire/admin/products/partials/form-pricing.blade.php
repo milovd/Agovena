@@ -42,10 +42,10 @@
             </div>
         </div>
         @if ($mode === 'edit' && $currencies->count() > 1)
-            <div class="ag-field" style="margin-top: 1rem;">
+            <div class="ag-field ag-u-mt-4">
                 <p class="ag-field__label">{{ __('admin.products.form.currency_overrides') }}</p>
                 <p class="ag-field__hint">{{ __('admin.products.form.currency_overrides_hint') }}</p>
-                <div class="ag-grid ag-grid--2" style="margin-top: 0.75rem;">
+                <div class="ag-grid ag-grid--2 ag-u-mt-3">
                     @foreach ($currencies as $currencyOption)
                         @continue(strtoupper($currencyOption->code) === strtoupper($currency))
                         <div class="ag-field" wire:key="currency-price-{{ $currencyOption->code }}">
