@@ -929,3 +929,21 @@ test('core and modules do not import proxmox extension types', function () {
         }
     }
 });
+
+test('saving a provisioning server shows the result on the servers page', function (): void {
+    enableProxmox();
+
+    Livewire::actingAs($this->createStaff())
+        ->test(ProvisioningServers::class)
+        ->set('name', 'Primary cluster')
+        ->set('providerKey', 'proxmox')
+        ->set('settings.api_url', 'https://pve.example.test:8006')
+        ->set('settings.token_user', 'root@pam')
+        ->set('settings.token_id', 'agovena')
+        ->set('settings.token_secret', '[REDACTED]')
+        ->set('settings.node', 'pve1')
+        ->set('settings.storage', 'local-lvm')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSee(__('provisioning::admin.server_saved'));
+});

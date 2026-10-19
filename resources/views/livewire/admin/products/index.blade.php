@@ -7,9 +7,7 @@
         </x-slot:actions>
     </x-ag.page-header>
 
-    @if (session('error'))
-        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
-    @endif
+    <x-ag.flash />
 
     <x-ag.table-toolbar filters>
         <div class="ag-toolbar__filters">

@@ -7,6 +7,8 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    <x-ag.flash />
+
     @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'customers'])
 
     @if ($showUserForm)

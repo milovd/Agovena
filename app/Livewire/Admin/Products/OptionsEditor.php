@@ -50,6 +50,9 @@ final class OptionsEditor extends Component
 
     public string $extensionField = '';
 
+    /** Result of the last action. Kept local: this section is nested in the product editor, which shows session feedback. */
+    public ?string $feedback = null;
+
     public function mount(int $productId): void
     {
         $this->authorize('products.update');
@@ -60,6 +63,7 @@ final class OptionsEditor extends Component
     {
         $this->authorize('products.update');
         $this->resetForm();
+        $this->feedback = null;
         $this->showForm = true;
     }
 
@@ -222,7 +226,7 @@ final class OptionsEditor extends Component
             }
         });
 
-        session()->flash('status', __($this->editingId ? 'admin.product_options.updated' : 'admin.product_options.created'));
+        $this->feedback = __($this->editingId ? 'admin.product_options.updated' : 'admin.product_options.created');
         $this->resetForm();
     }
 
@@ -230,7 +234,7 @@ final class OptionsEditor extends Component
     {
         $this->authorize('products.update');
         ProductOption::query()->where('product_id', $this->productId)->findOrFail($id)->delete();
-        session()->flash('status', __('admin.product_options.deleted'));
+        $this->feedback = __('admin.product_options.deleted');
     }
 
     public function cancel(): void

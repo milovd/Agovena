@@ -1,6 +1,8 @@
 <div class="admin-page ag-list-page admin-page--orders">
     <x-ag.page-header :heading="__('admin.orders.title')" :lede="__('admin.orders.lede')" />
 
+    <x-ag.flash />
+
     <x-ag.table-toolbar filters>
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline">

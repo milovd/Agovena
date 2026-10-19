@@ -7,6 +7,8 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    <x-ag.flash />
+
     <section class="ag-section ag-tax-settings" aria-labelledby="tax-settings-heading">
         <header class="ag-section__header ag-catalog-form__header">
             <div class="ag-catalog-form__heading">

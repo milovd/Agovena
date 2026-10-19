@@ -1,6 +1,8 @@
 <div class="admin-page ag-list-page admin-page--invoices">
     <x-ag.page-header :heading="__('admin.invoices.title')" :lede="__('admin.invoices.lede')" />
 
+    <x-ag.flash />
+
     @include('livewire.admin.invoices.partials.tabs', ['activeTab' => 'invoices'])
 
     <div class="ag-toolbar ag-toolbar--filters">

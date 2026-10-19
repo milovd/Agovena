@@ -7,6 +7,8 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    <x-ag.flash />
+
     @error('delete') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
 
     @if ($showForm)

@@ -1,6 +1,8 @@
 <div class="admin-page">
     <x-ag.page-header :heading="__('admin.store_presets.title')" :lede="__('admin.store_presets.lede')" />
 
+    <x-ag.flash />
+
     <section class="ag-card" aria-labelledby="store-presets-modules-heading">
         <header class="ag-card__header">
             <h2 id="store-presets-modules-heading" class="ag-card__title">{{ __('admin.modules.title') }}</h2>

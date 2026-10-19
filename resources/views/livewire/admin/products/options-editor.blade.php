@@ -4,6 +4,10 @@
         <p class="ag-section__lede">{{ __('admin.product_options.lede') }}</p>
     </header>
     <div class="ag-section__body">
+        @if ($feedback)
+            <p class="ag-alert ag-alert--success" role="status">{{ $feedback }}</p>
+        @endif
+
         @if ($showForm)
             <form wire:submit="save" class="ag-form" novalidate>
                 @if ($extensionFields !== [])

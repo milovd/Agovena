@@ -39,9 +39,7 @@
         </x-slot:actions>
     </x-ag.page-header>
 
-    @if (session('error'))
-        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
-    @endif
+    <x-ag.flash />
 
     @if (($isOrderable ?? true) === false)
         <p class="ag-alert ag-alert--warning" role="status">{{ __('admin.products.form.not_orderable') }}</p>

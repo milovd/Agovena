@@ -17,6 +17,8 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    <x-ag.flash />
+
     <div class="c-ticket-workspace__layout">
         @can('tickets.manage')
             <form class="ag-card ag-form c-ticket-workspace__status" wire:submit="updateStatus" aria-labelledby="ticket-status-heading">

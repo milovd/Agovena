@@ -7,6 +7,7 @@ use Agovena\Modules\Events\Enums\EventTicketStatus;
 use Agovena\Modules\Events\Http\Livewire\Admin\CheckIn;
 use Agovena\Modules\Events\Http\Livewire\Admin\EventShow;
 use Agovena\Modules\Events\Http\Livewire\Admin\EventsIndex;
+use Agovena\Modules\Events\Http\Livewire\Admin\ProductEventTab;
 use Agovena\Modules\Events\Models\Event;
 use Agovena\Modules\Events\Models\EventPerformance;
 use Agovena\Modules\Events\Models\EventTicket;
@@ -269,4 +270,39 @@ test('clearing a performance capacity rejects the performance instead of creatin
         ->assertHasErrors(['performance_capacity']);
 
     expect($event->performances()->count())->toBe(0);
+});
+
+test('the product event tab rejects a cleared capacity instead of saving the previous one', function (): void {
+    if (! (new ReflectionProperty(ProductEventTab::class, 'capacity'))->getType()?->allowsNull()) {
+        $this->markTestSkipped('This optional-packages revision predates nullable product event capacity.');
+    }
+
+    $product = Product::factory()->create(['name' => 'Capacity ticket']);
+    $tab = Livewire::actingAs($this->createStaff())->test(ProductEventTab::class, ['product' => $product]);
+    expect($tab->get('capacity'))->toBe(100);
+
+    $tab->set('startsAt', now()->addWeek()->format('Y-m-d\\TH:i'))
+        ->set('capacity', 45)
+        ->set('capacity', '')
+        ->call('save')
+        ->assertHasErrors(['capacity']);
+
+    expect(EventTicketType::query()->where('product_id', $product->id)->exists())->toBeFalse();
+});
+
+test('the product event tab shows its own result instead of sharing the product editor feedback', function (): void {
+    if (! property_exists(ProductEventTab::class, 'feedback')) {
+        $this->markTestSkipped('This optional-packages revision predates local product event feedback.');
+    }
+
+    $product = Product::factory()->create(['name' => 'Feedback ticket']);
+
+    Livewire::actingAs($this->createStaff())
+        ->test(ProductEventTab::class, ['product' => $product])
+        ->set('startsAt', now()->addWeek()->format('Y-m-d\\TH:i'))
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSee(__('events::admin.product_event_saved'));
+
+    expect(session('status'))->toBeNull();
 });

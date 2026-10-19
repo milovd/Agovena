@@ -7,6 +7,8 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    <x-ag.flash />
+
     @if ($canShowForm)
         <form wire:submit="save" class="ag-section ag-form ag-form--constrained ag-catalog-form" novalidate>
             <header class="ag-section__header ag-catalog-form__header">

@@ -7,6 +7,8 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    <x-ag.flash />
+
     @if (count($themes) > 0)
         <section class="c-theme-grid" aria-label="{{ __('admin.appearance.themes.title') }}">
             @foreach ($themes as $theme)

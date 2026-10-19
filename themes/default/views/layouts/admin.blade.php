@@ -222,10 +222,12 @@
             </header>
 
             <main id="main" class="admin-content" tabindex="-1">
-                @if (session('status'))
+                {{-- Pages render feedback from their own actions; repeat it here only when the page did not. --}}
+                @php($pageHtml = (string) $slot)
+                @if (session('status') && ! str_contains($pageHtml, '>'.e(session('status')).'</'))
                     <div class="ag-alert ag-alert--success" role="status">{{ session('status') }}</div>
                 @endif
-                @if (session('error'))
+                @if (session('error') && ! str_contains($pageHtml, '>'.e(session('error')).'</'))
                     <div class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</div>
                 @endif
                 @if (($schemaPendingCount ?? 0) > 0 && ! request()->routeIs('admin.updates') && auth()->user()?->can('settings.view'))

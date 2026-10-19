@@ -21,7 +21,7 @@
         <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
     @endif
     @if (session('error'))
-        <p class="ag-alert ag-alert--error" role="alert">{{ session('error') }}</p>
+        <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
     <div class="ag-order-layout">

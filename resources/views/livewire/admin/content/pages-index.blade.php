@@ -7,6 +7,8 @@
         </x-slot:actions>
     </x-ag.page-header>
 
+    <x-ag.flash />
+
     <div class="ag-toolbar ag-toolbar--filters ag-page-list__filters">
         <div class="ag-toolbar__filters">
             <div class="ag-field ag-field--inline ag-page-list__search">

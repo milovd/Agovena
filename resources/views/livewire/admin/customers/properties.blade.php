@@ -25,6 +25,8 @@
             </x-slot:actions>
         </x-ag.page-header>
 
+        <x-ag.flash />
+
         @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
 
         <form wire:submit="save" class="ag-section ag-form ag-form--constrained ag-customer-form" novalidate>
@@ -132,6 +134,8 @@
                 </button>
             </x-slot:actions>
         </x-ag.page-header>
+
+        <x-ag.flash />
 
         @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
 
