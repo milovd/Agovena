@@ -172,6 +172,27 @@ foreach (moduleBoundExtensions() as $label => $case) {
         expect($extensions->isEnabled($case['extension']))->toBeFalse()
             ->and($registry->get($case['registryKey']))->toBeNull();
     });
+
+    test("{$label} stays enabled but registers no provider while this Core cannot run it", function () use ($case): void {
+        $extensions = app(ExtensionManager::class);
+        installAndEnableModule($case['module']);
+        installAndEnableExtension($case['extension']);
+        $registry = app($case['registry']);
+        $coreVersion = config('agovena.version');
+
+        config(['agovena.version' => '0.1.0']);
+        $registry->clear();
+        $extensions->refresh();
+        $extensions->bootEnabled();
+
+        expect($extensions->isEnabled($case['extension']))->toBeTrue()
+            ->and($registry->get($case['registryKey']))->toBeNull();
+
+        config(['agovena.version' => $coreVersion]);
+        $extensions->rebuildRuntime();
+
+        expect($registry->get($case['registryKey']))->not->toBeNull();
+    });
 }
 
 test('all discovered extensions with module_dependencies are covered by dependency tests', function (): void {
