@@ -65,3 +65,49 @@ test('deleting a downloadable asset requires localized confirmation', function (
         ->assertSee('wire:confirm="'.e($confirmation).'"', false)
         ->assertSee('wire:click="delete(', false);
 })->with(['en', 'nl']);
+
+test('the add asset form shows validation feedback for every field', function (): void {
+    installAndEnableModule('downloads');
+    app(SyncRegisteredPermissions::class)(force: true);
+
+    $page = Livewire::actingAs($this->createStaff())
+        ->test(AssetsIndex::class)
+        ->set('label', str_repeat('a', 121))
+        ->set('download_limit', '0')
+        ->call('save')
+        ->assertHasErrors(['product_id', 'label', 'download_limit', 'file']);
+
+    $html = $page->html();
+    foreach (['d-product', 'd-label', 'd-limit', 'd-file'] as $field) {
+        expect($html)->toMatch('/id="'.$field.'"[^>]*>(?:(?!<\/div>).)*class="ag-field__error"/s');
+    }
+});
+
+test('the downloads list uses a labelled shared card, list toolbar spacing and accessible headers', function (): void {
+    installAndEnableModule('downloads');
+    app(SyncRegisteredPermissions::class)(force: true);
+    $manager = $this->createStaff();
+
+    $empty = Livewire::actingAs($manager)->test(AssetsIndex::class)->html();
+    expect($empty)->toContain('class="admin-page ag-list-page"')
+        ->toContain('class="ag-card ag-form" aria-labelledby="digital-add-heading"')
+        ->toContain('<h2 id="digital-add-heading" class="ag-card__title">')
+        ->toContain('class="ag-empty" role="status"')
+        ->not->toContain('style="')
+        ->not->toContain('<h3');
+
+    $product = Product::factory()->active()->create();
+    app(ProductCapabilityManager::class)->enable($product, 'digital');
+    DigitalAsset::query()->create([
+        'product_id' => $product->id,
+        'label' => 'Guide',
+        'disk' => 'local',
+        'path' => 'digital/'.$product->id.'/guide.pdf',
+        'filename' => 'guide.pdf',
+        'is_active' => true,
+    ]);
+
+    $list = Livewire::actingAs($manager)->test(AssetsIndex::class)->html();
+    expect(substr_count($list, '<th scope="col"'))->toBe(5)
+        ->and($list)->toContain('aria-label="'.e(__('common.delete').' guide.pdf').'"');
+});
