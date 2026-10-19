@@ -24,7 +24,7 @@ final class Index extends Component
 
     public string $type = 'percent';
 
-    public int $value = 10;
+    public ?int $value = null;
 
     public string $currency = 'EUR';
 

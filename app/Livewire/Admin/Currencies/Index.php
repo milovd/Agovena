@@ -33,7 +33,7 @@ final class Index extends Component
 
     public string $suffix = '';
 
-    public int $precision = 2;
+    public ?int $precision = null;
 
     public string $exchange_rate = '1.00000000';
 

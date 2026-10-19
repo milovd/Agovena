@@ -27,7 +27,7 @@ final class Index extends Component
 
     public string $name = '';
 
-    public int $rate_bps = 2100;
+    public ?int $rate_bps = null;
 
     public string $country = '';
 
