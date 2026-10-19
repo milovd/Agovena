@@ -91,24 +91,37 @@ final class SecurityHeaders
 
     private function viteDevOrigins(): string
     {
+        // CSP host-source grammar has no IPv6 literals, so "[::1]" is left out: browsers reject it.
         $origins = [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
-            'http://[::1]:5173',
             'ws://localhost:5173',
             'ws://127.0.0.1:5173',
-            'ws://[::1]:5173',
         ];
 
         $hot = public_path('hot');
         if (is_file($hot)) {
-            $url = trim((string) file_get_contents($hot));
-            if ($url !== '' && preg_match('#^https?://#i', $url) === 1) {
-                $origins[] = $url;
-                $origins[] = (string) preg_replace('#^http#i', 'ws', $url);
+            $origin = $this->cspOrigin(trim((string) file_get_contents($hot)));
+            if ($origin !== null) {
+                $origins[] = $origin;
+                $origins[] = (string) preg_replace('#^http#i', 'ws', $origin);
             }
         }
 
         return implode(' ', array_unique($origins));
+    }
+
+    /** Reduces a dev server URL to a CSP-valid "scheme://host[:port]", or null when it cannot be one. */
+    private function cspOrigin(string $url): ?string
+    {
+        $parts = parse_url($url);
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = (string) ($parts['host'] ?? '');
+
+        if (! in_array($scheme, ['http', 'https'], true) || preg_match('/\A[A-Za-z0-9.-]+\z/', $host) !== 1) {
+            return null;
+        }
+
+        return $scheme.'://'.$host.(isset($parts['port']) ? ':'.$parts['port'] : '');
     }
 }

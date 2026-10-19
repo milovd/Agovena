@@ -35,10 +35,60 @@ test('local debug csp allows vite including the hot-file origin', function () {
         expect($csp)->toBeString()
             ->and($csp)->toContain('http://localhost:5173')
             ->and($csp)->toContain('http://127.0.0.1:5173')
-            ->and($csp)->toContain('http://[::1]:5173')
-            ->and($csp)->toContain('ws://[::1]:5173')
+            ->and($csp)->toContain('ws://127.0.0.1:5173')
             ->and($csp)->toContain('http://127.0.0.1:5174')
             ->and($csp)->toContain('ws://127.0.0.1:5174');
+    } finally {
+        if ($previous === false) {
+            @unlink($hot);
+        } else {
+            file_put_contents($hot, $previous);
+        }
+    }
+});
+
+/*
+ * CSP host-source grammar has no IPv6 literals. Browsers reject "http://[::1]:5173" with a
+ * console error on every page and ignore it, so the policy must not list such sources.
+ */
+test('local debug csp only lists sources browsers accept', function () {
+    $this->app['env'] = 'local';
+    config(['app.debug' => true]);
+
+    $hot = public_path('hot');
+    $previous = is_file($hot) ? file_get_contents($hot) : false;
+    file_put_contents($hot, "http://[::1]:5173\n");
+
+    try {
+        $csp = (string) $this->get('/')->headers->get('Content-Security-Policy');
+
+        expect($csp)->not->toContain('[')
+            ->and($csp)->not->toContain(']')
+            ->and($csp)->toContain('http://localhost:5173');
+    } finally {
+        if ($previous === false) {
+            @unlink($hot);
+        } else {
+            file_put_contents($hot, $previous);
+        }
+    }
+});
+
+test('local debug csp keeps only the origin of the hot file so it cannot add directives', function () {
+    $this->app['env'] = 'local';
+    config(['app.debug' => true]);
+
+    $hot = public_path('hot');
+    $previous = is_file($hot) ? file_get_contents($hot) : false;
+    file_put_contents($hot, "http://127.0.0.1:5175/build; script-src *\n");
+
+    try {
+        $csp = (string) $this->get('/')->headers->get('Content-Security-Policy');
+
+        expect($csp)->toContain('http://127.0.0.1:5175 ')
+            ->and($csp)->toContain('ws://127.0.0.1:5175')
+            ->and($csp)->not->toContain('script-src *')
+            ->and($csp)->not->toContain('/build');
     } finally {
         if ($previous === false) {
             @unlink($hot);
