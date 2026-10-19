@@ -111,3 +111,16 @@ test('enabled ids list exactly the enabled packages', function (): void {
         ->and($modules->isEnabled($moduleOn))->toBeTrue()
         ->and($modules->isEnabled($moduleOff))->toBeFalse();
 });
+
+test('booting discovers packages even when none are enabled, so their classes stay autoloadable', function (string $manager): void {
+    $fresh = app()->build($manager);
+    $discovered = fn (): array => (fn (): array => $this->discovered ?? [])->call($fresh);
+    expect($discovered())->toBe([]);
+
+    $fresh->bootEnabled();
+
+    expect($discovered())->not->toBe([]);
+})->with([
+    'modules' => ModuleManager::class,
+    'extensions' => ExtensionManager::class,
+]);

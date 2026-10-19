@@ -108,14 +108,17 @@ final class ExtensionManager
 
     public function bootEnabled(): void
     {
-        // One read for the whole pass: this runs on every request. Dependency checks below stay live.
-        // Without the table (before installation) nothing is enabled.
-        $enabled = array_flip($this->enabledIds());
-        if ($enabled === []) {
+        if (! $this->extensionsTableReady()) {
             return;
         }
 
-        foreach ($this->discover() as $manifest) {
+        // Discovery also registers each package's autoloading, which code and static analysis
+        // rely on even when the package is disabled; keep it before the enabled check.
+        $manifests = $this->discover();
+        // One read for the whole pass: this runs on every request. Dependency checks below stay live.
+        $enabled = array_flip(AgovenaExtension::query()->where('enabled', true)->pluck('extension_id')->all());
+
+        foreach ($manifests as $manifest) {
             if (! isset($enabled[$manifest->id]) || ! $this->canUseManifest($manifest)) {
                 continue;
             }
