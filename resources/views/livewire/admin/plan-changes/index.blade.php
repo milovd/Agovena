@@ -43,6 +43,7 @@
                                 <option value="{{ $type }}">{{ __('admin.plan_changes.types.'.$type) }}</option>
                             @endforeach
                         </select>
+                        @error('change_type') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="plan-timing">{{ __('admin.plan_changes.timing') }}</label>
@@ -51,6 +52,7 @@
                                 <option value="{{ $value }}">{{ __('admin.plan_changes.timings.'.$value) }}</option>
                             @endforeach
                         </select>
+                        @error('timing') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                 </div>
                 <div class="c-subscriptions__plan-actions">

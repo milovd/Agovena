@@ -30,6 +30,7 @@
                             <option value="percent">{{ __('admin.discounts.percent') }}</option>
                             <option value="fixed">{{ __('admin.discounts.fixed') }}</option>
                         </select>
+                        @error('type') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="discount-value">{{ __('admin.discounts.value') }}</label>
@@ -48,6 +49,7 @@
                         <label class="ag-field__label" for="discount-minimum">{{ __('admin.discounts.minimum') }}</label>
                         <input id="discount-minimum" class="ag-input" type="number" min="0" wire:model.number="min_subtotal_amount">
                         <p class="ag-field__help">{{ __('admin.discounts.minor_units_help') }}</p>
+                        @error('min_subtotal_amount') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="discount-starts">{{ __('admin.discounts.starts_at') }}</label>
@@ -62,10 +64,12 @@
                     <div class="ag-field">
                         <label class="ag-field__label" for="discount-max">{{ __('admin.discounts.max_uses') }}</label>
                         <input id="discount-max" class="ag-input" type="number" min="1" wire:model.number="max_uses">
+                        @error('max_uses') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="discount-customer-max">{{ __('admin.discounts.max_per_customer') }}</label>
                         <input id="discount-customer-max" class="ag-input" type="number" min="1" wire:model.number="max_uses_per_customer">
+                        @error('max_uses_per_customer') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field ag-grid__span-2 ag-catalog-form__switch">
                         <x-ag.switch id="discount-active" wire:model="is_active" :label="__('common.active')" />
