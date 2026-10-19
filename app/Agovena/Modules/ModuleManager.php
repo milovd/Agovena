@@ -75,6 +75,20 @@ final class ModuleManager
             ->exists();
     }
 
+    /**
+     * Ids of every enabled Module in one query, for callers that check many Modules per request.
+     *
+     * @return list<string>
+     */
+    public function enabledIds(): array
+    {
+        if (! $this->modulesTableReady()) {
+            return [];
+        }
+
+        return AgovenaModule::query()->where('enabled', true)->orderBy('module_id')->pluck('module_id')->all();
+    }
+
     public function isInstalled(string $moduleId): bool
     {
         if (! $this->modulesTableReady()) {
@@ -89,12 +103,15 @@ final class ModuleManager
      */
     public function bootEnabled(): void
     {
-        if (! $this->modulesTableReady()) {
+        // One read for the whole pass: this runs on every request. Dependency checks below stay live.
+        // Without the table (before installation) nothing is enabled.
+        $enabled = array_flip($this->enabledIds());
+        if ($enabled === []) {
             return;
         }
 
         foreach ($this->discover() as $manifest) {
-            if (! $this->isEnabled($manifest->id)) {
+            if (! isset($enabled[$manifest->id])) {
                 continue;
             }
 

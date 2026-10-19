@@ -119,11 +119,12 @@ final class AdminNavigation
     public static function filterVisible(Collection $items, ModuleManager $modules, ?Router $router = null): Collection
     {
         $router ??= app('router');
+        $enabled = null;
 
-        return $items->filter(function (NavigationItem $item) use ($modules, $router): bool {
+        return $items->filter(function (NavigationItem $item) use ($modules, $router, &$enabled): bool {
             $moduleId = self::moduleOwner($item, $modules);
 
-            if ($moduleId !== null && ! $modules->isEnabled($moduleId)) {
+            if ($moduleId !== null && ! isset(($enabled ??= array_flip($modules->enabledIds()))[$moduleId])) {
                 return false;
             }
 

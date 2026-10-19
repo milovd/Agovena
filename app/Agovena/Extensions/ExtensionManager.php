@@ -83,6 +83,20 @@ final class ExtensionManager
             ->exists();
     }
 
+    /**
+     * Ids of every enabled Extension in one query, for callers that check many Extensions per request.
+     *
+     * @return list<string>
+     */
+    public function enabledIds(): array
+    {
+        if (! $this->extensionsTableReady()) {
+            return [];
+        }
+
+        return AgovenaExtension::query()->where('enabled', true)->orderBy('extension_id')->pluck('extension_id')->all();
+    }
+
     public function isInstalled(string $extensionId): bool
     {
         if (! $this->extensionsTableReady()) {
@@ -94,12 +108,15 @@ final class ExtensionManager
 
     public function bootEnabled(): void
     {
-        if (! $this->extensionsTableReady()) {
+        // One read for the whole pass: this runs on every request. Dependency checks below stay live.
+        // Without the table (before installation) nothing is enabled.
+        $enabled = array_flip($this->enabledIds());
+        if ($enabled === []) {
             return;
         }
 
         foreach ($this->discover() as $manifest) {
-            if (! $this->isEnabled($manifest->id) || ! $this->canUseManifest($manifest)) {
+            if (! isset($enabled[$manifest->id]) || ! $this->canUseManifest($manifest)) {
                 continue;
             }
 

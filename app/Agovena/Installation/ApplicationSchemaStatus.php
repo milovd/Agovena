@@ -104,8 +104,9 @@ final class ApplicationSchemaStatus
         $paths = array_merge($this->migrator->paths(), [database_path('migrations')]);
 
         try {
+            $enabledModules = array_flip($this->modules->enabledIds());
             foreach ($this->modules->discover() as $manifest) {
-                if (! $this->modules->isEnabled($manifest->id)) {
+                if (! isset($enabledModules[$manifest->id])) {
                     continue;
                 }
 
@@ -115,8 +116,9 @@ final class ApplicationSchemaStatus
                 }
             }
 
+            $enabledExtensions = array_flip($this->extensions->enabledIds());
             foreach ($this->extensions->discover() as $manifest) {
-                if (! $this->extensions->isEnabled($manifest->id)) {
+                if (! isset($enabledExtensions[$manifest->id])) {
                     continue;
                 }
 
