@@ -95,9 +95,9 @@
   min-width: 0;
 }
 
-.ag-page-form__side-heading {
-  margin: 0 0 var(--ag-space-4);
-  font-size: var(--ag-font-size-md);
+/* Header-less form cards need the same top inset as their side padding. */
+.ag-page-form .ag-card > .ag-card__content:first-child {
+  padding-top: 1.2rem;
 }
 
 .ag-page-form__publication .ag-field {
@@ -282,10 +282,6 @@
 
   .ag-page-form__metadata-fields {
     grid-template-columns: minmax(0, 1fr);
-  }
-
-  .ag-page-form .admin-panel {
-    padding: var(--ag-space-4);
   }
 
   .ag-page-form .ag-page-editor__toolbar {
