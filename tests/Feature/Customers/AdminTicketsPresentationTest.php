@@ -58,7 +58,10 @@ test('ticket detail keeps message and private attachment links alongside the rep
 
     Livewire::actingAs($this->createStaff())->test(TicketShow::class, ['ticket' => $ticket])
         ->assertSee('c-ticket-workspace__layout', false)
-        ->assertSee('c-ticket-workspace__conversation', false)
+        ->assertSee('class="ag-card ag-form c-ticket-workspace__status" wire:submit="updateStatus" aria-labelledby="ticket-status-heading"', false)
+        ->assertSee('class="ag-card c-ticket-workspace__conversation" aria-labelledby="ticket-conversation-heading"', false)
+        ->assertSee('class="ag-card ag-form c-ticket-workspace__reply" wire:submit="sendReply" aria-labelledby="ticket-reply-heading"', false)
+        ->assertDontSee('admin-panel', false)
         ->assertSee('c-ticket-workspace__reply-actions', false)
         ->assertSee('Please review this receipt.')
         ->assertSee(route('admin.ticket-attachments.download', $attachment), false)
