@@ -79,3 +79,32 @@ it('keeps status and the detail action visible in labelled service rows for view
         ->assertSee('aria-label="'.__('provisioning::admin.details').' '.$instance->number.'"', false)
         ->assertDontSee(__('provisioning::admin.servers_title'));
 });
+
+it('uses the shared list page toolbar, accessible table headers and empty state', function (): void {
+    installAndEnableModule('provisioning');
+    app(SyncRegisteredPermissions::class)(force: true);
+    $viewer = $this->createStaff(permissions: ['provisioning.view']);
+
+    Livewire::actingAs($viewer)
+        ->test(InstancesIndex::class)
+        ->assertSee('class="admin-page ag-list-page"', false)
+        ->assertSee('class="ag-toolbar ag-toolbar--filters"', false)
+        ->assertSee('<label class="visually-hidden" for="provisioning-status">'.__('provisioning::admin.filter_status').'</label>', false)
+        ->assertSee('id="provisioning-status" class="ag-select" wire:model.live="status"', false)
+        ->assertDontSee('style="', false)
+        ->assertSee('class="ag-empty" role="status"', false)
+        ->assertSee(__('provisioning::admin.empty'));
+
+    ServiceInstance::query()->create([
+        'number' => 'SVC-HEADERS-001',
+        'status' => ServiceInstanceStatus::Pending,
+        'provider_key' => 'manual',
+        'customer_email' => 'headers@example.test',
+    ]);
+
+    $html = Livewire::actingAs($viewer)->test(InstancesIndex::class)->html();
+    expect(substr_count($html, '<th scope="col"'))->toBe(6)
+        ->and($html)->toContain('<span class="visually-hidden">'.__('common.actions').'</span>')
+        ->toContain('wire:loading.class="is-loading" wire:target="status"')
+        ->not->toContain('<th></th>');
+});
