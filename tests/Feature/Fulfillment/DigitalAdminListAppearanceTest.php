@@ -36,7 +36,7 @@ test('digital assets stay readable on mobile for view-only staff', function (): 
         ->assertSee('handbook.pdf')
         ->assertSee('data-label="'.__('digital::admin.download_limit').'"', false)
         ->assertDontSee('wire:submit="save"', false)
-        ->assertDontSee('wire:click="delete(', false);
+        ->assertDontSee('wire:click="$wire.call(\'delete\', ', false);
 });
 
 test('deleting a downloadable asset requires localized confirmation', function (string $locale): void {
@@ -63,7 +63,7 @@ test('deleting a downloadable asset requires localized confirmation', function (
     Livewire::actingAs($manager)
         ->test(AssetsIndex::class)
         ->assertSee('wire:confirm="'.e($confirmation).'"', false)
-        ->assertSee('wire:click="delete(', false);
+        ->assertSee('wire:click="$wire.call(\'delete\', ', false);
 })->with(['en', 'nl']);
 
 test('the add asset form shows validation feedback for every field', function (): void {

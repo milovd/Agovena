@@ -227,7 +227,7 @@ final class Addresses extends Component
         $this->resetForm();
     }
 
-    public function delete(int $addressId, DeleteCustomerAddress $delete): void
+    public function deleteAddress(int $addressId, DeleteCustomerAddress $delete): void
     {
         /** @var Customer $customer */
         $customer = authenticated_customer();

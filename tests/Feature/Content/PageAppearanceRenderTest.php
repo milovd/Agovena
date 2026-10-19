@@ -24,7 +24,7 @@ test('pages list presents real rows with a responsive identity, publication stat
         ->assertSee('wire:model.live="publicationFilter"', false)
         ->assertSee('wire:click="selectCurrentPage"', false)
         ->assertSee("wire:click=\"bulkSetStatus('published')\"", false)
-        ->assertSee('wire:click="delete('.$draft->id.')"', false)
+        ->assertSee('wire:click="deletePage('.$draft->id.')"', false)
         ->assertSee(route('admin.appearance.pages.edit', $draft), false)
         ->assertSee(route('storefront.page', ['slug' => $published->slug]), false)
         ->assertSee('aria-controls="page-actions-'.$published->id.'"', false)
@@ -62,7 +62,7 @@ test('view-only staff retain the responsive page list without management control
         ->assertDontSee('ag-page-list__selection', false)
         ->assertDontSee('ag-page-list__row--selectable', false)
         ->assertDontSee('wire:click="selectCurrentPage"', false)
-        ->assertDontSee('wire:click="delete('.$draft->id.')"', false)
+        ->assertDontSee('wire:click="deletePage('.$draft->id.')"', false)
         ->assertDontSee('page-actions-'.$draft->id, false)
         ->assertDontSee(route('admin.appearance.pages.edit', $draft), false);
 });

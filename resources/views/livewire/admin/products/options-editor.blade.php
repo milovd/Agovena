@@ -105,7 +105,7 @@
                                 <td>{{ $option->is_active ? __('common.active') : __('common.inactive') }}</td>
                                 <td>
                                     <button class="ag-btn ag-btn--ghost" type="button" wire:click="edit({{ $option->id }})">{{ __('common.edit') }}</button>
-                                    <button class="ag-btn ag-btn--ghost" type="button" wire:click="delete({{ $option->id }})" wire:confirm="{{ __('admin.product_options.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                    <button class="ag-btn ag-btn--ghost" type="button" wire:click="deleteOption({{ $option->id }})" wire:confirm="{{ __('admin.product_options.delete_confirm') }}">{{ __('common.delete') }}</button>
                                 </td>
                             </tr>
                         @endforeach

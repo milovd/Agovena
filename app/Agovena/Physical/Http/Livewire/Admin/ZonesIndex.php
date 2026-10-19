@@ -52,7 +52,7 @@ final class ZonesIndex extends Component
         session()->flash('status', __('shipping::admin.saved'));
     }
 
-    public function delete(int $id): void
+    public function deleteZone(int $id): void
     {
         $this->authorize('shipping.manage');
         ShippingZone::query()->whereKey($id)->delete();

@@ -30,7 +30,7 @@ test('view-only tax staff keep rate facts without exposing a forged edit form', 
         ->assertDontSee('wire:submit="save"', false)
         ->assertDontSee('wire:click="create"', false)
         ->assertDontSee('wire:click="edit(', false)
-        ->assertDontSee('wire:click="delete(', false);
+        ->assertDontSee('wire:click="deleteRate(', false);
 });
 
 test('tax rate rows keep every fact and confirmed manager action available on mobile', function (string $locale): void {
@@ -60,7 +60,7 @@ test('tax rate rows keep every fact and confirmed manager action available on mo
         ->assertSee('ag-badge--success', false)
         ->assertSee('data-label="'.__('common.actions').'"', false)
         ->assertSee('wire:click="edit('.$rate->id.')"', false)
-        ->assertSee('wire:click="delete('.$rate->id.')" wire:confirm="'.__('admin.taxes.delete_confirm').'"', false);
+        ->assertSee('wire:click="deleteRate('.$rate->id.')" wire:confirm="'.__('admin.taxes.delete_confirm').'"', false);
 })->with(['en', 'nl']);
 
 test('empty and filtered tax lists show readable localized guidance without a clipped table', function (string $locale): void {
@@ -145,7 +145,7 @@ test('tax management keeps its existing create edit and confirmed delete behavio
         ->call('save')
         ->assertHasNoErrors()
         ->assertSee('Renamed override')
-        ->call('delete', $rate->id)
+        ->call('deleteRate', $rate->id)
         ->assertDontSee('Renamed override');
 
     expect(TaxRate::query()->find($rate->id))->toBeNull();
@@ -164,7 +164,7 @@ test('view-only tax staff cannot invoke protected edit or delete actions', funct
     ]);
 
     Livewire::actingAs($viewer)->test(Index::class)->call('edit', $rate->id)->assertForbidden();
-    Livewire::actingAs($viewer)->test(Index::class)->call('delete', $rate->id)->assertForbidden();
+    Livewire::actingAs($viewer)->test(Index::class)->call('deleteRate', $rate->id)->assertForbidden();
     expect(TaxRate::query()->find($rate->id))->not->toBeNull();
 });
 

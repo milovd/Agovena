@@ -21,7 +21,7 @@
                 </div>
                 <div class="store-address-list__actions">
                     <button type="button" class="store-btn store-btn--ghost" wire:click="edit({{ $address->id }})">{{ __('customer.addresses.edit') }}</button>
-                    <button type="button" class="store-btn store-btn--ghost" wire:click="delete({{ $address->id }})" wire:confirm="{{ __('customer.addresses.delete_confirm') }}">{{ __('customer.addresses.delete') }}</button>
+                    <button type="button" class="store-btn store-btn--ghost" wire:click="deleteAddress({{ $address->id }})" wire:confirm="{{ __('customer.addresses.delete_confirm') }}">{{ __('customer.addresses.delete') }}</button>
                 </div>
             </li>
         @endforeach

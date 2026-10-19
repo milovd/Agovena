@@ -107,7 +107,7 @@ final class Index extends Component
         $this->resetUserForm();
     }
 
-    public function delete(int $customerId, AnonymizeCustomer $anonymize): void
+    public function deleteCustomer(int $customerId, AnonymizeCustomer $anonymize): void
     {
         $this->authorize('customers.manage');
 

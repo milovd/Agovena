@@ -114,7 +114,7 @@ test('plan configuration retains all controls, values and a confirmed deletion',
         ->toContain('wire:model="is_active"')
         ->toContain('Starter plan')
         ->toContain('Pro plan')
-        ->toContain('wire:click="delete('.$change->id.')"')
+        ->toContain('wire:click="deletePlanChange('.$change->id.')"')
         ->toContain('wire:confirm="'.__('admin.plan_changes.delete_confirm').'"')
         ->toContain('data-label="'.__('admin.plan_changes.timing').'"')
         ->toContain('ag-badge--success');
@@ -150,7 +150,7 @@ test('plan view-only staff retain the list but not save or delete', function ():
         ->assertSee('View-only pro')
         ->assertSee(__('common.inactive'))
         ->assertDontSee('wire:submit="save"', false)
-        ->assertDontSee('wire:click="delete(', false);
+        ->assertDontSee('wire:click="deletePlanChange(', false);
 });
 
 test('subscription styles register mobile cards in the Admin stylesheet', function (): void {

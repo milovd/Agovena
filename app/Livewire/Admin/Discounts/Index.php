@@ -96,7 +96,7 @@ final class Index extends Component
         $this->resetForm();
     }
 
-    public function delete(int $id): void
+    public function deleteDiscount(int $id): void
     {
         $this->authorize('discounts.manage');
         $discount = DiscountCode::query()->findOrFail($id);

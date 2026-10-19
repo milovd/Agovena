@@ -63,7 +63,7 @@
                             <td class="c-shipping__detail" data-label="{{ __('common.status') }}"><x-ag.badge :variant="$zone->is_active ? 'success' : 'muted'">{{ $zone->is_active ? __('common.active') : __('common.inactive') }}</x-ag.badge></td>
                             <td class="ag-table__actions c-shipping__row-actions">
                                 @can('shipping.manage')
-                                    <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="delete({{ $zone->id }})" wire:confirm="{{ __('shipping::admin.delete_zone_confirm', ['name' => $zone->name]) }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $zone->name }}"><x-ag.icon name="trash" :size="16" /></button>
+                                    <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="deleteZone({{ $zone->id }})" wire:confirm="{{ __('shipping::admin.delete_zone_confirm', ['name' => $zone->name]) }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $zone->name }}"><x-ag.icon name="trash" :size="16" /></button>
                                 @endcan
                             </td>
                         </tr>

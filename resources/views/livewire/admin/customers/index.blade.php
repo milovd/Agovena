@@ -162,7 +162,7 @@
                                             <button
                                                 type="button"
                                                 class="ag-icon-btn ag-icon-btn--danger"
-                                                wire:click="delete({{ $customer->id }})"
+                                                wire:click="deleteCustomer({{ $customer->id }})"
                                                 wire:confirm="{{ __('admin.customers.delete_confirm') }}"
                                                 title="{{ __('common.delete') }}"
                                                 aria-label="{{ __('common.delete') }}: {{ $customer->name }}"

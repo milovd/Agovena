@@ -58,7 +58,7 @@ test('staff cannot mutate permissions or actions of a role assigned to themselve
         ->call('save')
         ->assertForbidden();
     Livewire::actingAs($staff)->test(RolesIndex::class)
-        ->call('delete', $role->id)
+        ->call('deleteRole', $role->id)
         ->assertForbidden();
 
     expect($role->fresh()->hasPermissionTo('roles.update'))->toBeTrue();
@@ -98,7 +98,7 @@ test('limited staff cannot delete an unused role with unheld permissions', funct
     ]);
 
     Livewire::actingAs($staff)->test(RolesIndex::class)
-        ->call('delete', $role->id)
+        ->call('deleteRole', $role->id)
         ->assertForbidden();
 
     expect(Role::query()->whereKey($role->id)->exists())->toBeTrue();
@@ -252,7 +252,7 @@ test('limited role managers do not see actions for roles beyond their permission
         ->assertSee('wire:click="edit('.$manageable->id.')"', false)
         ->assertDontSee('wire:click="edit('.$ownRole->id.')"', false)
         ->assertDontSee('wire:click="edit('.$privileged->id.')"', false)
-        ->assertDontSee('wire:click="delete('.$privileged->id.')"', false);
+        ->assertDontSee('wire:click="deleteRole('.$privileged->id.')"', false);
 });
 
 test('limited managers retain role creation editing and deletion within their own permission subset', function (): void {
@@ -284,7 +284,7 @@ test('limited managers retain role creation editing and deletion within their ow
         ->and($role->fresh()->hasPermissionTo('products.view'))->toBeFalse();
 
     Livewire::actingAs($staff)->test(RolesIndex::class)
-        ->call('delete', $role->id)
+        ->call('deleteRole', $role->id)
         ->assertOk();
     expect(Role::query()->whereKey($role->id)->exists())->toBeFalse();
 });
@@ -305,7 +305,7 @@ test('a revoked delete permission cannot remove an unassigned role from a stale 
         ->where('permission_id', $permission->id)
         ->delete();
 
-    $editor->call('delete', $role->id)->assertForbidden();
+    $editor->call('deleteRole', $role->id)->assertForbidden();
     expect(Role::query()->whereKey($role->id)->exists())->toBeTrue();
 });
 
@@ -315,7 +315,7 @@ test('deletion confirmation describes the in-use guard in both locales', functio
     $role = Role::findOrCreate('deletable_role', User::GUARD);
 
     Livewire::actingAs($owner)->test(RolesIndex::class)
-        ->assertSee('wire:click="delete('.$role->id.')"', false)
+        ->assertSee('wire:click="deleteRole('.$role->id.')"', false)
         ->assertSee('wire:confirm="'.e(__('admin.roles.delete_confirm')).'"', false);
 
     expect(__('admin.roles.delete_confirm'))->toContain($expected);
@@ -556,7 +556,7 @@ test('role deletion locks assignment pivots before checking whether the role is 
     [$queries, $stopTracing] = traceRoleLocks();
     try {
         Livewire::actingAs($staff)->test(RolesIndex::class)
-            ->call('delete', $role->id)->assertOk();
+            ->call('deleteRole', $role->id)->assertOk();
     } finally {
         $stopTracing();
     }

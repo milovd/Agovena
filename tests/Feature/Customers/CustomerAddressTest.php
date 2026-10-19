@@ -36,7 +36,7 @@ test('customer can save and delete an address', function () {
 
     Livewire::actingAs($customer->user)
         ->test(Addresses::class)
-        ->call('delete', $address->id)
+        ->call('deleteAddress', $address->id)
         ->assertHasNoErrors();
 
     expect(CustomerAddress::query()->whereKey($address->id)->exists())->toBeFalse();

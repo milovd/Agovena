@@ -116,7 +116,7 @@
                                                 @if ($page->status === 'published')
                                                     <a class="ag-menu__item" href="{{ route('storefront.page', ['slug' => $page->slug]) }}">{{ __('admin.content.pages.view') }}</a>
                                                 @endif
-                                                <button type="button" class="ag-menu__item ag-menu__item--danger" wire:click="delete({{ $page->id }})" wire:confirm="{{ __('admin.content.pages.delete_confirm') }}">{{ __('common.delete') }}</button>
+                                                <button type="button" class="ag-menu__item ag-menu__item--danger" wire:click="deletePage({{ $page->id }})" wire:confirm="{{ __('admin.content.pages.delete_confirm') }}">{{ __('common.delete') }}</button>
                                             </div>
                                         </div>
                                     @else

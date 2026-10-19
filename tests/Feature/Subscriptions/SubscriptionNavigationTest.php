@@ -108,7 +108,7 @@ it('retains plan-change management for the plan-only staff route', function (): 
         ->assertHasNoErrors();
 
     $change = ProductPlanChange::query()->where('from_product_id', $from->id)->where('to_product_id', $to->id)->firstOrFail();
-    Livewire::actingAs($staff)->test(PlanChangesIndex::class)->call('delete', $change->id)->assertHasNoErrors();
+    Livewire::actingAs($staff)->test(PlanChangesIndex::class)->call('deletePlanChange', $change->id)->assertHasNoErrors();
     expect(ProductPlanChange::query()->find($change->id))->toBeNull();
 });
 
@@ -116,7 +116,7 @@ it('keeps plan-change management hidden and forbidden without manage permission'
     $staff = $this->createStaff(permissions: ['plan-changes.view']);
     Livewire::actingAs($staff)->test(PlanChangesIndex::class)
         ->assertDontSee('wire:submit="save"', false)
-        ->call('delete', 1)
+        ->call('deletePlanChange', 1)
         ->assertForbidden();
 });
 

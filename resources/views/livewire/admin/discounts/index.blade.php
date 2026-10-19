@@ -122,7 +122,7 @@
                                         <button
                                             type="button"
                                             class="ag-icon-btn ag-icon-btn--danger"
-                                            wire:click="delete({{ $discount->id }})"
+                                            wire:click="deleteDiscount({{ $discount->id }})"
                                             wire:confirm="{{ __('admin.discounts.delete_confirm') }}"
                                             title="{{ __('admin.discounts.actions.delete') }}"
                                             aria-label="{{ __('admin.discounts.actions.delete_aria', ['code' => $discount->code]) }}"

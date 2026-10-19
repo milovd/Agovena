@@ -110,7 +110,7 @@ final class PagesIndex extends Component
         session()->flash('status', __('admin.content.pages.saved'));
     }
 
-    public function delete(int $id): void
+    public function deletePage(int $id): void
     {
         $this->authorize('pages.manage');
         app(DeletePage::class)->handle($id);

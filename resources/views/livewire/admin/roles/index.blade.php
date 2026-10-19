@@ -109,7 +109,7 @@
                                                 <button
                                                     type="button"
                                                     class="ag-icon-btn ag-icon-btn--danger"
-                                                    wire:click="delete({{ $role->id }})"
+                                                    wire:click="deleteRole({{ $role->id }})"
                                                     wire:confirm="{{ __('admin.roles.delete_confirm') }}"
                                                     title="{{ __('common.delete') }}"
                                                     aria-label="{{ __('common.delete') }}: {{ $role->name }}"

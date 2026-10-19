@@ -165,7 +165,7 @@
                                 <td class="ag-table__actions" data-label="{{ __('common.actions') }}">
                                     <span class="ag-row-actions">
                                         <button class="ag-icon-btn" type="button" wire:click="edit({{ $rate->id }})" title="{{ __('common.edit') }}" aria-label="{{ __('common.edit') }}: {{ $rate->name }}"><x-ag.icon name="pencil" :size="16" /><span class="ag-table__action-label">{{ __('common.edit') }}</span></button>
-                                        <button class="ag-icon-btn ag-icon-btn--danger" type="button" wire:click="delete({{ $rate->id }})" wire:confirm="{{ __('admin.taxes.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $rate->name }}"><x-ag.icon name="trash" :size="16" /><span class="ag-table__action-label">{{ __('common.delete') }}</span></button>
+                                        <button class="ag-icon-btn ag-icon-btn--danger" type="button" wire:click="deleteRate({{ $rate->id }})" wire:confirm="{{ __('admin.taxes.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $rate->name }}"><x-ag.icon name="trash" :size="16" /><span class="ag-table__action-label">{{ __('common.delete') }}</span></button>
                                     </span>
                                 </td>
                             @endcan

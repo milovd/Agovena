@@ -60,7 +60,7 @@ test('deleting a page records the removed publication details without exposing i
 
     Livewire::actingAs($staff)
         ->test(PagesIndex::class)
-        ->call('delete', $page->id)
+        ->call('deletePage', $page->id)
         ->assertHasNoErrors();
 
     $log = AuditLog::query()->where('action', 'page.deleted')->sole();
@@ -91,7 +91,7 @@ test('a staff member without page management cannot delete or audit a page', fun
 
     Livewire::actingAs($viewer)
         ->test(PagesIndex::class)
-        ->call('delete', $page->id)
+        ->call('deletePage', $page->id)
         ->assertForbidden();
 
     expect(Page::query()->whereKey($page->id)->exists())->toBeTrue()
@@ -103,7 +103,7 @@ test('deleting an already missing page preserves the existing no-op behavior wit
 
     Livewire::actingAs($staff)
         ->test(PagesIndex::class)
-        ->call('delete', 999999)
+        ->call('deletePage', 999999)
         ->assertHasNoErrors();
 
     expect(AuditLog::query()->where('action', 'page.deleted')->exists())->toBeFalse();

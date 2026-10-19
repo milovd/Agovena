@@ -123,7 +123,7 @@
                                                     <x-ag.icon :name="$endpoint->active ? 'x' : 'check'" :size="16" />
                                                     <span class="ag-table__action-label">{{ $endpoint->active ? __('admin.webhooks.disable') : __('admin.webhooks.enable') }}</span>
                                                 </button>
-                                                <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="delete({{ $endpoint->id }})" wire:confirm="{{ __('admin.webhooks.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $endpoint->name }}">
+                                                <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="deleteEndpoint({{ $endpoint->id }})" wire:confirm="{{ __('admin.webhooks.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $endpoint->name }}">
                                                     <x-ag.icon name="trash" :size="16" />
                                                     <span class="ag-table__action-label">{{ __('common.delete') }}</span>
                                                 </button>

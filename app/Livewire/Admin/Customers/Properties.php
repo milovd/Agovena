@@ -161,7 +161,7 @@ class Properties extends Component
         $this->resetForm();
     }
 
-    public function delete(int $id): void
+    public function deleteProperty(int $id): void
     {
         Gate::authorize('customers.manage');
         CustomerPropertyDefinition::query()->whereKey($id)->delete();

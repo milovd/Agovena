@@ -131,7 +131,7 @@ final class Index extends Component
         ]);
     }
 
-    public function delete(int $id, AuditLogger $audit): void
+    public function deleteEndpoint(int $id, AuditLogger $audit): void
     {
         $this->authorize('webhooks.manage');
         $endpoint = WebhookEndpoint::query()->findOrFail($id);

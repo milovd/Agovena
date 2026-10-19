@@ -193,7 +193,7 @@ it('returns to a populated endpoint page after deleting its last row', function 
         ->test(Index::class)
         ->call('gotoPage', 2, 'endpointsPage')
         ->assertSee('wire:key="webhook-endpoint-'.$oldestId.'"', false)
-        ->call('delete', $oldestId)
+        ->call('deleteEndpoint', $oldestId)
         ->assertSee('wire:key="webhook-endpoint-'.$newestId.'"', false)
         ->assertDontSee(__('admin.webhooks.empty'));
     expect(WebhookEndpoint::query()->count())->toBe(20);
@@ -224,13 +224,13 @@ it('keeps endpoint and failed delivery facts visible without webhook management 
         ->assertDontSee('wire:submit="save"', false)
         ->assertDontSee('wire:click="edit(', false)
         ->assertDontSee('wire:click="toggleActive(', false)
-        ->assertDontSee('wire:click="delete(', false)
+        ->assertDontSee('wire:click="deleteEndpoint(', false)
         ->assertDontSee('wire:click="retryDelivery(', false);
 
     Livewire::actingAs($staff)->test(Index::class)->call('retryDelivery', $delivery->id)->assertForbidden();
     Livewire::actingAs($staff)->test(Index::class)->call('edit', $endpoint->id)->assertForbidden();
     Livewire::actingAs($staff)->test(Index::class)->call('toggleActive', $endpoint->id)->assertForbidden();
-    Livewire::actingAs($staff)->test(Index::class)->call('delete', $endpoint->id)->assertForbidden();
+    Livewire::actingAs($staff)->test(Index::class)->call('deleteEndpoint', $endpoint->id)->assertForbidden();
     Livewire::actingAs($staff)->test(Index::class)->call('save')->assertForbidden();
     expect($delivery->fresh()->status)->toBe('failed')
         ->and($endpoint->fresh()->active)->toBeTrue();
@@ -282,7 +282,7 @@ it('keeps destination URLs out of update toggle and delete audit events', functi
         ->call('save')
         ->assertHasNoErrors()
         ->call('toggleActive', $endpoint->id)
-        ->call('delete', $endpoint->id);
+        ->call('deleteEndpoint', $endpoint->id);
 
     expect(WebhookEndpoint::query()->count())->toBe(0);
     foreach (AuditLog::query()->where('action', 'like', 'webhook.endpoint_%')->get() as $entry) {

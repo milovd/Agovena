@@ -120,7 +120,7 @@ final class Index extends Component
         $this->resetPage();
     }
 
-    public function delete(int $roleId, AdminRoleAssignmentPolicy $assignment): void
+    public function deleteRole(int $roleId, AdminRoleAssignmentPolicy $assignment): void
     {
         $this->authorize('roles.delete');
         $role = Role::query()->where('guard_name', User::GUARD)->findOrFail($roleId);

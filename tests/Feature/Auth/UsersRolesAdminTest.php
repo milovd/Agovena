@@ -222,7 +222,7 @@ test('owner role cannot be deleted', function () {
 
     Livewire::actingAs($staff)
         ->test(RolesIndex::class)
-        ->call('delete', $owner->id)
+        ->call('deleteRole', $owner->id)
         ->assertOk();
 
     expect(Role::query()->where('guard_name', 'web')->where('name', 'owner')->exists())->toBeTrue();

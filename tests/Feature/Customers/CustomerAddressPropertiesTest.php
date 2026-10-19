@@ -185,7 +185,7 @@ test('customers index exposes edit and delete actions and delete anonymizes the 
 
     Livewire::actingAs($staff)
         ->test(CustomersIndex::class)
-        ->call('delete', $customer->id)
+        ->call('deleteCustomer', $customer->id)
         ->assertHasNoErrors();
 
     expect($customer->fresh()->anonymized_at)->not->toBeNull()

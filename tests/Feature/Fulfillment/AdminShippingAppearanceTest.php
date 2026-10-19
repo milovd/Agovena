@@ -52,7 +52,7 @@ test('shipping method list has readable identity, details, status and named dele
         ->toContain('data-label="'.__('shipping::admin.zone').'"')
         ->toContain('data-label="'.__('common.status').'"')
         ->toContain('ag-badge--success')
-        ->toContain('wire:click="delete('.$method->id.')"')
+        ->toContain('wire:click="deleteMethod('.$method->id.')"')
         ->toContain('wire:confirm="'.__('shipping::admin.delete_method_confirm', ['name' => $method->name]).'"')
         ->toContain('aria-label="'.__('common.delete').': Standard parcel"');
 });
@@ -75,7 +75,7 @@ test('shipping zones use the same form and readable row composition', function (
         ->toContain('data-label="'.__('shipping::admin.countries_column').'"')
         ->toContain('data-label="'.__('common.status').'"')
         ->toContain('ag-badge--muted')
-        ->toContain('wire:click="delete('.$zone->id.')"')
+        ->toContain('wire:click="deleteZone('.$zone->id.')"')
         ->toContain('wire:confirm="'.__('shipping::admin.delete_zone_confirm', ['name' => $zone->name]).'"')
         ->toContain('aria-label="'.__('common.delete').': Benelux"');
 });
@@ -90,10 +90,10 @@ test('shipping view-only staff see both lists and links without management prese
 
     Livewire::actingAs($staff)->test(MethodsIndex::class)
         ->assertSee('Viewable method')->assertSee('href="'.route('admin.shipping.zones').'"', false)
-        ->assertDontSee('wire:submit="save"', false)->assertDontSee('wire:click="delete(', false);
+        ->assertDontSee('wire:submit="save"', false)->assertDontSee('wire:click="deleteMethod(', false);
     Livewire::actingAs($staff)->test(ZonesIndex::class)
         ->assertSee('Viewable zone')->assertSee('href="'.route('admin.shipping.methods').'"', false)
-        ->assertDontSee('wire:submit="save"', false)->assertDontSee('wire:click="delete(', false);
+        ->assertDontSee('wire:submit="save"', false)->assertDontSee('wire:click="deleteZone(', false);
 });
 
 test('shipping form validation remains wired to the existing Livewire save methods', function () {

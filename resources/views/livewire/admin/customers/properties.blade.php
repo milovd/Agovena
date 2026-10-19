@@ -16,7 +16,7 @@
                     <button
                         type="button"
                         class="ag-btn ag-btn--danger"
-                        wire:click="delete({{ $editingId }})"
+                        wire:click="deleteProperty({{ $editingId }})"
                         wire:confirm="{{ __('admin.customer_properties.delete_confirm') }}"
                     >
                         {{ __('common.delete') }}

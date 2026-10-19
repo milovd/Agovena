@@ -26,7 +26,7 @@ test('customer rows retain data and filters with named icon actions and compact 
     expect($html)->toContain('ag-table--customers')
         ->toContain('data-label="'.__('admin.customers.spent_column').'"')
         ->toContain('wire:confirm="'.__('admin.customers.delete_confirm').'"')
-        ->toContain('wire:click="delete('.$customer->id.')"')
+        ->toContain('wire:click="deleteCustomer('.$customer->id.')"')
         ->toContain('aria-label="'.__('admin.customers.edit_aria', ['name' => $customer->name]).'"')
         ->toContain('ag-icon-btn--danger')
         ->toContain('<svg');
@@ -38,13 +38,13 @@ test('customer action icons honor management permission and anonymized state', f
 
     Livewire::actingAs($staff)->test(CustomersIndex::class)
         ->assertSee('aria-label="'.__('admin.customers.edit_aria', ['name' => $customer->name]).'"', false)
-        ->assertDontSee('wire:click="delete('.$customer->id.')"', false)
+        ->assertDontSee('wire:click="deleteCustomer('.$customer->id.')"', false)
         ->assertDontSee('wire:click="createUser"', false);
 
     $owner = $this->createStaff();
     $customer->user->forceFill(['anonymized_at' => now()])->save();
     Livewire::actingAs($owner)->test(CustomersIndex::class)
-        ->assertDontSee('wire:click="delete('.$customer->id.')"', false);
+        ->assertDontSee('wire:click="deleteCustomer('.$customer->id.')"', false);
 });
 
 test('account creation keeps all required inputs and role choices in a compact form section', function () {
@@ -106,5 +106,5 @@ test('property create and edit retain all fields and controls in the form system
     $page->call('edit', $existing->id)
         ->assertSee('wire:model="key" required disabled', false)
         ->assertSee('wire:confirm="'.__('admin.customer_properties.delete_confirm').'"', false)
-        ->assertSee('wire:click="delete('.$existing->id.')"', false);
+        ->assertSee('wire:click="deleteProperty('.$existing->id.')"', false);
 });

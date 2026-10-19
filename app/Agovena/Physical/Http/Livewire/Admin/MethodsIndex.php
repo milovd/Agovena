@@ -87,7 +87,7 @@ final class MethodsIndex extends Component
         session()->flash('status', __('shipping::admin.saved'));
     }
 
-    public function delete(int $id): void
+    public function deleteMethod(int $id): void
     {
         $this->authorize('shipping.manage');
         ShippingMethod::query()->whereKey($id)->delete();

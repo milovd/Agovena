@@ -30,9 +30,9 @@ test('discount code list uses icon actions', function (): void {
     expect($html)
         ->toContain('class="ag-icon-btn ag-icon-btn--danger"')
         ->and($html)->toContain('wire:click="edit('.$discount->id.')"')
-        ->and($html)->toContain('wire:click="delete('.$discount->id.')"')
+        ->and($html)->toContain('wire:click="deleteDiscount('.$discount->id.')"')
         ->and($html)->not->toContain('wire:click="edit('.$discount->id.')">Edit</button>')
-        ->and($html)->not->toContain('wire:click="delete('.$discount->id.')">Delete</button>');
+        ->and($html)->not->toContain('wire:click="deleteDiscount('.$discount->id.')">Delete</button>');
 });
 
 test('discount codes preserve the full responsive row and all inline fields for authorized staff', function (): void {
@@ -86,5 +86,5 @@ test('view-only staff cannot see discount management controls', function (): voi
         ->assertSee('VIEWONLY')
         ->assertDontSee('wire:click="create"', false)
         ->assertDontSee('wire:click="edit('.$discount->id.')"', false)
-        ->assertDontSee('wire:click="delete('.$discount->id.')"', false);
+        ->assertDontSee('wire:click="deleteDiscount('.$discount->id.')"', false);
 });

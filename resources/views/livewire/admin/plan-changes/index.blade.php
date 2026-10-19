@@ -94,7 +94,7 @@
                             <td class="ag-table__actions c-subscriptions__row-actions">
                                 @can('plan-changes.manage')
                                     <x-ag.row-actions>
-                                        <button class="ag-icon-btn" type="button" wire:click="delete({{ $change->id }})" wire:confirm="{{ __('admin.plan_changes.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $change->fromProduct->name }} → {{ $change->toProduct->name }}">
+                                        <button class="ag-icon-btn" type="button" wire:click="deletePlanChange({{ $change->id }})" wire:confirm="{{ __('admin.plan_changes.delete_confirm') }}" title="{{ __('common.delete') }}" aria-label="{{ __('common.delete') }}: {{ $change->fromProduct->name }} → {{ $change->toProduct->name }}">
                                             <x-ag.icon name="trash" :size="16" />
                                         </button>
                                     </x-ag.row-actions>

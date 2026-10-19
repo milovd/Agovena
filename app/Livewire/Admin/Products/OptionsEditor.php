@@ -226,7 +226,7 @@ final class OptionsEditor extends Component
         $this->resetForm();
     }
 
-    public function delete(int $id): void
+    public function deleteOption(int $id): void
     {
         $this->authorize('products.update');
         ProductOption::query()->where('product_id', $this->productId)->findOrFail($id)->delete();

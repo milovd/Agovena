@@ -117,7 +117,7 @@ final class Index extends Component
         $this->resetForm();
     }
 
-    public function delete(int $id): void
+    public function deleteRate(int $id): void
     {
         $this->authorize('taxes.manage');
         TaxRate::query()->findOrFail($id)->delete();

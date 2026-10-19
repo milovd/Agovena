@@ -53,7 +53,7 @@ final class Index extends Component
         $this->reset(['to_product_id', 'sort']);
     }
 
-    public function delete(int $id): void
+    public function deletePlanChange(int $id): void
     {
         $this->authorize('plan-changes.manage');
         ProductPlanChange::query()->findOrFail($id)->delete();
