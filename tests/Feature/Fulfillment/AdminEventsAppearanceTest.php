@@ -219,3 +219,35 @@ test('empty event list remains navigable without a management form', function ()
         ->not->toContain('c-events__table')
         ->not->toContain('wire:submit="create"');
 });
+
+test('event detail and create forms show every reachable validation error beside its field', function (): void {
+    $staff = $this->createStaff();
+    $event = Event::query()->create(['name' => 'Validated concert', 'slug' => 'validated-concert', 'status' => EventStatus::Draft]);
+
+    $detail = Livewire::actingAs($staff)->test(EventShow::class, ['event' => $event])
+        ->set('venue', str_repeat('v', 256))
+        ->set('description', str_repeat('d', 5001))
+        ->call('save')
+        ->assertHasErrors(['venue', 'description']);
+    $detail->set('performance_starts_at', now()->addWeek()->format('Y-m-d\TH:i'))
+        ->set('performance_capacity', 0)
+        ->call('addPerformance')
+        ->assertHasErrors(['performance_capacity']);
+
+    $index = Livewire::actingAs($staff)->test(EventsIndex::class)
+        ->set('name', 'Too long venue')
+        ->set('venue', str_repeat('v', 256))
+        ->call('create')
+        ->assertHasErrors(['venue']);
+
+    expect($detail->html())->toMatch('/id="perf-cap"(?:(?!<\/div>).)*class="ag-field__error"/s')
+        ->and($index->html())->toMatch('/id="event-venue"(?:(?!<\/div>).)*class="ag-field__error"/s');
+
+    $detailErrors = Livewire::actingAs($staff)->test(EventShow::class, ['event' => $event])
+        ->set('venue', str_repeat('v', 256))
+        ->set('description', str_repeat('d', 5001))
+        ->call('save')
+        ->html();
+    expect($detailErrors)->toMatch('/id="ev-venue"(?:(?!<\/div>).)*class="ag-field__error"/s')
+        ->toMatch('/id="ev-description"(?:(?!<\/div>).)*class="ag-field__error"/s');
+});

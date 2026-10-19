@@ -99,3 +99,17 @@ test('managers can assign a pending delivery and must confirm revocation', funct
         ->assertSee('wire:submit="assign"', false)
         ->assertSee('ag-table__form-row', false);
 })->with(['en', 'nl']);
+
+test('a rejected key pool label shows its validation error beside the field', function (): void {
+    installAndEnableModule('digital-delivery');
+    app(SyncRegisteredPermissions::class)(force: true);
+
+    $html = Livewire::actingAs($this->createStaff())
+        ->test(SecretsIndex::class)
+        ->set('label', str_repeat('a', 121))
+        ->call('addCodes')
+        ->assertHasErrors(['label'])
+        ->html();
+
+    expect($html)->toMatch('/id="ds-label"(?:(?!<\/div>).)*class="ag-field__error"/s');
+});
