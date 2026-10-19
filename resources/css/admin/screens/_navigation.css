@@ -35,16 +35,11 @@
   display: flex;
   align-items: center;
   gap: var(--ag-space-3);
-  margin-bottom: var(--ag-space-5);
 }
 
 .c-navigation__panel-heading > .ag-icon {
   flex: 0 0 auto;
   color: var(--ag-color-primary);
-}
-
-.c-navigation__panel-heading .admin-panel__title {
-  margin: 0;
 }
 
 .c-navigation__form-panel .ag-form {
@@ -132,14 +127,8 @@
     font-size: var(--ag-font-size-sm);
   }
 
-  .c-navigation__form-panel,
-  .c-navigation__structure-panel {
-    padding: var(--ag-space-4);
-  }
-
   .c-navigation__table-wrap {
     overflow: visible;
-    border: 0;
     background: transparent;
     contain: none;
   }
@@ -162,6 +151,7 @@
   .c-navigation__table tbody {
     display: grid;
     gap: var(--ag-space-3);
+    padding: var(--ag-space-3);
   }
 
   .c-navigation__table tbody tr {

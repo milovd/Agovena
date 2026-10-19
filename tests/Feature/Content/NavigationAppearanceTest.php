@@ -30,8 +30,9 @@ test('the navigation view groups existing form controls and presents menu rows a
         ->assertSee('c-navigation__tabs', false)
         ->assertSee('aria-current="true"', false)
         ->assertSee('c-navigation__layout', false)
-        ->assertSee('c-navigation__form-panel', false)
-        ->assertSee('c-navigation__structure-panel', false)
+        ->assertSee('class="ag-card c-navigation__form-panel" aria-labelledby="nav-form-heading"', false)
+        ->assertSee('class="ag-card ag-card--flush c-navigation__structure-panel" aria-labelledby="nav-structure-heading"', false)
+        ->assertSee('class="ag-card__content"', false)
         ->assertSee('wire:submit="addItem"', false)
         ->assertSee('wire:model.live="type"', false)
         ->assertSee('wire:model="url"', false)
@@ -59,6 +60,17 @@ test('mobile navigation records keep every field and the remove action in the vi
         ->toContain('.c-navigation__actions')
         ->toContain('overflow-wrap: anywhere')
         ->not->toMatch('/#[0-9a-f]{3,8}\b/i');
+});
+
+test('tables inside flush Admin cards share the card frame instead of drawing a nested border', function (): void {
+    $card = file_get_contents(resource_path('css/admin/components/_card.css'));
+    $entry = file_get_contents(resource_path('css/admin.css'));
+
+    expect($card)->toContain('.ag-card--flush > .ag-card__content > :is(.ag-table-wrap, .admin-table-wrap)')
+        ->toContain('border-width: 1px 0 0;')
+        ->toContain('border-radius: 0;')
+        ->and(strpos($entry, "@import './admin/components/_card.css';"))
+        ->toBeGreaterThan(strpos($entry, "@import './admin/components/_table.css';"));
 });
 
 test('read-only empty menus span exactly the three visible columns', function (): void {
