@@ -38,3 +38,10 @@
   outline: none;
   box-shadow: var(--ag-focus-ring);
 }
+
+@media (max-width: 640px) {
+  .ag-product-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
