@@ -251,3 +251,22 @@ test('event detail and create forms show every reachable validation error beside
     expect($detailErrors)->toMatch('/id="ev-venue"(?:(?!<\/div>).)*class="ag-field__error"/s')
         ->toMatch('/id="ev-description"(?:(?!<\/div>).)*class="ag-field__error"/s');
 });
+
+test('clearing a performance capacity rejects the performance instead of creating one with the default capacity', function (): void {
+    if (! (new ReflectionProperty(EventShow::class, 'performance_capacity'))->getType()?->allowsNull()) {
+        $this->markTestSkipped('This optional-packages revision predates nullable performance capacity.');
+    }
+
+    $event = Event::query()->create(['name' => 'Capacity concert', 'slug' => 'capacity-concert', 'status' => EventStatus::Draft]);
+
+    $page = Livewire::actingAs($this->createStaff())->test(EventShow::class, ['event' => $event]);
+    expect($page->get('performance_capacity'))->toBe(100);
+
+    $page->set('performance_starts_at', now()->addWeek()->format('Y-m-d\TH:i'))
+        ->set('performance_capacity', 37)
+        ->set('performance_capacity', '')
+        ->call('addPerformance')
+        ->assertHasErrors(['performance_capacity']);
+
+    expect($event->performances()->count())->toBe(0);
+});
