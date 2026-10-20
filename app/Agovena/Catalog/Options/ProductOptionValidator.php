@@ -84,7 +84,7 @@ final class ProductOptionValidator
         $constraints = is_array($option->constraints) ? $option->constraints : [];
 
         return match ($option->type) {
-            ProductOptionType::Select, ProductOptionType::Radio => $this->assertChoice($product, $option, $submitted, $selections),
+            ProductOptionType::Select, ProductOptionType::Radio, ProductOptionType::Slider => $this->assertChoice($product, $option, $submitted, $selections),
             ProductOptionType::Checkbox => $this->assertChoices($product, $option, $submitted, $selections),
             ProductOptionType::Toggle => $this->assertToggle($submitted),
             ProductOptionType::Text, ProductOptionType::Textarea => $this->assertText($product, $option, $submitted, $constraints, $selections),

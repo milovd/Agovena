@@ -22,7 +22,7 @@ test('pages list presents real rows with a responsive identity, publication stat
         ->assertSee('ag-badge--muted', false)
         ->assertSee('wire:model.live.debounce.300ms="search"', false)
         ->assertSee('wire:model.live="publicationFilter"', false)
-        ->assertSee('wire:click="selectCurrentPage"', false)
+        ->assertSee('@click="toggleAll"', false)
         ->assertSee("wire:click=\"bulkSetStatus('published')\"", false)
         ->assertSee('wire:click="deletePage('.$draft->id.')"', false)
         ->assertSee(route('admin.appearance.pages.edit', $draft), false)

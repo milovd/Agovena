@@ -43,7 +43,8 @@ body {
   overflow: hidden;
   background: var(--ag-color-sidebar);
   color: var(--ag-color-text);
-  border-right: 1px solid var(--ag-color-border);
+  /* The frame (sidebar and topbar) is outlined like containers, so it stays visible against the page in light mode. */
+  border-right: 1px solid var(--ag-color-border-container);
 }
 
 /* Same height as the topbar so the brand row lines up with the breadcrumb row. */
@@ -373,7 +374,7 @@ body {
   height: var(--ag-topbar-height);
   padding: 0 var(--ag-space-6);
   background: var(--ag-color-surface);
-  border-bottom: 1px solid var(--ag-color-border);
+  border-bottom: 1px solid var(--ag-color-border-container);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -919,7 +920,7 @@ body {
     /* Above floating page controls (bulk actions, comboboxes, menus), below modals. */
     z-index: 70;
     border-right: 0;
-    border-left: 1px solid var(--ag-color-border);
+    border-left: 1px solid var(--ag-color-border-container);
     transform: translateX(105%);
     transition: transform var(--ag-transition);
     overflow-y: auto;

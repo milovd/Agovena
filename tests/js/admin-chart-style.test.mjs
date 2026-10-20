@@ -135,3 +135,9 @@ test('interactive datasets drop the server bar and point colors so Chart.js cann
         assert.deepEqual(unresolved, [], isBar ? 'bar' : 'area');
     }
 });
+
+test('the area hover dot is not clipped at the top of the plot', () => {
+    const dataset = interactiveDataset({ data: [0, 150], borderColor: '#155eef' }, { isBar: false, surface: '#ffffff', resolve: (value) => value });
+
+    assert.ok(dataset.clip >= dataset.pointHoverRadius + dataset.pointHoverBorderWidth);
+});

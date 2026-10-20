@@ -471,3 +471,104 @@
 .ag-code code {
   font: inherit;
 }
+
+/*
+ * Range input (shadcn Slider look) for Admin fields: <input type="range" class="ag-slider">.
+ * 6px muted track, primary range, 16px white thumb with a primary border.
+ * WebKit has no native progress part: set --fill (0% to 100%) on the input.
+ */
+.ag-slider {
+  --ag-slider-track: 6px;
+  --ag-slider-thumb: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 1.5rem;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+}
+
+.ag-slider:focus,
+.ag-slider:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.ag-slider::-webkit-slider-runnable-track {
+  height: var(--ag-slider-track);
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--ag-color-primary) 0 var(--fill, 0%),
+    color-mix(in srgb, var(--ag-color-text) 12%, transparent) var(--fill, 0%) 100%
+  );
+}
+
+.ag-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--ag-slider-thumb);
+  height: var(--ag-slider-thumb);
+  margin-top: calc((var(--ag-slider-track) - var(--ag-slider-thumb)) / 2);
+  border: 1px solid var(--ag-color-primary);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--ag-shadow-sm);
+  transition: box-shadow 150ms ease;
+}
+
+.ag-slider::-moz-range-track {
+  height: var(--ag-slider-track);
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ag-color-text) 12%, transparent);
+}
+
+.ag-slider::-moz-range-progress {
+  height: var(--ag-slider-track);
+  border-radius: 999px;
+  background: var(--ag-color-primary);
+}
+
+.ag-slider::-moz-range-thumb {
+  box-sizing: border-box;
+  width: var(--ag-slider-thumb);
+  height: var(--ag-slider-thumb);
+  border: 1px solid var(--ag-color-primary);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: var(--ag-shadow-sm);
+  transition: box-shadow 150ms ease;
+}
+
+.ag-slider:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-slider:focus-visible::-moz-range-thumb {
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-slider:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+@media (pointer: coarse) {
+  .ag-slider {
+    --ag-slider-thumb: 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-slider::-webkit-slider-thumb {
+    transition: none;
+  }
+
+  .ag-slider::-moz-range-thumb {
+    transition: none;
+  }
+}

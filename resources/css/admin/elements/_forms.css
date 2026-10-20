@@ -123,6 +123,67 @@ select.ag-input::-ms-expand {
   display: none;
 }
 
+/* The option list follows the theme instead of the operating system palette. */
+:is(.ag-select, select.ag-input) option {
+  background-color: var(--ag-color-surface);
+  color: var(--ag-color-text);
+}
+
+/* Browsers with customizable selects render the open list like the shadcn Select popover:
+   a surface card with a small shadow, padded rows, a muted hover row and a check on the
+   selected row. Other browsers keep their native list with the colors above. */
+@supports (appearance: base-select) {
+  :is(.ag-select, select.ag-input) {
+    appearance: base-select;
+    display: flex;
+    align-items: center;
+  }
+
+  :is(.ag-select, select.ag-input)::picker-icon {
+    display: none;
+  }
+
+  :is(.ag-select, select.ag-input)::picker(select) {
+    appearance: base-select;
+    min-width: anchor-size(width);
+    max-height: 18rem;
+    margin-block: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--ag-color-border);
+    border-radius: var(--ag-radius-md);
+    background: var(--ag-color-surface);
+    color: var(--ag-color-text);
+    box-shadow: var(--ag-shadow-md);
+  }
+
+  :is(.ag-select, select.ag-input) option {
+    display: flex;
+    align-items: center;
+    gap: var(--ag-space-2);
+    min-height: 2rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: var(--ag-radius-sm);
+    background: transparent;
+    font-size: var(--ag-font-size-sm);
+    cursor: default;
+  }
+
+  :is(.ag-select, select.ag-input) option:is(:hover, :focus-visible) {
+    outline: none;
+    background: var(--ag-color-surface-muted);
+  }
+
+  :is(.ag-select, select.ag-input) option::checkmark {
+    order: 1;
+    margin-left: auto;
+    color: var(--ag-color-text);
+  }
+
+  :is(.ag-select, select.ag-input) option:disabled {
+    opacity: 0.5;
+  }
+}
+
 .ag-input:focus-visible,
 .ag-select:focus-visible {
   outline: none;

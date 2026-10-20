@@ -233,7 +233,7 @@ final class ProductOptionPricer
             ];
         }
 
-        if (in_array($option->type, [ProductOptionType::Select, ProductOptionType::Radio], true)) {
+        if ($option->type->isSingleChoice()) {
             $choice = $this->choice($product, $option, (string) $submitted, $selections);
             if ($choice === null) {
                 return null;

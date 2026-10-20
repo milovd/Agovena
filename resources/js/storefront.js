@@ -10,6 +10,7 @@ import { initCookieConsent } from './storefront/consent.js';
 import { initMediaSkeletons } from './storefront/media-skeleton.js';
 import { registerHeaderComponents } from './storefront/header.js';
 import { registerHomeComponents } from './storefront/home.js';
+import { registerOptionSliderComponents } from './storefront/option-slider.js';
 import { registerProductComponents } from './storefront/product.js';
 
 document.addEventListener('alpine:init', () => {
@@ -19,6 +20,7 @@ document.addEventListener('alpine:init', () => {
     registerChromeComponents(Alpine);
     registerHeaderComponents(Alpine);
     registerProductComponents(Alpine);
+    registerOptionSliderComponents(Alpine);
     registerCartComponents(Alpine);
     registerCheckoutComponents(Alpine);
     registerAccountComponents(Alpine);

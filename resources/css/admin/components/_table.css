@@ -28,7 +28,7 @@
    carries the bulk selection controls. */
 .ag-table thead th,
 .admin-table__head th {
-  height: 2.5rem;
+  height: var(--ag-table-head-height);
   padding-block: 0.5rem;
   color: var(--ag-color-text-muted);
   font-weight: 500;
@@ -575,7 +575,7 @@ a.ag-table__name:focus-visible {
   right: 0;
   top: calc(100% + var(--ag-space-1));
   min-width: 12.5rem;
-  padding: var(--ag-space-2);
+  padding: var(--ag-space-1);
   background: var(--ag-color-surface);
   border: 1px solid var(--ag-color-border);
   border-radius: var(--ag-radius-md);
@@ -583,16 +583,22 @@ a.ag-table__name:focus-visible {
   z-index: 30;
 }
 
+/* shadcn Dropdown Menu item: small text, compact padded row, muted hover. */
 .ag-menu__item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--ag-space-2);
   width: 100%;
+  min-height: 2rem;
   margin: 0;
-  padding: var(--ag-space-2) var(--ag-space-3);
+  padding: 0.375rem 0.5rem;
   border: 0;
   border-radius: var(--ag-radius-sm);
   background: transparent;
   color: var(--ag-color-text);
   font: inherit;
+  font-size: var(--ag-font-size-sm);
+  line-height: 1.25;
   text-align: left;
   text-decoration: none;
   cursor: pointer;
@@ -606,6 +612,15 @@ a.ag-table__name:focus-visible {
 
 .ag-menu__item--danger {
   color: var(--ag-color-danger);
+}
+
+.ag-menu__item--danger:is(:hover, :focus-visible) {
+  background: var(--ag-color-danger-soft);
+}
+
+.ag-menu__item:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .ag-section {
@@ -916,6 +931,7 @@ a.ag-table__name:focus-visible {
   transition: background var(--ag-transition), border-color var(--ag-transition);
 }
 .ag-bulk-selection__select svg { width: 0.75rem; height: 0.75rem; }
+.ag-bulk-selection__select[aria-checked="false"] svg { visibility: hidden; }
 .ag-bulk-selection__select:hover { border-color: var(--ag-color-border-strong); }
 .ag-bulk-selection__select:is([aria-checked="true"], [aria-checked="mixed"]) { border-color: var(--ag-color-primary); background: var(--ag-color-primary); }
 .ag-bulk-selection__select:focus-visible { outline: none; box-shadow: var(--ag-focus-ring); }
@@ -928,10 +944,13 @@ a.ag-table__name:focus-visible {
   white-space: nowrap;
 }
 .ag-bulk-selection__surface { position: relative; }
+/* Selection scope without its own box: its children keep the page gap. */
+.ag-bulk-selection__scope { display: contents; }
 .ag-bulk-selection__floating-actions {
   position: absolute;
   z-index: 40;
-  top: calc(var(--ag-space-2) + var(--ag-space-1));
+  /* Centered on the header row: wrap border plus half of what the 2rem button leaves of the row. */
+  top: calc(1px + (var(--ag-table-head-height) - 2rem) / 2);
   right: var(--ag-space-3);
 }
 .ag-table th.ag-bulk-selection__header-actions { text-align: right; }

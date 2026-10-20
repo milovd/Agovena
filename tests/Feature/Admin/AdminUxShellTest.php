@@ -128,7 +128,7 @@ test('products list retains every filter and bulk action while presenting a visu
         ->and($source)->toContain('ag-table__mobile-meta')
         ->and($source)->toContain('wire:model.live.debounce.300ms="search"');
 
-    foreach (['wire:model.live="status"', 'wire:model.live="category"', 'wire:model.live="sort"', 'selectCurrentPage', "bulkSetStatus('active')", "bulkSetStatus('draft')", 'confirmDelete('] as $action) {
+    foreach (['wire:model.live="status"', 'wire:model.live="category"', 'wire:model.live="sort"', 'toggleAll', "bulkSetStatus('active')", "bulkSetStatus('draft')", 'confirmDelete('] as $action) {
         expect($source)->toContain($action);
     }
 });

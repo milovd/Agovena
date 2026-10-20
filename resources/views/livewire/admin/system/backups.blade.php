@@ -44,6 +44,7 @@
 
     <section class="ag-card" aria-labelledby="backup-schedule-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="calendar" tone="amber" :size="16" />
             <h2 id="backup-schedule-heading" class="ag-card__title">{{ __('admin.backups.schedule_title') }}</h2>
             <p class="ag-card__description">{{ __('admin.backups.schedule_description') }}</p>
         </header>
@@ -132,6 +133,7 @@
 
     <section class="ag-card ag-card--flush" aria-labelledby="backup-files-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="database" tone="blue" :size="16" />
             <h2 id="backup-files-heading" class="ag-card__title">{{ __('admin.backups.files_title') }}</h2>
             <p class="ag-card__description">{{ __('admin.backups.files_description') }}</p>
         </header>

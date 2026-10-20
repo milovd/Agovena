@@ -19,6 +19,7 @@
 
     <section class="ag-card ag-card--flush" aria-labelledby="notification-templates-list-heading">
         <header class="ag-card__header notification-templates__list-heading">
+            <x-ag.icon-tile name="bell" tone="blue" :size="16" />
             <div>
                 <p class="notification-templates__eyebrow">{{ __('admin.notifications.events') }}</p>
                 <h2 id="notification-templates-list-heading" class="ag-card__title">{{ __('admin.notifications.list_heading') }}</h2>

@@ -5,6 +5,7 @@
 
     <section class="ag-card" aria-labelledby="store-presets-modules-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="blocks" tone="indigo" :size="16" />
             <h2 id="store-presets-modules-heading" class="ag-card__title">{{ __('admin.modules.title') }}</h2>
         </header>
         <div class="ag-card__content">
@@ -22,6 +23,7 @@
 
     <section class="ag-card" aria-labelledby="store-presets-choose-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="store" tone="blue" :size="16" />
             <h2 id="store-presets-choose-heading" class="ag-card__title">{{ __('admin.store_presets.choose') }}</h2>
         </header>
         <div class="ag-card__content">

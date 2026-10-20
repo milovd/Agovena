@@ -18,6 +18,7 @@
 
     <section class="ag-card" aria-labelledby="maintenance-status-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="circle-alert" tone="amber" :size="16" />
             <h2 id="maintenance-status-heading" class="ag-card__title">{{ __('admin.maintenance.status_title') }}</h2>
             <p class="ag-card__description">{{ __('admin.maintenance.status_description') }}</p>
         </header>
@@ -51,6 +52,7 @@
 
     <section class="ag-card" aria-labelledby="maintenance-page-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="layout-template" tone="blue" :size="16" />
             <h2 id="maintenance-page-heading" class="ag-card__title">{{ __('admin.maintenance.page_title') }}</h2>
             <p class="ag-card__description">{{ __('admin.maintenance.page_description') }}</p>
         </header>
@@ -119,6 +121,7 @@
 
     <section class="ag-card" aria-labelledby="maintenance-reachable-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="users" tone="emerald" :size="16" />
             <h2 id="maintenance-reachable-heading" class="ag-card__title">{{ __('admin.maintenance.reachable_title') }}</h2>
             <p class="ag-card__description">{{ __('admin.maintenance.reachable_description') }}</p>
         </header>

@@ -61,6 +61,12 @@
         </div>
     @endif
 
+    @if ($bulkDeleteResult !== null)
+        <div class="ag-alert {{ $bulkDeleteResult['failed'] || $bulkDeleteResult['skipped'] || $bulkDeleteResult['in_orders'] ? 'ag-alert--danger' : 'ag-alert--success' }}" role="status" aria-live="polite" tabindex="-1">
+            {{ __('admin.products.bulk_delete_result', $bulkDeleteResult) }}
+        </div>
+    @endif
+
     @if ($products->isEmpty())
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ $search || $status || $category ? __('admin.products.empty.filtered_title') : __('admin.products.empty.title') }}</p>
@@ -89,14 +95,24 @@
             @error('selectedProductIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
             @error('bulkStatus') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
         @endcan
-        <div class="ag-bulk-selection__surface">
+        <div
+            class="ag-bulk-selection__surface"
+            @can('products.update')
+                x-data="agBulkSelection"
+                data-bulk-model="selectedProductIds"
+                data-bulk-visible="{{ json_encode($visibleIds) }}"
+                data-bulk-count-label="{{ __('admin.products.bulk_selected', ['count' => '__COUNT__']) }}"
+                data-bulk-select-label="{{ __('admin.products.bulk_select_page') }}"
+                data-bulk-deselect-label="{{ __('admin.products.bulk_deselect_page') }}"
+            @endcan
+        >
         <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.products.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status,category,sort">
             <table class="ag-table ag-table--products">
                 <thead>
                     <tr>
-                        @can('products.update')<th scope="col" class="ag-table__select-col"><button type="button" class="ag-bulk-selection__select" role="checkbox" aria-checked="{{ $allSelected ? 'true' : 'false' }}" wire:click="selectCurrentPage" title="{{ __($allSelected ? 'admin.products.bulk_deselect_page' : 'admin.products.bulk_select_page') }}" aria-label="{{ __($allSelected ? 'admin.products.bulk_deselect_page' : 'admin.products.bulk_select_page') }}">@if($allSelected)<x-ag.icon name="check" :size="13" />@endif</button></th>@endcan
+                        @can('products.update')<th scope="col" class="ag-table__select-col"><button type="button" class="ag-bulk-selection__select" role="checkbox" aria-checked="{{ $allSelected ? 'true' : 'false' }}" @click="toggleAll" :aria-checked="ariaChecked" title="{{ __($allSelected ? 'admin.products.bulk_deselect_page' : 'admin.products.bulk_select_page') }}" :title="toggleLabel" aria-label="{{ __($allSelected ? 'admin.products.bulk_deselect_page' : 'admin.products.bulk_select_page') }}" :aria-label="toggleLabel"><x-ag.icon name="check" :size="13" /></button></th>@endcan
                         <th scope="col" class="ag-table__thumb-col"><span class="visually-hidden">{{ __('common.image') }}</span></th>
-                        <th scope="col">{{ __('common.product') }} @can('products.update')<span class="ag-bulk-selection__count" aria-live="polite">{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}</span>@endcan</th>
+                        <th scope="col">{{ __('common.product') }} @can('products.update')<span class="ag-bulk-selection__count" aria-live="polite" x-text="countLabel">{{ __('admin.products.bulk_selected', ['count' => count($selectedProductIds)]) }}</span>@endcan</th>
                         <th scope="col" class="ag-table__col--md">{{ __('common.category') }}</th>
                         <th scope="col" class="ag-table__price-col">{{ __('common.price') }}</th>
                         <th scope="col" class="ag-table__status-col">{{ __('common.status') }}</th>
@@ -108,7 +124,7 @@
                     @foreach ($products as $product)
                         <tr wire:key="product-{{ $product->id }}">
                             @can('products.update')
-                                <td class="ag-table__select-col"><x-ag.checkbox id="product-select-{{ $product->id }}" wire:model.live="selectedProductIds" value="{{ $product->id }}" aria-label="{{ __('admin.products.bulk_select_row', ['name' => $product->name]) }}" /></td>
+                                <td class="ag-table__select-col"><x-ag.checkbox id="product-select-{{ $product->id }}" wire:model="selectedProductIds" value="{{ $product->id }}" aria-label="{{ __('admin.products.bulk_select_row', ['name' => $product->name]) }}" /></td>
                             @endcan
                             <td class="ag-table__thumb-col">
                                 @php $thumbUrl = \App\Agovena\Media\PublicMedia::url($product->image_path); @endphp
@@ -215,10 +231,13 @@
         </div>
         @can('products.update')
             <div class="ag-menu ag-bulk-selection__actions ag-bulk-selection__floating-actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
-                <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="product-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedProductIds) === 0)><x-ag.icon name="more-horizontal" :size="16" /></button>
+                <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="product-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedProductIds) === 0) :disabled="isEmpty"><x-ag.icon name="more-horizontal" :size="16" /></button>
                 <div id="product-bulk-actions" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
-                    <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_publish') }}</button>
-                    <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" @disabled(count($selectedProductIds) === 0)>{{ __('admin.products.bulk_draft') }}</button>
+                    <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('active')" wire:confirm="{{ __('admin.products.bulk_confirm_publish') }}" :disabled="isEmpty">{{ __('admin.products.bulk_publish') }}</button>
+                    <button type="button" class="ag-menu__item" wire:click="bulkSetStatus('draft')" wire:confirm="{{ __('admin.products.bulk_confirm_draft') }}" :disabled="isEmpty">{{ __('admin.products.bulk_draft') }}</button>
+                    @can('products.delete')
+                        <button type="button" class="ag-menu__item ag-menu__item--danger" wire:click="bulkDeleteProducts" wire:confirm="{{ __('admin.products.bulk_confirm_delete') }}" :disabled="isEmpty">{{ __('admin.products.bulk_delete') }}</button>
+                    @endcan
                 </div>
             </div>
         @endcan

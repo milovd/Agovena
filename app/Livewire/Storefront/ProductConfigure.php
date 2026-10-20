@@ -12,6 +12,8 @@ use App\Agovena\Catalog\Options\ProductOptionChoicesUnavailable;
 use App\Agovena\Catalog\Options\ProductOptionPricer;
 use App\Agovena\Catalog\Options\ProductOptionValidator;
 use App\Agovena\Theme\ThemeManager;
+use App\Models\Product;
+use App\Models\ProductOption;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -27,8 +29,12 @@ final class ProductConfigure extends Component
     /** @var array<string, mixed> */
     public array $optionSelections = [];
 
-    public function mount(string $slug, GetStorefrontProduct $get, ProductOptionValidator $options): void
-    {
+    public function mount(
+        string $slug,
+        GetStorefrontProduct $get,
+        ProductOptionValidator $options,
+        ConfigurableProductOptionResolver $configurableOptions,
+    ): void {
         $this->slug = $slug;
         $this->quantity = min(99, max(1, (int) request()->query('quantity', 1)));
         $this->intent = request()->query('intent') === 'checkout' ? 'checkout' : 'cart';
@@ -44,6 +50,7 @@ final class ProductConfigure extends Component
             $this->optionSelections[$option->key] = match ($option->type->value) {
                 'checkbox' => [],
                 'toggle' => false,
+                'slider' => $this->firstSliderStop($product, $option, $configurableOptions),
                 default => '',
             };
         }
@@ -147,5 +154,26 @@ final class ProductConfigure extends Component
         ]);
 
         $cart->add($product->id, $this->quantity, $this->optionSelections);
+    }
+
+    /**
+     * A slider always shows a position, so it starts on its first active stop
+     * (the same value the customer would get by leaving the thumb untouched).
+     */
+    private function firstSliderStop(Product $product, ProductOption $option, ConfigurableProductOptionResolver $configurableOptions): string
+    {
+        try {
+            $dynamicChoices = $configurableOptions->choices($product, $option, $this->optionSelections);
+        } catch (ProductOptionChoicesUnavailable) {
+            return '';
+        }
+
+        if ($dynamicChoices !== null) {
+            return $dynamicChoices[0]['value'] ?? '';
+        }
+
+        $first = $option->choices->where('is_active', true)->sortBy([['sort', 'asc'], ['id', 'asc']])->first();
+
+        return $first === null ? '' : (string) $first->value;
     }
 }

@@ -24,6 +24,7 @@
         @if ($showCodeForm)
             <section class="ag-card" aria-labelledby="new-referral-code-heading">
                 <header class="ag-card__header">
+                    <x-ag.icon-tile name="gift" tone="emerald" :size="16" />
                     <h2 id="new-referral-code-heading" class="ag-card__title">{{ $editingCodeId !== null ? __('admin.referrals.edit_code') : __('admin.referrals.new_code') }}</h2>
                 </header>
                 <div class="ag-card__content">
@@ -137,6 +138,7 @@
 
         <section class="ag-card ag-card--flush" aria-labelledby="referral-codes-heading">
             <header class="ag-card__header">
+                <x-ag.icon-tile name="ticket" tone="blue" :size="16" />
                 <h2 id="referral-codes-heading" class="ag-card__title">{{ __('admin.referrals.codes_title') }}</h2>
                 <p class="ag-card__description">{{ __('admin.referrals.codes_description') }}</p>
             </header>
@@ -218,6 +220,7 @@
 
         <section class="ag-card ag-card--flush" aria-labelledby="referral-attributions-heading">
             <header class="ag-card__header">
+                <x-ag.icon-tile name="users" tone="violet" :size="16" />
                 <h2 id="referral-attributions-heading" class="ag-card__title">{{ __('admin.referrals.attributions_title') }}</h2>
                 <p class="ag-card__description">{{ __('admin.referrals.attributions_description') }}</p>
             </header>

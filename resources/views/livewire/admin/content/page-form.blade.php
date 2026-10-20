@@ -67,6 +67,7 @@
         <aside class="ag-page-form__side">
             <section class="ag-card ag-page-form__publication" aria-labelledby="page-status-heading">
                 <header class="ag-card__header">
+                    <x-ag.icon-tile name="eye" tone="blue" :size="16" />
                     <h2 id="page-status-heading" class="ag-card__title">{{ __('common.status') }}</h2>
                 </header>
                 <div class="ag-card__content">

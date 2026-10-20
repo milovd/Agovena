@@ -163,6 +163,8 @@ export function interactiveDataset(source, { isBar, surface, resolve = resolveCs
         pointHoverBackgroundColor: color,
         pointHoverBorderColor: surface,
         pointHitRadius: 12,
+        // Let the hover dot (4px radius plus 2px ring) draw past the plot edge at the series maximum.
+        clip: 8,
     };
 }
 

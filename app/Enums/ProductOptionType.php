@@ -13,10 +13,18 @@ enum ProductOptionType: string
     case Text = 'text';
     case Textarea = 'textarea';
     case Number = 'number';
+    /** Single choice rendered as a range: the ordered choices are the slider stops. */
+    case Slider = 'slider';
 
     public function hasChoices(): bool
     {
-        return in_array($this, [self::Select, self::Radio, self::Checkbox], true);
+        return in_array($this, [self::Select, self::Radio, self::Checkbox, self::Slider], true);
+    }
+
+    /** Exactly one choice is stored (Select, Radio and Slider). */
+    public function isSingleChoice(): bool
+    {
+        return in_array($this, [self::Select, self::Radio, self::Slider], true);
     }
 
     public function isBoolean(): bool

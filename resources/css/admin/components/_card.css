@@ -18,6 +18,28 @@
   padding: 1.15rem 1.25rem 0.9rem;
 }
 
+/* A header that starts with an icon tile: the tile sits left of the title and description. */
+.ag-card__header:has(> .ag-icon-tile:first-child) {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.75rem;
+  align-items: start;
+}
+
+.ag-card__header > .ag-icon-tile:first-child {
+  grid-row: 1 / span 3;
+}
+
+.ag-card__header:has(> .ag-icon-tile:first-child) > :not(.ag-icon-tile:first-child) {
+  grid-column: 2;
+}
+
+.ag-card__header:has(> .ag-icon-tile:first-child) > .ag-card__title {
+  align-self: center;
+  min-height: 2.125rem;
+  display: flex;
+  align-items: center;
+}
+
 .ag-card__title {
   margin: 0;
   font-size: 1rem;

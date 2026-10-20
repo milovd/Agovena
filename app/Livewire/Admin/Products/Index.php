@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Products;
 
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Catalog\DeleteProduct;
+use App\Agovena\Catalog\DeleteSelectedProducts;
 use App\Agovena\Catalog\SetProductStatus;
 use App\Agovena\Catalog\SetSelectedProductStatus;
 use App\Models\Category;
@@ -38,6 +39,10 @@ final class Index extends Component
     /** @var array{updated: int, unchanged: int, skipped: int, failed: int}|null */
     #[Locked]
     public ?array $bulkResult = null;
+
+    /** @var array{deleted: int, in_orders: int, skipped: int, failed: int}|null */
+    #[Locked]
+    public ?array $bulkDeleteResult = null;
 
     private const MAX_BULK_SELECTION = 500;
 
@@ -90,23 +95,48 @@ final class Index extends Component
         if (! in_array($status, ['draft', 'active'], true)) {
             throw ValidationException::withMessages(['bulkStatus' => __('admin.products.bulk_invalid_status')]);
         }
+        [$requested, $ids] = $this->selectionOnCurrentPage();
+        $result = app(SetSelectedProductStatus::class)->handle($ids, $status);
+        $result['skipped'] += count($requested) - count($ids);
+        $this->selectedProductIds = [];
+        $this->bulkDeleteResult = null;
+        $this->bulkResult = $result;
+    }
+
+    public function bulkDeleteProducts(DeleteSelectedProducts $deleteSelected): void
+    {
+        $this->authorize('products.delete');
+        [$requested, $ids] = $this->selectionOnCurrentPage();
+        $result = $deleteSelected->handle($ids);
+        $result['skipped'] += count($requested) - count($ids);
+        $this->selectedProductIds = [];
+        $this->bulkResult = null;
+        $this->bulkDeleteResult = $result;
+    }
+
+    /**
+     * The requested ids (deduplicated strings) and the ones that are really on the current,
+     * filtered page; anything else in the browser state is ignored and counted as skipped.
+     *
+     * @return array{0: list<string>, 1: list<int>}
+     */
+    private function selectionOnCurrentPage(): array
+    {
         // Check the raw count before deduplicating hostile Livewire state.
         if (count($this->selectedProductIds) > self::MAX_BULK_SELECTION) {
             throw ValidationException::withMessages(['selectedProductIds' => __('admin.products.bulk_limit')]);
         }
-        $requested = array_unique(array_map(
+        $requested = array_values(array_unique(array_map(
             static fn (mixed $id): string => is_int($id) || is_string($id) ? (string) $id : '',
             $this->selectedProductIds,
-        ));
+        )));
         if ($requested === [] || $requested === ['']) {
             throw ValidationException::withMessages(['selectedProductIds' => __('admin.products.bulk_empty')]);
         }
         $visibleIds = $this->visibleProducts()->getCollection()->pluck('id')->all();
         $ids = array_values(array_filter($visibleIds, static fn (int $id): bool => in_array((string) $id, $requested, true)));
-        $result = app(SetSelectedProductStatus::class)->handle($ids, $status);
-        $result['skipped'] += count($requested) - count($ids);
-        $this->selectedProductIds = [];
-        $this->bulkResult = $result;
+
+        return [$requested, $ids];
     }
 
     public function setStatus(int $productId, string $status): void

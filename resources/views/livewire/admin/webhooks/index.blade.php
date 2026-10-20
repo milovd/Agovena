@@ -12,6 +12,7 @@
         @can('webhooks.manage')
         <x-ag.card>
             <x-ag.card.header>
+                <x-ag.icon-tile name="webhook" tone="blue" :size="16" />
                 <x-ag.card.title>{{ $editingId ? __('admin.webhooks.edit') : __('admin.webhooks.create') }}</x-ag.card.title>
                 <x-ag.card.description>{{ __('admin.webhooks.form_lede') }}</x-ag.card.description>
             </x-ag.card.header>
@@ -71,6 +72,7 @@
 
         <x-ag.card>
             <x-ag.card.header>
+                <x-ag.icon-tile name="globe" tone="cyan" :size="16" />
                 <x-ag.card.title>{{ __('admin.webhooks.endpoints') }}</x-ag.card.title>
                 <x-ag.card.description>{{ __('admin.webhooks.endpoints_lede') }}</x-ag.card.description>
             </x-ag.card.header>
@@ -144,6 +146,7 @@
 
         <x-ag.card>
             <x-ag.card.header>
+                <x-ag.icon-tile name="scroll-text" tone="indigo" :size="16" />
                 <x-ag.card.title>{{ __('admin.webhooks.delivery_log') }}</x-ag.card.title>
                 <x-ag.card.description>{{ __('admin.webhooks.delivery_log_lede') }}</x-ag.card.description>
             </x-ag.card.header>

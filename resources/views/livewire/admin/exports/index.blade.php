@@ -12,6 +12,7 @@
     @else
         <section class="ag-card" aria-labelledby="data-export-form-heading">
             <header class="ag-card__header">
+                <x-ag.icon-tile name="download" tone="blue" :size="16" />
                 <h2 id="data-export-form-heading" class="ag-card__title">{{ __('admin.exports.form_title') }}</h2>
                 <p class="ag-card__description">{{ __('admin.exports.form_description') }}</p>
             </header>
@@ -73,6 +74,7 @@
 
         <section class="ag-card" aria-labelledby="data-export-columns-heading">
             <header class="ag-card__header">
+                <x-ag.icon-tile name="file-text" tone="violet" :size="16" />
                 <h2 id="data-export-columns-heading" class="ag-card__title">{{ __('admin.exports.columns_title') }}</h2>
                 <p class="ag-card__description">{{ __('admin.exports.columns_help') }}</p>
             </header>

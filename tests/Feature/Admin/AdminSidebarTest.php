@@ -210,7 +210,8 @@ test('the sidebar keeps its divider beside the topbar and stacks the collapse to
     $css = (string) file_get_contents(resource_path('css/admin/components/_admin-shell.css'));
     preg_match('/^\.admin-sidebar \{(?<body>[^}]*)\}/m', $css, $sidebar);
 
-    expect($sidebar['body'])->toContain('border-right: 1px solid var(--ag-color-border);')
+    expect($sidebar['body'])->toContain('border-right: 1px solid var(--ag-color-border-container);')
+        ->and($css)->toMatch('/\n\.admin-topbar \{[^}]*border-bottom: 1px solid var\(--ag-color-border-container\);/')
         ->and($css)->not->toContain('.admin-sidebar__header::after')
         ->and($css)->toMatch('/html\[data-sidebar="collapsed"\] \.admin-sidebar__header \{[^}]*flex-direction: column;/')
         ->and($css)->not->toMatch('/html\[data-sidebar="collapsed"\] \.admin-sidebar__toggle \{[^}]*opacity: 0;/');

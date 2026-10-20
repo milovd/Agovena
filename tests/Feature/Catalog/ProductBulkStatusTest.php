@@ -23,13 +23,15 @@ it('renders confirmed bulk controls and accessible row selection only for produc
         ->assertSee('aria-label="'.__('admin.products.bulk_select_row', ['name' => $product->name]).'"', false)
         ->assertDontSee('class="ag-checkbox__label"', false)
         ->assertSee('wire:click="bulkSetStatus(\'active\')"', false)
-        ->assertSee('wire:confirm=', false);
+        ->assertSee('wire:confirm=', false)
+        ->assertSee('@click="toggleAll"', false)
+        ->assertSee('data-bulk-model="selectedProductIds"', false);
 
     $markup = Livewire::actingAs($manager)->test(Index::class)->html();
     $dom = new DOMDocument;
     @$dom->loadHTML($markup);
     $xpath = new DOMXPath($dom);
-    $select = $xpath->query('//table[contains(@class, "ag-table--products")]/thead/tr/th[1]//button[@*[name()="wire:click" and .="selectCurrentPage"] and @role="checkbox" and @aria-checked="false" and @aria-label and @title]');
+    $select = $xpath->query('//table[contains(@class, "ag-table--products")]/thead/tr/th[1]//button[contains(@class, "ag-bulk-selection__select") and @role="checkbox" and @aria-checked="false" and @aria-label and @title]');
     $count = $xpath->query('//table[contains(@class, "ag-table--products")]/thead/tr/th[3]//*[contains(@class, "ag-bulk-selection__count")][@aria-live="polite"]');
     $actions = $xpath->query('//*[contains(concat(" ", normalize-space(@class), " "), " ag-bulk-selection__floating-actions ")]');
     $more = $xpath->query('.//button[@aria-controls="product-bulk-actions" and @*[name()=":aria-expanded"] and @aria-label]', $actions->item(0));

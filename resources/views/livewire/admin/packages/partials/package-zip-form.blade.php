@@ -1,5 +1,6 @@
 <section class="ag-card" aria-labelledby="package-zip-heading">
     <header class="ag-card__header">
+        <x-ag.icon-tile name="upload" tone="violet" :size="16" />
         <h2 id="package-zip-heading" class="ag-card__title">{{ __('admin.packages.zip_title') }}</h2>
         <p class="ag-card__description">{{ __('admin.packages.zip_lede') }}</p>
     </header>

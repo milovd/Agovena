@@ -62,6 +62,7 @@
         <aside class="audit-log-detail__side">
             <section class="ag-card" aria-labelledby="audit-integrity-heading">
                 <header class="ag-card__header">
+                    <x-ag.icon-tile name="shield" tone="emerald" :size="16" />
                     <h2 id="audit-integrity-heading" class="ag-card__title">{{ __('admin.audit.integrity') }}</h2>
                 </header>
                 <div class="ag-card__content">
@@ -77,6 +78,7 @@
 
             <section class="ag-card" aria-labelledby="audit-network-heading">
                 <header class="ag-card__header">
+                    <x-ag.icon-tile name="globe" tone="cyan" :size="16" />
                     <h2 id="audit-network-heading" class="ag-card__title">{{ __('admin.audit.network_context') }}</h2>
                 </header>
                 <div class="ag-card__content">
@@ -104,6 +106,7 @@
             @foreach (['properties' => 'properties', 'before' => 'before', 'after' => 'after', 'context' => 'context'] as $field => $label)
                 <section class="ag-card audit-log-detail__payload" aria-labelledby="audit-payload-{{ $field }}-heading">
                     <header class="ag-card__header audit-log-detail__payload-heading">
+                        <x-ag.icon-tile name="file-text" tone="blue" :size="16" />
                         <h3 id="audit-payload-{{ $field }}-heading" class="ag-card__title">{{ __('admin.audit.'.$label) }}</h3>
                         <span>{{ is_countable($auditLog->{$field}) ? count($auditLog->{$field}) : 0 }}</span>
                     </header>

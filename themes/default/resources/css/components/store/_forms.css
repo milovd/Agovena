@@ -344,3 +344,213 @@ textarea.store-input {
   cursor: not-allowed;
   opacity: 0.5;
 }
+
+/*
+ * shadcn Slider for "slider" product options. A native range input over stop
+ * indexes: 6px muted track, accent range (--fill from the server and the
+ * storefrontOptionSlider component), 16px white thumb with an accent border.
+ * The input itself is 24px tall so the touch target stays large enough.
+ */
+.store-slider__header {
+  max-width: 32rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--theme-space-1) var(--theme-space-3);
+}
+
+.store-slider__value {
+  color: var(--theme-color-accent);
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.store-slider {
+  --slider-track: 6px;
+  --slider-thumb: 16px;
+  --slider-range: var(--theme-color-accent);
+  /* Muted rail derived from the text color so it stays visible on light and dark surfaces. */
+  --slider-rail: color-mix(in srgb, var(--theme-color-text) 12%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: var(--theme-space-2);
+  max-width: 32rem;
+}
+
+.store-slider__input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 1.5rem;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The focus ring sits on the thumb, not on the input box (overrides the reset's input ring). */
+.store-slider__input:focus,
+.store-slider__input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.store-slider__input::-webkit-slider-runnable-track {
+  height: var(--slider-track);
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--slider-range) 0 var(--fill, 0%),
+    var(--slider-rail) var(--fill, 0%) 100%
+  );
+}
+
+.store-slider__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--slider-thumb);
+  height: var(--slider-thumb);
+  margin-top: calc((var(--slider-track) - var(--slider-thumb)) / 2);
+  border: 1px solid var(--slider-range);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+  transition: box-shadow var(--theme-ease);
+}
+
+.store-slider__input::-moz-range-track {
+  height: var(--slider-track);
+  border: 0;
+  border-radius: 999px;
+  background: var(--slider-rail);
+}
+
+.store-slider__input::-moz-range-progress {
+  height: var(--slider-track);
+  border-radius: 999px;
+  background: var(--slider-range);
+}
+
+.store-slider__input::-moz-range-thumb {
+  box-sizing: border-box;
+  width: var(--slider-thumb);
+  height: var(--slider-thumb);
+  border: 1px solid var(--slider-range);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.12);
+  transition: box-shadow var(--theme-ease);
+}
+
+.store-slider__input:hover::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--slider-range) 22%, transparent);
+}
+
+.store-slider__input:hover::-moz-range-thumb {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--slider-range) 22%, transparent);
+}
+
+.store-slider__input:focus-visible::-webkit-slider-thumb {
+  box-shadow: var(--theme-focus);
+}
+
+.store-slider__input:focus-visible::-moz-range-thumb {
+  box-shadow: var(--theme-focus);
+}
+
+.store-slider__input:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.store-slider__ticks {
+  position: relative;
+  min-height: 2.25rem;
+  margin-inline: calc(var(--slider-thumb) / 2);
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.store-slider__tick {
+  position: absolute;
+  top: 0;
+  left: var(--pos, 0%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  max-width: 6rem;
+  transform: translateX(-50%);
+  color: var(--theme-color-text-muted);
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--theme-ease);
+}
+
+.store-slider__tick:first-child {
+  align-items: flex-start;
+  transform: translateX(calc(var(--slider-thumb) / -2));
+  text-align: start;
+}
+
+.store-slider__tick:last-child:not(:first-child) {
+  align-items: flex-end;
+  transform: translateX(calc(-100% + var(--slider-thumb) / 2));
+  text-align: end;
+}
+
+.store-slider__tick-label {
+  font-weight: 500;
+}
+
+.store-slider__tick-price {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.store-slider__tick:hover,
+.store-slider__tick.is-active {
+  color: var(--theme-color-text);
+}
+
+.store-slider__tick.is-active .store-slider__tick-label {
+  color: var(--theme-color-accent);
+  font-weight: 600;
+}
+
+/* Dense sliders on small screens: keep the ends and the selected stop readable. */
+@media (max-width: 30rem) {
+  .store-slider[data-count="6"] .store-slider__tick:not(:first-child, :last-child, .is-active),
+  .store-slider[data-count="7"] .store-slider__tick:not(:first-child, :last-child, .is-active),
+  .store-slider[data-count="8"] .store-slider__tick:not(:first-child, :last-child, .is-active),
+  .store-slider[data-count="9"] .store-slider__tick:not(:first-child, :last-child, .is-active),
+  .store-slider[data-count="10"] .store-slider__tick:not(:first-child, :last-child, .is-active) {
+    visibility: hidden;
+  }
+}
+
+@media (pointer: coarse) {
+  .store-slider {
+    --slider-thumb: 20px;
+  }
+}
+
+/* Vendor pseudo-elements stay in separate rules: one unknown selector drops a whole list. */
+@media (prefers-reduced-motion: reduce) {
+  .store-slider__input::-webkit-slider-thumb {
+    transition: none;
+  }
+
+  .store-slider__input::-moz-range-thumb {
+    transition: none;
+  }
+
+  .store-slider__tick {
+    transition: none;
+  }
+}

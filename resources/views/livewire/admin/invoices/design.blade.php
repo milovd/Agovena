@@ -35,6 +35,7 @@
         <form id="invoice-design-form" class="invoice-design__settings" wire:submit="save">
             <section class="ag-card" aria-labelledby="invoice-design-template-heading">
                 <header class="ag-card__header">
+                    <x-ag.icon-tile name="layout-template" tone="blue" :size="16" />
                     <h2 id="invoice-design-template-heading" class="ag-card__title">{{ __('admin.invoice_design.template_title') }}</h2>
                     <p class="ag-card__description">{{ __('admin.invoice_design.template_description') }}</p>
                 </header>
@@ -71,6 +72,7 @@
 
             <section class="ag-card" aria-labelledby="invoice-design-color-heading">
                 <header class="ag-card__header">
+                    <x-ag.icon-tile name="palette" tone="violet" :size="16" />
                     <h2 id="invoice-design-color-heading" class="ag-card__title">{{ __('admin.invoice_design.color_title') }}</h2>
                     <p class="ag-card__description">{{ __('admin.invoice_design.color_description') }}</p>
                 </header>
@@ -111,6 +113,7 @@
 
             <section class="ag-card" aria-labelledby="invoice-design-details-heading">
                 <header class="ag-card__header">
+                    <x-ag.icon-tile name="file-text" tone="emerald" :size="16" />
                     <h2 id="invoice-design-details-heading" class="ag-card__title">{{ __('admin.invoice_design.details_title') }}</h2>
                     <p class="ag-card__description">{{ __('admin.invoice_design.details_description') }}</p>
                 </header>
@@ -143,6 +146,7 @@
 
             <section class="ag-card" aria-labelledby="invoice-design-content-heading">
                 <header class="ag-card__header">
+                    <x-ag.icon-tile name="pencil" tone="amber" :size="16" />
                     <h2 id="invoice-design-content-heading" class="ag-card__title">{{ __('admin.invoice_design.content_title') }}</h2>
                     <p class="ag-card__description">{{ __('admin.invoice_design.content_description') }}</p>
                 </header>

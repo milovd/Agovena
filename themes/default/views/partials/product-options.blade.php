@@ -10,10 +10,79 @@
                 ]);
             @endphp
             <div class="store-field" wire:key="option-{{ $option->id }}">
-                <span class="store-label">
-                    {{ $option->label }}@if ($option->is_required) * @endif
-                </span>
-                @if ($option->type->value === 'select')
+                @if ($option->type->value === 'slider')
+                    @php
+                        $sliderStops = collect($optionChoices)->values()->map(static fn (array $choice): array => [
+                            'value' => (string) $choice['value'],
+                            'label' => (string) $choice['label'],
+                            'price' => (int) $choice['price_adjustment_amount'] > 0
+                                ? '+'.\App\Support\MoneyFormatter::formatDisplay((int) $choice['price_adjustment_amount'], $product->currency)
+                                : '',
+                        ]);
+                        $sliderSelected = (string) ($optionSelections[$option->key] ?? '');
+                        $sliderFound = $sliderStops->search(static fn (array $stop): bool => $stop['value'] === $sliderSelected);
+                        $sliderIndex = $sliderFound === false ? 0 : (int) $sliderFound;
+                        $sliderMax = max(0, $sliderStops->count() - 1);
+                        $sliderFill = $sliderMax > 0 ? round($sliderIndex / $sliderMax * 100, 4) : 0;
+                        $sliderCurrent = $sliderStops->get($sliderIndex);
+                        $sliderId = 'option-slider-'.$option->id;
+                    @endphp
+                    <div class="store-slider__header">
+                        <label class="store-label" for="{{ $sliderId }}">
+                            {{ $option->label }}@if ($option->is_required) * @endif
+                        </label>
+                        @if ($sliderCurrent)
+                            <output class="store-slider__value" for="{{ $sliderId }}" data-slider-output>{{ $sliderCurrent['label'] }}</output>
+                        @endif
+                    </div>
+                @else
+                    <span class="store-label">
+                        {{ $option->label }}@if ($option->is_required) * @endif
+                    </span>
+                @endif
+                @if ($option->type->value === 'slider')
+                    @if ($sliderStops->isNotEmpty())
+                        <div
+                            class="store-slider"
+                            x-data="storefrontOptionSlider"
+                            data-option-key="{{ $option->key }}"
+                            data-stops='@json($sliderStops->all())'
+                            data-count="{{ $sliderStops->count() }}"
+                        >
+                            <input
+                                id="{{ $sliderId }}"
+                                class="store-slider__input"
+                                type="range"
+                                min="0"
+                                max="{{ $sliderMax }}"
+                                step="1"
+                                value="{{ $sliderIndex }}"
+                                data-index="{{ $sliderIndex }}"
+                                aria-valuetext="{{ $sliderCurrent['label'] }}"
+                                style="--fill: {{ $sliderFill }}%"
+                                x-ref="input"
+                                x-on:input="preview"
+                                x-on:change="commit"
+                                @disabled($sliderMax === 0)
+                            >
+                            <div class="store-slider__ticks" aria-hidden="true">
+                                @foreach ($sliderStops as $stopIndex => $stop)
+                                    <span
+                                        @class(['store-slider__tick', 'is-active' => $stopIndex === $sliderIndex])
+                                        style="--pos: {{ $sliderMax > 0 ? round($stopIndex / $sliderMax * 100, 4) : 0 }}%"
+                                        data-index="{{ $stopIndex }}"
+                                        x-on:click="pick"
+                                    >
+                                        <span class="store-slider__tick-label">{{ $stop['label'] }}</span>
+                                        @if ($stop['price'] !== '')
+                                            <span class="store-slider__tick-price">{{ $stop['price'] }}</span>
+                                        @endif
+                                    </span>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                @elseif ($option->type->value === 'select')
                     <select class="store-input" wire:model.live="optionSelections.{{ $option->key }}">
                         <option value="">{{ __('storefront.product.choose_option') }}</option>
                         @foreach ($optionChoices as $choice)

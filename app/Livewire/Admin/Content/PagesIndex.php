@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Admin\Content;
 
 use App\Agovena\Content\DeletePage;
+use App\Agovena\Content\DeleteSelectedPages;
 use App\Agovena\Content\PageSlug;
 use App\Agovena\Content\SavePage;
 use App\Agovena\Content\SetSelectedPageStatus;
@@ -42,6 +43,10 @@ final class PagesIndex extends Component
     /** @var array{updated: int, unchanged: int, skipped: int, failed: int}|null */
     #[Locked]
     public ?array $bulkResult = null;
+
+    /** @var array{deleted: int, skipped: int, failed: int}|null */
+    #[Locked]
+    public ?array $bulkDeleteResult = null;
 
     private const MAX_BULK_SELECTION = 500;
 
@@ -152,7 +157,34 @@ final class PagesIndex extends Component
         $result = app(SetSelectedPageStatus::class)->handle($ids, $status);
         $result['skipped'] += count($requested) - count($ids);
         $this->selectedPageIds = [];
+        $this->bulkDeleteResult = null;
         $this->bulkResult = $result;
+    }
+
+    public function bulkDeletePages(DeleteSelectedPages $deleteSelected): void
+    {
+        $this->authorize('pages.manage');
+
+        // Reject the raw payload before deduplication so forged duplicate arrays cannot bypass the limit.
+        if (count($this->selectedPageIds) > self::MAX_BULK_SELECTION) {
+            throw ValidationException::withMessages(['selectedPageIds' => __('admin.content.pages.bulk_limit')]);
+        }
+
+        $requested = array_unique(array_map(
+            static fn (mixed $id): string => is_int($id) || is_string($id) ? (string) $id : '',
+            $this->selectedPageIds,
+        ));
+        if ($requested === [] || $requested === ['']) {
+            throw ValidationException::withMessages(['selectedPageIds' => __('admin.content.pages.bulk_empty')]);
+        }
+        $visibleIds = $this->visiblePages()->getCollection()->pluck('id')->all();
+        $ids = array_values(array_filter($visibleIds, static fn (int $id): bool => in_array((string) $id, $requested, true)));
+
+        $result = $deleteSelected->handle($ids);
+        $result['skipped'] += count($requested) - count($ids);
+        $this->selectedPageIds = [];
+        $this->bulkResult = null;
+        $this->bulkDeleteResult = $result;
     }
 
     public function render()

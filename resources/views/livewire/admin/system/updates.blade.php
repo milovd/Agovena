@@ -3,6 +3,7 @@
 
     <section class="ag-card" aria-labelledby="operations-status-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="server" tone="blue" :size="16" />
             <h2 id="operations-status-heading" class="ag-card__title">{{ __('admin.updates.operations_heading') }}</h2>
         </header>
         <div class="ag-card__content">
@@ -42,6 +43,7 @@
 
     <section class="ag-card" aria-labelledby="operations-providers-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="puzzle" tone="violet" :size="16" />
             <h2 id="operations-providers-heading" class="ag-card__title">{{ __('admin.updates.providers_heading') }}</h2>
         </header>
         <div class="ag-card__content">
@@ -78,6 +80,7 @@
 
     <section class="ag-card" aria-labelledby="operations-packages-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="package" tone="indigo" :size="16" />
             <h2 id="operations-packages-heading" class="ag-card__title">{{ __('admin.updates.packages_heading') }}</h2>
         </header>
         <div class="ag-card__content">
@@ -108,6 +111,7 @@
 
         <section class="ag-card" aria-labelledby="operations-command-heading">
             <header class="ag-card__header">
+                <x-ag.icon-tile name="scroll-text" tone="cyan" :size="16" />
                 <h2 id="operations-command-heading" class="ag-card__title">{{ __('admin.updates.command_heading') }}</h2>
             </header>
             <div class="ag-card__content">
@@ -120,6 +124,7 @@
 
         <section class="ag-card" aria-labelledby="operations-pending-heading">
             <header class="ag-card__header">
+                <x-ag.icon-tile name="circle-arrow-up" tone="amber" :size="16" />
                 <h2 id="operations-pending-heading" class="ag-card__title">{{ trans_choice('admin.updates.pending_heading', $pendingCount, ['count' => $pendingCount]) }}</h2>
             </header>
             <div class="ag-card__content">

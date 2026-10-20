@@ -48,15 +48,21 @@
                         <input id="opt-sort" class="ag-input" type="number" min="0" wire:model.number="sort">
                     </div>
                 </div>
-                @if (in_array($type, ['select', 'radio', 'checkbox'], true))
+                @if (\App\Enums\ProductOptionType::tryFrom($type)?->hasChoices())
                     <div class="ag-field">
                         @if ($selectedExtensionField?->dynamicChoices)
                             <label class="ag-field__label">{{ __('admin.product_options.choices') }}</label>
                             <p class="ag-field__help">{{ __('admin.product_options.extension_choices_help') }}</p>
+                            @if ($type === 'slider')
+                                <p class="ag-field__help">{{ __('admin.product_options.slider_help') }}</p>
+                            @endif
                         @else
                             <label class="ag-field__label" for="opt-choices">{{ __('admin.product_options.choices') }}</label>
                             <textarea id="opt-choices" class="ag-input" rows="5" wire:model="choicesText"></textarea>
                             <p class="ag-field__help">{{ __('admin.product_options.choices_help') }}</p>
+                            @if ($type === 'slider')
+                                <p class="ag-field__help">{{ __('admin.product_options.slider_help') }}</p>
+                            @endif
                             @error('choicesText') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                         @endif
                     </div>

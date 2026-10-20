@@ -64,6 +64,7 @@
 
     <section class="ag-card ag-card--flush" aria-labelledby="cron-tasks-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="server" tone="blue" :size="16" />
             <h2 id="cron-tasks-heading" class="ag-card__title">{{ __('admin.cron_statistics.tasks_title') }}</h2>
             <p class="ag-card__description">{{ __('admin.cron_statistics.tasks_lede') }}</p>
         </header>
@@ -102,6 +103,7 @@
 
     <section class="ag-card" aria-labelledby="cron-setup-heading">
         <header class="ag-card__header">
+            <x-ag.icon-tile name="settings" tone="violet" :size="16" />
             <h2 id="cron-setup-heading" class="ag-card__title">{{ __('admin.cron_statistics.setup_title') }}</h2>
             <p class="ag-card__description">{{ __('admin.cron_statistics.setup_lede') }}</p>
         </header>
