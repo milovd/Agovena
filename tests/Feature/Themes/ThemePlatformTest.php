@@ -53,7 +53,8 @@ test('homepage renders announcement hero and featured sections', function () {
         ->assertSee('Categories', false)
         ->assertSee('store-cats', false)
         ->assertSee('Search products', false)
-        ->assertSee('DM+Sans', false);
+        ->assertDontSee('fonts.googleapis.com', false)
+        ->assertDontSee('fonts.gstatic.com', false);
 });
 
 test('homepage keeps the storefront chrome compact and the hero deterministic', function () {

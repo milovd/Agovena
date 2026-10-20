@@ -61,8 +61,16 @@ export function registerShellComponents(Alpine) {
         },
         /** Long sidebars scroll; keep the current page (or its section) visible on load and when the drawer opens. */
         revealCurrentNavItem() {
-            const current = this.$refs.sidebar?.querySelector('[aria-current="page"], .admin-nav__trigger--active');
-            current?.scrollIntoView({ block: 'nearest' });
+            const sidebar = this.$refs.sidebar;
+            const current = sidebar?.querySelector('[aria-current="page"], .admin-nav__trigger--active');
+            const scrollport = sidebar?.querySelector('.admin-sidebar__scroll');
+            if (!current || !scrollport) return;
+
+            // scrollIntoView also changes the browser's Tab starting point and can scroll the page.
+            const item = current.getBoundingClientRect();
+            const viewport = scrollport.getBoundingClientRect();
+            if (item.top < viewport.top) scrollport.scrollTop += item.top - viewport.top;
+            else if (item.bottom > viewport.bottom) scrollport.scrollTop += item.bottom - viewport.bottom;
         },
         destroy() {
             this.mobileQuery?.removeEventListener('change', this.onViewportChange);

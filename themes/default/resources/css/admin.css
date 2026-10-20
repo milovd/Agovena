@@ -1,5 +1,5 @@
 /* Default Theme Admin skin. Import order is the cascade order. */
-@import './settings/_fonts.css';
+@import './admin/_fonts.css';
 @import './admin/_tokens.css';
 @import './admin/_shell.css';
 @import './admin/_tabs.css';

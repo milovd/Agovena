@@ -14,14 +14,20 @@ test('default theme layouts do not contact third-party font services', function 
         ->not->toContain('fonts.gstatic.com');
 })->with(['admin', 'storefront', 'checkout']);
 
-test('both theme entrypoints load the shared local font faces', function (string $entry): void {
+test('both theme entrypoints load the shared local font faces', function (string $entry, string $import): void {
     expect(file_get_contents(base_path('themes/default/resources/css/'.$entry.'.css')))
-        ->toContain("@import './settings/_fonts.css';");
-})->with(['admin', 'theme']);
+        ->toContain("@import '".$import."';");
+})->with([
+    ['admin', './admin/_fonts.css'],
+    ['theme', './settings/_fonts.css'],
+]);
 
 test('local font faces retain normal and italic Latin coverage and their license', function (): void {
     $root = base_path('themes/default/resources/fonts');
     $css = file_get_contents(base_path('themes/default/resources/css/settings/_fonts.css'));
+
+    expect(file_get_contents(base_path('themes/default/resources/css/admin/_fonts.css')))
+        ->toContain("@import '../settings/_fonts.css';");
 
     expect($css)->toContain("font-family: 'DM Sans'", 'font-weight: 400 700', 'font-display: swap')
         ->not->toContain('https://');
