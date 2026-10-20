@@ -26,7 +26,7 @@
             <x-slot:description>{{ __('inventory::admin.empty.text') }}</x-slot:description>
         </x-ag.empty>
     @else
-        <div class="ag-table-wrap c-inventory__table-wrap" role="region" aria-label="{{ __('inventory::admin.title') }}" tabindex="0">
+        <div class="ag-table-wrap c-inventory__table-wrap" role="region" aria-label="{{ __('inventory::admin.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,gotoPage,previousPage,nextPage">
             <table class="ag-table c-inventory__table">
                 <thead>
                     <tr>

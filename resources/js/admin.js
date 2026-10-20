@@ -2,6 +2,7 @@
  * Admin entry (loaded by the Admin layouts via @vite). Alpine components
  * live per concern under ./admin/; this file only wires them up.
  */
+import { registerCalendar } from './admin/calendar.js';
 import { registerChartComponents } from './admin/chart.js';
 import { registerInvoiceComponents } from './admin/invoices.js';
 import { registerPageEditorComponents } from './admin/page-editor.js';
@@ -11,6 +12,7 @@ import { preserveAdminThemeAcrossNavigation, registerShellComponents } from './a
 import { fileUploadState } from './shared/file-upload.js';
 
 preserveAdminThemeAcrossNavigation();
+registerCalendar();
 
 document.addEventListener('alpine:init', () => {
     registerChartComponents(Alpine);

@@ -77,7 +77,7 @@
                 <span class="audit-log__count">{{ $logs->total() }} {{ __('admin.audit.entries_count') }}</span>
             </div>
 
-            <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.audit.results_heading') }}" tabindex="0">
+            <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.audit.results_heading') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,actorType,category,outcome,severity,gotoPage,previousPage,nextPage">
                 <table class="ag-table ag-table--mobile-cards audit-log__table">
                     <caption class="visually-hidden">{{ __('admin.audit.table_caption') }}</caption>
                     <thead>

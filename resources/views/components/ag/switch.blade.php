@@ -10,6 +10,7 @@
 <label class="ag-switch {{ $disabled ? 'is-disabled' : '' }}" for="{{ $id }}">
     <input
         type="checkbox"
+        role="switch"
         id="{{ $id }}"
         @disabled($disabled)
         {{ $attributes->class(['ag-switch__input'])->except(['id', 'disabled']) }}

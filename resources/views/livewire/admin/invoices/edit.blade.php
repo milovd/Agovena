@@ -116,7 +116,7 @@
                 </div>
                 <div class="ag-field">
                     <label class="ag-field__label" for="invoice-due-at">{{ __('admin.invoices.edit.due_at') }}</label>
-                    <input id="invoice-due-at" class="ag-input" type="date" wire:model="dueAt">
+                    <x-ag.date-input id="invoice-due-at" class="ag-input" type="date" wire:model="dueAt" />
                     @error('dueAt') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                 </div>
                 <div class="ag-field ag-field--full">

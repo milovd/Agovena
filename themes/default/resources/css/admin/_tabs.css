@@ -1,47 +1,106 @@
+/* Tabs, shadcn Tabs look: a muted track with 3px padding and an active trigger that rises as a
+   surface with a small shadow. `.ag-tabs` is the compact segmented control (also used for
+   in-card toggles such as the dashboard period); `.ag-product-tabs` is the page-level tab bar.
+   Tracks that sit directly on the gray page use the page track token so they stay visible. */
+.ag-tabs,
 .ag-product-tabs {
-  display: flex;
-  gap: var(--ag-space-1);
-  margin: 0 0 var(--ag-space-5);
-  padding: var(--ag-space-1);
+  --ag-tabs-track: var(--ag-color-tabs-track);
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  max-width: 100%;
+  min-height: 2.25rem;
+  gap: 0;
+  padding: 3px;
   overflow-x: auto;
-  border: 1px solid var(--ag-color-border-container);
+  border: 0;
   border-radius: var(--ag-radius-lg);
-  background: var(--ag-color-surface);
-  box-shadow: var(--ag-shadow-sm);
+  background: var(--ag-tabs-track);
+  color: var(--ag-color-text-muted);
+  scrollbar-width: none;
 }
 
+.ag-tabs::-webkit-scrollbar,
+.ag-product-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.ag-product-tabs,
+.admin-page > .ag-tabs {
+  --ag-tabs-track: var(--ag-color-tabs-track-page);
+}
+
+.ag-product-tabs {
+  margin: 0 0 var(--ag-space-5);
+}
+
+/* Direct children of the page are spaced by the page gap, not by their own margin. */
+.admin-page > :is(.ag-tabs, .ag-product-tabs) {
+  margin: 0;
+}
+
+.ag-tabs__tab,
 .ag-product-tabs__tab {
-  flex: 0 0 auto;
-  min-height: 2.5rem;
-  padding: 0 var(--ag-space-4);
-  border: 0;
+  appearance: none;
+  display: inline-flex;
+  flex: 1 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: calc(2.25rem - 7px);
+  padding: 0.25rem 0.75rem;
+  border: 1px solid transparent;
   border-radius: var(--ag-radius-md);
   background: transparent;
   color: var(--ag-color-text-muted);
   font: inherit;
   font-size: var(--ag-font-size-sm);
-  font-weight: 650;
+  font-weight: 500;
+  line-height: 1.25;
+  text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background var(--ag-transition), color var(--ag-transition);
+  transition: background var(--ag-transition), color var(--ag-transition), box-shadow var(--ag-transition);
 }
 
+.ag-tabs__tab:hover,
 .ag-product-tabs__tab:hover {
   color: var(--ag-color-text);
 }
 
-.ag-product-tabs__tab.is-active {
-  background: var(--ag-color-primary-soft);
-  color: var(--ag-color-primary);
+.ag-tabs__tab:is(.ag-tabs__tab--active, [aria-selected="true"], [aria-pressed="true"]),
+.ag-product-tabs__tab:is(.is-active, [aria-selected="true"]) {
+  border-color: var(--ag-color-tabs-active-border);
+  background: var(--ag-color-tabs-active);
+  color: var(--ag-color-text);
+  box-shadow: var(--ag-shadow-sm);
 }
 
+.ag-tabs__tab:focus-visible,
 .ag-product-tabs__tab:focus-visible {
   outline: none;
   box-shadow: var(--ag-focus-ring);
 }
 
+.ag-tabs__tab:disabled,
+.ag-product-tabs__tab:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Narrow screens: the track wraps so every tab stays visible instead of scrolling out of view. */
 @media (max-width: 640px) {
   .ag-product-tabs {
     flex-wrap: wrap;
     overflow-x: visible;
+  }
+
+  .admin-page > .ag-tabs {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+
+  :is(.ag-tabs, .ag-product-tabs) > :is(.ag-tabs__tab, .ag-product-tabs__tab) {
+    flex: 0 1 auto;
   }
 }

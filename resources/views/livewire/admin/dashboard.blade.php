@@ -104,12 +104,14 @@
                 x-data="agChart"
                 data-chart-config="{{ json_encode([
                     'type' => $chartType,
-                    'showLegend' => true,
+                    'variant' => 'interactive',
+                    'showLegend' => false,
                     'animate' => false,
                     'dualAxis' => true,
                     'currency' => $revenueSeries['currency'],
                     'currencyPrecision' => $revenueSeries['precision'],
                     'labels' => $revenueSeries['labels'],
+                    'dates' => $revenueSeries['dates'] ?? [],
                     'axisLabels' => [
                         'revenue' => __('admin.dashboard.charts.revenue_axis'),
                         'orders' => __('admin.dashboard.charts.orders_axis'),
@@ -205,8 +207,29 @@
                     @php
                         $chartMoneyFormatter = new \App\Support\LocalizedCurrencyFormatter(app()->getLocale(), $revenueSeries['currency'], $revenueSeries['precision']);
                     @endphp
+                    <ul class="ag-chart-card__legend" role="list">
+                        <li class="ag-chart-card__legend-item">
+                            <span class="ag-chart-card__legend-dot ag-chart-card__legend-dot--chart-1" aria-hidden="true"></span>
+                            {{ __('admin.dashboard.charts.revenue') }}
+                        </li>
+                        <li class="ag-chart-card__legend-item">
+                            <span class="ag-chart-card__legend-dot ag-chart-card__legend-dot--chart-4" aria-hidden="true"></span>
+                            {{ __('admin.dashboard.charts.orders') }}
+                        </li>
+                    </ul>
                     <div class="ag-chart-card__canvas ag-chart-card__canvas--legend">
-                        <canvas x-ref="canvas" role="img" aria-label="{{ __('admin.dashboard.charts.overview') }}"></canvas>
+                        <div class="ag-chart-card__plot" wire:ignore>
+                            <canvas x-ref="canvas" role="img" aria-label="{{ __('admin.dashboard.charts.overview') }}"></canvas>
+                            <div class="ag-skeleton ag-chart-card__skeleton ag-chart-card__skeleton--boot" aria-hidden="true"></div>
+                        </div>
+                        <div
+                            class="ag-skeleton ag-chart-card__skeleton ag-chart-card__skeleton--loading"
+                            wire:loading.delay
+                            wire:target="setChartRange"
+                            role="status"
+                        >
+                            <span class="visually-hidden">{{ __('common.loading') }}</span>
+                        </div>
                         <table id="dashboard-chart-data" class="visually-hidden">
                             <caption>{{ __('admin.dashboard.charts.overview') }}</caption>
                             <thead>

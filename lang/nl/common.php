@@ -73,4 +73,8 @@ return [
     'files_selected' => ':count bestanden geselecteerd',
     'select_placeholder' => 'Kiezen…',
     'danger_zone' => 'Gevaarzone',
+    'open_calendar' => 'Kalender openen',
+    'calendar' => 'Kalender',
+    'previous_month' => 'Vorige maand',
+    'next_month' => 'Volgende maand',
 ];

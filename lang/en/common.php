@@ -73,4 +73,8 @@ return [
     'files_selected' => ':count files selected',
     'select_placeholder' => 'Select…',
     'danger_zone' => 'Danger zone',
+    'open_calendar' => 'Open calendar',
+    'calendar' => 'Calendar',
+    'previous_month' => 'Previous month',
+    'next_month' => 'Next month',
 ];

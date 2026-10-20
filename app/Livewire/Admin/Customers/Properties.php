@@ -204,7 +204,7 @@ class Properties extends Component
         return view('livewire.admin.customers.properties', [
             'definitions' => CustomerPropertyDefinition::query()->ordered()->get(),
             'types' => CustomerPropertyType::cases(),
-        ]);
+        ])->title(__('admin.customer_properties.title'));
     }
 
     private function resetForm(): void

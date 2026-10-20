@@ -1,8 +1,8 @@
-/* Switch - on/off configuration */
+/* Switch - on/off configuration (shadcn Switch: 2rem x 1.15rem track, 1rem thumb). */
 .ag-switch {
   display: inline-flex;
   align-items: center;
-  gap: var(--ag-space-3);
+  gap: var(--ag-space-2);
   margin: 0;
   cursor: pointer;
   user-select: none;
@@ -22,25 +22,26 @@
 
 .ag-switch__track {
   position: relative;
-  display: inline-block;
-  width: 2.5rem;
-  height: 1.375rem;
+  display: inline-flex;
+  align-items: center;
+  width: 2rem;
+  height: 1.15rem;
   flex-shrink: 0;
+  border: 1px solid transparent;
   border-radius: 999px;
-  background: var(--ag-color-border-strong);
-  transition: background var(--ag-transition);
+  background: var(--ag-color-input);
+  box-shadow: var(--ag-shadow-xs);
+  transition: background var(--ag-transition), box-shadow var(--ag-transition);
 }
 
 .ag-switch__thumb {
-  position: absolute;
-  top: 0.125rem;
-  left: 0.125rem;
-  width: 1.125rem;
-  height: 1.125rem;
+  display: block;
+  width: 1rem;
+  height: 1rem;
   border-radius: 999px;
-  background: #fff;
-  box-shadow: var(--ag-shadow-sm);
-  transition: transform var(--ag-transition);
+  background: var(--ag-color-switch-thumb);
+  pointer-events: none;
+  transition: transform var(--ag-transition), background var(--ag-transition);
 }
 
 .ag-switch__input:checked + .ag-switch__track {
@@ -48,7 +49,8 @@
 }
 
 .ag-switch__input:checked + .ag-switch__track .ag-switch__thumb {
-  transform: translateX(1.125rem);
+  background: var(--ag-color-switch-thumb-checked);
+  transform: translateX(calc(100% - 2px));
 }
 
 .ag-switch__input:focus-visible + .ag-switch__track {
@@ -56,17 +58,22 @@
 }
 
 .ag-switch__input:disabled + .ag-switch__track {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .ag-switch__input:disabled ~ .ag-switch__label,
 .ag-switch:has(.ag-switch__input:disabled) {
   cursor: not-allowed;
-  opacity: 0.8;
+}
+
+.ag-switch:has(.ag-switch__input:disabled) .ag-switch__label {
+  opacity: 0.5;
 }
 
 .ag-switch__label {
-  font-size: 0.9375rem;
+  font-size: var(--ag-font-size-sm);
+  font-weight: 500;
+  line-height: 1.25;
   color: var(--ag-color-text);
 }
 
@@ -132,7 +139,7 @@
   margin-top: var(--ag-space-4);
 }
 
-/* Checkbox - selection within a form/set */
+/* Checkbox - selection within a form/set (shadcn Checkbox: 1rem box, 4px radius). */
 .ag-checkbox {
   display: inline-flex;
   align-items: flex-start;
@@ -158,24 +165,24 @@
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 1.125rem;
-  height: 1.125rem;
-  margin-top: 0.15rem;
+  width: 1rem;
+  height: 1rem;
+  margin-top: 0.125rem;
   flex-shrink: 0;
-  border: 1.5px solid var(--ag-color-border-strong);
-  border-radius: 0.3rem;
-  background: var(--ag-color-surface);
-  transition: background var(--ag-transition), border-color var(--ag-transition);
+  border: 1px solid var(--ag-color-input);
+  border-radius: 4px;
+  background: var(--ag-color-control-bg);
+  box-shadow: var(--ag-shadow-xs);
+  transition: background var(--ag-transition), border-color var(--ag-transition), box-shadow var(--ag-transition);
 }
 
 .ag-checkbox__box::after {
   content: "";
-  width: 0.35rem;
-  height: 0.6rem;
-  border: solid #fff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg) scale(0);
-  transition: transform var(--ag-transition);
+  width: 0.875rem;
+  height: 0.875rem;
+  background: var(--ag-color-primary-foreground);
+  mask: var(--ag-icon-check) center / contain no-repeat;
+  opacity: 0;
 }
 
 .ag-checkbox__input:checked + .ag-checkbox__box {
@@ -184,7 +191,7 @@
 }
 
 .ag-checkbox__input:checked + .ag-checkbox__box::after {
-  transform: rotate(45deg) scale(1);
+  opacity: 1;
 }
 
 .ag-checkbox__input:focus-visible + .ag-checkbox__box {
@@ -192,7 +199,7 @@
 }
 
 .ag-checkbox__input:disabled + .ag-checkbox__box {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
 .ag-checkbox__input:disabled ~ .ag-checkbox__label,
@@ -201,8 +208,85 @@
 }
 
 .ag-checkbox__label {
-  font-size: 0.9375rem;
+  font-size: var(--ag-font-size-sm);
+  font-weight: 500;
+  line-height: 1.25rem;
   color: var(--ag-color-text);
+}
+
+/* Plain checkboxes and radios in Admin markup get the same shadcn look as the primitives above.
+   Primitives with a visually hidden input (`*__input`) draw their own box. */
+.admin-shell :is(input[type="checkbox"], input[type="radio"]):not([class*="__input"]) {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  flex-shrink: 0;
+  border: 1px solid var(--ag-color-input);
+  border-radius: 4px;
+  background-color: var(--ag-color-control-bg);
+  box-shadow: var(--ag-shadow-xs);
+  color: var(--ag-color-primary-foreground);
+  cursor: pointer;
+  vertical-align: -0.125rem;
+  transition: background-color var(--ag-transition), border-color var(--ag-transition), box-shadow var(--ag-transition);
+}
+
+.admin-shell input[type="radio"]:not([class*="__input"]) {
+  border-radius: 999px;
+}
+
+.admin-shell :is(input[type="checkbox"], input[type="radio"]):not([class*="__input"])::before {
+  content: "";
+  width: 0.875rem;
+  height: 0.875rem;
+  background: currentColor;
+  mask: var(--ag-icon-check) center / contain no-repeat;
+  transform: scale(0);
+}
+
+.admin-shell input[type="radio"]:not([class*="__input"])::before {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  mask: none;
+}
+
+.admin-shell :is(input[type="checkbox"], input[type="radio"]):not([class*="__input"]):checked {
+  border-color: var(--ag-color-primary);
+  background-color: var(--ag-color-primary);
+}
+
+.admin-shell :is(input[type="checkbox"], input[type="radio"]):not([class*="__input"]):checked::before {
+  transform: scale(1);
+}
+
+.admin-shell input[type="checkbox"]:not([class*="__input"]):indeterminate {
+  border-color: var(--ag-color-primary);
+  background-color: var(--ag-color-primary);
+}
+
+.admin-shell input[type="checkbox"]:not([class*="__input"]):indeterminate::before {
+  height: 2px;
+  border-radius: 1px;
+  mask: none;
+  transform: scale(0.65, 1);
+}
+
+.admin-shell :is(input[type="checkbox"], input[type="radio"]):not([class*="__input"]):focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.admin-shell :is(input[type="checkbox"], input[type="radio"]):not([class*="__input"]):disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.admin-shell :is(input[type="checkbox"], input[type="radio"])[aria-invalid="true"]:not([class*="__input"]) {
+  border-color: var(--ag-color-danger);
 }
 
 /* File upload */

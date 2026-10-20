@@ -7,6 +7,7 @@ import { registerCartComponents } from './storefront/cart.js';
 import { registerCheckoutComponents } from './storefront/checkout.js';
 import { registerChromeComponents } from './storefront/chrome.js';
 import { initCookieConsent } from './storefront/consent.js';
+import { initMediaSkeletons } from './storefront/media-skeleton.js';
 import { registerHeaderComponents } from './storefront/header.js';
 import { registerHomeComponents } from './storefront/home.js';
 import { registerProductComponents } from './storefront/product.js';
@@ -24,3 +25,4 @@ document.addEventListener('alpine:init', () => {
 });
 
 initCookieConsent();
+initMediaSkeletons();

@@ -99,7 +99,7 @@
             <button type="button" class="ag-btn ag-btn--ghost" wire:click="resetPage">{{ __('admin.currencies.first_page') }}</button>
         </div>
     @else
-    <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.currencies.title') }}" tabindex="0">
+    <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.currencies.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="gotoPage,previousPage,nextPage">
         <table class="ag-table ag-table--mobile-cards ag-table--currencies">
             <thead>
                 <tr>

@@ -9,11 +9,16 @@
   margin-bottom: 0;
 }
 
+/* shadcn Label: small, medium weight, tight leading. */
 .ag-field__label {
-  font-weight: 600;
-  font-size: 0.875rem;
-  letter-spacing: -0.01em;
+  font-weight: 500;
+  font-size: var(--ag-font-size-sm);
+  line-height: 1.25;
   color: var(--ag-color-text);
+}
+
+.ag-field:has(:disabled) > .ag-field__label {
+  opacity: 0.5;
 }
 
 .ag-field:has(:is(input, select, textarea)[required]) > .ag-field__label::after,
@@ -71,17 +76,27 @@
 .ag-select {
   width: 100%;
   max-width: 28rem;
-  min-height: var(--ag-control-height, 2.375rem);
-  padding: 0.55rem 0.75rem;
-  border: 1px solid var(--ag-color-border);
+  min-height: var(--ag-control-height, 2.25rem);
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--ag-color-input);
   border-radius: var(--ag-radius-md);
   font: inherit;
-  background-color: var(--ag-color-surface);
+  font-size: var(--ag-font-size-sm);
+  background-color: var(--ag-color-control-bg);
+  box-shadow: var(--ag-shadow-xs);
   color: var(--ag-color-text);
   transition:
     border-color var(--ag-transition),
     box-shadow var(--ag-transition),
     background-color var(--ag-transition);
+}
+
+/* 16px on phones so iOS does not zoom into a focused field. */
+@media (max-width: 640px) {
+  .ag-input,
+  .ag-select {
+    font-size: 1rem;
+  }
 }
 
 .ag-input:hover,

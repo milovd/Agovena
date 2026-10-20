@@ -423,6 +423,27 @@ a.ag-dashboard-list__title:focus-visible {
     min-height: 0;
   }
 
+  /* shadcn block header: title and description first, controls stacked below at full width. */
+  .admin-dashboard .ag-chart-card__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-dashboard .ag-chart-card__toolbar {
+    justify-content: flex-start;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .admin-dashboard .ag-chart-control {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .admin-dashboard .ag-chart-control .ag-select {
+    max-width: none;
+  }
+
   .ag-dashboard-list__item {
     align-items: flex-start;
   }

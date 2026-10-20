@@ -1,0 +1,209 @@
+/* Calendar popover for date and datetime fields (shadcn Calendar look). */
+
+/* Field wrapper: native input plus a calendar trigger overlapping its end. */
+.ag-date-input {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.ag-date-input > input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* The trigger only does something once calendar.js is loaded. */
+.ag-date-input__trigger {
+  display: none;
+}
+
+.ag-calendar-ready .ag-date-input > input {
+  padding-right: calc(var(--ag-space-8) + var(--ag-space-2));
+}
+
+.ag-calendar-ready .ag-date-input > input::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.ag-calendar-ready .ag-date-input__trigger {
+  position: relative;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: var(--ag-space-8);
+  height: var(--ag-space-8);
+  margin-left: calc(-1 * (var(--ag-space-8) + var(--ag-space-1)));
+  padding: 0;
+  border: 0;
+  border-radius: var(--ag-radius-md);
+  background: transparent;
+  color: var(--ag-color-text-muted);
+  cursor: pointer;
+}
+
+.ag-calendar-ready .ag-date-input__trigger:hover,
+.ag-calendar-ready .ag-date-input__trigger[aria-expanded="true"] {
+  background: var(--ag-color-surface-muted);
+  color: var(--ag-color-text);
+}
+
+.ag-calendar-ready .ag-date-input__trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}
+
+.ag-date-input > input:disabled + .ag-date-input__trigger,
+.ag-date-input > input[readonly] + .ag-date-input__trigger {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Popover: appended to <body>, above the topbar and modals. */
+.ag-calendar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 90;
+  width: max-content;
+  padding: var(--ag-space-3);
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-lg);
+  background: var(--ag-color-surface);
+  box-shadow: var(--ag-shadow-md);
+  color: var(--ag-color-text);
+  font-size: var(--ag-font-size-sm);
+}
+
+.ag-calendar--centered {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.ag-calendar__header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--ag-space-8);
+  margin-bottom: var(--ag-space-2);
+}
+
+.ag-calendar__caption {
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.ag-calendar__nav {
+  position: absolute;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ag-space-8);
+  height: var(--ag-space-8);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ag-radius-md);
+  background: transparent;
+  color: var(--ag-color-text);
+  cursor: pointer;
+}
+
+.ag-calendar__nav--previous {
+  left: 0;
+}
+
+.ag-calendar__nav--next {
+  right: 0;
+}
+
+.ag-calendar__nav:hover:not(:disabled) {
+  background: var(--ag-color-surface-muted);
+}
+
+.ag-calendar__nav:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ag-calendar__grid {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+.ag-calendar__weekday {
+  width: var(--ag-space-8);
+  padding: 0 0 var(--ag-space-1);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+  font-weight: 400;
+  text-align: center;
+  text-transform: capitalize;
+}
+
+.ag-calendar__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ag-calendar__cell {
+  padding: 1px 0;
+  text-align: center;
+}
+
+.ag-calendar__day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--ag-space-8);
+  height: var(--ag-space-8);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ag-radius-md);
+  background: transparent;
+  color: var(--ag-color-text);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.ag-calendar__day:hover,
+.ag-calendar__day.is-today {
+  background: var(--ag-color-surface-muted);
+}
+
+.ag-calendar__day.is-outside {
+  color: var(--ag-color-text-muted);
+}
+
+.ag-calendar__day.is-selected,
+.ag-calendar__day.is-selected:hover {
+  background: var(--ag-color-primary);
+  color: #fff;
+}
+
+.ag-calendar__day.is-selected:hover {
+  background: var(--ag-color-primary-hover);
+}
+
+.ag-calendar__day[aria-disabled="true"] {
+  background: transparent;
+  color: var(--ag-color-text-muted);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ag-calendar__day:focus-visible,
+.ag-calendar__nav:focus-visible {
+  position: relative;
+  outline: none;
+  box-shadow: var(--ag-focus-ring);
+}

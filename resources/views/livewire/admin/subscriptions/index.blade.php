@@ -23,7 +23,7 @@
             <x-slot:icon><x-ag.icon name="repeat" :size="24" /></x-slot:icon>
         </x-ag.empty>
     @else
-        <div class="ag-table-wrap c-subscriptions__table-wrap" role="region" aria-label="{{ __('subscriptions::admin.title') }}" tabindex="0">
+        <div class="ag-table-wrap c-subscriptions__table-wrap" role="region" aria-label="{{ __('subscriptions::admin.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="status">
             <table class="ag-table c-subscriptions__table">
                 <thead>
                     <tr>

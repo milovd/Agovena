@@ -24,7 +24,7 @@
             <x-slot:icon><x-ag.icon name="rotate-ccw" :size="24" /></x-slot:icon>
         </x-ag.empty>
     @else
-        <div class="ag-table-wrap c-returns__table-wrap" role="region" aria-label="{{ __('shipping::returns.admin_title') }}" tabindex="0">
+        <div class="ag-table-wrap c-returns__table-wrap" role="region" aria-label="{{ __('shipping::returns.admin_title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="status,gotoPage,previousPage,nextPage">
             <table class="ag-table c-returns__table">
                 <thead>
                     <tr>

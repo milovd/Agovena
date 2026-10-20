@@ -2,12 +2,25 @@
   --ag-color-primary: #155eef;
   --ag-color-primary-hover: #1249c7;
   --ag-color-primary-soft: rgb(21 94 239 / 0.12);
-  --ag-color-bg: #e8ecf2;
+  --ag-color-bg: #d8dee7;
   --ag-color-surface: #ffffff;
   --ag-color-surface-muted: #eef2f7;
   --ag-color-border: #e2e8f0;
   --ag-color-border-strong: #cbd5e1;
-  --ag-color-border-container: #c8d1dd;
+  --ag-color-border-container: #b8c2d0;
+  /* Form controls (shadcn input, checkbox, radio and switch). */
+  --ag-color-input: #d5dce6;
+  --ag-color-control-bg: var(--ag-color-surface);
+  --ag-color-primary-foreground: #ffffff;
+  --ag-color-switch-thumb: #ffffff;
+  --ag-color-switch-thumb-checked: #ffffff;
+  /* Tabs track: in cards it is the muted surface; on the page it sits one step below the page. */
+  --ag-color-tabs-track: var(--ag-color-surface-muted);
+  --ag-color-tabs-track-page: #c9d1dc;
+  --ag-color-tabs-active: var(--ag-color-surface);
+  --ag-color-tabs-active-border: transparent;
+  --ag-shadow-xs: 0 1px 2px rgb(15 23 42 / 0.05);
+  --ag-icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E");
   --ag-color-text: #0f172a;
   --ag-color-text-muted: #64748b;
   --ag-color-danger: #dc2626;

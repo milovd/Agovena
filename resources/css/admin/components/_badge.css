@@ -1,9 +1,28 @@
+/* Badge, shadcn Badge shape: 1.25rem high pill, medium text, optional icon; our variants keep their color. */
 .ag-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  width: fit-content;
+  min-height: 1.25rem;
   padding: 0.125rem 0.5rem;
+  overflow: hidden;
+  border: 1px solid transparent;
   border-radius: 999px;
+  background: var(--ag-color-surface-muted);
+  color: var(--ag-color-text);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.ag-badge svg {
+  flex: none;
+  width: 0.75rem;
+  height: 0.75rem;
 }
 
 .ag-badge--success {
@@ -29,4 +48,15 @@
 .ag-badge--danger {
   background: var(--ag-color-danger-soft);
   color: var(--ag-color-danger);
+}
+
+.ag-badge--primary {
+  background: var(--ag-color-primary);
+  color: var(--ag-color-primary-foreground);
+}
+
+.ag-badge--outline {
+  border-color: var(--ag-color-border-strong);
+  background: transparent;
+  color: var(--ag-color-text);
 }

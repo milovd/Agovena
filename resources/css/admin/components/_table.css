@@ -11,7 +11,7 @@
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9375rem;
+  font-size: var(--ag-font-size-sm);
 }
 
 .ag-table th,
@@ -19,23 +19,37 @@
 .admin-table th,
 .admin-table td {
   text-align: left;
-  padding: 0.7rem var(--ag-space-4);
+  padding: 0.625rem var(--ag-space-4);
   border-bottom: 1px solid var(--ag-color-border);
-  vertical-align: top;
+  vertical-align: middle;
 }
 
+/* shadcn Data Table header: 2.5rem row, medium weight, sentence case, in the muted band that also
+   carries the bulk selection controls. */
 .ag-table thead th,
 .admin-table__head th {
+  height: 2.5rem;
+  padding-block: 0.5rem;
   color: var(--ag-color-text-muted);
-  font-weight: 600;
-  font-size: 0.8125rem;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  font-size: var(--ag-font-size-sm);
+  white-space: nowrap;
   background: var(--ag-color-surface-muted);
+}
+
+.ag-table tbody tr,
+.admin-table__row {
+  transition: background var(--ag-transition);
 }
 
 .ag-table tbody tr:hover,
 .admin-table__row:hover {
+  background: color-mix(in srgb, var(--ag-color-surface-muted) 50%, transparent);
+}
+
+/* A selected row stays highlighted, like `data-state="selected"` in the shadcn table. */
+.ag-table tbody tr:has(> td input[type="checkbox"]:checked),
+.ag-table tbody tr[aria-selected="true"] {
   background: var(--ag-color-surface-muted);
 }
 
@@ -420,48 +434,47 @@ a.ag-table__name:focus-visible {
   gap: var(--ag-space-1);
 }
 
+/* shadcn Pagination: ghost buttons, the current page as an outlined surface button. */
 .ag-pagination__btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   min-height: 2.25rem;
   min-width: 2.25rem;
-  padding: 0.35rem 0.7rem;
-  border: 1px solid var(--ag-color-border);
+  padding: 0 0.625rem;
+  border: 1px solid transparent;
   border-radius: var(--ag-radius-md);
-  background: var(--ag-color-surface);
+  background: transparent;
   color: var(--ag-color-text);
   font: inherit;
   font-size: var(--ag-font-size-sm);
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   cursor: pointer;
   transition: background var(--ag-transition), border-color var(--ag-transition), color var(--ag-transition);
 }
 
-.ag-pagination__btn:hover:not(.ag-pagination__btn--disabled):not(.ag-pagination__btn--current),
-.ag-pagination__btn:focus-visible:not(.ag-pagination__btn--disabled) {
-  background: var(--ag-color-primary-soft);
-  border-color: color-mix(in srgb, var(--ag-color-primary) 35%, var(--ag-color-border));
-  color: var(--ag-color-primary);
-  outline: none;
+.ag-pagination__btn:hover:not(.ag-pagination__btn--disabled):not(.ag-pagination__btn--current) {
+  background: var(--ag-color-surface-muted);
 }
 
 .ag-pagination__btn:focus-visible {
+  outline: none;
   box-shadow: var(--ag-focus-ring);
 }
 
 .ag-pagination__btn--current {
-  background: var(--ag-color-primary);
-  border-color: var(--ag-color-primary);
-  color: #fff;
+  border-color: var(--ag-color-input);
+  background: var(--ag-color-control-bg);
+  box-shadow: var(--ag-shadow-xs);
   cursor: default;
 }
 
 .ag-pagination__btn--disabled {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
+  pointer-events: none;
 }
 
 .ag-pagination__icon {
@@ -487,22 +500,69 @@ a.ag-table__name:focus-visible {
   max-height: 1rem;
 }
 
+/* The loading message is announced, not shown: the rows themselves turn into skeletons. */
 .ag-loading {
-  display: none;
-  align-items: center;
-  gap: var(--ag-space-2);
-  margin-bottom: var(--ag-space-3);
-  color: var(--ag-color-text-muted);
-  font-size: 0.875rem;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.ag-loading--inline {
-  display: block;
-  margin-top: var(--ag-space-2);
+/* Skeleton rows: only while a list request is running, and only after 250 ms so quick filters,
+   sorts and page changes never flash a placeholder. A cover hides the stale cell and a pulsing bar
+   stands in for its content. */
+.ag-table-wrap.is-loading tbody td {
+  position: relative;
 }
 
-.ag-table-wrap.is-loading {
-  opacity: 0.55;
+.ag-table-wrap.is-loading tbody td::before,
+.ag-table-wrap.is-loading tbody td::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  opacity: 0;
+  animation: ag-table-skeleton-in 120ms ease-out 250ms forwards;
+}
+
+.ag-table-wrap.is-loading tbody td::before {
+  inset: 0 0 1px;
+  background: var(--ag-color-surface);
+}
+
+.ag-table-wrap.is-loading tbody td::after {
+  top: 50%;
+  left: var(--ag-space-4);
+  width: min(70%, 10rem);
+  height: 0.75rem;
+  border-radius: var(--ag-radius-sm);
+  background: var(--ag-color-surface-muted);
+  transform: translateY(-50%);
+  animation:
+    ag-table-skeleton-in 120ms ease-out 250ms forwards,
+    ag-table-skeleton-pulse 2s ease-in-out 370ms infinite;
+}
+
+.ag-table-wrap.is-loading tbody td:first-child:has(input[type="checkbox"])::after {
+  width: 1rem;
+  height: 1rem;
+}
+
+@keyframes ag-table-skeleton-in {
+  to { opacity: 1; }
+}
+
+@keyframes ag-table-skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ag-table-wrap.is-loading tbody td::after {
+    animation: ag-table-skeleton-in 0s linear 250ms forwards;
+  }
 }
 
 .ag-menu {
@@ -837,19 +897,27 @@ a.ag-table__name:focus-visible {
 
 .ag-list-page .admin-page__heading { font-size: 1.5rem; }
 .ag-list-page .ag-toolbar--filters { box-shadow: var(--ag-shadow-sm); }
+/* The page gap already separates the filter bar from the list below it. */
+.admin-page > .ag-toolbar { margin-bottom: 0; }
+/* Select-page control: a button that looks and behaves like the shadcn checkbox. */
 .ag-bulk-selection__select {
   display: inline-grid;
   place-items: center;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1rem;
+  height: 1rem;
   padding: 0;
-  border: 1px solid var(--ag-color-border);
-  border-radius: var(--ag-radius-sm);
-  background: var(--ag-color-surface);
-  color: var(--ag-color-text-muted);
+  border: 1px solid var(--ag-color-input);
+  border-radius: 4px;
+  background: var(--ag-color-control-bg);
+  box-shadow: var(--ag-shadow-xs);
+  color: var(--ag-color-primary-foreground);
+  vertical-align: middle;
   cursor: pointer;
+  transition: background var(--ag-transition), border-color var(--ag-transition);
 }
-.ag-bulk-selection__select:hover { color: var(--ag-color-primary); border-color: var(--ag-color-primary); }
+.ag-bulk-selection__select svg { width: 0.75rem; height: 0.75rem; }
+.ag-bulk-selection__select:hover { border-color: var(--ag-color-border-strong); }
+.ag-bulk-selection__select:is([aria-checked="true"], [aria-checked="mixed"]) { border-color: var(--ag-color-primary); background: var(--ag-color-primary); }
 .ag-bulk-selection__select:focus-visible { outline: none; box-shadow: var(--ag-focus-ring); }
 .ag-bulk-selection__count {
   margin-left: var(--ag-space-2);

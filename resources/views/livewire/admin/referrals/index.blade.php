@@ -86,7 +86,7 @@
                             </div>
                             <div class="ag-field">
                                 <label class="ag-field__label" for="referral-code-expires-at">{{ __('admin.referrals.expires_at') }}</label>
-                                <input id="referral-code-expires-at" class="ag-input" type="datetime-local" wire:model="expiresAt">
+                                <x-ag.date-input id="referral-code-expires-at" class="ag-input" type="datetime-local" wire:model="expiresAt" />
                                 <p class="ag-field__help">{{ __('admin.referrals.expires_at_help') }}</p>
                                 @error('expiresAt') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                             </div>

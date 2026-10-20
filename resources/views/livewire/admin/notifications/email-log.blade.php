@@ -13,7 +13,7 @@
             @endif
         </div>
     @else
-        <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-label="{{ __('admin.email_log.title') }}">
+        <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" tabindex="0" aria-label="{{ __('admin.email_log.title') }}" wire:loading.class="is-loading" wire:target="gotoPage,previousPage,nextPage">
             <table class="ag-table ag-table--mobile-cards ag-table--email-log">
                 <caption class="visually-hidden">{{ __('admin.email_log.title') }}</caption>
                 <thead>

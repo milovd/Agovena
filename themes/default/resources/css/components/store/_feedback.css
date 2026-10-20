@@ -115,3 +115,23 @@
   border-radius: var(--theme-radius-lg);
   background: var(--theme-color-surface);
 }
+
+/* Skeleton (shadcn Skeleton): a media frame whose image is still downloading pulses in the muted
+   surface color. The marker is only set for images that are not decoded yet (see
+   resources/js/storefront/media-skeleton.js) and the pulse starts after 250 ms, so cached and fast
+   images never show it. */
+[data-skeleton-loading] {
+  background-color: var(--theme-color-surface-muted);
+  animation: store-skeleton-pulse 2s ease-in-out 250ms infinite;
+}
+
+@keyframes store-skeleton-pulse {
+  0%, 100% { background-color: var(--theme-color-surface-muted); }
+  50% { background-color: color-mix(in srgb, var(--theme-color-surface-muted) 50%, var(--theme-color-surface)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-skeleton-loading] {
+    animation: none;
+  }
+}

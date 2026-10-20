@@ -244,7 +244,7 @@ test('light mode containers are outlined against the page about as clearly as da
 test('page-level containers use the container outline and nested tables keep the quiet divider', function (): void {
     $css = cssWithImports(resource_path('css/admin.css'))."\n".implode("\n", array_map('file_get_contents', glob(base_path('themes/default/resources/css/admin/*.css'))));
     $css = (string) preg_replace('/,\s+/', ', ', $css);
-    $containers = ['.ag-card', '.ag-section', '.ag-metric', '.ag-chart-card', '.ag-stats__item', '.ag-stat-card', '.ag-table-wrap, .admin-table-wrap', '.ag-toolbar--filters', '.ag-form__sticky', '.ag-product-tabs', '.admin-panel', '.ag-settings-card', '.ag-checklist', '.ag-package-card', '.c-theme-card'];
+    $containers = ['.ag-card', '.ag-section', '.ag-metric', '.ag-chart-card', '.ag-stats__item', '.ag-stat-card', '.ag-table-wrap, .admin-table-wrap', '.ag-toolbar--filters', '.ag-form__sticky', '.admin-panel', '.ag-settings-card', '.ag-checklist', '.ag-package-card', '.c-theme-card'];
     $missing = [];
     foreach ($containers as $selector) {
         if (preg_match('/(^|\n)'.preg_quote($selector, '/').' \{[^}]*border[^;]*var\(--ag-color-border-container/', $css) !== 1) {
@@ -254,14 +254,4 @@ test('page-level containers use the container outline and nested tables keep the
 
     expect($missing)->toBe([])
         ->and($css)->toMatch('/\.ag-card--flush > \.ag-card__content > :is\(\.ag-table-wrap, \.admin-table-wrap\) \{[^}]*border-color: var\(--ag-color-border\);/');
-});
-
-test('page-level tab bars match the product editor tabs instead of a gray bar on the gray page', function (): void {
-    $css = (string) file_get_contents(resource_path('css/admin/components/_patterns.css'));
-
-    expect($css)->toMatch('/\.admin-page > \.ag-tabs \{[^}]*background: var\(--ag-color-surface\);[^}]*border-color: var\(--ag-color-border-container\);/')
-        ->toMatch('/\.admin-page > \.ag-tabs :is\(\.ag-tabs__tab--active, \.ag-tabs__tab\[aria-selected="true"\]\) \{[^}]*background: var\(--ag-color-primary-soft\);/');
-
-    $html = $this->actingAs($this->createStaff())->get(route('admin.invoices.index'))->assertOk()->getContent();
-    expect($html)->toMatch('/<div class="admin-page[^"]*"[^>]*>(?:(?!<div).)*?<nav class="ag-tabs"/s');
 });

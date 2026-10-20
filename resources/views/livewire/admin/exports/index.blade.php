@@ -44,7 +44,7 @@
 
                         <div class="ag-field">
                             <label class="ag-field__label" for="data-export-created-from">{{ __('admin.exports.created_from') }}</label>
-                            <input id="data-export-created-from" type="date" class="ag-input" wire:model="createdFrom" aria-describedby="data-export-date-help">
+                            <x-ag.date-input id="data-export-created-from" type="date" class="ag-input" wire:model="createdFrom" aria-describedby="data-export-date-help" />
                             @error('createdFrom')
                                 <p class="ag-field__error">{{ $message }}</p>
                             @enderror
@@ -52,7 +52,7 @@
 
                         <div class="ag-field">
                             <label class="ag-field__label" for="data-export-created-to">{{ __('admin.exports.created_to') }}</label>
-                            <input id="data-export-created-to" type="date" class="ag-input" wire:model="createdTo" aria-describedby="data-export-date-help">
+                            <x-ag.date-input id="data-export-created-to" type="date" class="ag-input" wire:model="createdTo" aria-describedby="data-export-date-help" />
                             @error('createdTo')
                                 <p class="ag-field__error">{{ $message }}</p>
                             @enderror

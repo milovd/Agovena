@@ -51,7 +51,7 @@
                     @endforeach
                 @elseif ($option->type->value === 'toggle')
                     <label class="store-check">
-                        <input type="checkbox" wire:model.live="optionSelections.{{ $option->key }}">
+                        <input type="checkbox" role="switch" wire:model.live="optionSelections.{{ $option->key }}">
                         <span>
                             {{ __('storefront.product.enable_option') }}
                             @if ($option->price_adjustment_amount > 0)

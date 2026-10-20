@@ -55,12 +55,12 @@
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="discount-starts">{{ __('admin.discounts.starts_at') }}</label>
-                        <input id="discount-starts" class="ag-input" type="datetime-local" wire:model="starts_at">
+                        <x-ag.date-input id="discount-starts" class="ag-input" type="datetime-local" wire:model="starts_at" />
                         @error('starts_at') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="discount-ends">{{ __('admin.discounts.ends_at') }}</label>
-                        <input id="discount-ends" class="ag-input" type="datetime-local" wire:model="ends_at">
+                        <x-ag.date-input id="discount-ends" class="ag-input" type="datetime-local" wire:model="ends_at" />
                         @error('ends_at') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                     </div>
                     <div class="ag-field">
@@ -91,7 +91,7 @@
             <p class="ag-empty__text">{{ __('admin.discounts.empty_text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap ag-catalog-table-wrap" role="region" aria-label="{{ __('admin.discounts.title') }}" tabindex="0">
+        <div class="ag-table-wrap ag-catalog-table-wrap" role="region" aria-label="{{ __('admin.discounts.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="gotoPage,previousPage,nextPage">
             <table class="ag-table ag-table--discounts">
                 <thead><tr>
                     <th scope="col">{{ __('admin.discounts.code') }}</th>

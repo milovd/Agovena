@@ -11,7 +11,7 @@
             <p class="ag-empty__text">{{ __('admin.failed_jobs.empty_text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap" role="region" tabindex="0" aria-label="{{ __('admin.failed_jobs.title') }}">
+        <div class="ag-table-wrap" role="region" tabindex="0" aria-label="{{ __('admin.failed_jobs.title') }}" wire:loading.class="is-loading" wire:target="gotoPage,previousPage,nextPage">
             <table class="ag-table c-system-table">
                 <caption class="visually-hidden">{{ __('admin.failed_jobs.title') }}</caption>
                 <thead>

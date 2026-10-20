@@ -43,7 +43,7 @@
                 </div>
                 <div class="ag-field">
                     <label class="ag-field__label" for="order-due-at">{{ __('admin.orders.edit.due_at') }}</label>
-                    <input id="order-due-at" class="ag-input" type="datetime-local" wire:model="dueAt">
+                    <x-ag.date-input id="order-due-at" class="ag-input" type="datetime-local" wire:model="dueAt" />
                     @error('dueAt') <p class="ag-field__error" role="alert">{{ $message }}</p> @enderror
                 </div>
             </div>

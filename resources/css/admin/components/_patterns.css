@@ -111,65 +111,7 @@
 }
 
 
-.ag-tabs {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
-  padding: 0.25rem;
-  background: var(--ag-color-surface-muted);
-  border: 1px solid var(--ag-color-border);
-  border-radius: var(--ag-radius-md);
-}
-
-.ag-tabs__tab {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: var(--ag-color-text-muted);
-  font: inherit;
-  font-size: var(--ag-font-size-sm);
-  font-weight: 600;
-  text-decoration: none;
-  padding: 0.45rem 0.85rem;
-  border-radius: var(--ag-radius-sm);
-  cursor: pointer;
-  transition: background var(--ag-transition), color var(--ag-transition);
-}
-
-.ag-tabs__tab:hover {
-  color: var(--ag-color-text);
-  background: rgb(255 255 255 / 0.55);
-}
-
-.ag-tabs__tab[aria-selected="true"],
-.ag-tabs__tab--active {
-  background: var(--ag-color-surface);
-  color: var(--ag-color-text);
-  box-shadow: var(--ag-shadow-sm);
-}
-
-.ag-tabs__tab:focus-visible {
-  outline: none;
-  box-shadow: var(--ag-focus-ring);
-}
-
-/* Tab bars that sit on the page (Invoices/Design, Customers/Properties, Subscriptions/Plan changes)
-   are cards like the product editor tabs; the gray segmented look stays for tabs inside cards. */
-.admin-page > .ag-tabs {
-  display: flex;
-  background: var(--ag-color-surface);
-  border-color: var(--ag-color-border-container);
-}
-
-.admin-page > .ag-tabs .ag-tabs__tab:hover {
-  background: var(--ag-color-sidebar-hover);
-}
-
-.admin-page > .ag-tabs :is(.ag-tabs__tab--active, .ag-tabs__tab[aria-selected="true"]) {
-  background: var(--ag-color-primary-soft);
-  color: var(--ag-color-primary);
-  box-shadow: none;
-}
+/* Tabs (.ag-tabs, .ag-product-tabs) live in the Theme: themes/default/resources/css/admin/_tabs.css. */
 
 .ag-chart-card {
   background: var(--ag-color-surface);
@@ -255,6 +197,112 @@
 .ag-chart-card__canvas canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+/* Plot wrapper: Chart.js sizes the canvas from this box; the tooltip is positioned inside it. */
+.ag-chart-card__plot {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.ag-chart-card__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.ag-chart-card__plot[data-chart-state="ready"] > .ag-chart-card__skeleton--boot {
+  display: none;
+}
+
+.ag-chart-card__legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-2) var(--ag-space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ag-chart-card__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+  font-weight: 500;
+}
+
+.ag-chart-card__legend-dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: 0 0 auto;
+  border-radius: 0.125rem;
+  background: var(--ag-color-chart-1);
+}
+
+.ag-chart-card__legend-dot--chart-2 { background: var(--ag-color-chart-2); }
+.ag-chart-card__legend-dot--chart-3 { background: var(--ag-color-chart-3); }
+.ag-chart-card__legend-dot--chart-4 { background: var(--ag-color-chart-4); }
+
+/* HTML tooltip rendered by resources/js/admin/chart.js (shadcn/ui ChartTooltip look). */
+.ag-chart-card__tooltip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 2;
+  display: grid;
+  gap: var(--ag-space-1);
+  min-width: 8.5rem;
+  padding: var(--ag-space-2) 0.625rem;
+  border: 1px solid var(--ag-color-border);
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+  box-shadow: var(--ag-shadow-md);
+  color: var(--ag-color-text);
+  font-size: var(--ag-font-size-xs);
+  line-height: 1.35;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.ag-chart-card__tooltip[data-state="hidden"] {
+  visibility: hidden;
+}
+
+.ag-chart-card__tooltip-title {
+  margin: 0 0 0.125rem;
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-xs);
+  font-weight: 500;
+}
+
+.ag-chart-card__tooltip-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--ag-space-2);
+}
+
+.ag-chart-card__tooltip-indicator {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 0.125rem;
+}
+
+.ag-chart-card__tooltip-label {
+  color: var(--ag-color-text-muted);
+}
+
+.ag-chart-card__tooltip-value {
+  padding-left: var(--ag-space-3);
+  color: var(--ag-color-text);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .ag-identity {

@@ -74,13 +74,13 @@
 
                 <div class="ag-field">
                     <label class="ag-field__label" for="maintenance-ends-at">{{ __('admin.maintenance.ends_at_label') }}</label>
-                    <input
+                    <x-ag.date-input
                         id="maintenance-ends-at"
                         class="ag-input"
                         type="datetime-local"
                         wire:model="endsAt"
                         aria-describedby="maintenance-ends-at-help"
-                    >
+                    />
                     <p id="maintenance-ends-at-help" class="ag-field__help">{{ __('admin.maintenance.ends_at_help') }}</p>
                     @error('endsAt')
                         <p class="ag-field__error" role="alert">{{ $message }}</p>

@@ -85,7 +85,7 @@
             <p class="ag-empty__text">{{ $search || $status ? __('admin.customers.empty_filtered_text') : __('admin.customers.empty_text') }}</p>
         </div>
     @else
-        <div class="ag-table-wrap ag-customer-table-wrap" role="region" aria-label="{{ __('admin.customers.title') }}" tabindex="0">
+        <div class="ag-table-wrap ag-customer-table-wrap" role="region" aria-label="{{ __('admin.customers.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status,gotoPage,previousPage,nextPage">
             <table class="ag-table ag-table--customers">
                 <thead>
                     <tr>

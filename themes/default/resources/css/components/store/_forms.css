@@ -251,71 +251,96 @@ textarea.store-input {
   align-items: center;
   gap: var(--theme-space-2);
   margin-bottom: var(--theme-space-2);
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25;
   cursor: pointer;
 }
 
-.store-check input[type="checkbox"],
-.store-choice input[type="radio"] {
+/* shadcn Checkbox and Radio Group items: 1rem controls with a thin input border. */
+:is(.store-check, .store-choice) input:is([type="checkbox"], [type="radio"]) {
   appearance: none;
   -webkit-appearance: none;
   flex: 0 0 auto;
   margin: 0;
-  width: 1.15rem;
-  height: 1.15rem;
-  border: 2px solid var(--theme-color-border-strong);
+  width: 1rem;
+  height: 1rem;
+  border: 1px solid var(--theme-color-border-strong);
+  border-radius: 4px;
   background: var(--theme-color-surface);
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+  color: var(--theme-color-on-accent, #fff);
   display: grid;
   place-content: center;
   cursor: pointer;
+  transition: background-color var(--theme-ease), border-color var(--theme-ease), box-shadow var(--theme-ease);
 }
 
-.store-check input[type="checkbox"] {
-  border-radius: 0.3rem;
-}
-
-.store-choice input[type="radio"] {
+:is(.store-check, .store-choice) input[type="radio"] {
   border-radius: 999px;
 }
 
-.store-check input[type="checkbox"]::after,
-.store-choice input[type="radio"]::after {
+:is(.store-check, .store-choice) input:is([type="checkbox"], [type="radio"])::after {
   content: "";
+  width: 0.875rem;
+  height: 0.875rem;
+  background: currentColor;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center / contain no-repeat;
   transform: scale(0);
 }
 
-.store-choice input[type="radio"]::after {
-  width: 0.55rem;
-  height: 0.55rem;
+:is(.store-check, .store-choice) input[type="radio"]::after {
+  width: 0.5rem;
+  height: 0.5rem;
   border-radius: 999px;
+  mask: none;
+}
+
+:is(.store-check, .store-choice) input:is([type="checkbox"], [type="radio"]):checked {
+  border-color: var(--theme-color-accent);
   background: var(--theme-color-accent);
 }
 
-.store-check input[type="checkbox"]::after {
-  width: 0.28rem;
-  height: 0.5rem;
-  border: solid var(--theme-color-accent);
-  border-width: 0 2px 2px 0;
-  transform: scale(0) rotate(45deg);
-  margin-bottom: 0.15rem;
-}
-
-.store-check input[type="checkbox"]:checked,
-.store-choice input[type="radio"]:checked {
-  border-color: var(--theme-color-accent);
-}
-
-.store-check input[type="checkbox"]:checked::after,
-.store-choice input[type="radio"]:checked::after {
+:is(.store-check, .store-choice) input:is([type="checkbox"], [type="radio"]):checked::after {
   transform: scale(1);
 }
 
-.store-check input[type="checkbox"]:checked::after {
-  transform: scale(1) rotate(45deg);
+/* shadcn Switch for on/off product options: one element, the track is the input, the thumb its ::after. */
+:is(.store-check, .store-choice) input[type="checkbox"][role="switch"] {
+  width: 2rem;
+  height: 1.15rem;
+  padding: 0 1px;
+  place-content: center start;
+  border-color: transparent;
+  border-radius: 999px;
+  background: var(--theme-color-border-strong);
 }
 
-.store-check input[type="checkbox"]:focus-visible,
-.store-choice input[type="radio"]:focus-visible {
+:is(.store-check, .store-choice) input[type="checkbox"][role="switch"]::after {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 999px;
+  background: var(--theme-color-surface);
+  mask: none;
+  transform: none;
+  transition: transform var(--theme-ease);
+}
+
+:is(.store-check, .store-choice) input[type="checkbox"][role="switch"]:checked {
+  border-color: transparent;
+  background: var(--theme-color-accent);
+}
+
+:is(.store-check, .store-choice) input[type="checkbox"][role="switch"]:checked::after {
+  transform: translateX(calc(100% - 2px));
+}
+
+:is(.store-check, .store-choice) input:is([type="checkbox"], [type="radio"]):focus-visible {
   outline: none;
   box-shadow: var(--theme-focus);
+}
+
+:is(.store-check, .store-choice) input:is([type="checkbox"], [type="radio"]):disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }

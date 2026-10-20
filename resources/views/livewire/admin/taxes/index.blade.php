@@ -125,7 +125,7 @@
             @endif
         </div>
     @else
-        <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.taxes.list_title') }}" tabindex="0">
+        <div class="ag-table-wrap ag-table-wrap--mobile-cards" role="region" aria-label="{{ __('admin.taxes.list_title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="filter">
             <table class="ag-table ag-table--mobile-cards ag-table--taxes">
                 <thead><tr>
                     <th>{{ __('admin.taxes.country') }}</th>
