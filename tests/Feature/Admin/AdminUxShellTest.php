@@ -71,7 +71,7 @@ test('admin shell uses account icon trigger and leave admin action', function ()
         ->assertSee(route('storefront.home'), false)
         ->assertSee(__('admin.nav_groups.system'), false)
         ->assertDontSee(__('admin.nav.customer_properties'), false)
-        ->assertSee(__('admin.sidebar_powered_by', ['year' => now()->year]), false)
+        ->assertDontSee(__('admin.sidebar_powered_by', ['year' => now()->year]), false)
         ->assertSee(__('admin.sidebar_links.sponsor'), false)
         ->assertSee(__('admin.sidebar_links.github'), false)
         ->assertSee(__('admin.sidebar_links.documentation'), false)
@@ -542,7 +542,7 @@ test('enabled subscriptions appear under sales navigation', function () {
         ->and($item->group)->toBe('admin.nav_groups.sales');
 });
 
-test('admin navigation groups are collapsible and fulfillment icons are distinct', function () {
+test('admin navigation sections expand related pages and fulfillment icons are distinct', function () {
     installAndEnableModule('downloads');
     installAndEnableModule('inventory');
     installAndEnableModule('shipping');
@@ -558,14 +558,14 @@ test('admin navigation groups are collapsible and fulfillment icons are distinct
     $html = $this->actingAs($this->createStaff())
         ->get(route('admin.dashboard'))
         ->assertOk()
-        ->assertSee('admin-nav__group', false)
+        ->assertSee('admin-nav__trigger', false)
         ->assertSee('aria-controls="nav-group-panel-', false)
-        ->assertSee(__('admin.nav_groups.overview'), false)
         ->getContent();
 
-    expect($html)->toContain('agovena.admin.nav.v6.')
+    expect($html)->toContain('agovena.admin.nav.group.v8.')
         ->and($html)->toContain('x-data="agAdminNavGroup"')
-        ->and($html)->toContain('data-open="true"');
+        ->and($html)->toContain('data-open="false"')
+        ->and($html)->not->toContain('agovena.admin.nav.v6.');
 });
 
 test('admin product pagination uses sized icons not unbounded svg chevrons', function () {

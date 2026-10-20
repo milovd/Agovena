@@ -62,7 +62,7 @@ it('preserves independent permissions, one sidebar destination and exact current
     $sidebar = subscriptionLinks($html, $sidebarXpath);
     expect($sidebar)->toHaveCount(1)
         ->and($sidebar->item(0)->attributes->getNamedItem('href')->nodeValue)->toBe($sidebarHref)
-        ->and(subscriptionLinks($html, '//div[contains(@class, "admin-nav__section") and contains(@data-nav-key, "nav-groupssales")]//a[@href="'.$sidebarHref.'"]'))->toHaveCount(1);
+        ->and(subscriptionLinks($html, '//li[@data-nav-group="adminnav-groupscommerce"]//a[@href="'.$sidebarHref.'"]'))->toHaveCount(1);
 
     $tabs = subscriptionLinks($html, '//nav[@aria-label="'.__('subscriptions::admin.tabs_label').'"]//a');
     expect($tabs)->toHaveCount($tabCount);
@@ -74,7 +74,7 @@ it('preserves independent permissions, one sidebar destination and exact current
 
     if ($subscriptionsStatus === 200 && $planChangesStatus === 200) {
         expect(subscriptionLinks($subscriptions->getContent(), $sidebarXpath.'[@href="/admin/subscriptions" and @aria-current="page"]'))->toHaveCount(1)
-            ->and(subscriptionLinks($changes->getContent(), $sidebarXpath.'[@href="/admin/subscriptions" and contains(@class, "admin-nav__link--active") and not(@aria-current)]'))->toHaveCount(1)
+            ->and(subscriptionLinks($changes->getContent(), $sidebarXpath.'[@href="/admin/subscriptions" and contains(@class, "admin-nav__sub-link--active") and not(@aria-current)]'))->toHaveCount(1)
             ->and(subscriptionLinks($changes->getContent(), '//nav[@aria-label="'.__('subscriptions::admin.tabs_label').'"]//a[@href="'.route('admin.plan-changes.index').'" and @aria-current="page"]'))->toHaveCount(1);
     } else {
         expect(subscriptionLinks($html, $sidebarXpath.'[@aria-current="page"]'))->toHaveCount(1)

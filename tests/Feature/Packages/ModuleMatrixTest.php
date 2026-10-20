@@ -188,7 +188,7 @@ test('events and check-in tabs keep separate permissions and a single usable ful
         @$checkinDocument->loadHTML($checkin->getContent());
         $checkinXpath = new DOMXPath($checkinDocument);
         expect($checkinXpath->query('//nav[@aria-label="'.__('events::admin.tabs_label').'"]//a[@href="'.route('admin.events.checkin').'" and @aria-current="page"]'))->toHaveCount(1);
-        expect($checkinXpath->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events" and contains(@class, "admin-nav__link--active") and not(@aria-current)]'))->toHaveCount(1);
+        expect($checkinXpath->query('//nav[contains(@class, "admin-nav")]//a[@href="/admin/events" and contains(@class, "admin-nav__sub-link--active") and not(@aria-current)]'))->toHaveCount(1);
     }
 })->with([
     'view only' => [['events.view'], 200, 403, '/admin/events', 1],

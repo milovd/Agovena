@@ -9,6 +9,7 @@ return [
     'edit' => 'Edit',
     'delete' => 'Delete',
     'close' => 'Close',
+    'toggle_sidebar' => 'Toggle sidebar',
     'name' => 'Name',
     'email' => 'Email',
     'password' => 'Password',

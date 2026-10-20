@@ -26,75 +26,101 @@ body {
   max-height: 100vh;
   overflow: hidden;
   background: var(--ag-color-bg);
+  transition: grid-template-columns var(--ag-transition);
 }
 
 .admin-shell__backdrop {
   display: none;
 }
 
+/* Sidebar anatomy: brand header with collapse toggle, scrolling navigation with support links. */
 .admin-sidebar {
-  background: var(--ag-color-sidebar);
-  color: var(--ag-color-text);
-  padding: var(--ag-space-5) var(--ag-space-3) var(--ag-space-4);
-  border-right: 1px solid var(--ag-color-border);
   display: flex;
   flex-direction: column;
-  gap: var(--ag-space-2);
+  min-width: 0;
   min-height: 0;
   height: 100%;
   overflow: hidden;
+  background: var(--ag-color-sidebar);
+  color: var(--ag-color-text);
+  border-right: 1px solid var(--ag-color-border);
+}
+
+.admin-sidebar__header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--ag-space-1);
+  padding: var(--ag-space-2);
 }
 
 .admin-sidebar__brand {
   display: flex;
+  flex: 1;
   align-items: center;
-  gap: var(--ag-space-3);
-  margin-bottom: var(--ag-space-4);
-  padding: 0 var(--ag-space-2);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  font-size: 1.05rem;
-  flex-shrink: 0;
+  gap: var(--ag-space-2);
+  min-width: 0;
+  height: 3rem;
+  padding: var(--ag-space-2);
+  border-radius: var(--ag-radius-md);
+  color: inherit;
+  text-decoration: none;
+  transition: background var(--ag-transition);
 }
 
-.admin-sidebar__logo {
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: var(--ag-radius-sm);
-  background: var(--ag-color-primary);
-  flex-shrink: 0;
-  box-shadow: 0 0 0 3px var(--ag-color-primary-soft);
+.admin-sidebar__brand:hover {
+  background: var(--ag-color-sidebar-hover);
 }
 
 .admin-sidebar__logo-img {
-  width: 1.75rem;
-  height: 1.75rem;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
   object-fit: contain;
-  border-radius: var(--ag-radius-sm);
-  background: transparent;
-}
-
-.admin-sidebar__title {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  border-radius: var(--ag-radius-md);
 }
 
 .admin-sidebar__brand-text {
   display: grid;
   min-width: 0;
-  line-height: 1.15;
+  line-height: 1.25;
+}
+
+.admin-sidebar__title {
+  overflow: hidden;
+  font-size: var(--ag-font-size-sm);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-sidebar__subtitle {
-  margin-top: 0.2rem;
   overflow: hidden;
   color: var(--ag-color-sidebar-muted);
   font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.admin-sidebar__toggle {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ag-radius-md);
+  background: transparent;
+  color: var(--ag-color-sidebar-muted);
+  cursor: pointer;
+  transition: background var(--ag-transition), color var(--ag-transition);
+}
+
+.admin-sidebar__toggle:hover {
+  background: var(--ag-color-sidebar-hover);
+  color: var(--ag-color-text);
 }
 
 .admin-sidebar__scroll {
@@ -108,63 +134,131 @@ body {
 }
 
 .admin-nav {
+  display: flex;
   flex: 1 0 auto;
-  min-height: 0;
-  overflow: visible;
-  padding-bottom: var(--ag-space-3);
+  flex-direction: column;
+  padding: var(--ag-space-2);
 }
 
-.admin-sidebar__footer {
-  flex-shrink: 0;
-  margin-top: auto;
-  padding-top: var(--ag-space-3);
-  border-top: 1px solid var(--ag-color-border);
-  display: grid;
-  gap: 0.15rem;
-}
-
-.admin-sidebar__footer-meta {
+.admin-nav__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-1);
+  min-width: 0;
   margin: 0;
-  padding: 0.35rem var(--ag-space-3);
-  color: var(--ag-color-text-muted);
-  overflow: hidden;
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.025em;
-  text-overflow: ellipsis;
-  text-transform: uppercase;
-  white-space: nowrap;
+  padding: 0;
+  list-style: none;
 }
 
+/* Support links are part of the navigation and sit at the end, below the sections when there is room. */
+.admin-sidebar__footer {
+  margin-top: auto;
+  padding-top: var(--ag-space-4);
+}
+
+.admin-nav__link,
 .admin-sidebar__footer-link {
   display: flex;
   align-items: center;
-  gap: var(--ag-space-3);
-  padding: 0.55rem var(--ag-space-3);
-  border-radius: var(--ag-radius-sm);
+  gap: var(--ag-space-2);
+  width: 100%;
+  min-width: 0;
+  height: 2rem;
+  padding: var(--ag-space-2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--ag-radius-md);
+  background: transparent;
   color: inherit;
-  text-decoration: none;
+  font: inherit;
   font-size: var(--ag-font-size-sm);
-  font-weight: 500;
+  line-height: 1.25rem;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
   transition: background var(--ag-transition), color var(--ag-transition);
 }
 
+.admin-nav__link:hover,
 .admin-sidebar__footer-link:hover {
   background: var(--ag-color-sidebar-hover);
 }
 
+.admin-sidebar__brand:focus-visible,
+.admin-sidebar__toggle:focus-visible,
+.admin-nav__link:focus-visible,
+.admin-nav__sub-link:focus-visible,
 .admin-sidebar__footer-link:focus-visible {
   outline: none;
   box-shadow: var(--ag-focus-ring);
 }
 
-.admin-sidebar__footer-link--accent {
-  color: var(--ag-color-primary);
-  font-weight: 600;
-}
-
+.admin-nav__icon,
 .admin-sidebar__footer-icon {
   flex-shrink: 0;
+  width: 1rem;
+  height: 1rem;
+}
+
+.admin-nav__label,
+.admin-sidebar__footer-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.admin-nav__chevron {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: var(--ag-color-sidebar-muted);
+  transition: transform var(--ag-transition);
+}
+
+.admin-nav__item--open > .admin-nav__trigger .admin-nav__chevron {
+  transform: rotate(90deg);
+}
+
+.admin-nav__link--active,
+.admin-nav__sub-link--active {
+  background: var(--ag-color-sidebar-active);
+  color: var(--ag-color-primary);
+  font-weight: 500;
+}
+
+.admin-nav__link--active .admin-nav__icon {
+  color: var(--ag-color-primary);
+}
+
+.admin-nav__sub {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ag-space-1);
+  min-width: 0;
+  margin: var(--ag-space-1) 0 0 0.875rem;
+  padding: 0.125rem 0 0.125rem 0.625rem;
+  border-left: 1px solid var(--ag-color-border);
+  list-style: none;
+}
+
+.admin-nav__sub-link {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 1.75rem;
+  padding: 0 var(--ag-space-2);
+  overflow: hidden;
+  border-radius: var(--ag-radius-md);
+  color: inherit;
+  font-size: var(--ag-font-size-sm);
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background var(--ag-transition), color var(--ag-transition);
+}
+
+.admin-nav__sub-link:hover {
+  background: var(--ag-color-sidebar-hover);
 }
 
 .admin-sidebar__footer-link--sponsor .admin-sidebar__footer-icon {
@@ -179,180 +273,76 @@ body {
   color: var(--ag-color-sidebar-muted);
 }
 
-.admin-nav__section + .admin-nav__section {
-  margin-top: var(--ag-space-3);
+.admin-sidebar__tooltip {
+  position: fixed;
+  z-index: 75;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-text);
+  color: var(--ag-color-surface);
+  font-size: 0.75rem;
+  line-height: 1rem;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translateY(-50%);
+  box-shadow: var(--ag-shadow-sm);
 }
 
-.admin-nav__list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.1rem;
+.admin-sidebar__tooltip[hidden] {
+  display: none;
 }
 
-.admin-nav__link {
-  display: flex;
-  align-items: center;
-  gap: var(--ag-space-3);
-  padding: 0.4rem var(--ag-space-3);
-  border-radius: var(--ag-radius-sm);
-  color: inherit;
-  text-decoration: none;
-  transition: background var(--ag-transition), color var(--ag-transition);
-}
+/* Icon rail on desktop; labels stay available to assistive technology. */
+@media (min-width: 901px) {
+  html[data-sidebar="collapsed"] .admin-shell {
+    grid-template-columns: var(--ag-sidebar-width-icon) 1fr;
+  }
 
-.admin-nav__icon {
-  flex-shrink: 0;
-  opacity: 0.85;
-}
+  html[data-sidebar="collapsed"] .admin-sidebar__header {
+    flex-direction: column;
+  }
 
-.admin-nav__label {
-  min-width: 0;
-}
+  html[data-sidebar="collapsed"] .admin-sidebar__brand,
+  html[data-sidebar="collapsed"] .admin-sidebar__toggle {
+    justify-content: center;
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+  }
 
-.admin-nav__link:focus-visible {
-  outline: none;
-  box-shadow: var(--ag-focus-ring);
-}
+  html[data-sidebar="collapsed"] .admin-sidebar__brand-text,
+  html[data-sidebar="collapsed"] .admin-nav__label,
+  html[data-sidebar="collapsed"] .admin-sidebar__footer-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 
-.admin-nav__link:hover {
-  background: var(--ag-color-sidebar-hover);
-}
+  html[data-sidebar="collapsed"] .admin-nav__chevron,
+  html[data-sidebar="collapsed"] .admin-nav__sub {
+    display: none;
+  }
 
-.admin-nav__link--active {
-  background: var(--ag-color-sidebar-active);
-  color: var(--ag-color-primary);
-  font-weight: 600;
-}
+  html[data-sidebar="collapsed"] .admin-nav__link,
+  html[data-sidebar="collapsed"] .admin-sidebar__footer-link {
+    justify-content: center;
+    width: 2rem;
+    padding: var(--ag-space-2);
+  }
 
-.admin-nav__link--active .admin-nav__icon {
-  opacity: 1;
-  color: var(--ag-color-primary);
-}
+  /* The section holding the current page stays recognisable on the rail. */
+  html[data-sidebar="collapsed"] .admin-nav__trigger--active {
+    background: var(--ag-color-sidebar-active);
+    color: var(--ag-color-primary);
+  }
 
-.admin-nav__link--child {
-  margin-left: var(--ag-space-5);
-  padding-block: 0.35rem;
-  color: var(--ag-color-text-muted);
-  font-size: var(--ag-font-size-sm);
-}
-
-.admin-nav__link--child .admin-nav__icon {
-  width: 1rem;
-  height: 1rem;
-}
-
-.admin-nav__group {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ag-space-2);
-  width: 100%;
-  margin: 0 0 var(--ag-space-1);
-  padding: 0.35rem var(--ag-space-3);
-  border: 0;
-  border-radius: var(--ag-radius-sm);
-  background: transparent;
-  font: inherit;
-  font-size: 0.6875rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-align: left;
-  color: var(--ag-color-sidebar-muted);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.admin-nav__group:hover {
-  background: var(--ag-color-sidebar-hover);
-  color: var(--ag-color-text);
-}
-
-.admin-nav__group:focus-visible {
-  outline: none;
-  box-shadow: var(--ag-focus-ring);
-}
-
-.admin-nav__group-label {
-  min-width: 0;
-}
-
-.admin-nav__group-chevron {
-  flex-shrink: 0;
-  opacity: 0.7;
-  transition: transform var(--ag-transition);
-}
-
-.admin-nav__group--static {
-  cursor: default;
-}
-
-.admin-nav__group--static:hover {
-  background: transparent;
-}
-
-.admin-nav__item--open .admin-nav__branch {
-  transform: rotate(0deg);
-}
-
-.admin-nav__row {
-  display: flex;
-  align-items: center;
-  gap: 0.15rem;
-}
-
-.admin-nav__row .admin-nav__link {
-  flex: 1;
-  min-width: 0;
-}
-
-.admin-nav__toggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  margin-right: 0.35rem;
-  padding: 0;
-  border: 0;
-  border-radius: var(--ag-radius-sm);
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.admin-nav__toggle:hover {
-  background: var(--ag-color-sidebar-hover);
-}
-
-.admin-nav__toggle:focus-visible {
-  outline: none;
-  box-shadow: var(--ag-focus-ring);
-}
-
-.admin-nav__branch {
-  display: block;
-  opacity: 0.7;
-  transform: rotate(-90deg);
-  transition: transform var(--ag-transition);
-}
-
-.admin-nav__item--open .admin-nav__branch {
-  transform: rotate(0deg);
-}
-
-.admin-nav__sub {
-  margin: 0.1rem 0 0.35rem;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.1rem;
-}
-
-.admin-nav__link--branch-active {
-  color: var(--ag-color-primary);
+  html[data-sidebar="collapsed"] .admin-sidebar__scroll {
+    scrollbar-width: none;
+  }
 }
 
 .admin-main {
@@ -903,6 +893,10 @@ body {
 
   .admin-topbar__menu {
     display: inline-flex;
+  }
+
+  .admin-sidebar__toggle {
+    display: none;
   }
 
   .admin-sidebar__close {

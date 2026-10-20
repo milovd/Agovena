@@ -63,17 +63,17 @@ final class PhysicalCapability
             group: 'admin.nav_groups.fulfillment',
             href: '/admin/shipping/methods',
             icon: 'truck',
-            sort: 19,
+            sort: 10,
             permission: 'shipping.view',
         ));
 
         $context->admin()->navigation(new NavigationItem(
             id: 'shipping-returns',
             label: 'admin.nav.returns',
-            group: 'admin.nav_groups.fulfillment',
+            group: 'admin.nav_groups.sales',
             href: '/admin/shipping/returns',
             icon: 'rotate-ccw',
-            sort: 20,
+            sort: 13,
             permission: 'returns.view',
         ));
 

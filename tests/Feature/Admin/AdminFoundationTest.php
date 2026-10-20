@@ -27,16 +27,15 @@ use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
 
-test('admin shell shows grouped catalog, sales, and system navigation', function () {
+test('admin shell shows commerce, fulfillment, online store and system navigation', function () {
     $staff = $this->createStaff();
 
     $this->actingAs($staff)
         ->get('/admin')
         ->assertOk()
-        ->assertSee('Overview', false)
-        ->assertSee(__('admin.nav_groups.catalog'), false)
-        ->assertSee(__('admin.nav_groups.sales'), false)
-        ->assertSee(__('admin.nav_groups.customers'), false)
+        ->assertSee(__('admin.nav_groups.commerce'), false)
+        ->assertSee(__('admin.nav_groups.fulfillment'), false)
+        ->assertSee(__('admin.nav_groups.online_store'), false)
         ->assertSee('Categories', false)
         ->assertSee('System', false)
         ->assertSee('Settings', false)
@@ -47,12 +46,13 @@ test('admin shell shows grouped catalog, sales, and system navigation', function
         ->assertDontSee('Configuration', false);
 });
 
-test('admin sidebar keeps its powered by credit on one line', function () {
+test('admin sidebar labels stay on one line', function () {
     $css = file_get_contents(base_path('resources/css/admin/components/_admin-shell.css'));
-    preg_match('/\.admin-sidebar__footer-meta\s*\{(?<body>.*?)\}/s', $css, $matches);
+    preg_match('/\.admin-nav__link,\s*\.admin-sidebar__footer-link\s*\{(?<body>.*?)\}/s', $css, $links);
+    preg_match('/\.admin-nav__label,\s*\.admin-sidebar__footer-label\s*\{(?<body>.*?)\}/s', $css, $labels);
 
-    expect($matches['body'] ?? '')->toContain('white-space: nowrap')
-        ->and($matches['body'] ?? '')->toContain('text-overflow: ellipsis');
+    expect($links['body'] ?? '')->toContain('white-space: nowrap')
+        ->and($labels['body'] ?? '')->toContain('text-overflow: ellipsis');
 });
 
 test('settings hub lists registered groups from the admin registrar', function () {

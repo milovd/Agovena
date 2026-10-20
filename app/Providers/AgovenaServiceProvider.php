@@ -389,7 +389,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.catalog',
             href: '/admin/products',
             icon: 'package',
-            sort: 10,
+            sort: 20,
             permission: 'products.view',
         ));
 
@@ -399,7 +399,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.catalog',
             href: '/admin/categories',
             icon: 'folders',
-            sort: 15,
+            sort: 21,
             permission: 'categories.view',
         ));
 
@@ -409,7 +409,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.sales',
             href: '/admin/orders',
             icon: 'shopping-bag',
-            sort: 20,
+            sort: 10,
             permission: 'orders.view',
         ));
 
@@ -419,7 +419,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.sales',
             href: '/admin/invoices',
             icon: 'file-text',
-            sort: 25,
+            sort: 11,
             permission: 'invoices.view',
         ));
 
@@ -429,7 +429,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.sales',
             href: '/admin/invoices/design',
             icon: 'palette',
-            sort: 26,
+            sort: 12,
             permission: 'invoices.design',
             hideWhenPermission: 'invoices.view',
         ));
@@ -437,16 +437,16 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'discounts',
             label: 'admin.nav.discounts',
-            group: 'admin.nav_groups.sales',
+            group: 'admin.nav_groups.marketing',
             href: '/admin/discounts',
-            icon: 'file-text',
-            sort: 27,
+            icon: 'percent',
+            sort: 40,
             permission: 'discounts.view',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'customers',
-            label: 'admin.nav.customers',
+            label: 'admin.nav.all_customers',
             group: 'admin.nav_groups.customers',
             href: '/admin/customers',
             icon: 'users',
@@ -460,7 +460,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.customers',
             href: '/admin/customers/properties',
             icon: 'settings',
-            sort: 31,
+            sort: 32,
             permission: 'customers.manage',
             hideWhenPermission: 'customers.view',
         ));
@@ -471,24 +471,24 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.customers',
             href: '/admin/tickets',
             icon: 'file-text',
-            sort: 50,
+            sort: 31,
             permission: 'tickets.view',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'taxes',
             label: 'admin.nav.taxes',
-            group: 'admin.nav_groups.system',
+            group: 'admin.nav_groups.settings',
             href: '/admin/taxes',
             icon: 'coins',
-            sort: 115,
+            sort: 102,
             permission: 'taxes.view',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'settings',
-            label: 'admin.nav.settings',
-            group: 'admin.nav_groups.system',
+            label: 'admin.nav.store_settings',
+            group: 'admin.nav_groups.settings',
             href: '/admin/settings',
             icon: 'settings',
             sort: 100,
@@ -498,20 +498,20 @@ class AgovenaServiceProvider extends ServiceProvider
         $admin->navigation(new NavigationItem(
             id: 'notification-templates',
             label: 'admin.nav.notifications',
-            group: 'admin.nav_groups.system',
+            group: 'admin.nav_groups.settings',
             href: '/admin/notifications',
             icon: 'mail',
-            sort: 55,
+            sort: 103,
             permission: 'notifications.view',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'currencies',
             label: 'admin.nav.currencies',
-            group: 'admin.nav_groups.system',
+            group: 'admin.nav_groups.settings',
             href: '/admin/currencies',
             icon: 'coins',
-            sort: 110,
+            sort: 101,
             permission: 'currencies.view',
         ));
 
@@ -520,8 +520,8 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'admin.nav.modules',
             group: 'admin.nav_groups.integrations',
             href: '/admin/modules',
-            icon: 'package',
-            sort: 119,
+            icon: 'blocks',
+            sort: 110,
             permission: 'modules.view',
         ));
 
@@ -531,7 +531,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.integrations',
             href: '/admin/extensions',
             icon: 'package',
-            sort: 121,
+            sort: 111,
             permission: 'extensions.view',
         ));
 
@@ -541,7 +541,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.integrations',
             href: '/admin/api-tokens',
             icon: 'key',
-            sort: 122,
+            sort: 121,
             permission: 'api.tokens',
         ));
 
@@ -551,7 +551,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.system',
             href: '/admin/backups',
             icon: 'database',
-            sort: 123,
+            sort: 210,
             permission: 'backups.view',
         ));
 
@@ -561,7 +561,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.system',
             href: '/admin/exports',
             icon: 'download',
-            sort: 124,
+            sort: 220,
             permission: 'data.export',
         ));
 
@@ -571,17 +571,17 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.system',
             href: '/admin/maintenance',
             icon: 'circle-alert',
-            sort: 125,
+            sort: 230,
             permission: 'maintenance.manage',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'roles',
             label: 'admin.nav.roles',
-            group: 'admin.nav_groups.system',
+            group: 'admin.nav_groups.settings',
             href: '/admin/roles',
             icon: 'shield',
-            sort: 210,
+            sort: 104,
             permission: 'roles.view',
         ));
 
@@ -590,8 +590,8 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'admin.nav.audit',
             group: 'admin.nav_groups.monitoring',
             href: '/admin/audit',
-            icon: 'file-text',
-            sort: 60,
+            icon: 'scroll-text',
+            sort: 240,
             permission: 'audit.view',
         ));
 
@@ -601,17 +601,17 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.monitoring',
             href: '/admin/email-log',
             icon: 'mail',
-            sort: 62,
+            sort: 250,
             permission: 'notifications.view',
         ));
 
         $admin->navigation(new NavigationItem(
             id: 'referrals',
             label: 'admin.nav.referrals',
-            group: 'admin.nav_groups.sales',
+            group: 'admin.nav_groups.marketing',
             href: '/admin/referrals',
             icon: 'gift',
-            sort: 58,
+            sort: 41,
             permission: 'referrals.view',
         ));
 
@@ -620,8 +620,8 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'admin.nav.webhooks',
             group: 'admin.nav_groups.integrations',
             href: '/admin/webhooks',
-            icon: 'repeat',
-            sort: 61,
+            icon: 'webhook',
+            sort: 120,
             permission: 'webhooks.view',
         ));
 
@@ -631,7 +631,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.monitoring',
             href: '/admin/cron-statistics',
             icon: 'calendar',
-            sort: 63,
+            sort: 260,
             permission: 'settings.view',
         ));
 
@@ -641,7 +641,7 @@ class AgovenaServiceProvider extends ServiceProvider
             group: 'admin.nav_groups.monitoring',
             href: '/admin/failed-jobs',
             icon: 'circle-alert',
-            sort: 64,
+            sort: 270,
             permission: 'jobs.view',
         ));
 
@@ -650,8 +650,8 @@ class AgovenaServiceProvider extends ServiceProvider
             label: 'admin.nav.updates',
             group: 'admin.nav_groups.system',
             href: '/admin/updates',
-            icon: 'repeat',
-            sort: 230,
+            icon: 'circle-arrow-up',
+            sort: 200,
             permission: 'settings.view',
         ));
 

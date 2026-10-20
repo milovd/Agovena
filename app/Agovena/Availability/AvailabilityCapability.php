@@ -49,7 +49,7 @@ final class AvailabilityCapability
             group: 'admin.nav_groups.catalog',
             href: '/admin/inventory',
             icon: 'warehouse',
-            sort: 18,
+            sort: 22,
             permission: 'inventory.view',
         ));
 

@@ -9,6 +9,7 @@ return [
     'edit' => 'Bewerken',
     'delete' => 'Verwijderen',
     'close' => 'Sluiten',
+    'toggle_sidebar' => 'Zijbalk in- of uitklappen',
     'name' => 'Naam',
     'email' => 'E-mail',
     'password' => 'Wachtwoord',

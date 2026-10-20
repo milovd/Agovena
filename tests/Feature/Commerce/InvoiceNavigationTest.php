@@ -43,7 +43,7 @@ it('keeps invoice navigation reachable with each independent permission', functi
     $sidebar = invoiceNavigationLinks($html, '//nav[contains(concat(" ", normalize-space(@class), " "), " admin-nav ")]//a[starts-with(@href, "/admin/invoices")]');
     expect($sidebar)->toHaveCount(1)
         ->and($sidebar->item(0)->attributes->getNamedItem('href')->nodeValue)->toBe($sidebarHref)
-        ->and(invoiceNavigationLinks($html, '//div[contains(@class, "admin-nav__section") and contains(@data-nav-key, "nav-groupssales")]//a[@href="'.$sidebarHref.'"]'))->toHaveCount(1);
+        ->and(invoiceNavigationLinks($html, '//li[@data-nav-group="adminnav-groupscommerce"]//a[@href="'.$sidebarHref.'"]'))->toHaveCount(1);
 
     $tabs = invoiceNavigationLinks($html, '//nav[@aria-label="'.__('admin.invoice_design.tabs_label').'"]//a');
     expect($tabs)->toHaveCount($tabCount);
@@ -58,7 +58,7 @@ it('keeps invoice navigation reachable with each independent permission', functi
 
     if ($listStatus === 200 && $designStatus === 200) {
         expect(invoiceNavigationLinks($list->getContent(), '//nav[contains(@class, "admin-nav")]//a[@href="/admin/invoices" and @aria-current="page"]'))->toHaveCount(1)
-            ->and(invoiceNavigationLinks($design->getContent(), '//nav[contains(@class, "admin-nav")]//a[@href="/admin/invoices" and contains(@class, "admin-nav__link--active") and not(@aria-current)]'))->toHaveCount(1)
+            ->and(invoiceNavigationLinks($design->getContent(), '//nav[contains(@class, "admin-nav")]//a[@href="/admin/invoices" and contains(@class, "admin-nav__sub-link--active") and not(@aria-current)]'))->toHaveCount(1)
             ->and(invoiceNavigationLinks($design->getContent(), '//nav[@aria-label="'.__('admin.invoice_design.tabs_label').'"]//a[@href="'.route('admin.invoices.design').'" and @aria-current="page"]'))->toHaveCount(1);
     } else {
         expect(invoiceNavigationLinks($html, '//nav[contains(@class, "admin-nav")]//a[@aria-current="page" and starts-with(@href, "/admin/invoices")]'))->toHaveCount(1)

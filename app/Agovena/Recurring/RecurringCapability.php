@@ -50,8 +50,8 @@ final class RecurringCapability
             label: 'admin.nav.subscriptions',
             group: 'admin.nav_groups.sales',
             href: '/admin/subscriptions',
-            icon: 'package',
-            sort: 16,
+            icon: 'refresh-cw',
+            sort: 14,
             permission: 'subscriptions.view',
             activeForPaths: ['/admin/plan-changes'],
         ));
@@ -62,7 +62,7 @@ final class RecurringCapability
             group: 'admin.nav_groups.sales',
             href: '/admin/plan-changes',
             icon: 'repeat',
-            sort: 18,
+            sort: 15,
             permission: 'plan-changes.view',
             hideWhenPermission: 'subscriptions.view',
         ));

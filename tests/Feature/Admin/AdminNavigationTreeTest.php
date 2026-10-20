@@ -30,34 +30,23 @@ test('admin navigation nests children under parents and promotes orphans', funct
         ->and($nodes[1]->children)->toBe([]);
 });
 
-test('core admin items are grouped as sibling links instead of nested parents', function () {
-    $byId = collect(app(AdminRegistrar::class)->navigationItems())->keyBy('id');
+test('core admin items register in their sections without parent pages', function () {
+    $items = collect(app(AdminRegistrar::class)->navigationItems());
+    $byId = $items->keyBy('id');
 
-    expect($byId->get('products')?->group)->toBe('admin.nav_groups.catalog')
-        ->and($byId->get('categories')?->group)->toBe('admin.nav_groups.catalog')
-        ->and($byId->get('categories')?->parent)->toBeNull()
-        ->and($byId->get('orders')?->group)->toBe('admin.nav_groups.sales')
-        ->and($byId->get('invoices')?->parent)->toBeNull()
-        ->and($byId->get('discounts')?->parent)->toBeNull()
+    expect($byId->get('orders')?->group)->toBe('admin.nav_groups.sales')
+        ->and($byId->get('shipping-returns')?->group)->toBe('admin.nav_groups.sales')
+        ->and($byId->get('products')?->group)->toBe('admin.nav_groups.catalog')
         ->and($byId->get('customers')?->group)->toBe('admin.nav_groups.customers')
-        ->and($byId->get('customer-properties')?->parent)->toBeNull()
-        ->and($byId->get('theme-customize')?->parent)->toBeNull()
-        ->and($byId->get('navigation')?->parent)->toBeNull()
-        ->and($byId->get('pages')?->parent)->toBeNull()
+        ->and($byId->get('discounts')?->group)->toBe('admin.nav_groups.marketing')
+        ->and($byId->get('referrals')?->group)->toBe('admin.nav_groups.marketing')
         ->and($byId->get('themes')?->group)->toBe('admin.nav_groups.online_store')
-        ->and($byId->get('tickets')?->group)->toBe('admin.nav_groups.customers')
         ->and($byId->get('modules')?->group)->toBe('admin.nav_groups.integrations')
+        ->and($byId->get('settings')?->group)->toBe('admin.nav_groups.settings')
+        ->and($byId->get('roles')?->group)->toBe('admin.nav_groups.settings')
         ->and($byId->get('audit')?->group)->toBe('admin.nav_groups.monitoring')
-        ->and($byId->get('extensions')?->parent)->toBeNull()
-        ->and($byId->get('modules')?->parent)->toBeNull()
-        ->and($byId->get('roles')?->parent)->toBeNull()
-        ->and($byId->get('security')?->parent)->toBeNull()
-        ->and($byId->get('api-tokens')?->parent)->toBeNull()
-        ->and($byId->get('currencies')?->parent)->toBeNull()
-        ->and($byId->get('taxes')?->parent)->toBeNull()
-        ->and($byId->get('email-log')?->parent)->toBeNull()
-        ->and($byId->get('failed-jobs')?->parent)->toBeNull()
-        ->and($byId->get('notification-templates')?->parent)->toBeNull();
+        ->and($byId->get('updates')?->group)->toBe('admin.nav_groups.system')
+        ->and($items->pluck('parent')->filter()->all())->toBe([]);
 });
 
 test('every core navigation item opens for staff holding only its permission', function () {
@@ -89,7 +78,7 @@ test('database backups has one system navigation item', function () {
         ->and($byId->get('backups')?->permission)->toBe('backups.view');
 });
 
-test('admin sidebar renders grouped collapsible sections with sibling links', function () {
+test('admin sidebar renders dropdown sections with their pages', function () {
     installAndEnableModule('inventory');
     installAndEnableModule('shipping');
     app(SyncRegisteredPermissions::class)(force: true);
@@ -98,48 +87,46 @@ test('admin sidebar renders grouped collapsible sections with sibling links', fu
         ->get(route('admin.dashboard'))
         ->assertOk()
         ->assertSee(__('admin.nav.categories'), false)
-        ->assertSee(__('admin.nav_groups.catalog'), false)
-        ->assertSee(__('admin.nav_groups.sales'), false)
+        ->assertSee(__('admin.nav_groups.commerce'), false)
         ->assertSee(__('admin.nav_groups.online_store'), false)
         ->getContent();
 
-    expect($html)->toContain('agovena.admin.nav.v6.')
-        ->and($html)->toMatch('/<button[^>]*id="nav-group-[^"]*overview"/s')
-        ->and($html)->not->toContain('admin-nav__group--static')
-        ->and($html)->not->toContain('admin-nav__toggle');
+    expect($html)->toContain('aria-controls="nav-group-panel-adminnav-groupscatalog"')
+        ->and($html)->toContain('agovena.admin.nav.group.v8.adminnav-groupscatalog')
+        ->and($html)->not->toContain('admin-nav__toggle')
+        ->and($html)->not->toContain('agovena.admin.nav.v6.');
 });
 
-test('the first Admin visit shows overview and catalog and keeps the other groups folded', function () {
-    $html = $this->actingAs($this->createStaff())
-        ->get(route('admin.dashboard'))
-        ->assertOk()
-        ->getContent();
+test('a section opens for the page the staff member is on and stays folded otherwise', function () {
+    $staff = $this->createStaff();
+    $dashboard = $this->actingAs($staff)->get(route('admin.dashboard'))->assertOk()->getContent();
+    $categories = $this->actingAs($staff)->get('/admin/categories')->assertOk()->getContent();
 
-    expect($html)->toMatch('/data-nav-key="agovena\.admin\.nav\.v6\.adminnav-groupsoverview"\s+data-open="true"/s')
-        ->and($html)->toMatch('/data-nav-key="agovena\.admin\.nav\.v6\.adminnav-groupscatalog"\s+data-open="true"/s')
-        ->and($html)->toMatch('/data-nav-key="agovena\.admin\.nav\.v6\.adminnav-groupssales"\s+data-open="false"/s');
+    expect($dashboard)->toMatch('/data-nav-key="agovena\.admin\.nav\.group\.v8\.adminnav-groupscatalog"\s+data-open="false"\s+data-active="false"/s')
+        ->and($categories)->toMatch('/data-nav-key="agovena\.admin\.nav\.group\.v8\.adminnav-groupscatalog"\s+data-open="false"\s+data-active="true"/s')
+        ->and($categories)->toMatch('#class="admin-nav__sub-link admin-nav__sub-link--active"\s+href="/admin/categories"\s+aria-current="page"#');
 });
 
-test('the real Admin groups registered destinations into the approved nine sections', function () {
+test('the real Admin groups registered destinations into the commerce dropdown sections', function () {
     $items = collect(app(AdminRegistrar::class)->navigationItems());
     $groups = AdminNavigation::groupedTree($items);
+    $rendered = $groups->flatMap(fn ($nodes) => array_map(fn (NavigationItem $item) => $item->id, AdminNavigation::groupLinks($nodes)));
 
     expect(AdminNavigation::groupOrder())->toBe([
         'admin.nav_groups.overview',
+        'admin.nav_groups.commerce',
         'admin.nav_groups.catalog',
-        'admin.nav_groups.sales',
         'admin.nav_groups.customers',
+        'admin.nav_groups.marketing',
         'admin.nav_groups.fulfillment',
         'admin.nav_groups.online_store',
         'admin.nav_groups.integrations',
-        'admin.nav_groups.monitoring',
+        'admin.nav_groups.settings',
         'admin.nav_groups.system',
     ])->and($groups->keys()->all())->toBe(AdminNavigation::groupOrder())
-        ->and($groups->flatten(1)->pluck('item.id')->sort()->values()->all())
-        ->toBe($items->pluck('id')->sort()->values()->all())
-        ->and($groups->get('admin.nav_groups.customers')->pluck('item.id'))->toContain('tickets')
-        ->and($groups->get('admin.nav_groups.integrations')->pluck('item.id'))->toContain('modules', 'webhooks')
-        ->and($groups->get('admin.nav_groups.monitoring')->pluck('item.id'))->toContain('audit', 'failed-jobs')
+        ->and($rendered->sort()->values()->all())->toBe($items->pluck('id')->sort()->values()->all())
+        ->and($groups->get('admin.nav_groups.commerce')->pluck('item.id'))->toContain('orders', 'invoices', 'shipping-returns')
+        ->and($groups->get('admin.nav_groups.system')->pluck('item.id'))->toContain('updates', 'audit', 'failed-jobs')
         ->and($groups->get('admin.nav_groups.online_store')->pluck('item.id'))->toContain('pages');
 });
 
@@ -156,7 +143,7 @@ test('legacy Module group keys resolve before grouping without rewriting their r
         'admin.nav_groups.customers',
         'admin.nav_groups.fulfillment',
         'admin.nav_groups.online_store',
-        'admin.nav_groups.system',
+        'admin.nav_groups.settings',
     ])->and($groups->flatten(1)->pluck('item.id')->sort()->values()->all())
         ->toBe($items->pluck('id')->sort()->values()->all())
         ->and($items[0]->group)->toBe('admin.nav_groups.operations');

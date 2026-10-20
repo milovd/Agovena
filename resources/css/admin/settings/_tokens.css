@@ -18,7 +18,7 @@
   --ag-color-info: #0284c7;
   --ag-color-info-soft: rgb(2 132 199 / 0.12);
   --ag-color-support: #db2777;
-  --ag-color-sidebar: #ffffff;
+  --ag-color-sidebar: var(--ag-color-surface);
   --ag-color-sidebar-muted: #64748b;
   --ag-color-sidebar-hover: rgb(15 23 42 / 0.05);
   --ag-color-sidebar-active: rgb(21 94 239 / 0.1);
@@ -48,7 +48,8 @@
   --ag-font-size-lg: 1.125rem;
   --ag-font-size-xl: 1.25rem;
   --ag-line-height: 1.5;
-  --ag-sidebar-width: 15.5rem;
+  --ag-sidebar-width: 16rem;
+  --ag-sidebar-width-icon: 3rem;
   --ag-topbar-height: 4.25rem;
   --ag-content-max: 80rem;
   --ag-control-height: 2.375rem;

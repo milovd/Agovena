@@ -21,7 +21,7 @@
   --ag-color-info: #0284c7;
   --ag-color-info-soft: rgb(2 132 199 / 0.12);
   --ag-color-support: #db2777;
-  --ag-color-sidebar: #ffffff;
+  --ag-color-sidebar: var(--ag-color-surface);
   --ag-color-sidebar-muted: #64748b;
   --ag-color-sidebar-hover: rgb(15 23 42 / 0.05);
   --ag-color-sidebar-active: rgb(21 94 239 / 0.1);
@@ -41,7 +41,8 @@
   --ag-color-tile-indigo-soft: rgb(79 70 229 / 0.12);
   --ag-color-tile-cyan: #0891b2;
   --ag-color-tile-cyan-soft: rgb(8 145 178 / 0.12);
-  --ag-sidebar-width: 14.5rem;
+  --ag-sidebar-width: 16rem;
+  --ag-sidebar-width-icon: 3rem;
   --ag-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.04);
   --ag-shadow-md: 0 6px 20px rgb(15 23 42 / 0.06);
   --ag-focus-ring: 0 0 0 3px rgb(21 94 239 / 0.35);
@@ -56,7 +57,7 @@
   --ag-color-bg: #0b1220;
   --ag-color-surface: #111827;
   --ag-color-surface-muted: #1f2937;
-  --ag-color-border: #243044;
+  --ag-color-border: #1f2a3d;
   --ag-color-border-strong: #334155;
   --ag-color-text: #f8fafc;
   --ag-color-text-muted: #94a3b8;
@@ -69,7 +70,7 @@
   --ag-color-info: #38bdf8;
   --ag-color-info-soft: rgb(56 189 248 / 0.14);
   --ag-color-support: #f472b6;
-  --ag-color-sidebar: #0f172a;
+  --ag-color-sidebar: var(--ag-color-surface);
   --ag-color-sidebar-muted: #94a3b8;
   --ag-color-sidebar-hover: rgb(148 163 184 / 0.1);
   --ag-color-sidebar-active: rgb(96 165 250 / 0.16);
@@ -89,7 +90,8 @@
   --ag-color-tile-indigo-soft: rgb(165 180 252 / 0.16);
   --ag-color-tile-cyan: #67e8f9;
   --ag-color-tile-cyan-soft: rgb(103 232 249 / 0.16);
-  --ag-sidebar-width: 14.5rem;
+  --ag-sidebar-width: 16rem;
+  --ag-sidebar-width-icon: 3rem;
   --ag-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
   --ag-shadow-md: 0 10px 28px rgb(0 0 0 / 0.4);
   --ag-focus-ring: 0 0 0 3px rgb(96 165 250 / 0.4);

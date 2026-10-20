@@ -18,6 +18,11 @@
             } catch (e) {
                 document.documentElement.setAttribute('data-theme', 'light');
             }
+            try {
+                if (localStorage.getItem('agovena.admin.sidebar') === 'collapsed') {
+                    document.documentElement.setAttribute('data-sidebar', 'collapsed');
+                }
+            } catch (e) {}
         })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -37,7 +42,7 @@
     @vite($adminAssets)
     @livewireStyles
 </head>
-<body class="admin-app" x-data="agAdminShell" @keydown.escape.window="closeNav()">
+<body class="admin-app" x-data="agAdminShell" @keydown.escape.window="closeNav()" @keydown.window="onShortcut($event)" @agovena-sidebar-expand.window="expandSidebar()">
     <a class="admin-skip-link" href="#main">{{ __('admin.skip_to_content') }}</a>
 
     <div
@@ -50,21 +55,39 @@
         <aside
             class="admin-sidebar"
             id="admin-sidebar"
+            data-collapsible="icon"
             aria-label="{{ __('admin.sidebar_aria') }}"
             x-ref="sidebar"
             :role="navOpen && isMobile ? 'dialog' : null"
             :aria-modal="navOpen && isMobile ? 'true' : null"
             :inert="isMobile && !navOpen"
             @keydown.tab="trapNavFocus($event)"
+            @mouseover="showTooltip($event)"
+            @mouseout="hideTooltip()"
+            @focusin="showTooltip($event)"
+            @focusout="hideTooltip()"
         >
-            <div class="admin-sidebar__brand">
-                <img class="admin-sidebar__logo-img" src="/{{ \App\Agovena\Theme\StorefrontBrand::BUNDLED_LOGO }}" alt="{{ __('admin.product_name') }}">
-                <span class="admin-sidebar__brand-text">
-                    <span class="admin-sidebar__title">{{ __('admin.product_name') }}</span>
-                    @if (! empty($siteName) && strcasecmp($siteName, __('admin.product_name')) !== 0)
-                        <span class="admin-sidebar__subtitle">{{ $siteName }}</span>
-                    @endif
-                </span>
+            <div class="admin-sidebar__header">
+                <a class="admin-sidebar__brand" href="{{ route('admin.dashboard') }}" data-tooltip="{{ __('admin.product_name') }}">
+                    <img class="admin-sidebar__logo-img" src="/{{ \App\Agovena\Theme\StorefrontBrand::BUNDLED_LOGO }}" alt="">
+                    <span class="admin-sidebar__brand-text">
+                        <span class="admin-sidebar__title">{{ __('admin.product_name') }}</span>
+                        @if (! empty($siteName) && strcasecmp($siteName, __('admin.product_name')) !== 0)
+                            <span class="admin-sidebar__subtitle">{{ $siteName }}</span>
+                        @endif
+                    </span>
+                </a>
+                <button
+                    type="button"
+                    class="admin-sidebar__toggle"
+                    @click="toggleSidebar()"
+                    aria-controls="admin-sidebar"
+                    :aria-expanded="(!collapsed).toString()"
+                    aria-label="{{ __('common.toggle_sidebar') }}"
+                    data-tooltip="{{ __('common.toggle_sidebar') }}"
+                >
+                    <x-ag.icon name="panel-left" :size="16" />
+                </button>
                 <button
                     type="button"
                     class="admin-sidebar__close js-admin-drawer-close"
@@ -75,38 +98,41 @@
                     <span class="visually-hidden">{{ __('common.close') }}</span>
                 </button>
             </div>
+            @php
+                $supportLinks = config('agovena.admin.support_links', []);
+                $footerLinks = [
+                    ['key' => 'sponsor', 'icon' => 'heart'],
+                    ['key' => 'github', 'icon' => 'star'],
+                    ['key' => 'documentation', 'icon' => 'book-open'],
+                ];
+            @endphp
             <div class="admin-sidebar__scroll">
                 <nav class="admin-nav" aria-label="{{ __('admin.nav_aria') }}">
                     @include('partials.admin.nav')
+                    <div class="admin-sidebar__footer">
+                        <ul class="admin-nav__list" role="list">
+                            @foreach ($footerLinks as $footerLink)
+                                @php $footerHref = $supportLinks[$footerLink['key']] ?? null; @endphp
+                                @if (is_string($footerHref) && $footerHref !== '')
+                                    <li class="admin-nav__item">
+                                        <a
+                                            class="admin-sidebar__footer-link admin-sidebar__footer-link--{{ $footerLink['key'] }}"
+                                            href="{{ $footerHref }}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            data-tooltip="{{ __('admin.sidebar_links.'.$footerLink['key']) }}"
+                                        >
+                                            <x-ag.icon name="{{ $footerLink['icon'] }}" class="admin-sidebar__footer-icon" :size="16" />
+                                            <span class="admin-sidebar__footer-label">{{ __('admin.sidebar_links.'.$footerLink['key']) }}</span>
+                                        </a>
+                                    </li>
+                                @endif
+                            @endforeach
+                        </ul>
+                    </div>
                 </nav>
-                <div class="admin-sidebar__footer">
-                @php
-                    $supportLinks = config('agovena.admin.support_links', []);
-                    $footerLinks = [
-                        ['key' => 'sponsor', 'icon' => 'heart', 'class' => 'sponsor'],
-                        ['key' => 'github', 'icon' => 'star', 'class' => 'github'],
-                        ['key' => 'documentation', 'icon' => 'book-open', 'class' => 'documentation'],
-                    ];
-                @endphp
-                <p class="admin-sidebar__footer-meta">
-                    {{ __('admin.sidebar_powered_by', ['year' => now()->year]) }}
-                </p>
-                @foreach ($footerLinks as $footerLink)
-                    @php $footerHref = $supportLinks[$footerLink['key']] ?? null; @endphp
-                    @if (is_string($footerHref) && $footerHref !== '')
-                        <a
-                            class="admin-sidebar__footer-link admin-sidebar__footer-link--{{ $footerLink['class'] }}"
-                            href="{{ $footerHref }}"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                        >
-                            <x-ag.icon name="{{ $footerLink['icon'] }}" class="admin-sidebar__footer-icon" :size="22" />
-                            <span>{{ __('admin.sidebar_links.'.$footerLink['key']) }}</span>
-                        </a>
-                    @endif
-                @endforeach
-                </div>
             </div>
+            <div class="admin-sidebar__tooltip" x-ref="navTooltip" aria-hidden="true" hidden></div>
         </aside>
 
         <div class="admin-main" :inert="isMobile && navOpen">

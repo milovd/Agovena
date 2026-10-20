@@ -38,19 +38,38 @@ final class AdminNavigation
         'plan-changes',
     ];
 
-    /** @var array<string, string> */
-    private const LEGACY_GROUPS = [
-        'admin.nav_groups.appearance' => 'online_store',
-        'admin.nav_groups.operations' => 'fulfillment',
-        'admin.nav_groups.commerce' => 'catalog',
-        'admin.nav_groups.services' => 'fulfillment',
+    /**
+     * Registered group key => sidebar section. Packages keep their registered keys; the sidebar
+     * shows commerce-style dropdown sections that are never pages themselves.
+     *
+     * @var array<string, string>
+     */
+    private const DISPLAY_GROUPS = [
+        'admin.nav_groups.sales' => 'commerce',
         'admin.nav_groups.support' => 'customers',
-        'admin.nav_groups.configuration' => 'system',
+        'admin.nav_groups.operations' => 'fulfillment',
+        'admin.nav_groups.services' => 'fulfillment',
+        'admin.nav_groups.appearance' => 'online_store',
+        'admin.nav_groups.configuration' => 'settings',
+        'admin.nav_groups.monitoring' => 'system',
         'admin.nav_groups.administration' => 'system',
     ];
 
+    /** @var array<string, string> */
+    private const GROUP_ICONS = [
+        'admin.nav_groups.commerce' => 'shopping-bag',
+        'admin.nav_groups.catalog' => 'package',
+        'admin.nav_groups.customers' => 'users',
+        'admin.nav_groups.marketing' => 'percent',
+        'admin.nav_groups.fulfillment' => 'truck',
+        'admin.nav_groups.online_store' => 'store',
+        'admin.nav_groups.integrations' => 'blocks',
+        'admin.nav_groups.settings' => 'settings',
+        'admin.nav_groups.system' => 'server',
+    ];
+
     /**
-     * Canonical sidebar group order (translation keys).
+     * Canonical sidebar section order (translation keys). The overview section holds plain links.
      *
      * @return list<string>
      */
@@ -58,15 +77,45 @@ final class AdminNavigation
     {
         return [
             'admin.nav_groups.overview',
+            'admin.nav_groups.commerce',
             'admin.nav_groups.catalog',
-            'admin.nav_groups.sales',
             'admin.nav_groups.customers',
+            'admin.nav_groups.marketing',
             'admin.nav_groups.fulfillment',
             'admin.nav_groups.online_store',
             'admin.nav_groups.integrations',
-            'admin.nav_groups.monitoring',
+            'admin.nav_groups.settings',
             'admin.nav_groups.system',
         ];
+    }
+
+    /** Whether a section renders as a dropdown; the overview section holds plain links such as the dashboard. */
+    public static function groupHasLabel(string $group): bool
+    {
+        return $group !== 'admin.nav_groups.overview';
+    }
+
+    /**
+     * Icon for a dropdown section; package-defined sections use their first item's icon.
+     *
+     * @param  Collection<int, AdminNavigationNode>  $nodes
+     */
+    public static function groupIcon(string $group, Collection $nodes): string
+    {
+        $first = $nodes->first();
+
+        return self::GROUP_ICONS[$group] ?? ($first instanceof AdminNavigationNode ? $first->item->icon : null) ?? 'blocks';
+    }
+
+    /**
+     * The section's links in order, with any package-defined children directly after their parent.
+     *
+     * @param  Collection<int, AdminNavigationNode>  $nodes
+     * @return list<NavigationItem>
+     */
+    public static function groupLinks(Collection $nodes): array
+    {
+        return $nodes->flatMap(static fn (AdminNavigationNode $node): array => [$node->item, ...$node->children])->values()->all();
     }
 
     /**
@@ -163,9 +212,9 @@ final class AdminNavigation
 
     private static function displayGroup(NavigationItem $item): string
     {
-        $legacyGroup = self::LEGACY_GROUPS[$item->group] ?? null;
+        $section = self::DISPLAY_GROUPS[$item->group] ?? null;
 
-        return $legacyGroup === null ? $item->group : 'admin.nav_groups.'.$legacyGroup;
+        return $section === null ? $item->group : 'admin.nav_groups.'.$section;
     }
 
     /** @param  Collection<int, NavigationItem>|null  $visibleItems */

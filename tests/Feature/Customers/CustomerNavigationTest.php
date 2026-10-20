@@ -43,7 +43,7 @@ it('keeps customer navigation reachable with each independent permission', funct
     $sidebar = customerNavigationLinks($html, '//nav[contains(concat(" ", normalize-space(@class), " "), " admin-nav ")]//a[starts-with(@href, "/admin/customers")]');
     expect($sidebar)->toHaveCount(1)
         ->and($sidebar->item(0)->attributes->getNamedItem('href')->nodeValue)->toBe($sidebarHref)
-        ->and(customerNavigationLinks($html, '//div[contains(@class, "admin-nav__section") and contains(@data-nav-key, "nav-groupscustomers")]//a[@href="'.$sidebarHref.'"]'))->toHaveCount(1);
+        ->and(customerNavigationLinks($html, '//li[@data-nav-group="adminnav-groupscustomers"]//a[@href="'.$sidebarHref.'"]'))->toHaveCount(1);
 
     $tabs = customerNavigationLinks($html, '//nav[@aria-label="'.__('admin.customers.tabs_label').'"]//a');
     expect($tabs)->toHaveCount($tabCount);
@@ -58,7 +58,7 @@ it('keeps customer navigation reachable with each independent permission', funct
 
     if ($listStatus === 200 && $propertiesStatus === 200) {
         expect(customerNavigationLinks($list->getContent(), '//nav[contains(@class, "admin-nav")]//a[@href="/admin/customers" and @aria-current="page"]'))->toHaveCount(1)
-            ->and(customerNavigationLinks($properties->getContent(), '//nav[contains(@class, "admin-nav")]//a[@href="/admin/customers" and contains(@class, "admin-nav__link--active") and not(@aria-current)]'))->toHaveCount(1)
+            ->and(customerNavigationLinks($properties->getContent(), '//nav[contains(@class, "admin-nav")]//a[@href="/admin/customers" and contains(@class, "admin-nav__sub-link--active") and not(@aria-current)]'))->toHaveCount(1)
             ->and(customerNavigationLinks($properties->getContent(), '//nav[@aria-label="'.__('admin.customers.tabs_label').'"]//a[@href="'.route('admin.customers.properties').'" and @aria-current="page"]'))->toHaveCount(1);
     } else {
         expect(customerNavigationLinks($html, '//nav[contains(@class, "admin-nav")]//a[@aria-current="page" and starts-with(@href, "/admin/customers")]'))->toHaveCount(1)
