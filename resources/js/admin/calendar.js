@@ -398,6 +398,8 @@ function markReady() {
 
 export function registerCalendar() {
     if (window.agCalendarRegistered) return;
+    // Keep one native picker when the browser cannot hide its built-in calendar button.
+    if (!window.CSS?.supports?.('selector(input::-webkit-calendar-picker-indicator)')) return;
     window.agCalendarRegistered = true;
 
     markReady();
