@@ -2080,7 +2080,7 @@ return [
         'choices' => 'Choices',
         'choices_help' => 'One choice per line as value:Label or value:Label=price in minor units.',
         'choices_required' => 'This option type needs at least one choice.',
-        'slider_help' => 'Slider: each choice is one stop, in the order listed (for example 2:2 GB, 4:4 GB=300, 8:8 GB=700). The first stop is preselected.',
+        'slider_help' => 'Slider: each choice is one stop, in the order listed (for example 2:2 GB, 4:4 GB=300, 8:8 GB=700). Required sliders start on the first stop; optional sliders start at None.',
         'price_adjustment' => 'Price adjustment (minor units)',
         'price_adjustment_help' => 'Added to the product price when this option is selected.',
         'max_length' => 'Maximum characters',

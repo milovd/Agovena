@@ -2080,7 +2080,7 @@ return [
         'choices' => 'Keuzes',
         'choices_help' => 'Eén keuze per regel als waarde:Label of waarde:Label=prijs in kleinste eenheden.',
         'choices_required' => 'Dit optietype heeft minstens één keuze nodig.',
-        'slider_help' => 'Schuifregelaar: elke keuze is een stap, in de volgorde van de lijst (bijvoorbeeld 2:2 GB, 4:4 GB=300, 8:8 GB=700). De eerste stap is vooraf geselecteerd.',
+        'slider_help' => 'Schuifregelaar: elke keuze is een stap, in de volgorde van de lijst (bijvoorbeeld 2:2 GB, 4:4 GB=300, 8:8 GB=700). Verplichte schuifregelaars starten op de eerste stap; optionele starten op Geen.',
         'price_adjustment' => 'Prijsaanpassing (kleinste eenheden)',
         'price_adjustment_help' => 'Wordt bij de productprijs opgeteld als deze optie is gekozen.',
         'max_length' => 'Maximaal aantal tekens',

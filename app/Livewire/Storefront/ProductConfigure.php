@@ -12,6 +12,7 @@ use App\Agovena\Catalog\Options\ProductOptionChoicesUnavailable;
 use App\Agovena\Catalog\Options\ProductOptionPricer;
 use App\Agovena\Catalog\Options\ProductOptionValidator;
 use App\Agovena\Theme\ThemeManager;
+use App\Enums\ProductOptionType;
 use App\Models\Product;
 use App\Models\ProductOption;
 use Livewire\Attributes\Locked;
@@ -54,6 +55,24 @@ final class ProductConfigure extends Component
                 default => '',
             };
         }
+
+        $this->synchronizeDynamicSliders($product, $options, $configurableOptions);
+    }
+
+    public function updatedOptionSelections(mixed $value, ?string $key = null): void
+    {
+        // A client-supplied slider value still goes through the normal checkout validator.
+        // Only reconcile other sliders whose available stops changed with a parent option.
+        if ($key === null) {
+            return;
+        }
+
+        $this->synchronizeDynamicSliders(
+            app(GetStorefrontProduct::class)->handle($this->slug),
+            app(ProductOptionValidator::class),
+            app(ConfigurableProductOptionResolver::class),
+            $key,
+        );
     }
 
     public function incrementQuantity(): void
@@ -157,11 +176,49 @@ final class ProductConfigure extends Component
     }
 
     /**
-     * A slider always shows a position, so it starts on its first active stop
-     * (the same value the customer would get by leaving the thumb untouched).
+     * Keep dependent slider state consistent with the stops shown after a parent option changes.
+     * Required sliders use the first available stop; optional sliders return to None rather than
+     * silently opting the customer into another paid extra.
+     */
+    private function synchronizeDynamicSliders(
+        Product $product,
+        ProductOptionValidator $options,
+        ConfigurableProductOptionResolver $configurableOptions,
+        ?string $changedKey = null,
+    ): void {
+        foreach ($options->activeOptions($product) as $option) {
+            if ($option->type !== ProductOptionType::Slider || $option->key === $changedKey) {
+                continue;
+            }
+
+            try {
+                $choices = $configurableOptions->choices($product, $option, $this->optionSelections);
+            } catch (ProductOptionChoicesUnavailable) {
+                $choices = [];
+            }
+            if ($choices === null) {
+                continue;
+            }
+
+            $current = $this->optionSelections[$option->key] ?? '';
+            if (in_array($current, array_column($choices, 'value'), true)) {
+                continue;
+            }
+            $this->optionSelections[$option->key] = $option->is_required ? ($choices[0]['value'] ?? '') : '';
+            $this->resetValidation('optionSelections.'.$option->key);
+        }
+    }
+
+    /**
+     * Required sliders start on the first active stop. Optional sliders have a None stop.
      */
     private function firstSliderStop(Product $product, ProductOption $option, ConfigurableProductOptionResolver $configurableOptions): string
     {
+        // Optional extras must never incur a charge until the customer selects a stop.
+        if (! $option->is_required) {
+            return '';
+        }
+
         try {
             $dynamicChoices = $configurableOptions->choices($product, $option, $this->optionSelections);
         } catch (ProductOptionChoicesUnavailable) {

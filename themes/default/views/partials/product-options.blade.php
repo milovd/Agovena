@@ -19,6 +19,9 @@
                                 ? '+'.\App\Support\MoneyFormatter::formatDisplay((int) $choice['price_adjustment_amount'], $product->currency)
                                 : '',
                         ]);
+                        if (! $option->is_required) {
+                            $sliderStops->prepend(['value' => '', 'label' => __('common.none'), 'price' => '']);
+                        }
                         $sliderSelected = (string) ($optionSelections[$option->key] ?? '');
                         $sliderFound = $sliderStops->search(static fn (array $stop): bool => $stop['value'] === $sliderSelected);
                         $sliderIndex = $sliderFound === false ? 0 : (int) $sliderFound;
