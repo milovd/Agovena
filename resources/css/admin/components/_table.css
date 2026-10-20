@@ -950,7 +950,7 @@ a.ag-table__name:focus-visible {
   position: absolute;
   z-index: 40;
   /* Centered on the header row: wrap border plus half of what the 2rem button leaves of the row. */
-  top: calc(1px + (var(--ag-table-head-height) - 2rem) / 2);
+  top: calc(1px + (var(--ag-bulk-head-height, var(--ag-table-head-height)) - 2rem) / 2);
   right: var(--ag-space-3);
 }
 .ag-table th.ag-bulk-selection__header-actions { text-align: right; }

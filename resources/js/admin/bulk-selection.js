@@ -15,9 +15,27 @@ export function registerBulkSelection(Alpine) {
         // Nested components (the actions menu) evaluate these getters too, where $root is their
         // own element; keep a reference to the selection root instead.
         bulkRoot: null,
+        headerObserver: null,
 
         init() {
             this.bulkRoot = this.$el;
+            const header = this.bulkRoot.querySelector('thead tr');
+            if (!header) return;
+
+            // The counter wraps on narrow screens. Anchor the menu to the real header height,
+            // not the desktop minimum, without moving it into the table's clipping boundary.
+            const measure = () => {
+                this.bulkRoot.style.setProperty('--ag-bulk-head-height', `${header.getBoundingClientRect().height}px`);
+            };
+            measure();
+            if (typeof ResizeObserver !== 'undefined') {
+                this.headerObserver = new ResizeObserver(measure);
+                this.headerObserver.observe(header);
+            }
+        },
+
+        destroy() {
+            this.headerObserver?.disconnect();
         },
 
         get bulkData() {
