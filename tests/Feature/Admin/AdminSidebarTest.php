@@ -185,3 +185,38 @@ test('dark mode card borders are as quiet as light mode card borders', function 
 
     expect(abs($darkRatio - $lightRatio))->toBeLessThan(0.03);
 });
+
+/** CIELAB lightness (L*) of a #rrggbb colour. */
+function adminTokenLightness(string $hex): float
+{
+    $y = adminTokenLuminance($hex);
+
+    return 116 * ($y > 0.008856 ? $y ** (1 / 3) : 7.787 * $y + 16 / 116) - 16;
+}
+
+test('light mode cards stand clearly apart from the page background', function (): void {
+    $css = (string) file_get_contents(base_path('themes/default/resources/css/admin/_tokens.css'));
+    $light = substr($css, 0, (int) strpos($css, '[data-theme="dark"]'));
+    preg_match('/--ag-color-bg:\s*(#[0-9a-fA-F]{6});/', $light, $bg);
+    preg_match('/--ag-color-surface:\s*(#[0-9a-fA-F]{6});/', $light, $surface);
+    preg_match('/--ag-color-bg:\s*(#[0-9a-fA-F]{6});/', (string) file_get_contents(resource_path('css/admin/settings/_tokens.css')), $coreBg);
+
+    // A bright screen flattens small lightness steps: white cards need roughly double the dark-mode step.
+    expect(adminTokenLightness($surface[1]) - adminTokenLightness($bg[1]))->toBeGreaterThan(6.0)
+        ->and($coreBg[1])->toBe($bg[1]);
+});
+
+test('the sidebar header and topbar form one band without a divider between them', function (): void {
+    $css = (string) file_get_contents(resource_path('css/admin/components/_admin-shell.css'));
+    preg_match('/^\.admin-sidebar \{(?<body>[^}]*)\}/m', $css, $sidebar);
+    preg_match('/^\.admin-sidebar__header \{(?<body>[^}]*)\}/m', $css, $header);
+    preg_match('/^\.admin-sidebar__scroll \{(?<body>[^}]*)\}/m', $css, $scroll);
+    preg_match('/^\.admin-topbar \{(?<body>[^}]*)\}/m', $css, $topbar);
+
+    expect($sidebar['body'])->not->toContain('border-right')
+        ->and($scroll['body'])->toContain('border-right: 1px solid var(--ag-color-border);')
+        ->and($header['body'])->toContain('height: var(--ag-topbar-height);')
+        ->and($topbar['body'])->toContain('height: var(--ag-topbar-height);')
+        ->and($topbar['body'])->toContain('background: var(--ag-color-surface);')
+        ->and($css)->toMatch('/html\[data-sidebar="collapsed"\] \.admin-sidebar__header:hover \.admin-sidebar__toggle/');
+});

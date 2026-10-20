@@ -43,15 +43,28 @@ body {
   overflow: hidden;
   background: var(--ag-color-sidebar);
   color: var(--ag-color-text);
-  border-right: 1px solid var(--ag-color-border);
 }
 
+/* Same height and surface as the topbar: together they form one band. The sidebar divider
+   starts below it and meets the topbar border in a corner. */
 .admin-sidebar__header {
+  position: relative;
   display: flex;
   flex-shrink: 0;
   align-items: center;
   gap: var(--ag-space-1);
-  padding: var(--ag-space-2);
+  height: var(--ag-topbar-height);
+  padding: 0 var(--ag-space-2);
+}
+
+.admin-sidebar__header::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  background: var(--ag-color-border);
 }
 
 .admin-sidebar__brand {
@@ -131,6 +144,9 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  border-right: 1px solid var(--ag-color-border);
+  scrollbar-color: var(--ag-color-border-strong) transparent;
+  scrollbar-width: thin;
 }
 
 .admin-nav {
@@ -299,7 +315,7 @@ body {
   }
 
   html[data-sidebar="collapsed"] .admin-sidebar__header {
-    flex-direction: column;
+    justify-content: center;
   }
 
   html[data-sidebar="collapsed"] .admin-sidebar__brand,
@@ -309,6 +325,25 @@ body {
     width: 2rem;
     height: 2rem;
     padding: 0;
+  }
+
+  /* On the rail the toggle takes the logo's place when the header is hovered or focused. */
+  html[data-sidebar="collapsed"] .admin-sidebar__toggle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  html[data-sidebar="collapsed"] .admin-sidebar__header:hover .admin-sidebar__toggle,
+  html[data-sidebar="collapsed"] .admin-sidebar__toggle:focus-visible {
+    opacity: 1;
+  }
+
+  html[data-sidebar="collapsed"] .admin-sidebar__header:hover .admin-sidebar__logo-img,
+  html[data-sidebar="collapsed"] .admin-sidebar__header:has(.admin-sidebar__toggle:focus-visible) .admin-sidebar__logo-img {
+    opacity: 0;
   }
 
   html[data-sidebar="collapsed"] .admin-sidebar__brand-text,
@@ -361,14 +396,13 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: var(--ag-space-4);
-  min-height: var(--ag-topbar-height);
+  height: var(--ag-topbar-height);
   padding: 0 var(--ag-space-6);
-  background: color-mix(in srgb, var(--ag-color-surface) 92%, transparent);
+  background: var(--ag-color-surface);
   border-bottom: 1px solid var(--ag-color-border);
   position: sticky;
   top: 0;
   z-index: 10;
-  backdrop-filter: blur(10px);
   flex-shrink: 0;
   color: var(--ag-color-text);
 }
@@ -910,7 +944,6 @@ body {
     height: 100%;
     /* Above floating page controls (bulk actions, comboboxes, menus), below modals. */
     z-index: 70;
-    border-right: 0;
     border-left: 1px solid var(--ag-color-border);
     transform: translateX(105%);
     transition: transform var(--ag-transition);
@@ -921,6 +954,15 @@ body {
   .admin-shell--nav-open .admin-sidebar {
     transform: translateX(0);
     visibility: visible;
+  }
+
+  /* The drawer has its own edge; the desktop divider and its corner pixel do not apply. */
+  .admin-sidebar__scroll {
+    border-right: 0;
+  }
+
+  .admin-sidebar__header::after {
+    display: none;
   }
 
   .admin-shell__backdrop {
