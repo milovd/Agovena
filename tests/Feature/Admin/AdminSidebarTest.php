@@ -206,17 +206,62 @@ test('light mode cards stand clearly apart from the page background', function (
         ->and($coreBg[1])->toBe($bg[1]);
 });
 
-test('the sidebar header and topbar form one band without a divider between them', function (): void {
+test('the sidebar keeps its divider beside the topbar and stacks the collapse toggle under the logo on the rail', function (): void {
     $css = (string) file_get_contents(resource_path('css/admin/components/_admin-shell.css'));
     preg_match('/^\.admin-sidebar \{(?<body>[^}]*)\}/m', $css, $sidebar);
-    preg_match('/^\.admin-sidebar__header \{(?<body>[^}]*)\}/m', $css, $header);
-    preg_match('/^\.admin-sidebar__scroll \{(?<body>[^}]*)\}/m', $css, $scroll);
-    preg_match('/^\.admin-topbar \{(?<body>[^}]*)\}/m', $css, $topbar);
 
-    expect($sidebar['body'])->not->toContain('border-right')
-        ->and($scroll['body'])->toContain('border-right: 1px solid var(--ag-color-border);')
-        ->and($header['body'])->toContain('height: var(--ag-topbar-height);')
-        ->and($topbar['body'])->toContain('height: var(--ag-topbar-height);')
-        ->and($topbar['body'])->toContain('background: var(--ag-color-surface);')
-        ->and($css)->toMatch('/html\[data-sidebar="collapsed"\] \.admin-sidebar__header:hover \.admin-sidebar__toggle/');
+    expect($sidebar['body'])->toContain('border-right: 1px solid var(--ag-color-border);')
+        ->and($css)->not->toContain('.admin-sidebar__header::after')
+        ->and($css)->toMatch('/html\[data-sidebar="collapsed"\] \.admin-sidebar__header \{[^}]*flex-direction: column;/')
+        ->and($css)->not->toMatch('/html\[data-sidebar="collapsed"\] \.admin-sidebar__toggle \{[^}]*opacity: 0;/');
+});
+
+/** @return array{light: array<string, string>, dark: array<string, string>} */
+function adminThemeTokens(): array
+{
+    $css = (string) file_get_contents(base_path('themes/default/resources/css/admin/_tokens.css'));
+    $split = (int) strpos($css, '[data-theme="dark"]');
+    $parse = static function (string $block): array {
+        preg_match_all('/(--ag-color-[a-z-]+):\s*([^;]+);/', $block, $matches, PREG_SET_ORDER);
+
+        return collect($matches)->mapWithKeys(fn (array $match): array => [$match[1] => trim($match[2])])->all();
+    };
+
+    return ['light' => $parse(substr($css, 0, $split)), 'dark' => $parse(substr($css, $split))];
+}
+
+test('light mode containers are outlined against the page about as clearly as dark mode containers', function (): void {
+    ['light' => $light, 'dark' => $dark] = adminThemeTokens();
+    $lightOutline = adminTokenLightness($light['--ag-color-bg']) - adminTokenLightness($light['--ag-color-border-container']);
+    $darkOutline = adminTokenLightness($dark['--ag-color-border']) - adminTokenLightness($dark['--ag-color-bg']);
+
+    expect($dark['--ag-color-border-container'])->toBe('var(--ag-color-border)')
+        ->and($lightOutline)->toBeGreaterThan(0.8 * $darkOutline)
+        ->and($lightOutline)->toBeLessThan(1.1 * $darkOutline)
+        ->and((string) file_get_contents(resource_path('css/admin/settings/_tokens.css')))->toContain('--ag-color-border-container: '.$light['--ag-color-border-container'].';');
+});
+
+test('page-level containers use the container outline and nested tables keep the quiet divider', function (): void {
+    $css = cssWithImports(resource_path('css/admin.css'))."\n".implode("\n", array_map('file_get_contents', glob(base_path('themes/default/resources/css/admin/*.css'))));
+    $css = (string) preg_replace('/,\s+/', ', ', $css);
+    $containers = ['.ag-card', '.ag-section', '.ag-metric', '.ag-chart-card', '.ag-stats__item', '.ag-stat-card', '.ag-table-wrap, .admin-table-wrap', '.ag-toolbar--filters', '.ag-form__sticky', '.ag-product-tabs', '.admin-panel', '.ag-settings-card', '.ag-checklist', '.ag-package-card', '.c-theme-card'];
+    $missing = [];
+    foreach ($containers as $selector) {
+        if (preg_match('/(^|\n)'.preg_quote($selector, '/').' \{[^}]*border[^;]*var\(--ag-color-border-container/', $css) !== 1) {
+            $missing[] = $selector;
+        }
+    }
+
+    expect($missing)->toBe([])
+        ->and($css)->toMatch('/\.ag-card--flush > \.ag-card__content > :is\(\.ag-table-wrap, \.admin-table-wrap\) \{[^}]*border-color: var\(--ag-color-border\);/');
+});
+
+test('page-level tab bars match the product editor tabs instead of a gray bar on the gray page', function (): void {
+    $css = (string) file_get_contents(resource_path('css/admin/components/_patterns.css'));
+
+    expect($css)->toMatch('/\.admin-page > \.ag-tabs \{[^}]*background: var\(--ag-color-surface\);[^}]*border-color: var\(--ag-color-border-container\);/')
+        ->toMatch('/\.admin-page > \.ag-tabs :is\(\.ag-tabs__tab--active, \.ag-tabs__tab\[aria-selected="true"\]\) \{[^}]*background: var\(--ag-color-primary-soft\);/');
+
+    $html = $this->actingAs($this->createStaff())->get(route('admin.invoices.index'))->assertOk()->getContent();
+    expect($html)->toMatch('/<div class="admin-page[^"]*"[^>]*>(?:(?!<div).)*?<nav class="ag-tabs"/s');
 });

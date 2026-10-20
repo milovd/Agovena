@@ -10,6 +10,8 @@
   --ag-color-surface-muted: #eef2f7;
   --ag-color-border: #e2e8f0;
   --ag-color-border-strong: #cbd5e1;
+  /* Outline of containers on the page: white cards need a darker edge than the page to read as cards. */
+  --ag-color-border-container: #c8d1dd;
   --ag-color-text: #0f172a;
   --ag-color-text-muted: #64748b;
   --ag-color-danger: #dc2626;
@@ -59,6 +61,7 @@
   --ag-color-surface-muted: #1f2937;
   --ag-color-border: #1f2a3d;
   --ag-color-border-strong: #334155;
+  --ag-color-border-container: var(--ag-color-border);
   --ag-color-text: #f8fafc;
   --ag-color-text-muted: #94a3b8;
   --ag-color-danger: #f87171;

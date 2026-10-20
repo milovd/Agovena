@@ -2,7 +2,7 @@
 .admin-table-wrap {
   overflow-x: auto;
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius);
 }
 .ag-table-wrap:focus-visible { outline: none; box-shadow: var(--ag-focus-ring); }
@@ -368,7 +368,7 @@ a.ag-table__name:focus-visible {
   margin-bottom: var(--ag-space-4);
   padding: var(--ag-space-3);
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-md);
 }
 
@@ -551,7 +551,7 @@ a.ag-table__name:focus-visible {
 .ag-section {
   margin-bottom: var(--ag-space-6);
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-lg);
 }
 
@@ -624,7 +624,7 @@ a.ag-table__name:focus-visible {
   gap: var(--ag-space-2);
   padding: var(--ag-space-3) var(--ag-space-4);
   margin-top: var(--ag-space-4);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-md);
   color: var(--ag-color-text);
   background: var(--ag-color-surface);
@@ -749,7 +749,7 @@ a.ag-table__name:focus-visible {
 
 .ag-stat-card {
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-lg);
   padding: var(--ag-space-4);
 }

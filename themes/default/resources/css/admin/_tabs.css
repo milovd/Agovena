@@ -4,7 +4,7 @@
   margin: 0 0 var(--ag-space-5);
   padding: var(--ag-space-1);
   overflow-x: auto;
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-lg);
   background: var(--ag-color-surface);
   box-shadow: var(--ag-shadow-sm);

@@ -108,7 +108,7 @@
 .ag-checklist {
   overflow: hidden;
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-lg);
   box-shadow: var(--ag-shadow-sm);
 }

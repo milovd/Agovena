@@ -13,7 +13,7 @@
 .customer-workspace__hero {
   align-items: center;
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-lg);
   display: flex;
   justify-content: space-between;
@@ -113,7 +113,7 @@
 .customer-workspace__metric {
   align-content: start;
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-md);
   column-gap: var(--ag-space-3);
   display: grid;
@@ -165,7 +165,7 @@
 
 .customer-workspace__card {
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-lg);
   min-width: 0;
   padding: var(--ag-space-5);

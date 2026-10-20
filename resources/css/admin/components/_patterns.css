@@ -33,7 +33,7 @@
   gap: var(--ag-space-2);
   padding: var(--ag-space-5);
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-md);
   box-shadow: none;
   min-height: 6.5rem;
@@ -153,9 +153,27 @@
   box-shadow: var(--ag-focus-ring);
 }
 
+/* Tab bars that sit on the page (Invoices/Design, Customers/Properties, Subscriptions/Plan changes)
+   are cards like the product editor tabs; the gray segmented look stays for tabs inside cards. */
+.admin-page > .ag-tabs {
+  display: flex;
+  background: var(--ag-color-surface);
+  border-color: var(--ag-color-border-container);
+}
+
+.admin-page > .ag-tabs .ag-tabs__tab:hover {
+  background: var(--ag-color-sidebar-hover);
+}
+
+.admin-page > .ag-tabs :is(.ag-tabs__tab--active, .ag-tabs__tab[aria-selected="true"]) {
+  background: var(--ag-color-primary-soft);
+  color: var(--ag-color-primary);
+  box-shadow: none;
+}
+
 .ag-chart-card {
   background: var(--ag-color-surface);
-  border: 1px solid var(--ag-color-border);
+  border: 1px solid var(--ag-color-border-container);
   border-radius: var(--ag-radius-md);
   box-shadow: none;
   padding: var(--ag-space-5);
