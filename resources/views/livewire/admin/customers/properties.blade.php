@@ -12,7 +12,7 @@
             :heading="$editingId ? __('admin.customer_properties.edit') : __('admin.customer_properties.new')"
         >
             <x-slot:actions>
-                @if ($editingId)
+                @if ($editingId && ! $editingSystem)
                     <button
                         type="button"
                         class="ag-btn ag-btn--danger"
@@ -28,6 +28,11 @@
         <x-ag.flash />
 
         @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
+
+        @if ($editingSystem)
+            <div class="ag-alert ag-alert--info" role="note">{{ __('admin.customer_properties.system_help') }}</div>
+        @endif
+        @error('property') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
 
         <form wire:submit="save" class="ag-section ag-form ag-form--constrained ag-customer-form" novalidate>
             <div class="ag-section__body">
@@ -45,7 +50,7 @@
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="property-type">{{ __('admin.customer_properties.type') }}</label>
-                        <select id="property-type" class="ag-select" wire:model.live="type">
+                        <select id="property-type" class="ag-select" wire:model.live="type" @disabled($editingSystem)>
                             @foreach ($types as $case)
                                 <option value="{{ $case->value }}">{{ __('admin.customer_properties.types.'.$case->value) }}</option>
                             @endforeach
@@ -139,6 +144,8 @@
 
         @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
 
+        @error('property') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
+
         @if ($definitions->isEmpty())
             <div class="ag-empty" role="status"><p class="ag-empty__text">{{ __('admin.customer_properties.empty_text') }}</p></div>
         @else
@@ -159,7 +166,12 @@
                         @foreach ($definitions as $definition)
                             <tr wire:key="property-{{ $definition->id }}">
                                 <td class="ag-property-cell--identity">
-                                    <span class="ag-table__primary">{{ $definition->label }}</span>
+                                    <span class="ag-table__primary">
+                                        {{ $definition->label }}
+                                        @if (\App\Agovena\Customer\Properties\CustomerAddressProperties::isSystemKey($definition->key))
+                                            <span class="ag-badge ag-badge--muted ag-property-system-badge" title="{{ __('admin.customer_properties.system_help') }}">{{ __('admin.customer_properties.system') }}</span>
+                                        @endif
+                                    </span>
                                     @if ($definition->description)
                                         <span class="ag-table__muted">{{ Str::limit($definition->description, 60) }}</span>
                                     @endif

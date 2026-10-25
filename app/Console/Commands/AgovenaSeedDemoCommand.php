@@ -99,7 +99,8 @@ final class AgovenaSeedDemoCommand extends Command
         'customer_credit_accounts',
         'customer_credit_entries',
         'customer_password_reset_tokens',
-        'customer_property_definitions',
+        // Property definitions are store configuration (including the default address
+        // fields), so a reseed keeps them; only the customers' values are demo data.
         'customer_property_values',
         'customers',
         'digital_assets',

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Livewire\Admin\Customers;
 
+use App\Agovena\Customer\Properties\CustomerAddressProperties;
 use App\Agovena\Customer\Properties\CustomerPropertyValidator;
 use App\Enums\CustomerPropertyType;
 use App\Models\CustomerPropertyDefinition;
@@ -99,6 +100,19 @@ class Properties extends Component
     {
         Gate::authorize('customers.manage');
 
+        // The key is immutable once a property exists (stored values and the address mapping
+        // depend on it), and system address properties also keep their type. The disabled
+        // inputs are only presentation; the stored values win here.
+        $existing = $this->editingId !== null
+            ? CustomerPropertyDefinition::query()->findOrFail($this->editingId)
+            : null;
+        if ($existing !== null) {
+            $this->key = $existing->key;
+            if (CustomerAddressProperties::isSystemKey($existing->key)) {
+                $this->type = $existing->type->value;
+            }
+        }
+
         $this->validate([
             'key' => [
                 'required',
@@ -164,7 +178,13 @@ class Properties extends Component
     public function deleteProperty(int $id): void
     {
         Gate::authorize('customers.manage');
-        CustomerPropertyDefinition::query()->whereKey($id)->delete();
+        $definition = CustomerPropertyDefinition::query()->findOrFail($id);
+        if (CustomerAddressProperties::isSystemKey($definition->key)) {
+            $this->addError('property', __('admin.customer_properties.system_delete_blocked'));
+
+            return;
+        }
+        $definition->delete();
         if ($this->editingId === $id) {
             $this->resetForm();
         }
@@ -204,6 +224,8 @@ class Properties extends Component
         return view('livewire.admin.customers.properties', [
             'definitions' => CustomerPropertyDefinition::query()->ordered()->get(),
             'types' => CustomerPropertyType::cases(),
+            'editingSystem' => $this->editingId !== null
+                && CustomerAddressProperties::isSystemKey((string) CustomerPropertyDefinition::query()->whereKey($this->editingId)->value('key')),
         ])->title(__('admin.customer_properties.title'));
     }
 
