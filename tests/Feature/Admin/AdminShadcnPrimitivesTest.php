@@ -92,5 +92,5 @@ test('list rows become skeletons only while a request runs and only after a shor
 });
 
 test('selected table rows stay highlighted like the shadcn data table', function (): void {
-    expect(shadcnAdminCss())->toContain('.ag-table tbody tr:has(> td input[type="checkbox"]:checked)');
+    expect(shadcnAdminCss())->toContain('.ag-table tbody tr:has(> td input[type="checkbox"]:not([role="switch"]):checked)');
 });

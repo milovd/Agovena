@@ -119,6 +119,28 @@ it('keeps phone and company as ordinary deletable properties and never renames a
     expect(CustomerPropertyDefinition::query()->whereKey($phone->id)->exists())->toBeFalse();
 });
 
+it('shows a delete row action only for properties that can be deleted', function (): void {
+    $staff = $this->createStaff([], ['customers.view', 'customers.manage']);
+    $definitions = CustomerPropertyDefinition::query()->get()->keyBy('key');
+
+    $html = Livewire::actingAs($staff)->test(Properties::class)->html();
+
+    expect(substr_count($html, 'ag-row-actions'))->toBe($definitions->count())
+        ->and($html)->toContain('wire:click="deleteProperty('.$definitions['phone']->id.')"')
+        ->and($html)->toContain('wire:click="deleteProperty('.$definitions['company_name']->id.')"')
+        ->and($html)->toContain('wire:confirm="'.e(__('admin.customer_properties.delete_confirm')).'"');
+    foreach (CustomerAddressProperties::SYSTEM_KEYS as $key) {
+        expect($html)->not->toContain('wire:click="deleteProperty('.$definitions[$key]->id.')"');
+    }
+});
+
+it('does not highlight table rows because a switch is on', function (): void {
+    $css = file_get_contents(resource_path('css/admin/components/_table.css'));
+
+    expect($css)->toContain('.ag-table tbody tr:has(> td input[type="checkbox"]:not([role="switch"]):checked)')
+        ->not->toContain('.ag-table tbody tr:has(> td input[type="checkbox"]:checked)');
+});
+
 it('marks system address properties in the Admin table', function (): void {
     $staff = $this->createStaff([], ['customers.view', 'customers.manage']);
 

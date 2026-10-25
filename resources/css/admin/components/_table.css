@@ -47,8 +47,9 @@
   background: color-mix(in srgb, var(--ag-color-surface-muted) 50%, transparent);
 }
 
-/* A selected row stays highlighted, like `data-state="selected"` in the shadcn table. */
-.ag-table tbody tr:has(> td input[type="checkbox"]:checked),
+/* A selected row stays highlighted, like `data-state="selected"` in the shadcn table.
+   Switches are checkboxes too, but a switch that is on does not select its row. */
+.ag-table tbody tr:has(> td input[type="checkbox"]:not([role="switch"]):checked),
 .ag-table tbody tr[aria-selected="true"] {
   background: var(--ag-color-surface-muted);
 }
@@ -874,12 +875,6 @@ a.ag-table__name:focus-visible {
   width: 6.5rem;
   text-align: center;
   vertical-align: middle;
-}
-
-.ag-table--properties .ag-table__col-actions {
-  width: 6rem;
-  text-align: right;
-  white-space: nowrap;
 }
 
 .ag-table--properties .ag-switch--table {

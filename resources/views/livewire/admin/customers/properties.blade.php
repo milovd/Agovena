@@ -159,24 +159,25 @@
                             <th scope="col" class="ag-table__col-toggle">{{ __('admin.customer_properties.non_editable') }}</th>
                             <th scope="col" class="ag-table__col-toggle">{{ __('admin.customer_properties.required') }}</th>
                             <th scope="col" class="ag-table__col-toggle">{{ __('admin.customer_properties.show_on_invoice') }}</th>
-                            <th scope="col" class="ag-table__col-actions"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                            <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($definitions as $definition)
+                            @php($isSystem = \App\Agovena\Customer\Properties\CustomerAddressProperties::isSystemKey($definition->key))
                             <tr wire:key="property-{{ $definition->id }}">
                                 <td class="ag-property-cell--identity">
                                     <span class="ag-table__primary">
                                         {{ $definition->label }}
-                                        @if (\App\Agovena\Customer\Properties\CustomerAddressProperties::isSystemKey($definition->key))
-                                            <span class="ag-badge ag-badge--muted ag-property-system-badge" title="{{ __('admin.customer_properties.system_help') }}">{{ __('admin.customer_properties.system') }}</span>
+                                        @if ($isSystem)
+                                            <span class="ag-badge ag-property-system-badge" title="{{ __('admin.customer_properties.system_help') }}">{{ __('admin.customer_properties.system') }}</span>
                                         @endif
                                     </span>
                                     @if ($definition->description)
                                         <span class="ag-table__muted">{{ Str::limit($definition->description, 60) }}</span>
                                     @endif
                                 </td>
-                                <td class="ag-property-cell--key" data-label="{{ __('admin.customer_properties.key') }}"><code>{{ $definition->key }}</code></td>
+                                <td class="ag-property-cell--key" data-label="{{ __('admin.customer_properties.key') }}"><span class="ag-muted">{{ $definition->key }}</span></td>
                                 <td class="ag-property-cell--type" data-label="{{ __('admin.customer_properties.type') }}">{{ __('admin.customer_properties.types.'.$definition->type->value) }}</td>
                                 <td class="ag-table__col-toggle" data-label="{{ __('admin.customer_properties.non_editable') }}">
                                     <x-ag.switch
@@ -202,10 +203,22 @@
                                         :aria-label="__('admin.customer_properties.show_on_invoice')"
                                     />
                                 </td>
-                                <td class="ag-table__col-actions">
-                                    <button type="button" class="ag-icon-btn" wire:click="edit({{ $definition->id }})" title="{{ __('common.edit') }}" aria-label="{{ __('common.edit') }}: {{ $definition->label }}">
-                                        <x-ag.icon name="pencil" :size="16" />
-                                    </button>
+                                <td class="ag-table__actions">
+                                    <div class="ag-row-actions">
+                                        <button type="button" class="ag-icon-btn" wire:click="edit({{ $definition->id }})" title="{{ __('common.edit') }}" aria-label="{{ __('common.edit') }}: {{ $definition->label }}">
+                                            <x-ag.icon name="pencil" :size="16" />
+                                        </button>
+                                        @if (! $isSystem)
+                                            <button
+                                                type="button"
+                                                class="ag-icon-btn ag-icon-btn--danger"
+                                                wire:click="deleteProperty({{ $definition->id }})"
+                                                wire:confirm="{{ __('admin.customer_properties.delete_confirm') }}"
+                                                title="{{ __('common.delete') }}"
+                                                aria-label="{{ __('common.delete') }}: {{ $definition->label }}"
+                                            ><x-ag.icon name="trash" :size="16" /></button>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach
