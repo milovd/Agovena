@@ -34,6 +34,12 @@
         <span class="ag-loading__text">{{ __('admin.orders.loading') }}</span>
     </div>
 
+    @if ($bulkDeleteResult !== null)
+        <div class="ag-alert {{ $bulkDeleteResult['failed'] || $bulkDeleteResult['skipped'] || $bulkDeleteResult['kept'] ? 'ag-alert--danger' : 'ag-alert--success' }}" role="status" aria-live="polite" tabindex="-1">
+            {{ __('admin.orders.bulk_delete_result', $bulkDeleteResult) }}
+        </div>
+    @endif
+
     @if ($orders->isEmpty())
         <div class="ag-empty" role="status">
             <p class="ag-empty__title">{{ $search || $status || $paymentStatus ? __('admin.orders.empty.filtered_title') : __('admin.orders.empty.title') }}</p>
@@ -42,24 +48,47 @@
             </p>
         </div>
     @else
-        @php($displayCurrency = \App\Support\MoneyFormatter::preferredDisplayCurrency())
+        @php
+            $displayCurrency = \App\Support\MoneyFormatter::preferredDisplayCurrency();
+            $visibleIds = $orders->getCollection()->pluck('id')->map(static fn ($id) => (string) $id)->all();
+            $selectedIds = array_map(static fn ($id) => is_int($id) || is_string($id) ? (string) $id : '', $selectedOrderIds);
+            $allSelected = $visibleIds !== [] && array_diff($visibleIds, $selectedIds) === [];
+        @endphp
+        @can('orders.delete')
+            @error('selectedOrderIds') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
+        @endcan
+        <div
+            class="ag-bulk-selection__surface"
+            @can('orders.delete')
+                x-data="agBulkSelection"
+                data-bulk-model="selectedOrderIds"
+                data-bulk-visible="{{ json_encode($visibleIds) }}"
+                data-bulk-count-label="{{ __('admin.orders.bulk_selected', ['count' => '__COUNT__']) }}"
+                data-bulk-select-label="{{ __('admin.orders.bulk_select_page') }}"
+                data-bulk-deselect-label="{{ __('admin.orders.bulk_deselect_page') }}"
+            @endcan
+        >
         <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status,paymentStatus">
             <table class="ag-table ag-table--orders">
                 <thead>
                     <tr>
-                        <th scope="col">{{ __('admin.orders.order_column') }}</th>
+                        @can('orders.delete')<th scope="col" class="ag-table__select-col"><button type="button" class="ag-bulk-selection__select" role="checkbox" aria-checked="{{ $allSelected ? 'true' : 'false' }}" @click="toggleAll" :aria-checked="ariaChecked" title="{{ __($allSelected ? 'admin.orders.bulk_deselect_page' : 'admin.orders.bulk_select_page') }}" :title="toggleLabel" aria-label="{{ __($allSelected ? 'admin.orders.bulk_deselect_page' : 'admin.orders.bulk_select_page') }}" :aria-label="toggleLabel"><x-ag.icon name="check" :size="13" /></button></th>@endcan
+                        <th scope="col">{{ __('admin.orders.order_column') }} @can('orders.delete')<span class="ag-bulk-selection__count" aria-live="polite" x-text="countLabel">{{ __('admin.orders.bulk_selected', ['count' => count($selectedOrderIds)]) }}</span>@endcan</th>
                         <th scope="col">{{ __('common.customer') }}</th>
                         <th scope="col">{{ __('common.total') }}</th>
                         <th scope="col">{{ __('common.status') }}</th>
                         <th scope="col" class="ag-table__col--md">{{ __('admin.orders.payment_column') }}</th>
                         <th scope="col" class="ag-table__col--lg">{{ __('common.created') }}</th>
-                        <th scope="col"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
+                        <th scope="col" class="ag-bulk-selection__header-actions"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($orders as $order)
                         @php($formattedTotal = \App\Support\MoneyFormatter::formatDisplay($order->total_amount, $order->currency, $displayCurrency))
                         <tr wire:key="order-{{ $order->id }}">
+                            @can('orders.delete')
+                                <td class="ag-table__select-col"><x-ag.checkbox id="order-select-{{ $order->id }}" wire:model="selectedOrderIds" value="{{ $order->id }}" aria-label="{{ __('admin.orders.bulk_select_row', ['number' => $order->number]) }}" /></td>
+                            @endcan
                             <td>
                                 <div class="ag-table__primary">
                                     <a class="ag-table__name" href="{{ route('admin.orders.show', $order) }}">{{ $order->number }}</a>
@@ -138,6 +167,15 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        @can('orders.delete')
+            <div class="ag-menu ag-bulk-selection__actions ag-bulk-selection__floating-actions" x-data="agDisclosure" @keydown.escape.window="close(true)" @click.outside="close()">
+                <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-controls="order-bulk-actions" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}" @disabled(count($selectedOrderIds) === 0) :disabled="isEmpty"><x-ag.icon name="more-horizontal" :size="16" /></button>
+                <div id="order-bulk-actions" class="ag-menu__panel" x-show="open" x-cloak role="group" aria-label="{{ __('common.actions') }}">
+                    <button type="button" class="ag-menu__item ag-menu__item--danger" wire:click="bulkDeleteOrders" wire:confirm="{{ __('admin.orders.bulk_confirm_delete') }}" :disabled="isEmpty">{{ __('admin.orders.bulk_delete') }}</button>
+                </div>
+            </div>
+        @endcan
         </div>
         <div class="ag-pagination">{{ $orders->links() }}</div>
     @endif

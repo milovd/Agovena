@@ -388,9 +388,11 @@ a.ag-table__name:focus-visible {
 
 .ag-toolbar__filters {
   display: flex;
+  flex: 1 1 auto;
   flex-wrap: wrap;
   gap: var(--ag-space-2);
   align-items: center;
+  min-width: 0;
 }
 
 .ag-field--inline {
@@ -1004,7 +1006,8 @@ a.ag-table__name:focus-visible {
     gap: var(--ag-space-2);
     font-size: var(--ag-font-size-xs);
   }
-  .ag-table--products .ag-bulk-selection__count { display: block; margin-left: 0; }
+  .ag-table--products .ag-bulk-selection__count,
+  .ag-table--orders .ag-bulk-selection__count { display: block; margin-left: 0; }
   .ag-list-page .ag-table-wrap { max-width: 100%; }
   .ag-table--products { table-layout: fixed; }
   .ag-table--products th,
