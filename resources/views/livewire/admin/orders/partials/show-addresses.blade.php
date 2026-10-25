@@ -1,10 +1,11 @@
 {{-- Order detail: billing and shipping addresses. Part of livewire.admin.orders.show. --}}
-<section class="ag-section ag-order-addresses" aria-labelledby="order-addresses-heading">
-    <header class="ag-section__header">
-        <h3 id="order-addresses-heading" class="ag-section__title">{{ __('admin.orders.show.addresses') }}</h3>
-        <p class="ag-section__lede">{{ __('admin.orders.show.addresses_lede') }}</p>
+<section class="ag-card ag-order-addresses" aria-labelledby="order-addresses-heading">
+    <header class="ag-card__header">
+        <x-ag.icon-tile name="map-pin" tone="cyan" />
+        <h2 id="order-addresses-heading" class="ag-card__title">{{ __('admin.orders.show.addresses') }}</h2>
+        <p class="ag-card__description">{{ __('admin.orders.show.addresses_lede') }}</p>
     </header>
-    <div class="ag-section__body">
+    <div class="ag-card__content">
         <div class="ag-order-addresses__grid">
             @foreach ([
                 'billing' => __('admin.orders.show.billing_address'),

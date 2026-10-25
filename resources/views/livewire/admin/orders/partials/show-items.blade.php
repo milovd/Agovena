@@ -1,10 +1,11 @@
-{{-- Order detail: line items. Part of livewire.admin.orders.show. --}}
-<section class="ag-section" aria-labelledby="order-items-heading">
-    <header class="ag-section__header">
-        <h3 id="order-items-heading" class="ag-section__title">{{ __('admin.orders.show.items') }}</h3>
-        <p class="ag-section__lede">{{ __('admin.orders.show.items_lede') }}</p>
+{{-- Order detail: line items and totals. Part of livewire.admin.orders.show. --}}
+<section class="ag-card" aria-labelledby="order-items-heading">
+    <header class="ag-card__header">
+        <x-ag.icon-tile name="package" tone="blue" />
+        <h2 id="order-items-heading" class="ag-card__title">{{ __('admin.orders.show.items') }}</h2>
+        <p class="ag-card__description">{{ __('admin.orders.show.items_lede') }}</p>
     </header>
-    <div class="ag-section__body">
+    <div class="ag-card__content">
         <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.items') }}" tabindex="0">
             <table class="ag-table">
                 <thead>
@@ -27,5 +28,26 @@
                 </tbody>
             </table>
         </div>
+        <dl class="admin-order__totals">
+            <div>
+                <dt>{{ __('common.subtotal') }}</dt>
+                <dd>{{ \App\Support\MoneyFormatter::format($order->subtotal_amount, $order->currency) }}</dd>
+            </div>
+            @if (($order->shipping_amount ?? 0) > 0 || filled($order->shipping_method_label))
+                <div>
+                    <dt>
+                        {{ __('common.shipping') }}
+                        @if ($order->shipping_method_label)
+                            <span class="ag-muted">({{ $order->shipping_method_label }})</span>
+                        @endif
+                    </dt>
+                    <dd>{{ \App\Support\MoneyFormatter::format((int) $order->shipping_amount, $order->currency) }}</dd>
+                </div>
+            @endif
+            <div class="admin-order__total">
+                <dt>{{ __('common.total') }}</dt>
+                <dd>{{ \App\Support\MoneyFormatter::format($order->total_amount, $order->currency) }}</dd>
+            </div>
+        </dl>
     </div>
 </section>

@@ -108,30 +108,24 @@
                             </td>
                             <td class="ag-table__actions">
                                 <x-ag.row-actions>
-                                    @can('orders.update')
-                                        <a
-                                            class="ag-icon-btn"
-                                            href="{{ route('admin.orders.edit', $order) }}"
-                                            title="{{ __('admin.orders.actions.edit') }}"
-                                            aria-label="{{ __('admin.orders.actions.edit_aria', ['number' => $order->number]) }}"
-                                        >
-                                            <x-ag.icon name="pencil" :size="16" />
-                                        </a>
-                                    @endcan
-                                    <div class="ag-menu" x-data="agDisclosure" @keydown.escape.window="close()" @click.outside="close()">
-                                        <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-haspopup="menu" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}: {{ $order->number }}">
-                                            <x-ag.icon name="more-horizontal" :size="16" />
-                                        </button>
-                                        <div class="ag-menu__panel" x-show="open" x-cloak role="menu">
-                                            <a class="ag-menu__item" role="menuitem" href="{{ route('admin.orders.show', $order) }}">{{ __('admin.orders.open') }}</a>
-                                            @can('orders.update')
-                                                <a class="ag-menu__item" role="menuitem" href="{{ route('admin.orders.edit', $order) }}">{{ __('admin.orders.actions.edit') }}</a>
-                                            @endcan
-                                            @can('orders.delete')
+                                    <a
+                                        class="ag-icon-btn"
+                                        href="{{ route('admin.orders.show', $order) }}"
+                                        title="{{ __('admin.orders.actions.view') }}"
+                                        aria-label="{{ __('admin.orders.actions.view_aria', ['number' => $order->number]) }}"
+                                    >
+                                        <x-ag.icon name="eye" :size="16" />
+                                    </a>
+                                    @can('orders.delete')
+                                        <div class="ag-menu" x-data="agDisclosure" @keydown.escape.window="close()" @click.outside="close()">
+                                            <button type="button" class="ag-icon-btn" @click="toggle()" :aria-expanded="open.toString()" aria-haspopup="menu" title="{{ __('common.actions') }}" aria-label="{{ __('common.actions') }}: {{ $order->number }}">
+                                                <x-ag.icon name="more-horizontal" :size="16" />
+                                            </button>
+                                            <div class="ag-menu__panel" x-show="open" x-cloak role="menu">
                                                 <button type="button" class="ag-menu__item ag-menu__item--danger" role="menuitem" wire:click="confirmDelete({{ $order->id }})">{{ __('admin.orders.actions.delete') }}</button>
-                                            @endcan
+                                            </div>
                                         </div>
-                                    </div>
+                                    @endcan
                                 </x-ag.row-actions>
                             </td>
                         </tr>

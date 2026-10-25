@@ -1,9 +1,10 @@
-<section class="ag-section" aria-labelledby="shipping-returns-heading" wire:key="shipping-returns-{{ $order->id }}">
-    <header class="ag-section__header">
-        <h3 id="shipping-returns-heading" class="ag-section__title">{{ __('shipping::returns.order_section_title') }}</h3>
-        <p class="ag-section__lede">{{ __('shipping::returns.order_section_lede') }}</p>
+<section class="ag-card" aria-labelledby="shipping-returns-heading" wire:key="shipping-returns-{{ $order->id }}">
+    <header class="ag-card__header">
+        <x-ag.icon-tile name="rotate-ccw" tone="amber" />
+        <h2 id="shipping-returns-heading" class="ag-card__title">{{ __('shipping::returns.order_section_title') }}</h2>
+        <p class="ag-card__description">{{ __('shipping::returns.order_section_lede') }}</p>
     </header>
-    <div class="ag-section__body">
+    <div class="ag-card__content">
         @if ($returns->isEmpty())
             <p class="ag-muted">{{ __('shipping::returns.order_section_empty') }}</p>
         @else

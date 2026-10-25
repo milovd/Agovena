@@ -139,6 +139,22 @@ a.ag-icon-btn {
   color: var(--ag-color-text-muted);
 }
 
+/* An icon action in a page header: as tall as the header buttons, with the secondary button surface. */
+.ag-icon-btn--header,
+a.ag-icon-btn--header {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-color: var(--ag-color-border-container);
+  background: var(--ag-color-surface);
+  color: var(--ag-color-text);
+}
+
+.ag-icon-btn.ag-icon-btn--header:hover {
+  border-color: color-mix(in srgb, var(--ag-color-primary) 38%, var(--ag-color-border));
+  background: var(--ag-color-surface);
+  color: var(--ag-color-primary);
+}
+
 .ag-icon-btn:hover {
   background: var(--ag-color-surface-muted);
   color: var(--ag-color-text);

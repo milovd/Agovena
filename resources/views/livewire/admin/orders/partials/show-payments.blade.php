@@ -1,9 +1,10 @@
 {{-- Order detail sidebar: payments, refunds and manual payment recording. Part of livewire.admin.orders.show. --}}
-<section class="ag-section" aria-labelledby="payment-heading">
-    <header class="ag-section__header">
-        <h3 id="payment-heading" class="ag-section__title">{{ __('admin.orders.show.payment') }}</h3>
+<section class="ag-card" aria-labelledby="payment-heading">
+    <header class="ag-card__header">
+        <x-ag.icon-tile name="credit-card" tone="violet" />
+        <h2 id="payment-heading" class="ag-card__title">{{ __('admin.orders.show.payment') }}</h2>
     </header>
-    <div class="ag-section__body">
+    <div class="ag-card__content">
         @if ($order->payment)
             <dl class="ag-dl">
                 <div><dt>{{ __('common.method') }}</dt><dd>{{ $paymentGatewayLabel }}</dd></div>

@@ -1,9 +1,10 @@
-<section class="ag-section" aria-labelledby="shipping-fulfillment-heading" wire:key="shipping-fulfillment-{{ $order->id }}">
-    <header class="ag-section__header">
-        <h3 id="shipping-fulfillment-heading" class="ag-section__title">{{ __('shipping::admin.fulfillment_title') }}</h3>
-        <p class="ag-section__lede">{{ __('shipping::admin.fulfillment_lede') }}</p>
+<section class="ag-card" aria-labelledby="shipping-fulfillment-heading" wire:key="shipping-fulfillment-{{ $order->id }}">
+    <header class="ag-card__header">
+        <x-ag.icon-tile name="truck" tone="indigo" />
+        <h2 id="shipping-fulfillment-heading" class="ag-card__title">{{ __('shipping::admin.fulfillment_title') }}</h2>
+        <p class="ag-card__description">{{ __('shipping::admin.fulfillment_lede') }}</p>
     </header>
-    <div class="ag-section__body">
+    <div class="ag-card__content">
         @if (session('status'))
             <p class="ag-alert ag-alert--success" role="status">{{ session('status') }}</p>
         @endif

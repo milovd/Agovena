@@ -21,9 +21,64 @@
   max-width: 100%;
 }
 
-.admin-page--order .ag-order-layout__main > .ag-section,
-.admin-page--order .ag-order-layout__side > .ag-section {
+.admin-page--order .ag-order-layout__main > :is(.ag-section, .ag-card),
+.admin-page--order .ag-order-layout__side > :is(.ag-section, .ag-card) {
   margin-bottom: 0;
+}
+
+/* Header meta: order status, payment status and creation date under the order number. */
+.admin-order__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-2) var(--ag-space-3);
+  color: var(--ag-color-text-muted);
+  font-size: var(--ag-font-size-sm);
+}
+
+.admin-order__metrics .ag-metric__value {
+  overflow-wrap: anywhere;
+}
+
+.admin-order__metrics .ag-metric__link {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+/* Totals under the line items, right-aligned like an invoice. */
+.admin-order__totals {
+  display: grid;
+  gap: var(--ag-space-2);
+  width: min(100%, 20rem);
+  margin: var(--ag-space-4) 0 0 auto;
+  font-size: var(--ag-font-size-sm);
+}
+
+.admin-order__totals > div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--ag-space-4);
+}
+
+.admin-order__totals dt {
+  margin: 0;
+  color: var(--ag-color-text-muted);
+}
+
+.admin-order__totals dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-order__totals .admin-order__total {
+  padding-top: var(--ag-space-3);
+  border-top: 1px solid var(--ag-color-border);
+  font-size: var(--ag-font-size-base, 1rem);
+  font-weight: 700;
+}
+
+.admin-order__totals .admin-order__total dt {
+  color: var(--ag-color-text);
 }
 
 .ag-order-addresses__grid {
@@ -70,6 +125,15 @@
 .admin-page--order .ag-order-layout__side .ag-dl dd {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/* Payment actions sit below the payment facts, not against them. */
+.admin-page--order .ag-order-layout__side .ag-card__content > .ag-btn {
+  margin-top: var(--ag-space-4);
+}
+
+.admin-page--order .ag-order-layout__side .ag-card__content > .ag-btn + .ag-btn {
+  margin-top: var(--ag-space-3);
 }
 
 @media (min-width: 768px) {

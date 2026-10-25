@@ -1,10 +1,11 @@
 {{-- Order detail sidebar: invoices and credit notes. Part of livewire.admin.orders.show. --}}
 @if ($order->invoices->isNotEmpty() || $order->creditNotes->isNotEmpty() || $canManageInvoices)
-    <section class="ag-section" aria-labelledby="documents-heading">
-        <header class="ag-section__header">
-            <h3 id="documents-heading" class="ag-section__title">{{ __('admin.orders.show.documents') }}</h3>
+    <section class="ag-card" aria-labelledby="documents-heading">
+        <header class="ag-card__header">
+            <x-ag.icon-tile name="file-text" tone="amber" />
+            <h2 id="documents-heading" class="ag-card__title">{{ __('admin.orders.show.documents') }}</h2>
         </header>
-        <div class="ag-section__body">
+        <div class="ag-card__content">
             @if ($order->invoices->isNotEmpty())
                 <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.documents') }}" tabindex="0">
                     <table class="ag-table">

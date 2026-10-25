@@ -1195,6 +1195,8 @@ return [
             'address_lede' => 'These details are stored on the order.',
             'due_at' => 'Due date',
             'company' => 'Company',
+            'view' => 'View order',
+            'view_aria' => 'View order :number',
             'address' => 'Address',
             'address_line2' => 'Address line 2',
             'postal_code' => 'Postal code',
@@ -1220,7 +1222,6 @@ return [
             'cancelled' => 'Cancelled',
         ],
         'order_column' => 'Order',
-        'open' => 'Open order',
         'open_aria' => 'Open order :number',
         'status' => [
             'pending' => 'Pending',
@@ -1256,7 +1257,6 @@ return [
         ],
         'show' => [
             'title' => 'Order :number',
-            'lede' => 'Order operations and payment recording.',
             'items' => 'Items',
             'items_lede' => 'Snapshotted at checkout. Prices stay valid if catalog products change.',
             'addresses' => 'Addresses',
@@ -1271,6 +1271,7 @@ return [
             'attempts' => 'Payment attempts',
             'gateway' => 'Gateway',
             'provider_reference' => 'Provider reference',
+            'lines' => '{1} :count line|[0,*] :count lines',
             'refunds' => 'Refunds',
             'no_payment' => 'No payment record.',
             'record_payment' => 'Record payment',

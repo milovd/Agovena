@@ -1195,6 +1195,8 @@ return [
             'address_lede' => 'Deze gegevens worden op de bestelling bewaard.',
             'due_at' => 'Vervaldatum',
             'company' => 'Bedrijf',
+            'view' => 'Bestelling bekijken',
+            'view_aria' => 'Bestelling :number bekijken',
             'address' => 'Adres',
             'address_line2' => 'Adresregel 2',
             'postal_code' => 'Postcode',
@@ -1220,7 +1222,6 @@ return [
             'cancelled' => 'Geannuleerd',
         ],
         'order_column' => 'Bestelling',
-        'open' => 'Bestelling openen',
         'open_aria' => 'Bestelling :number openen',
         'status' => [
             'pending' => 'In afwachting',
@@ -1256,7 +1257,6 @@ return [
         ],
         'show' => [
             'title' => 'Bestelling :number',
-            'lede' => 'Bestelbeheer en betalingen registreren.',
             'items' => 'Artikelen',
             'items_lede' => 'Vastgelegd bij het afrekenen. Prijzen blijven geldig als de catalogus verandert.',
             'addresses' => 'Adressen',
@@ -1271,6 +1271,7 @@ return [
             'attempts' => 'Betaalpogingen',
             'gateway' => 'Gateway',
             'provider_reference' => 'Providerreferentie',
+            'lines' => '{1} :count regel|[0,*] :count regels',
             'refunds' => 'Terugbetalingen',
             'no_payment' => 'Geen betaling geregistreerd.',
             'record_payment' => 'Betaling registreren',

@@ -29,8 +29,20 @@ it('uses the shared list structure while keeping filters, actions and mobile ord
         ->assertSee('ag-table__mobile-meta', false)
         ->assertSee('wire:model.live="status"', false)
         ->assertSee('aria-haspopup="menu"', false)
-        ->assertSee(route('admin.orders.edit', $order), false)
         ->assertSee('wire:click="confirmDelete('.$order->id.')"', false);
+});
+
+it('opens an order with a view icon and keeps editing on the order page', function (): void {
+    $staff = $this->createStaff();
+    $order = Order::factory()->create(['number' => 'AG-TEST-ORDER-85']);
+
+    $html = Livewire::actingAs($staff)->test(OrdersIndex::class)->html();
+
+    expect($html)->toContain('href="'.route('admin.orders.show', $order).'"')
+        ->toContain('aria-label="'.e(__('admin.orders.actions.view_aria', ['number' => $order->number])).'"')
+        ->not->toContain(route('admin.orders.edit', $order))
+        ->not->toContain('role="menuitem" href=');
+    expect(__('admin.orders.actions.view_aria', ['number' => 'X'], 'nl'))->not->toBe('admin.orders.actions.view_aria');
 });
 
 it('has loading and combined filters without losing the order detail or protected row actions', function (): void {
