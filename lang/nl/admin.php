@@ -1182,6 +1182,8 @@ return [
             'delete_aria' => 'Bestelling :number verwijderen',
             'more' => 'Meer acties',
             'more_aria' => 'Meer acties voor bestelling :number',
+            'view' => 'Bestelling bekijken',
+            'view_aria' => 'Bestelling :number bekijken',
         ],
         'delete' => [
             'title' => 'Bestelling :number verwijderen?',
@@ -1195,8 +1197,6 @@ return [
             'address_lede' => 'Deze gegevens worden op de bestelling bewaard.',
             'due_at' => 'Vervaldatum',
             'company' => 'Bedrijf',
-            'view' => 'Bestelling bekijken',
-            'view_aria' => 'Bestelling :number bekijken',
             'address' => 'Adres',
             'address_line2' => 'Adresregel 2',
             'postal_code' => 'Postcode',
@@ -1258,6 +1258,7 @@ return [
         'show' => [
             'title' => 'Bestelling :number',
             'items' => 'Artikelen',
+            'lines' => '{1} :count regel|[0,*] :count regels',
             'items_lede' => 'Vastgelegd bij het afrekenen. Prijzen blijven geldig als de catalogus verandert.',
             'addresses' => 'Adressen',
             'addresses_lede' => 'Vastgelegd bij het afrekenen voor facturatie en levering.',
@@ -1271,7 +1272,6 @@ return [
             'attempts' => 'Betaalpogingen',
             'gateway' => 'Gateway',
             'provider_reference' => 'Providerreferentie',
-            'lines' => '{1} :count regel|[0,*] :count regels',
             'refunds' => 'Terugbetalingen',
             'no_payment' => 'Geen betaling geregistreerd.',
             'record_payment' => 'Betaling registreren',
