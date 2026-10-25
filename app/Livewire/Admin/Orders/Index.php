@@ -7,8 +7,7 @@ namespace App\Livewire\Admin\Orders;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Orders\DeleteOrder;
 use App\Agovena\Orders\DeleteSelectedOrders;
-use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
+use App\Agovena\Orders\OrderListStatus;
 use App\Livewire\Concerns\RequiresRecentPassword;
 use App\Models\Order;
 use App\Models\User;
@@ -28,9 +27,8 @@ final class Index extends Component
 
     public string $search = '';
 
+    /** One combined list status (OrderListStatus value), or '' for every order. */
     public string $status = '';
-
-    public string $paymentStatus = '';
 
     public ?int $confirmingDeleteId = null;
 
@@ -58,10 +56,11 @@ final class Index extends Component
         $this->resetPage();
     }
 
-    public function updatingPaymentStatus(): void
+    public function updatedStatus(): void
     {
-        $this->selectedOrderIds = [];
-        $this->resetPage();
+        if (OrderListStatus::tryFrom($this->status) === null) {
+            $this->status = '';
+        }
     }
 
     public function updatedPaginators(): void
@@ -180,8 +179,7 @@ final class Index extends Component
 
         return view('livewire.admin.orders.index', [
             'orders' => $orders,
-            'orderStatuses' => OrderStatus::cases(),
-            'paymentStatuses' => PaymentStatus::cases(),
+            'listStatuses' => OrderListStatus::cases(),
             'confirmingOrder' => $confirmingOrder,
         ])->layout('layouts.admin', [
             'title' => __('admin.orders.title'),
@@ -203,12 +201,9 @@ final class Index extends Component
             });
         }
 
-        if ($this->status !== '') {
-            $query->where('status', $this->status);
-        }
-
-        if ($this->paymentStatus !== '') {
-            $query->whereHas('payment', fn ($q) => $q->where('status', $this->paymentStatus));
+        $status = OrderListStatus::tryFrom($this->status);
+        if ($status !== null) {
+            OrderListStatus::apply($query, $status);
         }
 
         return $query->orderByDesc('id')->paginate(15);

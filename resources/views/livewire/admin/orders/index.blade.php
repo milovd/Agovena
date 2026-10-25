@@ -10,27 +10,18 @@
                 <input id="order-search" class="ag-input ag-input--search" type="search" wire:model.live.debounce.300ms="search" placeholder="{{ __('admin.orders.search_placeholder') }}">
             </div>
             <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="order-status">{{ __('admin.orders.status_label') }}</label>
+                <label class="visually-hidden" for="order-status">{{ __('admin.orders.list_status_label') }}</label>
                 <select id="order-status" class="ag-select" wire:model.live="status">
                     <option value="">{{ __('admin.orders.status_all') }}</option>
-                    @foreach ($orderStatuses as $case)
-                        <option value="{{ $case->value }}">{{ __('admin.orders.status.'.$case->value) }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="ag-field ag-field--inline">
-                <label class="visually-hidden" for="payment-status">{{ __('admin.orders.payment_status_label') }}</label>
-                <select id="payment-status" class="ag-select" wire:model.live="paymentStatus">
-                    <option value="">{{ __('admin.orders.payment_status_all') }}</option>
-                    @foreach ($paymentStatuses as $case)
-                        <option value="{{ $case->value }}">{{ __('admin.orders.payment_status.'.$case->value) }}</option>
+                    @foreach ($listStatuses as $case)
+                        <option value="{{ $case->value }}">{{ __('admin.orders.list_status.'.$case->value) }}</option>
                     @endforeach
                 </select>
             </div>
         </div>
     </x-ag.table-toolbar>
 
-    <div wire:loading.flex class="ag-loading" wire:target="search,status,paymentStatus,gotoPage,previousPage,nextPage">
+    <div wire:loading.flex class="ag-loading" wire:target="search,status,gotoPage,previousPage,nextPage">
         <span class="ag-loading__text">{{ __('admin.orders.loading') }}</span>
     </div>
 
@@ -42,9 +33,9 @@
 
     @if ($orders->isEmpty())
         <div class="ag-empty" role="status">
-            <p class="ag-empty__title">{{ $search || $status || $paymentStatus ? __('admin.orders.empty.filtered_title') : __('admin.orders.empty.title') }}</p>
+            <p class="ag-empty__title">{{ $search || $status ? __('admin.orders.empty.filtered_title') : __('admin.orders.empty.title') }}</p>
             <p class="ag-empty__text">
-                {{ $search || $status || $paymentStatus ? __('admin.orders.empty.filtered_text') : __('admin.orders.empty.text') }}
+                {{ $search || $status ? __('admin.orders.empty.filtered_text') : __('admin.orders.empty.text') }}
             </p>
         </div>
     @else
@@ -68,7 +59,7 @@
                 data-bulk-deselect-label="{{ __('admin.orders.bulk_deselect_page') }}"
             @endcan
         >
-        <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status,paymentStatus">
+        <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.title') }}" tabindex="0" wire:loading.class="is-loading" wire:target="search,status">
             <table class="ag-table ag-table--orders">
                 <thead>
                     <tr>
@@ -77,14 +68,16 @@
                         <th scope="col">{{ __('common.customer') }}</th>
                         <th scope="col">{{ __('common.total') }}</th>
                         <th scope="col">{{ __('common.status') }}</th>
-                        <th scope="col" class="ag-table__col--md">{{ __('admin.orders.payment_column') }}</th>
                         <th scope="col" class="ag-table__col--lg">{{ __('common.created') }}</th>
                         <th scope="col" class="ag-bulk-selection__header-actions"><span class="visually-hidden">{{ __('common.actions') }}</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($orders as $order)
-                        @php($formattedTotal = \App\Support\MoneyFormatter::formatDisplay($order->total_amount, $order->currency, $displayCurrency))
+                        @php
+                            $formattedTotal = \App\Support\MoneyFormatter::formatDisplay($order->total_amount, $order->currency, $displayCurrency);
+                            $listStatus = \App\Agovena\Orders\OrderListStatus::for($order);
+                        @endphp
                         <tr wire:key="order-{{ $order->id }}">
                             @can('orders.delete')
                                 <td class="ag-table__select-col"><x-ag.checkbox id="order-select-{{ $order->id }}" wire:model="selectedOrderIds" value="{{ $order->id }}" aria-label="{{ __('admin.orders.bulk_select_row', ['number' => $order->number]) }}" /></td>
@@ -94,12 +87,7 @@
                                     <a class="ag-table__name" href="{{ route('admin.orders.show', $order) }}">{{ $order->number }}</a>
                                     <span class="ag-table__mobile-meta">
                                         <span>{{ $formattedTotal }}</span>
-                                        <span @class([
-                                            'ag-badge',
-                                            'ag-badge--success' => $order->status->value === 'paid',
-                                            'ag-badge--warning' => $order->status->value === 'pending',
-                                            'ag-badge--muted' => $order->status->value === 'cancelled',
-                                        ])>{{ __('admin.orders.status.'.$order->status->value) }}</span>
+                                        <span class="ag-badge ag-badge--{{ $listStatus->badgeVariant() }}">{{ __('admin.orders.list_status.'.$listStatus->value) }}</span>
                                     </span>
                                 </div>
                             </td>
@@ -111,24 +99,7 @@
                             </td>
                             <td>{{ $formattedTotal }}</td>
                             <td>
-                                <span @class([
-                                    'ag-badge',
-                                    'ag-badge--success' => $order->status->value === 'paid',
-                                    'ag-badge--warning' => $order->status->value === 'pending',
-                                    'ag-badge--muted' => $order->status->value === 'cancelled',
-                                ])>{{ __('admin.orders.status.'.$order->status->value) }}</span>
-                            </td>
-                            <td class="ag-table__col--md">
-                                @if ($order->payment)
-                                    <span @class([
-                                        'ag-badge',
-                                        'ag-badge--success' => $order->payment->status->value === 'paid',
-                                        'ag-badge--warning' => $order->payment->status->value === 'pending',
-                                        'ag-badge--muted' => $order->payment->status->value === 'cancelled',
-                                    ])>{{ __('admin.orders.payment_status.'.$order->payment->status->value) }}</span>
-                                @else
-                                    <span class="ag-muted">{{ __('common.em_dash') }}</span>
-                                @endif
+                                <span class="ag-badge ag-badge--{{ $listStatus->badgeVariant() }}">{{ __('admin.orders.list_status.'.$listStatus->value) }}</span>
                             </td>
                             <td class="ag-table__col--lg">
                                 <span class="ag-muted" title="{{ $order->created_at?->toDateTimeString() }}">

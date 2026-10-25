@@ -28,7 +28,6 @@ it('uses the shared list structure while keeping filters, actions and mobile ord
         ->assertSee('role="region" aria-label="'.__('admin.orders.title').'" tabindex="0"', false)
         ->assertSee('ag-table__mobile-meta', false)
         ->assertSee('wire:model.live="status"', false)
-        ->assertSee('wire:model.live="paymentStatus"', false)
         ->assertSee('aria-haspopup="menu"', false)
         ->assertSee(route('admin.orders.edit', $order), false)
         ->assertSee('wire:click="confirmDelete('.$order->id.')"', false);
@@ -38,7 +37,7 @@ it('has loading and combined filters without losing the order detail or protecte
     $staff = $this->createStaff([], ['orders.view']);
     $order = Order::factory()->create(['number' => 'AG-TEST-ORDER-83']);
     Livewire::actingAs($staff)->test(OrdersIndex::class)
-        ->assertSee('wire:target="search,status,paymentStatus,gotoPage,previousPage,nextPage"', false)
+        ->assertSee('wire:target="search,status,gotoPage,previousPage,nextPage"', false)
         ->assertDontSee(route('admin.orders.edit', $order), false)
         ->assertDontSee('wire:click="confirmDelete('.$order->id.')"', false)
         ->set('search', 'AG-TEST-ORDER-83')
