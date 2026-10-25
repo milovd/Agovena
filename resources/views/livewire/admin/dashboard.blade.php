@@ -230,7 +230,9 @@
                         >
                             <span class="visually-hidden">{{ __('common.loading') }}</span>
                         </div>
-                        <table id="dashboard-chart-data" class="visually-hidden">
+                        {{-- A table ignores height: 1px and grows with its rows; the hidden block contains it. --}}
+                        <div class="visually-hidden">
+                        <table id="dashboard-chart-data">
                             <caption>{{ __('admin.dashboard.charts.overview') }}</caption>
                             <thead>
                                 <tr>
@@ -249,6 +251,7 @@
                                 @endforeach
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 @endif
             </section>

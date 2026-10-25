@@ -22,7 +22,9 @@ use App\Models\Ticket;
 use App\Support\MoneyFormatter;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Livewire\Livewire;
+use Symfony\Component\Finder\SplFileInfo;
 use Tests\Support\CreatesStaff;
 
 uses(CreatesStaff::class);
@@ -223,6 +225,20 @@ test('dashboard columns share one bottom edge and the topbar content edges', fun
         ->and($shell)->toMatch('/@media \\(min-width: 901px\\) \\{\\s*\\.admin-account-dropdown \\{[^}]*margin-inline-end: calc\\(\\(2\\.875rem - 1\\.375rem\\) \\/ -2\\)/s');
 });
 
+test('screen-reader-only tables sit inside a hidden block so their rows cannot stretch the page', function () {
+    // A table ignores height: 1px and grows with its rows; a clipped block wrapper contains it.
+    $offenders = collect(File::allFiles(resource_path('views')))
+        ->filter(fn (SplFileInfo $file): bool => str_ends_with($file->getFilename(), '.blade.php'))
+        ->filter(fn (SplFileInfo $file): bool => preg_match('/<table\b[^>]*class="[^"]*\b(ag-)?visually-hidden\b/', (string) file_get_contents($file->getPathname())) === 1)
+        ->map(fn (SplFileInfo $file): string => $file->getRelativePathname())
+        ->values()
+        ->all();
+
+    expect($offenders)->toBe([])
+        ->and((string) file_get_contents(resource_path('views/livewire/admin/dashboard.blade.php')))
+        ->toMatch('/<div class="visually-hidden">\s*<table id="dashboard-chart-data">/');
+});
+
 test('dashboard keeps six focused metrics and one configurable chart', function () {
     $component = Livewire::actingAs($this->createStaff())
         ->test(Dashboard::class)
@@ -326,7 +342,7 @@ test('dashboard chart exposes daily values in an accessible table without changi
     $table = $xpath->query('//table[@id="dashboard-chart-data"]')->item(0);
 
     expect($table)->not->toBeNull()
-        ->and($table->getAttribute('class'))->toContain('visually-hidden')
+        ->and($table->parentNode->getAttribute('class'))->toContain('visually-hidden')
         ->and($xpath->query('.//caption', $table)->item(0)->textContent)->toContain(__('admin.dashboard.charts.overview'))
         ->and($xpath->query('.//tbody/tr', $table))->toHaveCount(14)
         ->and($xpath->query('//canvas[@x-ref="canvas"]'))->toHaveCount(1);
