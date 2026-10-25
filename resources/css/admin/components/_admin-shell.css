@@ -501,6 +501,13 @@ body {
   flex-shrink: 0;
 }
 
+/* Desktop: the account glyph, not its hit area, ends on the content edge below. */
+@media (min-width: 901px) {
+  .admin-account-dropdown {
+    margin-inline-end: calc((2.875rem - 1.375rem) / -2);
+  }
+}
+
 .admin-account-menu {
   left: unset;
   right: 0;

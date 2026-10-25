@@ -369,12 +369,15 @@ a.ag-dashboard-list__title:focus-visible {
 }
 
 @media (min-width: 1101px) {
+  /* Keep the shell inline padding so content starts under the breadcrumb. */
   .admin-content:has(> .admin-dashboard) {
     max-width: none;
-    padding: var(--ag-space-7) 2.75rem;
+    padding-block: var(--ag-space-7);
   }
 
-  .admin-dashboard .ag-dashboard-grid > .ag-dashboard-stack:first-child > .ag-chart-card {
+  /* Both columns fill the shared grid row, whichever one is intrinsically taller. */
+  .admin-dashboard .ag-dashboard-grid > .ag-dashboard-stack:first-child > .ag-chart-card,
+  .admin-dashboard .ag-dashboard-grid > .ag-dashboard-stack:last-child > .ag-dashboard-widget:last-child {
     flex: 1;
   }
 

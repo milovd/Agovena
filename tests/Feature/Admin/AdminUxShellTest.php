@@ -208,6 +208,21 @@ test('dashboard KPI tiles keep a full contextual color in both themes', function
     expect($css)->toMatch('/\\.admin-dashboard \\.ag-metric \\.ag-icon-tile\\s*\\{[^}]*background: var\\(--ag-tile-color\\)/s');
 });
 
+test('dashboard columns share one bottom edge and the topbar content edges', function () {
+    $dashboard = file_get_contents(resource_path('css/admin/screens/_dashboard.css'));
+    $shell = file_get_contents(resource_path('css/admin/components/_admin-shell.css'));
+
+    // Both columns grow into the shared grid row, whichever one is intrinsically taller.
+    expect($dashboard)->toMatch('/\\.ag-dashboard-stack:last-child > \\.ag-dashboard-widget:last-child\\s*\\{[^}]*flex: 1/s')
+        // The dashboard keeps the shell inline padding, so content starts under the breadcrumb.
+        ->and($dashboard)->not->toMatch('/\\.admin-content:has\\(> \\.admin-dashboard\\)\\s*\\{[^}]*padding(-inline)?:[^;]*2\\.75rem/s')
+        ->and($dashboard)->toMatch('/\\.admin-content:has\\(> \\.admin-dashboard\\)\\s*\\{[^}]*padding-block: var\\(--ag-space-7\\)/s')
+        ->and($shell)->toMatch('/\\.admin-topbar \\{[^}]*padding: 0 var\\(--ag-space-6\\)/s')
+        ->and($shell)->toMatch('/\\.admin-content \\{[^}]*padding: var\\(--ag-space-6\\)/s')
+        // The account glyph, not its hit area, ends on the content edge.
+        ->and($shell)->toMatch('/@media \\(min-width: 901px\\) \\{\\s*\\.admin-account-dropdown \\{[^}]*margin-inline-end: calc\\(\\(2\\.875rem - 1\\.375rem\\) \\/ -2\\)/s');
+});
+
 test('dashboard keeps six focused metrics and one configurable chart', function () {
     $component = Livewire::actingAs($this->createStaff())
         ->test(Dashboard::class)
