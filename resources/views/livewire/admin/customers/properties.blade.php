@@ -12,7 +12,7 @@
             :heading="$editingId ? __('admin.customer_properties.edit') : __('admin.customer_properties.new')"
         >
             <x-slot:actions>
-                @if ($editingId && ! $editingSystem)
+                @if ($editingId)
                     <button
                         type="button"
                         class="ag-btn ag-btn--danger"
@@ -28,11 +28,6 @@
         <x-ag.flash />
 
         @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
-
-        @if ($editingSystem)
-            <div class="ag-alert ag-alert--info" role="note">{{ __('admin.customer_properties.system_help') }}</div>
-        @endif
-        @error('property') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
 
         <form wire:submit="save" class="ag-section ag-form ag-form--constrained ag-customer-form" novalidate>
             <div class="ag-section__body">
@@ -50,7 +45,7 @@
                     </div>
                     <div class="ag-field">
                         <label class="ag-field__label" for="property-type">{{ __('admin.customer_properties.type') }}</label>
-                        <select id="property-type" class="ag-select" wire:model.live="type" @disabled($editingSystem)>
+                        <select id="property-type" class="ag-select" wire:model.live="type">
                             @foreach ($types as $case)
                                 <option value="{{ $case->value }}">{{ __('admin.customer_properties.types.'.$case->value) }}</option>
                             @endforeach
@@ -144,8 +139,6 @@
 
         @include('livewire.admin.customers.partials.tabs', ['activeTab' => 'properties'])
 
-        @error('property') <div class="ag-alert ag-alert--danger" role="alert">{{ $message }}</div> @enderror
-
         @if ($definitions->isEmpty())
             <div class="ag-empty" role="status"><p class="ag-empty__text">{{ __('admin.customer_properties.empty_text') }}</p></div>
         @else
@@ -164,15 +157,9 @@
                     </thead>
                     <tbody>
                         @foreach ($definitions as $definition)
-                            @php($isSystem = \App\Agovena\Customer\Properties\CustomerAddressProperties::isSystemKey($definition->key))
                             <tr wire:key="property-{{ $definition->id }}">
                                 <td class="ag-property-cell--identity">
-                                    <span class="ag-table__primary">
-                                        {{ $definition->label }}
-                                        @if ($isSystem)
-                                            <span class="ag-badge ag-property-system-badge" title="{{ __('admin.customer_properties.system_help') }}">{{ __('admin.customer_properties.system') }}</span>
-                                        @endif
-                                    </span>
+                                    <span class="ag-table__primary">{{ $definition->label }}</span>
                                     @if ($definition->description)
                                         <span class="ag-table__muted">{{ Str::limit($definition->description, 60) }}</span>
                                     @endif
@@ -208,16 +195,14 @@
                                         <button type="button" class="ag-icon-btn" wire:click="edit({{ $definition->id }})" title="{{ __('common.edit') }}" aria-label="{{ __('common.edit') }}: {{ $definition->label }}">
                                             <x-ag.icon name="pencil" :size="16" />
                                         </button>
-                                        @if (! $isSystem)
-                                            <button
-                                                type="button"
-                                                class="ag-icon-btn ag-icon-btn--danger"
-                                                wire:click="deleteProperty({{ $definition->id }})"
-                                                wire:confirm="{{ __('admin.customer_properties.delete_confirm') }}"
-                                                title="{{ __('common.delete') }}"
-                                                aria-label="{{ __('common.delete') }}: {{ $definition->label }}"
-                                            ><x-ag.icon name="trash" :size="16" /></button>
-                                        @endif
+                                        <button
+                                            type="button"
+                                            class="ag-icon-btn ag-icon-btn--danger"
+                                            wire:click="deleteProperty({{ $definition->id }})"
+                                            wire:confirm="{{ __('admin.customer_properties.delete_confirm') }}"
+                                            title="{{ __('common.delete') }}"
+                                            aria-label="{{ __('common.delete') }}: {{ $definition->label }}"
+                                        ><x-ag.icon name="trash" :size="16" /></button>
                                     </div>
                                 </td>
                             </tr>

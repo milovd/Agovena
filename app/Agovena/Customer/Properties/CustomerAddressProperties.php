@@ -27,20 +27,6 @@ final class CustomerAddressProperties
         return array_values(self::FIELD_MAP);
     }
 
-    /**
-     * Address properties that checkout, tax and invoices map onto a structured address.
-     * Merchants can relabel and configure them, but not delete them or change key or type.
-     * Phone and company stay ordinary properties.
-     *
-     * @var list<string>
-     */
-    public const SYSTEM_KEYS = ['country', 'address', 'address2', 'city', 'state', 'zip'];
-
-    public static function isSystemKey(string $key): bool
-    {
-        return in_array($key, self::SYSTEM_KEYS, true);
-    }
-
     public static function isAddressKey(string $key): bool
     {
         return in_array($key, self::keys(), true);

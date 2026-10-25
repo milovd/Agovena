@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Agovena\Customer\Properties\CustomerAddressProperties;
+use App\Agovena\Customer\Properties\CustomerPropertyService;
 use App\Livewire\Admin\Customers\Properties;
 use App\Models\Customer;
 use App\Models\CustomerPropertyDefinition;
@@ -53,84 +54,67 @@ it('restores all default customer properties when an earlier reseed wiped them',
         ->and($definitions['address2']->is_required)->toBeFalse();
 });
 
-it('only restores missing system address properties when the merchant removed optional ones', function (): void {
-    CustomerPropertyDefinition::query()->whereIn('key', ['phone', 'company_name', 'zip'])->delete();
+it('does not recreate default properties the merchant deleted', function (): void {
+    CustomerPropertyDefinition::query()->whereIn('key', ['phone', 'country', 'zip'])->delete();
     CustomerPropertyDefinition::query()->where('key', 'city')->update(['label' => 'Town', 'is_required' => false]);
 
     runDefaultCustomerPropertyRepair();
 
-    expect(CustomerPropertyDefinition::query()->where('key', 'zip')->exists())->toBeTrue()
-        ->and(CustomerPropertyDefinition::query()->whereIn('key', ['phone', 'company_name'])->exists())->toBeFalse()
+    expect(CustomerPropertyDefinition::query()->whereIn('key', ['phone', 'country', 'zip'])->exists())->toBeFalse()
         ->and(CustomerPropertyDefinition::query()->where('key', 'city')->first())
         ->label->toBe('Town')
         ->is_required->toBeFalse();
 });
 
-it('locks the key, type and existence of system address properties but keeps their settings editable', function (): void {
+it('lets the merchant edit and delete every default property but never renames a key', function (): void {
     $staff = $this->createStaff([], ['customers.view', 'customers.manage']);
     $country = CustomerPropertyDefinition::query()->where('key', 'country')->sole();
 
-    expect(CustomerAddressProperties::SYSTEM_KEYS)->toBe(['country', 'address', 'address2', 'city', 'state', 'zip']);
-
-    Livewire::actingAs($staff)->test(Properties::class)
-        ->call('deleteProperty', $country->id)
-        ->assertHasErrors(['property']);
-    expect(CustomerPropertyDefinition::query()->whereKey($country->id)->exists())->toBeTrue();
+    expect(method_exists(CustomerAddressProperties::class, 'isSystemKey'))->toBeFalse();
 
     Livewire::actingAs($staff)->test(Properties::class)
         ->call('edit', $country->id)
-        ->assertDontSee('wire:click="deleteProperty('.$country->id.')"', false)
-        ->assertSee('id="property-type" class="ag-select" wire:model.live="type" disabled', false)
+        ->assertSee('wire:click="deleteProperty('.$country->id.')"', false)
+        ->assertDontSee('wire:model.live="type" disabled', false)
         ->set('key', 'land')
-        ->set('type', 'text')
         ->set('label', 'Land')
         ->set('is_required', false)
-        ->set('show_on_invoice', false)
         ->call('save')
         ->assertHasNoErrors();
 
     expect($country->fresh())
         ->key->toBe('country')
-        ->type->value->toBe('country')
         ->label->toBe('Land')
-        ->is_required->toBeFalse()
-        ->show_on_invoice->toBeFalse();
+        ->is_required->toBeFalse();
 
-    Livewire::actingAs($staff)->test(Properties::class)
-        ->call('toggleField', $country->id, 'is_required')
-        ->assertHasNoErrors();
-    expect($country->fresh()->is_required)->toBeTrue();
+    foreach (DEFAULT_CUSTOMER_PROPERTY_KEYS as $key) {
+        $id = CustomerPropertyDefinition::query()->where('key', $key)->value('id');
+        Livewire::actingAs($staff)->test(Properties::class)
+            ->call('deleteProperty', $id)
+            ->assertHasNoErrors();
+    }
+    expect(CustomerPropertyDefinition::query()->whereIn('key', DEFAULT_CUSTOMER_PROPERTY_KEYS)->exists())->toBeFalse();
 });
 
-it('keeps phone and company as ordinary deletable properties and never renames any key on update', function (): void {
-    $staff = $this->createStaff([], ['customers.view', 'customers.manage']);
-    $phone = CustomerPropertyDefinition::query()->where('key', 'phone')->sole();
+it('falls back cleanly when the address properties were deleted', function (): void {
+    $customer = Customer::factory()->create();
+    CustomerPropertyDefinition::query()->whereIn('key', DEFAULT_CUSTOMER_PROPERTY_KEYS)->delete();
 
-    Livewire::actingAs($staff)->test(Properties::class)
-        ->call('edit', $phone->id)
-        ->set('key', 'mobile')
-        ->call('save')
-        ->assertHasNoErrors();
-    expect($phone->fresh()->key)->toBe('phone');
-
-    Livewire::actingAs($staff)->test(Properties::class)
-        ->call('deleteProperty', $phone->id)
-        ->assertHasNoErrors();
-    expect(CustomerPropertyDefinition::query()->whereKey($phone->id)->exists())->toBeFalse();
+    expect(app(CustomerPropertyService::class)->addressFromProperties($customer))->toBeNull();
 });
 
-it('shows a delete row action only for properties that can be deleted', function (): void {
+it('shows edit and delete row actions for every property, without a system badge', function (): void {
     $staff = $this->createStaff([], ['customers.view', 'customers.manage']);
-    $definitions = CustomerPropertyDefinition::query()->get()->keyBy('key');
+    $definitions = CustomerPropertyDefinition::query()->get();
 
     $html = Livewire::actingAs($staff)->test(Properties::class)->html();
 
     expect(substr_count($html, 'ag-row-actions'))->toBe($definitions->count())
-        ->and($html)->toContain('wire:click="deleteProperty('.$definitions['phone']->id.')"')
-        ->and($html)->toContain('wire:click="deleteProperty('.$definitions['company_name']->id.')"')
-        ->and($html)->toContain('wire:confirm="'.e(__('admin.customer_properties.delete_confirm')).'"');
-    foreach (CustomerAddressProperties::SYSTEM_KEYS as $key) {
-        expect($html)->not->toContain('wire:click="deleteProperty('.$definitions[$key]->id.')"');
+        ->and(substr_count($html, 'ag-icon-btn ag-icon-btn--danger'))->toBe($definitions->count())
+        ->and($html)->toContain('wire:confirm="'.e(__('admin.customer_properties.delete_confirm')).'"')
+        ->and($html)->not->toContain('ag-property-system-badge');
+    foreach ($definitions as $definition) {
+        expect($html)->toContain('wire:click="deleteProperty('.$definition->id.')"');
     }
 });
 
@@ -139,13 +123,4 @@ it('does not highlight table rows because a switch is on', function (): void {
 
     expect($css)->toContain('.ag-table tbody tr:has(> td input[type="checkbox"]:not([role="switch"]):checked)')
         ->not->toContain('.ag-table tbody tr:has(> td input[type="checkbox"]:checked)');
-});
-
-it('marks system address properties in the Admin table', function (): void {
-    $staff = $this->createStaff([], ['customers.view', 'customers.manage']);
-
-    $html = Livewire::actingAs($staff)->test(Properties::class)->html();
-
-    expect(substr_count($html, 'ag-property-system-badge'))->toBe(count(CustomerAddressProperties::SYSTEM_KEYS))
-        ->and(__('admin.customer_properties.system', [], 'nl'))->not->toBe('admin.customer_properties.system');
 });

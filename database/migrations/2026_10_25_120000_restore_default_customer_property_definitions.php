@@ -7,33 +7,27 @@ use Illuminate\Support\Facades\DB;
 
 /*
  * The demo reseed used to wipe customer_property_definitions, which removed the default
- * Paymenter-style address properties from installs and the public demo. This restores them
- * idempotently:
- * - none of the defaults left (a wiped install): restore all eight;
- * - some left (the merchant curated them): only restore the system address keys that the
- *   checkout, tax and invoice mapping depend on, and keep the merchant's own choices.
- * Existing rows are never changed.
+ * Paymenter-style properties from installs and the public demo. When none of the defaults
+ * is left (the trace of that wipe), restore all eight. When some are left, the merchant
+ * curated them and deleted ones stay deleted. Existing rows are never changed.
  */
 return new class extends Migration
 {
-    private const SYSTEM_KEYS = ['country', 'address', 'address2', 'city', 'state', 'zip'];
-
     public function up(): void
     {
         $defaults = $this->defaults();
-        $existing = DB::table('customer_property_definitions')
+        $anyDefaultLeft = DB::table('customer_property_definitions')
             ->whereIn('key', array_keys($defaults))
-            ->pluck('key')
-            ->all();
+            ->exists();
 
-        $restore = $existing === []
-            ? array_keys($defaults)
-            : array_values(array_diff(self::SYSTEM_KEYS, $existing));
+        if ($anyDefaultLeft) {
+            return;
+        }
 
         $now = now();
-        foreach ($restore as $key) {
+        foreach ($defaults as $key => $definition) {
             DB::table('customer_property_definitions')->insertOrIgnore([
-                ...$defaults[$key],
+                ...$definition,
                 'key' => $key,
                 'options' => null,
                 'is_active' => true,
