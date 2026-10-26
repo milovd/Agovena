@@ -39,7 +39,7 @@ final class RecurringCapability
             key: 'subscribable',
             label: 'admin.products.capabilities.subscribable',
             description: 'admin.products.capabilities.subscribable_help',
-
+            orderLineEditable: true,
         ));
 
         $context->admin()->permission('subscriptions.view', 'admin.permissions.subscriptions.view');

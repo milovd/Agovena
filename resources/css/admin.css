@@ -8,6 +8,7 @@
 @import './admin/components/_calendar.css';
 @import './admin/components/_skeleton.css';
 @import './admin/components/_combobox.css';
+@import './admin/components/_search-select.css';
 @import './admin/components/_badge.css';
 @import './admin/components/_alert.css';
 @import './admin/components/_modal.css';

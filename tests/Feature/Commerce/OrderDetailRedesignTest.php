@@ -43,14 +43,18 @@ it('shows the order number as heading with one combined status in the header', f
         ->toContain($order->created_at->toDayDateTimeString());
 });
 
-it('turns edit into an icon button in the header and hides it without update permission', function (): void {
+it('edits the order on the page itself without an edit button or dialog', function (): void {
     [$order, $html] = orderDetailHtml($this, $this->createStaff());
 
-    expect($html)->toContain('<button type="button" class="ag-icon-btn ag-icon-btn--header" wire:click="startEditDetails" title="'.e(__('admin.orders.inline.edit_details')).'" aria-label="'.e(__('admin.orders.inline.edit_details_aria', ['number' => $order->number])).'">')
+    expect($html)->toContain('wire:click="saveOrder"')
+        ->toContain('wire:model="details.customerName"')
+        ->not->toContain('startEditDetails')
+        ->not->toContain('role="dialog" aria-modal="true" aria-labelledby="order-details-title"')
         ->not->toContain('href="'.route('admin.orders.edit', $order).'"');
 
     [, $viewOnly] = orderDetailHtml($this, $this->createStaff([], ['orders.view']), 'AG-DETAIL-2');
-    expect($viewOnly)->not->toContain('wire:click="startEditDetails"');
+    expect($viewOnly)->not->toContain('wire:click="saveOrder"')
+        ->not->toContain('wire:model="details.billing.line1"');
 });
 
 it('summarises the order in brand metric cards', function (): void {

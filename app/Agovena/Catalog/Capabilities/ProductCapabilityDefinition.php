@@ -23,6 +23,12 @@ final class ProductCapabilityDefinition
         public readonly ?string $providedByModule = null,
         /** @var (Closure(array<string, mixed>): bool)|null */
         public readonly ?Closure $availability = null,
+        /**
+         * True when staff may add, remove, re-product or re-quantity order lines of products with
+         * this capability on an unpaid order. The owner must then keep its own order-line state
+         * in sync through OrderItemsChanging/OrderItemsChanged. Price edits are always allowed.
+         */
+        public readonly bool $orderLineEditable = false,
     ) {}
 
     /**

@@ -47,25 +47,7 @@ final class UpdateOrder
         return DB::transaction(function () use ($order, $attributes): Order {
             $locked = Order::query()->whereKey($order->id)->lockForUpdate()->firstOrFail();
 
-            $data = array_intersect_key($attributes, array_flip(self::EDITABLE_ATTRIBUTES));
-            if (($data['shipping_same_as_billing'] ?? false) === true) {
-                foreach (['name', 'company', 'line1', 'line2', 'city', 'region', 'postal_code', 'country', 'phone'] as $field) {
-                    $data['shipping_'.$field] = $data['billing_'.$field] ?? null;
-                }
-            }
-
-            $before = $locked->only(self::EDITABLE_ATTRIBUTES);
-            $locked->fill($data);
-            if ($locked->isDirty()) {
-                $locked->save();
-                $this->audit->logChange(
-                    'order.updated',
-                    $locked,
-                    $before,
-                    $locked->only(self::EDITABLE_ATTRIBUTES),
-                    ['order_number' => $locked->number],
-                );
-            }
+            $this->applyLocked($locked, $attributes);
 
             $fresh = $locked->fresh(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds']);
             if ($fresh === null) {
@@ -74,5 +56,37 @@ final class UpdateOrder
 
             return $fresh;
         });
+    }
+
+    /**
+     * For callers that already hold the order lock inside their own transaction.
+     *
+     * @param  array<string, mixed>  $attributes
+     */
+    public function applyLocked(Order $locked, array $attributes): bool
+    {
+        $data = array_intersect_key($attributes, array_flip(self::EDITABLE_ATTRIBUTES));
+        if (($data['shipping_same_as_billing'] ?? false) === true) {
+            foreach (['name', 'company', 'line1', 'line2', 'city', 'region', 'postal_code', 'country', 'phone'] as $field) {
+                $data['shipping_'.$field] = $data['billing_'.$field] ?? null;
+            }
+        }
+
+        $before = $locked->only(self::EDITABLE_ATTRIBUTES);
+        $locked->fill($data);
+        if (! $locked->isDirty()) {
+            return false;
+        }
+
+        $locked->save();
+        $this->audit->logChange(
+            'order.updated',
+            $locked,
+            $before,
+            $locked->only(self::EDITABLE_ATTRIBUTES),
+            ['order_number' => $locked->number],
+        );
+
+        return true;
     }
 }

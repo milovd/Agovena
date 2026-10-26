@@ -7,16 +7,18 @@ namespace App\Livewire\Admin\Orders;
 use App\Agovena\Admin\AdminRegistrar;
 use App\Agovena\Admin\InMemoryAdminRegistrar;
 use App\Agovena\Admin\OrderDetailSection;
+use App\Agovena\Catalog\Options\ProductOptionPricer;
 use App\Agovena\Invoices\LinkInvoiceToOrder;
 use App\Agovena\Invoices\UnlinkInvoiceFromOrder;
 use App\Agovena\Orders\CancelUnpaidOrder;
-use App\Agovena\Orders\ChangeOrderCustomer;
 use App\Agovena\Orders\DeleteOrder;
+use App\Agovena\Orders\Lines\OrderLineDraft;
+use App\Agovena\Orders\SaveOrderChanges;
 use App\Agovena\Orders\UnpaidOrderCancelSource;
 use App\Agovena\Orders\UnpaidOrderEditGuard;
-use App\Agovena\Orders\UpdateOrder;
 use App\Agovena\Payments\PaymentGatewayRegistry;
 use App\Agovena\Payments\RecordManualPayment;
+use App\Agovena\Recurring\Enums\SubscriptionInterval;
 use App\Agovena\Recurring\Models\Subscription;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
@@ -26,12 +28,16 @@ use App\Livewire\Forms\Admin\OrderDetailsForm;
 use App\Models\Customer;
 use App\Models\Invoice;
 use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
 use App\Models\User;
+use App\Support\MoneyFormatter;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use InvalidArgumentException;
 use Livewire\Component;
 
 final class Show extends Component
@@ -47,119 +53,170 @@ final class Show extends Component
 
     public bool $confirmingCancel = false;
 
-    public bool $showInvoiceLinker = false;
-
     public string $invoiceSearch = '';
 
     public OrderDetailsForm $details;
 
-    public bool $editingDetails = false;
+    public ?int $customerId = null;
 
-    public bool $editingAddresses = false;
+    public string $customerLabel = '';
+
+    /** @var list<array{key: string, id: int|null, product_id: int|null, label: string, quantity: string, price: string}> */
+    public array $lines = [];
+
+    /** The open search select: "customer" or "line.{index}". */
+    public ?string $picker = null;
+
+    public string $pickerTerm = '';
+
+    public string $pristine = '';
+
+    public string $pristineLines = '';
 
     public bool $confirmingDelete = false;
-
-    public string $customerSearch = '';
-
-    public ?int $selectedCustomerId = null;
 
     public function mount(Order $order): void
     {
         $this->authorize('orders.view');
-        $this->order = $order->load(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds']);
-        $this->details->fillFrom($this->order);
+        $this->order = $order->load(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds', 'customer']);
+        $this->fillForm();
     }
 
-    public function startEditDetails(): void
+    public function openPicker(string $field): void
     {
         $this->authorize('orders.update');
-        $this->details->fillFrom($this->order);
-        $this->selectedCustomerId = $this->order->customer_id === null ? null : (int) $this->order->customer_id;
-        $this->customerSearch = $this->customerLabel($this->order->customer);
-        $this->editingAddresses = false;
-        $this->editingDetails = true;
+        abort_unless($field === 'customer' || $this->lineIndex($field) !== null, 404);
+        $this->picker = $field;
+        $this->pickerTerm = '';
     }
 
-    public function cancelEditDetails(): void
+    public function closePicker(): void
     {
-        $this->editingDetails = false;
-        $this->customerSearch = '';
-        $this->details->fillFrom($this->order);
+        $this->picker = null;
+        $this->pickerTerm = '';
     }
 
-    public function updatedCustomerSearch(): void
+    public function pick(string $field, int $id): void
     {
         $this->authorize('orders.update');
-        // Typing starts a new search; the choice only counts once a result is picked.
-        $this->selectedCustomerId = null;
+        $guard = app(UnpaidOrderEditGuard::class);
+
+        if ($field === 'customer') {
+            $reason = $guard->blockingReason($this->order, forCustomerChange: true);
+            if ($reason !== null) {
+                $this->addError('customer', $reason);
+
+                return;
+            }
+            $customer = Customer::query()->findOrFail($id);
+            $this->customerId = (int) $customer->id;
+            $this->customerLabel = $this->labelFor($customer);
+            $this->details->customerName = (string) $customer->name;
+            $this->details->customerEmail = (string) $customer->email;
+            $this->closePicker();
+
+            return;
+        }
+
+        $index = $this->lineIndex($field);
+        abort_if($index === null, 404);
+        $reason = $guard->blockingReason($this->order, forLineChange: true);
+        if ($reason !== null) {
+            $this->addError('lines', $reason);
+
+            return;
+        }
+
+        $product = Product::query()->findOrFail($id);
+        $this->lines[$index]['product_id'] = (int) $product->id;
+        $this->lines[$index]['label'] = (string) $product->name;
+        try {
+            $price = app(ProductOptionPricer::class)->unitPrice($product, [], (string) $this->order->currency);
+            $this->lines[$index]['price'] = MoneyFormatter::majorInputFromMinor($price->amount, (string) $this->order->currency);
+        } catch (InvalidArgumentException) {
+            // Not priced in this currency: staff enter the price.
+        }
+        $this->resetValidation('lines.'.$index.'.product');
+        $this->closePicker();
     }
 
-    public function selectCustomer(int $customerId): void
+    public function addLine(): void
     {
         $this->authorize('orders.update');
-        $customer = Customer::query()->findOrFail($customerId);
-        $this->selectedCustomerId = (int) $customer->id;
-        $this->customerSearch = $this->customerLabel($customer);
-        $this->details->customerName = (string) $customer->name;
-        $this->details->customerEmail = (string) $customer->email;
-        $this->resetValidation('order');
+        $reason = app(UnpaidOrderEditGuard::class)->blockingReason($this->order, forLineChange: true);
+        if ($reason !== null) {
+            $this->addError('lines', $reason);
+
+            return;
+        }
+
+        $this->lines[] = [
+            'key' => 'new-'.Str::lower(Str::random(8)),
+            'id' => null,
+            'product_id' => null,
+            'label' => '',
+            'quantity' => '1',
+            'price' => MoneyFormatter::majorInputFromMinor(0, (string) $this->order->currency),
+        ];
+        $this->openPicker('line.'.(count($this->lines) - 1));
     }
 
-    public function saveDetails(UpdateOrder $update, ChangeOrderCustomer $changeCustomer): void
+    public function removeLine(int $index): void
     {
         $this->authorize('orders.update');
-        $attributes = $this->details->detailsAttributes();
-        $staff = $this->staff();
+        abort_unless(isset($this->lines[$index]), 404);
+        unset($this->lines[$index]);
+        $this->lines = array_values($this->lines);
+        $this->closePicker();
+    }
 
-        $customerChanges = $this->selectedCustomerId !== null
-            && $this->selectedCustomerId !== (int) $this->order->customer_id;
+    public function resetForm(): void
+    {
+        $this->fillForm();
+    }
+
+    public function saveOrder(SaveOrderChanges $save, UnpaidOrderEditGuard $guard): void
+    {
+        $this->authorize('orders.update');
+        $this->closePicker();
+
+        $attributes = array_merge($this->details->detailsAttributes(), $this->details->addressAttributes());
+        // Lines only go along when they changed, so contact edits never trip over line rules.
+        $drafts = $this->linesHash() !== $this->pristineLines && $guard->blockingReason($this->order, forLineChange: true) === null
+            ? $this->lineDrafts()
+            : null;
+
+        $customer = null;
+        if ($this->customerId !== null && $this->customerId !== (int) $this->order->customer_id) {
+            $customer = Customer::query()->findOrFail($this->customerId);
+            if (! $this->requireRecentPassword('saveOrder')) {
+                return;
+            }
+        }
+
+        $openInvoice = $this->order->invoices()->where('status', InvoiceStatus::Issued)->value('id');
 
         try {
-            if ($customerChanges) {
-                $customer = Customer::query()->findOrFail($this->selectedCustomerId);
-                app(UnpaidOrderEditGuard::class)->assertEditable($this->order, forCustomerChange: true);
-                if (! $this->requireRecentPassword('saveDetails')) {
-                    return;
-                }
-                $changeCustomer->handle($this->order, $customer, $staff);
-            }
-
-            $update->handle($this->order->fresh() ?? $this->order, $attributes);
+            $save->handle($this->order, $this->staff(), $customer, $attributes, $drafts);
         } catch (ValidationException $exception) {
-            $this->addError('order', $exception->errors()['order'][0] ?? $exception->getMessage());
+            $errors = $exception->errors();
+            foreach (['order', 'lines', 'customer'] as $key) {
+                if (isset($errors[$key][0])) {
+                    $this->addError($key, $errors[$key][0]);
+                }
+            }
+            if (! isset($errors['order']) && ! isset($errors['lines']) && ! isset($errors['customer'])) {
+                $this->addError('order', (string) collect($errors)->flatten()->first());
+            }
 
             return;
         }
 
         $this->refreshOrder();
-        $this->details->fillFrom($this->order);
-        $this->editingDetails = false;
-        $this->customerSearch = '';
-        session()->flash('status', __($customerChanges ? 'admin.orders.flash.customer_changed' : 'admin.orders.flash.updated'));
-    }
-
-    public function startEditAddresses(): void
-    {
-        $this->authorize('orders.update');
-        $this->details->fillFrom($this->order);
-        $this->editingDetails = false;
-        $this->editingAddresses = true;
-    }
-
-    public function cancelEditAddresses(): void
-    {
-        $this->editingAddresses = false;
-        $this->details->fillFrom($this->order);
-    }
-
-    public function saveAddresses(UpdateOrder $update): void
-    {
-        $this->authorize('orders.update');
-        $this->order = $update->handle($this->order, $this->details->addressAttributes());
-        $this->refreshOrder();
-        $this->details->fillFrom($this->order);
-        $this->editingAddresses = false;
-        session()->flash('status', __('admin.orders.flash.updated'));
+        $reissued = $openInvoice !== null
+            && $this->order->invoices()->where('status', InvoiceStatus::Issued)->value('id') !== $openInvoice;
+        $this->fillForm();
+        session()->flash('status', __($reissued ? 'admin.orders.inline.saved_reissued' : 'admin.orders.inline.saved'));
     }
 
     public function confirmDelete(): void
@@ -254,18 +311,6 @@ final class Show extends Component
         session()->flash('status', __('admin.orders.flash.payment_recorded'));
     }
 
-    public function startLinkInvoice(): void
-    {
-        $this->authorize('invoices.manage');
-        $this->showInvoiceLinker = true;
-    }
-
-    public function cancelLinkInvoice(): void
-    {
-        $this->showInvoiceLinker = false;
-        $this->invoiceSearch = '';
-    }
-
     public function linkInvoice(int $invoiceId, LinkInvoiceToOrder $link): void
     {
         $this->authorize('invoices.manage');
@@ -275,7 +320,7 @@ final class Show extends Component
         $staff = Auth::user();
         $link->handle($invoice, $this->order, $staff);
         $this->refreshOrder();
-        $this->cancelLinkInvoice();
+        $this->invoiceSearch = '';
         session()->flash('status', __('admin.orders.flash.invoice_linked'));
     }
 
@@ -311,17 +356,16 @@ final class Show extends Component
                     ->orWhereHas('refunds');
             })->exists();
         $invoiceCandidates = collect();
-        if ($this->showInvoiceLinker && $canManageInvoices) {
+        if (trim($this->invoiceSearch) !== '' && $canManageInvoices) {
             $term = trim($this->invoiceSearch);
             $invoiceCandidates = Invoice::query()
                 ->whereNull('order_id')
                 ->where('status', InvoiceStatus::Issued)
-                ->when($term !== '', static function ($query) use ($term): void {
-                    $query->where(function ($query) use ($term): void {
-                        $query->where('number', 'like', "%{$term}%")
-                            ->orWhere('customer_name', 'like', "%{$term}%")
-                            ->orWhere('customer_email', 'like', "%{$term}%");
-                    });
+                ->where(function ($query) use ($term): void {
+                    $like = '%'.str_replace(['%', '_'], ['\\%', '\\_'], $term).'%';
+                    $query->where('number', 'like', $like)
+                        ->orWhere('customer_name', 'like', $like)
+                        ->orWhere('customer_email', 'like', $like);
                 })
                 ->latest('id')
                 ->limit(8)
@@ -333,12 +377,10 @@ final class Show extends Component
             'canUpdate' => $user?->can('orders.update') === true,
             'canDelete' => $user?->can('orders.delete') === true,
             'customerLockReason' => app(UnpaidOrderEditGuard::class)->blockingReason($this->order, forCustomerChange: true),
-            'customerResults' => $this->editingDetails ? $this->customerResults() : collect(),
-            'subscriptionsByItem' => Subscription::query()
-                ->where('order_id', $this->order->id)
-                ->whereNotNull('order_item_id')
-                ->get()
-                ->keyBy('order_item_id'),
+            'linesLockReason' => app(UnpaidOrderEditGuard::class)->blockingReason($this->order, forLineChange: true),
+            'pickerResults' => $this->pickerResults(),
+            'lineRecurring' => $this->lineRecurring(),
+            'isDirty' => $this->pristine !== $this->formHash(),
             'canViewSubscriptions' => $user?->can('subscriptions.view') === true,
             'displayableProperties' => array_values(array_filter(
                 $this->order->custom_properties_snapshot ?? [],
@@ -392,31 +434,176 @@ final class Show extends Component
     private function refreshOrder(): void
     {
         $this->order = Order::query()->whereKey($this->order->id)->firstOrFail()
-            ->load(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds']);
+            ->load(['items', 'payment.attempts', 'invoices', 'creditNotes', 'refunds', 'customer']);
     }
 
-    /** @return Collection<int, Customer> */
-    private function customerResults(): Collection
+    private function fillForm(): void
     {
-        $term = trim($this->customerSearch);
-        if ($term === '' || $this->selectedCustomerId !== null) {
-            return collect();
+        $this->details->fillFrom($this->order);
+        $this->customerId = $this->order->customer_id === null ? null : (int) $this->order->customer_id;
+        $this->customerLabel = $this->order->customer !== null
+            ? $this->labelFor($this->order->customer)
+            : (string) $this->order->customer_name.' ('.$this->order->customer_email.')';
+        $currency = (string) $this->order->currency;
+        $this->lines = $this->order->items->map(static fn (OrderItem $item): array => [
+            'key' => 'item-'.$item->id,
+            'id' => (int) $item->id,
+            'product_id' => $item->product_id === null ? null : (int) $item->product_id,
+            'label' => (string) $item->label,
+            'quantity' => (string) $item->quantity,
+            'price' => MoneyFormatter::majorInputFromMinor((int) $item->unit_amount, $currency),
+        ])->values()->all();
+        $this->closePicker();
+        $this->resetValidation();
+        $this->pristine = $this->formHash();
+        $this->pristineLines = $this->linesHash();
+    }
+
+    private function formHash(): string
+    {
+        return md5((string) json_encode([$this->details->all(), $this->customerId, $this->linesHash()]));
+    }
+
+    private function linesHash(): string
+    {
+        return md5((string) json_encode(array_map(
+            static fn (array $line): array => [$line['id'], $line['product_id'], trim($line['quantity']), trim($line['price'])],
+            $this->lines,
+        )));
+    }
+
+    /** @return list<OrderLineDraft> */
+    private function lineDrafts(): array
+    {
+        $currency = (string) $this->order->currency;
+        $errors = [];
+        $drafts = [];
+
+        foreach ($this->lines as $index => $line) {
+            if ($line['product_id'] === null) {
+                $errors['lines.'.$index.'.product'] = __('admin.orders.lines.errors.product');
+            }
+            $quantity = trim($line['quantity']);
+            if (! ctype_digit($quantity) || (int) $quantity < 1 || (int) $quantity > 10000) {
+                $errors['lines.'.$index.'.quantity'] = __('admin.orders.lines.errors.quantity');
+            }
+            try {
+                $unit = MoneyFormatter::minorFromMajorInput(trim($line['price']), $currency);
+            } catch (InvalidArgumentException) {
+                $unit = null;
+                $errors['lines.'.$index.'.price'] = __('admin.orders.lines.errors.price');
+            }
+
+            if ($line['product_id'] !== null && $unit !== null && ctype_digit($quantity)) {
+                $drafts[] = new OrderLineDraft($line['id'], (int) $line['product_id'], (int) $quantity, $unit);
+            }
         }
 
+        if ($errors !== []) {
+            throw ValidationException::withMessages($errors);
+        }
+
+        return $drafts;
+    }
+
+    private function lineIndex(string $field): ?int
+    {
+        if (! str_starts_with($field, 'line.')) {
+            return null;
+        }
+        $index = substr($field, 5);
+
+        return ctype_digit($index) && isset($this->lines[(int) $index]) ? (int) $index : null;
+    }
+
+    /** @return list<array{id: int, label: string, hint: string|null}> */
+    private function pickerResults(): array
+    {
+        if ($this->picker === null) {
+            return [];
+        }
+
+        $term = trim($this->pickerTerm);
         $like = '%'.str_replace(['%', '_'], ['\%', '\_'], $term).'%';
 
-        return Customer::query()
-            ->where(static function ($query) use ($like): void {
-                $query->where('name', 'like', $like)->orWhere('email', 'like', $like);
+        if ($this->picker === 'customer') {
+            return Customer::query()
+                ->when($term !== '', static function ($query) use ($like): void {
+                    $query->where(static function ($query) use ($like): void {
+                        $query->where('name', 'like', $like)->orWhere('email', 'like', $like);
+                    });
+                })
+                ->orderBy('name')
+                ->limit(8)
+                ->get(['id', 'name', 'email'])
+                ->map(fn (Customer $customer): array => ['id' => (int) $customer->id, 'label' => $this->labelFor($customer), 'hint' => null])
+                ->all();
+        }
+
+        return Product::query()
+            ->when($term !== '', static function ($query) use ($like): void {
+                $query->where(static function ($query) use ($like): void {
+                    $query->where('name', 'like', $like)->orWhere('sku', 'like', $like);
+                });
             })
             ->orderBy('name')
             ->limit(8)
-            ->get(['id', 'name', 'email']);
+            ->get(['id', 'name', 'sku', 'price_amount', 'currency'])
+            ->map(static fn (Product $product): array => [
+                'id' => (int) $product->id,
+                'label' => (string) $product->name,
+                'hint' => MoneyFormatter::format((int) $product->price_amount, (string) $product->currency),
+            ])
+            ->all();
     }
 
-    private function customerLabel(?Customer $customer): string
+    /**
+     * How each line bills again: the subscription it created, or the recurring setup of its product.
+     *
+     * @return array<string, array{count: int, interval: string, subscription: Subscription|null}>
+     */
+    private function lineRecurring(): array
     {
-        return $customer === null ? '' : $customer->name.' ('.$customer->email.')';
+        $subscriptions = Subscription::query()
+            ->where('order_id', $this->order->id)
+            ->whereNotNull('order_item_id')
+            ->get()
+            ->keyBy('order_item_id');
+        $productIds = array_values(array_filter(array_column($this->lines, 'product_id')));
+        $products = Product::query()->with('capabilities')->whereIn('id', $productIds)->get()->keyBy('id');
+
+        $recurring = [];
+        foreach ($this->lines as $line) {
+            $subscription = $line['id'] !== null ? $subscriptions->get($line['id']) : null;
+            if ($subscription instanceof Subscription) {
+                $recurring[$line['key']] = [
+                    'count' => (int) $subscription->interval_count,
+                    'interval' => $subscription->interval->value,
+                    'subscription' => $subscription,
+                ];
+
+                continue;
+            }
+
+            $config = $line['product_id'] !== null
+                ? $products->get($line['product_id'])?->capability('subscribable')?->config
+                : null;
+            if (is_array($config)) {
+                $interval = SubscriptionInterval::tryFrom((string) ($config['interval'] ?? 'month')) ?? SubscriptionInterval::Month;
+                $recurring[$line['key']] = [
+                    'count' => max(1, (int) ($config['interval_count'] ?? 1)),
+                    'interval' => $interval->value,
+                    'subscription' => null,
+                ];
+            }
+        }
+
+        return $recurring;
+    }
+
+    private function labelFor(Customer $customer): string
+    {
+        return $customer->name.' ('.$customer->email.')';
     }
 
     private function staff(): User

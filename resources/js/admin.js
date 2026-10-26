@@ -3,6 +3,7 @@
  * live per concern under ./admin/; this file only wires them up.
  */
 import { registerBulkSelection } from './admin/bulk-selection.js';
+import { registerSearchSelect } from './admin/search-select.js';
 import { registerCalendar } from './admin/calendar.js';
 import { registerChartComponents } from './admin/chart.js';
 import { registerInvoiceComponents } from './admin/invoices.js';
@@ -18,6 +19,7 @@ registerCalendar();
 document.addEventListener('alpine:init', () => {
     registerChartComponents(Alpine);
     registerBulkSelection(Alpine);
+    registerSearchSelect(Alpine);
     registerShellComponents(Alpine);
     registerProductComponents(Alpine);
     registerSettingsComponents(Alpine);

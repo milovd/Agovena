@@ -9,6 +9,7 @@ use App\Agovena\Admin\OrderDetailSection;
 use App\Agovena\Availability\Listeners\AssertStockBeforeOrderPlacing;
 use App\Agovena\Availability\Listeners\ReserveStockWhenOrderCreated;
 use App\Agovena\Availability\Listeners\RestockWhenOrderCancelled;
+use App\Agovena\Availability\Listeners\SyncStockWhenOrderItemsChange;
 use App\Agovena\Catalog\Capabilities\ProductCapabilityDefinition;
 use App\Agovena\Customer\AccountNavItem;
 use App\Agovena\Modules\ModuleContext;
@@ -22,8 +23,11 @@ use App\Agovena\Physical\Http\Livewire\Customer\ReturnCreate;
 use App\Agovena\Physical\Http\Livewire\Customer\ReturnsIndex as CustomerReturnsIndex;
 use App\Agovena\Physical\Listeners\CancelShipmentsWhenOrderCancelled;
 use App\Agovena\Physical\Listeners\CreateShipmentWhenOrderCreated;
+use App\Agovena\Physical\Listeners\SyncShipmentWhenOrderItemsChange;
 use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
+use App\Events\OrderItemsChanged;
+use App\Events\OrderItemsChanging;
 use App\Events\OrderPlacing;
 use Illuminate\Support\Facades\Route;
 
@@ -41,7 +45,7 @@ final class PhysicalCapability
             key: 'physical',
             label: 'admin.products.capabilities.physical',
             description: 'admin.products.capabilities.physical_help',
-
+            orderLineEditable: true,
         ));
 
         $context->capabilities()->register(new ProductCapabilityDefinition(
@@ -49,7 +53,7 @@ final class PhysicalCapability
             label: 'admin.products.capabilities.shippable',
             description: 'admin.products.capabilities.shippable_help',
             requires: ['physical'],
-
+            orderLineEditable: true,
         ));
 
         $context->admin()->permission('shipping.view', 'admin.permissions.shipping.view');
@@ -106,6 +110,11 @@ final class PhysicalCapability
         $context->listen(OrderCreated::class, ReserveStockWhenOrderCreated::class);
         $context->listen(OrderCancelled::class, RestockWhenOrderCancelled::class);
         $context->listen(OrderCancelled::class, CancelShipmentsWhenOrderCancelled::class);
+        // Staff line edits on unpaid orders: give back first, then reserve and sync again.
+        $context->listen(OrderItemsChanging::class, SyncStockWhenOrderItemsChange::class);
+        $context->listen(OrderItemsChanging::class, SyncShipmentWhenOrderItemsChange::class);
+        $context->listen(OrderItemsChanged::class, SyncStockWhenOrderItemsChange::class);
+        $context->listen(OrderItemsChanged::class, SyncShipmentWhenOrderItemsChange::class);
 
         $context->adminRoutes(function (): void {
             Route::get('/shipping/methods', MethodsIndex::class)->name('shipping.methods');

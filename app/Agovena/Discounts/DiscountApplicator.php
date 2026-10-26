@@ -43,18 +43,36 @@ final class DiscountApplicator
             $this->fail('discount_minimum');
         }
 
-        if ($discount->type === 'fixed') {
-            if ($discount->currency !== null && strtoupper($discount->currency) !== $subtotal->currency) {
-                $this->fail('discount_currency');
-            }
-            $amount = min($subtotal->amount, $discount->value);
-        } elseif ($discount->type === 'percent') {
-            $amount = intdiv(($subtotal->amount * min(100, $discount->value)) + 50, 100);
-        } else {
+        if ($discount->type === 'fixed'
+            && $discount->currency !== null
+            && strtoupper($discount->currency) !== $subtotal->currency) {
+            $this->fail('discount_currency');
+        }
+
+        if (! in_array($discount->type, ['fixed', 'percent'], true)) {
             $this->fail('discount_invalid');
         }
 
-        return new AppliedDiscount($discount, Money::of($amount, $subtotal->currency));
+        return new AppliedDiscount($discount, Money::of($this->amountFor($discount, $subtotal), $subtotal->currency));
+    }
+
+    /**
+     * The discount a code gives on a subtotal, without usage checks. Used to recalculate an
+     * order whose lines changed after the code was already redeemed on it.
+     */
+    public function amountFor(DiscountCode $discount, Money $subtotal): int
+    {
+        if ($subtotal->amount < $discount->min_subtotal_amount) {
+            return 0;
+        }
+
+        return match ($discount->type) {
+            'fixed' => $discount->currency !== null && strtoupper($discount->currency) !== $subtotal->currency
+                ? 0
+                : min($subtotal->amount, $discount->value),
+            'percent' => intdiv(($subtotal->amount * min(100, $discount->value)) + 50, 100),
+            default => 0,
+        };
     }
 
     private function fail(string $key): never

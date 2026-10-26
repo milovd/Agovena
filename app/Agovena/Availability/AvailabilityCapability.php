@@ -23,13 +23,14 @@ final class AvailabilityCapability
             key: 'availability',
             label: 'admin.products.capabilities.inventory',
             description: 'admin.products.capabilities.inventory_help',
+            orderLineEditable: true,
         ));
 
         $context->capabilities()->register(new ProductCapabilityDefinition(
             key: 'physical',
             label: 'admin.products.capabilities.physical',
             description: 'admin.products.capabilities.physical_help',
-
+            orderLineEditable: true,
         ));
 
         $context->capabilities()->register(new ProductCapabilityDefinition(
@@ -37,7 +38,7 @@ final class AvailabilityCapability
             label: 'admin.products.capabilities.inventory',
             description: 'admin.products.capabilities.inventory_help',
             requires: ['physical'],
-
+            orderLineEditable: true,
         ));
 
         $context->admin()->permission('inventory.view', 'admin.permissions.inventory.view');

@@ -20,7 +20,7 @@ use Illuminate\Validation\ValidationException;
  */
 final class UnpaidOrderEditGuard
 {
-    public function blockingReason(Order $order, bool $forCustomerChange = false): ?string
+    public function blockingReason(Order $order, bool $forCustomerChange = false, bool $forLineChange = false): ?string
     {
         $order->loadMissing('payment');
 
@@ -40,17 +40,17 @@ final class UnpaidOrderEditGuard
             return __('admin.orders.edit_lock.invoice_history');
         }
 
-        // Account credit was taken from the current customer's ledger.
-        if ($forCustomerChange && (int) $order->credit_amount > 0) {
+        // Account credit was taken from the current customer's ledger for the current total.
+        if (($forCustomerChange || $forLineChange) && (int) $order->credit_amount > 0) {
             return __('admin.orders.edit_lock.credit_applied');
         }
 
         return null;
     }
 
-    public function assertEditable(Order $order, bool $forCustomerChange = false): void
+    public function assertEditable(Order $order, bool $forCustomerChange = false, bool $forLineChange = false): void
     {
-        $reason = $this->blockingReason($order, $forCustomerChange);
+        $reason = $this->blockingReason($order, $forCustomerChange, $forLineChange);
         if ($reason !== null) {
             throw ValidationException::withMessages(['order' => $reason]);
         }

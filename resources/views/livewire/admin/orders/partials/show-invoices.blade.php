@@ -11,12 +11,9 @@
     <header class="ag-card__header">
         <x-ag.icon-tile name="file-text" tone="amber" />
         <h2 id="order-invoices-heading" class="ag-card__title">{{ __('admin.orders.show.invoices') }}</h2>
-        <p class="ag-card__description">{{ __('admin.orders.show.invoices_lede') }}</p>
     </header>
     <div class="ag-card__content">
-        @if ($orderInvoices->isEmpty() && $order->creditNotes->isEmpty())
-            <p class="ag-muted">{{ __('admin.orders.show.no_invoices') }}</p>
-        @else
+        @if ($orderInvoices->isNotEmpty() || $order->creditNotes->isNotEmpty())
             <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.invoices') }}" tabindex="0">
                 <table class="ag-table admin-order__invoice-table">
                     <thead>
@@ -42,8 +39,8 @@
                                         <x-ag.icon name="eye" :size="16" />
                                     </a>
                                     @if ($canManageInvoices && $invoice->canChangeOrderAssociation())
-                                        <button type="button" class="ag-icon-btn" wire:click="unlinkInvoice({{ $invoice->id }})" wire:confirm="{{ __('admin.orders.show.invoice_unlink_confirm') }}" wire:loading.attr="disabled" wire:target="unlinkInvoice({{ $invoice->id }})" title="{{ __('common.remove') }}" aria-label="{{ __('common.remove') }}">
-                                            <x-ag.icon name="x" :size="16" />
+                                        <button type="button" class="ag-icon-btn ag-icon-btn--danger" wire:click="unlinkInvoice({{ $invoice->id }})" wire:confirm="{{ __('admin.orders.show.invoice_unlink_confirm') }}" wire:loading.attr="disabled" wire:target="unlinkInvoice({{ $invoice->id }})" title="{{ __('admin.orders.inline.unlink_invoice', ['number' => $invoice->number]) }}" aria-label="{{ __('admin.orders.inline.unlink_invoice', ['number' => $invoice->number]) }}">
+                                            <x-ag.icon name="link-2-off" :size="16" />
                                         </button>
                                     @endif
                                 </td>
@@ -66,40 +63,28 @@
                     </tbody>
                 </table>
             </div>
+        @elseif (! $canManageInvoices)
+            <p class="ag-muted">{{ __('admin.orders.show.no_invoices') }}</p>
         @endif
 
         @if ($canManageInvoices)
-            <div class="ag-stack ag-u-mt-4">
-                @if (! $showInvoiceLinker)
-                    <div><button type="button" class="ag-btn ag-btn--secondary" wire:click="startLinkInvoice">{{ __('admin.orders.show.link_invoice') }}</button></div>
-                @else
-                    <div class="ag-stack" role="group" aria-labelledby="link-invoice-heading">
-                        <h3 id="link-invoice-heading" class="ag-section__title">{{ __('admin.orders.show.link_invoice') }}</h3>
-                        <label class="ag-field__label" for="invoice-search">{{ __('admin.invoices.search_label') }}</label>
-                        <input id="invoice-search" class="ag-input" type="search" wire:model.live.debounce.300ms="invoiceSearch" placeholder="{{ __('admin.invoices.search_placeholder') }}" autocomplete="off">
-                        <div class="ag-table-wrap" role="region" aria-label="{{ __('admin.orders.show.link_invoice') }}" tabindex="0">
-                            <table class="ag-table">
-                                <thead>
-                                    <tr>
-                                        <th scope="col">{{ __('admin.invoices.number') }}</th>
-                                        <th scope="col">{{ __('admin.invoices.customer') }}</th>
-                                        <th scope="col"><span class="visually-hidden">{{ __('admin.orders.actions.more') }}</span></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse ($invoiceCandidates as $candidate)
-                                        <tr wire:key="invoice-candidate-{{ $candidate->id }}">
-                                            <td>{{ $candidate->number }}</td>
-                                            <td>{{ $candidate->customer_name }}<br><span class="ag-muted">{{ $candidate->customer_email }}</span></td>
-                                            <td><button type="button" class="ag-btn ag-btn--secondary ag-btn--sm" wire:click="linkInvoice({{ $candidate->id }})" wire:loading.attr="disabled" wire:target="linkInvoice({{ $candidate->id }})">{{ __('admin.orders.show.link') }}</button></td>
-                                        </tr>
-                                    @empty
-                                        <tr><td colspan="3" class="ag-muted">{{ __('admin.orders.show.no_invoice_candidates') }}</td></tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                        <div><button type="button" class="ag-btn ag-btn--ghost" wire:click="cancelLinkInvoice">{{ __('common.cancel') }}</button></div>
+            {{-- Type to find an unlinked invoice and add it with the plus. --}}
+            <div class="admin-order__invoice-add" x-data="agSearchSelect" data-close-model="invoiceSearch" data-open-selector=".admin-order__invoice-results"
+                @click.outside="close()" @keydown.escape.window="close()">
+                <div class="ag-search-select__search admin-order__invoice-search">
+                    <x-ag.icon name="plus" :size="15" />
+                    <input id="invoice-search" type="search" wire:model.live.debounce.300ms="invoiceSearch" placeholder="{{ __('admin.orders.inline.add_invoice') }}" aria-label="{{ __('admin.orders.inline.add_invoice') }}" autocomplete="off">
+                </div>
+                @if (trim($invoiceSearch) !== '')
+                    <div class="ag-search-select__panel admin-order__invoice-results" role="listbox">
+                        @forelse ($invoiceCandidates as $candidate)
+                            <button type="button" class="ag-search-select__option" role="option" wire:key="invoice-candidate-{{ $candidate->id }}" wire:click="linkInvoice({{ $candidate->id }})" aria-label="{{ __('admin.orders.inline.add_invoice_aria', ['number' => $candidate->number]) }}">
+                                <span>{{ $candidate->number }} <span class="ag-muted">{{ $candidate->customer_name }}</span></span>
+                                <span class="ag-search-select__hint">{{ \App\Support\MoneyFormatter::format($candidate->total_amount, $candidate->currency) }} <x-ag.icon name="plus" :size="14" /></span>
+                            </button>
+                        @empty
+                            <p class="ag-search-select__empty">{{ __('admin.orders.inline.no_results') }}</p>
+                        @endforelse
                     </div>
                 @endif
             </div>

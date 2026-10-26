@@ -143,6 +143,35 @@ final class InventoryService
         });
     }
 
+    /**
+     * Puts the reserved stock of one order line back and drops its reservation, so the line can be
+     * changed or removed and, if needed, reserved again. Used when staff edit an unpaid order.
+     */
+    public function releaseForItem(int $orderItemId): void
+    {
+        DB::transaction(function () use ($orderItemId): void {
+            $reservation = InventoryReservation::query()
+                ->where('order_item_id', $orderItemId)
+                ->lockForUpdate()
+                ->first();
+            if ($reservation === null) {
+                return;
+            }
+
+            if ($reservation->getAttribute('status') === 'reserved') {
+                $stock = InventoryStock::query()->where('product_id', $reservation->product_id)->lockForUpdate()->first();
+                if ($stock !== null && $stock->track_stock) {
+                    $previousQuantity = $stock->quantity;
+                    $stock->quantity += $reservation->quantity;
+                    $stock->save();
+                    ProductStockChanged::dispatch($stock->product, $previousQuantity, $stock->quantity);
+                }
+            }
+
+            $reservation->delete();
+        });
+    }
+
     public function releaseForOrder(Order $order): int
     {
         return DB::transaction(function () use ($order): int {

@@ -39,20 +39,16 @@ test('staff can edit an open order contact and address snapshot', function () {
 
     Livewire::actingAs($staff)
         ->test(OrderShow::class, ['order' => $order])
-        ->call('startEditDetails')
         ->set('details.customerName', 'New name')
         ->set('details.customerEmail', 'new@example.test')
-        ->call('saveDetails')
-        ->assertHasNoErrors()
-        ->assertSee(__('admin.orders.flash.updated'), false)
-        ->call('startEditAddresses')
         ->set('details.billing.name', 'New name')
         ->set('details.billing.line1', 'New street 2')
         ->set('details.billing.city', 'Newtown')
         ->set('details.billing.postal_code', '2000 BB')
         ->set('details.billing.country', 'BE')
-        ->call('saveAddresses')
-        ->assertHasNoErrors();
+        ->call('saveOrder')
+        ->assertHasNoErrors()
+        ->assertSee(__('admin.orders.inline.saved'), false);
 
     expect($order->fresh())
         ->customer_name->toBe('New name')
@@ -74,10 +70,9 @@ test('staff can correct contact details on a paid order without rewriting its in
 
     Livewire::actingAs($staff)
         ->test(OrderShow::class, ['order' => $order])
-        ->call('startEditDetails')
         ->set('details.customerName', 'Corrected name')
         ->set('details.customerEmail', 'corrected@example.test')
-        ->call('saveDetails')
+        ->call('saveOrder')
         ->assertHasNoErrors();
 
     expect($order->fresh()->customer_name)->toBe('Corrected name')
@@ -95,8 +90,8 @@ test('staff with update permission edit the order on the order page', function (
     Livewire::actingAs($staff)->test(OrderShow::class, ['order' => $order])
         ->assertSee('class="admin-breadcrumbs"', false)
         ->assertSee('class="ag-back"', false)
-        ->call('startEditDetails')
-        ->assertSee('wire:model="details.customerName"', false);
+        ->assertSee('wire:model="details.customerName"', false)
+        ->assertSee('wire:click="saveOrder"', false);
 });
 
 test('order detail keeps the important information in a compact address section', function () {
@@ -295,12 +290,13 @@ test('staff without update permission cannot open order editing', function () {
 
     Livewire::actingAs($staff)
         ->test(OrderShow::class, ['order' => $order])
-        ->call('startEditDetails')
+        ->assertDontSee('wire:click="saveOrder"', false)
+        ->call('saveOrder')
         ->assertForbidden();
 
     Livewire::actingAs($staff)
         ->test(OrderShow::class, ['order' => $order])
-        ->call('saveAddresses')
+        ->call('openPicker', 'customer')
         ->assertForbidden();
 });
 

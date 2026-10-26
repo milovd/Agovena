@@ -181,46 +181,6 @@
   font-weight: 600;
 }
 
-/* Inline order details dialog: wider than a confirmation, scrolls on short screens. */
-.admin-order__details-form {
-  width: min(34rem, 100%);
-  max-height: calc(100dvh - 2 * var(--ag-space-4));
-  overflow-y: auto;
-  display: grid;
-  gap: var(--ag-space-4);
-}
-
-.admin-order__details-form .ag-field {
-  margin: 0;
-}
-
-.admin-order__details-form .ag-combobox__options,
-.admin-order__details-form .ag-combobox__empty {
-  position: static;
-  margin-top: 0.35rem;
-}
-
-.admin-order__details-form .ag-combobox__empty {
-  padding: var(--ag-space-3);
-  color: var(--ag-color-text-muted);
-  font-size: 0.875rem;
-}
-
-.admin-order__field-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--ag-space-3);
-  font-size: 0.875rem;
-}
-
-.admin-order__details-form .ag-input--static {
-  display: flex;
-  align-items: center;
-  color: var(--ag-color-text-muted);
-  background: var(--ag-color-surface-muted, var(--ag-color-surface));
-}
-
 /* Recurring line metadata under the product label. */
 .admin-order__line {
   display: grid;
@@ -268,10 +228,6 @@
   margin: 0;
 }
 
-.admin-order__address-form .ag-form__actions {
-  margin-top: var(--ag-space-5);
-}
-
 /* Linked invoices: numbers, dates and amounts never break; the table wrapper scrolls instead. */
 .admin-order__invoice-table :is(th, td) {
   white-space: nowrap;
@@ -312,8 +268,192 @@
   text-decoration: line-through;
 }
 
-/* Order editing fills its container: the dialog column and the address card columns. */
-.admin-order__details-form .ag-input,
-.admin-order__address-form .ag-input {
+/* Paymenter-style order form: fields sit directly on the page. */
+.admin-order__fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ag-space-4);
+}
+
+.admin-order__fields .ag-field,
+.admin-order__address-form .ag-field {
+  margin: 0;
+}
+
+.admin-order__field--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-page--order .ag-order-layout .ag-input {
   max-width: none;
+}
+
+.admin-order__field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ag-space-3);
+}
+
+.admin-order__field-link {
+  font-size: 0.875rem;
+}
+
+.admin-order__required {
+  margin-left: 0.15rem;
+  color: var(--ag-color-danger);
+}
+
+.admin-order__lock {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  color: var(--ag-color-text-muted);
+}
+
+/* Editable lines. */
+.admin-order__lines td {
+  vertical-align: top;
+}
+
+.admin-order__lines .admin-order__col-qty {
+  width: 6rem;
+}
+
+.admin-order__lines .admin-order__col-price {
+  width: 8.5rem;
+}
+
+.admin-order__lines .admin-order__col-total {
+  width: 7rem;
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Next to inputs the line total sits on the input's text line. */
+.admin-order__lines:has(input) td.admin-order__col-total {
+  padding-top: 1.35rem;
+}
+
+.admin-order__lines .admin-order__col-action {
+  width: 3rem;
+  text-align: right;
+}
+
+.admin-order__lines .ag-input.is-invalid {
+  border-color: var(--ag-color-danger);
+}
+
+.admin-order__qty,
+.admin-order__price {
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The product search panel must be able to leave the table, so the lines never scroll. */
+.admin-page--order .ag-order-layout .ag-table-wrap.admin-order__lines-wrap {
+  overflow: visible;
+}
+
+.admin-order__add-line {
+  margin-top: var(--ag-space-3);
+  border: 1px dashed var(--ag-color-border-container, var(--ag-color-border));
+}
+
+/* Adding an invoice: one search field, matches drop down below it. */
+.admin-order__invoice-add {
+  position: relative;
+  margin-top: var(--ag-space-4);
+}
+
+.admin-order__invoice-search {
+  border: 1px solid var(--ag-color-border-container, var(--ag-color-border));
+  border-radius: var(--ag-radius-md);
+  background: var(--ag-color-surface);
+}
+
+.admin-order__invoice-search:focus-within {
+  box-shadow: var(--ag-focus-ring);
+}
+
+/* One save bar for the whole order form, shown once something changed. */
+.admin-order__savebar {
+  position: sticky;
+  bottom: var(--ag-space-4);
+  z-index: 30;
+  display: none;
+  align-items: center;
+  gap: var(--ag-space-3);
+  width: fit-content;
+  margin: var(--ag-space-6) 0 0 auto;
+  padding: var(--ag-space-2) var(--ag-space-2) var(--ag-space-2) var(--ag-space-4);
+  background: var(--ag-color-surface);
+  border: 1px solid var(--ag-color-border-container, var(--ag-color-border));
+  border-radius: var(--ag-radius-lg);
+  box-shadow: var(--ag-shadow-md);
+}
+
+.admin-order__savebar.is-dirty,
+.admin-order__savebar.is-visible {
+  display: flex;
+}
+
+.admin-order__savebar-text {
+  color: var(--ag-color-text-muted);
+  font-size: 0.875rem;
+}
+
+.admin-order__savebar .ag-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ag-space-2);
+}
+
+@media (max-width: 640px) {
+  .admin-order__fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Lines stack: the product on top, quantity, price, total and remove below it. */
+  .admin-order__lines thead {
+    display: none;
+  }
+
+  .admin-order__lines tbody tr {
+    display: grid;
+    grid-template-columns: 4.5rem minmax(0, 1fr) auto 2.25rem;
+    align-items: center;
+    gap: var(--ag-space-2);
+    padding: var(--ag-space-3);
+  }
+
+  .admin-order__lines tbody td,
+  .admin-order__lines tbody :is(.admin-order__col-qty, .admin-order__col-price, .admin-order__col-total, .admin-order__col-action) {
+    width: auto;
+    padding: 0;
+    border: 0;
+  }
+
+  .admin-order__lines tbody td:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .admin-order__lines:has(input) td.admin-order__col-total {
+    padding-top: 0;
+  }
+
+  .admin-order__lines tbody tr + tr {
+    border-top: 1px solid var(--ag-color-border);
+  }
+
+  .admin-order__savebar {
+    width: auto;
+    margin-left: 0;
+  }
+
+  .admin-order__savebar-text {
+    flex: 1;
+  }
 }
