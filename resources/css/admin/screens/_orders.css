@@ -36,6 +36,21 @@
   font-size: var(--ag-font-size-sm);
 }
 
+/* The metric row lives in the order layout grid: Total and Items fill the main
+   column, Customer fills the side column above Payment. */
+.admin-page--order .admin-order__metrics {
+  align-self: stretch;
+  gap: var(--ag-space-6);
+}
+
+.admin-page--order .admin-order__metrics > .ag-metric {
+  height: 100%;
+}
+
+.admin-order__metrics--side {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .admin-order__metrics .ag-metric__value {
   overflow-wrap: anywhere;
 }
@@ -127,8 +142,9 @@
   overflow-wrap: anywhere;
 }
 
-/* Payment actions sit below the payment facts, not against them. */
+/* Payment actions sit below the payment facts, full width so they line up. */
 .admin-page--order .ag-order-layout__side .ag-card__content > .ag-btn {
+  width: 100%;
   margin-top: var(--ag-space-4);
 }
 

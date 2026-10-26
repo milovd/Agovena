@@ -49,17 +49,17 @@ a.ag-btn:visited {
 
 .ag-btn--primary {
   background: var(--ag-color-primary);
-  color: #fff;
+  color: var(--ag-color-primary-foreground);
 }
 
 .ag-btn--primary:hover:not(:disabled):not(.is-disabled) {
   background: var(--ag-color-primary-hover);
-  color: #fff;
+  color: var(--ag-color-primary-foreground);
 }
 
 a.ag-btn--primary,
 a.ag-btn--primary:visited {
-  color: #fff;
+  color: var(--ag-color-primary-foreground);
 }
 
 .ag-btn--secondary {
@@ -87,27 +87,27 @@ a.ag-btn--primary:visited {
 
 .ag-btn--danger {
   background: var(--ag-color-danger);
-  color: #fff;
+  color: var(--ag-color-danger-foreground);
 }
 
 .ag-btn--danger:hover:not(:disabled):not(.is-disabled) {
   filter: brightness(0.95);
-  color: #fff;
+  color: var(--ag-color-danger-foreground);
 }
 
 a.ag-btn--danger,
 a.ag-btn--danger:visited {
-  color: #fff;
+  color: var(--ag-color-danger-foreground);
 }
 
 .ag-btn--danger-outline {
   background: var(--ag-color-surface);
-  border-color: rgb(220 38 38 / 0.35);
+  border-color: color-mix(in srgb, var(--ag-color-danger) 40%, transparent);
   color: var(--ag-color-danger);
 }
 
 .ag-btn--danger-outline:hover:not(:disabled):not(.is-disabled) {
-  background: rgb(220 38 38 / 0.08);
+  background: var(--ag-color-danger-soft);
 }
 
 .ag-btn--sm {

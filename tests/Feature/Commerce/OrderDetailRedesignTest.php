@@ -57,7 +57,7 @@ it('summarises the order in brand metric cards', function (): void {
     [, $html] = orderDetailHtml($this, $this->createStaff());
 
     expect(substr_count($html, 'class="ag-metric"'))->toBe(3)
-        ->and($html)->toContain('class="ag-metrics admin-order__metrics"')
+        ->and($html)->toContain('class="ag-metrics admin-order__metrics admin-order__metrics--main"')
         ->toContain('€25.00')
         ->toContain(trans_choice('admin.orders.show.lines', 1, ['count' => 1]))
         ->toContain('Ada Detail')
@@ -78,4 +78,45 @@ it('uses icon cards for every Core order section and keeps all totals', function
         ->toContain('€5.00')
         ->toContain('Courier')
         ->toContain('Detail Product');
+});
+
+it('aligns the order metrics with the item and payment columns', function (): void {
+    [, $html] = orderDetailHtml($this, $this->createStaff());
+    $css = (string) file_get_contents(resource_path('css/admin/screens/_orders.css'));
+
+    // Total and Items share the main column, Customer sits above Payment in the side column.
+    $layout = strpos($html, '<div class="ag-order-layout">');
+    $main = strpos($html, 'admin-order__metrics--main" role="list"');
+    $side = strpos($html, 'admin-order__metrics--side" role="list"');
+    $cards = strpos($html, '<div class="ag-order-layout__main">');
+
+    expect($layout)->toBeInt()
+        ->and($layout < $main && $main < $side && $side < $cards)->toBeTrue()
+        ->and(substr_count($html, 'class="ag-metric"'))->toBe(3)
+        ->and($css)->toContain('.admin-page--order .admin-order__metrics {')
+        ->toContain('.admin-order__metrics--side');
+});
+
+it('keeps button text readable on solid primary and danger buttons in both themes', function (): void {
+    $buttons = (string) file_get_contents(resource_path('css/admin/components/_button.css'));
+    $themeTokens = (string) file_get_contents(base_path('themes/default/resources/css/admin/_tokens.css'));
+    $coreTokens = (string) file_get_contents(resource_path('css/admin/settings/_tokens.css'));
+
+    expect($buttons)->not->toContain('color: #fff')
+        ->toContain('color: var(--ag-color-primary-foreground)')
+        ->toContain('color: var(--ag-color-danger-foreground)')
+        ->and($coreTokens)->toContain('--ag-color-danger-foreground: #ffffff')
+        ->and($themeTokens)->toContain('--ag-color-danger-foreground: #ffffff')
+        ->toContain('--ag-color-danger-foreground: #0b1220');
+});
+
+it('makes cancelling an unpaid order a secondary destructive action', function (): void {
+    $staff = $this->createStaff();
+    $order = Order::factory()->create(['number' => 'AG-DETAIL-3']);
+    Payment::factory()->for($order)->create();
+
+    $html = $this->actingAs($staff)->get(route('admin.orders.show', $order))->assertOk()->getContent();
+
+    expect($html)->toContain('class="ag-btn ag-btn--danger-outline" wire:click="startCancelUnpaid"')
+        ->toContain('class="ag-btn ag-btn--primary" wire:click="startRecordPayment"');
 });

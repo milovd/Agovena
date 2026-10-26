@@ -38,32 +38,35 @@
         <p class="ag-alert ag-alert--danger" role="alert">{{ session('error') }}</p>
     @endif
 
-    <div class="ag-metrics admin-order__metrics" role="list" aria-label="{{ __('admin.orders.show.summary') }}">
-        <x-ag.metric-card
-            icon="wallet"
-            tone="emerald"
-            :label="__('common.total')"
-            :value="$money($order->total_amount, $order->currency)"
-            :hint="__('common.subtotal').' '.$money($order->subtotal_amount, $order->currency)"
-        />
-        <x-ag.metric-card
-            icon="package"
-            tone="blue"
-            :label="__('admin.orders.show.items')"
-            :value="(string) $itemQuantity"
-            :hint="$lineCount !== $itemQuantity ? trans_choice('admin.orders.show.lines', $lineCount, ['count' => $lineCount]) : null"
-        />
-        <x-ag.metric-card
-            icon="user"
-            tone="amber"
-            :label="__('common.customer')"
-            :value="$order->customer_name"
-            :href="'mailto:'.$order->customer_email"
-            :link-label="$order->customer_email"
-        />
-    </div>
-
     <div class="ag-order-layout">
+        {{-- The metrics share the layout columns: Total and Items span the main column, Customer matches Payment. --}}
+        <div class="ag-metrics admin-order__metrics admin-order__metrics--main" role="list" aria-label="{{ __('admin.orders.show.summary') }}">
+            <x-ag.metric-card
+                icon="wallet"
+                tone="emerald"
+                :label="__('common.total')"
+                :value="$money($order->total_amount, $order->currency)"
+                :hint="__('common.subtotal').' '.$money($order->subtotal_amount, $order->currency)"
+            />
+            <x-ag.metric-card
+                icon="package"
+                tone="blue"
+                :label="__('admin.orders.show.items')"
+                :value="(string) $itemQuantity"
+                :hint="$lineCount !== $itemQuantity ? trans_choice('admin.orders.show.lines', $lineCount, ['count' => $lineCount]) : null"
+            />
+        </div>
+        <div class="ag-metrics admin-order__metrics admin-order__metrics--side" role="list" aria-label="{{ __('common.customer') }}">
+            <x-ag.metric-card
+                icon="user"
+                tone="amber"
+                :label="__('common.customer')"
+                :value="$order->customer_name"
+                :href="'mailto:'.$order->customer_email"
+                :link-label="$order->customer_email"
+            />
+        </div>
+
         <div class="ag-order-layout__main">
             @include('livewire.admin.orders.partials.show-items')
 

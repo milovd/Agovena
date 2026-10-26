@@ -29,6 +29,7 @@
   --ag-color-text: #0f172a;
   --ag-color-text-muted: #64748b;
   --ag-color-danger: #dc2626;
+  --ag-color-danger-foreground: #ffffff;
   --ag-color-danger-soft: rgb(220 38 38 / 0.1);
   --ag-color-success: #059669;
   --ag-color-success-soft: rgb(5 150 105 / 0.12);
@@ -89,6 +90,7 @@
   --ag-color-text: #f8fafc;
   --ag-color-text-muted: #94a3b8;
   --ag-color-danger: #f87171;
+  --ag-color-danger-foreground: #0b1220;
   --ag-color-danger-soft: rgb(248 113 113 / 0.14);
   --ag-color-success: #34d399;
   --ag-color-success-soft: rgb(52 211 153 / 0.14);

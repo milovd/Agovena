@@ -107,7 +107,7 @@
 
         @if ($canCancelUnpaid)
             @if (! $confirmingCancel)
-                <button type="button" class="ag-btn ag-btn--danger ag-u-mt-3" wire:click="startCancelUnpaid">
+                <button type="button" class="ag-btn ag-btn--danger-outline" wire:click="startCancelUnpaid">
                     {{ __('admin.orders.show.cancel_unpaid') }}
                 </button>
             @else
