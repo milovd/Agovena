@@ -163,3 +163,157 @@
     grid-template-columns: minmax(0, 1.45fr) minmax(20rem, 0.75fr);
   }
 }
+
+/* Customer metric: email plus a link to the customer workspace. */
+.admin-order__customer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ag-space-1) var(--ag-space-3);
+  margin: var(--ag-space-1) 0 0;
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.admin-order__customer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+/* Inline order details dialog: wider than a confirmation, scrolls on short screens. */
+.admin-order__details-form {
+  width: min(34rem, 100%);
+  max-height: calc(100dvh - 2 * var(--ag-space-4));
+  overflow-y: auto;
+  display: grid;
+  gap: var(--ag-space-4);
+}
+
+.admin-order__details-form .ag-field {
+  margin: 0;
+}
+
+.admin-order__details-form .ag-combobox__options,
+.admin-order__details-form .ag-combobox__empty {
+  position: static;
+  margin-top: 0.35rem;
+}
+
+.admin-order__details-form .ag-combobox__empty {
+  padding: var(--ag-space-3);
+  color: var(--ag-color-text-muted);
+  font-size: 0.875rem;
+}
+
+.admin-order__field-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ag-space-3);
+  font-size: 0.875rem;
+}
+
+.admin-order__details-form .ag-input--static {
+  display: flex;
+  align-items: center;
+  color: var(--ag-color-text-muted);
+  background: var(--ag-color-surface-muted, var(--ag-color-surface));
+}
+
+/* Recurring line metadata under the product label. */
+.admin-order__line {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.admin-order__line-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ag-space-1) var(--ag-space-2);
+  color: var(--ag-color-text-muted);
+  font-size: 0.8125rem;
+}
+
+/* Inline address editing inside the addresses card. */
+.admin-order__address-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ag-space-3);
+  align-content: start;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-order__address-fields > legend,
+.admin-order__address-fields > .ag-check,
+.admin-order__address-field--name,
+.admin-order__address-field--company,
+.admin-order__address-field--line1,
+.admin-order__address-field--line2 {
+  grid-column: 1 / -1;
+}
+
+.admin-order__address-fields > legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--ag-space-1);
+}
+
+.admin-order__address-fields .ag-field,
+.admin-order__address-fields > .ag-check {
+  margin: 0;
+}
+
+.admin-order__address-form .ag-form__actions {
+  margin-top: var(--ag-space-5);
+}
+
+/* Linked invoices: numbers, dates and amounts never break; the table wrapper scrolls instead. */
+.admin-order__invoice-table :is(th, td) {
+  white-space: nowrap;
+}
+
+/* In a narrow main column the issue date gives way first; the due date matters more while unpaid. */
+.admin-order__invoices .ag-card__content {
+  container-type: inline-size;
+}
+
+@container (max-width: 42rem) {
+  .admin-order__invoice-table :is(th, td):nth-child(3) {
+    display: none;
+  }
+}
+
+.admin-order__invoice-amount {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-order__invoice-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.admin-order__invoice-actions > * + * {
+  margin-left: var(--ag-space-1);
+}
+
+.admin-order__invoice--void td:not(:nth-child(2)) {
+  color: var(--ag-color-text-muted);
+}
+
+.admin-order__invoice--void td:first-child a {
+  color: inherit;
+  text-decoration: line-through;
+}
+
+/* Order editing fills its container: the dialog column and the address card columns. */
+.admin-order__details-form .ag-input,
+.admin-order__address-form .ag-input {
+  max-width: none;
+}

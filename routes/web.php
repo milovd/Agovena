@@ -45,7 +45,6 @@ use App\Livewire\Admin\Modules\Index as ModulesIndex;
 use App\Livewire\Admin\Notifications\EmailLogIndex as NotificationsEmailLog;
 use App\Livewire\Admin\Notifications\Index as NotificationTemplatesIndex;
 use App\Livewire\Admin\Notifications\Templates as NotificationTemplatesForm;
-use App\Livewire\Admin\Orders\Edit as OrdersEdit;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
 use App\Livewire\Admin\Orders\Show as OrdersShow;
 use App\Livewire\Admin\PlanChanges\Index as PlanChangesIndex;
@@ -215,7 +214,8 @@ Route::middleware(['auth', 'abuse', SyncStaffPermissions::class, 'admin.access',
     Route::get('/roles', RolesIndex::class)->name('roles.index');
     Route::redirect('/staff', '/admin/customers')->name('staff.index');
     Route::get('/orders', OrdersIndex::class)->name('orders.index');
-    Route::get('/orders/{order}/edit', OrdersEdit::class)->name('orders.edit');
+    // Orders are edited on the order page; the old edit URL keeps working as a redirect.
+    Route::redirect('/orders/{order}/edit', '/admin/orders/{order}')->name('orders.edit');
     Route::get('/orders/{order}', OrdersShow::class)->name('orders.show');
     Route::get('/invoices', InvoicesIndex::class)->name('invoices.index');
     Route::get('/invoices/design', InvoicesDesign::class)->name('invoices.design');

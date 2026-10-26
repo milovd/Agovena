@@ -33,6 +33,22 @@
   grid-column: 2;
 }
 
+/* Optional header action (for example an edit pencil): pinned top right, next to the title. */
+.ag-card__header:has(> .ag-card__action) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.ag-card__header:has(> .ag-icon-tile:first-child):has(> .ag-card__action) {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.ag-card__header > .ag-card__action,
+.ag-card__header:has(> .ag-icon-tile:first-child) > .ag-card__action:not(.ag-icon-tile) {
+  grid-column: -2;
+  grid-row: 1;
+  align-self: center;
+}
+
 .ag-card__header:has(> .ag-icon-tile:first-child) > .ag-card__title {
   align-self: center;
   min-height: 2.125rem;

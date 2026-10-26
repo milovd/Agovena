@@ -11,7 +11,7 @@ const ADMIN_DATE_INPUT_VIEWS = [
     'discounts/index',
     'exports/index',
     'invoices/edit',
-    'orders/edit',
+    'orders/show',
     'referrals/index',
     'system/maintenance',
     'events/product-tab',

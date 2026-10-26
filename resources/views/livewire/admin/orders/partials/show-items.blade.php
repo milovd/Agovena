@@ -18,8 +18,24 @@
                 </thead>
                 <tbody>
                     @foreach ($order->items as $item)
+                        @php($subscription = $subscriptionsByItem->get($item->id))
                         <tr>
-                            <td>{{ $item->label }}</td>
+                            <td>
+                                <div class="admin-order__line">
+                                    <span>{{ $item->label }}</span>
+                                    @if ($subscription)
+                                        <span class="admin-order__line-meta">
+                                            <span class="ag-badge ag-badge--info">{{ __('admin.orders.inline.recurring') }}</span>
+                                            <span>{{ $subscription->interval_count }} × {{ __('subscriptions::interval.'.$subscription->interval->value) }}</span>
+                                            @if ($canViewSubscriptions)
+                                                <a href="{{ route('admin.subscriptions.show', $subscription) }}">{{ __('admin.orders.inline.subscription', ['number' => $subscription->number]) }}</a>
+                                            @else
+                                                <span>{{ __('admin.orders.inline.subscription', ['number' => $subscription->number]) }}</span>
+                                            @endif
+                                        </span>
+                                    @endif
+                                </div>
+                            </td>
                             <td>{{ $item->quantity }}</td>
                             <td>{{ \App\Support\MoneyFormatter::format($item->unit_amount, $item->currency) }}</td>
                             <td>{{ \App\Support\MoneyFormatter::format($item->line_total_amount, $item->currency) }}</td>

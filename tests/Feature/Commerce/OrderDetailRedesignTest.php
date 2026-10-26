@@ -46,17 +46,17 @@ it('shows the order number as heading with one combined status in the header', f
 it('turns edit into an icon button in the header and hides it without update permission', function (): void {
     [$order, $html] = orderDetailHtml($this, $this->createStaff());
 
-    expect($html)->toMatch('#<a class="ag-icon-btn ag-icon-btn--header" href="'.preg_quote(route('admin.orders.edit', $order), '#').'" title="'.preg_quote(__('admin.orders.actions.edit'), '#').'" aria-label="'.preg_quote(e(__('admin.orders.actions.edit_aria', ['number' => $order->number])), '#').'">#')
-        ->not->toContain('<a class="ag-btn ag-btn--secondary" href="'.route('admin.orders.edit', $order).'"');
+    expect($html)->toContain('<button type="button" class="ag-icon-btn ag-icon-btn--header" wire:click="startEditDetails" title="'.e(__('admin.orders.inline.edit_details')).'" aria-label="'.e(__('admin.orders.inline.edit_details_aria', ['number' => $order->number])).'">')
+        ->not->toContain('href="'.route('admin.orders.edit', $order).'"');
 
-    [$viewOnlyOrder, $viewOnly] = orderDetailHtml($this, $this->createStaff([], ['orders.view']), 'AG-DETAIL-2');
-    expect($viewOnly)->not->toContain(route('admin.orders.edit', $viewOnlyOrder));
+    [, $viewOnly] = orderDetailHtml($this, $this->createStaff([], ['orders.view']), 'AG-DETAIL-2');
+    expect($viewOnly)->not->toContain('wire:click="startEditDetails"');
 });
 
 it('summarises the order in brand metric cards', function (): void {
     [, $html] = orderDetailHtml($this, $this->createStaff());
 
-    expect(substr_count($html, 'class="ag-metric"'))->toBe(3)
+    expect(preg_match_all('/class="ag-metric(?: [^"]*)?"/', $html))->toBe(3)
         ->and($html)->toContain('class="ag-metrics admin-order__metrics admin-order__metrics--main"')
         ->toContain('€25.00')
         ->toContain(trans_choice('admin.orders.show.lines', 1, ['count' => 1]))
@@ -67,7 +67,7 @@ it('summarises the order in brand metric cards', function (): void {
 it('uses icon cards for every Core order section and keeps all totals', function (): void {
     [, $html] = orderDetailHtml($this, $this->createStaff());
 
-    foreach (['order-items-heading', 'order-addresses-heading', 'payment-heading', 'documents-heading', 'shipping-fulfillment-heading', 'shipping-returns-heading'] as $heading) {
+    foreach (['order-items-heading', 'order-addresses-heading', 'payment-heading', 'order-invoices-heading', 'shipping-fulfillment-heading', 'shipping-returns-heading'] as $heading) {
         expect($html)->toMatch('#<header class="ag-card__header">\s*<span [^>]*class="ag-icon-tile"[^>]*>.*?id="'.$heading.'"#s');
     }
 
@@ -92,7 +92,7 @@ it('aligns the order metrics with the item and payment columns', function (): vo
 
     expect($layout)->toBeInt()
         ->and($layout < $main && $main < $side && $side < $cards)->toBeTrue()
-        ->and(substr_count($html, 'class="ag-metric"'))->toBe(3)
+        ->and(preg_match_all('/class="ag-metric(?: [^"]*)?"/', $html))->toBe(3)
         ->and($css)->toContain('.admin-page--order .admin-order__metrics {')
         ->toContain('.admin-order__metrics--side');
 });

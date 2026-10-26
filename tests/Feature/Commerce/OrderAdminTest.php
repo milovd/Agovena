@@ -11,8 +11,8 @@ use App\Agovena\Orders\DeleteOrder;
 use App\Enums\InvoiceStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
-use App\Livewire\Admin\Orders\Edit as OrderEdit;
 use App\Livewire\Admin\Orders\Index as OrdersIndex;
+use App\Livewire\Admin\Orders\Show as OrderShow;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Order;
@@ -38,17 +38,21 @@ test('staff can edit an open order contact and address snapshot', function () {
     $invoice = app(IssueInvoiceFromOrder::class)->handle($order);
 
     Livewire::actingAs($staff)
-        ->test(OrderEdit::class, ['order' => $order])
-        ->set('customerName', 'New name')
-        ->set('customerEmail', 'new@example.test')
-        ->set('billingName', 'New name')
-        ->set('billingLine1', 'New street 2')
-        ->set('billingCity', 'Newtown')
-        ->set('billingPostalCode', '2000 BB')
-        ->set('billingCountry', 'BE')
-        ->call('save')
+        ->test(OrderShow::class, ['order' => $order])
+        ->call('startEditDetails')
+        ->set('details.customerName', 'New name')
+        ->set('details.customerEmail', 'new@example.test')
+        ->call('saveDetails')
         ->assertHasNoErrors()
-        ->assertSee(__('admin.orders.flash.updated'), false);
+        ->assertSee(__('admin.orders.flash.updated'), false)
+        ->call('startEditAddresses')
+        ->set('details.billing.name', 'New name')
+        ->set('details.billing.line1', 'New street 2')
+        ->set('details.billing.city', 'Newtown')
+        ->set('details.billing.postal_code', '2000 BB')
+        ->set('details.billing.country', 'BE')
+        ->call('saveAddresses')
+        ->assertHasNoErrors();
 
     expect($order->fresh())
         ->customer_name->toBe('New name')
@@ -69,28 +73,30 @@ test('staff can correct contact details on a paid order without rewriting its in
     $invoice = app(IssueInvoiceFromOrder::class)->handle($order);
 
     Livewire::actingAs($staff)
-        ->test(OrderEdit::class, ['order' => $order])
-        ->set('customerName', 'Corrected name')
-        ->set('customerEmail', 'corrected@example.test')
-        ->call('save')
+        ->test(OrderShow::class, ['order' => $order])
+        ->call('startEditDetails')
+        ->set('details.customerName', 'Corrected name')
+        ->set('details.customerEmail', 'corrected@example.test')
+        ->call('saveDetails')
         ->assertHasNoErrors();
 
     expect($order->fresh()->customer_name)->toBe('Corrected name')
         ->and($invoice->fresh()->customer_name)->toBe('Old name');
 });
 
-test('staff with update permission can open the order edit route', function () {
+test('staff with update permission edit the order on the order page', function () {
     $staff = $this->createStaff([], ['orders.view', 'orders.update']);
     $order = Order::factory()->create();
 
     $this->actingAs($staff)
         ->get(route('admin.orders.edit', $order))
-        ->assertOk()
-        ->assertSee(__('admin.orders.edit_title', ['number' => $order->number]), false)
+        ->assertRedirect(route('admin.orders.show', $order));
+
+    Livewire::actingAs($staff)->test(OrderShow::class, ['order' => $order])
         ->assertSee('class="admin-breadcrumbs"', false)
         ->assertSee('class="ag-back"', false)
-        ->assertSee('href="'.route('admin.orders.show', $order).'"', false)
-        ->assertSee('wire:model="customerName"', false);
+        ->call('startEditDetails')
+        ->assertSee('wire:model="details.customerName"', false);
 });
 
 test('order detail keeps the important information in a compact address section', function () {
@@ -126,7 +132,7 @@ test('order detail tables remain keyboard scrollable on narrow screens', functio
         ->get(route('admin.orders.show', $order))
         ->assertOk()
         ->assertSee('role="region" aria-label="'.__('admin.orders.show.items').'" tabindex="0"', false)
-        ->assertSee('role="region" aria-label="'.__('admin.orders.show.documents').'" tabindex="0"', false);
+        ->assertSee('role="region" aria-label="'.__('admin.orders.show.invoices').'" tabindex="0"', false);
 });
 
 test('order detail ignores metadata snapshots without hiding real customer properties', function () {
@@ -288,7 +294,13 @@ test('staff without update permission cannot open order editing', function () {
     $order = Order::factory()->create();
 
     Livewire::actingAs($staff)
-        ->test(OrderEdit::class, ['order' => $order])
+        ->test(OrderShow::class, ['order' => $order])
+        ->call('startEditDetails')
+        ->assertForbidden();
+
+    Livewire::actingAs($staff)
+        ->test(OrderShow::class, ['order' => $order])
+        ->call('saveAddresses')
         ->assertForbidden();
 });
 

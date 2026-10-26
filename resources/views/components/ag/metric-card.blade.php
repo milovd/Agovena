@@ -11,4 +11,5 @@
     @if ($href)
         <a class="ag-metric__link" href="{{ $href }}">{{ $linkLabel ?? $label }} <x-ag.icon name="arrow-right" :size="14" /></a>
     @endif
+    {{ $slot }}
 </article>
